@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 var combobox=null;
 
@@ -78,7 +79,7 @@ function treateEnchantement() {
 		var monstre = texte.substring(texte.indexOf(" d'un ")+6,texte.indexOf(" d'au minimum"));
 		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
 		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
-		//alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
+		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
 		MZ_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
 	}
 	MZ_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MZ_getValue(numTroll+".position.X")+";"+MZ_getValue(numTroll+".position.Y")+";"+MZ_getValue(numTroll+".position.N"));

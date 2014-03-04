@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 function treateMeneurMission() {
 	var nodes = document.evaluate(
@@ -65,7 +66,7 @@ function treateMeneurMission() {
 			var mundidey = (enonce.indexOf("Mundidey") != -1);
 			MZ_setValue("MISSION_" + numTroll, "R$"+nbr+"$"+type+"$"+mundidey+"$"+enonce);
 		}
-		catch(e) {alert(e)}
+		catch(e) {window.alert(e)}
 		return true;
 	}
 	else if(enonce.indexOf("de la famille des") != -1)

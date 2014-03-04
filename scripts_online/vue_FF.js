@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 /* VERSION PROVISOIRE --- BUGGUÉE !!!
  * v0.1.1b by Dab - 2013-04-23
@@ -159,7 +160,7 @@ function getMonstreNom(i, force) { // mode forcé = demandé lors du toggle sur af
 		return x_monstres[i].childNodes[checkBoxLevels.checked && !force ? 2 : 3].firstChild.firstChild.nodeValue;
 		}
 	catch(e) {
-		alert('Impossible de trouver le monstre '+i);
+		window.alert('Impossible de trouver le monstre '+i);
 		}
 	}
 
@@ -405,7 +406,7 @@ function retrieveCDMs() { // chk
 					}
 					catch(e)
 					{
-						alert(e+'\n'+url+'\n'+texte);
+						window.alert(e+'\n'+url+'\n'+texte);
 					}
 					}
 				});
@@ -420,6 +421,7 @@ function retrieveCDMs() { // chk
 /*********************************************************************************
 *                                Fonctions Trõlls                                *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 function getTrollPosition(i) {
 	var tds = x_trolls[i].childNodes;
@@ -491,7 +493,7 @@ function refreshDiplo() {
 						MZ_setValue('NODIPLO','true');
 						var bouton=document.getElementsByName('deldiplo')[0];
 						bouton.checked=true;
-						alert(infosDiplo.getElementsByTagName('error')[0].firstChild.nodeValue);
+						window.alert(infosDiplo.getElementsByTagName('error')[0].firstChild.nodeValue);
 						return;
 					}
 					var infosDiploTrolls = infosDiplo.getElementsByTagName('troll');
@@ -507,7 +509,7 @@ function refreshDiplo() {
 					isDiploComputed = true;
 					putRealDiplo();
 				}
-				catch(e) {alert(e);	}
+				catch(e) {window.alert(e);	}
 				}
 			});
 		}
@@ -579,6 +581,7 @@ function hidePXTroll() {
 /*********************************************************************************
 *                               Fonctions Trésors                                *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 function getTresorNom(i) {
 	var nom = x_tresors[i].childNodes[2].firstChild.childNodes;
@@ -629,6 +632,7 @@ function filtreTresors() {
 /*********************************************************************************
 *                                Fonctions Lieux                                 *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 function getLieuNom(i) {
 	var nom = x_lieux[i].childNodes[2].childNodes[1].firstChild;
@@ -655,6 +659,7 @@ function filtreLieux() {
 /*********************************************************************************
 *                               Ajouts des Boutons                               *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 function putExternalLinks() { // Insertion des liens déclarés dans les options MZ
 	var Rdiv = document.evaluate("//div/a[contains(./text(),'Logout')]/..", document,
@@ -882,7 +887,7 @@ function putFiltresBoutons() {
 		}
 		catch(e)
 		{
-			alert(e);
+			window.alert(e);
 		}
 	}
 }
@@ -892,7 +897,7 @@ function appendSearch(td, text, buttonValue, buttonOnClick) {
 	var textbox = appendTextbox(nobr, 'text', text, '12', '20');
 	appendText(nobr, "\u00a0");
 	var button=appendButton(nobr, buttonValue, buttonOnClick);
-	textbox.addEventListener("keypress",function(event){try{if(event.keyCode == 13) {event.preventDefault();button.click();}}catch(e){alert(e)}}, true);
+	textbox.addEventListener("keypress",function(event){try{if(event.keyCode == 13) {event.preventDefault();button.click();}}catch(e){window.alert(e)}}, true);
 	td.appendChild(nobr);
 	appendText(td, "\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ");
 }
@@ -1024,7 +1029,7 @@ function getVueScript()
 	    }
         return txt + "#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n" + getVue()[0] + ";" + getPositionStr(getPosition()) + "\n#FIN ORIGINE\n";
 	}
-	catch(e) { alert(e)}
+	catch(e) { window.alert(e)}
 }
 
 function putScriptExterne() {
@@ -1068,7 +1073,7 @@ function erreur( chaine ) { // inutilisé ?
 		return;
 	var it = infoit.substring(0, infoit.indexOf('$'));
 	if (it=='bricol')
-			alert("Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"+chaine);
+			window.alert("Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"+chaine);
 	MZ_removeValue(numTroll+'.INFOSIT');
 	}
 
@@ -1119,7 +1124,7 @@ function putInfosTrolls() {
 	}
 	catch(e)
 	{
-	alert(e+" "+i+"\n"+x_trolls[i].innerHTML);
+	window.alert(e+" "+i+"\n"+x_trolls[i].innerHTML);
 	}
 	}
 
@@ -1286,7 +1291,7 @@ function analyseTagFile(data)
 		}
 		catch(e)
 		{
-			alert(e);
+			window.alert(e);
 			break;
 		}
 	}
@@ -1322,14 +1327,14 @@ function computeTag()
 					}
 					catch(e)
 					{
-						alert(e);
+						window.alert(e);
 					}
 				}
 			});
 		}
 	}
 	}
-	catch(e) {alert(e);}
+	catch(e) {window.alert(e);}
 }
 
 function computeTelek()
@@ -1470,7 +1475,7 @@ function computeTactique(begin, end) {
 			tr.appendChild(createPopupImage2(imgUrl, id, nom));
 		}
 	}
-	}catch(e){alert(j+" "+e)}
+	}catch(e){window.alert(j+" "+e)}
 	filtreMonstres();
 	}
 
@@ -1690,5 +1695,5 @@ displayScriptTime();
 }
 catch(e)
 {
-alert(e);
+window.alert(e);
 }

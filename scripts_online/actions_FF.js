@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 /* v0.5 by Dabihul - 2013-08-13
  * correction de l'accès au titre de message
@@ -301,7 +302,7 @@ function sendDices() {
 		onload: function(responseDetails) {
 				var texte = responseDetails.responseText;
 				if(texte.indexOf('error: ')!=-1) {
-					alert(texte.substring(texte.indexOf('error: ')+7));
+					window.alert(texte.substring(texte.indexOf('error: ')+7));
 					MZ_setValue(numTroll+'.POISS', false);
 					}
 				}

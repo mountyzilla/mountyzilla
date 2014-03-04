@@ -2,6 +2,7 @@
 *  This file is part of Mountyzilla (http://mountyzilla.tilk.info/)              *
 *  Mountyzilla is free software; provided under the GNU General Public License   *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 /* v0.0.1 by Dabihul - 2013-04-21 */
 
@@ -58,7 +59,7 @@ MZ_xmlhttpRequest({
 				}
 				catch(e)
 				{
-					alert(e);
+					window.alert(e);
 				}
 			}
 		});
@@ -107,7 +108,7 @@ MZ_xmlhttpRequest({
 				}
 				catch(e)
 				{
-					alert(e);
+					window.alert(e);
 				}
 			}
 		});

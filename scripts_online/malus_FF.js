@@ -15,17 +15,29 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
-/* v1.2.3 by Dab - 2013-05-03 */
 
-function decumul(bmt, nbr) {
+/* v1.4 - 2014-01-06
+ * - Gestion des sorts double composante
+ * v1.4.1 - 2014-01-22
+ * - Correction décumul
+ * TODO
+ * - Identifier la position de "PV" dans l'ordre MH
+ */
+
+var listeBM;
+
+
+/* [functions]                     Utilitaires                                  */
+
+function decumul(bmt,nbr) {
 	var bmr;
-	if (!nbr || nbr <2) {bmr = bmt;}
-	else if (nbr==2) {bmr = parseInt(0.67*bmt);}
-	else if (nbr==3) {bmr = parseInt(0.40*bmt);}
-	else if (nbr==4) {bmr = parseInt(0.25*bmt);}
-	else if (nbr==5) {bmr = parseInt(0.15*bmt);}
-	else {bmr = parseInt(0.1*bmt);}
-	if (bmt<0) {return Math.min(-1,bmr);}
+	if(!nbr || nbr<2) bmr = bmt;
+	else if(nbr==2) bmr = parseInt(0.67*bmt);
+	else if(nbr==3) bmr = parseInt(0.40*bmt);
+	else if(nbr==4) bmr = parseInt(0.25*bmt);
+	else if(nbr==5) bmr = parseInt(0.15*bmt);
+	else bmr = parseInt(0.1*bmt);
+	if(bmt<0) return Math.min(-1,bmr);
 	return Math.max(1,bmr);
 	}
 
@@ -34,7 +46,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 	case 'ATT':
 		return -1;
 	case 'ESQ': 
-		if (b=='ATT') return 1;
+		if(b=='ATT') return 1;
 		return -1;
 	case 'DEG': 
 		switch( b ) {
@@ -113,6 +125,21 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			default:
 				return -1;
 			}
+	case 'Concentration':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+				return 1;
+			default:
+				return -1;
+			}	
 	case 'Fatigue':
 		switch( b ) {
 			case 'ATT':
@@ -124,6 +151,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'Armure':
 			case 'RM':
 			case 'MM':
+			case 'Concentration':
 				return 1;
 			default:
 				return -1;
@@ -139,6 +167,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'Armure':
 			case 'RM':
 			case 'MM':
+			case 'Concentration':
 			case 'Fatigue':
 				return 1;
 			default:
@@ -155,6 +184,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'Armure':
 			case 'RM':
 			case 'MM':
+			case 'Concentration':
 			case 'Fatigue':
 			case "Dés d'attaque":
 				return 1;
@@ -172,6 +202,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'Armure':
 			case 'RM':
 			case 'MM':
+			case 'Concentration':
 			case 'Fatigue':
 			case "Dés d'attaque":
 			case 'Dés de dégâts':
@@ -181,142 +212,242 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			}
 		}
 	}
+
+
+/* [functions]              Fonctions hide / display                            */
+
+function toggleDetails() {
+	if(MZ_getValue('BMDETAIL')!='false') {
+		MZ_setValue('BMDETAIL','false');
+		var trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style.display = 'none';
+		trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style = '';	
+		}
+	else {	
+		MZ_setValue('BMDETAIL','true');
+		var trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style.display = 'none';
+		trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style = '';
+		}
+	}
+
+function toggleBMList() {
+	if(MZ_getValue('BMHIDELIST')=='true') {
+		MZ_setValue('BMHIDELIST','false');
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style = '';
+		document.getElementsByTagName('thead')[0].style = '';
+		document.getElementById('trhelp').style = '';
+		}
+	else {
+		MZ_setValue('BMHIDELIST','true');
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style.display = 'none';
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+		document.getElementById('trhelp').style.display = 'none';
+		}
+	}
+
+function setDisplayBM() {
+	if(!listeBM) return;
 	
+	var titre = document.getElementById('titre2');
+	if(titre) {
+		titre.style.cursor = 'pointer';
+		titre.onclick = toggleBMList;
+		}
+	
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	var tr = document.evaluate("./tr/td/text()[contains(.,'décumul')]/../..",
+								tfoot, null, 9, null).singleNodeValue;
+	tr.id = 'trhelp';
+	
+	if(MZ_getValue('BMHIDELIST')=='true') {
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style.display = 'none';
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+		tr.style.display = 'none';
+		}
+	}
+
+
+/* [functions]                 Fonction principale                              */
 
 function traiteMalus() {
-	var listeBM = document.getElementsByClassName('mh_tdpage');
-	var uniListe = [], listeDurees = [], listeDecumuls = [];
+	var mainTab = document.getElementsByTagName('table')[0];
+	listeBM = document.evaluate('./tbody/tr', mainTab, null, 7, null);
+	if(listeBM.snapshotLength==0) return;
+	
 	/* Suppression des BM de fatigue stockés */
-	if (MZ_getValue(numTroll+'.bm.fatigue'))
+	if(MZ_getValue(numTroll+'.bm.fatigue'))
 		MZ_removeValue(numTroll+'.bm.fatigue');
 	
 	/* Extraction des données */
-	nb = 0;
-	while (nb < listeBM.length) {
-		tr = listeBM[nb]; nb++;
-		var type = tr.childNodes[3].textContent;
-		// si c'est un type à décumul ... NB : TP n'est plus décumulé
-		if (type=='Potion' || type=='Parchemin' || type=='Sortilège' || type=='Capacité Spéciale')
-			var nom = tr.childNodes[1].textContent;
-		else
-			var nom = 'pasdedecumul';
-		if (nom.indexOf('Amnésie')!=-1) // Amnésie n'est pas décumulée
-			nom = 'pasdedecumul';
+	var uniListe = [], listeDurees = {}, listeDecumuls = {};
+	var nb = 0;
+	while(nb<listeBM.snapshotLength) {
+		tr = listeBM.snapshotItem(nb); nb++;
 		var effetsT = tr.childNodes[5].textContent.split(' | ');
 		var phymag = tr.childNodes[9].textContent;
 		var duree = parseInt( tr.childNodes[11].textContent.match(/\d+/) );
+		var type = tr.childNodes[3].textContent, nom;
+		// si c'est un type à décumul
+		switch(type) {
+			case 'Potion':
+			case 'Parchemin':
+			case 'Sortilège':
+			case 'Capacité Spéciale':
+				nom = tr.childNodes[1].textContent+phymag;
+				break;
+			default:
+				nom = 'pasdedecumul';
+			}
+		if(nom.indexOf('Amnésie')!=-1) // !! Amnésie = Capa, mais pas décumulée
+			nom = 'pasdedecumul';
 		
-		uniListe[nb] = [];
-		uniListe[nb]['duree'] = duree;
-		uniListe[nb]['nom'] = nom;
-		uniListe[nb]['caracs'] = [];
-		for (var i=0 ; i<effetsT.length ; i++) {
-			if (effetsT[i].indexOf(':')==-1)
-				continue;
-			// structure : liste[nb]=[duree , nom , Array[carac.type] ]
+		uniListe[nb] = {
+			'duree':duree,
+			'nom':nom, // permet de gérer le non décumul des sorts à double composante
+			'caracs':{}
+			}
+		for(var i=0 ; i<effetsT.length ; i++) {
+			if(effetsT[i].indexOf(':')==-1) continue;
+			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
 			// nom = 'pasdedecumul' si pas de décumul
-			// carac = ATT.Physique, DEG.Magie ...
-			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) )+'.'+phymag ;
+			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
+			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
+				uniListe[nb]['type'] = phymag;
 			var bm = parseInt( effetsT[i].match(/-?\d+/) );
 			uniListe[nb]['caracs'][carac] = bm;
 			listeDurees[duree] = true;
 			}
 		}
-
+	
 	/* Gestion des décumuls et cumuls des durées */
 	var toursGeres = [];
-	for (var d in listeDurees) toursGeres.push(d);
-	toursGeres.sort( function (a, b){return a-b;} );
+	for(var d in listeDurees) toursGeres.push(d);
+	toursGeres.sort( function (a,b){return b-a;} );
+	// pour sauvegarder les bm de fatigue
+	var strfat = '';
+	// Pour affichage & adpatation à footable.js (statique)
+	var thead = document.getElementsByTagName('thead')[0];
+	var nbHidden = document.evaluate("./tr/th[@style='display: none;']",
+									thead, null, 7, null).snapshotLength;
+	var tfoot = document.getElementsByTagName('tfoot')[0];
 	
-	var strfat = ''; // pour sauvegarder les bm de fatigue
-	for (var i=0 ; i<toursGeres.length ; i++) {
+	for(var i=0 ; i<toursGeres.length ; i++) {
 		var tour = toursGeres[i];
-		var effetsCeTour = []; decumulsCeTour = [];
-		for (var nb=1 ; nb<uniListe.length ; nb++) {
-			if (uniListe[nb]['duree']<toursGeres[i]) // si durée pvr < durée analysée, on passe
+		var effetsCeTour = {}; decumulsCeTour = {};
+		for(var nb=1 ; nb<uniListe.length ; nb++) {
+			if(uniListe[nb]['duree']<toursGeres[i]) // si durée pvr < durée analysée, on passe
 				continue;
 			var nom = uniListe[nb]['nom'];
-			if (nom!='pasdedecumul') {
-				if (decumulsCeTour[nom]==null)
-					decumulsCeTour[nom] = 0;
+			if(nom!='pasdedecumul') {
+				if(decumulsCeTour[nom]==null) decumulsCeTour[nom] = 0;
 				decumulsCeTour[nom]++;
 				}
-			for (var carac in uniListe[nb]['caracs']) {
-				var nomcarac = carac.substring(0,carac.indexOf('.'));
-				var typecarac = carac.substring(carac.indexOf('.')+1);
+			for(var carac in uniListe[nb]['caracs']) {
 				var bm = uniListe[nb]['caracs'][carac];
-				if (effetsCeTour[nomcarac]==null) {
-					effetsCeTour[nomcarac] = [];
-					effetsCeTour[nomcarac]['Physique'] = 0;
-					effetsCeTour[nomcarac]['Magie'] = 0;
+				if(carac=='ATT' || carac=='DEG' || carac=='Armure') {
+					var type = uniListe[nb]['type'];
+					if(!effetsCeTour[carac])
+						effetsCeTour[carac] = {'Physique':0, 'Magie':0};
+					if(nom=='pasdedecumul')
+						effetsCeTour[carac][type] += bm;
+					else
+						effetsCeTour[carac][type] += decumul(bm,decumulsCeTour[nom]);
 					}
-				if (nom=='pasdedecumul' || nomcarac=='Fatigue')
-					effetsCeTour[nomcarac][typecarac] += bm;
-				else if (nomcarac=='TOUR') // les durees se comptent en demi-minutes dans MH
-					effetsCeTour[nomcarac][typecarac] += decumul(2*bm,decumulsCeTour[nom])/2;
-				else
-					effetsCeTour[nomcarac][typecarac] += decumul(bm,decumulsCeTour[nom]);
+				else {
+					if(!effetsCeTour[carac]) effetsCeTour[carac]=0;
+					if(nom=='pasdedecumul' || carac=='Fatigue')
+						effetsCeTour[carac] += bm;
+					else if(carac=='TOUR') // les durees se comptent en demi-minutes dans MH
+						effetsCeTour[carac] += decumul(2*bm,decumulsCeTour[nom])/2;
+					else 
+						effetsCeTour[carac] += decumul(bm,decumulsCeTour[nom]);
+					}
 				}
 			}
 		
 		/* Création du bilan du tour */
-		var texte = '';
+		var texteD = '', texteS = '';
 		var caracGerees = [];
-		for (var k in effetsCeTour)
-			caracGerees.push(k);
+		for(var k in effetsCeTour) caracGerees.push(k);
 		caracGerees.sort( triecaracs );
 		
-		for (var j=0 ; j<caracGerees.length ; j++) {
-			if (texte.length>0) {texte += ' | ';}
-			if (caracGerees[j]=='TOUR') {
-				texte += 'TOUR : '
-					+aff( effetsCeTour['TOUR']['Physique']+effetsCeTour['TOUR']['Magie'] )+' min';
+		for(var j=0 ; j<caracGerees.length ; j++) {
+			var carac = caracGerees[j], str = '';
+			
+			switch( carac ) {
+				case 'ATT':
+				case 'DEG':
+				case 'Armure':
+					var phy = effetsCeTour[carac]['Physique'];
+					var mag = effetsCeTour[carac]['Magie'];
+					texteD += (phy || mag)? ' | '+carac+' : '+aff(phy)+'/'+aff(mag) : '';
+					texteS += (phy+mag) ? ' | '+carac+' : '+aff(phy+mag) : '';
+					break;
+				case 'TOUR':
+					str = effetsCeTour[carac]? ' | TOUR : '+aff( effetsCeTour[carac] )+' min' : '';
+					break;
+ 				case 'Fatigue':
+					strfat += toursGeres[i]+'-'+effetsCeTour[carac]+';';
+				case 'PV':
+				case 'ESQ':
+				case 'REG':
+				case 'Vue':
+					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] ) : '';
+					break;
+				default:
+					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] )+' %' : '';
 				}
-			else if (caracGerees[j]=='Fatigue') {
-				texte += 'Fatigue : '
-					+aff( effetsCeTour['Fatigue']['Physique']+effetsCeTour['Fatigue']['Magie'] );
-				// mémorisation fatigue
-				strfat+= toursGeres[i]+'-'
-					+(effetsCeTour['Fatigue']['Physique']+effetsCeTour['Fatigue']['Magie'])+';';
-				}
-			else if (caracGerees[j]=='PV') {
-				texte += 'PV : '
-					+aff( effetsCeTour['PV']['Physique']+effetsCeTour['PV']['Magie'] );
-				}
-			else if (caracGerees[j].length==3 || caracGerees[j]=='Armure') {
-				texte += caracGerees[j]+' : '
-					+aff( effetsCeTour[ caracGerees[j] ]['Physique'] )+'/'
-					+aff( effetsCeTour[ caracGerees[j] ]['Magie'] );
-				if (effetsCeTour[ caracGerees[j] ]['Physique']!=0 && effetsCeTour[ caracGerees[j] ]['Magie']!=0)
-					texte += ' ('+aff( effetsCeTour[ caracGerees[j] ]['Physique']
-									+effetsCeTour[ caracGerees[j] ]['Magie'])+')';
-				}
-			else {
-				texte += caracGerees[j]+' : '
-					+aff(effetsCeTour[caracGerees[j]]['Physique']+effetsCeTour[caracGerees[j]]['Magie'])+' %';
+			if(str) {
+				texteD += str;
+				texteS += str;
 				}
 			}
 		
 		/* Affichage */
-		// adpatation affichage dynamique (footable.js)
-		var thead = document.getElementsByTagName('thead')[0];
-		var nbHidden = document.evaluate("./tr/th[@style='display: none;']", thead, null, 7, null).snapshotLength;
-		var tfoottr = document.getElementsByTagName('tfoot')[0].childNodes[1];
-		var tr = insertTr(tfoottr.nextSibling, 'mh_tdpage');
-		var td = appendTdText(tr, texte);
-		td.setAttribute('colspan',5-nbHidden);
-		texte = toursGeres[i]+' Tour';
-		if (toursGeres[i]>1) {texte += 's';}
-		appendTdText(tr, texte);
+		// Si rien à afficher on passe
+		if(!texteD) continue;
+		// Si BMM+BMP=0
+		texteS = texteS ? texteS.substring(3) : 'Aucun effet';
+		var tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanDetail');
+		if(MZ_getValue('BMDETAIL')=='false')
+			tr.style.display = 'none';
+		var td = appendTdText(tr,texteD.substring(3));
+		td.colSpan = 5-nbHidden;
+		var txttour = toursGeres[i]+' Tour';
+		if(toursGeres[i]>1) txttour += 's';
+		appendTdText(tr,txttour);
+		
+		tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanSomme');
+		if(MZ_getValue('BMDETAIL')!='false')
+			tr.style.display = 'none';
+		td = appendTdText(tr,texteS);
+		td.colSpan = 5-nbHidden;
+		appendTdText(tr,txttour);
 		}
 	
-	if (strfat) // stockage fatigue : tour-fatigue;tour-fatigue;...
-		MZ_setValue(numTroll+'.bm.fatigue', strfat);
+	/* mise en place toggleDetails */
+	tfoot.style.cursor = 'pointer';
+	tfoot.onclick = toggleDetails;
+	
+	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
+	if(strfat)
+		MZ_setValue(numTroll+'.bm.fatigue',strfat);
 	}
 
 try {
 start_script();
 traiteMalus();
-displayScriptTime()
+setDisplayBM();
+displayScriptTime();
 }
-catch(e) {alert(e)};
+catch(e) {window.alert(e)};

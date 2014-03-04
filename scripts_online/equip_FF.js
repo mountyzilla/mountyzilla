@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 var popup;
 
@@ -214,4 +215,4 @@ if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchant
 	
 displayScriptTime();
 }
-catch(e){alert(e)}
+catch(e){window.alert(e)}

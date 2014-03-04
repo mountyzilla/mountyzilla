@@ -15,8 +15,16 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
-/* v0.1.2 by Dabihul - 2012-08-02 | TODO : bin tout en fait                     */
 
+/*
+ * v0.1.2b - 2013-08-19
+ * - correction syntaxe alert
+ * v0.1.3 by Dab - 2013-08-23
+ * - correction treateMinerai
+ * TODO tout le reste !
+ */
+
+//var compoDB = "http://darkwood.free.fr/divers/compodb.php";
 var popup;
 
 function initPopup() {
@@ -67,17 +75,16 @@ function arrondi(x) {
 	}
 
 function treateMinerai() {
-	//alert('ON - currentURL = '+currentURL);
-	if(currentURL.indexOf("as_type=Divers")==-1)
-		return false;
-	//alert('check1');
-	var node = document.evaluate("//tr[@class='mh_tdtitre' and contains(./td/b/text(),'Minerai')]",
-						document, null, 9, null).singleNodeValue;
-	if (!node)
-		return false;
-	//alert('check2');
+	if (currentURL.indexOf("as_type=Divers")==-1) return false;
+	var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'"
+								+" and contains(./tr/th/text(),'Minerai')]",
+								document, null, 9, null).singleNodeValue;
+	if (!node) return false;
 	node = node.nextSibling.nextSibling;
-	while (node && node.getAttribute('class')!='mh_tdtitre') {
+	
+	var trlist = document.evaluate('./tr', node, null, 7, null);
+	for (var i=0 ; i<trlist.snapshotLength ; i++) {
+		var node = trlist.snapshotItem(i);
 		var nature = node.childNodes[5].textContent;
 		var caracs = node.childNodes[7].textContent;
 		var taille = caracs.match(/\d+/);
@@ -95,13 +102,11 @@ function treateMinerai() {
 			if (nature.indexOf('Taill')!=-1) coef = 1.15*coef;
 			node.childNodes[7].textContent += ' | Carats: ' + arrondi(taille*coef) ;
 			}
-		node = node.nextSibling.nextSibling;
 		}
 	}
 
 function treateComposants() {
-	if(currentURL.indexOf("as_type=Compo")==-1)
-		return false;
+	if (currentURL.indexOf("as_type=Compo")==-1) return false;
 	//On récupère les composants
 	var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
@@ -303,7 +308,7 @@ function treateEnchant()
 	}
 	catch(e)
 	{
-		alert(e);
+		window.alert(e);
 	}
 }
 
