@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 var popup;
 
@@ -70,7 +71,7 @@ function treateGowaps() {
 	for (var j = 0; j < tbodys.snapshotLength; j++) {
 		var tbody = tbodys.snapshotItem(j);
 		var id_gowap = currentURL.substring(currentURL.indexOf("?ai_IdFollower=")+15)*1;
-		insertButtonComboDB(tbody, 'gowap', id_gowap,'mh_tdpage_fo');
+		//insertButtonComboDB(tbody, 'gowap', id_gowap,'mh_tdpage_fo');
 		if(MZ_getValue("NOINFOEM") != "true")
 			insertEMInfos(tbody);
 		if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )

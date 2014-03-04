@@ -19,27 +19,33 @@
 /* v3.1.1 by Dabihul - 2013-05-30
  * - nouvelle nouvelle gestion recherches (jquery + ajout colonne + renommage)
  * - ajout toggleMouches
+ * 2013-08-19
+ * - correction syntaxe alert
+ * v3.1.2b by Dab - 2013-08-22
+ * - correction affichage bordures via hide & display du thead
  */
 
 var mainTab = document.getElementById('mouches');
-var trmouches;
+var trmouches='';
 
 function toggleMouches() {
 	if (MZ_getValue('HIDEMOUCHES')=='true') {
 		MZ_setValue('HIDEMOUCHES','false');
 		for (var i=0 ; i<trmouches.snapshotLength ; i++)
 			trmouches.snapshotItem(i).setAttribute('style','');
+		document.getElementsByTagName('thead')[0].setAttribute('style','');
 		}
 	else {
 		MZ_setValue('HIDEMOUCHES','true');
 		for (var i=0 ; i<trmouches.snapshotLength ; i++)
 			trmouches.snapshotItem(i).setAttribute('style','display:none;');
+		document.getElementsByTagName('thead')[0].setAttribute('style','display:none;');
 		}
 	}
 
 function setDisplayMouches() {
 	if (!mainTab) return;
-	trmouches = document.evaluate("./tbody/tr", mainTab, null, 7, null);
+	trmouches = document.evaluate('./tbody/tr', mainTab, null, 7, null);
 	if (!trmouches) return;
 	
 	var titre = document.getElementById('titre2');
@@ -57,6 +63,7 @@ function setDisplayMouches() {
 	if (MZ_getValue('HIDEMOUCHES')=='true') {
 		for (var i=0 ; i<trmouches.snapshotLength ; i++)
 			trmouches.snapshotItem(i).setAttribute('style','display:none;');
+		document.getElementsByTagName('thead')[0].setAttribute('style','display:none;');
 		}
 	}
 
@@ -136,4 +143,4 @@ setDisplayMouches();
 traiteMouches();
 displayScriptTime();
 }
-catch(e) {alert(e)}
+catch(e) {window.alert(e)}

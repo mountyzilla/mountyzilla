@@ -16,6 +16,8 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
+/* 2013-10-03 - correction des alert / window.alert */
+
 var getDiploURL = "http://mountyzilla.tilk.info/scripts_0.9/getDiplo_FF.php";
 
 function addButtonDiplo() {
@@ -79,7 +81,7 @@ function sendDiplo() {
 				var texte = responseDetails.responseText;
 				if(texte.indexOf("alert")!=-1)
 				{
-					alert(texte.substring(texte.indexOf("alert('")+7,texte.indexOf("')")));
+					window.alert(texte.substring(texte.indexOf("alert('")+7,texte.indexOf("')")));
 				}
 			}
 		});
@@ -92,7 +94,7 @@ try
 }
 catch(e)
 {
-	alert(e);
+	window.alert(e);
 }
 
 displayScriptTime();

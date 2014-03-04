@@ -16,70 +16,95 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
+/* v0.2 by Dab - 2013-08-20
+ * - patch dégueu pour gérer la décomposition P/M de l'armure
+ */
 
 var pageDispatcher = "http://mountypedia.free.fr/mz/cdmdispatcher.php";
 //var pageDispatcher = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
-var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
+//var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
 var pageEffetDispatcher = "http://mountypedia.free.fr/mz/effetdispatcher.php";
 var buttonCDM;
 
 /*******************************************************************************************
-Vous avez utilisé CONNAISSANCE DES MONSTRES sur un Ver Carnivore Géant [Nouveau] (4195873)
+CDM :
+Vous avez RÉUSSI à utiliser cette compétence au niveau 5 : jet de 34 sur 95 %.
 
-Le Monstre ciblé fait partie des : Monstre
+Il ne vous est pas possible d'améliorer cette compétence.
 
-Niveau : Excellent (entre 11 et 13)
+Le Monstre Ciblé fait partie des : Mort-Vivant (Archi-Nécromant [Antique] - N°4571589)
+Niveau :	Inimaginable (entre 49 et 51)
+Points de Vie :	Surtrollesque (entre 450 et 470)
+Blessure (Approximatif) :	0 %	
+Dés d'Attaque :	Impressionnant (entre 30 et 32)
+Dés d'Esquive :	Impressionnant (entre 28 et 30)
+Dés de Dégat :	Très Fort (entre 18 et 20)
+Dés de Régénération :	Excellent (égal à 13)
+Armure Physique :	Moyen (entre 10 et 12)
+Armure Magique :	Faible (inférieur à 6)
+Vue :	Moyen (entre 9 et 11)
+Maitrise Magique :	Inimaginable (supérieur à 6000)
+Résistance Magique :	Inimaginable (supérieur à 6000)
+Nombre d'attaques :	1
+Vitesse de Déplacement :	Normale
+Voir le Caché :	Oui
+Attaque à distance :	Non
+Attaque magique :	Oui
+Vole :	Non
+Sang froid :	Inexistant
+DLA :	Milieu
+Durée Tour :	Remarquable (entre 9 et 11)
+Chargement :	Vide
+Bonus Malus :	Aucun
 
-*******************************************
+Vous avez également gagné 1 PX pour la réussite.
+*******************************************************************************************
+BOT :
+Vous avez utilisé CONNAISSANCE DES MONSTRES sur un Capitan Ronfleur [Naissant] (4768960)
 
-Vous avez utilisé le Sortilège : CONNAISSANCE DES MONSTRES sur un Gritche [Favori] (2010762)
+Le Monstre ciblé fait partie des : Mort-Vivant
 
-Le Monstre ciblé fait partie des : Démon
-
-Niveau : Impressionnant (entre 27 et 29)
-Points de Vie : Excellent (entre 230 et 250)
-Blessure : 95 % (approximativement)
-Points de Vie restants (Approximatif) : Entre 1 et 11
-Dés d'Attaque : Excellent (entre 26 et 28)
-Dés d'Esquive : Fort (entre 11 et 13)
-Dés de Dégât : Fort (entre 13 et 15)
-Dés de Régén. : Moyen (égal à 4)
-Armure : Remarquable (entre 21 et 23)
-Vue : Très Faible (entre 2 et 4)
-Capacité spéciale : Coup Perforant - Affecte : Armure | Durée 2 tour(s)
-Maitrise Magique : Jamais vu (supérieur à 4000)
-Résistance Magique : Jamais vu (entre 3900 et 4100)
-Nombre d'attaques : 1
-Vitesse de Déplacement : Lente
-Voir le Caché : Oui
-Attaque à distance : Non
-DLA : Milieu
-Durée tour : Fort (entre 6 et 8)
-Chargement : Vide
-Bonus Malus : Faiblesse Passagère
-Portée du Pouvoir : Au toucher
-
--->
-
-Le Monstre Ciblé fait partie des : Mort-Vivant (Maître Nécrochore [Vénérable] - N°1249810)
-Niveau : Incroyable (entre 36 et 39)
-
+Niveau : Incroyable (entre 36 et 38)
 *******************************************************************************************/
 
-function sendCDM() { // check Dab
-	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
-			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	if (!td)
-		return false;
-		
-	cdm = td.innerHTML;
-	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,"$3$4 ($1 - N°$2)<br>");
-	cdm = cdm.replace(/<br>/g,"\n");
-	cdm = cdm.replace(/Blessure :[\s]*[0-9]+ % \(approximativement\)/g, "Blessure : XX % (approximativement)");
+function getNNInt(str) {
+	var nbrs = str.match(/\d+/g);
+	for (var i=0 ; i<nbrs.length ; i++)
+		nbrs[i] = parseInt(nbrs[i]);
+	return nbrs;
+	}
 
+function sendCDM() {
+	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
+								document, null, 9, null).singleNodeValue;
+	cdm = td.innerHTML;
+	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,
+						"$3$4 ($1 - N°$2)<br>");
+	cdm = cdm.replace(/Blessure :[\s]*[0-9]+ % \(approximativement\)/,
+						'Blessure : XX % (approximativement)');
+	// Supprime la décomposition P/M de l'Armure
+	var bgn = cdm.indexOf('Armure Physique');
+	if (bgn!=-1) {
+		var end = cdm.indexOf('Vue')-2;
+		var lines = cdm.substring(bgn,end).split('<br>');
+		var armp = getNNInt(lines[0]);
+		var armm = getNNInt(lines[1]);
+		if (lines[0].indexOf('(inf')!=-1)
+			armp = [0,armp[0]];
+		if (lines[1].indexOf('(inf')!=-1)
+			armm = [0,armm[0]];
+		var insrt = 'Armure : ';
+		if (lines[0].indexOf('(sup')!=-1 || lines[1].indexOf('(sup')!=-1)
+			insrt += 'adj (supérieur à '+(armp[0]+armm[0]);
+		else
+			insrt += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
+		cdm = cdm.replace(cdm.substring(bgn,end),insrt+')<br>');
+		}
+	cdm = cdm.replace(/<br>/g,'\n');
+	
 	MZ_xmlhttpRequest({
 				method: 'GET',
-				url: pageDispatcher+"?cdm="+escape(cdm),
+				url: pageDispatcher+'?cdm='+escape(cdm),
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml'
@@ -91,35 +116,26 @@ function sendCDM() { // check Dab
 				});
 	}
 
-
-function traiteCdM() { // check Dab
+function traiteCdM() {
 	// Teste si ce message du bot est un message de CdM
 	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
-			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	if (!td)
-		return false;
+								document, null, 9, null).singleNodeValue;
+	if (!td) return false;
 		
 	cdm = td.innerHTML;
-	// pour mettre les points de vie restants estimés
+		
+	// Insertion de l'estimation des PV restants
 	var des = cdm.indexOf('Dés');
-	var pv = cdm.substring(cdm.indexOf('Points de Vie'), cdm.indexOf('Blessure'));
-	pv = getPVsRestants(pv, cdm.substring(cdm.indexOf('Blessure :'), des));
+	var pv = cdm.slice(cdm.indexOf('Points de Vie'),cdm.indexOf('Blessure'));
+	pv = getPVsRestants(pv, cdm.slice(cdm.indexOf('Blessure :'),des) );
 	if (pv)
-		td.innerHTML = cdm.substring(0, des - 4) + '<br />' + pv[0] + pv[1] + cdm.substring(des - 4);
+		td.innerHTML = cdm.slice(0,des-4)+'<br />'+(pv[0]+pv[1]) + cdm.substring(des-4);
 
-	// On insère le bouton et un espace
-	var button = insertButtonCdm('bClose');
-	buttonCDM = button;
-/*	button.setAttribute("onClick", "window.open('" + pageCdmRecord + "?cdm=" + escape(cdm)
-			+ "&source=mountyzilla/script_teubreu&forwardTo=" + pageDispatcher
-			+ "', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
-			+ "this.value='Merci de votre participation'; this.disabled = true;");*/
-			
-	button.addEventListener('click', sendCDM, true);
+	// Insertion bouton envoi + espace
+	buttonCDM = insertButtonCdm('bClose',sendCDM);
 	}
 
-
-function traitePouvoir() {
+/*function traitePouvoir() {
 	// Teste si ce message du bot est un message de CdM
 	// le test "capa" évite les pouvoirs type Chonchon (pas de SR)
 	var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacité spéciale')]/..",
@@ -163,7 +179,7 @@ function traitePouvoir() {
 					'Accept': 'application/atom+xml,application/xml,text/xml'
 				}});
 	}
-}
+}*/
 
 traiteCdM();
 //traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB

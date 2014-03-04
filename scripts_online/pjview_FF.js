@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 /*********************************************************************************
 * v1.1.1 by Dabihul - 2012-07-21                                                 *
@@ -26,6 +27,7 @@
 * TODO                                                                           *
 * - màn pour ZZ                                                                  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 var mh_caracs = new Array();
 var mh_templates = new Array();

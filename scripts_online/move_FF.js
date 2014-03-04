@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* 2013-08-19 : correction auto syntaxe alert */
 
 /* v0.1 by Dabihul - 2013-08-14
  * correction de la syntaxe des confirm (merci à Mamoune)
@@ -152,7 +153,7 @@ function validateTPDestination()
 						+'Etes-vous bien certain de vouloir prendre ce portail ?');
 	return true;
 	}
-	catch(e) {alert(e)}
+	catch(e) {window.alert(e)}
 }
 
 function newsubmitTP(event)
