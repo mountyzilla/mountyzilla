@@ -26,7 +26,6 @@
  * Ces fonctions sont dev ici en test, à terme elles seront à intégrer dans libs
  */
 
-
 function traiteChampis() {
 	try{
 		var tr = document.getElementById('mh_objet_hidden_Champignon');
@@ -68,7 +67,7 @@ function traiteMinerai() {
 		var node = trlist.snapshotItem(i);
 		var nature = node.childNodes[7].textContent,
 			caracs = node.childNodes[9].textContent;
-		var taille = caracs.match(/\d+/);
+		var taille = Number(caracs.match(/\d+/));
 		var coef = 1;
 		if(caracs.indexOf('Moyen')!=-1) coef = 2;
 		else if(caracs.indexOf('Normale')!=-1) coef = 3;
@@ -83,21 +82,26 @@ function traiteMinerai() {
 			if(nature.indexOf('Taill')!=-1) coef = 1.15*coef;
 			str = ' | Carats: ';
 			}
-		var nb = Math.round(taille*coef)
-		appendText(node.childNodes[9], str+nb );
-		if(!totaux[nature])
-			totaux[nature] = nb;
-		else
-			totaux[nature] += nb;
+		var carats = Math.round(taille*coef)
+		appendText(node.childNodes[9], str+carats );
+		if(!totaux[nature]) {
+			totaux[nature] = [taille,carats];
+			}
+		else {
+			totaux[nature][0] += taille;
+			totaux[nature][1] += carats;
+			}
 		}
 	str = 'Total : ';
 	for(var nature in totaux) {
 		if(str.length>8) str += ', ';
-		str += nature+totaux[nature];
-		if(nature.indexOf('Mithril')!=-1)
-			str += ' UM';
-		else
-			str += ' carats';
+		if(nature.indexOf('Mithril')!=-1) {
+			str += nature+totaux[nature][1]+' UM';
+			}
+		else {
+			str += nature+totaux[nature][0]+'U/'
+				+totaux[nature][1]+'c';
+			}
 		}
 	/*var node = document.getElementById('mh_plus_Minerai');
 	var titre = document.evaluate("./td[contains(./b/text(),'Minerai')]",
