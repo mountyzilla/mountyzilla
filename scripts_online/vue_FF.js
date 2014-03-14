@@ -40,15 +40,12 @@
 var filtreMonstre = ''; // obsolète - DEBUG
 
 // Infos remplies par des scripts extérieurs
-var cg = [];
-var ct = [];
-var listeCDM = [];
+var cg = [], ct = []; // Couleur Guilde, Couleur Trõll (Diplo)
 
-var listeLevels = [];
-var listeTags = [];
-var listeTagsInfos = [];
-var listeTagsGuilde = [];
-var listeTagsInfosGuilde = [];
+var listeCDM = [], listeLevels = [];
+
+var listeTags = [], listeTagsInfos = [],
+	listeTagsGuilde = [], listeTagsInfosGuilde = [];
 
 // Fenêtres déplaçables
 var winCurr = null;
@@ -81,26 +78,31 @@ var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
 
 function saveCheckBox(chkb, pref) {
+	// Enregistre et retourne l'état d'une CheckBox
 	var etat = chkb.checked;
 	MZ_setValue(pref, etat ? 'true' : 'false' );
 	return etat;
 	}
 
 function recallCheckBox(chkb, pref) {
+	// Restitue l'état d'une CheckBox
 	chkb.checked = (MZ_getValue(pref)=='true');
 	}
 
 function saveComboBox(cbb, pref) {
+	// Enregistre et retourne l'état d'une ComboBox
 	var etat = cbb.selectedIndex;
 	MZ_setValue(pref, etat);
 	return etat;
 	}
 
 function recallComboBox(cbb, pref) {
+	// Restitue l'état d'une ComboBox
 	if(MZ_getValue(pref)) cbb.value = MZ_getValue(pref);
 	}
 
 function synchroniseFiltres() {
+	// Récupération de toutes les options de la vue
 	recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
 	recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
 	recallCheckBox(checkBoxGowaps,'NOGOWAP');
@@ -108,7 +110,6 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxEngages,'NOENGAGE');
 	recallCheckBox(checkBoxLevels,'NOLEVEL');
 	recallCheckBox(checkBoxIntangibles,'NOINT');
-
 	recallCheckBox(checkBoxGG,'NOGG');
 	recallCheckBox(checkBoxCompos,'NOCOMP');
 	recallCheckBox(checkBoxBidouilles,'NOBID');
@@ -121,11 +122,11 @@ function synchroniseFiltres() {
 	}
 
 
-/*-[functions]----- Fonctions de récupération de données (DOM) --------------*/
+/*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
 /* INFOS :
  * les champs-titres (table>tbody>tr>td>table>tbody>tr>td>a)
  * sont identifiables via leur Name
- * les tables-listings sont identifiables via l'ID du tr contenant
+ * les tables-listings sont identifiables via l'ID du tr conteneur
  * (mh_vue_hidden_XXX, XXX=trolls, champis, etc)
  */
 
@@ -189,7 +190,7 @@ function getMonstreTdNom(i) {
 function getMonstreNom(i) {
 	try {
 		return tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3]
-								.firstChild.firstChild.nodeValue;
+			.firstChild.firstChild.nodeValue;
 		}
 	catch(e) {
 		window.alert('Impossible de trouver le monstre '+i);
@@ -318,11 +319,9 @@ function computeTactique(begin, end) {
 			var nom = getMonstreNom(j);
 			var donneesMonstre = listeCDM[id];
 			if(donneesMonstre && nom.indexOf('Gowap')==-1) {
-				var imgUrl =
-					'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/calc2.png';
 				var td = getMonstreTdNom(j);
 				appendText(td,' ');
-				td.appendChild( createPopupImage2(imgUrl, id, nom) );
+				td.appendChild( createPopupImage2(MZimg+'calc2.png', id, nom) );
 				}
 			}
 		}
@@ -336,11 +335,9 @@ function updateTactique() {
 	if(!isCDMsRetrieved) return;
 	
 	if(noTactique) {
-		var imgUrl =
-			'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/calc2.png';
 		for(var i=nbMonstres ; i>0 ; i--) {
 			var tr = getMonstreTdNom(i);
-			var img = document.evaluate("img[@src='"+imgUrl+"']",
+			var img = document.evaluate("img[@src='"+MZimg+"calc2.png']",
 				tr, null, 9, null).singleNodeValue;
 			if(img) {
 				img.parentNode.removeChild(img.previousSibling);
@@ -352,7 +349,8 @@ function updateTactique() {
 		computeTactique();
 	}
 
-function filtreMonstres() { // mais elle fait quoi au juste cette fonction ?
+function filtreMonstres() {
+	// = EventListener universel pour les fonctions liées aux monstres
 	var urlImg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/'
 		+'Competences/ecritureMagique.png',
 		urlEnchantImg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/'
@@ -419,18 +417,18 @@ function filtreMonstres() { // mais elle fait quoi au juste cette fonction ?
 		}
 
 		x_monstres[i].style.display =
-				(noGowaps	&& nom.indexOf('gowap apprivoisé')!=-1
+			(noGowaps	&& nom.indexOf('gowap apprivoisé')!=-1
 				&& getMonstreDistance(i)>1) ||
-				(noEngages && getMonstreDistance(i)!=0
+			(noEngages && getMonstreDistance(i)!=0
 				&& listeEngages[pos[0]] && listeEngages[pos[0]][pos[1]]
 				&& listeEngages[pos[0]][pos[1]][pos[2]]) ||
-				(isFiltreOn && nom.indexOf(filtreMonstre)==-1) ||
-				(niveau_min>0 && getMonstreLevel(i)<niveau_min
-				&& getMonstreDistance(i)>1 && getMonstreDistance(i)!=-1
-				&& nom.toLowerCase().indexOf("kilamo")==-1) ||
-				(niveau_max>0 && getMonstreLevel(i)>niveau_max
-				&& getMonstreDistance(i)>1 && getMonstreDistance(i)!=-1
-				&& nom.toLowerCase().indexOf("kilamo") == -1) ? 'none' : '';
+			(isFiltreOn && nom.indexOf(filtreMonstre)==-1) ||
+			(niveau_min>0 && getMonstreLevel(i)<niveau_min
+			&& getMonstreDistance(i)>1 && getMonstreDistance(i)!=-1
+			&& nom.toLowerCase().indexOf("kilamo")==-1) ||
+			(niveau_max>0 && getMonstreLevel(i)>niveau_max
+			&& getMonstreDistance(i)>1 && getMonstreDistance(i)!=-1
+			&& nom.toLowerCase().indexOf("kilamo") == -1) ? 'none' : '';
 		if(nom.indexOf('liche')==0 || nom.indexOf('hydre')==0
 			|| nom.indexOf('balrog')==0 || nom.indexOf('beholder')==0) {
 			if(!noMythiques) {
@@ -472,7 +470,7 @@ function retireMarquage(nom) {
 
 function retrieveCDMs() {
 	if(checkBoxLevels.checked) return;
-	
+
 	var str = '';
 	var begin = 1; // num de début de lot si plusieurs lots de CdM (>500 CdM)
 	var max = MZ_getValue(numTroll+'.MAXCDM');
@@ -480,7 +478,7 @@ function retrieveCDMs() {
 	if(MZ_getValue('CDMID')==null) MZ_setValue('CDMID',1); // à quoi sert CDMID ??
 	
 	for(var i=1 ; i<=max ; i++) {
-		var nomMonstre = retireMarquage(getMonstreNom(i, true));
+		var nomMonstre = retireMarquage(getMonstreNom(i,true));
 		if(nomMonstre.indexOf(']') != -1)
 			nomMonstre = nomMonstre.substring(0,nomMonstre.indexOf(']')+1);
 		str += 'nom[]=' + escape(nomMonstre) + '$'
@@ -551,8 +549,8 @@ function filtreTrolls() {
 	var isFGOn = strGuilde!='';
 	var titre = document.getElementsByName('trolls')[0].firstChild.firstChild;
 	titre.nodeValue = 'TRÕLLS'
-		+ (isFTOn ? ' (filtrés sur '+strTroll+')' : '')
-		+ (isFGOn ? ' (guildes filtrées sur '+strGuilde+')' : '');
+		+(isFTOn ? ' (filtrés sur '+strTroll+')' : '')
+		+(isFGOn ? ' (guildes filtrées sur '+strGuilde+')' : '');
 
 	for(var i=1 ; i<=nbTrolls ; i++) {
 		var tds = tr_trolls[i].childNodes;
@@ -870,13 +868,13 @@ function set2DViewSystem() {
 /* [functions] Boutons d'envoi d'infos aux bases */
 function appendSendBouton(paren, url, id, func, text) {
 	var myForm = document.createElement('form');
-	myForm.setAttribute('method','post');
-	myForm.setAttribute('align','right');
-	myForm.setAttribute('action',url);
-	myForm.setAttribute('name','frmvue');
-	myForm.setAttribute('target','_blank');
-	appendHidden(myForm, id, '');
-	appendSubmit(myForm, text,
+	myForm.method = 'post';
+	myForm.align = 'right';
+	myForm.action = url;
+	myForm.name = 'frmvue';
+	myForm.target = '_blank';
+	appendHidden(myForm,id,'');
+	appendSubmit(myForm,text,
 		function() {document.getElementsByName(id)[0].value=func();}
 		);
 	paren.appendChild(myForm);
@@ -1033,8 +1031,8 @@ function putSearchForms() {
 	td = appendTdText(tr,'FILTRAGE MONSTRES :',true);
 	td.align = 'right';
 	td = appendTdCenter(tr);
-	comboBoxNiveauMin=appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
-	comboBoxNiveauMax=appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
+	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
+	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
 	}
 
 // SCRIPTS
@@ -1120,7 +1118,7 @@ function getVueScript() {
 
 
 
-/* [functions]                 Systèmes Tactiques                              */
+/*-[functions]--------------- Systèmes Tactiques -----------------------------*/
 
 function putScriptExterne() {
 	var infoit = MZ_getValue(numTroll+'.INFOSIT');
@@ -1130,8 +1128,9 @@ function putScriptExterne() {
 	if(nomit=='bricol') {
 		var data = infoit.split('$');
 		try {
-			appendNewScript(
-				'http://trolls.ratibus.net/'+data[1]+'/mz.php?login='+data[2]+'&password='+data[3]
+			appendNewScript('http://trolls.ratibus.net/'+data[1]
+				+'/mz.php?login='+data[2]
+				+'&password='+data[3]
 				);
 			}
 		catch(e) { window.alert(erreurIT(e,it)); }
@@ -1141,7 +1140,8 @@ function putScriptExterne() {
 function erreurIT( chaine , it ) {
 	if(it=='bricol')
 		window.alert(
-			"Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"+chaine
+			"Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"
+			+chaine
 			);
 	MZ_removeValue(numTroll+'.INFOSIT');
 	}
@@ -1149,7 +1149,7 @@ function erreurIT( chaine , it ) {
 /* Le script de Ratibus renvoie :
  + infosTrolls = new Array();
  + infosTrolls[numdutroll] =
- 	new Array(PV,PVbase,date màj : "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
+ new Array(PV,PVbase,date màj: "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
  + etc ...
  + putInfosTrolls();
  */
@@ -1242,12 +1242,13 @@ function initPopup() {
 	popup = document.createElement('div');
 	popup.id = 'popup';
 	popup.className = 'mh_textbox';
-	popup.style = 'position: absolute;'
-				+'border: 1px solid #000000;'
-				+'visibility: hidden;'
-				+'display: inline;'
-				+'z-index: 3;'
-				+'max-width: 400px;';
+	popup.style =
+		'position: absolute;'
+		+'border: 1px solid #000000;'
+		+'visibility: hidden;'
+		+'display: inline;'
+		+'z-index: 3;'
+		+'max-width: 400px;';
 	document.body.appendChild(popup);
 	}
 
@@ -1706,7 +1707,7 @@ function savePosition() {
 	}
 
 
-/*                              Partie principale                               */
+/*                             Partie principale                              */
 
 try
 {
@@ -1734,7 +1735,8 @@ savePosition();
 	var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
 	var noMythiques = saveCheckBox(checkBoxMythiques, "NOMYTH");
 	var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-	var noTresorsEngages = saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
+	var noTresorsEngages =
+		saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
 	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
 	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
 	filtreMonstres();

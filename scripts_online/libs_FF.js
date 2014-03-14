@@ -37,6 +37,7 @@
  */
 
 var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
+var MZimg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 var numTroll = MZ_getValue('NUM_TROLL');
@@ -630,7 +631,8 @@ var nival = {
 	'Zombie':2
 	}
 
-var tabEM = { //Monstre: [Compo exact, Sort, Position, Localisation]
+var tabEM = {
+	//Monstre: [Compo exact, Sort, Position, Localisation]
 	// AA
 	'Basilisk':["Œil d'un ","Analyse Anatomique",3,"Tête"],
 	// AE
@@ -760,8 +762,7 @@ function addInfoMM(node,mob,niv,qualite,effetQ) {
 	
 function addInfoEM(node,mob,compo,qualite,localisation) {
 	if(!tabEM[mob]) return;
-	var title = 'Composant variable';
-	var texte = 'Variable'
+	var title = 'Composant variable', texte = 'Variable';
 	var bold = false;
 	if(tabEM[mob].length>1) {
 		var pc = 5*(tabEM[mob][2]-numQualite[qualite]);
@@ -777,18 +778,14 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 		texte = aff(pc)+'%';
 		title = texte+" pour l'écriture de "+tabEM[mob][1];
 		}
-	var urlImg =
-	'http://mountyzilla.tilk.info/scripts_0.9/images/Competences/ecritureMagique.png';
-	var span = document.createElement('span');
-	span.appendChild(createAltImage(urlImg,'EM'));
-	appendText(span,' ['+texte+']',bold);
-	span.title = title;
-	appendText(node,' ');
+	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
+		+'Competences/ecritureMagique.png';
+	var span = createImageSpan(urlImg,'EM:',title,' ['+texte+']',bold);
 	node.appendChild(span);
 	}
 
 function insererInfosEM(tbody) {
-	// lancé par equip, equipgowap [*saccompo* > OBSOLETE]
+	// lancé par equip, equipgowap
 	var trCompos = document.evaluate(
 		"./tr[not(starts-with(td[2]/img/@alt,'Pas'))]",
 		tbody,null,7,null);
@@ -841,17 +838,19 @@ function titreCompoEM(mob,compo,localisation,qualite) {
 	return '';
 	}
 
-//DEBUG - rétrocompatibilité
-function compoEM(mob) { // appelé dans libs, vue
+// DEBUG - rétrocompatibilité
+function compoEM(mob) {
+	// appelé dans libs, vue
 	return compoMobEM(mob);
 	}
-function composantEM(mob,compo,localisation,qualite) { // appelé dans libs, tancompo
+function composantEM(mob,compo,localisation,qualite) {
+	// appelé dans libs, tancompo
 	return titreCompoEM(mob,compo,localisation,qualite);
 	}
 //
 
 
-/*-[functions]------------------------ Stockage des Talents -------------------------------------*/
+/*-[functions]-------------- Stockage des Talents ----------------------------*/
 
 arrayTalents = {
 	/* Compétences */
@@ -982,7 +981,7 @@ function isProfilActif() { // what for ?
 	}
 
 
-/*-[functions]------------------------- Gestions des CDMs ---------------------------------------*/
+/*-[functions]---------------- Gestions des CDMs -----------------------------*/
 
 function getPVsRestants(pv,bless,vue) {
 	bless = Number(bless.match(/\d+/));
@@ -1000,7 +999,8 @@ function getPVsRestants(pv,bless,vue) {
 		var pvb = Math.ceil( pvminmax[0]*(95-bless) / 100 );
 		var pvh = Math.floor( pvminmax[1]*(105-bless) / 100 );
 		}
-	return vue ? ' ('+pvb+'-'+pvh+')' : ['Points de Vie restants : ','Entre '+pvb+' et '+pvh];
+	return vue ? ' ('+pvb+'-'+pvh+')' :
+		['Points de Vie restants : ','Entre '+pvb+' et '+pvh];
 	}
 
 function insertButtonCdm(nextName,onClick,texte) {
@@ -1020,9 +1020,10 @@ function insertButtonCdm(nextName,onClick,texte) {
 	return button;
 	}
 
-var listeTitres = ['Niveau','Famille','Points de Vie','Blessure','Attaque','Esquive','Dégâts',
-			'Régénération','Armure','Vue','Capacité spéciale','Résistance Magique','Autres'];
-		
+var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
+	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
+	'Capacité spéciale','Résistance Magique','Autres'];
+
 function createCDMTable(id,nom,donneesMonstre) {
 try {
 	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -1036,13 +1037,13 @@ try {
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,
-						'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
-						true);
+		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
+		true);
 	td.colSpan = 2;
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
-
+	
 	for(var i=0 ; i<listeTitres.length-3 ; i++) {
 		//window.alert(listeTitres[i]);
 		createCase(listeTitres[i],tbody,80);
@@ -1052,7 +1053,7 @@ try {
 	var infosCompo='';
 	if(TypeMonstre!='')
 	   infosCompo = compoEM(TypeMonstre);
-
+	
 	var nodes = tbody.childNodes;
 	nodes[0].childNodes[1].innerHTML = bbcode(donneesMonstre[0]) + analysePX(bbcode(donneesMonstre[0]));
 	nodes[1].childNodes[1].firstChild.nodeValue = bbcode(donneesMonstre[1]);
@@ -1166,9 +1167,7 @@ try {
 }
 
 
-/*********************************************************************************
-*                           Gestion des enchantements                            *
-*********************************************************************************/
+/*-[functions]------------ Gestion des enchantements -------------------------*/
 
 var listeMonstreEnchantement = null,
 	listeEquipementEnchantement = null,
@@ -1352,12 +1351,10 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 	}
 }
 
+/*-[functions]---------------- Analyse Tactique ------------------------------*/
 
 
-/***********************************************
-Les % de toucher
-***********************************************/
-
+// Les % de toucher
 var c = new Array();
 
 // coefficients binomiaux
@@ -1802,7 +1799,7 @@ function analyseTactique(donneesMonstre,nom) {
 	}
 
 
-/*-[functions]--------------------- Gestion des tags de trõlls ----------------------------------*/
+/*-[functions]----------- Gestion des tags de trõlls -------------------------*/
 
 var tagPopup = null;
 var nbTagFile = 0, nbTagFileAnalyzed = 0;
@@ -1814,12 +1811,13 @@ function initTagPopup() {
 	tagPopup = document.createElement('div');
 	tagPopup.id = 'tagPopup';
 	tagPopup.classNAme = 'mh_textbox';
-	tagPopup.style = 'position:absolute;'
-				+'border:1px solid #000000;'
-				+'visibility:hidden;'
-				+'display:inline;'
-				+'z-index:3;'
-				+'max-width:400px;';
+	tagPopup.style =
+		'position:absolute;'
+		+'border:1px solid #000000;'
+		+'visibility:hidden;'
+		+'display:inline;'
+		+'z-index:3;'
+		+'max-width:400px;';
 	document.body.appendChild(tagPopup);
 	}
 
@@ -1837,11 +1835,11 @@ function hideTagPopup() {
 
 function performTagComputation() { // uniquement lancé par libs
 	var nbGuildes = document.evaluate("//a[contains(@href,'javascript:EAV') "
-						+"or contains (@href,'javascript:EnterAllianceView')]",
-						document,null,7,null).snapshotLength;
+		+"or contains (@href,'javascript:EnterAllianceView')]",
+		document, null, 7, null).snapshotLength;
 	var nbTrolls = document.evaluate("//a[contains(@href,'javascript:EPV') "
-						+"or contains(@href,'javascript:EnterPJView')]",
-						document,null,7,null).snapshotLength;
+		+"or contains(@href,'javascript:EnterPJView')]",
+		document, null, 7, null).snapshotLength;
 	if(nbTrolls>0 || nbGuildes>0) {
 		initTagPopup();
 		getTag(analyseTags,showTags);
@@ -1850,7 +1848,8 @@ function performTagComputation() { // uniquement lancé par libs
 
 function getTag(fonctionAnalyse,fonctionAffiche) {
 try {
-	if(!MZ_getValue(numTroll+'.TAGSURL') || MZ_getValue(numTroll+'.TAGSURL')=='') return;
+	if(!MZ_getValue(numTroll+'.TAGSURL') || MZ_getValue(numTroll+'.TAGSURL')=='')
+		return;
 	var tagsurl = MZ_getValue(numTroll+'.TAGSURL');
 	var listeTagsURL = tagsurl.split('$');
 	nbTagFile = listeTagsURL.length;
@@ -1892,7 +1891,7 @@ try {
 function createTagImage(url,text) {
 	var img = document.createElement('img');
 	img.src = url;
-	img.align = 'ABSMIDDLE'; // WARNING - Obsolete
+	img.align = 'absmiddle'; // WARNING - Obsolete
 	img.texteinfo = text;
 	img.onmouseover = showTagPopup;
 	img.onmouseout = hideTagPopup;
@@ -1903,7 +1902,10 @@ function showTags() { // uniquement dans libs
 try {
 	if(infoTagGuildes.length>0)
 		{ // nom mais quelle brutasse !!!
-			var nodes = document.evaluate("//a[contains(@href,'javascript:EAV') or contains(@href,'javascript:EnterAllianceView')]",document,null,7,null);
+			var nodes = document.evaluate(
+				"//a[contains(@href,'javascript:EAV') "
+				+"or contains(@href,'javascript:EnterAllianceView')]",
+				document, null, 7, null);
 			for(var i=0;i<nodes.snapshotLength;i++)
 			{
 				var node = nodes.snapshotItem(i);
