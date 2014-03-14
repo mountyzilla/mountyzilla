@@ -44,6 +44,7 @@
 
 /* structure générale données */
 var mainTab, mainTR, pvTR;
+var tr_comps, tr_sorts;
 
 /* Anatrolliseur */
 var urlAnatrolliseur;
@@ -256,8 +257,8 @@ function initAll() {
 	race = trim(strRace.substring(strRace.indexOf(':')+2));
 	
 	/* PuM/PréM */
-	nodepum = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
-								mainTR.snapshotItem(6),null,7,null);
+	var nodepum = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
+		mainTR.snapshotItem(6),null,7,null);
 	if(nodepum.snapshotLength>0) {
 		bmDAttM = getNumbers( nodepum.snapshotItem(0).nodeValue )[0];
 		bmDDegM = getNumbers( nodepum.snapshotItem(1).nodeValue )[0];
@@ -845,13 +846,15 @@ function traitementTalents() {
 		var talTabs = document.evaluate("./tbody/tr/td/table",
 			mainTab[1],null,7,null);
 		var listeComp = talTabs.snapshotItem(0);
+		tr_comp = listeComp.getElementsByTagName('tr');
 		var listeSort = talTabs.snapshotItem(1);
+		tr_sort = listeSort.getElementsByTagName('tr');
 		var titres = document.evaluate("./tbody/tr/td/b/text()",
 			mainTab[1],null,7,null);
 		}
 	catch(e) {return;}
-	var totalComp = injecteInfosBulles(listeComp,'competences');
-	var totalSort = injecteInfosBulles(listeSort,'sortileges');
+	var totalComp = injecteInfosBulles(tr_comp,'competences');
+	var totalSort = injecteInfosBulles(tr_sort,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
 	listeComp.parentNode.onclick = toggleFreeze;
@@ -859,15 +862,14 @@ function traitementTalents() {
 	}
 
 function injecteInfosBulles(liste,fonction) {
-	var listeTR = liste.getElementsByTagName('tr');
 	var totalpc = 0;
-	for(var i=0 ; i<listeTR.length ; i++) {
-		var node = listeTR[i].childNodes[3].firstChild;
+	for(var i=0 ; i<liste.length ; i++) {
+		var node = liste[i].childNodes[3].firstChild;
 		var nom = epure(trim(node.firstChild.nodeValue));
-		var nbrs = getNumbers(listeTR[i].childNodes[5].firstChild
+		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
 			.firstChild.nodeValue);
 		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
-			var lstNoms = trim(epure(listeTR[i].childNodes[3].lastChild.nodeValue))
+			var lstNoms = trim(epure(liste[i].childNodes[3].lastChild.nodeValue))
 				.slice(1,-1).split(', ');
 			for(var j=0 ; j<lstNoms.length ; j++)
 				setTalent(lstNoms[j],nbrs[1],nbrs[0]);
@@ -878,8 +880,8 @@ function injecteInfosBulles(liste,fonction) {
 		setInfos(node,nom,fonction,nbrs[0]);
 		setTalent(nom,nbrs[1],nbrs[0]);
 		totalpc += nbrs[1];
-		for(var j=3 ; j<listeTR[i].childNodes[5].childNodes.length ; j+=2) {
-			nbrs = getNumbers(listeTR[i].childNodes[5].childNodes[j].nodeValue);
+		for(var j=3 ; j<liste[i].childNodes[5].childNodes.length ; j+=2) {
+			nbrs = getNumbers(liste[i].childNodes[5].childNodes[j].nodeValue);
 			setTalent(nom,nbrs[1],nbrs[0]);
 			totalpc += nbrs[1];
 			}
