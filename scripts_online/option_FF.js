@@ -15,52 +15,397 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* v0.1.1 by Dab - 2013-05-08 */
 
-function updateIT(node,value)
-{
-	var child = node.childNodes[5];
-	if (value == "none") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdVide);
-		if (node.childNodes.length > 11)
-			node.removeChild(node.childNodes[6]);
-	} else if (value == "ssgg") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdSSGG);
-		if (node.childNodes.length > 11)
-			node.removeChild(node.childNodes[6]);
-	} else if (value == "bricol") {
-		child.removeChild(
-		child.childNodes[1]);
-		child.appendChild(tdBricol);
-		if (node.childNodes.length == 11)
-			insertBefore(node.childNodes[6], trBricol);
+
+var tagsData = [];
+tagsData['Types de Trolls (Ancien)'] = 'http://mountypedia.free.fr/mz/typeTrolls.csv';
+tagsData['Types de Trolls (Nouveau)'] = 'http://mountypedia.free.fr/mz/typeTrolls_new.csv';
+tagsData['Pogo 2009'] = 'http://mountyzilla.tilk.info/resources/pogo2009.csv';
+
+
+
+/*                           Fonctions de sauvegarde                            */
+
+function saveITData() {
+	var IT = document.getElementById('itSelect').value;
+	if (IT=='bricol') {
+		var sys = document.getElementById('urlbricol').value;
+		var log = document.getElementById('loginbricol').value;
+		var pas = document.getElementById('passbricol').value;
+		if (sys && log && pas)
+				MZ_setValue(numTroll+'.INFOSIT', 'bricol$'+sys+'$'+log+'$'+hex_md5(pas) );
+		}
+	else
+		{ MZ_removeValue(numTroll+'.INFOSIT'); }
 	}
-}
 
-function modifyIT() {
-	var node = this.parentNode.parentNode.parentNode;
-	updateIT(node,this.value);
-}
-
-function updateTags(node,value)
-{
-	var child = node.childNodes[node.childNodes.length-3];
-	if (value == "none") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdVide2);
-	} else if (value == "default") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdVide2);
-	} else if (value == "defaultv2") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdVide2);
-	} else if (value == "others") {
-		child.removeChild(child.childNodes[1]);
-		child.appendChild(tdTagsURL);
+function saveTagsData() {
+	var nom = document.getElementById('tagsSelect').value;
+	
+	switch(nom) {
+		case 'none':
+			MZ_removeValue(numTroll+'.TAGSURL');
+			break;
+		case 'other':
+			var url = document.getElementById('tagsInput').value
+			if (url)
+				{ MZ_setValue(numTroll+'.TAGSURL', '#'+url ); } // # si url perso
+			else 
+				{ MZ_removeValue(numTroll+'.TAGSURL'); }
+			break;
+		default:
+			MZ_setValue(numTroll+'.TAGSURL','$'+tagsData[nom]); // $ si url auto
+		}
 	}
-}
 
+function refreshLinks() {
+	document.getElementById('linksBody').innerHTML = '';
+	var i=1, anotherURL = MZ_getValue('URL1');
+	if (!anotherURL) {addLinkField();}
+	while( anotherURL && i<999 ) {
+		addLinkField(i, anotherURL, MZ_getValue('URL'+i+'.nom'), MZ_getValue('URL'+i+'.ico') );
+		i++;
+		anotherURL = MZ_getValue('URL'+i);
+		}
+	}
+
+function saveLinks() {
+	var numLinks = document.getElementById('linksBody').childNodes.length;
+	
+	var data=[ [] ];
+	/* Récupération et tri des liens */
+	for(var i=1 ; i<=numLinks ; i++) {
+		MZ_removeValue('URL'+i);
+		MZ_removeValue('URL'+i+'.nom');
+		MZ_removeValue('URL'+i+'.ico');
+		var url = document.getElementById('url'+i).value;
+		var nom = document.getElementById('nom'+i).value;
+		var ico = document.getElementById('ico'+i).value;
+		if (url && (nom || ico) ) {
+			data.push( [url, nom ? nom : '', ico ? ico : ''] );
+			}
+		}
+	/* Sauvegarde */
+	for(var i=1 ; i<data.length ; i++) {
+		MZ_setValue('URL'+i, data[i][0]);
+		MZ_setValue('URL'+i+'.nom', data[i][1]);
+		MZ_setValue('URL'+i+'.ico', data[i][2]);
+		}
+	}
+
+function saveAll() {
+	MZ_setValue('VUEEXT', document.getElementById('vueext').value);
+	
+	var maxcdm = parseInt(document.getElementById('maxcdm').value);
+	if (maxcdm)
+		{ MZ_setValue(numTroll+'.MAXCDM', maxcdm ); }
+	else {
+		MZ_removeValue(numTroll+'.MAXCDM');
+		document.getElementById('maxcdm').value = '';
+		}
+	
+	// Pourquoi Tilk stockait-il tout en str ?
+	MZ_setValue(numTroll+'.USECSS', document.getElementById('usecss').checked ? 'true' : 'false');
+	MZ_setValue(numTroll+'.INFOCARAC', document.getElementById('infocarac').checked ? 'true' : 'false');
+	//MZ_setValue(numTroll+'.SEND_IDT', document.getElementById("send_idt").checked ? "oui" : "non");
+	MZ_setValue('NOINFOEM', document.getElementById('noInfoEM').checked ? 'true' : 'false');
+	
+	if (document.getElementById('usepoiss').checked && document.getElementById('passpoiss').value)
+		{ MZ_setValue(numTroll+'.POISS', hex_md5(document.getElementById('passpoiss').value)); }
+	else if (!document.getElementById('usepoiss').checked)
+		{ MZ_removeValue(numTroll+'.POISS'); }
+	
+	saveLinks();
+	refreshLinks();
+	saveTagsData();
+	saveITData();
+	
+	var bouton = document.getElementById('saveAll');
+	bouton.value = (bouton.value=='Sauvegardé !') ? 'Re-sauvegardé !' : 'Sauvegardé !';
+	}
+
+
+/*                                EventListeners                                */
+
+function onChangeIT() {
+	var IT = document.getElementById('itSelect').value;
+	
+	var itBody = document.getElementById('itBody');
+	itBody.innerHTML = '';
+	
+	if (IT=='bricol') {
+		var tr = appendTr(itBody, 'mh_tdpage')
+		var td = appendTd(tr);
+		var str = MZ_getValue(numTroll+'.INFOSIT');
+		if (str) {
+			var splt = str.split('$');
+			var system = splt[1];
+			var login = splt[2];
+			}
+		appendText(td, 'Nom du système : ');
+		appendTextbox(td, 'text', 'urlbricol', '20', '50', system);
+		td = appendTd(tr);
+		appendText(td, 'Login du compte : ');
+		appendTextbox(td, 'text', 'loginbricol', '20', '50', login);
+		td = appendTd(tr);
+		appendText(td, 'Mot de passe du compte : ');
+		appendTextbox(td, 'password', 'passbricol', '20', '50');
+		}
+	}
+
+function onChangeTags() {
+	var value = document.getElementById('tagsSelect').value;
+	var tagsBody = document.getElementById('tagsBody');
+	
+	if (value=='other') {
+		var td = appendTdText(appendTr(tagsBody),'Url du fichier de tags : ');
+		var mem = MZ_getValue(numTroll+'.TAGSURL'), url = '';
+		if (mem && mem.substr(0,1)=='#')
+			{ url = mem.substr(1); }
+		appendTextbox(td, 'text', 'tagsInput', '50', '150', url);
+		}
+	else
+		{ tagsBody.innerHTML = ''; }
+	}
+
+function addLinkField(i,url,nom,ico) {
+	var linksBody = document.getElementById('linksBody');
+	if (!(i>0)) {
+		i = linksBody.childNodes.length+1;
+		}
+	var tr = appendTr(linksBody);
+	var td = appendTdCenter(tr);
+	appendText(td, 'Lien '+i+' : ');
+	appendTextbox(td, 'text', 'url'+i, '40', '150', url);
+	td = appendTdCenter(tr);
+	appendText(td, 'Nom : ');
+	appendTextbox(td, 'text', 'nom'+i, '20', '150', nom);
+	td = appendTdCenter(tr);
+	appendText(td, 'Icône : ');
+	appendTextbox(td, 'text', 'ico'+i, '40', '150', ico);
+	}
+
+function removeLinkField() {
+	var linksBody = document.getElementById('linksBody');
+	var i = linksBody.childNodes.length;
+	MZ_removeValue('URL'+i);
+	MZ_removeValue('URL'+i+'.nom');
+	MZ_removeValue('URL'+i+'.ico');
+	linksBody.removeChild(linksBody.lastChild);
+	if (linksBody.childNodes.length==0)
+		{ addLinkField(); }
+	}
+
+
+/*                            Fonctions d'insertion                             */
+
+
+function insertTitle(next, txt) {
+	var div = document.createElement('div');
+	div.setAttribute('class','Titre2');
+	appendText(div,txt);
+	insertBefore(next,div);
+	}
+
+function insertMainTable(node) {
+	var table = document.createElement('table');
+	table.setAttribute('width', '98%');
+	table.setAttribute('border', '0');
+	table.setAttribute('align', 'center');
+	table.setAttribute('cellpadding', '2');
+	table.setAttribute('cellspacing', '1');
+	table.setAttribute('class', 'mh_tdborder');
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	insertBefore(node,table);
+	return tbody;
+	}
+
+function appendSubTable(node) {
+	var table = document.createElement('table');
+	table.setAttribute('width', '100%');
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	node.appendChild(table);
+	return tbody;
+	}
+
+function insertOptionTable(insertPt) {
+	var mainBody = insertMainTable(insertPt);
+	
+	/* Liens dans Vue */
+	var tr = appendTr(mainBody, 'mh_tdtitre');
+	var td = appendTdText(tr, 'Hyperliens ajoutés dans la Vue :',true);
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	var tbody = appendSubTable(td);
+	tbody.setAttribute('id','linksBody');
+	refreshLinks();
+	
+	td = appendTdCenter(appendTr(mainBody, 'mh_tdpage'));
+	appendButton(td, 'Ajouter', addLinkField );
+	appendButton(td, 'Supprimer', removeLinkField );
+	
+	/* Options de la Vue : vue externe, nb de CdM, etc */
+	tr = appendTr(mainBody, 'mh_tdtitre');
+	appendTdText(tr, 'Options de la Vue :',true);
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	tbody = appendSubTable(td);
+	
+	tr = appendTr(tbody);
+	td = appendTdText(tr, 'Vue externe : ');
+	var select = document.createElement('select');
+	select.setAttribute('id', 'vueext');
+	td.appendChild(select);
+	var listeVues2D = ['Bricol\' Vue','Vue du CCM','Vue Gloumfs 2D','Vue Gloumfs 3D','Grouky Vue!'];
+	for (var i=0 ; i<listeVues2D.length ; i++)
+		{ appendOption(select, listeVues2D[i], listeVues2D[i]); }
+	if (MZ_getValue('VUEEXT'))
+		{ select.value = MZ_getValue('VUEEXT'); }
+	
+	td = appendTd(tr);
+	appendCheckBox(td, 'noInfoEM', MZ_getValue('NOINFOEM')=='true');
+	appendText(td, ' Masquer les informations à propos de l\'écriture magique');
+	
+	tr = appendTr(tbody);
+	td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
+	appendTextbox(td, 'text', 'maxcdm', '5', '10', MZ_getValue(numTroll+'.MAXCDM') );
+	
+	td = appendTd(tr);
+	appendCheckBox(td, 'usecss', MZ_getValue(numTroll+'.USECSS')=='true');
+	appendText(td, ' Utiliser la CSS pour les couleurs de la diplomatie');
+	
+	/* Interface Tactique */
+	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
+	appendText(td, 'Interface Tactique : ',true);
+	select = document.createElement('select');
+	select.setAttribute('id', 'itSelect');
+	//select.setAttribute('name', 'tactic'); ?
+	appendOption(select, 'none', 'Aucune');
+	appendOption(select, 'bricol', 'Système Tactique des Bricol\'Trolls'); // seule supportée !
+	td.appendChild(select);
+	
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	tbody = appendSubTable(td);
+	tbody.setAttribute('id','itBody');
+	select.addEventListener('change', onChangeIT, true);
+	var str = MZ_getValue(numTroll+'.INFOSIT');
+	if (str) {
+		select.value = str.substring(0, str.indexOf('$'));
+		onChangeIT();
+		}
+	
+	/* Tags de Trõlls */
+	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
+	appendText(td, 'Tags de trõlls : ',true);
+	select = document.createElement('select');
+	select.setAttribute('id', 'tagsSelect');
+	//select.setAttribute('name', 'tagsSelect'); ?
+	appendOption(select, 'none', 'Aucun');
+	str = MZ_getValue(numTroll+'.TAGSURL');
+	str = str ? str.substr(1) : '';
+	for (var tags in tagsData) {
+		appendOption(select, tags, tags);
+		if (str && str==tagsData[tags])
+			{ select.value = tags; }
+		}
+	appendOption(select, 'other', 'Autre');
+	td.appendChild(select);
+	
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	td.setAttribute('id','tagsBody');
+	select.addEventListener('change', onChangeTags, true);
+	str = MZ_getValue(numTroll+'.TAGSURL');
+	if (str && str.substr(0,1)=='#') {
+		select.value = 'other';
+		onChangeTags();
+		}
+	
+	/* Poissotron */
+	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
+	appendText(td, 'Poissotron : ',true);
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	tbody = appendSubTable(td);
+
+	tr = appendTr(tbody);
+	td = appendTd(tr);
+	appendCheckBox(td, 'usepoiss', MZ_getValue(numTroll+'.POISS') );
+	appendText(td, ' Envoyer vos jets de dés au ');
+	var link = document.createElement('a');
+	link.setAttribute('href', 'http://www.fur4x-hebergement.net/minitilk');
+	link.setAttribute('target', '_blank');
+	appendText(link, 'Poissotron');
+	td.appendChild(link);
+	
+	td = appendTdText(tr, 'Mot de passe pour le Poissotron : ');
+	appendTextbox(td, 'password', 'passpoiss', '20', '50');
+	
+	/* Options diverses */
+	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
+	appendText(td, 'Options diverses :',true);
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	appendCheckBox(td, 'infocarac', MZ_getValue(numTroll+'.INFOCARAC')!='false');
+	appendText(td, ' Afficher les caractéristiques des équipements des autres Trõlls');
+	
+	/*td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	appendCheckBox(td, 'send_idt', MZ_getValue(numTroll+'.SEND_IDT') != 'non')
+	appendText(td, ' Envoyer les objets identifiés au système de stats');*/
+	
+	/* Bouton SaveAll */
+	td = appendTdCenter(appendTr(mainBody, 'mh_tdtitre'));
+	input = appendButton(td, 'Sauvegarder', saveAll);
+	input.setAttribute('id', 'saveAll');
+	}
+
+function insertCreditsTable(insertPt) {
+	var tbody = insertMainTable(insertPt);
+	
+	var td = appendTdText(appendTr(tbody, 'mh_tdtitre'),
+		'Depuis son origine, nombreux sont ceux qui ont contribué à faire de MountyZilla ce qu\'il est aujourd\'hui.'
+		+' Merci à eux !');
+
+	var ul = document.createElement('ul');
+	td.appendChild(ul);
+	appendLI(ul,'Fine fille (6465) pour les popup javascript');
+	appendLI(ul,'Reivax (4234) pour les infos bulles');
+	appendLI(ul,'Noc (2770) pour les moyennes des caracs');
+	appendLI(ul,'Endymion (12820) pour les infos sur les comp/sorts');
+	appendLI(ul,'Ratibus (15916) pour l\'envoi de CdM');
+	appendLI(ul,'TetDure (41931) pour les PVs restants dans les CdM');
+	appendLI(ul,'Les Teubreux pour leur bestiaire !');
+	appendLI(ul,'Les développeurs de vue qui font des efforts pour s\'intégrer à Mountyzilla');
+	appendLI(ul,'Gros Kéké (233) qui permet de tester le script aux limites du raisonnable avec sa vue de barbare');
+	appendLI(ul,'TuttiRikikiMaoussKosTroll (61214) pour le script sur les caracs de l\'équipement');
+	appendLI(ul,'Ashitaka (9485) pour le gros nettoyage de l\'extension, des scripts, et beaucoup de choses à venir');
+	appendLI(ul,'Toute ceux de l\'ancienne génération oubliés par Tilk');
+	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... et tous les participants au projet ZoryaZilla');
+	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
+	appendLI(ul,'Tous les testeurs de la nouvelle génération oubliés par Dabihul');
+	}
+
+
+/*                              Partie principale                               */
+
+start_script(712);
+
+// Pour cryptage des mdp IT & Poissotron
+appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
+
+var insertPoint = document.getElementById('footer2');
+insertBefore(insertPoint, document.createElement('p'));
+insertTitle(insertPoint, 'Mountyzilla : Options');
+insertOptionTable(insertPoint);
+/* insertion enchantements ici
+if (...)
+insertEnchantementTable();
+*/
+insertBefore(insertPoint, document.createElement('p'));
+insertTitle(insertPoint, 'Mountyzilla : Crédits');
+insertCreditsTable(insertPoint);
+insertBefore(insertPoint, document.createElement('p'));
+
+
+/*                                  Obsolètes                                   */
 function deleteEnchantement()
 {
 	try
@@ -108,268 +453,6 @@ function deleteEnchantement()
 		alert(e);
 	}
 }
-
-function modifyTags() {
-	var node = this.parentNode.parentNode.parentNode;
-	updateTags(node,this.value);
-}
-
-function apply() {
-try
-{
-	var form = this.form;
-	if (document.getElementById("url1").value != "" && document.getElementById("nom1").value != "") {
-		MZ_setValue("URL1", document.getElementById("url1").value);
-		MZ_setValue("NOM1", document.getElementById("nom1").value);
-	} else {
-		MZ_removeValue("URL1");
-		MZ_removeValue("NOM1");
-	}
-	if (document.getElementById("url2").value != "" && document.getElementById("nom2").value != "") {
-		MZ_setValue("URL2", document.getElementById("url2").value);
-		MZ_setValue("NOM2", document.getElementById("nom2").value);
-	} else {
-		MZ_removeValue("URL2");
-		MZ_removeValue("NOM2");
-	}
-	if (document.getElementById("url3").value != "" && document.getElementById("nom3").value != "") {
-		MZ_setValue("URL3", document.getElementById("url3").value);
-		MZ_setValue("NOM3", document.getElementById("nom3").value);
-	} else {
-		MZ_removeValue("URL3");
-		MZ_removeValue("NOM3");
-	}
-	if (document.getElementById("vueext").value != "")
-		MZ_setValue("VUEEXT", document.getElementById("vueext").value);
-	else
-		MZ_removeValue("VUEEXT");
-	if (document.getElementById("max_level").value != "")
-		MZ_setValue("MAX_LEVEL", document.getElementById("max_level").value);
-	else
-		MZ_removeValue("MAX_LEVEL");
-	MZ_setValue("USECSS", document.getElementById("usecss").checked ? "true" : "false");
-	MZ_setValue("FORMAT_TIME", document.getElementById("format_time").checked ? "oui" : "non");
-	MZ_setValue("INFOCARAC", document.getElementById("infocarac").checked ? "true" : "false");
-	MZ_setValue("SEND_IDT", document.getElementById("send_idt").checked ? "oui" : "non");
-	MZ_setValue("NOINFOEM", document.getElementById("noInfoEM").checked ? "true" : "false");
-
-	if (document.getElementById("usepoiss").checked && document.getElementById("passpoiss").value != "") {
-		MZ_removeValue("POISS_" + numTroll);
-		MZ_setValue("POISS_" + numTroll, hex_md5(document.getElementById("passpoiss").value));
-	} else if(!document.getElementById("usepoiss").checked)
-		MZ_removeValue("POISS_" + numTroll);
-
-	if (document.getElementById("tactic").value != "none") {
-		if (document.getElementById("tactic").value == "ssgg" && document.getElementById("mdpssgg").value != "") {
-			MZ_removeValue("IT_" + numTroll);
-			MZ_setValue("IT_" + numTroll, "ssgg$" + hex_md5(document.getElementById("mdpssgg").value));
-		} else if (document.getElementById("tactic").value == "bricol" && document.getElementById("urlbricol").value != "" && document.getElementById("loginbricol").value != ""
-				   && document.getElementById("passbricol").value != "") {
-			MZ_setValue("IT_" + numTroll, "bricol$" + document.getElementById("urlbricol").value + "$" + document.getElementById("loginbricol").value
-					+ "$" + hex_md5(document.getElementById("passbricol").value));
-		}
-	} else
-		MZ_removeValue("IT_" + numTroll);
-	
-	var previousInfo = MZ_getValue("TAGSURL");
-	MZ_removeValue("TAGSURL");
-	if (document.getElementById("tags").value == "default")
-	{
-		MZ_setValue("TAGSURL","http://mountypedia.free.fr/mz/typeTrolls.csv");
-	}
-	else if (document.getElementById("tags").value == "defaultv2")
-	{
-		MZ_setValue("TAGSURL","http://mountypedia.free.fr/mz/typeTrolls_new.csv");
-	}
-	else if (document.getElementById("tags").value == "pogo2009")
-	{
-		MZ_setValue("TAGSURL","http://mountyzilla.tilk.info/resources/pogo2009.csv");
-	}
-	else if (document.getElementById("tags").value == "others")
-	{
-		if(previousInfo != document.getElementById("tagsurl").value.replace(/;http/g,"$http"))
-		{
-			if(confirm('Utiliser des fichiers de tags peut-être potentiellement dangereux.\nN\'utilisez que ceux provenant de personnes dont vous avez confiance.\nEtes-vous sûr de vouloir utiliser ceux là ?'))
-				MZ_setValue("TAGSURL",document.getElementById("tagsurl").value.replace(/;http/g,"$http"));
-			else
-				MZ_setValue("TAGSURL",previousInfo);
-		}
-		else
-			MZ_setValue("TAGSURL",previousInfo);
-	}
-		
-	document.getElementById("Bouton").setAttribute('Value', 'Données sauvegardées');
-} catch(error)
-{
-	alert(error);
-}
-}
-
-function insertTitle(next, txt) {
-	var div = document.createElement('DIV');
-	div.setAttribute('class', 'Titre2');
-	appendText(div, txt);
-	insertBefore(next, div);
-}
-
-start_script(712);
-
-appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
-
-// OPTIONS
-
-var aList = document.getElementsByTagName('A');
-var insertPoint = aList[aList.length - 1].parentNode.parentNode.parentNode.parentNode;
-
-insertTitle(insertPoint, 'Options du script Mountyzilla');
-
-var form = document.createElement('form');
-insertBefore(insertPoint, form);
-var table = document.createElement('table');
-table.setAttribute('width', '98%');
-table.setAttribute('border', '0');
-table.setAttribute('align', 'center');
-table.setAttribute('cellpadding', '2');
-table.setAttribute('cellspacing', '1');
-table.setAttribute('class', 'mh_tdborder');
-form.appendChild(table);
-
-var tbody = document.createElement('tbody');
-table.appendChild(tbody);
-
-var tr = appendTr(tbody, 'mh_tdtitre');
-appendText(appendTdCenter(tr), 'Lien 1 :');
-appendTextbox(appendTdCenter(tr), 'text', 'url1', '50', '150', MZ_getValue("URL1"));
-appendText(appendTdCenter(tr), 'Nom :');
-appendTextbox(appendTdCenter(tr), 'text', 'nom1', '50', '150', MZ_getValue("NOM1"));
-
-tr = appendTr(tbody, 'mh_tdtitre');
-appendText(appendTdCenter(tr), 'Lien 2 :');
-appendTextbox(appendTdCenter(tr), 'text', 'url2', '50', '150', MZ_getValue("URL2"));
-appendText(appendTdCenter(tr), 'Nom :');
-appendTextbox(appendTdCenter(tr), 'text', 'nom2', '50', '150', MZ_getValue("NOM2"));
-
-tr = appendTr(tbody, 'mh_tdtitre');
-appendText(appendTdCenter(tr), 'Lien 3 :');
-appendTextbox(appendTdCenter(tr), 'text', 'url3', '50', '150', MZ_getValue("URL3"));
-appendText(appendTdCenter(tr), 'Nom :');
-appendTextbox(appendTdCenter(tr), 'text', 'nom3', '50', '150', MZ_getValue("NOM3"));
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendText(td, "Vue externe : ");
-var select = document.createElement('SELECT');
-select.setAttribute('id', 'vueext');
-td.appendChild(select);
-appendOption(select, 'bricol', 'Bricol\' Vue');
-appendOption(select, 'ccm', 'Vue du CCM');
-appendOption(select, 'evo', 'Vue Evolution');
-appendOption(select, 'garush', 'Vue Garush');
-appendOption(select, 'gloumfs2d', 'Vue Gloumfs 2D');
-appendOption(select, 'gloumfs3d', 'Vue Gloumfs 3D');
-appendOption(select, 'grouky', 'Grouky Vue');
-appendOption(select, 'kilamo', 'Vue KiLaMo');
-appendOption(select, 'lxgt', 'Vue LXGT');
-appendOption(select, 'otan', 'Vue OTAN');
-appendOption(select, 'relaismago', 'Vue R&M');
-appendOption(select, 'xtrolls', 'Vue X Trolls');
-appendOption(select, 'noone', 'Aucune');
-if (MZ_getValue("VUEEXT") != "" && MZ_getValue("VUEEXT")!= null)
-	select.value = MZ_getValue("VUEEXT");
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'usecss', MZ_getValue("USECSS") == "true")
-appendText(td, " Utiliser la CSS pour les couleurs de la diplomatie");
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendText(td, "Nombre de niveaux de monstres à afficher : ");
-appendTextbox(td, 'text', 'max_level', '5', '10', (MZ_getValue("MAX_LEVEL") == "" || MZ_getValue("MAX_LEVEL") == null)? 5000 : MZ_getValue("MAX_LEVEL"));
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'format_time',  MZ_getValue("FORMAT_TIME") == null || MZ_getValue("FORMAT_TIME") == '' || MZ_getValue("FORMAT_TIME") == "oui")
-appendText(td, " Utiliser les dates Mountyhall");
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendText(td, "Interface Tactique : ");
-select = document.createElement('SELECT');
-select.addEventListener("change",modifyIT,true);
-select.setAttribute('id', 'tactic');
-select.setAttribute('name', 'tactic');
-td.appendChild(select);
-appendOption(select, 'none', 'Aucune');
-appendOption(select, 'ssgg', 'SSGG');
-appendOption(select, 'bricol', 'Système Tactique des Bricol\'Trolls');
-
-var tdSSGG = appendTdCenter(null, 2);
-appendText(tdSSGG, "Mot de passe pour le SSGG : ");
-appendTextbox(tdSSGG, 'password', 'mdpssgg', '20', '50');
-
-var trBricol = document.createElement('TR');
-trBricol.setAttribute('class', 'mh_tdtitre');
-var tdBricol = appendTdCenter(trBricol, 2);
-appendText(tdBricol, "Nom du système : ");
-appendTextbox(tdBricol, 'text', 'urlbricol', '20', '50');
-tdBricol = appendTdCenter(trBricol, 2);
-appendText(tdBricol, "Login du compte : ");
-appendTextbox(tdBricol, 'text', 'loginbricol', '20', '50');
-tdBricol = appendTdCenter(trBricol, 2);
-appendText(tdBricol, "Mot de passe du compte : ");
-appendTextbox(tdBricol, 'password', 'passbricol', '20', '50');
-
-var tdVide = appendTdCenter(tr, 2);
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'usepoiss', MZ_getValue("POISS_" + numTroll) != "" && MZ_getValue("POISS_" + numTroll) != null)
-appendText(td, " Envoyer vos jets de dé au ");
-var link = document.createElement('A');
-link.setAttribute('href', 'http://www.fur4x-hebergement.net/minitilk');
-link.setAttribute('target', '_blank');
-td.appendChild(link);
-appendText(link, "Poissotron");
-td = appendTdCenter(tr, 2);
-appendText(td, "Mot de passe pour le Poissotron : ");
-appendTextbox(td, 'password', 'passpoiss', '20', '50');
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'infocarac', MZ_getValue("INFOCARAC") != "false")
-appendText(td, " Afficher les caractéristiques des équipements des autres Trõlls");
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'send_idt', MZ_getValue("SEND_IDT") != "non")
-appendText(td, " Envoyer les objets identifiés au système de stats");
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendText(td, "Tags de Trolls : ");
-select = document.createElement('SELECT');
-select.addEventListener("change", modifyTags,true);
-select.setAttribute('id', 'tags');
-select.setAttribute('name', 'tags');
-td.appendChild(select);
-appendOption(select, 'none', 'Aucuns');
-appendOption(select, 'defaultv2', 'Types de Trolls (Nouveau)');
-appendOption(select, 'default', 'Types de Trolls (Ancien)');
-appendOption(select, 'pogo2009', 'Les équipes du pogo 2009');
-appendOption(select, 'others', 'Autres');
-
-var tdVide2 = appendTdCenter(tr, 2);
-
-var tdTagsURL = appendTdCenter(null, 2);
-appendText(tdTagsURL, "Adresses des fichiers de tags : ");
-appendTextbox(tdTagsURL, 'text', 'tagsurl', '50', '500');
-
-tr = appendTr(tbody, 'mh_tdtitre');
-td = appendTdCenter(tr, 2);
-appendCheckBox(td, 'noInfoEM', MZ_getValue("NOINFOEM") == "true")
-appendText(td, " Cacher toutes les informations à propos de l'écriture magique");
-td = appendTdCenter(tr, 2);
-
-td = appendTdCenter(appendTr(tbody, 'mh_tdtitre'), 4);
-input = appendButton(td, 'Sauvegarder', apply);
-input.setAttribute('id', 'Bouton');
-
-//Les enchantements
 
 if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
 {
@@ -450,78 +533,7 @@ if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchant
 	insertBefore(insertPoint, table);
 	insertBefore(insertPoint, document.createElement('p'));
 }
+/*                                Fin obsolètes                                 */
 
-
-// REMERCIEMENTS
-
-insertTitle(insertPoint, 'Crédits du script');
-
-table = document.createElement('table');
-table.setAttribute('width', '98%');
-table.setAttribute('border', '0');
-table.setAttribute('align', 'center');
-table.setAttribute('cellpadding', '2');
-table.setAttribute('cellspacing', '1');
-table.setAttribute('class', 'mh_tdborder');
-
-tbody = document.createElement('tbody');
-table.appendChild(tbody);
-
-td = appendTdText(appendTr(tbody, 'mh_tdtitre'), 'Beaucoup de personnes ont travaillés sur ce script :');
-
-var ul = document.createElement('UL');
-td.appendChild(ul);
-appendLI(ul, 'Fine fille (6465) pour les popup javascript');
-appendLI(ul, 'Reivax (4234) pour les infos bulles');
-appendLI(ul, 'Noc (2770) pour les moyennes des caracs');
-appendLI(ul, 'Endymion (12820) pour les infos sur les comp/sorts');
-appendLI(ul, 'Ratibus (15916) pour l\'envoi de CdM');
-appendLI(ul, 'TetDure (41931) pour les PVs restants dans les CdM');
-appendLI(ul, 'Les Teubreux pour leur bestiaire !');
-appendLI(ul, 'Les développeurs de vue qui font des efforts pour s\'intégrer à Mountyzilla');
-appendLI(ul, 'Gros Kéké (233) qui permet de tester le script aux limites du raisonnable avec sa vue de barbare');
-appendLI(ul, 'TuttiRikikiMaoussKosTroll (61214) pour le script sur les caracs de l\'équipement');
-appendLI(ul, 'Ashitaka (9485) pour le gros nettoyage de l\'extension, des scripts, et beaucoup de choses à venir');
-appendLI(ul, 'Tous ceux que j\'ai oubliés');
-insertBefore(insertPoint, table);
-
-
-insertBefore(insertPoint, document.createElement('p'));
-try
-{
-if (MZ_getValue("IT_" + numTroll) != "") {
-	var c = MZ_getValue("IT_" + numTroll);
-	if(c)
-	{
-		document.getElementsByName("tactic")[0].value = c.substring(0, c.indexOf('$'));
-		updateIT(document.getElementsByName("tactic")[0].parentNode.parentNode.parentNode,document.getElementsByName("tactic")[0].value);
-		if (document.getElementsByName("tactic")[0].value == "bricol") {
-			var t = c.split('$');
-			document.getElementsByName("urlbricol")[0].value = t[1];
-			document.getElementsByName("loginbricol")[0].value = t[2];
-		}
-	}
-}
-
-if (MZ_getValue("TAGSURL") != "" && MZ_getValue("TAGSURL") != null) {
-	var c = MZ_getValue("TAGSURL");
-	if(c=="http://mountypedia.free.fr/mz/typeTrolls.csv")
-		document.getElementsByName("tags")[0].value = "default";
-	else if(c=="http://mountypedia.free.fr/mz/typeTrolls_new.csv")
-		document.getElementsByName("tags")[0].value = "defaultv2";
-	else if(c=="http://mountyzilla.tilk.info/resources/pogo2009.csv")
-		document.getElementsByName("tags")[0].value = "pogo2009";
-	else if(c)
-	{
-		document.getElementsByName("tags")[0].value = "others";
-		updateTags(document.getElementsByName("tags")[0].parentNode.parentNode.parentNode,document.getElementsByName("tags")[0].value);
-		tdTagsURL.childNodes[1].value = c.replace(/\$http/g,";http");
-	}
-}
-}
-catch(e)
-{
-alert(e);
-}
 
 displayScriptTime();

@@ -15,66 +15,36 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* v1.0.4 by Dabihul - 2012-08-01 - TODO nada                                   */
+
+
+// n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
 
 function updateData() {
 	var inputs = document.getElementsByTagName('input');
-	var nom = document.getElementsByTagName('div')[0].childNodes[0].nodeValue;
-	//Un cookie par troll joué
-	if (nom != nomTroll) {
-		MZ_setValue("NUM_TROLL", inputs[0].getAttribute('value'));
-		MZ_setValue("NOM_TROLL", nom);
-		MZ_removeValue("RM_TROLL");
-	}
-	MZ_setValue("NIV_TROLL", inputs[1].getAttribute('value'));
-	MZ_setValue("MM_TROLL", inputs[2].getAttribute('value'));
+	var divs = document.getElementsByTagName('div');
 	
-	var infoPos = document.evaluate("//div[@class='infoMenu']/text()[contains(.,'|Y=')]",
-		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	if(!infoPos)
-		return;
-	var listePos = infoPos.nodeValue.split("=");
-	if(listePos.length!=4)
-		return;
-	var x = parseInt(listePos[1]);
-	var y = parseInt(listePos[2]);
-	var n = parseInt(listePos[3]);
-	MZ_setValue(numTroll+".position.X",x);
-	MZ_setValue(numTroll+".position.Y",y);
-	MZ_setValue(numTroll+".position.N",n);
-}
-
-
-var listeCookies=new Array("NUM_TROLL","NOM_TROLL","CDMID","NIV_TROLL","URL1","URL2","URL3","NOM1","NOM2","NOM3","VUEEXT","MAX_LEVEL","USECSS","FORMAT_TIME",
-	"INFOCARAC","TAGSURL","SEND_IDT","NOINFOEM","MM_TROLL","RM_TROLL","NOENGAGE","NOINT","NOGG","NOCOMP","NOBID","NODIPLO","NOMYTH","NOEM","NOTROU","NOGOWAP",
-	"NOLEVEL");
-
-var listeCookiesByTroll = new Array("MISSION_","IT_","POISS_");
+	numTroll = inputs[0].getAttribute('value');
+	MZ_setValue('NUM_TROLL', numTroll);
+	MZ_setValue('NIV_TROLL',inputs[1].getAttribute('value'));
+	if (!MZ_getValue(numTroll+'.caracs.rm'))
+		MZ_setValue(numTroll+'.caracs.rm', 0); // assure l'init des 4 var de libs
+	MZ_setValue(numTroll+'.caracs.mm',inputs[2].getAttribute('value'));
 	
-function cookiesToStorage()
-{
-	for(var i=0;i<listeCookies.length;i++)
-		cookieToStorage(listeCookies[i]);
-	var numTroll = MZ_getValue("NUM_TROLL");
-	if(numTroll != null)
-	{
-		for(var i=0;i<listeCookiesByTroll.length;i++)
-			cookieToStorage(listeCookiesByTroll[i]+numTroll);
+	var DLA = new Date( StringToDate(divs[1].firstChild.nodeValue.substring(5)) );
+	if (MZ_getValue(numTroll+'.DLA.encours')) {
+		var DLAstockee = new Date( StringToDate(MZ_getValue(numTroll+'.DLA.encours')) );
+		if (DLA>DLAstockee)
+			MZ_setValue(numTroll+'.DLA.ancienne', DateToString(DLAstockee) );
+		}
+	MZ_setValue(numTroll+'.DLA.encours', DateToString(DLA) );
+	
+	var listePos = divs[1].childNodes[2].nodeValue.split('=');
+	MZ_setValue(numTroll+'.position.X', parseInt(listePos[1]) );
+	MZ_setValue(numTroll+'.position.Y', parseInt(listePos[2]) );
+	MZ_setValue(numTroll+'.position.N', parseInt(listePos[3]) );
 	}
-}
-
-function cookieToStorage(value)
-{
-	if(getCookie(value) != null && getCookie(value).length>0)
-	{
-		if(MZ_getValue(value) == null)
-			MZ_setValue(value,getCookie(value));
-			//A réactiver lors du vrai changement
-		deleteCookie(value);
-	}
-}
-
 
 start_script(31);
 
 updateData();
-cookiesToStorage();

@@ -15,6 +15,7 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* v0.1.2 by Dabihul - 2012-08-02 | TODO : bin tout en fait                     */
 
 var popup;
 
@@ -22,8 +23,8 @@ function initPopup() {
 	popup = document.createElement('div');
 	popup.setAttribute('id', 'popup');
 	popup.setAttribute('class', 'mh_textbox');
-	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;' +
-			'display: inline; z-index: 3; max-width: 400px;');
+	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;'
+						+ 'display: inline; z-index: 3; max-width: 400px;');
 	document.body.appendChild(popup);
 }
 
@@ -61,7 +62,42 @@ function formateTexte(texte)
 	return texte;
 }
 
-var compoDB = "http://darkwood.free.fr/divers/compodb.php";
+function arrondi(x) {
+	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
+	}
+
+function treateMinerai() {
+	//alert('ON - currentURL = '+currentURL);
+	if(currentURL.indexOf("as_type=Divers")==-1)
+		return false;
+	//alert('check1');
+	var node = document.evaluate("//tr[@class='mh_tdtitre' and contains(./td/b/text(),'Minerai')]",
+						document, null, 9, null).singleNodeValue;
+	if (!node)
+		return false;
+	//alert('check2');
+	node = node.nextSibling.nextSibling;
+	while (node && node.getAttribute('class')!='mh_tdtitre') {
+		var nature = node.childNodes[5].textContent;
+		var caracs = node.childNodes[7].textContent;
+		var taille = caracs.match(/\d+/);
+		var coef = 1;
+		if (caracs.indexOf('Moyen')!=-1) {coef = 2;}
+		else if (caracs.indexOf('Normale')!=-1) {coef = 3;}
+		else if (caracs.indexOf('Bonne')!=-1) {coef = 4;}
+		else if (caracs.indexOf('Exceptionnelle')!=-1) {coef = 5;}
+		if (nature.indexOf('Mithril')!=-1) {
+			coef = 0.2*coef;
+			node.childNodes[7].textContent += ' | UM: ' + arrondi(taille*coef) ;
+			}
+		else {
+			coef = 0.75*coef+1.25;
+			if (nature.indexOf('Taill')!=-1) coef = 1.15*coef;
+			node.childNodes[7].textContent += ' | Carats: ' + arrondi(taille*coef) ;
+			}
+		node = node.nextSibling.nextSibling;
+		}
+	}
 
 function treateComposants() {
 	if(currentURL.indexOf("as_type=Compo")==-1)
@@ -112,12 +148,18 @@ function treateAllComposants() {
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
 	//On récupère les composants
-	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])", document, null, XPathResult.ANY_TYPE, null ).numberValue;
+	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])",
+							document, null, XPathResult.ANY_TYPE, null ).numberValue;
 	var c = (categ == 0 ? 3 : 4);
-	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
-		+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-		+ "and (td["+c+"]/text()[1] = '\240-\240' or contains(td["+c+"]/text()[2],'Tous les trolls') or contains(td["+c+"]/text()[1],'Tous les trolls') or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
-		+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
+		+ "or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']"
+		+ "/descendant::tr[contains(td[1]/a/b/text(),']') and ("
+			+ "td["+c+"]/text()[1] = '\240-\240' "
+			+ "or contains(td["+c+"]/text()[2],'Tous les trolls') "
+			+ "or contains(td["+c+"]/text()[1],'Tous les trolls') "
+			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
+		+ "and td[1]/img/@alt = 'Identifié']",
+		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
 
@@ -173,24 +215,23 @@ function treateEM()
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
 	var urlImg = "http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png";
-	var nodes = document.evaluate(
-			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
-			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
+			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
 	for (var i = 0; i < nodes.snapshotLength; i++) {
-		var link = nodes.snapshotItem(i);
-		var nomCompoTotal = link.firstChild.nodeValue;
+		var desc = nodes.snapshotItem(i).getElementsByTagName('td') ;
+		var link = desc[2].firstChild ;
+		var nomCompoTotal = desc[2].textContent ;
 		var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
 		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
-		var nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
-		nomCompoTotal = link.childNodes[1].childNodes[0].nodeValue;
-		var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
-		var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
+		var nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length-1)) ;
+		var locqual = desc[3].textContent ;
+		var qualite = trim(locqual.substring(locqual.indexOf("Qualité:")+9)) ;
+		var localisation = trim(locqual.substring(0,locqual.indexOf("|")-1)) ;
 		if(isEM(nomMonstre).length>0)
 		{
-			var infos = composantEM(nomMonstre, nomCompo, localisation,getQualite(qualite));
+			var infos = composantEM(nomMonstre, trim(nomCompo), localisation,getQualite(qualite));
 			if(infos.length>0)
 			{
 				var shortDescr = "Variable";
@@ -201,17 +242,16 @@ function treateEM()
 					if(parseInt(shortDescr)>=0)
 						bold=1;
 				}
-				link.parentNode.appendChild(createThisImage(urlImg,infos));
-				appendText(link.parentNode," ["+shortDescr+"]",bold);
+				link.parentNode.appendChild(createImage(urlImg,infos)) ;
+				appendText(link.parentNode," ["+shortDescr+"]",bold) ;
 			}
 		}
+		
 	}
 }
 
 function treateChampi() {
-	if(currentURL.indexOf("as_type=Champi")==-1)
-		return false;
-	if(MZ_getValue("NOINFOEM") == "true")
+	if (currentURL.indexOf('as_type=Champi')==-1)
 		return false;
 	var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -220,14 +260,12 @@ function treateChampi() {
 
 	for (var i = 0; i < nodes.snapshotLength; i++) {
 			var node = nodes.snapshotItem(i);
-			var nomChampi = trim(node.nodeValue.replace(/\240/g, " "));
-			if(moisChampi[nomChampi])
-			{
-				appendText(node.parentNode.parentNode," [Mois "+moisChampi[nomChampi]+"]");
+			var nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
+			if (moisChampi[nomChampi]) {
+				appendText(node.parentNode.parentNode,' [Mois '+moisChampi[nomChampi]+']');
+				}
 			}
-			
 	}
-}
 
 function treateEnchant()
 {
@@ -258,7 +296,7 @@ function treateEnchant()
 				var infos = composantEnchant(nomMonstre, nomCompo, localisation,getQualite(qualite));
 				if(infos.length>0)
 				{
-					link.parentNode.appendChild(createThisImage(urlImg,infos));
+					link.parentNode.appendChild(createImage(urlImg,infos));
 				}
 			}
 		}
@@ -271,7 +309,7 @@ function treateEnchant()
 
 function treateEquipEnchant()
 {
-	if(currentURL.indexOf("as_type=Arme")==-1 && currentURL.indexOf("as_type=Armure")==-1)
+	if(currentURL.indexOf('as_type=Arme')==-1 && currentURL.indexOf('as_type=Armure')==-1)
 		return false;
 	initPopup();
 	computeEnchantementEquipement(createPopupImage,formateTexte);
@@ -281,15 +319,14 @@ start_script();
 
 treateAllComposants();
 treateComposants();
-
-if(MZ_getValue("NOINFOEM") != "true")
-{
+treateMinerai();
+if (MZ_getValue('NOINFOEM')!='true') {
 	treateChampi();
 	treateEM();
-}
-if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
-{
+	}
+if (MZ_getValue(numTroll+'.enchantement.liste') && MZ_getValue(numTroll+'.enchantement.liste')!='') {
 	treateEnchant();
 	treateEquipEnchant();
-}
+	}
+
 displayScriptTime();

@@ -75,7 +75,7 @@ function treateGowaps() {
 				tbody1, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		
 		
-		insertButtonComboDB(tbody, 'gowap', parseInt(node.nodeValue.substring(0, node.nodeValue.indexOf('.'))));
+		//insertButtonComboDB(tbody, 'gowap', parseInt(node.nodeValue.substring(0, node.nodeValue.indexOf('.'))));
 		if(MZ_getValue("NOINFOEM") != "true")
 			insertEMInfos(tbody);
 	}

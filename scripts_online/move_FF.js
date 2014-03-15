@@ -16,6 +16,10 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
+/* v0.1 by Dabihul - 2013-08-14
+ * correction de la syntaxe des confirm (merci à Mamoune)
+ */
+
 function validateDestination()
 {
 	var x = document.getElementsByName('ai_XDepart')[0].value*1;
@@ -41,14 +45,16 @@ function validateDestination()
 		}
 		if(isTrou(x,y,n))
 		{
-			return confirm('Vous allez tomber dans un trou de météorite.\nEtes vous sûr de faire cela ?\nSi ce message vous a sauvé la vie, n\'hésitez pas à offrir un péisk à mini TilK (n°36216)...');
+			return window.confirm('La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
+								+'Vous allez tomber dans un trou de météorite.\n'
+								+'Etes vous sûr de vouloir effectuer ce déplacement ?');
 		}
 	}
 	
 	return true;
 }
 
-var petitsTrous = new Array();
+var petitsTrous = [];
 petitsTrous["-52;57"] = true;
 petitsTrous["55;70"] = true;
 petitsTrous["64;70"] = true;
@@ -56,7 +62,7 @@ petitsTrous["12;-15"] = true;
 petitsTrous["30;-52"] = true;
 petitsTrous["48;-39"] = true;
 
-var grosTrous = new Array();
+var grosTrous = [];
 grosTrous["-35;65"] = true;
 grosTrous["-13;73"] = true;
 grosTrous["-64;9"] = true;
@@ -137,9 +143,13 @@ function validateTPDestination()
 		}
 	}
 	if(nbtrous>0 && nbtrous<72)
-		return confirm('Vous allez '+Math.floor((100*nbtrous)/144)+'% de chance de tomber dans un trou de météorite.\nEtes vous sûr de faire cela ?');
+		return window.confirm('La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
+						+'Vous avez '+Math.floor((100*nbtrous)/144)+'% de risque de tomber dans un trou de météorite.\n'
+						+'Etes-vous sûr de vouloir prendre ce portail ?');
 	else if(nbtrous>=72)
-		return confirm('Vous allez '+Math.floor((100*nbtrous)/144)+'% de chance de tomber dans un trou de météorite.\nEtes vous sûr de faire cela ?\nSi ce message vous a sauvé la vie, n\'hésitez pas à offrir un péisk à mini TilK (n°36216)...');
+		return window.confirm('La voix de  mini TilK (n°36216) tonne dans votre tête :\n'
+						+'Malheureux, vous avez '+Math.floor((100*nbtrous)/144)+'% de risque de tomber dans un trou de météorite !\n'
+						+'Etes-vous bien certain de vouloir prendre ce portail ?');
 	return true;
 	}
 	catch(e) {alert(e)}

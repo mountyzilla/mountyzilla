@@ -6,7 +6,7 @@
 *    the Free Software Foundation; either version 2 of the License, or           *
 *    (at your option) any later version.                                         *
 *                                                                                *
-*    Foobar is distributed in the hope that it will be useful,                   *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
 *    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
 *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
 *    GNU General Public License for more details.                                *
@@ -16,53 +16,26 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-var poissotron = "http://www.fur4x-hebergement.net/minitilk/getDice2.php";
-var comboDB = "http://troc.mountyhall.com//mz_zz.php";
+/* TODO
+ * - revoir la gestion des CdM
+ * - revoir tout ce qui est lié à la vue (estimateurs dég nott)
+ * - vérfier la gestion des enchants
+ * v1.2.2.3 by Dabihul - 2013-04-21
+ * - correction displayScriptTime (nouveau footer)
+ * v1.2.2.3b by Dabihul - 2013-05-08
+ * - implémentation sans usage de binom (remplacera cnp)
+ */
 
-/*********************************************************************************
-*   mise à jour de variables globales utiles               *
-*********************************************************************************/
+var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
 
-var numTroll = MZ_getValue("NUM_TROLL");
-var nomTroll = MZ_getValue("NOM_TROLL");
-var nivTroll = MZ_getValue("NIV_TROLL");
-var mmTroll = MZ_getValue("MM_TROLL");	// Peut être raffraîchi par le Profil
-var rmTroll = MZ_getValue("RM_TROLL");
+/*                   mise à jour de variables globales utiles                   */
+var numTroll = MZ_getValue('NUM_TROLL'); // utilisé pour accès bdd (un peu partout)
+var nivTroll = MZ_getValue('NIV_TROLL'); // utilisé dans vue pour PX
+var mmTroll = MZ_getValue(numTroll+'.caracs.mm'); // utilisé dans actions et vue (calculs SR)
+var rmTroll = MZ_getValue(numTroll+'.caracs.rm'); // utilisé dans actions et vue (calculs SR)
 
-/*********************************************************************************
-*    Fonctions cookies (inutiles logiquement)       Plus quelques timers         *
-*********************************************************************************/
 
-function getCookie(nom) {
-	var dc = document.cookie;
-	var prefix = nom + "=";
-
-	var begin = dc.indexOf("; " + prefix);
-	if (begin == -1) {
-		if (dc.indexOf(prefix) != 0)
-			return "";
-		begin = 0;
-	} else
-		begin += 2;
-
-	var end = dc.indexOf(";", begin);
-	if (end == -1)
-		end = dc.length;
-
-	return unescape(dc.substring(begin + prefix.length, end));
-}
-
-function setCookie(nom, value) {
-	document.cookie = nom + "=" + escape(value) + "; expires=" + expdate.toGMTString() + "; path=/";
-}
-
-function deleteCookie(nom) {
-	if (getCookie(nom))
-		document.cookie = nom + "=; path=/; expires=Thu, 01-Jan-70 00:00:01 GMT";
-}
-
-// Fonctions durée de script
-
+/*                          Fonctions durée de script                           */
 var date_debut = null;
 
 function start_script(nbJours_exp) {
@@ -72,53 +45,81 @@ function start_script(nbJours_exp) {
 	// Créé la variable expdate si demandé
 	if (nbJours_exp) {
 		expdate = new Date();
-		expdate.setTime(expdate.getTime() + nbJours_exp * 24 * 60 * 60 * 1000);
+		expdate.setTime(expdate.getTime()+nbJours_exp*86400000);
+		}
 	}
-}
 
 function displayScriptTime() {
-	var node = document.evaluate("//td/text()[contains(.,'Page générée en')]/../br",
-			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	if (node)
-		insertText(node," - [Script exécuté en " + (new Date().getTime() - date_debut.getTime()) / 1000 + " sec.]");
+	var footerNode = document.getElementById('footer2');
+	if (!footerNode) {return;}
+	
+	var node = document.evaluate(".//text()[contains(.,'Page générée en')]/../br", footerNode,
+								null, 9, null).singleNodeValue;
+	if (!node) {return;}
+	insertText(node,' - [Script exécuté en '+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
+	}
+
+
+/*                             Insertion de scripts                             */
+
+function isPage(url) {
+	return currentURL.indexOf(MHURL + url) == 0;
 }
 
-/*********************************************************************************
-*   Modifications du DOM              *
-*********************************************************************************/
+function chargerScript(script) {
+	// (mauvaise) Détection du chargement de la page
+	if (document.getElementsByTagName('A').length > 0)
+		appendNewScript(script.indexOf('http://') != -1 ? script : scriptsMZ+script+'_FF.js');
+}
+
+function addScript(src) {
+	var newScript = document.createElement('script');
+	newScript.setAttribute('language', 'JavaScript');
+	newScript.setAttribute('src', src);
+	var parent = document.body;
+	parent.appendChild(newScript);
+	return newScript;
+}
+
+function appendNewScript(src, paren) {
+	MZ_appendNewScript(src);
+}
+
+
+/*                             Modifications du DOM                             */
 
 function insertBefore(next, el) {
 	next.parentNode.insertBefore(el, next);
-}
+	}
 
 function appendTr(tbody, clas) {
-	var tr = document.createElement('TR');
+	var tr = document.createElement('tr');
 	if (clas)
 		tr.setAttribute('class', clas);
 	tbody.appendChild(tr);
 	return tr;
-}
+	}
 
 function insertTr(next, clas) {
-	var tr = document.createElement('TR');
+	var tr = document.createElement('tr');
 	if (clas)
 		tr.setAttribute('class', clas);
 	insertBefore(next, tr);
 	return tr;
-}
+	}
 
 function appendTd(tr) {
-	var td = document.createElement('TD');
+	var td = document.createElement('td');
 	if (tr)
 		tr.appendChild(td);
 	return td;	
-}
+	}
 
 function insertTd(next) {
-	var td = document.createElement('TD');
+	var td = document.createElement('td');
 	insertBefore(next, td);
 	return td;
-}
+	}
 
 function appendTdCenter(tr, colspan) {
 	var td = appendTd(tr);
@@ -126,38 +127,64 @@ function appendTdCenter(tr, colspan) {
 	if (colspan)
 		td.setAttribute('colspan', colspan);
 	return td;
-}
-
-function appendTdText(tr, text, bold) {
-	var td = appendTd(tr);
-	appendText(td, text, bold);
-	return td;
-}
-
-function insertTdText(next, text, bold) {
-	var td = insertTd(next);
-	appendText(td, text, bold);
-	return td;
-}
+	}
 
 function insertTdElement(next, el) {
 	var td = insertTd(next);
 	if (el)
 		td.appendChild(el);
 	return td;
-}
+	}
 
-function appendNobr(paren, id, delgg, text) {
-	var nobr = document.createElement('NOBR');
-	appendCheckBox(nobr, id, null, delgg);
-	appendText(nobr, text);
-	paren.appendChild(nobr);
-	appendText(paren, '   ');
-	return nobr;
-}
+function appendText(paren, text, bold) {
+	if (bold) {
+		var b = document.createElement('b');
+		b.appendChild(document.createTextNode(text));
+		paren.appendChild(b);
+		}
+	else
+		paren.appendChild(document.createTextNode(text));
+	}
+
+function insertText(next, text, bold) {
+	if (bold) {
+		var b = document.createElement('b');
+		appendText(b, text);
+		insertBefore(next, b);
+		}
+	else
+		insertBefore(next, document.createTextNode(text));
+	}
+
+function appendTdText(tr, text, bold) {
+	var td = appendTd(tr);
+	appendText(td, text, bold);
+	return td;
+	}
+
+function insertTdText(next, text, bold) {
+	var td = insertTd(next);
+	appendText(td, text, bold);
+	return td;
+	}
+
+function appendBr(paren) {
+	paren.appendChild(document.createElement('br'));
+	}
+
+function insertBr(next) {
+	insertBefore(next, document.createElement('br'));
+	}
+
+function appendLI(ul, text) { // uniquement utilisé dans les options (crédits)
+	var li = document.createElement('li');
+	appendText(li, text);
+	ul.appendChild(li);
+	return li;
+	}
 
 function appendTextbox(paren, type, nam, size, maxlength, value) {
-	var input = document.createElement('INPUT');
+	var input = document.createElement('input');
 	input.setAttribute('class', 'TextboxV2');
 	input.setAttribute('type', type);
 	input.setAttribute('name', nam);
@@ -168,48 +195,37 @@ function appendTextbox(paren, type, nam, size, maxlength, value) {
 		input.setAttribute('value', value);
 	paren.appendChild(input);
 	return input;
-}
+	}
 
 function appendCheckBox(paren, nam, checked, onClick) {
-	var input = document.createElement('INPUT');
+	var input = document.createElement('input');
 	input.setAttribute('type', 'checkbox');
 	input.setAttribute('name', nam);
 	input.setAttribute('id', nam);
 	if (checked)
 		input.checked = true;
 	if (onClick)
-	{
-		input.addEventListener("click", onClick, true);
-	}
+		input.addEventListener('click', onClick, true);
 	paren.appendChild(input);
 	return input;
-}
-
-function appendLI(ul, text) {
-	var li = document.createElement('LI');
-	appendText(li, text);
-	ul.appendChild(li);
-	return li;
-}
-
-function getMyID(e)
-{
-	var parent = e.parentNode;
-	for(var i=0;i<parent.childNodes.length;i++)
-	{
-		if(e==parent.childNodes[i])
-			return i;
 	}
-	return -1;
-}
+
+function appendNobr(paren, id, delgg, text) {
+	var nobr = document.createElement('nobr');
+	appendCheckBox(nobr, id, null, delgg);
+	appendText(nobr, text);
+	paren.appendChild(nobr);
+	appendText(paren, '   ');
+	return nobr;
+	}
 
 function appendOption(select, value, text) {
-	var option = document.createElement('OPTION');
+	var option = document.createElement('option');
 	option.setAttribute('value', value);
 	appendText(option, text);
 	select.appendChild(option);
 	return option;
-}
+	}
 
 function appendHidden(form, nam, value) {
 	var input = document.createElement('input');
@@ -218,7 +234,7 @@ function appendHidden(form, nam, value) {
 	input.setAttribute('id', nam);
 	input.setAttribute('value', value);
 	form.appendChild(input);
-}
+	}
 
 function appendButton(paren, value, onClick) {
 	var input = document.createElement('input');
@@ -226,10 +242,10 @@ function appendButton(paren, value, onClick) {
 	input.setAttribute('class', 'mh_form_submit');
 	input.setAttribute('value', value);
 	input.setAttribute('onMouseOver', 'this.style.cursor=\'hand\';');
-	input.addEventListener("click",onClick, true);
+	input.addEventListener('click', onClick, true);
 	paren.appendChild(input);
 	return input;
-}
+	}
 
 function appendSubmit(paren, value, onClick) {
 	var input = document.createElement('input');
@@ -238,107 +254,273 @@ function appendSubmit(paren, value, onClick) {
 	input.setAttribute('value', value);
 	input.setAttribute('onMouseOver', 'this.style.cursor=\'hand\';');
 	if (onClick)
-		input.addEventListener("click",onClick, true);
+		input.addEventListener('click', onClick, true);
 	paren.appendChild(input);
 	return input;
-}
+	}
 
-function insertBr(next) {
-	insertBefore(next, document.createElement('br'));
-}
-
-function appendBr(paren) {
-	paren.appendChild(document.createElement('BR'));
-}
-
-function insertText(next, text, bold) {
-	if (bold) {
-		var b = document.createElement('b');
-		appendText(b, text);
-		insertBefore(next, b);
-	} else
-		insertBefore(next, document.createTextNode(text));
-}
-
-function appendText(paren, text, bold) {
-	if (bold) {
-		var b = document.createElement('b');
-		b.appendChild(document.createTextNode(text));
-		paren.appendChild(b);
-	} else
-		paren.appendChild(document.createTextNode(text));
-}
-
-function createImage(url, text)
-{
+function createImage(url, text) {
 	var img = document.createElement('img');
 	img.setAttribute('src',url);
 	img.setAttribute('title',text);
 	img.setAttribute('align','ABSMIDDLE');
 	return img;
-}
-
-
-function createCase(titre,table,width)
-{
-	if(width==null)
-		width="120";
+	}
+	
+function createCase(titre, table, width) {
+	if (width==null)
+		width='120';
 	var tr = appendTr(table, 'mh_tdpage');
-
+	
 	var td = appendTdText(tr, titre, true);
 	td.setAttribute('class', 'mh_tdtitre');
 	td.setAttribute('width', width);
-
-
+	
 	td = appendTdText(tr, '');
 	td.setAttribute('class', 'mh_tdpage');
 	return td;
-}
-
-function insertAfter(e,newE)
-{
-	var id = getMyID(e);
-	if(id==-1)
-		return;
-	if(id<e.parentNode.childNodes.length-1)
-	{
-		insertBefore(e.nextSibling,newE);
 	}
+
+function getMyID(e) {
+	var parent = e.parentNode;
+	for (var i=0 ; i<parent.childNodes.length ; i++) {
+		if (e==parent.childNodes[i])
+			return i;
+		}
+	return -1;
+	}
+
+function insertAfter(e, newE) {
+	var id = getMyID(e);
+	if (id==-1)
+		return;
+	if (id<e.parentNode.childNodes.length-1)
+		insertBefore(e.nextSibling,newE);
 	else
-	{
 		e.parentNode.appendChild(newE);
 	}
+
+
+/*                     Fonctions de mise en forme du texte                      */
+
+function aff(nb) {
+	return (nb>=0) ? '+'+nb : nb;
+	}
+
+function trim(str) {
+	return str.replace(/(^\s*)|(\s*$)/g,'');
+	}
+
+function epure(texte) {
+	return texte.replace(/[éêèë]/g,'e').replace(/[àâä]/g,'a').replace(/Â/g, 'A').replace(/[ùûü]/g,'u')
+			.replace(/[ôöõ]/g,'o').replace(/[ïî]/g,'i').replace(/[ç]/g,'c');
+	}
+
+function bbcode(texte)
+{
+	texte=texte.replace(/&/g, "&amp;") ;
+	texte=texte.replace(/"/g, "&quot;") ;
+	texte=texte.replace(/</g, "&lt;") ;
+	texte=texte.replace(/>/g, "&gt;") ;
+	texte=texte.replace(/'/g, "&#146;") ;
+	texte=texte.replace(/\[b\](.*?)\[\/b\]/g,"<b>$1</b>");
+	texte=texte.replace(/\[i\](.*?)\[\/i\]/g,"<i>$1</i>");
+	texte=texte.replace(/\[img\]([^"]*?)\[\/img\]/g,"<img src=\"$1\" />");
+	return texte;	
 }
+
+
+/*                      Gestion / Transformation des Dates                      */
+
+function addZero(i) {
+	return (i<10) ? '0'+i : i;
+	}
+
+function DateToString(date) {
+	return addZero(date.getDate())+'/'+addZero(date.getMonth()+1)+'/'+date.getFullYear()+' '
+		+addZero(date.getHours())+':'+addZero(date.getMinutes())+':'+addZero(date.getSeconds());
+	}
+
+function StringToDate(str) {
+	return str.replace(/([0-9]+)\/([0-9]+)/,"$2/$1");
+	}
+
+
+/*                            Stockage des comp/sort                            */
+
+conversionCompSortArray = new Array();
+// comps
+conversionCompSortArray[epure('Accélération du Métabolisme')]='AM';
+conversionCompSortArray[epure('Attaque Précise')]='AP';
+conversionCompSortArray[epure('Balayage')]='Balayage';
+conversionCompSortArray[epure('Balluchonnage')]='Balluchonnage';
+conversionCompSortArray[epure('Bidouille')]='Bidouille';
+conversionCompSortArray[epure('Botte Secrète')]='BS';
+conversionCompSortArray[epure('Camouflage')]='Camouflage';
+conversionCompSortArray[epure('Charger')]='Charger';
+conversionCompSortArray[epure('Connaissance des Monstres')]='CdM';
+conversionCompSortArray[epure('Construire un Piège')]='Piege';
+conversionCompSortArray[epure('Contre-Attaquer')]='CA';
+conversionCompSortArray[epure('Coup de Butoir')]='CdB';
+conversionCompSortArray[epure('Course')]='Course';
+conversionCompSortArray[epure('Déplacement Eclair')]='DE';
+conversionCompSortArray[epure('Dressage')]='Dressage';
+conversionCompSortArray[epure('Ecriture Magique')]='EM';
+conversionCompSortArray[epure('Frénésie')]='Frenesie';
+conversionCompSortArray[epure('Grattage')]='Grattage';
+conversionCompSortArray[epure('Hurlement Effrayant')]='HE';
+conversionCompSortArray[epure('Identification des Champignons')]='IdC';
+conversionCompSortArray[epure('Insultes')]='Insultes';
+conversionCompSortArray[epure("S'interposer")]='Interposition';
+conversionCompSortArray[epure('Lancer de Potions')]='LdP';
+conversionCompSortArray[epure('Marquage')]='Marquage';
+conversionCompSortArray[epure('Mélange Magique')]='MM';
+conversionCompSortArray[epure('Miner')]='Miner';
+conversionCompSortArray[epure('Nécromancie')]='Necromancie';
+conversionCompSortArray[epure('Parer')]='Parer';
+conversionCompSortArray[epure('Pistage')]='Pistage';
+conversionCompSortArray[epure('Planter un Champignon')]='PuC';
+conversionCompSortArray[epure('Régénération Accrue')]='RA';
+conversionCompSortArray[epure('Réparation')]='Reparation';
+conversionCompSortArray[epure('Retraite')]='Retraite';
+conversionCompSortArray[epure('Rotobaffe')]='Rotobaffe';
+conversionCompSortArray[epure('Shamaner')]='Shamaner';
+conversionCompSortArray[epure('Tailler')]='Tailler';
+//conversionCompSortArray[epure('Vol')]='Vol';
+// sorts
+conversionCompSortArray[epure('Analyse Anatomique')]='AA';
+conversionCompSortArray[epure('Armure Ethérée')]='AE';
+conversionCompSortArray[epure('Augmentation de l´Attaque')]='AdA';
+conversionCompSortArray[epure('Augmentation de l´Esquive')]='AdE';
+conversionCompSortArray[epure('Augmentation des Dégats')]='AdD';
+conversionCompSortArray[epure('Bulle Anti-Magie')]='BAM';
+conversionCompSortArray[epure('Bulle Magique')]='BuM';
+conversionCompSortArray[epure('Explosion')]='Explosion';
+conversionCompSortArray[epure('Faiblesse Passagère')]='FP';
+conversionCompSortArray[epure('Flash Aveuglant')]='FA';
+conversionCompSortArray[epure('Glue')]='Glue';
+conversionCompSortArray[epure('Griffe du Sorcier')]='GdS';
+conversionCompSortArray[epure('Hypnotisme')]='Hypnotisme';
+conversionCompSortArray[epure('Identification des trésors')]='IdT';
+conversionCompSortArray[epure('Invisibilité')]='Invisibilite';
+conversionCompSortArray[epure('Lévitation')]='Levitation';
+conversionCompSortArray[epure('Projectile Magique')]='Projectile';
+conversionCompSortArray[epure('Projection')]='Projection';
+conversionCompSortArray[epure('Rafale Psychique')]='Rafale';
+conversionCompSortArray[epure('Sacrifice')]='Sacrifice';
+conversionCompSortArray[epure('Siphon des Âmes')]='Siphon';
+conversionCompSortArray[epure('Télékinésie')]='Telekinesie';
+conversionCompSortArray[epure('Téléportation')]='TP';
+conversionCompSortArray[epure('Vampirisme')]='Vampirisme';
+conversionCompSortArray[epure('Vision Accrue')]='VA';
+conversionCompSortArray[epure('Vision lointaine')]='VL';
+conversionCompSortArray[epure('Voir le Caché')]='VlC';
+conversionCompSortArray[epure('Vue Troublée')]='VT';
+//conversionCompSortArray[epure('')]='';
+
+function setSortComp(nom,pourcentage,niveau) {
+	if (!niveau)
+		niveau = 1;
+	pourcentage = parseInt(pourcentage);
+	if (conversionCompSortArray[epure(nom)])
+		MZ_setValue(numTroll+'.compsort.'+conversionCompSortArray[epure(nom)]+'.'+niveau,pourcentage);
+	}
+
+function getSortComp(nom,niveau) {
+	var nomEnBase = conversionCompSortArray[epure(nom)];
+	if (!nomEnBase)
+		return 0;
+	if (!niveau) {
+		var pcmax = 0;
+		var niveau = 1;
+		while (MZ_getValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau)) {
+			pcmax = Math.max(pcmax, MZ_getValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau));
+			niveau++;
+			}
+		return pcmax;
+		}
+	if (MZ_getValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau))
+		return MZ_getValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau);
+	return 0;
+	}
+
+function removeAllSortComp() {
+	for (var comp in conversionCompSortArray) {
+		var niveau = 1;
+		var nomEnBase = conversionCompSortArray[comp];
+		while (MZ_getValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau)) {
+			MZ_removeValue(numTroll+'.compsort.'+nomEnBase+'.'+niveau);
+			niveau++;
+			}
+		}
+	}
+
+function isProfilActif() { // what for ? 
+	var att = MZ_getValue(numTroll+'.caracs.attaque');
+	var attbmp = MZ_getValue(numTroll+'.caracs.attaque.bmp');;
+	var attbmm = MZ_getValue(numTroll+'.caracs.attaque.bmm');;
+	var mm = MZ_getValue(numTroll+'.caracs.mm');
+	var deg = MZ_getValue(numTroll+'.caracs.degats');
+	var degbmp = MZ_getValue(numTroll+'.caracs.degats.bmp');
+	var degbmm = MZ_getValue(numTroll+'.caracs.degats.bmm');
+	var vue = MZ_getValue(numTroll+'.caracs.vue');
+	var bmvue = MZ_getValue(numTroll+'.caracs.vue.bm');
+	if (att==null || attbmp==null || attbmm==null || mm==null || deg==null
+		|| degbmp==null || degbmm==null || vue==null || bmvue==null)
+		return false;
+	return true;
+	}
+
 
 /*********************************************************************************
-*   Gestions des CDMs               *
+*                               Gestions des CDMs                                *
 *********************************************************************************/
 
-function getPVsRestants(pv, b, vue) {
-	b = parseInt(b.substring(0, b.indexOf(" %")));
-	if (b == 0)
+function getPVsRestants(pv, bless, vue) { // by Dab
+	bless = parseInt(bless.match(/\d+/));
+	if (bless==0)
 		return null;
-	var pv1 = parseInt(vue ? pv.substring(0, pv.indexOf("-"))
-			: pv.substring(pv.indexOf("(entre ") + 7, pv.indexOf(" et")));
-	var pv2 = parseInt(vue ? pv.substring(pv.indexOf("-") + 1, pv.indexOf(" -->"))
-			: pv.substring(pv.indexOf("et ") + 3, pv.indexOf(')')));
-	if (b == 95) {
-		var pva1 = 1;
-		var pva2 = Math.floor(pv2 * 5 / 100) - 1;
-	} else if (b == 5) {
-		var pva1 = Math.floor(pv1 * 95 / 100);
-		var pva2 = pv2 - 1;
-	} else {
-		var pva1 = Math.floor(pv1 * (100 - (b + 4)) / 100);
-		var pva2 = Math.ceil(pv2 * (100 - (b - 5)) / 100) - 1;
+	var pvminmax = pv.match(/\d+/g);
+	if (bless==95) {
+		var pvb = 1;
+		var pvh = Math.floor( pvminmax[1]/20 );
+		}
+	else if (bless == 5) {
+		var pvb = Math.floor( pvminmax[0]*19/20 );
+		var pvh = pvminmax[1];
+		}
+	else {
+		var pvb = Math.ceil( pvminmax[0]*(95-bless) / 100 );
+		var pvh = Math.floor( pvminmax[1]*(105-bless) / 100 );
+		}
+	return vue ?  " (" + pvb + "-" + pvh + ")"
+			: new Array("Points de Vie restants : ", "Entre " + pvb + " et " + pvh);
 	}
-	return vue ? " (" + pva1 + "-" + pva2 + ")"
-			: new Array("Points de Vie restants (Approximatif) : ", "Entre " + pva1 + " et " + pva2);
-}
+
+/* function estimPV(pv, bless) { // by Dab
+	var pvb, pvh;
+	bless = parseInt(bless.match(/\d+/));
+	if (bless==0)
+		return null;
+	var encadrepv = pv.match(/\d+/g);
+	if (bless==95) {
+		pvb = 1;
+		pvh = Math.floor( encadrepv[1]/20 );
+		}
+	else if (bless == 5) {
+		pvb = Math.floor( encadrepv[0]*19/20 );
+		pvh = encadrepv[1];
+		}
+	else {
+		pvb = Math.ceil( encadrepv[0]*(95-bless)/100 );
+		pvh = Math.floor( encadrepv[1]*(105-bless)/100 );
+		}
+	return new Array(pvb, pvh);
+	} */
 
 function insertButtonCdm(nextName, url, texte) {
-	if(texte==null)
-		texte = "Participer au bestiaire";
+	if (texte==null)
+		texte = 'Participer au bestiaire';
 	var nextNode = document.getElementsByName(nextName)[0];
 
 	var espace = document.createTextNode('\t');
@@ -350,7 +532,7 @@ function insertButtonCdm(nextName, url, texte) {
 	button.setAttribute('value', texte);
 	button.setAttribute('onMouseOver', 'this.style.cursor=\'hand\';');
 	if(url)
-		button.addEventListener("click", url, true);
+		button.addEventListener('click', url, true);
 	insertBefore(espace, button);
 	return button;
 }
@@ -359,7 +541,7 @@ var listeTitres = new Array('Niveau', 'Famille', 'Points de Vie', 'Blessure', 'A
 		'Régénération', 'Armure', 'Vue', 'Capacité spéciale', 'Résistance Magique', 'Autres');
 		
 function createCDMTable(id, nom, donneesMonstre) {
-try{
+try {
 	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/";
 	var table = document.createElement('table');
 	var profilActif = isProfilActif();
@@ -370,7 +552,7 @@ try{
 	
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead, 'mh_tdtitre');
-	var td = appendTdText(tr, "CDM de " + nom + (donneesMonstre[11] != "???" ? " (N° " + id + ")" : ''), true);
+	var td = appendTdText(tr, 'CDM de '+nom+(donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''), true);
 	td.setAttribute('colspan', '2');
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
@@ -426,7 +608,9 @@ try{
 		}
 	}
 	
-	if(donneesMonstre[12]>0 || donneesMonstre[13]>=0 || donneesMonstre[14]>0 || donneesMonstre[15].length>0 || (donneesMonstre[17] && donneesMonstre[17].length>0) || infosCompo.length>0 || nom.indexOf("Gowap Apprivoisé")==-1)
+	if (donneesMonstre[12]>0 || donneesMonstre[13]>=0 || donneesMonstre[14]>0 || donneesMonstre[15].length>0
+		|| (donneesMonstre[17] && donneesMonstre[17].length>0)
+		|| infosCompo.length>0 || nom.indexOf("Gowap Apprivoisé")==-1)
 	{
 		
 		td = createCase(listeTitres[12],tbody);
@@ -479,8 +663,7 @@ try{
 			td.appendChild(createPopupImage2(urlImg+"calc.png", id, nom));
 		}
 	}
-
-
+	
 	// pourcentage de blessure
 	lb = nodes[3].childNodes[1].getElementsByTagName('b');
 	if (lb.length == 1 && donneesMonstre[2].indexOf("-") != -1) {
@@ -489,259 +672,13 @@ try{
 			lb[0].firstChild.nodeValue += pvs;
 	}
 	return table;
-}
-catch(e){alert(e);}
-}
-
-/*********************************************************************************
-*   Compoland / Troc de l'hydre               *
-*********************************************************************************/
-
-function getFormComboDB(source, id_source, text, texteButton) {
-	if(texteButton==null)
-		texteButton = 'Vendre ces composants sur le Troc de l\'Hydre';
-	var form = document.createElement('form');
-	form.setAttribute('method', 'post');
-	form.setAttribute('align', 'center');
-	form.setAttribute('action', comboDB);
-	form.setAttribute('target', '_blank');
-	appendHidden(form, 'compo', text);
-	appendHidden(form, 'id_troll', numTroll);
-	appendHidden(form, 'source', source);
-	appendHidden(form, 'id_source', id_source);
-	appendSubmit(form, texteButton);
-	return form;
-}
-
-function insertButtonComboDB(tbody, source, id_source, style) {
-	var nodes = document.evaluate("descendant::img[@alt = 'Composant - Spécial']",
-			tbody, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	if (nodes.snapshotLength == 0)
-		return false;
-		
-	if(style == null)
-		style = 'mh_tdpage';
-
-	var text = "";
-	for (var i = 0; i < nodes.snapshotLength; i++) {
-			var link = nodes.snapshotItem(i).nextSibling.nextSibling;
-			var href = link.href;
-			text += href.substring(href.indexOf("IDTresor=") + 9, href.lastIndexOf("'")) + ";"
-					+ link.firstChild.nodeValue.replace(/\240/g, " ").replace(/d'un/g, "d un") + ";pas défini";
-			if(i != nodes.snapshotLength -1)
-				text+="\n";
 	}
-
-	var form = getFormComboDB(source, id_source, text);
-	if (form)
-		appendTdCenter(insertTr(tbody.childNodes[0], style), 2).appendChild(form);
+	catch(e){alert(e);}
 }
 
 
 /*********************************************************************************
-*   Insertion de scripts               *
-*********************************************************************************/
-
-
-function isPage(url) {
-	return currentURL.indexOf(MHURL + url) == 0;
-}
-
-function chargerScript(script) {
-	// (mauvaise) Détection du chargement de la page
-	if (document.getElementsByTagName('A').length > 0)
-		appendNewScript(script.indexOf("http://") != -1 ? script : scriptsMZ + script + "_FF.js");
-}
-
-function addScript(src) {
-	var newScript = document.createElement('script');
-	newScript.setAttribute('language', 'JavaScript');
-	newScript.setAttribute('src', src);
-	var parent = document.body;
-	parent.appendChild(newScript);
-	return newScript;
-}
-
-function appendNewScript(src, paren) {
-	MZ_appendNewScript(src);
-}
-
-function createThisImage(url, text)
-{
-	var img = document.createElement('img');
-	img.setAttribute('src',url);
-	img.setAttribute('title',text);
-	img.setAttribute('align','ABSMIDDLE');
-	return img;
-}
-
-/*********************************************************************************
-*    Fonctions pour épurer du texte                *
-*********************************************************************************/
-
-function epure(texte)
-{
-	texte = texte.replace(/[éêèë]/, "e");
-	texte = texte.replace(/[àâä]/, "a");
-	texte = texte.replace(/[ùû]/, "u");
-	texte = texte.replace(/[ôö]/, "o");
-	texte = texte.replace(/[ïî]/, "i");
-	texte = texte.replace(/[ç]/, "c");
-	return texte;
-}
-
-
-function bbcode(texte)
-{
-	texte=texte.replace(/&/g, "&amp;") ;
-	texte=texte.replace(/"/g, "&quot;") ;
-	texte=texte.replace(/</g, "&lt;") ;
-	texte=texte.replace(/>/g, "&gt;") ;
-	texte=texte.replace(/'/g, "&#146;") ;
-	texte=texte.replace(/\[b\](.*?)\[\/b\]/g,"<b>$1</b>");
-	texte=texte.replace(/\[i\](.*?)\[\/i\]/g,"<i>$1</i>");
-	texte=texte.replace(/\[img\]([^"]*?)\[\/img\]/g,"<img src=\"$1\" />");
-	return texte;	
-}
-
-function trim (myString)
-{
-	return myString.replace(/^\s+/g,'').replace(/\s+$/g,'')
-}
-
-function str_woa(str) {
-	return str.replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u')
-			.replace(/[ïî]/g, 'i').replace(/[öô]/g, 'o');
-}
-
-/*********************************************************************************
-*    Stockage des comp/sort                 *
-*********************************************************************************/
-
-conversionCompSortArray = new Array();
-conversionCompSortArray[str_woa("Accélération du Métabolisme")]="AM";
-conversionCompSortArray[str_woa("Attaque Précise")]="AP";
-conversionCompSortArray[str_woa("Balluchonnage")]="Balluchonnage";
-conversionCompSortArray[str_woa("Bidouille")]="Bidouille";
-conversionCompSortArray[str_woa("Botte Secrète")]="BS";
-conversionCompSortArray[str_woa("Camouflage")]="Camouflage";
-conversionCompSortArray[str_woa("Charger")]="Charger";
-conversionCompSortArray[str_woa("Connaissance des Monstres")]="CdM";
-conversionCompSortArray[str_woa("Construire un Piège")]="Piege";
-conversionCompSortArray[str_woa("Contre-Attaquer")]="CA";
-conversionCompSortArray[str_woa("Coup de Butoir")]="CdB";
-conversionCompSortArray[str_woa("Déplacement Eclair")]="DE";
-conversionCompSortArray[str_woa("Dressage")]="Dressage";
-conversionCompSortArray[str_woa("Ecriture Magique")]="EM";
-conversionCompSortArray[str_woa("Frénésie")]="Frenesie";
-conversionCompSortArray[str_woa("Grattage")]="Grattage";
-conversionCompSortArray[str_woa("Hurlement Effrayant")]="HE";
-conversionCompSortArray[str_woa("Identification des Champignons")]="IdC";
-conversionCompSortArray[str_woa("Insultes")]="Insultes";
-conversionCompSortArray[str_woa("Lancer de Potions")]="LdP";
-conversionCompSortArray[str_woa("Marquage")]="Marquage";
-conversionCompSortArray[str_woa("Mélange Magique")]="MM";
-conversionCompSortArray[str_woa("Miner")]="Miner";
-conversionCompSortArray[str_woa("Nécromancie")]="Necromancie";
-conversionCompSortArray[str_woa("Parer")]="Parer";
-conversionCompSortArray[str_woa("Pistage")]="Pistage";
-conversionCompSortArray[str_woa("Planter un Champignon")]="PuC";
-conversionCompSortArray[str_woa("Régénération Accrue")]="RA";
-conversionCompSortArray[str_woa("Retraite")]="Retraite";
-conversionCompSortArray[str_woa("Shamaner")]="Shamaner";
-conversionCompSortArray[str_woa("Tailler")]="Tailler";
-conversionCompSortArray[str_woa("Vol")]="Vol";
-conversionCompSortArray[str_woa("Analyse Anatomique")]="AA";
-conversionCompSortArray[str_woa("Armure Ethérée")]="AE";
-conversionCompSortArray[str_woa("Augmentation de l´Attaque")]="AdA";
-conversionCompSortArray[str_woa("Augmentation de l´Esquive")]="AdE";
-conversionCompSortArray[str_woa("Augmentation des Dégats")]="AdD";
-conversionCompSortArray[str_woa("Bulle Anti-Magie")]="BAM";
-conversionCompSortArray[str_woa("Bulle Magique")]="BuM";
-conversionCompSortArray[str_woa("Explosion")]="Explosion";
-conversionCompSortArray[str_woa("Faiblesse Passagère")]="FP";
-conversionCompSortArray[str_woa("Flash Aveuglant")]="FA";
-conversionCompSortArray[str_woa("Glue")]="Glue";
-conversionCompSortArray[str_woa("Griffe du Sorcier")]="GdS";
-conversionCompSortArray[str_woa("Hypnotisme")]="Hypnotisme";
-conversionCompSortArray[str_woa("Identification des trésors")]="IdT";
-conversionCompSortArray[str_woa("Invisibilité")]="Invisibilite";
-conversionCompSortArray[str_woa("Projectile Magique")]="Projectile";
-conversionCompSortArray[str_woa("Projection")]="Projection";
-conversionCompSortArray[str_woa("Rafale Psychique")]="Rafale";
-conversionCompSortArray[str_woa("Sacrifice")]="Sacrifice";
-conversionCompSortArray[str_woa("Télékinésie")]="Telekinesie";
-conversionCompSortArray[str_woa("Téléportation")]="TP";
-conversionCompSortArray[str_woa("Vampirisme")]="Vampirisme";
-conversionCompSortArray[str_woa("Vision Accrue")]="VA";
-conversionCompSortArray[str_woa("Vision lointaine")]="VL";
-conversionCompSortArray[str_woa("Voir le Caché")]="VlC";
-conversionCompSortArray[str_woa("Vue Troublée")]="VT";
-//conversionCompSortArray[str_woa("")]="";
-
-function setSortComp(nom,pourcentage,niveau)
-{
-	if(niveau == null)
-		niveau = 1;
-	pourcentage = parseInt(pourcentage);
-	if(conversionCompSortArray[str_woa(nom)] != null)
-		MZ_setValue(numTroll+".compsort."+conversionCompSortArray[str_woa(nom)]+"."+niveau,pourcentage);
-}
-
-function getSortComp(nom,niveau)
-{
-	var realName = conversionCompSortArray[str_woa(nom)];
-	if(realName == null)
-		return 0;
-	if(niveau == null)
-	{
-		var max = 0;
-		niveau = 1;
-		while(MZ_getValue(numTroll+".compsort."+realName+"."+niveau)!=null)
-		{
-			max = Math.max(max, MZ_getValue(numTroll+".compsort."+realName+"."+niveau));
-			niveau++;
-		}
-		return max;
-	}
-
-	if(MZ_getValue(numTroll+".compsort."+realName+"."+niveau)!=null)
-		return MZ_getValue(numTroll+".compsort."+realName+"."+niveau);
-	return 0;
-}
-
-function removeAllSortComp()
-{
-	for (var comp in conversionCompSortArray)
-	{
-		var niveau=1;
-		var realName = conversionCompSortArray[comp];
-		while(MZ_getValue(numTroll+".compsort."+realName+"."+niveau)!=null)
-		{
-			MZ_removeValue(numTroll+".compsort."+realName+"."+niveau);
-			niveau++;
-		}
-	}
-}
-
-function isProfilActif()
-{
-	var att = MZ_getValue(numTroll+".caracs.attaque");
-	var attbmp = MZ_getValue(numTroll+".caracs.attaque.bmp");;
-	var attbmm = MZ_getValue(numTroll+".caracs.attaque.bmm");;
-	var mm = MZ_getValue(numTroll+".caracs.mm")+MZ_getValue(numTroll+".caracs.mm.bm");
-	var deg = MZ_getValue(numTroll+".caracs.degats");
-	var degbmp = MZ_getValue(numTroll+".caracs.degats.bmp");
-	var degbmm = MZ_getValue(numTroll+".caracs.degats.bmm");
-	var vue = MZ_getValue(numTroll+".caracs.vue");
-	if(att==null || attbmp==null || attbmm==null || mm==null || deg==null || degbmp==null || degbmm==null || vue==null)
-		return false;
-	return true;
-}
-
-
-/*********************************************************************************
-*    Gestion des enchantements                *
+*                           Gestion des enchantements                            *
 *********************************************************************************/
 
 var listeMonstreEnchantement = null;
@@ -753,18 +690,18 @@ function computeCompoEnchantement()
 	listeMonstreEnchantement = new Array();
 	listeInfoEnchantement = new Array();
 	listeEquipementEnchantement = new Array();
-	var liste = MZ_getValue(numTroll+".enchantement.liste").split(";");
+	var liste = MZ_getValue(numTroll+'.enchantement.liste').split(';');
 	for(var i=0;i<liste.length;i++)
 	{
 		var idEquipement = liste[i]*1;
-		if(MZ_getValue(numTroll+".enchantement."+idEquipement+".objet")==null || MZ_getValue(numTroll+".enchantement."+idEquipement+".enchanteur")==null)
+		if(MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.objet')==null || MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.enchanteur')==null)
 			continue;
-		var nomEquipement = MZ_getValue(numTroll+".enchantement."+idEquipement+".objet");
-		var infoEnchanteur = MZ_getValue(numTroll+".enchantement."+idEquipement+".enchanteur").split(";");
-		var texteGlobal="";
+		var nomEquipement = MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.objet');
+		var infoEnchanteur = MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.enchanteur').split(';');
+		var texteGlobal='';
 		for(var j=0;j<3;j++)
 		{
-			var infoComposant = MZ_getValue(numTroll+".enchantement."+idEquipement+".composant."+j).split(";");
+			var infoComposant = MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.composant.'+j).split(';');
 			listeMonstreEnchantement[infoComposant[2]] = 1;
 			var array = new Array();
 			array[0]=infoComposant[0].replace("Ril","Œil");
@@ -776,22 +713,22 @@ function computeCompoEnchantement()
 			{
 				texte += ";"+infoComposant[k].replace("Ril","Œil");
 			}
-			texteGlobal+=texte+"\n";
-			texte += " pour l'enchantement d'un(e) "+nomEquipement+" chez l'enchanteur n°"+infoEnchanteur[0]+" ("+infoEnchanteur[1]+"|"+infoEnchanteur[2]+"|"+infoEnchanteur[3]+")";
+			texteGlobal+=texte+'\n';
+			texte += " pour l'enchantement d'un(e) "+nomEquipement+" chez l'enchanteur n°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
 			array[4]=texte;
 			listeInfoEnchantement.push(array);
 		}
-		texteGlobal += "chez l'enchanteur n°"+infoEnchanteur[0]+" ("+infoEnchanteur[1]+"|"+infoEnchanteur[2]+"|"+infoEnchanteur[3]+")";
+		texteGlobal += "chez l'enchanteur n°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
 		listeEquipementEnchantement[idEquipement] = texteGlobal;
 	}
 	
 }
 
 function isEnchant(nom) {
-	var monstreEnchant = "";
+	var monstreEnchant = '';
 	for(j in listeInfoEnchantement) {
 		monstre = listeInfoEnchantement[j][2].toLowerCase();
-		if ((nom+" ").toLowerCase().indexOf(monstre+" ")>=0){		
+		if ((nom+' ').toLowerCase().indexOf(monstre+' ')>=0){		
 			monstreEnchant=monstre;
 			break; // ça permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
 		}
@@ -807,14 +744,14 @@ function getInfoEnchantementFromMonstre(nom)
 		{
 			computeCompoEnchantement();
 		}
-		var infosEnchant = "";
+		var infosEnchant = '';
 		for(j in listeInfoEnchantement) {
 			monstre = listeInfoEnchantement[j][2].toLowerCase();
-			if ((nom+" ").toLowerCase().indexOf(monstre+" ")>=0){		
-				if(infosEnchant=="")
+			if ((nom+' ').toLowerCase().indexOf(monstre+' ')>=0){		
+				if(infosEnchant=='')
 					infosEnchant=listeInfoEnchantement[j][4];
 				else
-					infosEnchant+="\n"+listeInfoEnchantement[j][4];
+					infosEnchant+='\n'+listeInfoEnchantement[j][4];
 			}
 		}
 		return trim(infosEnchant);
@@ -826,7 +763,7 @@ function getInfoEnchantementFromMonstre(nom)
 }
 
 function composantEnchant(Monstre, composant, localisation,qualite) {
-     var compo="";
+     var compo='';
 	for (var i=0; i<listeInfoEnchantement.length; i++) {
 	 	if (listeInfoEnchantement[i][2].toLowerCase()==Monstre.toLowerCase() && 
 			listeInfoEnchantement[i][0].toLowerCase()==composant.toLowerCase() && 
@@ -848,16 +785,16 @@ function insertEnchantInfos(tbody) {
 				tbody, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
+		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png';
 		for (var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i).nextSibling.nextSibling;
-			var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g, " ");
+			var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g, ' ');
 			var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
-			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
+			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf(' ')+1,nomCompoTotal.length);
 			var nomMonstre = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" de Qualité"));
-			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
-			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
+			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(' ['));
+			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf('[')+1,nomCompoTotal.indexOf(']'));
 			if(isEnchant(nomMonstre).length>0)
 			{
 				var infos = composantEnchant(nomMonstre, nomCompo, localisation,getQualite(qualite));
@@ -866,11 +803,11 @@ function insertEnchantInfos(tbody) {
 					if(link.parentNode == link.nextSibling.parentNode)
 					{
 						var tmp = link.nextSibling;
-						link.parentNode.insertBefore(createThisImage(urlImg,infos), link.nextSibling);
+						link.parentNode.insertBefore(createImage(urlImg,infos), link.nextSibling);
 					}
 					else
 					{
-						link.parentNode.appendChild(createThisImage(urlImg,infos));
+						link.parentNode.appendChild(createImage(urlImg,infos));
 					}
 				}
 			}
@@ -892,16 +829,16 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 				document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
+		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png';
 		for (var i = 0; i < nodes.snapshotLength; i++) 
 		{
 			var link = nodes.snapshotItem(i);
-			var idEquipement = link.getAttribute("href");
-			idEquipement = idEquipement.substring(idEquipement.indexOf("ai_IDTresor=")+12);
+			var idEquipement = link.getAttribute('href');
+			idEquipement = idEquipement.substring(idEquipement.indexOf('ai_IDTresor=')+12);
 			idEquipement = parseInt(idEquipement.substring(0,idEquipement.indexOf("'")));
 			var nomEquipement = trim(link.firstChild.nodeValue);
-			var enchanteur = MZ_getValue(numTroll+".enchantement."+idEquipement+".enchanteur");
-			if(!enchanteur || enchanteur == "")
+			var enchanteur = MZ_getValue(numTroll+'.enchantement.'+idEquipement+'.enchanteur');
+			if(!enchanteur || enchanteur == '')
 				continue;
 			var infos = listeEquipementEnchantement[idEquipement];
 			infos=formateTexte(infos);
@@ -917,7 +854,7 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 					link.parentNode.appendChild(fontionTexte(urlImg,infos));
 				}
 			}
-			MZ_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement+" ("+idEquipement+")");
+			MZ_setValue(numTroll+'.enchantement.'+idEquipement+'.objet',nomEquipement+' ('+idEquipement+')');
 		}
 	}
 	catch(e)
@@ -937,39 +874,39 @@ function insertEMInfos(tbody) {
 			tbody, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png";
+	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png';
 	for (var i = 0; i < nodes.snapshotLength; i++) {
 		var link = nodes.snapshotItem(i).nextSibling.nextSibling;
-		var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g, " ");
+		var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g, ' ');
 		var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
 		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
-		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
+		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf(' ')+1,nomCompoTotal.length);
 		var nomMonstre = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" de Qualité"));
-		var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
-		var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
+		var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(' ['));
+		var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf('[')+1,nomCompoTotal.indexOf(']'));
 		if(isEM(nomMonstre).length>0)
 		{
 			var infos = composantEM(nomMonstre, nomCompo, localisation,getQualite(qualite));
 			if(infos.length>0)
 			{
-				var shortDescr = "Variable";
+				var shortDescr = 'Variable';
 				var bold = 0;
-				if(infos != "Composant variable")
+				if(infos != 'Composant variable')
 				{
-					shortDescr = infos.substring(0,infos.indexOf(" "));
+					shortDescr = infos.substring(0,infos.indexOf(' '));
 					if(parseInt(shortDescr)>=0)
 						bold=1;
 				}
 				if(link.parentNode == link.nextSibling.parentNode)
 				{
 					var tmp = link.nextSibling;
-					link.parentNode.insertBefore(createThisImage(urlImg,infos), link.nextSibling);
-					insertText(tmp," ["+shortDescr+"]",bold);
+					link.parentNode.insertBefore(createImage(urlImg,infos), link.nextSibling);
+					insertText(tmp,' ['+shortDescr+']',bold);
 				}
 				else
 				{
-					link.parentNode.appendChild(createThisImage(urlImg,infos));
-					appendText(link.parentNode," ["+shortDescr+"]",bold);
+					link.parentNode.appendChild(createImage(urlImg,infos));
+					appendText(link.parentNode,' ['+shortDescr+']',bold);
 				}
 			}
 		}
@@ -988,10 +925,10 @@ function getQualite(qualite)
 }
 
 function isEM(nom) {
-	var monstreEM = "";
+	var monstreEM = '';
 	for(j in tabEM) {
 		monstre = tabEM[j][0].toLowerCase();
-		if ((nom+" ").toLowerCase().indexOf(monstre+" ")>=0){		
+		if ((nom+' ').toLowerCase().indexOf(monstre+' ')>=0){		
 			monstreEM=monstre;
 			break; // ça permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
 		}
@@ -1000,12 +937,12 @@ function isEM(nom) {
 }
 
 function getEM(nom) {
-	var monstreEM = "";
-	if(nom.indexOf("[") != -1)
-		nom = nom.substring(0,nom.indexOf("["));
+	var monstreEM = '';
+	if(nom.indexOf('[') != -1)
+		nom = nom.substring(0,nom.indexOf('['));
 	for(j in tabEM) {
 		monstre = tabEM[j][0].toLowerCase();
-		if (nom.toLowerCase().indexOf(monstre+" ")==0 || nom.toLowerCase().indexOf(" "+monstre+" ")>=0){		
+		if (nom.toLowerCase().indexOf(monstre+' ')==0 || nom.toLowerCase().indexOf(' '+monstre+' ')>=0){		
 			monstreEM=monstre;
 			break; // ça permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
 		}
@@ -1014,20 +951,20 @@ function getEM(nom) {
 }
 
 function compoEM(Monstre) {
-     var compo="";
+     var compo='';
 	for (var i=0; i<tabEM.length; i++) {
 	 	if (tabEM[i][0].toLowerCase()==Monstre.toLowerCase()) {
 	 	    if (tabEM[i][4]==1)
-			    compo="Divers composants "+tabEM[i][1]+" "+tabEM[i][0]+" ("+tabEM[i][2]+")";
+			    compo='Divers composants '+tabEM[i][1]+' '+tabEM[i][0]+' ('+tabEM[i][2]+')';
   		    else
-			    compo=tabEM[i][1]+" "+tabEM[i][0]+" (Qualité "+tabQualite[tabEM[i][3]]+") pour l'écriture de "+tabEM[i][2];
+			    compo=tabEM[i][1]+' '+tabEM[i][0]+" (Qualité "+tabQualite[tabEM[i][3]]+") pour l'écriture de "+tabEM[i][2];
 		}
 	}
 	return compo;     
 }
 
 function composantEM(Monstre, composant, localisation,qualite) {
-     var compo="";
+     var compo='';
 	for (var i=0; i<tabEM.length; i++) {
 	 	if (tabEM[i][0].toLowerCase()==Monstre.toLowerCase()) {
 			if(tabEM[i][4]==0)
@@ -1041,15 +978,15 @@ function composantEM(Monstre, composant, localisation,qualite) {
 				if(pourcentage>=-20)
 				{
 					if(compo.length>0)
-						compo+=" | ";
+						compo+=' | ';
 					compo+=pourcentage+"% pour l'écriture de "+tabEM[i][2];
 				}
 			}
 			else
 			{
 				if(compo.length>0)
-					compo+=" | ";
-				compo+="Composant variable";
+					compo+=' | ';
+				compo+='Composant variable';
 			}
 		}
 	}
@@ -1200,6 +1137,7 @@ Les % de toucher
 
 var c = new Array();
 
+// coefficients binomiaux
 function cnp(n,k)
 {
 	if(c[n] != null && c[n][k] != null)
@@ -1211,10 +1149,30 @@ function cnp(n,k)
 		c[n][k] = 1;
 		return 1;
 	}
-	var result = cnp(n-1,k-1)*n/k;
+	var result = cnp(n-1,k-1)*n/k; // mouais... k mul+k div
 	c[n][k] = result;
 	return result;
 }
+
+// by Dab, à comparer
+function binom(n,p) {
+	if (p<0 || p>n) return 0;
+	
+	if (c[n])
+		if (c[n][p]) return c[n][p];
+	else {
+		c[n]=[1];
+		c[n][n]=1;
+		if (p==0 || p==n) return 1;
+		}
+	
+	if (2*p>n)
+		{c[n][p]=binom(n,n-p);}
+	else
+		{c[n][p]=binom(n-1,p-1)+binom(n-1,p);} // (k^2-k)/2 *additions
+	
+	return c[n][p];
+	}
 
 var coeff = new Array();
 
@@ -1364,15 +1322,14 @@ function getAnalyseTactique(id,nom)
 	return str+"</table>";
 }
 
-function analyseTactique(donneesMonstre,nom)
-{
+function analyseTactique(donneesMonstre,nom) {
 	try
 	{
-	var listeAttaques=new Array();
+	var listeAttaques = [];
 	var att = MZ_getValue(numTroll+".caracs.attaque");
 	var attbmp = MZ_getValue(numTroll+".caracs.attaque.bmp");;
 	var attbmm = MZ_getValue(numTroll+".caracs.attaque.bmm");;
-	var mm = MZ_getValue(numTroll+".caracs.mm")+MZ_getValue(numTroll+".caracs.mm.bm");
+	var mm = MZ_getValue(numTroll+".caracs.mm");
 	var deg = MZ_getValue(numTroll+".caracs.degats");
 	var degbmp = MZ_getValue(numTroll+".caracs.degats.bmp");
 	var degbmm = MZ_getValue(numTroll+".caracs.degats.bmm");
@@ -1390,10 +1347,11 @@ function analyseTactique(donneesMonstre,nom)
 	var modificateurArmureM = '';
 	var pasDeSR=false;
 	var esqM, attM, armM, degM;
-	if(donneesMonstre==null || att==null || attbmp==null || attbmm==null || mm==null || deg==null || degbmp==null || degbmm==null || vue==null ||pv==null || esq==null || arm==null)
+	if (donneesMonstre==null || att==null || attbmp==null || attbmm==null || mm==null || deg==null || degbmp==null || degbmm==null || vue==null ||pv==null || esq==null || arm==null)
 		return null;
-	var td = document.createElement('TD')
-	td.innerHTML = bbcode(donneesMonstre[4]);
+	
+	var td = document.createElement('td')
+	td.innerHTML = bbcode(donneesMonstre[4]); // sans déconner ? C'est quoi cette histoire ?
 	var esqM = 0;
 	try
 	{
@@ -1406,6 +1364,7 @@ function analyseTactique(donneesMonstre,nom)
 		modificateurArmure = '<';
 		modificateurMagie = '<';
 	}
+	
 	td.innerHTML = bbcode(donneesMonstre[3]);
 	var attM = 0;
 	try
@@ -1418,6 +1377,7 @@ function analyseTactique(donneesMonstre,nom)
 		modificateurEsquiveM = '>';
 		modificateurArmureM = '>';
 	}
+	
 	td.innerHTML = bbcode(donneesMonstre[5]);
 	var degM = 0;
 	try
@@ -1429,6 +1389,7 @@ function analyseTactique(donneesMonstre,nom)
 		degM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurArmureM = '>';
 	}
+	
 	td.innerHTML = bbcode(donneesMonstre[7]);
 	var armM = 0;
 	try
@@ -1440,6 +1401,7 @@ function analyseTactique(donneesMonstre,nom)
 		armM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurArmure = '<';
 	}
+	
 	var coeffSeuil = 0.95;
 	try
 	{
@@ -1454,6 +1416,7 @@ function analyseTactique(donneesMonstre,nom)
 		modificateurMagie = '<';
 		pasDeSR = true;
 	}
+	
 	var chanceDEsquiveParfaite = chanceEsquiveParfaite(att,esqM,attbmp+attbmm,0);
 	var chanceDeTouche = chanceTouche(att,esqM,attbmp+attbmm,0);
 	var chanceDeCritique = chanceCritique(att,esqM,attbmp+attbmm,0);
@@ -1613,7 +1576,7 @@ function analyseTactique(donneesMonstre,nom)
 	return listeAttaques;
 	}
 	catch(e) { alert(e);}
-}
+	}
 
 /***********************************************
 Les popups
@@ -1644,16 +1607,15 @@ function hideTagPopup() {
 	tagPopup.style.visibility = "hidden";
 }
 
-function createTagImage(url, text)
-{
+function createTagImage(url, text) {
 	var img = document.createElement('img');
 	img.setAttribute('src',url);
 	img.setAttribute('align','ABSMIDDLE');
-	img.setAttribute("texteinfo",text);
-	img.addEventListener("mouseover", showTagPopup,true);
-	img.addEventListener("mouseout", hideTagPopup,true);
+	img.setAttribute('texteinfo',text);
+	img.addEventListener('mouseover', showTagPopup , true);
+	img.addEventListener('mouseout', hideTagPopup , true);
 	return img;
-}
+	}
 
 /***********************************************
 les tags de trolls
@@ -1679,9 +1641,9 @@ function getTag(fonctionAnalyse,fonctionAffiche)
 {
 	try
 	{
-		if(MZ_getValue("TAGSURL") == null || MZ_getValue("TAGSURL")=="")
+		if(MZ_getValue(numTroll+'.TAGSURL') == null || MZ_getValue(numTroll+'.TAGSURL')=='')
 			return false;
-		var tagsurl = MZ_getValue("TAGSURL");
+		var tagsurl = MZ_getValue(numTroll+'.TAGSURL');
 		var listeTagsURL = tagsurl.split("$");
 		nbTagFile = listeTagsURL.length;
 		for(var i=0;i<listeTagsURL.length;i++)
@@ -1734,7 +1696,7 @@ function showTags()
 	try
 	{
 		if(infoTagGuildes.length>0)
-		{
+		{ // nom mais quelle brutasse !!!
 			var nodes = document.evaluate("//a[contains(@href,'javascript:EAV') or contains(@href,'javascript:EnterAllianceView')]", document, null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 			for(var i=0;i<nodes.snapshotLength;i++)
 			{

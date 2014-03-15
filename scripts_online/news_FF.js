@@ -1,3 +1,10 @@
+/*********************************************************************************
+*  This file is part of Mountyzilla (http://mountyzilla.tilk.info/)              *
+*  Mountyzilla is free software; provided under the GNU General Public License   *
+*********************************************************************************/
+
+/* v0.0.1 by Dabihul - 2013-04-21 */
+
 const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
 const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
 const nbitems = 10;
@@ -39,8 +46,9 @@ MZ_xmlhttpRequest({
 						string += '<a href="javascript:EPV('+infos[0]+')"><span class="Echo_texte">'+infos[1]+'</span></a> ('+infos[2]+' '+an+')'
 					}
 					string += '</small></td></tr></table>';
-					var thisP = document.evaluate("//p/a/text()[contains(.,'messagerie')]/../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-					var newP=document.createElement('p');
+					var thisP = document.evaluate("//p/a/text()[contains(.,'messagerie')]/../..",
+												document, null, 9, null).singleNodeValue;
+					var newP = document.createElement('p');
 					newP.setAttribute('align','center');
 					if(thisP!=null)
 					{
@@ -87,8 +95,9 @@ MZ_xmlhttpRequest({
 						}
 						string += '</table>';
 						//var thisP=document.getElementsByTagName('p')[8];
-						//var thisP = document.evaluate("//p/table[@class = 'mh_tdborder' and contains(./descendant::text(),'Heure Serveur')]/..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-						var thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+						//var thisP=document.evaluate("//p/table[@class = 'mh_tdborder' and contains(./descendant::text(),'Heure Serveur')]/..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+						//var thisP=document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+						var thisP=document.getElementById('footer2');
 						var newP=document.createElement('p');
 						newP.setAttribute('align','center');
 						thisP.parentNode.insertBefore(newP,thisP);
@@ -101,4 +110,4 @@ MZ_xmlhttpRequest({
 					alert(e);
 				}
 			}
-		});	
+		});

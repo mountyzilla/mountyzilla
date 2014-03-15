@@ -15,187 +15,308 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
+/* v1.2.3 by Dab - 2013-05-03 */
 
-function positive(i)
-{
-	if(i==null)
-		return 0;
-	if(i>=0)
-		return "+"+i;
-	return i;
-}
+function decumul(bmt, nbr) {
+	var bmr;
+	if (!nbr || nbr <2) {bmr = bmt;}
+	else if (nbr==2) {bmr = parseInt(0.67*bmt);}
+	else if (nbr==3) {bmr = parseInt(0.40*bmt);}
+	else if (nbr==4) {bmr = parseInt(0.25*bmt);}
+	else if (nbr==5) {bmr = parseInt(0.15*bmt);}
+	else {bmr = parseInt(0.1*bmt);}
+	if (bmt<0) {return Math.min(-1,bmr);}
+	return Math.max(1,bmr);
+	}
 
-function isEmpty(array)
-{
-	var t=0;
-	for(var i in array)
-		t=1;
-	return t==0;
-}
-
-
-function treateMalus() {
-try
-{
-	var malus = document.evaluate("//tr[@class='mh_tdpage']/td/text()[contains(.,'Tour')]/../../td[4]/text()[contains(.,':')]",
-			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	var listePouvoirsByTurn = new Array();
-	var listePouvoirs = new Array();
-	var listeDuree = new Array();
-	var listeType = new Array();
-	for(var i=0;i<malus.snapshotLength;i++)
-	{
-		var textes = malus.snapshotItem(i).nodeValue.split(" | ");
-		var nbTour = parseInt(document.evaluate("td/text()[contains(.,'Tour')]", malus.snapshotItem(i).parentNode.parentNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue);
-		var type = document.evaluate("td[5]/text()", malus.snapshotItem(i).parentNode.parentNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue;
-		if(listePouvoirsByTurn[nbTour] == null)
-			listePouvoirsByTurn[nbTour] = new Array();
-		if(listePouvoirsByTurn[nbTour][type] == null)
-			listePouvoirsByTurn[nbTour][type] = new Array();
-		for(var j=0;j<textes.length;j++)
-		{
-			var texte = trim(textes[j]);
-			if(texte.indexOf(":")==-1)
-				continue;
-			var bonus = trim(texte.substring(0,texte.indexOf(":")));
-			listePouvoirs[bonus] = 1;
-			var valeur = parseInt(texte.substring(texte.indexOf(":")+1));
-			if(listePouvoirsByTurn[nbTour][type][bonus] == null)
-				listePouvoirsByTurn[nbTour][type][bonus] = valeur;
-			else
-				listePouvoirsByTurn[nbTour][type][bonus] += valeur;
+function triecaracs(a,b) { // version Yoyor, mod by Dab
+	switch( a ) {
+	case 'ATT':
+		return -1;
+	case 'ESQ': 
+		if (b=='ATT') return 1;
+		return -1;
+	case 'DEG': 
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'REG':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Vue':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'TOUR':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Armure':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'RM':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'MM':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Fatigue':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+				return 1;
+			default:
+				return -1;
+			}
+	case "Dés d'attaque":
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Fatigue':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Dés de dégâts':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Fatigue':
+			case "Dés d'attaque":
+				return 1;
+			default:
+				return -1;
+			}
+	default :
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Fatigue':
+			case "Dés d'attaque":
+			case 'Dés de dégâts':
+				return 1;
+			default:
+				return -1;
+			}
 		}
-		listeDuree[nbTour]=1;
-		listeType[type] = 1;
 	}
-	var tbody = document.evaluate("//form[@name='ActionForm']/table[@class='mh_tdborder']/tbody[1]",
-			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	var keys = new Array();
-	for(k in listeDuree)
-	{
-	     keys.push(k);
-	}
-	keys.sort( function (a, b){return (parseInt(a) > parseInt(b)) - (parseInt(a) < parseInt(b));} );
 	
-	for(var i=0;i<keys.length;i++)
-	{
-		var duree = keys[i];
-		var nbTypes=0;
-		for(type in listeType)
-		{
-			if(listePouvoirsByTurn[duree][type] == null)
-				listePouvoirsByTurn[duree][type] = new Array();
-			for(var j=i+1;j<keys.length;j++)
-			{
-				var duree2 = keys[j];
-				for(pouv in listePouvoirs)
-				{
-					if(listePouvoirsByTurn[duree2][type]!= null && listePouvoirsByTurn[duree2][type][pouv] != null)
-					{
-						valeur = listePouvoirsByTurn[duree2][type][pouv];
-						if(listePouvoirsByTurn[duree][type][pouv] == null)
-							listePouvoirsByTurn[duree][type][pouv] = valeur;
-						else
-							listePouvoirsByTurn[duree][type][pouv] += valeur;
+
+function traiteMalus() {
+	var listeBM = document.getElementsByClassName('mh_tdpage');
+	var uniListe = [], listeDurees = [], listeDecumuls = [];
+	/* Suppression des BM de fatigue stockés */
+	if (MZ_getValue(numTroll+'.bm.fatigue'))
+		MZ_removeValue(numTroll+'.bm.fatigue');
+	
+	/* Extraction des données */
+	nb = 0;
+	while (nb < listeBM.length) {
+		tr = listeBM[nb]; nb++;
+		var type = tr.childNodes[3].textContent;
+		// si c'est un type à décumul ... NB : TP n'est plus décumulé
+		if (type=='Potion' || type=='Parchemin' || type=='Sortilège' || type=='Capacité Spéciale')
+			var nom = tr.childNodes[1].textContent;
+		else
+			var nom = 'pasdedecumul';
+		if (nom.indexOf('Amnésie')!=-1) // Amnésie n'est pas décumulée
+			nom = 'pasdedecumul';
+		var effetsT = tr.childNodes[5].textContent.split(' | ');
+		var phymag = tr.childNodes[9].textContent;
+		var duree = parseInt( tr.childNodes[11].textContent.match(/\d+/) );
+		
+		uniListe[nb] = [];
+		uniListe[nb]['duree'] = duree;
+		uniListe[nb]['nom'] = nom;
+		uniListe[nb]['caracs'] = [];
+		for (var i=0 ; i<effetsT.length ; i++) {
+			if (effetsT[i].indexOf(':')==-1)
+				continue;
+			// structure : liste[nb]=[duree , nom , Array[carac.type] ]
+			// nom = 'pasdedecumul' si pas de décumul
+			// carac = ATT.Physique, DEG.Magie ...
+			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) )+'.'+phymag ;
+			var bm = parseInt( effetsT[i].match(/-?\d+/) );
+			uniListe[nb]['caracs'][carac] = bm;
+			listeDurees[duree] = true;
+			}
+		}
+
+	/* Gestion des décumuls et cumuls des durées */
+	var toursGeres = [];
+	for (var d in listeDurees) toursGeres.push(d);
+	toursGeres.sort( function (a, b){return a-b;} );
+	
+	var strfat = ''; // pour sauvegarder les bm de fatigue
+	for (var i=0 ; i<toursGeres.length ; i++) {
+		var tour = toursGeres[i];
+		var effetsCeTour = []; decumulsCeTour = [];
+		for (var nb=1 ; nb<uniListe.length ; nb++) {
+			if (uniListe[nb]['duree']<toursGeres[i]) // si durée pvr < durée analysée, on passe
+				continue;
+			var nom = uniListe[nb]['nom'];
+			if (nom!='pasdedecumul') {
+				if (decumulsCeTour[nom]==null)
+					decumulsCeTour[nom] = 0;
+				decumulsCeTour[nom]++;
+				}
+			for (var carac in uniListe[nb]['caracs']) {
+				var nomcarac = carac.substring(0,carac.indexOf('.'));
+				var typecarac = carac.substring(carac.indexOf('.')+1);
+				var bm = uniListe[nb]['caracs'][carac];
+				if (effetsCeTour[nomcarac]==null) {
+					effetsCeTour[nomcarac] = [];
+					effetsCeTour[nomcarac]['Physique'] = 0;
+					effetsCeTour[nomcarac]['Magie'] = 0;
 					}
+				if (nom=='pasdedecumul' || nomcarac=='Fatigue')
+					effetsCeTour[nomcarac][typecarac] += bm;
+				else if (nomcarac=='TOUR') // les durees se comptent en demi-minutes dans MH
+					effetsCeTour[nomcarac][typecarac] += decumul(2*bm,decumulsCeTour[nom])/2;
+				else
+					effetsCeTour[nomcarac][typecarac] += decumul(bm,decumulsCeTour[nom]);
 				}
 			}
-			if(!isEmpty(listePouvoirsByTurn[duree][type]))
-				nbTypes++;
+		
+		/* Création du bilan du tour */
+		var texte = '';
+		var caracGerees = [];
+		for (var k in effetsCeTour)
+			caracGerees.push(k);
+		caracGerees.sort( triecaracs );
+		
+		for (var j=0 ; j<caracGerees.length ; j++) {
+			if (texte.length>0) {texte += ' | ';}
+			if (caracGerees[j]=='TOUR') {
+				texte += 'TOUR : '
+					+aff( effetsCeTour['TOUR']['Physique']+effetsCeTour['TOUR']['Magie'] )+' min';
+				}
+			else if (caracGerees[j]=='Fatigue') {
+				texte += 'Fatigue : '
+					+aff( effetsCeTour['Fatigue']['Physique']+effetsCeTour['Fatigue']['Magie'] );
+				// mémorisation fatigue
+				strfat+= toursGeres[i]+'-'
+					+(effetsCeTour['Fatigue']['Physique']+effetsCeTour['Fatigue']['Magie'])+';';
+				}
+			else if (caracGerees[j]=='PV') {
+				texte += 'PV : '
+					+aff( effetsCeTour['PV']['Physique']+effetsCeTour['PV']['Magie'] );
+				}
+			else if (caracGerees[j].length==3 || caracGerees[j]=='Armure') {
+				texte += caracGerees[j]+' : '
+					+aff( effetsCeTour[ caracGerees[j] ]['Physique'] )+'/'
+					+aff( effetsCeTour[ caracGerees[j] ]['Magie'] );
+				if (effetsCeTour[ caracGerees[j] ]['Physique']!=0 && effetsCeTour[ caracGerees[j] ]['Magie']!=0)
+					texte += ' ('+aff( effetsCeTour[ caracGerees[j] ]['Physique']
+									+effetsCeTour[ caracGerees[j] ]['Magie'])+')';
+				}
+			else {
+				texte += caracGerees[j]+' : '
+					+aff(effetsCeTour[caracGerees[j]]['Physique']+effetsCeTour[caracGerees[j]]['Magie'])+' %';
+				}
+			}
+		
+		/* Affichage */
+		// adpatation affichage dynamique (footable.js)
+		var thead = document.getElementsByTagName('thead')[0];
+		var nbHidden = document.evaluate("./tr/th[@style='display: none;']", thead, null, 7, null).snapshotLength;
+		var tfoottr = document.getElementsByTagName('tfoot')[0].childNodes[1];
+		var tr = insertTr(tfoottr.nextSibling, 'mh_tdpage');
+		var td = appendTdText(tr, texte);
+		td.setAttribute('colspan',5-nbHidden);
+		texte = toursGeres[i]+' Tour';
+		if (toursGeres[i]>1) {texte += 's';}
+		appendTdText(tr, texte);
 		}
-		if(nbTypes==1)
-		{
-			for(type in listeType)
-			{
-				var text="";
-				for (key in listePouvoirsByTurn[duree][type])
-				{
-					if(text.length!=0)
-						text+=" | ";
-					text+=key+" : "+positive(listePouvoirsByTurn[duree][type][key]);
-					if(key=="TOUR")
-						text+=" min";
-					if(key=="RM" || key=="MM")
-						text+="%";
-				}
-				if(text.length!=0)
-				{
-					var tr = appendTr(tbody,"mh_tdtitre");
-					var td = appendTdText(tr,"Total",1);
-					td = appendTdText(tr,text,1);
-					td.setAttribute('colspan',3);
-					td = appendTdText(tr,type);
-					td = appendTdText(tr,duree+" Tour(s)");
-				}
-			}
-		}
-		else if(nbTypes>1)
-		{
-			var text="";
-			for(pouv in listePouvoirs)
-			{
-				if(listePouvoirsByTurn[duree]["Physique"][pouv] || listePouvoirsByTurn[duree]["Magie"][pouv])
-				{
-					if(text.length!=0)
-						text+=" | ";
-					text+=pouv;
-					if(listePouvoirsByTurn[duree]["Physique"][pouv]==null)
-						text+="* : ";
-					else
-						text+=" : "+positive(listePouvoirsByTurn[duree]["Physique"][pouv]);
-					if(listePouvoirsByTurn[duree]["Physique"][pouv] && listePouvoirsByTurn[duree]["Magie"][pouv])
-						text+="/";
-					if(listePouvoirsByTurn[duree]["Magie"][pouv])
-						text+=positive(listePouvoirsByTurn[duree]["Magie"][pouv]);
-					if(pouv=="TOUR")
-						text+=" min";
-					if(pouv=="RM" || pouv=="MM")
-						text+="%";
-					if(listePouvoirsByTurn[duree]["Physique"][pouv] && listePouvoirsByTurn[duree]["Magie"][pouv])
-					{
-						text+=" ("+positive(listePouvoirsByTurn[duree]["Magie"][pouv]+listePouvoirsByTurn[duree]["Physique"][pouv]);
-						if(pouv=="TOUR")
-							text+=" min";
-						if(pouv=="RM" || pouv=="MM")
-							text+="%";
-						text+=")";
-					}
-				}
-			}
-/*			for(type in listeType)
-			{
-				for (key in listePouvoirsByTurn[duree][type])
-				{
-					if(text.length!=0)
-						text+=" | ";
-					if(type=="Magie")
-						text+=key+"* : "+positive(listePouvoirs);
-					else
-						text+=key+" : "+positive(listePouvoirsByTurn[duree][type][key]);
-					if(key=="TOUR")
-						text+=" min";
-					if(key=="RM" || key=="MM")
-						text+="%";
-				}
-			}*/
-			if(text.length!=0)
-			{
-				var tr = appendTr(tbody,"mh_tdtitre");
-				var td = appendTdText(tr,"Total",1);
-				td = appendTdText(tr,text,1);
-				td.setAttribute('colspan',3);
-				td = appendTdText(tr,"Mixte");
-				td = appendTdText(tr,duree+" Tour(s)");
-			}
-		}
+	
+	if (strfat) // stockage fatigue : tour-fatigue;tour-fatigue;...
+		MZ_setValue(numTroll+'.bm.fatigue', strfat);
 	}
 
-}
-catch(e) {alert(e)}
-}
-
+try {
 start_script();
-
-treateMalus();
-
-displayScriptTime();
+traiteMalus();
+displayScriptTime()
+}
+catch(e) {alert(e)};

@@ -16,57 +16,124 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-function positive(i)
-{
-	if(i>=0)
-		return "+"+i;
-	return i;
-}
+/* v3.1.1 by Dabihul - 2013-05-30
+ * - nouvelle nouvelle gestion recherches (jquery + ajout colonne + renommage)
+ * - ajout toggleMouches
+ */
 
-function treateMouches() {
-try
-{
-	var mouches = document.evaluate("//tr[@class='mh_tdpage']/td/img[@alt='Là']/../../td[2]/text()[contains(.,'(')]",
-			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	listePouvoirs = new Array();
-	for(var i=0;i<mouches.snapshotLength;i++)
-	{
-		var texte = mouches.snapshotItem(i).nodeValue;
-		if(texte.indexOf(":")==-1)
-			continue;
-		var bonus = trim(texte.substring(texte.indexOf("(")+1,texte.indexOf(":")));
-		var valeur = parseInt(texte.substring(texte.indexOf(":")+1,texte.indexOf(")")));
-		if(listePouvoirs[bonus] == null)
-			listePouvoirs[bonus] = valeur;
+var mainTab = document.getElementById('mouches');
+var trmouches;
+
+function toggleMouches() {
+	if (MZ_getValue('HIDEMOUCHES')=='true') {
+		MZ_setValue('HIDEMOUCHES','false');
+		for (var i=0 ; i<trmouches.snapshotLength ; i++)
+			trmouches.snapshotItem(i).setAttribute('style','');
+		}
+	else {
+		MZ_setValue('HIDEMOUCHES','true');
+		for (var i=0 ; i<trmouches.snapshotLength ; i++)
+			trmouches.snapshotItem(i).setAttribute('style','display:none;');
+		}
+	}
+
+function setDisplayMouches() {
+	if (!mainTab) return;
+	trmouches = document.evaluate("./tbody/tr", mainTab, null, 7, null);
+	if (!trmouches) return;
+	
+	var titre = document.getElementById('titre2');
+	if (titre) {
+		titre.setAttribute('style','cursor:pointer;');
+		titre.addEventListener('click', toggleMouches , false);
+		}
+	
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	if (tfoot) {
+		tfoot.setAttribute('style','cursor:pointer;');
+		tfoot.addEventListener('click', toggleMouches , false);
+		}
+	
+	if (MZ_getValue('HIDEMOUCHES')=='true') {
+		for (var i=0 ; i<trmouches.snapshotLength ; i++)
+			trmouches.snapshotItem(i).setAttribute('style','display:none;');
+		}
+	}
+
+function traiteMouches() {
+	if (!mainTab) return;
+
+	/* Extraction des bm des mouches actives */
+	var mouchesLa = document.evaluate("./tbody/tr/td[7]/img[@alt='La Mouche est là']/../../td[3]/nobr[1]",
+										mainTab, null, 7, null);
+	var listePouvoirs = [], listeTypes = [];
+	for (var i=0 ; i<mouchesLa.snapshotLength ; i++) {
+		var node = mouchesLa.snapshotItem(i);
+		// pour décompte final type de mouches
+		var type = trim(node.parentNode.parentNode.childNodes[7].textContent);
+		if (!listeTypes[type])
+			listeTypes[type] = 1;
 		else
-			listePouvoirs[bonus] += valeur;
+			listeTypes[type]++;
+		if (!node.textContent) continue;
+		// gestion bonus (multiples pour pogées)
+		var caracs = node.textContent.split(' | ');
+		for (var j=0 ; j<caracs.length ; j++) {
+			var valeur = parseInt(caracs[j].match(/-?\d+/));
+			var carac = caracs[j].substring(0,caracs[j].indexOf(':')-1);
+			if (!listePouvoirs[carac])
+				listePouvoirs[carac] = valeur;
+			else
+				listePouvoirs[carac] += valeur;
+			}
+		}
+	
+	/* Extraction Effet total et affichage variation */
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	if (!tfoot) return;
+	var node = document.evaluate(".//b[contains(./text(),'Effet total')]", tfoot,
+								null, 9, null).singleNodeValue.nextSibling;
+	var effetsmax = node.nodeValue.split('|');
+	var texte = ' ';
+	for (var i=0 ; i<effetsmax.length ; i++) {
+		if (texte.length!=1)
+			texte += ' | ';
+		var carac = trim(effetsmax[i].substring(0,effetsmax[i].indexOf(':')-1));
+		var bonus = effetsmax[i].match(/-?\d+/);
+		if (!listePouvoirs[carac]) listePouvoirs[carac]=0;
+		if (listePouvoirs[carac]!=bonus) {
+			texte += '<b>'+carac+' : '+aff(listePouvoirs[carac]);
+			if (carac=='TOUR') texte += ' min';
+			texte += '</b>';
+			}
+		else
+			texte += effetsmax[i];
+		}
+	span = document.createElement('span');
+	span.innerHTML = texte;
+	node.parentNode.replaceChild(span, node);
+	
+	/* Affichage différences décomptes par type */
+	var mouchesParType = document.evaluate("./tr/td/ul/li/text()", tfoot, null, 7, null);
+	for (var i=0 ; i<mouchesParType.snapshotLength ; i++) {
+		var node = mouchesParType.snapshotItem(i);
+		var mots = node.nodeValue.split(' ');
+		var type = mots.pop();
+		if (!listeTypes[type])
+			node.nodeValue += ' (0 présente)';
+		else if (mots[0]!=listeTypes[type]) {
+			if (listeTypes[type]==1)
+				node.nodeValue += ' (1 présente)';
+			else
+				node.nodeValue += ' ('+listeTypes[type]+' présentes)';
+			}
+		}
 	}
-	var nombreMouches = document.evaluate("//tr[@class='mh_tdpage']/td[4]/text()[contains(.,'jours')]/../../td[2]/text()[contains(.,'(')]",
-			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotLength;
-	var tbody = document.evaluate("//form[@name='ActionForm']/table[@class='mh_tdborder']/tbody[1]",
-			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-	var tr = appendTr(tbody,"mh_tdtitre");
-	var td = appendTdText(tr,"Total",1);
-	td = appendTdText(tr,mouches.snapshotLength+" mouches présentes sur "+nombreMouches+"",1);
-	td.setAttribute('colspan', 4);
-	var text="";
-	for (key in listePouvoirs)
-	{
-		if(text.length!=0)
-			text+=" | ";
-		text+=key+" : "+positive(listePouvoirs[key]);
-		if(key=="TOUR")
-			text+=" min";
-		if(key=="RM" || key=="MM")
-			text+="%";
-	}
-	appendText(td," ( "+text+" )");
+
+try {
+start_script();
+setDisplayMouches();
+traiteMouches();
+displayScriptTime();
 }
 catch(e) {alert(e)}
-}
-
-start_script();
-
-treateMouches();
-
-displayScriptTime();

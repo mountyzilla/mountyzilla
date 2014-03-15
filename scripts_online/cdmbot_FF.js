@@ -16,13 +16,21 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
+
 var pageDispatcher = "http://mountypedia.free.fr/mz/cdmdispatcher.php";
 //var pageDispatcher = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
 var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
 var pageEffetDispatcher = "http://mountypedia.free.fr/mz/effetdispatcher.php";
 var buttonCDM;
 
-/*
+/*******************************************************************************************
+Vous avez utilisé CONNAISSANCE DES MONSTRES sur un Ver Carnivore Géant [Nouveau] (4195873)
+
+Le Monstre ciblé fait partie des : Monstre
+
+Niveau : Excellent (entre 11 et 13)
+
+*******************************************
 
 Vous avez utilisé le Sortilège : CONNAISSANCE DES MONSTRES sur un Gritche [Favori] (2010762)
 
@@ -55,16 +63,17 @@ Portée du Pouvoir : Au toucher
 
 Le Monstre Ciblé fait partie des : Mort-Vivant (Maître Nécrochore [Vénérable] - N°1249810)
 Niveau : Incroyable (entre 36 et 39)
-*/
-function sendCDM()
-{
-	var td = document.evaluate("//td/text()[contains(.,'Le Monstre ciblé fait partie des')]/..",
+
+*******************************************************************************************/
+
+function sendCDM() { // check Dab
+	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if (!td)
 		return false;
 		
 	cdm = td.innerHTML;
-	cdm = cdm.replace(/.*Vous avez utilisé.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,"$3$4 ($1 - N°$2)<br>");
+	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,"$3$4 ($1 - N°$2)<br>");
 	cdm = cdm.replace(/<br>/g,"\n");
 	cdm = cdm.replace(/Blessure :[\s]*[0-9]+ % \(approximativement\)/g, "Blessure : XX % (approximativement)");
 
@@ -74,17 +83,18 @@ function sendCDM()
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml'
-				},
+					},
 				onload: function(responseDetails) {
 					buttonCDM.value=responseDetails.responseText;
 					buttonCDM.disabled = true;
-				}
+					}
 				});
-}
+	}
 
-function traiteCdM() {
+
+function traiteCdM() { // check Dab
 	// Teste si ce message du bot est un message de CdM
-	var td = document.evaluate("//td/text()[contains(.,'Le Monstre ciblé fait partie des')]/..",
+	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if (!td)
 		return false;
@@ -93,12 +103,9 @@ function traiteCdM() {
 	// pour mettre les points de vie restants estimés
 	var des = cdm.indexOf('Dés');
 	var pv = cdm.substring(cdm.indexOf('Points de Vie'), cdm.indexOf('Blessure'));
-	pv = getPVsRestants(pv, cdm.substring(cdm.indexOf('Blessure :') + 12, des));
+	pv = getPVsRestants(pv, cdm.substring(cdm.indexOf('Blessure :'), des));
 	if (pv)
-		td.innerHTML = cdm.substring(0, des - 4) + "<br>" + pv[0]+ pv[1] + cdm.substring(des - 4);
-
-	// Pas de blessure quand on envoie un message du bot
-	cdm = cdm.replace(/Blessure : [0-9]+ % (approximativement)/g, "Blessure : XX % (approximativement)");
+		td.innerHTML = cdm.substring(0, des - 4) + '<br />' + pv[0] + pv[1] + cdm.substring(des - 4);
 
 	// On insère le bouton et un espace
 	var button = insertButtonCdm('bClose');
@@ -108,12 +115,14 @@ function traiteCdM() {
 			+ "', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
 			+ "this.value='Merci de votre participation'; this.disabled = true;");*/
 			
-	button.addEventListener("click",sendCDM, true);
-}
+	button.addEventListener('click', sendCDM, true);
+	}
+
 
 function traitePouvoir() {
 	// Teste si ce message du bot est un message de CdM
-	var td = document.evaluate("//td/text()[contains(.,'Vous avez été impliqué dans un événement : POUVOIR')]/../text()[contains(.,'sa capacité spéciale')]/..",
+	// le test "capa" évite les pouvoirs type Chonchon (pas de SR)
+	var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacité spéciale')]/..",
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if (!td)
 		return false;
@@ -126,18 +135,17 @@ function traitePouvoir() {
 	date = new Date(date.replace(/([0-9]+)\/([0-9]+)\//,"$2/$1/"));
 	var effetPouvoir="";
 	var full=false;
-	if(infos.indexOf("REDUIT")!=-1)
-	{
+	if(infos.indexOf("REDUIT")!=-1) {
 		effetPouvoir = /effet REDUIT : ([^<]+)/.exec(infos)[1];
-	}
-	else
-	{
+		}
+	else {
 		effetPouvoir = /effet : ([^<]+)/.exec(infos)[1];
 		full=true;
-	}
+		}
 	var dureePouvoir = /durée de ([0-9]+)/.exec(infos)[1];
 	// On insère le bouton et un espace
-	var url = pageEffetDispatcher + "?pouv="+escape(nomPouvoir)+"&monstre="+escape(nomMonstre)+"&id="+escape(id)+"&effet="+escape(effetPouvoir)+"&duree="+escape(dureePouvoir)+"&date="+escape(Math.round(date.getTime()/1000));
+	//var url = pageEffetDispatcher + "?pouv="+escape(nomPouvoir)+"&monstre="+escape(nomMonstre)+"&id="+escape(id)+"&effet="+escape(effetPouvoir)+"&duree="+escape(dureePouvoir)+"&date="+escape(Math.round(date.getTime()/1000));
+	// ce type d'URL est obsolète (se fait par msgId dorénavant)
 	if(!MZ_getValue('AUTOSENDPOUV'))
 	{
 		var button = insertButtonCdm('bClose',null,"Collecter les infos du pouvoir");
@@ -158,4 +166,4 @@ function traitePouvoir() {
 }
 
 traiteCdM();
-traitePouvoir();
+//traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
