@@ -290,15 +290,16 @@ function createImage(url,title) {
 	return img;
 	}
 
-function createAltImage(url,alt) {
+function createAltImage(url,alt,title) {
 	var img = document.createElement('img');
 	img.src = url;
 	img.alt = alt;
+	img.title = title;
 	img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
 	return img;
 	}
 
-function createImageSpan(url,text,title,alt) {
+function createImageSpan(url,alt,title,text,bold) {
 	var span = document.createElement('span');
 	span.title = title;
 	var img = document.createElement('img');
@@ -306,7 +307,7 @@ function createImageSpan(url,text,title,alt) {
 	img.alt = alt;
 	img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
 	span.appendChild(img);
-	span.appenChild(document.createTextNode(text));
+	appendText(span,text,bold);
 	return span;
 	}
 
@@ -769,7 +770,7 @@ function addInfoMM(node,mob,niv,qualite,effetQ) {
 			str = 'Compo de ';
 		}
 	var title = str+mob+' : -'+niv+'\nQualité '+qualite+' : -'+effetQ;
-	var span = createImageSpan(urlImg,text,title,'MM:');
+	var span = createImageSpan(urlImg,'MM:',title,text);
 	node.appendChild(span);
 	}
 	

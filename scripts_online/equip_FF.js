@@ -18,9 +18,35 @@
 
 /**
  * 2014-02-08 - v2.0a (from scratch)
- * 2014-02-18 - v2.0a.1
-  - ajout calcul Carats / UM des minerais + totaux
+ * 2014-02-18 - v2.0a0
+ * - ajout calcul Carats / UM des minerais + totaux
+ * 2014-03-06 - v2.0a1
+ * - retour Infos EM des Champis
+ * TODO
+ * Ces fonctions sont dev ici en test, à terme elles seront à intégrer dans libs
  */
+
+
+function traiteChampis() {
+	try{
+		var tr = document.getElementById('mh_objet_hidden_Champignon');
+		var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		}
+	catch(e){return;}
+	if(trlist.length<=0) return;
+	for(var i=0 ; i<trlist.snapshotLength ; i++) {
+		var node = trlist.snapshotItem(i).childNodes[7];
+		var str = node.textContent.trim();
+		var type = str.slice(0,str.lastIndexOf(' '));
+		var mundi = mundiChampi[type];
+		if(!mundi) continue;
+		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
+			+'Competences/ecritureMagique.png';
+		var img = createAltImage(urlImg,'EM','Mundidey '+mundi);
+		appendText(node,' ');
+		node.appendChild(img);
+		}
+	}
 
 function traiteCompos() {
 	var tr = document.getElementById('mh_objet_hidden_Composant');
@@ -31,16 +57,17 @@ function traiteCompos() {
 
 function traiteMinerai() {
 	try{
-	var tr = document.getElementById('mh_objet_hidden_Minerai');
-	var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
-	}
+		var tr = document.getElementById('mh_objet_hidden_Minerai');
+		var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		}
 	catch(e){return;}
 	if(trlist.length<=0) return;
-	var totaux = {}, str;
+	var totaux = {};
+	var str;
 	for(var i=0 ; i<trlist.snapshotLength ; i++) {
 		var node = trlist.snapshotItem(i);
-		var nature = node.childNodes[7].textContent;
-		var caracs = node.childNodes[9].textContent;
+		var nature = node.childNodes[7].textContent,
+			caracs = node.childNodes[9].textContent;
 		var taille = caracs.match(/\d+/);
 		var coef = 1;
 		if(caracs.indexOf('Moyen')!=-1) coef = 2;
@@ -74,22 +101,18 @@ function traiteMinerai() {
 		}
 	/*var node = document.getElementById('mh_plus_Minerai');
 	var titre = document.evaluate("./td[contains(./b/text(),'Minerai')]",
-				node.parentNode.parentNode.parentNode, null, 9, null).singleNodeValue;
+		node.parentNode.parentNode.parentNode, null, 9, null).singleNodeValue;
 	if(!titre) return;*/
-	// Il faut prÃ©alablement injecter du CSS pour ne pas hÃ©riter de 'mh_titre3'
-	var parNode = trlist.snapshotItem(0).parentNode;
-	var td = appendTdText(parNode, '('+str+')');
+	// Il faut préalablement injecter du CSS pour ne pas hériter de 'mh_titre3'
+	var td = appendTdText(trlist.snapshotItem(0).parentNode, '('+str+')');
 	td.colSpan = 7;
 	}
 
-function traiteChampis() {
-	
-	}
 
 start_script();
 
-traiteCompos();
 traiteChampis();
+traiteCompos();
 traiteMinerai();
 
 displayScriptTime();
