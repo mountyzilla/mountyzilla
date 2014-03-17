@@ -364,13 +364,26 @@ function trim(str) {
 	return str.replace(/(^\s*)|(\s*$)/g,'');
 	}
 
+String.prototype.trim = function() {
+    return this.replace(/^\s+/,'').replace(/\s+$/,'');
+    }
+
 function epure(texte) {
 	return texte.replace(/[авд]/g,'a').replace(/В/g,'A')
+		.replace(/[з]/g,'c')
 		.replace(/[йкил]/g,'e')
 		.replace(/[по]/g,'i')
 		.replace(/[фцх]/g,'o')
-		.replace(/[щыь]/g,'u')
-		.replace(/[з]/g,'c');
+		.replace(/[щыь]/g,'u');
+	}
+
+String.prototype.epure = function () {
+	return this.replace(/[авд]/g,'a').replace(/В/g,'A')
+		.replace(/[з]/g,'c')
+		.replace(/[йкил]/g,'e')
+		.replace(/[по]/g,'i')
+		.replace(/[фцх]/g,'o')
+		.replace(/[щыь]/g,'u');
 	}
 
 function bbcode(texte) {
