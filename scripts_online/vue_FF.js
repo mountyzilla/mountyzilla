@@ -16,25 +16,9 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-/* VERSION PROVISOIRE --- BUGGUÉE !!!
- * v0.1.1b - 2013-04-23
- * - downgrade getTrollGuildeID pour suivre MH
- * - grouky vue -> 5b1 ; vue kilamo -> DEAD
- * v0.1.2 - 2013-04-30
- * - adaptation aux nouvelles options
- * - modif insertion des urls (v-centrage avec table autour)
- * v0.1.3 - 2013-05-08
- * - correction insertion données Bricol'Trolls
- * (les BT ne gèrent pas les bonus de PV)
+/* TODO
  * /!\ bug latent sur diminution bonusPV (perte Telaite / template Ours),
  * prévoir fix ("delete infos")
- * v0.1.3.1 - 2013-05-17
- * - correction getVueScript (champignons)
- * v0.1.3.1b - 2013-08-29
- * - correction syntaxe alert
- * v0.1.4 - 2013-12-28
- * - le checking général continue (et c'est gonflant)
- * - ajout des liens vers les IT BT
  */
 
 var filtreMonstre = ''; // obsolète - DEBUG
@@ -65,8 +49,8 @@ var listeEngages = [];
 var isEngagesComputed = false;
 var cursorOnLink = false;
 
-var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste') &&
-					MZ_getValue(numTroll+'.enchantement.liste')!='';
+var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
+	&& MZ_getValue(numTroll+'.enchantement.liste')!='';
 
 
 /*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
@@ -217,6 +201,10 @@ function getTrollDistance(i) {
 
 function getTrollID(i) {
 	return tr_trolls[i].childNodes[1].firstChild.nodeValue;
+	}
+
+function getTrollNomNode(i) {
+	return tr_trolls[i].childNodes[2];
 	}
 
 function getTrollGuildeID(i) {
@@ -689,7 +677,74 @@ function hidePXTroll() {
 	bulle.style.visibility = 'hidden';
 	}
 
+/* [functions] Envoi PX / MP */
 
+function putBoutonPXMP() {
+	// Bouton d'initialisation du mode Envoi
+	var tdTitle = document.getElementsByName('trolls')[0];
+	if(!tdTitle) return;
+	tdTitle = tdTitle.parentNode;
+	tdTitle.width = 70;
+	var td = insertTd(tdTitle.nextSibling);
+	var bouton = appendButton(td,'Envoyer...',prepareEnvoi);
+	bouton.id = 'boutonEnvoi';
+	}
+
+function prepareEnvoi() {
+	// = EventListener bouton d'envoi
+	/* Ajout du radio de choix PX ou MP */
+	var tdEnvoi = document.getElementById('boutonEnvoi');
+	if(!tdEnvoi) return;
+	tdEnvoi = tdEnvoi.parentNode;
+	var radioElt = document.createElement('input');
+	radioElt.type = 'radio';
+	radioElt.name = 'envoiPXMP'
+	radioElt.id = 'radioPX'
+	appendText(tdEnvoi,' ');
+	tdEnvoi.appendChild(radioElt);
+	appendText(tdEnvoi,' des PX ');
+	radioElt = document.createElement('input');
+	radioElt.type = 'radio';
+	radioElt.name = 'envoiPXMP'
+	radioElt.checked = true;
+	tdEnvoi.appendChild(radioElt);
+	appendText(tdEnvoi,' un MP');
+	
+	/* Ajout de la colonne des CheckBoxes */
+	var td = insertTdText(getTrollNomNode(0),'');
+	td.width = 5;
+	for(var i=nbTrolls ; i>0 ; i--) {
+		td = insertTd(getTrollNomNode(i));
+		appendCheckBox(td,'envoi'+i);
+		}
+	
+	/* Modification de l'effet du bouton */
+	document.getElementById('boutonEnvoi').onclick = effectueEnvoi;
+	}
+
+function effectueEnvoi() {
+	// = Second Listener du bouton d'envoi PX MP (charge un nouveau frame)
+	var str='';
+	for(var i=nbTrolls ; i>0 ; i--) {
+		var chb = document.getElementById('envoi'+i);
+		if(chb.checked)	str += (str?',':'')+getTrollID(i);
+		}
+	var PXchecked = document.getElementById('radioPX').checked;
+	if(PXchecked) {
+		window.open(
+			'http://games.mountyhall.com/mountyhall/MH_Play/'
+			+'Actions/Play_a_DonPX.php?cat=8&dest='+str,
+			'Contenu'
+			);
+		}
+	else {
+		window.open(
+			'http://games.mountyhall.com/mountyhall/Messagerie/'
+			+'MH_Messagerie.php?cat=3&dest='+str,
+			'Contenu'
+			);
+		}
+	}
 
 /*-[functions]---------------- Fonctions Trésors -----------------------------*/
 /*------------------------------- CHECK DONE ---------------------------------*/
@@ -1720,6 +1775,7 @@ putExternalLinks();
 set2DViewSystem();
 putLieuxBouton();
 putMonstresBouton();
+putBoutonPXMP();
 
 
 //800 ms
