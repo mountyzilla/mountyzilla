@@ -693,9 +693,9 @@ function putBoutonPXMP() {
 function prepareEnvoi() {
 	// = EventListener bouton d'envoi
 	/* Ajout du radio de choix PX ou MP */
-	var tdEnvoi = document.getElementById('boutonEnvoi');
-	if(!tdEnvoi) return;
-	tdEnvoi = tdEnvoi.parentNode;
+	var btnEnvoi = document.getElementById('boutonEnvoi');
+	if(!btnEnvoi) return;
+	var tdEnvoi = btnEnvoi.parentNode;
 	var radioElt = document.createElement('input');
 	radioElt.type = 'radio';
 	radioElt.name = 'envoiPXMP'
@@ -710,6 +710,9 @@ function prepareEnvoi() {
 	tdEnvoi.appendChild(radioElt);
 	appendText(tdEnvoi,' un MP');
 	
+	/* Insertion du bouton Annuler */
+	var btn = insertButton(btnEnvoi,'Annuler',annuleEnvoi);
+	
 	/* Ajout de la colonne des CheckBoxes */
 	var td = insertTdText(getTrollNomNode(0),'');
 	td.width = 5;
@@ -718,8 +721,26 @@ function prepareEnvoi() {
 		appendCheckBox(td,'envoi'+i);
 		}
 	
-	/* Modification de l'effet du bouton */
+	/* Modification de l'effet du bouton Envoi */
 	document.getElementById('boutonEnvoi').onclick = effectueEnvoi;
+	}
+
+function annuleEnvoi() {
+	// = EventListener du bouton Annuler
+	/* Nettoyage du td du bouton Envoi */
+	var btnEnvoi = document.getElementById('boutonEnvoi');
+	var tdEnvoi = btnEnvoi.parentNode;
+	while(tdEnvoi.firstChild) {
+		tdEnvoi.removeChild(tdEnvoi.firstChild);
+		}
+	/* Suppression CheckBoxes */
+	for(var i=nbTrolls ; i>=0 ; i--) {
+		var td = getTrollNomNode(i);
+		td.parentNode.removeChild(td);
+		}
+	/* Retour à l'effet de base du bouton Envoi */
+	btnEnvoi.onclick = prepareEnvoi;
+	tdEnvoi.appendChild(btnEnvoi);
 	}
 
 function effectueEnvoi() {
