@@ -16,15 +16,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-/* v1.1.1 by Dabihul - 2012-07-21
- * - màn de l'analyseur de profil
- * - correction des valeurs (MM/RM et qq erreurs)
- * - ajout d'une 18e carac (poids max pour les anneaux... ok c'est moche)
- * - gestion des items renforcés ou légers
- * - résolution du problème lower/upper-case
- * v2.0a0 - 2014-04-09
- * - màj syntaxe en vue dépôt GitHub : BDD en json + multiples màj code
- TODO
+/* TODO
  * - MZ2.0 : Implémenter les BDD en dur dans le module interne
  */
 

@@ -16,15 +16,6 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-/*
- * v0.1.2b - 2013-08-19
- * - correction syntaxe alert
- * v0.1.3 by Dab - 2013-08-23
- * - correction treateMinerai
- * TODO tout le reste !
- */
-
-//var compoDB = "http://darkwood.free.fr/divers/compodb.php";
 var popup;
 
 function initPopup() {

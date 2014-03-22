@@ -128,7 +128,7 @@ function traiteCdM() {
 	var des = cdm.indexOf('Dés');
 	var pv = cdm.slice(cdm.indexOf('Points de Vie'),cdm.indexOf('Blessure'));
 	pv = getPVsRestants(pv, cdm.slice(cdm.indexOf('Blessure :'),des) );
-	if (pv)
+	if(pv)
 		td.innerHTML = cdm.slice(0,des-4)+'<br />'+(pv[0]+pv[1]) + cdm.substring(des-4);
 
 	// Insertion bouton envoi + espace

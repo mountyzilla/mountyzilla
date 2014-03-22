@@ -16,9 +16,11 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-/* v0.1a vy Dab - 2013-08-20
+/* v0.1a by Dab - 2013-08-20
  * - révision complète du script
  * NB : il n'est plus possible de différencier meneur et équipier par la validation d'étape
+ * TODO
+ * À remettre totalement à jour avec la réforme des missions
  */
 
 function treateMission() {
@@ -78,9 +80,7 @@ function treateMission() {
 	}
 
 start_script(60);
-// provisoire : clean up
-MZ_removeValue('MISSION_' + numTroll);
-//
+
 MZ_removeValue(numTroll+'.MISSION');
 treateMission();
 

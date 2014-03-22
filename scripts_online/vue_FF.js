@@ -17,24 +17,12 @@
 *******************************************************************************/
 
 /* VERSION PROVISOIRE --- BUGGUÉE !!!
- * v0.1.1b - 2013-04-23
- * - downgrade getTrollGuildeID pour suivre MH
- * - grouky vue -> 5b1 ; vue kilamo -> DEAD
- * v0.1.2 - 2013-04-30
- * - adaptation aux nouvelles options
- * - modif insertion des urls (v-centrage avec table autour)
+ * TODO
  * v0.1.3 - 2013-05-08
  * - correction insertion données Bricol'Trolls
  * (les BT ne gèrent pas les bonus de PV)
  * /!\ bug latent sur diminution bonusPV (perte Telaite / template Ours),
  * prévoir fix ("delete infos")
- * v0.1.3.1 - 2013-05-17
- * - correction getVueScript (champignons)
- * v0.1.3.1b - 2013-08-29
- * - correction syntaxe alert
- * v0.1.4 - 2013-12-28
- * - le checking général continue (et c'est gonflant)
- * - ajout des liens vers les IT BT
  */
 
 var filtreMonstre = ''; // obsolète - DEBUG

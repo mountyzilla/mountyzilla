@@ -58,7 +58,7 @@ function treateMonstre() {
 			}
 			catch(e)
 			{
-				alert(e);
+				window.alert(e);
 			}
 
 		}
@@ -102,7 +102,7 @@ function showPopup(evt) {
 	}
 	catch(e)
 	{
-		alert(e);
+		window.alert(e);
 	}
 }
 
@@ -141,7 +141,7 @@ try
 }
 catch(e)
 {
-	alert(e);
+	window.alert(e);
 }
 
 displayScriptTime();

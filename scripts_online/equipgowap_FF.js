@@ -15,7 +15,6 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
-/* 2013-08-19 : correction auto syntaxe alert */
 
 var popup;
 

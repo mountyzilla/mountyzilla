@@ -16,25 +16,8 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-/* v0.10.0 - 2013-12-13
- * - correctif freezing et check-up déploiement
- * v0.10.3a - 2013-12-22
- * - correctif BS
- * - alignement Anatrolliseur (Rotobaffe)
- * v0.10.4 - 2013-12-28
- * - allègement de code
- * v0.10.5 - 2014-01-01
- * - gestion pièges
- * v0.10.6 - 2014-01-04
- * - gestion golemo
- * v0.10.6.1 - 2014-01-06
- * - correction refreshAccel()
- * v0.10.6.2 - 2014-01-24
- * - disparition balluchonnage
- * v0.10.6.3 - 2014-02-03
- * - mise aux normes MDN
- * TODO
- * - révision des formules de trimul --> sera traité en externe dans MZ 1.1
+/* TODO
+ * - révision des formules de trimul --> sera traité en externe dans MZ 2.0
  * - ajouter la gestion des bm de PV et du vampi... pour le trimul aussi
   --> manque d'infos
  * - (ou pas) gérer les décumuls avec la page des BM

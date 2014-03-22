@@ -2,9 +2,6 @@
 *  This file is part of Mountyzilla (http://mountyzilla.tilk.info/)              *
 *  Mountyzilla is free software; provided under the GNU General Public License   *
 *********************************************************************************/
-/* 2013-08-19 : correction auto syntaxe alert */
-
-/* v0.0.1 by Dabihul - 2013-04-21 */
 
 const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
 const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
