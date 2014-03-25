@@ -15,9 +15,6 @@
 *    along with Mountyzilla; if not, write to the Free Software                  *
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
-/* 2013-08-19 : correction auto syntaxe alert */
-/* v1.0.4 by Dabihul - 2012-08-01 - TODO nada                                   */
-
 
 // n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
 

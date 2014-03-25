@@ -2,9 +2,6 @@
 *  This file is part of Mountyzilla (http://mountyzilla.tilk.info/)              *
 *  Mountyzilla is free software; provided under the GNU General Public License   *
 *********************************************************************************/
-/* 2013-08-19 : correction auto syntaxe alert */
-
-/* v0.0.1 by Dabihul - 2013-04-21 */
 
 const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
 const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
@@ -95,9 +92,6 @@ MZ_xmlhttpRequest({
 							}
 						}
 						string += '</table>';
-						//var thisP=document.getElementsByTagName('p')[8];
-						//var thisP=document.evaluate("//p/table[@class = 'mh_tdborder' and contains(./descendant::text(),'Heure Serveur')]/..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-						//var thisP=document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 						var thisP=document.getElementById('footer2');
 						var newP=document.createElement('p');
 						newP.setAttribute('align','center');
