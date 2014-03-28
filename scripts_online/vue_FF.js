@@ -339,10 +339,8 @@ function updateTactique() {
 
 function filtreMonstres() {
 	// = EventListener universel pour les fonctions liées aux monstres
-	var urlImg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/'
-		+'Competences/ecritureMagique.png',
-		urlEnchantImg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/'
-		+'images/enchant.png';
+	var urlImg = MZimg+'Competences/ecritureMagique.png',
+		urlEnchantImg = MZimg+'images/enchant.png';
 	var useCss = MZ_getValue(numTroll+'.USECSS')=='true';
 	var noGowaps = saveCheckBox(checkBoxGowaps,'NOGOWAP'),
 		noMythiques = saveCheckBox(checkBoxMythiques,'NOMYTH'),
@@ -533,20 +531,23 @@ function filtreTrolls() {
 	var noIntangibles = saveCheckBox(checkBoxIntangibles,'NOINT');
 	var strTroll = document.getElementById('rec_troll').value.toLowerCase();
 	var strGuilde = document.getElementById('rec_guilde').value.toLowerCase();
-	var isFTOn = strTroll!='';
-	var isFGOn = strGuilde!='';
+	var isFiltreTrollOn = strTroll!='';
+	var isFiltreGuildeOn = strGuilde!='';
 	var titre = document.getElementsByName('trolls')[0].firstChild.firstChild;
 	titre.nodeValue = 'TRÕLLS'
-		+(isFTOn ? ' (filtrés sur '+strTroll+')' : '')
-		+(isFGOn ? ' (guildes filtrées sur '+strGuilde+')' : '');
+		+(isFiltreTrollOn ? ' (filtrés sur '+strTroll+')' : '')
+		+(isFiltreGuildeOn ? ' (guildes filtrées sur '+strGuilde+')' : '');
 
 	for(var i=1 ; i<=nbTrolls ; i++) {
 		var tds = tr_trolls[i].childNodes;
 		tr_trolls[i].style.display =
-			(noIntangibles && tds[2].firstChild.className=='mh_trolls_0') ||
-			(isFTOn && tds[2].textContent.toLowerCase().indexOf(strTroll)==-1) ||
-			(isFGOn && (!tds[5].firstChild.firstChild ||
-				tds[5].textContent.toLowerCase().indexOf(strGuilde)==-1))
+			(noIntangibles
+				&& tds[2].firstChild.className=='mh_trolls_0') ||
+			(isFiltreTrollOn	
+				&& tds[2].textContent.toLowerCase().indexOf(strTroll)==-1) ||
+			(isFiltreGuildeOn
+				&& (!tds[5].firstChild.firstChild ||
+					tds[5].textContent.toLowerCase().indexOf(strGuilde)==-1))
 			? 'none' : '';
 		}
 	}
@@ -573,9 +574,9 @@ function refreshDiplo() {
 			onload: function(responseDetails) {
 				try	{
 					responseDetails.responseXML =
-					new DOMParser().parseFromString(
-						responseDetails.responseText,'text/xml'
-						);
+						new DOMParser().parseFromString(
+							responseDetails.responseText,'text/xml'
+							);
 					var infosDiplo = responseDetails.responseXML;
 					if(infosDiplo.getElementsByTagName('error').length>0) {
 						MZ_setValue('NODIPLO','true');
@@ -752,18 +753,10 @@ function effectueEnvoi() {
 		}
 	var PXchecked = document.getElementById('radioPX').checked;
 	if(PXchecked) {
-		window.open(
-			'http://games.mountyhall.com/mountyhall/MH_Play/'
-			+'Actions/Play_a_DonPX.php?cat=8&dest='+str,
-			'Contenu'
-			);
+		window.open('Actions/Play_a_DonPX.php?cat=8&dest='+str,'Contenu');
 		}
 	else {
-		window.open(
-			'http://games.mountyhall.com/mountyhall/Messagerie/'
-			+'MH_Messagerie.php?cat=3&dest='+str,
-			'Contenu'
-			);
+		window.open('../Messagerie/MH_Messagerie.php?cat=3&dest='+str,'Contenu');
 		}
 	}
 
@@ -1228,6 +1221,8 @@ function erreurIT( chaine , it ) {
  new Array(PV,PVbase,date màj: "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
  + etc ...
  + putInfosTrolls();
+ * 
+ * Il est donc impossible d'afficher les invis d'une IT Bricol'Trolls.
  */
 
 function corrigeBricolTrolls() {
@@ -1255,10 +1250,10 @@ function putInfosTrolls() {
 	
 	try
 	{
-	var td = insertTdText(tr_trolls[0].childNodes[6], 'PA', true);
-	td.setAttribute('width', '40');
-	td = insertTdText(tr_trolls[0].childNodes[6], 'PV', true);
-	td.setAttribute('width', '105');
+	var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
+	td.width = 40;
+	td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
+	td.width = 105;
 	
 	corrigeBricolTrolls();
 	
@@ -1298,10 +1293,13 @@ function putInfosTrolls() {
 			}
 		}
 	}
-	catch(e) { window.alert('Erreur troll='+i+'\n'+e+'\n'+tr_trolls[i].innerHTML); }
+	catch(e) {
+		window.alert('Erreur troll='+i+'\n'+e+'\n'+tr_trolls[i].innerHTML);
+		}
 	}
 
 
+/* [functions] Gros tas de fonctions à ranger */
 
 // POPUP CDM
 
@@ -1817,12 +1815,9 @@ savePosition();
 	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
 	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
 	filtreMonstres();
-	if(noIntangibles)
-		filtreTrolls();
-	if(noGG || noCompos || noBidouilles || noTresorsEngages)
-		filtreTresors();
-	if(noTrou)
-		filtreLieux();
+	if(noIntangibles) filtreTrolls();
+	if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
+	if(noTrou) filtreLieux();
 }
 refreshDiplo();
 initPXTroll();
