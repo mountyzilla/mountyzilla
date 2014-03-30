@@ -981,59 +981,101 @@ function putFiltresBoutons() {
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,'INFORMATIONS',true);
-	td.colSpan = 9;
+	td.colSpan = 3;
 	td.onmouseover = function() {
-						this.style.cursor='pointer';
-						this.className='mh_tdpage';
-						};
-	td.onmouseout = function() {this.className='mh_tdtitre';};
-	td.onclick = function() {toggleTableauInfos(false);};
+		this.style.cursor = 'pointer';
+		this.className = 'mh_tdpage';
+		};
+	td.onmouseout = function() {
+		this.className = 'mh_tdtitre';
+		};
+	td.onclick = function() {
+		toggleTableauInfos(false);
+		};
+	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
 	infoTab.replaceChild(thead,infoTab.firstChild);
-
-	// On met le limitateur de vue à gauche des infos pour des questions de taille de cellule
-	var tr = infoTab.childNodes[1].firstChild;
+	
+	// On met le limitateur de vue à gauche des infos
+	// pour des questions de taille de cellule
+	/*var tr = infoTab.childNodes[1].firstChild;
 	tr.className = 'mh_tdpage';
 	td = tr.childNodes[1];
 	tr.removeChild(td);
-	tr.appendChild(td);
+	tr.appendChild(td);*/
 // TODO: *** de *** pourquoi il veut pas me center le TD de gauche ??
 //	tr.firstChild.setAttribute('align','center');
 
-	tr = insertTr(tr,'mh_tdpage');
+	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
 	td = appendTdText(tr,'EFFACER : ',true);
-	td.align = 'right';
-	td = appendTdCenter(tr);
-	checkBoxGG = appendNobr(td,'delgg',filtreTresors,' Les GG\'').firstChild;
-	checkBoxCompos = appendNobr(td,'delcomp',filtreTresors,' Les Compos').firstChild;
-	checkBoxBidouilles = appendNobr(td,'delbid',filtreTresors,' Les Bidouilles').firstChild;
-	checkBoxIntangibles = appendNobr(td,'delint',filtreTrolls,' Les Intangibles').firstChild;
-	checkBoxGowaps = appendNobr(td,'delgowap',filtreMonstres,' Les Gowaps').firstChild;
-	checkBoxEngages = appendNobr(td,'delengage',filtreMonstres,' Les Engagés').firstChild;
-	checkBoxLevels = appendNobr(td,'delniveau',toggleLevelColumn,' Les Niveaux').firstChild;
-	checkBoxDiplo = appendNobr(td,'deldiplo',refreshDiplo,' La Diplo').firstChild;
-	checkBoxTrou = appendNobr(td,'deltrou',filtreLieux,' Les Trous').firstChild;
-	checkBoxMythiques = appendNobr(td,'delmyth',filtreMonstres,' Les Mythiques').firstChild;
-	if(MZ_getValue("NOINFOEM") != "true")
-		checkBoxEM = appendNobr(td,'delem',filtreMonstres,' Les Composants EM').firstChild;
-	checkBoxTresorsNonLibres = appendNobr(td,'deltres',filtreTresors,' Les Trésors non libres').firstChild;
-	checkBoxTactique = appendNobr(td,'deltactique',updateTactique,' Les Infos tactiques').firstChild;
+	td.align = 'center';
+	td.className = 'mh_tdtitre';
+	td.width = 100;
+	td = appendTdCenter(tr,2);
+	// DEBUG : à quoi servent les ids si on utilise des var globales ?
+	checkBoxGG = appendCheckBoxSpan(
+		td,'delgg',filtreTresors," Les GG'"
+		).firstChild;
+	checkBoxCompos = appendCheckBoxSpan(
+		td,'delcomp',filtreTresors,' Les Compos'
+		).firstChild;
+	checkBoxBidouilles = appendCheckBoxSpan(
+		td,'delbid',filtreTresors,' Les Bidouilles'
+		).firstChild;
+	checkBoxIntangibles = appendCheckBoxSpan(
+		td,'delint',filtreTrolls,' Les Intangibles'
+		).firstChild;
+	checkBoxGowaps = appendCheckBoxSpan(
+		td,'delgowap',filtreMonstres,' Les Gowaps'
+		).firstChild;
+	checkBoxEngages = appendCheckBoxSpan(
+		td,'delengage',filtreMonstres,' Les Engagés'
+		).firstChild;
+	checkBoxLevels = appendCheckBoxSpan(
+		td,'delniveau',toggleLevelColumn,' Les Niveaux'
+		).firstChild;
+	checkBoxDiplo = appendCheckBoxSpan(
+		td,'deldiplo',refreshDiplo,' La Diplo'
+		).firstChild;
+	checkBoxTrou = appendCheckBoxSpan(
+		td,'deltrou',filtreLieux,' Les Trous'
+		).firstChild;
+	checkBoxMythiques = appendCheckBoxSpan(
+		td,'delmyth',filtreMonstres,' Les Mythiques'
+		).firstChild;
+	if(MZ_getValue('NOINFOEM')!='true') {
+		checkBoxEM = appendCheckBoxSpan(
+			td,'delem',filtreMonstres,' Les Composants EM'
+			).firstChild;
+		}
+	checkBoxTresorsNonLibres = appendCheckBoxSpan(
+		td,'deltres',filtreTresors,' Les Trésors non libres'
+		).firstChild;
+	checkBoxTactique = appendCheckBoxSpan(
+		td,'deltactique',updateTactique,' Les Infos tactiques'
+		).firstChild;
 	
-	if(MZ_getValue('INFOPLIE')) toggleTableauInfos(true);
+	if(MZ_getValue('INFOPLIE')) {
+		toggleTableauInfos(true);
+		}
 	}
 
 function toggleTableauInfos(firstRun) {
 	if(cursorOnLink) return; // héritage Tilk, utilité inconnue ???
 	
 	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
-	if(!firstRun)
+	if(!firstRun) {
 		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
+		}
 	
 	if(MZ_getValue('INFOPLIE')) {
 		var vues = getPorteVue();
 		var pos = getPosition();
-		appendText(infoTab.firstChild.firstChild.firstChild,
-					' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
-					+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',true);
+		appendText(
+			infoTab.firstChild.firstChild.firstChild,
+			' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
+			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
+			true
+			);
 
 		infoTab.childNodes[1].style.display = 'none';
 		}
@@ -1091,6 +1133,7 @@ function putSearchForms() {
 	var td = appendTdText(tr,'RECHERCHER :',true);
 	td.align = 'right';
 	td = appendTdCenter(tr);
+	td.colSpan = 2;
 	appendSearch(td,'rec_monstre','Monstre',filtreMonstres);
 	appendSearch(td,'rec_troll','Trõll',filtreTrolls);
 	appendSearch(td,'rec_guilde','Guilde',filtreTrolls);
@@ -1100,6 +1143,7 @@ function putSearchForms() {
 	td = appendTdText(tr,'FILTRAGE MONSTRES :',true);
 	td.align = 'right';
 	td = appendTdCenter(tr);
+	td.colSpan = 2;
 	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
 	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
 	}
