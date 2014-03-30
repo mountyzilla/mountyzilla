@@ -698,14 +698,14 @@ function prepareEnvoi() {
 	var tdEnvoi = btnEnvoi.parentNode;
 	var radioElt = document.createElement('input');
 	radioElt.type = 'radio';
-	radioElt.name = 'envoiPXMP'
-	radioElt.id = 'radioPX'
+	radioElt.name = 'envoiPXMP';
+	radioElt.id = 'radioPX';
 	appendText(tdEnvoi,' ');
 	tdEnvoi.appendChild(radioElt);
 	appendText(tdEnvoi,' des PX ');
 	radioElt = document.createElement('input');
 	radioElt.type = 'radio';
-	radioElt.name = 'envoiPXMP'
+	radioElt.name = 'envoiPXMP';
 	radioElt.checked = true;
 	tdEnvoi.appendChild(radioElt);
 	appendText(tdEnvoi,' un MP');
