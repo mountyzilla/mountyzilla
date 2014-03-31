@@ -37,7 +37,7 @@
  */
 
 var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
-var MZimg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/';
+var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 var numTroll = MZ_getValue('NUM_TROLL');
