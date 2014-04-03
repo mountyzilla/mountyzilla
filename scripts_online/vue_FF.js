@@ -1521,7 +1521,7 @@ function computeTelek()
 {
 	if(getSortComp("Télékinésie")==0)
 		return false;
-	var urlImg = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/Sorts/telekinesie.png";
+	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/telekinesie.png";
 	var trolln = getPosition()[2];
 	for(var i = nbTresors+1; --i >= 1;) {
 		var pos = getTresorPosition(i);
@@ -1540,8 +1540,8 @@ function getPortee(param) {
 
 function computeChargeProjo()
 {
-	var urlImgCharge = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
+	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
+	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
 
 	var trolln = getPosition()[2];
 	if(!computeChargeProjoMonstre()) return false;
@@ -1586,8 +1586,8 @@ function computeChargeProjo()
 
 function computeChargeProjoMonstre()
 {
-	var urlImgCharge = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
+	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
+	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
 	var charger = getSortComp("Charger")!=0;
 	var projo = getSortComp("Projectile Magique")!=0;
 	var trolln = getPosition()[2];
@@ -1607,7 +1607,7 @@ function computeChargeProjoMonstre()
 		porteeProjo = getPortee(MZ_getValue(numTroll+".caracs.vue.bm")+MZ_getValue(numTroll+".caracs.vue"));
 	}
 	
-	var urlImg = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
+	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
 	for(var i = nbMonstres+1; --i >= 1;) 
 	{
 		var id = getMonstreID(i);
@@ -1637,7 +1637,7 @@ function computeVLC(begin,end) {
 	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
 	if(!cache)
 		return false;
-	var urlImg = "http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
+	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
 	for(var i = end; i >= begin;i--)
 	{
 		var id = getMonstreID(i);
@@ -1662,7 +1662,7 @@ function computeMission(begin,end) {
 	if(!end) end=nbMonstres;
 	if(!MZ_getValue(numTroll+'.MISSION') || MZ_getValue(numTroll+'.MISSION')=='') return false;
 	
-	var urlImg = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/mission.png';
+	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/mission.png';
 	var infosMission = MZ_getValue(numTroll+'.MISSION').split('$');
 	for(var i=end ; i>=begin ; i--) {
 		var id = getMonstreID(i);
