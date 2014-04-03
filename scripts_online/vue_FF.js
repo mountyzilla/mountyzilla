@@ -282,13 +282,16 @@ function toggleLevelColumn() {
 	// = EventListener checkBox noLevel
 	if(!saveCheckBox(checkBoxLevels,'NOLEVEL')) {
 		insertLevelColumn();
-		if(!isCDMsRetrieved) retrieveCDMs();
+		if(!isCDMsRetrieved) {
+			retrieveCDMs();
+			}
 		}
 	else if(getMonstreLevelNode(0).textContent=='Niveau') {
 		for(var i=0 ; i<=nbMonstres ; i++) {
-			if(isCDMsRetrieved)
-				listeLevels[i] = getMonstreLevelNode(i).innerHTML;
+			if(isCDMsRetrieved) {
 				// mémorisation des levels pour recall
+				listeLevels[i] = getMonstreLevelNode(i).innerHTML;
+				}
 			tr_monstres[i].removeChild(getMonstreLevelNode(i));
 			}
 		}
@@ -313,7 +316,9 @@ function computeTactique(begin, end) {
 				}
 			}
 		}
-	catch(e) {window.alert('Erreur computeTactique mob num : '+j+' :\n'+e)}
+	catch(e) {
+		window.alert('Erreur computeTactique mob num : '+j+' :\n'+e)
+		}
 	filtreMonstres();
 	}
 
@@ -712,7 +717,7 @@ function prepareEnvoi() {
 	appendText(tdEnvoi,' un MP');
 	
 	/* Insertion du bouton Annuler */
-	var btn = insertButton(btnEnvoi,'Annuler',annuleEnvoi);
+	insertButton(btnEnvoi,'Annuler',annuleEnvoi);
 	
 	/* Ajout de la colonne des CheckBoxes */
 	var td = insertTdText(getTrollNomNode(0),'');
@@ -978,6 +983,7 @@ function putLieuxBouton() {
 function putFiltresBoutons() {
 	/* creerTableauInfos() */
 	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
+	infoTab.id = 'infoTab';
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,'INFORMATIONS',true);
@@ -994,17 +1000,6 @@ function putFiltresBoutons() {
 		};
 	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
 	infoTab.replaceChild(thead,infoTab.firstChild);
-	
-	// On met le limitateur de vue à gauche des infos
-	// pour des questions de taille de cellule
-	/*var tr = infoTab.childNodes[1].firstChild;
-	tr.className = 'mh_tdpage';
-	td = tr.childNodes[1];
-	tr.removeChild(td);
-	tr.appendChild(td);*/
-// TODO: *** de *** pourquoi il veut pas me center le TD de gauche ??
-//	tr.firstChild.setAttribute('align','center');
-
 	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
 	td = appendTdText(tr,'EFFACER : ',true);
 	td.align = 'center';
@@ -1062,11 +1057,10 @@ function putFiltresBoutons() {
 function toggleTableauInfos(firstRun) {
 	if(cursorOnLink) return; // héritage Tilk, utilité inconnue ???
 	
-	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
+	var infoTab = document.getElementById('infoTab');
 	if(!firstRun) {
 		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
 		}
-	
 	if(MZ_getValue('INFOPLIE')) {
 		var vues = getPorteVue();
 		var pos = getPosition();
@@ -1076,7 +1070,6 @@ function toggleTableauInfos(firstRun) {
 			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
 			true
 			);
-
 		infoTab.childNodes[1].style.display = 'none';
 		}
 	else {
@@ -1151,6 +1144,7 @@ function putSearchForms() {
 // SCRIPTS
 
 function getPosition() {
+	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
 	var pos = document.evaluate("//li/b/text()[contains(.,'X = ')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue;
 	var posx = pos.substring(pos.indexOf('=') + 2, pos.indexOf(','));
@@ -1159,26 +1153,32 @@ function getPosition() {
 }
 
 function getPorteVue() {
-	var array=new Array();
-	var nodes = document.evaluate("//li/b/text()[contains(.,'horizontalement') or contains(.,'verticalement')]", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	if(nodes.snapshotLength!=4)
+	// Retourne [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
+	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
+	var array = [];
+	var infoTab = document.getElementById('infoTab');
+	var nodes = document.evaluate(
+		".//li/b/text()[contains(.,'horizontalement') "
+		+"or contains(.,'verticalement')]",
+		infoTab, null, 7, null);
+	if(nodes.snapshotLength!=4) {
 		return null;
-	for(var i=0;i<4;i++)
-	{
+		}
+	for(var i=0 ; i<4 ; i++) {
 		array.push(parseInt(nodes.snapshotItem(i).nodeValue));
-
-	}
+		}
 	return array;
-}
+	}
 
 function getPositionStr(pos) {
 	return pos[0]+';'+pos[1]+';'+pos[2];
 	}
 
 function getVue() {
+	// Retourne [vueHpure, vueVpure]
 	var vues = getPorteVue();
 	return [ vues[0], vues[1] ];
-}
+	}
 
 function appendMonstres(txt) {
 	for(var i=1; i<=nbMonstres ; i++)
