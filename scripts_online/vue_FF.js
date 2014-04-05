@@ -25,7 +25,7 @@
  * Variables Globales
  */
 
-var filtreMonstre = ''; // obsolète - DEBUG
+//var filtreMonstre = ''; obsolète - DEBUG
 
 // Infos remplies par des scripts extérieurs
 var cg = [], ct = []; // Couleur Guilde, Couleur Trõll (Diplo)
@@ -472,6 +472,30 @@ function toggleTableauInfos(firstRun) {
 	}
 
 /* [functions] Filtres */
+function ajoutTrFiltre(refTitre) {
+	var titreBody = refTitre.parentNode.parentNode.parentNode;
+	var tr = appendTr(titreBody,'mh_tdpage');
+	var td = appendTd(tr);
+	td.colSpan = 4;
+	return td;
+	}
+
+function ajoutFiltreStr(td,nomBouton,id,onClick) {
+	appendButton(td,nomBouton,onClick);
+	appendText(td,'\u00a0');
+	var textbox = appendTextbox(td,'text',id,15,30);
+	textbox.onkeypress =
+		function(event){
+			try {
+				if(event.keyCode==13) {
+					event.preventDefault();
+					button.click();
+					}
+				}
+			catch(e){window.alert(e)}
+			};
+	}
+
 function appendSearch(td,text,buttonValue,buttonOnClick) {
 	var nobr = document.createElement('NOBR');
 	var textbox = appendTextbox(nobr,'text',text,'12','20');
@@ -515,6 +539,25 @@ function appendComboSearch(td,text,comboName,comboOnChange) {
 }
 
 function putSearchForms() {
+	var node = document.getElementsByName('monstres')[0];
+	var td = ajoutTrFiltre(node);
+	ajoutFiltreStr(td,'Nom du monstre:','strMonstre',filtreMonstres);
+	
+	node = document.getElementsByName('trolls')[0];
+	td = ajoutTrFiltre(node);
+	ajoutFiltreStr(td,'Nom du trõll:','strTroll',filtreTrolls);
+	appendText(td,'\u00a0\u00a0\u00a0');
+	ajoutFiltreStr(td,'Nom de guilde:','strGuilde',filtreTrolls);
+	
+	// OBSOLETE
+	var tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
+	var td = appendTdText(tr,'FILTRAGE MONSTRES :',true);
+	var td = appendTdCenter(tr,2);
+	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
+	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
+	}
+
+/*function putSearchForms() {
 	var tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
 	var td = appendTdText(tr,'RECHERCHER :',true);
 	td.align = 'right';
@@ -532,7 +575,7 @@ function putSearchForms() {
 	td.colSpan = 2;
 	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
 	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
-	}
+	}*/
 
 /* [functions] Boutons d'envoi d'infos aux bases */
 function appendSendBouton(paren, url, id, func, text) {
@@ -692,6 +735,7 @@ function filtreMonstres() {
 		isEngagesComputed = true;
 		}
 	
+	var filtreMonstre = document.getElementById('strMonstre').value.toLowerCase();
 	var isFiltreOn = (filtreMonstre!='');
 	var strfilter = '';
 	if(niveau_min>0 || niveau_max>0) {
@@ -858,8 +902,8 @@ function retrieveCDMs() {
 
 function filtreTrolls() {
 	var noIntangibles = saveCheckBox(checkBoxIntangibles,'NOINT');
-	var strTroll = document.getElementById('rec_troll').value.toLowerCase();
-	var strGuilde = document.getElementById('rec_guilde').value.toLowerCase();
+	var strTroll = document.getElementById('strTroll').value.toLowerCase();
+	var strGuilde = document.getElementById('strGuilde').value.toLowerCase();
 	var isFiltreTrollOn = strTroll!='';
 	var isFiltreGuildeOn = strGuilde!='';
 	var titre = document.getElementsByName('trolls')[0].firstChild.firstChild;
