@@ -21,6 +21,10 @@
  * prévoir fix ("delete infos")
  */
 
+/**
+ * Variables Globales
+ */
+
 var filtreMonstre = ''; // obsolète - DEBUG
 
 // Infos remplies par des scripts extérieurs
@@ -52,58 +56,12 @@ var cursorOnLink = false;
 var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
 	&& MZ_getValue(numTroll+'.enchantement.liste')!='';
 
-
-/*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
-/*------------------------------- CHECK DONE ---------------------------------*/
-
+// Checkboxes de filtrage
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
 	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
 	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
 
-function saveCheckBox(chkb, pref) {
-	// Enregistre et retourne l'état d'une CheckBox
-	var etat = chkb.checked;
-	MZ_setValue(pref, etat ? 'true' : 'false' );
-	return etat;
-	}
-
-function recallCheckBox(chkb, pref) {
-	// Restitue l'état d'une CheckBox
-	chkb.checked = (MZ_getValue(pref)=='true');
-	}
-
-function saveComboBox(cbb, pref) {
-	// Enregistre et retourne l'état d'une ComboBox
-	var etat = cbb.selectedIndex;
-	MZ_setValue(pref, etat);
-	return etat;
-	}
-
-function recallComboBox(cbb, pref) {
-	// Restitue l'état d'une ComboBox
-	if(MZ_getValue(pref)) cbb.value = MZ_getValue(pref);
-	}
-
-function synchroniseFiltres() {
-	// Récupération de toutes les options de la vue
-	recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
-	recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
-	recallCheckBox(checkBoxGowaps,'NOGOWAP');
-	recallCheckBox(checkBoxMythiques,'NOMYTH');
-	recallCheckBox(checkBoxEngages,'NOENGAGE');
-	recallCheckBox(checkBoxLevels,'NOLEVEL');
-	recallCheckBox(checkBoxIntangibles,'NOINT');
-	recallCheckBox(checkBoxGG,'NOGG');
-	recallCheckBox(checkBoxCompos,'NOCOMP');
-	recallCheckBox(checkBoxBidouilles,'NOBID');
-	recallCheckBox(checkBoxDiplo,'NODIPLO');
-	recallCheckBox(checkBoxTrou,'NOTROU');
-	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
-	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
-	if(MZ_getValue('NOINFOEM')!='true')
-		recallCheckBox(checkBoxEM,'NOEM');
-	}
 
 
 /*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
@@ -249,6 +207,373 @@ function getLieuDistance(i) {
 
 function getLieuNom(i) { /* DEBUG - en test */
 	return tr_lieux[i].childNodes[2].childNodes[1].textContent;
+	}
+
+
+/*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
+
+function saveCheckBox(chkb, pref) {
+	// Enregistre et retourne l'état d'une CheckBox
+	var etat = chkb.checked;
+	MZ_setValue(pref, etat ? 'true' : 'false' );
+	return etat;
+	}
+
+function recallCheckBox(chkb, pref) {
+	// Restitue l'état d'une CheckBox
+	chkb.checked = (MZ_getValue(pref)=='true');
+	}
+
+function saveComboBox(cbb, pref) {
+	// Enregistre et retourne l'état d'une ComboBox
+	var etat = cbb.selectedIndex;
+	MZ_setValue(pref, etat);
+	return etat;
+	}
+
+function recallComboBox(cbb, pref) {
+	// Restitue l'état d'une ComboBox
+	if(MZ_getValue(pref)) cbb.value = MZ_getValue(pref);
+	}
+
+function synchroniseFiltres() {
+	// Récupération de toutes les options de la vue
+	recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
+	recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
+	recallCheckBox(checkBoxGowaps,'NOGOWAP');
+	recallCheckBox(checkBoxMythiques,'NOMYTH');
+	recallCheckBox(checkBoxEngages,'NOENGAGE');
+	recallCheckBox(checkBoxLevels,'NOLEVEL');
+	recallCheckBox(checkBoxIntangibles,'NOINT');
+	recallCheckBox(checkBoxGG,'NOGG');
+	recallCheckBox(checkBoxCompos,'NOCOMP');
+	recallCheckBox(checkBoxBidouilles,'NOBID');
+	recallCheckBox(checkBoxDiplo,'NODIPLO');
+	recallCheckBox(checkBoxTrou,'NOTROU');
+	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
+	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
+	if(MZ_getValue('NOINFOEM')!='true')
+		recallCheckBox(checkBoxEM,'NOEM');
+	}
+
+
+/*-[functions]-------- Initialisation: Ajout des Boutons ---------------------*/
+
+/* [functions] Insertion raccourcis urls */
+function putExternalLinks() {
+	// Insertion dans la vue des liens déclarés dans les options MZ
+	var Rdiv = document.evaluate("//div/a[contains(./text(),'Logout')]/..",
+		document, null, 9, null).singleNodeValue;
+	if(!Rdiv) return;
+	var anotherURL = MZ_getValue('URL1');
+	if(!anotherURL) return;
+	/* Insertion du div [Logout] dans une table */
+	var table = document.createElement('table');
+	table.width = '100%';
+	var tr = appendTr(table);
+	var td = appendTd(tr);
+	var Ldiv = document.createElement('div');
+	Ldiv.setAttribute('align','left');
+	td.appendChild(Ldiv);
+	td = appendTd(tr);
+	Rdiv.parentNode.replaceChild(table,Rdiv);
+	td.appendChild(Rdiv);
+	/* Insertion Liens */
+	var i=1;
+	while(anotherURL) {
+		var a = document.createElement('a');
+		Ldiv.appendChild(a);
+		var url = MZ_getValue('URL'+i);
+		var nom = MZ_getValue('URL'+i+'.nom');
+		var ico = MZ_getValue('URL'+i+'.ico');
+		a.href = url;
+		a.target = '_blank';
+		a.className = 'AllLinks'; // ??? DEBUG
+		if(ico) {
+			var txt = nom ? nom : '';
+			var img = createImage(ico,txt);
+			a.appendChild(img);
+			}
+		else
+			appendText(a,'['+nom+']');
+		i++;
+		anotherURL = MZ_getValue('URL'+i);
+		}
+	}
+
+/* [functions] Menu Vue 2D */
+/*------------------------------- CHECK DONE ---------------------------------*/
+var vue2Ddata = {
+	'Bricol\' Vue':
+		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
+		getVueScript, ['mode','vue_SP_Vue2','screen_width',screen.width] ],
+	'Vue du CCM':
+		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
+		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
+	'Vue Gloumfs 2D' :
+		['http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla', getVueScript, [] ],
+	'Vue Gloumfs 3D':
+		['http://gloumf.free.fr/vue3d.php', 'vue_mountyzilla', getVueScript, [] ],
+	'Grouky Vue!':
+		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
+		getVueScript, ['type_vue', 'V5b1'] ]
+	};
+
+function refresh2DViewButton() {
+	// = EventListener menu+bouton vue 2D
+	var vueext = document.getElementById('selectVue2D').value;
+	MZ_setValue('VUEEXT',vueext);
+	var form = document.getElementById('viewForm');
+	form.innerHTML = '';
+	form.method = 'post';
+	form.action = vue2Ddata[vueext][0];
+	form.target = '_blank';
+	appendHidden(form, vue2Ddata[vueext][1], '');
+	var listeParams = vue2Ddata[vueext][3];
+	for(var i=0 ; i<listeParams.length ; i+=2) {
+		appendHidden(form, listeParams[i], listeParams[i+1]);
+		}
+	appendSubmit(form, 'Voir',
+		function() {
+			document.getElementsByName(vue2Ddata[vueext][1])[0].value =
+				vue2Ddata[vueext][2]();
+			}
+		);
+	}
+
+function set2DViewSystem() {
+	var vueext = MZ_getValue('VUEEXT');
+	if(!vueext || !vue2Ddata[vueext]) vueext = 'Bricol\' Vue';
+	
+	/* Choix de la vue sans passer par les options */
+	selectVue2D = document.createElement('select');
+	selectVue2D.id = 'selectVue2D';
+	selectVue2D.className = 'SelectboxV2';
+	for(var view in vue2Ddata)
+		appendOption(selectVue2D, view, view);
+	selectVue2D.value = vueext;
+	selectVue2D.onchange = refresh2DViewButton;
+	
+	var form = document.createElement('form');
+	form.id = 'viewForm';
+	
+	var center = document.getElementById('titre2').nextSibling;
+	var table = document.createElement('table');
+	var tr = appendTr(table);
+	var td = appendTd(tr);
+	td.appendChild(selectVue2D);
+	td = appendTd(tr);
+	td.style = 'font-size:0px;';
+	// gère la fameuse erreur de l'extra character
+	td.appendChild(form);
+	center.insertBefore(table,center.firstChild);
+	insertBr(center.childNodes[1]);
+	
+	refresh2DViewButton();
+	}
+
+/* [functions] Tableau d'Infos */
+function creerTableauInfos() {
+	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
+	infoTab.id = 'infoTab';
+	var thead = document.createElement('thead');
+	var tr = appendTr(thead,'mh_tdtitre');
+	var td = appendTdText(tr,'INFORMATIONS',true);
+	td.colSpan = 3;
+	td.onmouseover = function() {
+		this.style.cursor = 'pointer';
+		this.className = 'mh_tdpage';
+		};
+	td.onmouseout = function() {
+		this.className = 'mh_tdtitre';
+		};
+	td.onclick = function() {
+		toggleTableauInfos(false);
+		};
+	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
+	infoTab.replaceChild(thead,infoTab.firstChild);
+	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
+	td = appendTdText(tr,'EFFACER : ',true);
+	td.align = 'center';
+	td.className = 'mh_tdtitre';
+	td.width = 100;
+	td = appendTdCenter(tr,2);
+	// DEBUG : à quoi servent les ids si on utilise des var globales ?
+	checkBoxGG = appendCheckBoxSpan(
+		td,'delgg',filtreTresors," Les GG'"
+		).firstChild;
+	checkBoxCompos = appendCheckBoxSpan(
+		td,'delcomp',filtreTresors,' Les Compos'
+		).firstChild;
+	checkBoxBidouilles = appendCheckBoxSpan(
+		td,'delbid',filtreTresors,' Les Bidouilles'
+		).firstChild;
+	checkBoxIntangibles = appendCheckBoxSpan(
+		td,'delint',filtreTrolls,' Les Intangibles'
+		).firstChild;
+	checkBoxGowaps = appendCheckBoxSpan(
+		td,'delgowap',filtreMonstres,' Les Gowaps'
+		).firstChild;
+	checkBoxEngages = appendCheckBoxSpan(
+		td,'delengage',filtreMonstres,' Les Engagés'
+		).firstChild;
+	checkBoxLevels = appendCheckBoxSpan(
+		td,'delniveau',toggleLevelColumn,' Les Niveaux'
+		).firstChild;
+	checkBoxDiplo = appendCheckBoxSpan(
+		td,'deldiplo',refreshDiplo,' La Diplo'
+		).firstChild;
+	checkBoxTrou = appendCheckBoxSpan(
+		td,'deltrou',filtreLieux,' Les Trous'
+		).firstChild;
+	checkBoxMythiques = appendCheckBoxSpan(
+		td,'delmyth',filtreMonstres,' Les Mythiques'
+		).firstChild;
+	if(MZ_getValue('NOINFOEM')!='true') {
+		checkBoxEM = appendCheckBoxSpan(
+			td,'delem',filtreMonstres,' Les Composants EM'
+			).firstChild;
+		}
+	checkBoxTresorsNonLibres = appendCheckBoxSpan(
+		td,'deltres',filtreTresors,' Les Trésors non libres'
+		).firstChild;
+	checkBoxTactique = appendCheckBoxSpan(
+		td,'deltactique',updateTactique,' Les Infos tactiques'
+		).firstChild;
+	
+	if(MZ_getValue('INFOPLIE')) {
+		toggleTableauInfos(true);
+		}
+	}
+
+function toggleTableauInfos(firstRun) {
+	if(cursorOnLink) return; // héritage Tilk, utilité inconnue ???
+	
+	var infoTab = document.getElementById('infoTab');
+	if(!firstRun) {
+		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
+		}
+	if(MZ_getValue('INFOPLIE')) {
+		var vues = getPorteVue();
+		var pos = getPosition();
+		appendText(
+			infoTab.firstChild.firstChild.firstChild,
+			' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
+			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
+			true
+			);
+		infoTab.childNodes[1].style.display = 'none';
+		}
+	else {
+		var titre = infoTab.firstChild.firstChild.firstChild.childNodes[1];
+		titre.parentNode.removeChild(titre);
+		infoTab.childNodes[1].style.display = '';
+		}
+	}
+
+/* [functions] Filtres */
+function appendSearch(td,text,buttonValue,buttonOnClick) {
+	var nobr = document.createElement('NOBR');
+	var textbox = appendTextbox(nobr,'text',text,'12','20');
+	appendText(nobr,"\u00a0");
+	var button=appendButton(nobr,buttonValue,buttonOnClick);
+	textbox.onkeypress =
+		function(event){
+			try {
+				if(event.keyCode==13) {
+					event.preventDefault();
+					button.click();
+					}
+				}
+			catch(e){window.alert(e)}
+			};
+	td.appendChild(nobr);
+	appendText(td,"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ");
+	}
+
+function appendComboSearch(td,text,comboName,comboOnChange) {
+	var nobr = document.createElement('nobr');
+	appendText(nobr,'\u00a0'+text);
+	appendText(nobr,'\u00a0');
+	var select = document.createElement('select');
+	select.name = comboName;
+	select.onchange = comboOnChange;
+	var option = document.createElement('OPTION');
+	option.value = 0;
+	appendText(option,'Aucun');
+	select.appendChild(option);
+	for(var i=1;i<=50;i++) {
+		option = document.createElement('OPTION');
+		option.setAttribute("value",i);
+		appendText(option,i);
+		select.appendChild(option);
+	}
+	nobr.appendChild(select);
+	td.appendChild(nobr);
+	appendText(td,"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ");
+	return select;
+}
+
+function putSearchForms() {
+	var tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
+	var td = appendTdText(tr,'RECHERCHER :',true);
+	td.align = 'right';
+	td = appendTdCenter(tr);
+	td.colSpan = 2;
+	appendSearch(td,'rec_monstre','Monstre',filtreMonstres);
+	appendSearch(td,'rec_troll','Trõll',filtreTrolls);
+	appendSearch(td,'rec_guilde','Guilde',filtreTrolls);
+	appendSearch(td,'rec_tresor','Trésor',filtreTresors);
+	appendSearch(td,'rec_lieu','Lieu',filtreLieux);
+	tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
+	td = appendTdText(tr,'FILTRAGE MONSTRES :',true);
+	td.align = 'right';
+	td = appendTdCenter(tr);
+	td.colSpan = 2;
+	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
+	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
+	}
+
+/* [functions] Boutons d'envoi d'infos aux bases */
+function appendSendBouton(paren, url, id, func, text) {
+	var myForm = document.createElement('form');
+	myForm.method = 'post';
+	myForm.align = 'right';
+	myForm.action = url;
+	myForm.name = 'frmvue';
+	myForm.target = '_blank';
+	appendHidden(myForm,id,'');
+	appendSubmit(myForm,text,
+		function() {
+			document.getElementsByName(id)[0].value = func();
+			}
+		);
+	paren.appendChild(myForm);
+	}
+
+function putMonstresBouton() {
+	var tdTitle = document.getElementsByName('monstres')[0];
+	if(!tdTitle) return;
+	tdTitle = tdTitle.parentNode;
+	
+	var td = insertTd(tdTitle.nextSibling);
+	td.setAttribute('style','font-size:0px'); // p***n d'extra character de m***e
+	appendSendBouton(td,
+		'http://mountyhall.clubs.resel.fr/script/v2/get_monstres.php',
+		'listemonstres', getMonstres,
+		'Ajouter les monstres à la base des Teubreux');
+	}
+
+function putLieuxBouton() {
+	var tdTitle = document.getElementsByName('lieux')[0];
+	if(!tdTitle) return;
+	tdTitle = tdTitle.parentNode;
+	
+	var td = insertTd(tdTitle.nextSibling);
+	td.setAttribute('style','font-size:0px');
+	appendSendBouton(td,
+				'http://mountyzilla.tilk.info/scripts/lieux.php',
+				'listelieux', getLieux, 'Ajouter les lieux à la base');
 	}
 
 
@@ -527,7 +852,6 @@ function retrieveCDMs() {
 		}
 	isCDMsRetrieved=true;
 	}
-
 
 
 /*-[functions]---------------- Fonctions Trõlls ------------------------------*/
@@ -823,324 +1147,6 @@ function filtreLieux() {
 	}
 
 
-
-/*-[functions]---------------- Ajout des Boutons -----------------------------*/
-
-/* [functions] Insertion raccourcis urls */
-/*------------------------------- CHECK DONE ---------------------------------*/
-function putExternalLinks() {
-	// Insertion dans la vue des liens déclarés dans les options MZ
-	var Rdiv = document.evaluate("//div/a[contains(./text(),'Logout')]/..",
-		document, null, 9, null).singleNodeValue;
-	if(!Rdiv) return;
-	var anotherURL = MZ_getValue('URL1');
-	if(!anotherURL) return;
-	
-	/* Insertion du div Logout dans une table */
-	var table = document.createElement('table');
-	table.width = '100%';
-	var tr = appendTr(table);
-	var td = appendTd(tr);
-	var Ldiv = document.createElement('div');
-	Ldiv.setAttribute('align','left');
-	td.appendChild(Ldiv);
-	td = appendTd(tr);
-	Rdiv.parentNode.replaceChild(table,Rdiv);
-	td.appendChild(Rdiv);
-	/* Insertion Liens */
-	var i=1;
-	while(anotherURL) {
-		var a = document.createElement('a');
-		Ldiv.appendChild(a);
-		var url = MZ_getValue('URL'+i);
-		var nom = MZ_getValue('URL'+i+'.nom');
-		var ico = MZ_getValue('URL'+i+'.ico');
-		a.href = url;
-		a.target = '_blank';
-		a.className = 'AllLinks'; // ??? DEBUG
-		if(ico) {
-			var txt = nom ? nom : '';
-			var img = createImage(ico,txt);
-			a.appendChild(img);
-			}
-		else
-			appendText(a,'['+nom+']');
-		i++;
-		anotherURL = MZ_getValue('URL'+i);
-		}
-	}
-
-/* [functions] Menu Vue 2D */
-/*------------------------------- CHECK DONE ---------------------------------*/
-var vue2Ddata = {
-	'Bricol\' Vue':
-		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
-		getVueScript, ['mode','vue_SP_Vue2','screen_width',screen.width] ],
-	'Vue du CCM':
-		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
-		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
-	'Vue Gloumfs 2D' :
-		['http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Vue Gloumfs 3D':
-		['http://gloumf.free.fr/vue3d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Grouky Vue!':
-		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
-		getVueScript, ['type_vue', 'V5b1'] ]
-	};
-
-function refresh2DViewButton() {
-	// = EventListener menu+bouton vue 2D
-	var vueext = document.getElementById('selectVue2D').value;
-	MZ_setValue('VUEEXT',vueext);
-	var form = document.getElementById('viewForm');
-	form.innerHTML = '';
-	form.method = 'post';
-	form.action = vue2Ddata[vueext][0];
-	form.target = '_blank';
-	appendHidden(form, vue2Ddata[vueext][1], '');
-	var listeParams = vue2Ddata[vueext][3];
-	for(var i=0 ; i<listeParams.length ; i+=2)
-		appendHidden(form, listeParams[i], listeParams[i+1]);
-	appendSubmit(form, 'Voir',
-		function() {
-			document.getElementsByName(vue2Ddata[vueext][1])[0].value =
-				vue2Ddata[vueext][2]();
-			});
-	}
-
-function set2DViewSystem() {
-	var vueext = MZ_getValue('VUEEXT');
-	if(!vueext || !vue2Ddata[vueext]) vueext = 'Bricol\' Vue';
-	
-	/* Choix de la vue sans passer par les options */
-	selectVue2D = document.createElement('select');
-	selectVue2D.id = 'selectVue2D';
-	selectVue2D.className = 'SelectboxV2';
-	for(var view in vue2Ddata)
-		appendOption(selectVue2D, view, view);
-	selectVue2D.value = vueext;
-	selectVue2D.onchange = refresh2DViewButton;
-	
-	var form = document.createElement('form');
-	form.id = 'viewForm';
-	
-	var center = document.getElementById('titre2').nextSibling;
-	var table = document.createElement('table');
-	var tr = appendTr(table);
-	var td = appendTd(tr);
-	td.appendChild(selectVue2D);
-	td = appendTd(tr);
-	td.style = 'font-size:0px;';
-	// gère la fameuse erreur de l'extra character
-	td.appendChild(form);
-	center.insertBefore(table,center.firstChild);
-	insertBr(center.childNodes[1]);
-	
-	refresh2DViewButton();
-	}
-
-/* [functions] Boutons d'envoi d'infos aux bases */
-function appendSendBouton(paren, url, id, func, text) {
-	var myForm = document.createElement('form');
-	myForm.method = 'post';
-	myForm.align = 'right';
-	myForm.action = url;
-	myForm.name = 'frmvue';
-	myForm.target = '_blank';
-	appendHidden(myForm,id,'');
-	appendSubmit(myForm,text,
-		function() {document.getElementsByName(id)[0].value=func();}
-		);
-	paren.appendChild(myForm);
-	}
-
-function putMonstresBouton() {
-	var tdTitle = document.getElementsByName('monstres')[0];
-	if(!tdTitle) return;
-	tdTitle = tdTitle.parentNode;
-	
-	var td = insertTd(tdTitle.nextSibling);
-	td.setAttribute('style','font-size:0px'); // p***n d'extra character de m***e
-	appendSendBouton(td,
-		'http://mountyhall.clubs.resel.fr/script/v2/get_monstres.php',
-		'listemonstres', getMonstres,
-		'Ajouter les monstres à la base des Teubreux');
-	}
-
-function putLieuxBouton() {
-	var tdTitle = document.getElementsByName('lieux')[0];
-	if(!tdTitle) return;
-	tdTitle = tdTitle.parentNode;
-	
-	var td = insertTd(tdTitle.nextSibling);
-	td.setAttribute('style','font-size:0px');
-	appendSendBouton(td,
-				'http://mountyzilla.tilk.info/scripts/lieux.php',
-				'listelieux', getLieux, 'Ajouter les lieux à la base');
-	}
-
-/* [functions] Boutons de filtrages (TableauInfos) */
-function putFiltresBoutons() {
-	/* creerTableauInfos() */
-	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
-	infoTab.id = 'infoTab';
-	var thead = document.createElement('thead');
-	var tr = appendTr(thead,'mh_tdtitre');
-	var td = appendTdText(tr,'INFORMATIONS',true);
-	td.colSpan = 3;
-	td.onmouseover = function() {
-		this.style.cursor = 'pointer';
-		this.className = 'mh_tdpage';
-		};
-	td.onmouseout = function() {
-		this.className = 'mh_tdtitre';
-		};
-	td.onclick = function() {
-		toggleTableauInfos(false);
-		};
-	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
-	infoTab.replaceChild(thead,infoTab.firstChild);
-	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
-	td = appendTdText(tr,'EFFACER : ',true);
-	td.align = 'center';
-	td.className = 'mh_tdtitre';
-	td.width = 100;
-	td = appendTdCenter(tr,2);
-	// DEBUG : à quoi servent les ids si on utilise des var globales ?
-	checkBoxGG = appendCheckBoxSpan(
-		td,'delgg',filtreTresors," Les GG'"
-		).firstChild;
-	checkBoxCompos = appendCheckBoxSpan(
-		td,'delcomp',filtreTresors,' Les Compos'
-		).firstChild;
-	checkBoxBidouilles = appendCheckBoxSpan(
-		td,'delbid',filtreTresors,' Les Bidouilles'
-		).firstChild;
-	checkBoxIntangibles = appendCheckBoxSpan(
-		td,'delint',filtreTrolls,' Les Intangibles'
-		).firstChild;
-	checkBoxGowaps = appendCheckBoxSpan(
-		td,'delgowap',filtreMonstres,' Les Gowaps'
-		).firstChild;
-	checkBoxEngages = appendCheckBoxSpan(
-		td,'delengage',filtreMonstres,' Les Engagés'
-		).firstChild;
-	checkBoxLevels = appendCheckBoxSpan(
-		td,'delniveau',toggleLevelColumn,' Les Niveaux'
-		).firstChild;
-	checkBoxDiplo = appendCheckBoxSpan(
-		td,'deldiplo',refreshDiplo,' La Diplo'
-		).firstChild;
-	checkBoxTrou = appendCheckBoxSpan(
-		td,'deltrou',filtreLieux,' Les Trous'
-		).firstChild;
-	checkBoxMythiques = appendCheckBoxSpan(
-		td,'delmyth',filtreMonstres,' Les Mythiques'
-		).firstChild;
-	if(MZ_getValue('NOINFOEM')!='true') {
-		checkBoxEM = appendCheckBoxSpan(
-			td,'delem',filtreMonstres,' Les Composants EM'
-			).firstChild;
-		}
-	checkBoxTresorsNonLibres = appendCheckBoxSpan(
-		td,'deltres',filtreTresors,' Les Trésors non libres'
-		).firstChild;
-	checkBoxTactique = appendCheckBoxSpan(
-		td,'deltactique',updateTactique,' Les Infos tactiques'
-		).firstChild;
-	
-	if(MZ_getValue('INFOPLIE')) {
-		toggleTableauInfos(true);
-		}
-	}
-
-function toggleTableauInfos(firstRun) {
-	if(cursorOnLink) return; // héritage Tilk, utilité inconnue ???
-	
-	var infoTab = document.getElementById('infoTab');
-	if(!firstRun) {
-		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
-		}
-	if(MZ_getValue('INFOPLIE')) {
-		var vues = getPorteVue();
-		var pos = getPosition();
-		appendText(
-			infoTab.firstChild.firstChild.firstChild,
-			' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
-			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
-			true
-			);
-		infoTab.childNodes[1].style.display = 'none';
-		}
-	else {
-		var titre = infoTab.firstChild.firstChild.firstChild.childNodes[1];
-		titre.parentNode.removeChild(titre);
-		infoTab.childNodes[1].style.display = '';
-		}
-	}
-
-function appendSearch(td,text,buttonValue,buttonOnClick) {
-	var nobr = document.createElement('NOBR');
-	var textbox = appendTextbox(nobr,'text',text,'12','20');
-	appendText(nobr,"\u00a0");
-	var button=appendButton(nobr,buttonValue,buttonOnClick);
-	textbox.onkeypress =
-		function(event){
-			try {
-				if(event.keyCode==13) {
-					event.preventDefault();
-					button.click();
-					}
-				}
-			catch(e){window.alert(e)}
-			};
-	td.appendChild(nobr);
-	appendText(td,"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ");
-	}
-
-function appendComboSearch(td,text,comboName,comboOnChange) {
-	var nobr = document.createElement('nobr');
-	appendText(nobr,'\u00a0'+text);
-	appendText(nobr,'\u00a0');
-	var select = document.createElement('select');
-	select.name = comboName;
-	select.onchange = comboOnChange;
-	var option = document.createElement('OPTION');
-	option.value = 0;
-	appendText(option,'Aucun');
-	select.appendChild(option);
-	for(var i=1;i<=50;i++) {
-		option = document.createElement('OPTION');
-		option.setAttribute("value",i);
-		appendText(option,i);
-		select.appendChild(option);
-	}
-	nobr.appendChild(select);
-	td.appendChild(nobr);
-	appendText(td,"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ");
-	return select;
-}
-
-function putSearchForms() {
-	var tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
-	var td = appendTdText(tr,'RECHERCHER :',true);
-	td.align = 'right';
-	td = appendTdCenter(tr);
-	td.colSpan = 2;
-	appendSearch(td,'rec_monstre','Monstre',filtreMonstres);
-	appendSearch(td,'rec_troll','Trõll',filtreTrolls);
-	appendSearch(td,'rec_guilde','Guilde',filtreTrolls);
-	appendSearch(td,'rec_tresor','Trésor',filtreTresors);
-	appendSearch(td,'rec_lieu','Lieu',filtreLieux);
-	tr = insertTr(mainTabs[0].childNodes[1].childNodes[1],'mh_tdpage');
-	td = appendTdText(tr,'FILTRAGE MONSTRES :',true);
-	td.align = 'right';
-	td = appendTdCenter(tr);
-	td.colSpan = 2;
-	comboBoxNiveauMin = appendComboSearch(td,'Niveau min :','rec_niveau_monstre_min',filtreMonstres);
-	comboBoxNiveauMax = appendComboSearch(td,'Niveau max :','rec_niveau_monstre_max',filtreMonstres);
-	}
-
 // SCRIPTS
 
 function getPosition() {
@@ -1228,7 +1234,6 @@ function getVueScript() {
 	}
 	catch(e) {window.alert(e)}
 	}
-
 
 
 /*-[functions]--------------- Systèmes Tactiques -----------------------------*/
@@ -1832,7 +1837,7 @@ try
 start_script(31);
 	
 
-putFiltresBoutons();
+creerTableauInfos();
 putSearchForms();
 putExternalLinks();
 set2DViewSystem();
