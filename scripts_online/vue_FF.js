@@ -161,7 +161,7 @@ function getTrollID(i) {
 
 function getTrollNomNode(i) {
 	var isEnvoiOn =
-		document.getElementById('btn_envoi').value == 'Annuler';
+		document.getElementById('btn_envoi').parentNode.childNodes.length>1;
 	return tr_trolls[i].childNodes[ isEnvoiOn ? 3 : 2 ];
 	}
 
@@ -1077,6 +1077,14 @@ function putBoutonPXMP() {
 
 function prepareEnvoi() {
 	// = EventListener bouton d'envoi
+	/* Ajout de la colonne des CheckBoxes */
+	var td = insertTdText(getTrollNomNode(0),'');
+	td.width = 5;
+	for(var i=nbTrolls ; i>0 ; i--) {
+		td = insertTd(getTrollNomNode(i));
+		appendCheckBox(td,'envoi'+i);
+		}
+	
 	/* Ajout du radio de choix PX ou MP */
 	var btnEnvoi = document.getElementById('btn_envoi');
 	if(!btnEnvoi) return;
@@ -1100,14 +1108,6 @@ function prepareEnvoi() {
 	
 	/* Insertion du bouton Annuler */
 	insertButton(btnEnvoi,'Annuler',annuleEnvoi);
-	
-	/* Ajout de la colonne des CheckBoxes */
-	var td = insertTdText(getTrollNomNode(0),'');
-	td.width = 5;
-	for(var i=nbTrolls ; i>0 ; i--) {
-		td = insertTd(getTrollNomNode(i));
-		appendCheckBox(td,'envoi'+i);
-		}
 	
 	/* Modification de l'effet du bouton Envoi */
 	document.getElementById('btn_envoi').onclick = effectueEnvoi;
