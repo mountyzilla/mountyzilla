@@ -1081,19 +1081,22 @@ function prepareEnvoi() {
 	var btnEnvoi = document.getElementById('btn_envoi');
 	if(!btnEnvoi) return;
 	var tdEnvoi = btnEnvoi.parentNode;
+	appendText(tdEnvoi,' ');
+	var span = document.createElement('span');
+	span.style.whiteSpace = 'nowrap';
 	var radioElt = document.createElement('input');
 	radioElt.type = 'radio';
 	radioElt.name = 'envoiPXMP';
 	radioElt.id = 'radioPX';
-	appendText(tdEnvoi,' ');
-	tdEnvoi.appendChild(radioElt);
-	appendText(tdEnvoi,' des PX ');
+	span.appendChild(radioElt);
+	appendText(span,' des PX ');
 	radioElt = document.createElement('input');
 	radioElt.type = 'radio';
 	radioElt.name = 'envoiPXMP';
 	radioElt.checked = true;
-	tdEnvoi.appendChild(radioElt);
-	appendText(tdEnvoi,' un MP');
+	span.appendChild(radioElt);
+	appendText(span,' un MP');
+	tdEnvoi.appendChild(span);
 	
 	/* Insertion du bouton Annuler */
 	insertButton(btnEnvoi,'Annuler',annuleEnvoi);
