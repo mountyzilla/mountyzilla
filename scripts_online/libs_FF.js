@@ -265,7 +265,7 @@ function appendButton(paren,value,onClick) {
 	input.className = 'mh_form_submit';
 	input.value = value;
 	input.onmouseover = function(){this.style.cursor='pointer';};
-	input.onclick = onClick;
+	if(onClick) input.onclick = onClick;
 	paren.appendChild(input);
 	return input;
 	}
