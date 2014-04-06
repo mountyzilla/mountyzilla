@@ -233,13 +233,18 @@ function saveComboBox(cbb, pref) {
 
 function recallComboBox(cbb, pref) {
 	// Restitue l'état d'une ComboBox
-	if(MZ_getValue(pref)) cbb.value = MZ_getValue(pref);
+	var nb = MZ_getValue(pref);
+	if(nb) cbb.value = nb;
+	return nb;
 	}
 
 function synchroniseFiltres() {
 	// Récupération de toutes les options de la vue
-	recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
-	recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
+	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
+	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
+	if(numBool) {
+		debutFiltrage('monstres');
+		}
 	recallCheckBox(checkBoxGowaps,'NOGOWAP');
 	recallCheckBox(checkBoxMythiques,'NOMYTH');
 	recallCheckBox(checkBoxEngages,'NOENGAGE');
