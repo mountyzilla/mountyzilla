@@ -232,6 +232,16 @@ function appendNobr(paren,id,delgg,text) {
 	return nobr;
 	}
 
+function appendCheckBoxSpan(paren,id,onClick,text) {
+	var span = document.createElement('span');
+	span.style.whiteSpace = 'nowrap';
+	appendCheckBox(span,id,false,onClick);
+	appendText(span,text);
+	paren.appendChild(span);
+	appendText(paren,'   ');
+	return span;
+	}
+
 function appendOption(select,value,text) {
 	var option = document.createElement('option');
 	option.value = value;
@@ -255,7 +265,7 @@ function appendButton(paren,value,onClick) {
 	input.className = 'mh_form_submit';
 	input.value = value;
 	input.onmouseover = function(){this.style.cursor='pointer';};
-	input.onclick = onClick;
+	if(onClick) input.onclick = onClick;
 	paren.appendChild(input);
 	return input;
 	}
