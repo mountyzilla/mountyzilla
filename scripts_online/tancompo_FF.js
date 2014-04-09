@@ -16,15 +16,6 @@
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-/*
- * v0.1.2b - 2013-08-19
- * - correction syntaxe alert
- * v0.1.3 by Dab - 2013-08-23
- * - correction treateMinerai
- * TODO tout le reste !
- */
-
-//var compoDB = "http://darkwood.free.fr/divers/compodb.php";
 var popup;
 
 function initPopup() {
@@ -74,13 +65,15 @@ function arrondi(x) {
 	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
 	}
 
-function treateMinerai() {
-	if (currentURL.indexOf("as_type=Divers")==-1) return false;
+function traiteMinerai() {
+	if (currentURL.indexOf("as_type=Divers")==-1) return;
+	try {
 	var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'"
 								+" and contains(./tr/th/text(),'Minerai')]",
 								document, null, 9, null).singleNodeValue;
-	if (!node) return false;
 	node = node.nextSibling.nextSibling;
+	}
+	catch(e) {return;}
 	
 	var trlist = document.evaluate('./tr', node, null, 7, null);
 	for (var i=0 ; i<trlist.snapshotLength ; i++) {
@@ -89,32 +82,35 @@ function treateMinerai() {
 		var caracs = node.childNodes[7].textContent;
 		var taille = caracs.match(/\d+/);
 		var coef = 1;
-		if (caracs.indexOf('Moyen')!=-1) {coef = 2;}
-		else if (caracs.indexOf('Normale')!=-1) {coef = 3;}
-		else if (caracs.indexOf('Bonne')!=-1) {coef = 4;}
-		else if (caracs.indexOf('Exceptionnelle')!=-1) {coef = 5;}
+		if (caracs.indexOf('Moyen')!=-1) coef = 2;
+		else if (caracs.indexOf('Normale')!=-1) coef = 3;
+		else if (caracs.indexOf('Bonne')!=-1) coef = 4;
+		else if (caracs.indexOf('Exceptionnelle')!=-1) coef = 5;
 		if (nature.indexOf('Mithril')!=-1) {
 			coef = 0.2*coef;
-			node.childNodes[7].textContent += ' | UM: ' + arrondi(taille*coef) ;
+			appendText(node.childNodes[7], ' | UM: '+arrondi(taille*coef) );
 			}
 		else {
 			coef = 0.75*coef+1.25;
 			if (nature.indexOf('Taill')!=-1) coef = 1.15*coef;
-			node.childNodes[7].textContent += ' | Carats: ' + arrondi(taille*coef) ;
+			appendText(node.childNodes[7], ' | Carats: '+arrondi(taille*coef) );
 			}
 		}
 	}
 
 function treateComposants() {
-	if (currentURL.indexOf("as_type=Compo")==-1) return false;
+	if (currentURL.indexOf("as_type=Compo")==-1) return;
 	//On récupère les composants
 	var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
 			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
 			+ "and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) "
 			+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	if (nodes.snapshotLength == 0)
-		return false;
+	if (nodes.snapshotLength == 0) {
+//		window.alert('treateComposants DOWN');
+		return;
+		}
+	window.alert(nodes.snapshotLength);
 
 	var texte = "";
 	for (var i = 0; i < nodes.snapshotLength; i++) {
@@ -150,11 +146,11 @@ function treateComposants() {
 }
 
 function treateAllComposants() {
-	if(currentURL.indexOf("as_type=Compo")==-1)
-		return false;
+	if(currentURL.indexOf("as_type=Compo")==-1) return;
+	
 	//On récupère les composants
 	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])",
-							document, null, XPathResult.ANY_TYPE, null ).numberValue;
+							document, null, 0, null ).numberValue;
 	var c = (categ == 0 ? 3 : 4);
 	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
 		+ "or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']"
@@ -165,8 +161,10 @@ function treateAllComposants() {
 			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
 		+ "and td[1]/img/@alt = 'Identifié']",
 		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	if (nodes.snapshotLength == 0)
-		return false;
+	if (nodes.snapshotLength == 0) {
+//		window.alert('treateAllComposants DOWN');
+		return;
+		}
 
 	var texte = "";
 	for (var i = 0; i < nodes.snapshotLength; i++) {
@@ -264,12 +262,11 @@ function treateChampi() {
 		return false;
 
 	for (var i = 0; i < nodes.snapshotLength; i++) {
-			var node = nodes.snapshotItem(i);
-			var nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
-			if (moisChampi[nomChampi]) {
-				appendText(node.parentNode.parentNode,' [Mois '+moisChampi[nomChampi]+']');
-				}
-			}
+		var node = nodes.snapshotItem(i);
+		var nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
+		if (moisChampi[nomChampi])
+			appendText(node.parentNode.parentNode,' [Mois '+moisChampi[nomChampi]+']');
+		}
 	}
 
 function treateEnchant()
@@ -324,7 +321,7 @@ start_script();
 
 treateAllComposants();
 treateComposants();
-treateMinerai();
+traiteMinerai();
 if (MZ_getValue('NOINFOEM')!='true') {
 	treateChampi();
 	treateEM();
