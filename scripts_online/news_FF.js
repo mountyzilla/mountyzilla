@@ -137,12 +137,17 @@ function afficherNouvelles(xml_data) {
 	if(!footer) {
 		return;
 		}
-	var titre = xml_data.evaluate('//channel/title/text()',
-		xml_data, null, 9, null).singleNodeValue.nodeValue;
-	var description = xml_data.evaluate('//channel/description/text()',
-		xml_data, null, 9, null).singleNodeValue.nodeValue;
-	var items = xml_data.evaluate('//channel/item',
-		xml_data, null, 7, null);
+	try {
+		var titre = xml_data.evaluate('//channel/title/text()',
+			xml_data, null, 9, null).singleNodeValue.nodeValue;
+		var description = xml_data.evaluate('//channel/description/text()',
+			xml_data, null, 9, null).singleNodeValue.nodeValue;
+		var items = xml_data.evaluate('//channel/item',
+			xml_data, null, 7, null);
+		}
+	catch(e) {
+		return;
+		}
 	if(!titre || !description || items.snapshotLength==0) {
 		return;
 		}
