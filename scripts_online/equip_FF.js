@@ -48,9 +48,12 @@ function traiteChampis() {
 	}
 
 function traiteCompos() {
-	var tr = document.getElementById('mh_objet_hidden_Composant');
-	var tbody = document.evaluate("./td/table/tbody",
-		tr, null, 9, null).singleNodeValue;
+	try {
+		var tr = document.getElementById('mh_objet_hidden_Composant');
+		var tbody = document.evaluate("./td/table/tbody",
+			tr, null, 9, null).singleNodeValue;
+		}
+	catch(e) {return;}
 	insererInfosEM(tbody);
 	}
 
