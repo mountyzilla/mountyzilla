@@ -177,5 +177,9 @@ function afficherNouvelles(xml_data) {
 
 /*---------------------------------- Main ------------------------------------*/
 
+start_script();
+
 traiterJubilaires();
 traiterNouvelles();
+
+displayScriptTime();
