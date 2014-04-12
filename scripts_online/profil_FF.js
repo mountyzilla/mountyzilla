@@ -178,8 +178,10 @@ function initAll() {
 	pv = Nbrs['pva'][0];
 	pvbase = Nbrs['pvm'][0];
 	pvmax = pvbase;
-	if(Nbrs['pvm'].length>1) // s'il y a des BM de PV
+	if(Nbrs['pvm'].length>1) {
+		// s'il y a des BM de PV
 		pvmax += Nbrs['pvm'][1];
+		}
 	
 	fatigue = Nbrs['fat'][0];
 	bmfatigue = (Nbrs['fat'].length>1) ? Nbrs['fat'][1] : 0;
@@ -213,7 +215,8 @@ function initAll() {
 	degbm = Nbrs['deg'][2]+degbmm;
 	degmoy = 2*deg+degbm;
 	appendTdText(caracs[3],
-		'(moyenne : '+degmoy+'/'+(2*Math.floor(1.5*deg)+degbm)+')' );
+		'(moyenne : '+degmoy+'/'+(2*Math.floor(1.5*deg)+degbm)+')'
+		);
 	
 	rm = Nbrs['rm'][0];
 	rmbm = Nbrs['rm'][1];
@@ -237,33 +240,40 @@ function initAll() {
 	
 	/* Race */
 	var strRace = mainTR.snapshotItem(0).childNodes[3].childNodes[4].nodeValue;
-	race = trim(strRace.substring(strRace.indexOf(':')+2));
+	race = trim(strRace.slice(strRace.indexOf(':')+2));
 	
 	/* PuM/PréM */
-	var nodepum = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
+	var nodes = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
 		mainTR.snapshotItem(6),null,7,null);
-	if(nodepum.snapshotLength>0) {
-		bmDAttM = getNumbers( nodepum.snapshotItem(0).nodeValue )[0];
-		bmDDegM = getNumbers( nodepum.snapshotItem(1).nodeValue )[0];
+	if(nodes.snapshotLength>0) {
+		bmDAttM = getNumbers( nodes.snapshotItem(0).nodeValue )[0];
+		bmDDegM = getNumbers( nodes.snapshotItem(1).nodeValue )[0];
 		}
 	
 	/* setDLA() */
 	var str = mainTR.snapshotItem(1).childNodes[3].childNodes[1]
 		.firstChild.nodeValue;
 	DLA = new Date( StringToDate(str) );
-	
+
 	/* setHeureServeur() */
-	var footerNode = document.getElementById('footer2');
-	if(!footerNode) return;
-	var str = document.evaluate(".//text()[contains(.,'Serveur')]",
-		footerNode,null,9,null).singleNodeValue.nodeValue;
-	str = str.substring(str.indexOf('/')-2,str.lastIndexOf(':')+3);
-	HeureServeur = new Date( StringToDate(str) );
+	try {
+		var footerNode = document.getElementById('footer2');
+		var str = document.evaluate(".//text()[contains(.,'Serveur')]",
+			footerNode,null,9,null).singleNodeValue.nodeValue;
+		str = str.slice(str.indexOf('/')-2,str.lastIndexOf(':')+3);
+		HeureServeur = new Date( StringToDate(str) );
+		}
+	catch(e) {
+		console.warn('MZ: Heure Serveur introuvable, '
+			+"utilisation de l'heure actuelle à la place\n"+e);
+		HeureServeur = new Date();
+		}
 
 	/* initAnatrolliseur() */
 	function amelio_dtb(dtb) {
-		if(dtb>555)
+		if(dtb>555) {
 			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
+			}
 		return 10+Math.ceil((555-dtb)/2.5);
 		}
 	
@@ -274,11 +284,11 @@ function initAll() {
 	var amelio_deg = deg-3;
 	var amelio_reg = reg-1;
 	var amelio_arm = arm-1;
-	if(race=='Darkling') amelio_reg--;
-	if(race=='Durakuir') amelio_pv--;
-	if(race=='Kastar') amelio_deg--;
-	if(race=='Skrim') amelio_att--;
-	if(race=='Tomawak') amelio_vue--;
+	if(race==='Darkling') amelio_reg--;
+	if(race==='Durakuir') amelio_pv--;
+	if(race==='Kastar') amelio_deg--;
+	if(race==='Skrim') amelio_att--;
+	if(race==='Tomawak') amelio_vue--;
 	
 	urlAnatrolliseur = 'http://mountyhall.dispas.net/dynamic/'
 		+'outils_anatrolliseur.php?anatrolliseur=v8'
@@ -329,6 +339,7 @@ function saveProfil() {
 	MZ_setValue(numTroll+'.position.X',posX);
 	MZ_setValue(numTroll+'.position.Y',posY);
 	MZ_setValue(numTroll+'.position.N',posN);
+	MZ_setValue(numTroll+'.race',race);
 	}
 
 
@@ -336,7 +347,9 @@ function saveProfil() {
 
 function setAnatrolliseur() {
 	appendButton(mainTR.snapshotItem(0).childNodes[1],'Anatrolliser!',
-		function(){window.open(urlAnatrolliseur,'_blank')}
+		function(){
+			window.open(urlAnatrolliseur,'_blank')
+			}
 		);
 	}
 
@@ -1536,25 +1549,27 @@ function sortileges(sort,mainCall,pcA,pcD) {
 /*---------------------------------- Main ------------------------------------*/
 
 try {
-start_script(31);
-creerBulleVide();
-initAll();
-setInfoDateCreation();
-setNextDLA();
-setInfosPV();
-setInfosPxPi();
-if(MZ_getValue('VUECARAC')=='true') vueCarac();
-setLieu();
-setStabilite();
-setCurrentEsquive();
-setRatioKillDeath();
-setTotauxMagie();
-traitementTalents();
-// À lancer après traitementTalents() :
-setAnatrolliseur();
-// Cette fonction modifie lourdement le DOM, à placer en dernier :
-if(race=='Kastar') setAccel();
-saveProfil();
-displayScriptTime();
-}
-catch(e) {window.alert(e)}
+	start_script(31);
+	creerBulleVide();
+	initAll();
+	setInfoDateCreation();
+	setNextDLA();
+	setInfosPV();
+	setInfosPxPi();
+	if(MZ_getValue('VUECARAC')=='true') vueCarac();
+	setLieu();
+	setStabilite();
+	setCurrentEsquive();
+	setRatioKillDeath();
+	setTotauxMagie();
+	traitementTalents();
+	// À lancer après traitementTalents() :
+	setAnatrolliseur();
+	// Cette fonction modifie lourdement le DOM, à placer en dernier :
+	if(race=='Kastar') setAccel();
+	saveProfil();
+	displayScriptTime();
+	}
+catch(e) {
+	window.alert(e)
+	}
