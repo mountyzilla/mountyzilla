@@ -368,8 +368,9 @@ function setInfoDateCreation() {
 function setNextDLA() {
 	var node = mainTR.snapshotItem(1).childNodes[3].childNodes[8].childNodes[1];
 	var nbrs = node.firstChild.nodeValue.match(/\d+/g);
-	DureeTour = nbrs[0]*3600000+nbrs[1]*60000;
-	var DLAsuivMSec = DLA.getTime()+DureeTour; var loupes = 0;
+	DureeTour = nbrs[0]*36e5+nbrs[1]*6e4;
+	var DLAsuivMSec = DLA.getTime()+DureeTour;
+	var loupes = 0;
 	while(DLAsuivMSec<HeureServeur) {
 		DLAsuivMSec += DureeTour;
 		loupes++;
@@ -379,11 +380,27 @@ function setNextDLA() {
 	appendText(node,
 		'---> Prochaine DLA (estimée)............: '+DateToString(DLAsuiv)
 		);
-	if(loupes==1)
+	/* Estimation des DLA suivantes */
+	var title = '';
+	var nextPv = pv;
+	for(var i=1 ; i<4 ; i++) {
+		nextPv = Math.min(nextPv+regmoy,pvmax);
+		var nextTour =
+			dtb+Math.max(0,pdm+bmt+Math.floor(500*(pvmax-nextPv)/pvmax)/2);
+		title += (title ? '\n' : '')
+			+'DLA +'+i+': '+DateToString( new Date(DLAsuivMSec) )
+			+' ('+nextPv+'PV, durée: '+dureeHM(nextTour)+')';
+		DLAsuivMSec += nextTour*6e4;
+		}
+	node.parentNode.title = title;
+	/* Affichage des tours manqués */
+	if(loupes==1) {
 		node.nextSibling.nodeValue = ' (Vous avez manqué votre dernier tour)';
-	else if(loupes>1)
+		}
+	else if(loupes>1) {
 		node.nextSibling.nodeValue =
 			' (Vous avez manqué vos '+loupes+' derniers tours)';
+		}
 	}
 
 function vueCarac() {
