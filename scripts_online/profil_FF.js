@@ -650,8 +650,9 @@ function setAccel() {
 	td = document.createElement('td');
 	tr.appendChild(td);
 	// si pas PDA, augmenter hauteur bannière
-	if(mainTR.snapshotItem(0).childNodes.length>5)
+	if(mainTR.snapshotItem(0).childNodes.length>5) {
 		mainTR.snapshotItem(0).childNodes[5].rowSpan = 12;
+		}
 	insertBefore(mainTR.snapshotItem(5),tr);
 	
 	/* Récupération des données */
@@ -674,19 +675,22 @@ function setAccel() {
 					}
 				}
 			}
-		if(varbm[0]==bmfatigue)
+		if(varbm[0]==bmfatigue) {
 			BMfrais = true;
+			}
 		}
 	else
 		BMfrais = true;
 	if(!BMfrais && bmfatigue>0) {
 		// si les BM n'ont pas été rafraîchis
-		if(bmfatigue==15)
+		if(bmfatigue==15) {
 			varbm = [15,15,15];
-		else
+			}
+		else {
 			varbm = [30,30,15];
+			}
 		}
-	if(overDLA) varbm.shift(); // décalage BM en overDLA
+	if(overDLA) { varbm.shift(); } // décalage BM en overDLA
 	var minppv = minParPVsac(varfat,varbm[0]);
 	minParPV = (varbm[0]==undefined) ? minppv[0] : minppv[1];
 	
@@ -768,6 +772,11 @@ function setAccel() {
 	
 	if(pv<=0) {
 		appendText(td,'Aucun calcul possible : vous êtes mort voyons !');
+		return;
+		}
+	
+	if(fatigue>30) {
+		appendText(td,'Vous êtes trop fatigué pour accélérer.');
 		return;
 		}
 	
