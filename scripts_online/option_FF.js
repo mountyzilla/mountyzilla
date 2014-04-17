@@ -93,7 +93,7 @@ function saveLinks() {
 		var url = document.getElementById('url'+i).value;
 		var nom = document.getElementById('nom'+i).value;
 		var ico = document.getElementById('ico'+i).value;
-		if(url && (nom || ico) )
+		if(url && (nom || ico) )
 			data.push( [url, nom ? nom : '', ico ? ico : ''] );
 		}
 	/* Sauvegarde */

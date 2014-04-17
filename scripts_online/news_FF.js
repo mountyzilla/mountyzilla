@@ -56,7 +56,7 @@ function traiterJubilaires() {
 				},
 			onload: function(responseDetails) {
 				var listeTrolls = responseDetails.responseText.split('\n');
-				if(!listeTrolls || listeTrolls.length==0) {
+				if(!listeTrolls || listeTrolls.length==0) {
 					return;
 					}
 				afficherJubilaires(listeTrolls);
@@ -148,7 +148,7 @@ function afficherNouvelles(xml_data) {
 	catch(e) {
 		return;
 		}
-	if(!titre || !description || items.snapshotLength==0) {
+	if(!titre || !description || items.snapshotLength==0) {
 		return;
 		}
 	var p = document.createElement('p');

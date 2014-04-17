@@ -26,7 +26,7 @@ var DivInfo;
 var freezed = false;
 
 // liste du matos
-// mh_caracs ['Nom'] = [ 'Type', 'AttP','AttM', 'DegP','DegM', 'Esq',
+// mh_caracs ['Nom'] = [ 'Type', 'AttP','AttM', 'DegP','DegM', 'Esq',
 // 'ArmP','ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
 // 'PV', 'DLA', 'Poids_Min', 'Poids_Max' ];
 var mh_caracs = {

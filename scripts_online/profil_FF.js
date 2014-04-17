@@ -683,14 +683,14 @@ function setAccel() {
 		BMfrais = true;
 	if(!BMfrais && bmfatigue>0) {
 		// si les BM n'ont pas été rafraîchis
-		if(bmfatigue==15) {
+		if(bmfatigue==15) {
 			varbm = [15,15,15];
 			}
 		else {
 			varbm = [30,30,15];
 			}
 		}
-	if(overDLA) { varbm.shift(); } // décalage BM en overDLA
+	if(overDLA) { varbm.shift(); } // décalage BM en overDLA
 	var minppv = minParPVsac(varfat,varbm[0]);
 	minParPV = (varbm[0]==undefined) ? minppv[0] : minppv[1];
 	
@@ -890,7 +890,7 @@ function injecteInfosBulles(liste,fonction) {
 		var nom = epure(trim(node.firstChild.nodeValue));
 		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
 			.firstChild.nodeValue);
-		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
+		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
 			var lstNoms = trim(epure(liste[i].childNodes[3].lastChild.nodeValue))
 				.slice(1,-1).split(', ');
 			for(var j=0 ; j<lstNoms.length ; j++)
@@ -936,7 +936,7 @@ function setTalent(nom,pc,niveau) {
 	pc = parseInt(pc);
 	if(!niveau) niveau = 1;
 	
-	switch(nomEnBase) {
+	switch(nomEnBase) {
 		case 'Insultes':
 			urlAnatrolliseur += 'Insu'+niveau+'|';
 		case 'IdT':
@@ -1045,7 +1045,7 @@ function competences(comp,niveau) {
 		var notMaxedOut = false;
 		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
+			if(lastmax!=0 && pc<=lastmax) continue;
 			if(i>niveau) texte += '<i>';
 			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+attbm;
 			texte += 'Attaque (niveau '+i+') : <b>'
@@ -1140,7 +1140,7 @@ function competences(comp,niveau) {
 			+' => <b>'+attmoy+'</b>';
 		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
+			if(lastmax!=0 && pc<=lastmax) continue;
 			if(i>niveau) texte += '<hr><i>';
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+degbm;
 			texte += 'Dégats (niveau '+i+') : <b>'
@@ -1398,7 +1398,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Levitation')!=-1)
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
-	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
+	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
 		var eps = 1, pc = 20;
 		var str = 'PréM';
 		var newSort;
