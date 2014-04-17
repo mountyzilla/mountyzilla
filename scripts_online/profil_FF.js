@@ -859,15 +859,15 @@ function traitementTalents() {
 		var talTabs = document.evaluate("./tbody/tr/td/table",
 			mainTab[1],null,7,null);
 		var listeComp = talTabs.snapshotItem(0);
-		tr_comp = listeComp.getElementsByTagName('tr');
+		tr_comps = listeComp.getElementsByTagName('tr');
 		var listeSort = talTabs.snapshotItem(1);
-		tr_sort = listeSort.getElementsByTagName('tr');
+		tr_sorts = listeSort.getElementsByTagName('tr');
 		var titres = document.evaluate("./tbody/tr/td/b/text()",
 			mainTab[1],null,7,null);
 		}
 	catch(e) {return;}
-	var totalComp = injecteInfosBulles(tr_comp,'competences');
-	var totalSort = injecteInfosBulles(tr_sort,'sortileges');
+	var totalComp = injecteInfosBulles(tr_comps,'competences');
+	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
 	listeComp.parentNode.onclick = toggleFreeze;
