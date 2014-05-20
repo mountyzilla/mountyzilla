@@ -907,7 +907,7 @@ function retrieveCDMs() {
 					}
 					catch(e)
 					{
-						window.alert(e+'\n'+url+'\n'+texte);
+						console.error(e+'\n'+url+'\n'+texte);
 					}
 					}
 				});
