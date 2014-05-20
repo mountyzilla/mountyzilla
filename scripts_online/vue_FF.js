@@ -241,7 +241,7 @@ function recallComboBox(cbb, pref) {
 function synchroniseFiltres() {
 	// Récupération de toutes les options de la vue
 	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
-	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
+	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
 	if(numBool) {
 		debutFiltrage('monstres');
 		}
@@ -682,7 +682,7 @@ function toggleLevelColumn() {
 
 /* [functions] Infos Tactiques */
 // TODO à revoir
-function computeTactique(begin, end) {
+function computeTactique(begin, end) {
 	try {
 		if(!begin) begin = 1;
 		if(!end) end = nbMonstres;
@@ -907,7 +907,7 @@ function retrieveCDMs() {
 					}
 					catch(e)
 					{
-						window.alert(e+'\n'+url+'\n'+texte);
+						console.error(e+'\n'+url+'\n'+texte);
 					}
 					}
 				});
@@ -1064,7 +1064,7 @@ function hidePXTroll() {
 	bulle.style.visibility = 'hidden';
 	}
 
-/* [functions] Envoi PX / MP */
+/* [functions] Envoi PX / MP */
 function putBoutonPXMP() {
 	// Bouton d'initialisation du mode Envoi
 	var td = document.getElementById('td_insert_trolls');

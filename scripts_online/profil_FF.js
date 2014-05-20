@@ -178,8 +178,10 @@ function initAll() {
 	pv = Nbrs['pva'][0];
 	pvbase = Nbrs['pvm'][0];
 	pvmax = pvbase;
-	if(Nbrs['pvm'].length>1) // s'il y a des BM de PV
+	if(Nbrs['pvm'].length>1) {
+		// s'il y a des BM de PV
 		pvmax += Nbrs['pvm'][1];
+		}
 	
 	fatigue = Nbrs['fat'][0];
 	bmfatigue = (Nbrs['fat'].length>1) ? Nbrs['fat'][1] : 0;
@@ -213,7 +215,8 @@ function initAll() {
 	degbm = Nbrs['deg'][2]+degbmm;
 	degmoy = 2*deg+degbm;
 	appendTdText(caracs[3],
-		'(moyenne : '+degmoy+'/'+(2*Math.floor(1.5*deg)+degbm)+')' );
+		'(moyenne : '+degmoy+'/'+(2*Math.floor(1.5*deg)+degbm)+')'
+		);
 	
 	rm = Nbrs['rm'][0];
 	rmbm = Nbrs['rm'][1];
@@ -237,33 +240,40 @@ function initAll() {
 	
 	/* Race */
 	var strRace = mainTR.snapshotItem(0).childNodes[3].childNodes[4].nodeValue;
-	race = trim(strRace.substring(strRace.indexOf(':')+2));
+	race = trim(strRace.slice(strRace.indexOf(':')+2));
 	
 	/* PuM/PréM */
-	var nodepum = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
+	var nodes = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
 		mainTR.snapshotItem(6),null,7,null);
-	if(nodepum.snapshotLength>0) {
-		bmDAttM = getNumbers( nodepum.snapshotItem(0).nodeValue )[0];
-		bmDDegM = getNumbers( nodepum.snapshotItem(1).nodeValue )[0];
+	if(nodes.snapshotLength>0) {
+		bmDAttM = getNumbers( nodes.snapshotItem(0).nodeValue )[0];
+		bmDDegM = getNumbers( nodes.snapshotItem(1).nodeValue )[0];
 		}
 	
 	/* setDLA() */
 	var str = mainTR.snapshotItem(1).childNodes[3].childNodes[1]
 		.firstChild.nodeValue;
 	DLA = new Date( StringToDate(str) );
-	
+
 	/* setHeureServeur() */
-	var footerNode = document.getElementById('footer2');
-	if(!footerNode) return;
-	var str = document.evaluate(".//text()[contains(.,'Serveur')]",
-		footerNode,null,9,null).singleNodeValue.nodeValue;
-	str = str.substring(str.indexOf('/')-2,str.lastIndexOf(':')+3);
-	HeureServeur = new Date( StringToDate(str) );
+	try {
+		var footerNode = document.getElementById('footer2');
+		var str = document.evaluate(".//text()[contains(.,'Serveur')]",
+			footerNode,null,9,null).singleNodeValue.nodeValue;
+		str = str.slice(str.indexOf('/')-2,str.lastIndexOf(':')+3);
+		HeureServeur = new Date( StringToDate(str) );
+		}
+	catch(e) {
+		console.warn('MZ: Heure Serveur introuvable, '
+			+"utilisation de l'heure actuelle à la place\n"+e);
+		HeureServeur = new Date();
+		}
 
 	/* initAnatrolliseur() */
 	function amelio_dtb(dtb) {
-		if(dtb>555)
+		if(dtb>555) {
 			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
+			}
 		return 10+Math.ceil((555-dtb)/2.5);
 		}
 	
@@ -274,11 +284,11 @@ function initAll() {
 	var amelio_deg = deg-3;
 	var amelio_reg = reg-1;
 	var amelio_arm = arm-1;
-	if(race=='Darkling') amelio_reg--;
-	if(race=='Durakuir') amelio_pv--;
-	if(race=='Kastar') amelio_deg--;
-	if(race=='Skrim') amelio_att--;
-	if(race=='Tomawak') amelio_vue--;
+	if(race==='Darkling') amelio_reg--;
+	if(race==='Durakuir') amelio_pv--;
+	if(race==='Kastar') amelio_deg--;
+	if(race==='Skrim') amelio_att--;
+	if(race==='Tomawak') amelio_vue--;
 	
 	urlAnatrolliseur = 'http://mountyhall.dispas.net/dynamic/'
 		+'outils_anatrolliseur.php?anatrolliseur=v8'
@@ -329,6 +339,7 @@ function saveProfil() {
 	MZ_setValue(numTroll+'.position.X',posX);
 	MZ_setValue(numTroll+'.position.Y',posY);
 	MZ_setValue(numTroll+'.position.N',posN);
+	MZ_setValue(numTroll+'.race',race);
 	}
 
 
@@ -336,7 +347,9 @@ function saveProfil() {
 
 function setAnatrolliseur() {
 	appendButton(mainTR.snapshotItem(0).childNodes[1],'Anatrolliser!',
-		function(){window.open(urlAnatrolliseur,'_blank')}
+		function(){
+			window.open(urlAnatrolliseur,'_blank')
+			}
 		);
 	}
 
@@ -355,8 +368,9 @@ function setInfoDateCreation() {
 function setNextDLA() {
 	var node = mainTR.snapshotItem(1).childNodes[3].childNodes[8].childNodes[1];
 	var nbrs = node.firstChild.nodeValue.match(/\d+/g);
-	DureeTour = nbrs[0]*3600000+nbrs[1]*60000;
-	var DLAsuivMSec = DLA.getTime()+DureeTour; var loupes = 0;
+	DureeTour = nbrs[0]*36e5+nbrs[1]*6e4;
+	var DLAsuivMSec = DLA.getTime()+DureeTour;
+	var loupes = 0;
 	while(DLAsuivMSec<HeureServeur) {
 		DLAsuivMSec += DureeTour;
 		loupes++;
@@ -366,11 +380,27 @@ function setNextDLA() {
 	appendText(node,
 		'---> Prochaine DLA (estimée)............: '+DateToString(DLAsuiv)
 		);
-	if(loupes==1)
+	/* Estimation des DLA suivantes */
+	var title = '';
+	var nextPv = pv;
+	for(var i=1 ; i<4 ; i++) {
+		nextPv = Math.min(nextPv+regmoy,pvmax);
+		var nextTour =
+			dtb+Math.max(0,pdm+bmt+Math.floor(500*(pvmax-nextPv)/pvmax)/2);
+		title += (title ? '\n' : '')
+			+'DLA +'+i+': '+DateToString( new Date(DLAsuivMSec) )
+			+' ('+nextPv+'PV, durée: '+dureeHM(nextTour)+')';
+		DLAsuivMSec += nextTour*6e4;
+		}
+	node.parentNode.title = title;
+	/* Affichage des tours manqués */
+	if(loupes==1) {
 		node.nextSibling.nodeValue = ' (Vous avez manqué votre dernier tour)';
-	else if(loupes>1)
+		}
+	else if(loupes>1) {
 		node.nextSibling.nodeValue =
 			' (Vous avez manqué vos '+loupes+' derniers tours)';
+		}
 	}
 
 function vueCarac() {
@@ -620,8 +650,9 @@ function setAccel() {
 	td = document.createElement('td');
 	tr.appendChild(td);
 	// si pas PDA, augmenter hauteur bannière
-	if(mainTR.snapshotItem(0).childNodes.length>5)
+	if(mainTR.snapshotItem(0).childNodes.length>5) {
 		mainTR.snapshotItem(0).childNodes[5].rowSpan = 12;
+		}
 	insertBefore(mainTR.snapshotItem(5),tr);
 	
 	/* Récupération des données */
@@ -644,19 +675,22 @@ function setAccel() {
 					}
 				}
 			}
-		if(varbm[0]==bmfatigue)
+		if(varbm[0]==bmfatigue) {
 			BMfrais = true;
+			}
 		}
 	else
 		BMfrais = true;
 	if(!BMfrais && bmfatigue>0) {
 		// si les BM n'ont pas été rafraîchis
-		if(bmfatigue==15)
+		if(bmfatigue==15) {
 			varbm = [15,15,15];
-		else
+			}
+		else {
 			varbm = [30,30,15];
+			}
 		}
-	if(overDLA) varbm.shift(); // décalage BM en overDLA
+	if(overDLA) { varbm.shift(); } // décalage BM en overDLA
 	var minppv = minParPVsac(varfat,varbm[0]);
 	minParPV = (varbm[0]==undefined) ? minppv[0] : minppv[1];
 	
@@ -738,6 +772,11 @@ function setAccel() {
 	
 	if(pv<=0) {
 		appendText(td,'Aucun calcul possible : vous êtes mort voyons !');
+		return;
+		}
+	
+	if(fatigue>30) {
+		appendText(td,'Vous êtes trop fatigué pour accélérer.');
 		return;
 		}
 	
@@ -829,15 +868,15 @@ function traitementTalents() {
 		var talTabs = document.evaluate("./tbody/tr/td/table",
 			mainTab[1],null,7,null);
 		var listeComp = talTabs.snapshotItem(0);
-		tr_comp = listeComp.getElementsByTagName('tr');
+		tr_comps = listeComp.getElementsByTagName('tr');
 		var listeSort = talTabs.snapshotItem(1);
-		tr_sort = listeSort.getElementsByTagName('tr');
+		tr_sorts = listeSort.getElementsByTagName('tr');
 		var titres = document.evaluate("./tbody/tr/td/b/text()",
 			mainTab[1],null,7,null);
 		}
 	catch(e) {return;}
-	var totalComp = injecteInfosBulles(tr_comp,'competences');
-	var totalSort = injecteInfosBulles(tr_sort,'sortileges');
+	var totalComp = injecteInfosBulles(tr_comps,'competences');
+	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
 	listeComp.parentNode.onclick = toggleFreeze;
@@ -851,7 +890,7 @@ function injecteInfosBulles(liste,fonction) {
 		var nom = epure(trim(node.firstChild.nodeValue));
 		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
 			.firstChild.nodeValue);
-		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
+		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
 			var lstNoms = trim(epure(liste[i].childNodes[3].lastChild.nodeValue))
 				.slice(1,-1).split(', ');
 			for(var j=0 ; j<lstNoms.length ; j++)
@@ -897,7 +936,7 @@ function setTalent(nom,pc,niveau) {
 	pc = parseInt(pc);
 	if(!niveau) niveau = 1;
 	
-	switch(nomEnBase) {
+	switch(nomEnBase) {
 		case 'Insultes':
 			urlAnatrolliseur += 'Insu'+niveau+'|';
 		case 'IdT':
@@ -1006,7 +1045,7 @@ function competences(comp,niveau) {
 		var notMaxedOut = false;
 		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
+			if(lastmax!=0 && pc<=lastmax) continue;
 			if(i>niveau) texte += '<i>';
 			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+attbm;
 			texte += 'Attaque (niveau '+i+') : <b>'
@@ -1101,7 +1140,7 @@ function competences(comp,niveau) {
 			+' => <b>'+attmoy+'</b>';
 		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
+			if(lastmax!=0 && pc<=lastmax) continue;
 			if(i>niveau) texte += '<hr><i>';
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+degbm;
 			texte += 'Dégats (niveau '+i+') : <b>'
@@ -1359,7 +1398,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Levitation')!=-1)
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
-	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
+	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
 		var eps = 1, pc = 20;
 		var str = 'PréM';
 		var newSort;
@@ -1536,25 +1575,27 @@ function sortileges(sort,mainCall,pcA,pcD) {
 /*---------------------------------- Main ------------------------------------*/
 
 try {
-start_script(31);
-creerBulleVide();
-initAll();
-setInfoDateCreation();
-setNextDLA();
-setInfosPV();
-setInfosPxPi();
-if(MZ_getValue('VUECARAC')=='true') vueCarac();
-setLieu();
-setStabilite();
-setCurrentEsquive();
-setRatioKillDeath();
-setTotauxMagie();
-traitementTalents();
-// À lancer après traitementTalents() :
-setAnatrolliseur();
-// Cette fonction modifie lourdement le DOM, à placer en dernier :
-if(race=='Kastar') setAccel();
-saveProfil();
-displayScriptTime();
-}
-catch(e) {window.alert(e)}
+	start_script(31);
+	creerBulleVide();
+	initAll();
+	setInfoDateCreation();
+	setNextDLA();
+	setInfosPV();
+	setInfosPxPi();
+	if(MZ_getValue('VUECARAC')=='true') vueCarac();
+	setLieu();
+	setStabilite();
+	setCurrentEsquive();
+	setRatioKillDeath();
+	setTotauxMagie();
+	traitementTalents();
+	// À lancer après traitementTalents() :
+	setAnatrolliseur();
+	// Cette fonction modifie lourdement le DOM, à placer en dernier :
+	if(race=='Kastar') setAccel();
+	saveProfil();
+	displayScriptTime();
+	}
+catch(e) {
+	window.alert(e)
+	}

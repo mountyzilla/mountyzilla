@@ -321,7 +321,7 @@ function traiteMalus() {
 			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
 			// nom = 'pasdedecumul' si pas de décumul
 			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
-			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
+			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
 			var bm = parseInt( effetsT[i].match(/-?\d+/) );
 			uniListe[nb]['caracs'][carac] = bm;
@@ -354,7 +354,7 @@ function traiteMalus() {
 				}
 			for(var carac in uniListe[nb]['caracs']) {
 				var bm = uniListe[nb]['caracs'][carac];
-				if(carac=='ATT' || carac=='DEG' || carac=='Armure') {
+				if(carac=='ATT' || carac=='DEG' || carac=='Armure') {
 					var type = uniListe[nb]['type'];
 					if(!effetsCeTour[carac])
 						effetsCeTour[carac] = {'Physique':0, 'Magie':0};
