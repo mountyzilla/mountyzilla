@@ -415,6 +415,8 @@ function insertCreditsTable(insertPt) {
 	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... '
 		+'et tous les participants au projet ZoryaZilla');
 	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
+	appendLI(ul,'Rokü Menton-brûlant (108387) pour m\'avoir incité à passer '
+		+'sur GitHub');
 	appendLI(ul,'Tous les testeurs de la nouvelle génération '
 		+'oubliés par Dabihul');
 	}
