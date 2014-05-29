@@ -347,6 +347,39 @@ function sendDices() {
 }*/
 
 
+/*-[functions]------------------- Décalage DLA -------------------------------*/
+
+function confirmeDecalage() {
+	var DLA = document.getElementsByTagName('script')[1]
+		.textContent.match(/\d+/g);
+	var newDLA = new Date( DLA[1],DLA[2],DLA[3],DLA[4],DLA[5],DLA[6] );
+	newDLA.setMinutes(
+		newDLA.getMinutes()+parseInt(document.getElementById('ai_NbMinutes').value)
+	);
+	return window.confirm(
+		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
+		+'\nConfirmez-vous cette heure ?'
+	);
+}
+
+function newsubmitDLA(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	if(confirmeDecalage()) {
+		this.submit();
+	}
+}
+
+function changeActionDecalage() {
+	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
+		return;
+	}
+	var form = document.getElementsByName('ActionForm')[0];
+	if(form) {
+		form.addEventListener('submit', newsubmitDLA, true);
+	}
+}
+
 /*-[functions]------------------- Alerte Mundi -------------------------------*/
 
 function prochainMundi() {
@@ -374,6 +407,9 @@ function prochainMundi() {
 function dispatch() {
 	if(isPage('MH_Play/Play_action')) {
 		prochainMundi();
+	}
+	else if(isPage('MH_Play/Actions/Play_a_Decaler')) {
+		changeActionDecalage();
 	}
 	else if(isPage('MH_Play/Actions')) {
 		sendDices();
