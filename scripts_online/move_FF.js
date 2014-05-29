@@ -17,7 +17,7 @@
 *******************************************************************************/
 
 
-/* Données sur les trous de météorites */
+/*-[variables+function]- Données sur les trous de météorites -----------------*/
 
 var petitsTrous = {
 	'-52;57': true,
@@ -110,15 +110,15 @@ function newsubmitDE(event) {
 	}
 }
 
-
-/*-[functions]----------------- Gestion des TPs ------------------------------*/
-
 function changeValidation() {
 	var form = document.getElementsByName('ActionForm')[0];
 	if(form) {
 		form.addEventListener('submit', newsubmitDE, true);
 	}
 }
+
+
+/*-[functions]----------------- Gestion des TPs ------------------------------*/
 
 function validateTPDestination() {
 	try {
@@ -186,6 +186,9 @@ function changeButtonValidate() {
 		form.addEventListener('submit', newsubmitTP, true);
 	}
 }
+
+
+/*-[functions]---------------- Partie Principale -----------------------------*/
 
 if(isPage('MH_Play/Actions/Play_a_Move.php')) {
 	changeValidation();
