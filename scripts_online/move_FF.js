@@ -95,7 +95,7 @@ function validateDestination() {
 			return window.confirm(
 				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
 				+'Vous allez tomber dans un trou de météorite.\n'
-				+'Etes vous sûr de vouloir effectuer ce déplacement ?'
+				+'Êtes vous sûr de vouloir effectuer ce déplacement ?'
 			);
 		}
 	}
@@ -151,7 +151,7 @@ function validateTPDestination() {
 				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
 				+'Vous avez '+Math.floor((100*nbtrous)/144)
 				+'% de risque de tomber dans un trou de météorite.\n'
-				+'Etes-vous sûr de vouloir prendre ce portail ?'
+				+'Êtes-vous sûr de vouloir prendre ce portail ?'
 			);
 		}
 		else if(nbtrous>=72) {
@@ -159,7 +159,7 @@ function validateTPDestination() {
 				'La voix de  mini TilK (n°36216) tonne dans votre tête :\n'
 				+'Malheureux, vous avez '+Math.floor((100*nbtrous)/144)
 				+'% de risque de tomber dans un trou de météorite !\n'
-				+'Etes-vous bien certain de vouloir prendre ce portail ?'
+				+'Êtes-vous bien certain de vouloir prendre ce portail ?'
 			);
 		}
 		return true;
