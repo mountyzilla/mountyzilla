@@ -405,10 +405,10 @@ function prochainMundi() {
 /*                            Fonction principale                             */
 
 function dispatch() {
-	if(isPage('MH_Play/Play_action')) {
+	if(isPage('MH_Play/Play_action.php')) {
 		prochainMundi();
 	}
-	else if(isPage('MH_Play/Actions/Play_a_Decaler')) {
+	else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
 		changeActionDecalage();
 	}
 	else if(isPage('MH_Play/Actions')) {
