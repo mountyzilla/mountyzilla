@@ -409,7 +409,8 @@ function dispatch() {
 		}
 		else if(messageTitle.indexOf('Identification des trésors') != -1
 			// à replacer avec Attaque après révision getLvl :
-			|| messageTitle.indexOf('Explosion') != -1) {
+			|| messageTitle.indexOf('Explosion') != -1
+			|| messageTitle.indexOf('Insulte') != -1) {
 			traiteRM();
 		}
 	}
