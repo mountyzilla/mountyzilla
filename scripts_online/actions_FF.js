@@ -350,8 +350,6 @@ function sendDices() {
 /*-[functions]------------------- Décalage DLA -------------------------------*/
 
 function confirmeDecalage() {
-	// var DLA = new Date( StringToDate(MZ_getValue(numTroll+'.DLA.encours')) );
-	// Cette méthode ne gère pas des décalages multiples pendant une même session
 	var DLA = document.getElementsByTagName('script')[1]
 		.textContent.match(/\d+/g);
 	var newDLA = new Date( DLA[1],DLA[2],DLA[3],DLA[4],DLA[5],DLA[6] );
@@ -373,6 +371,9 @@ function newsubmitDLA(evt) {
 }
 
 function changeActionDecalage() {
+	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
+		return;
+	}
 	var form = document.getElementsByName('ActionForm')[0];
 	if(form) {
 		form.addEventListener('submit', newsubmitDLA, true);
