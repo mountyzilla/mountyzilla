@@ -20,20 +20,6 @@
  * - revoir la gestion des CdM --> nott armure magique
  * - revoir tout ce qui est lié à la vue (estimateurs dég nott)
  * - vérfier la gestion des enchants
- * v1.2.2.3 - 2013-04-21
- * - correction displayScriptTime (nouveau footer)
- * v1.2.2.3b - 2013-05-08
- * - implémentation sans usage de binom (remplacera cnp)
- * v1.2.2.4 - 2013-08-19
- * - correction syntaxe alert
- * v1.3 - 2013-12-13
- * - modification arrayTalents, getSortComp, setSortComp
- * v1.3.1 - 2013-12-28
- * - allègement de code arrayTalents
- * v1.3.2 - 2013-12-30
- * - allègements de code divers
- * v1.3.3 - 2014-01-01
- * - gestion pièges
  */
 
 var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
@@ -789,12 +775,7 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 	var title = 'Composant variable', texte = 'Variable';
 	var bold = false;
 	if(tabEM[mob].length>1) {
-		var pc = 5*(tabEM[mob][2]-numQualite[qualite]);
-		// DEBUG
-		//window.alert(compo+'\n'
-		//	+tabEM[mob].join(', ')+'\n'
-		//	+compo.indexOf(tabEM[mob][0]));
-		//
+		var pc = 5*(numQualite[qualite]-tabEM[mob][2]);
 		if(tabEM[mob][0].indexOf(compo)==-1) pc -= 20;
 		if(localisation.indexOf(tabEM[mob][3])==-1) pc -= 5;
 		if(pc<-20) return;
