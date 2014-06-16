@@ -16,12 +16,8 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-
-/* v0.1.2 - 2013-08-19
- * - correction syntaxe alert
- * - ajout option autoCdM
- * v0.1.3 - 2013-10-05
- * - gestion affichage Vue comme Carac
+/* TODO
+ * Passer le HTML injecté aux conventions HTML5
  */
 
 var tagsData = {
@@ -31,7 +27,7 @@ var tagsData = {
 		'http://mountypedia.free.fr/mz/typeTrolls_new.csv',
 	'Pogo 2009':
 		'http://mountyzilla.tilk.info/resources/pogo2009.csv'
-	}
+};
 
 /*-[functions]------------- Fonctions de sauvegarde --------------------------*/
 
@@ -41,13 +37,15 @@ function saveITData() {
 		var system = document.getElementById('urlbricol').value;
 		var login = document.getElementById('loginbricol').value;
 		var pass = document.getElementById('passbricol').value;
-		if(system && login && pass)
+		if(system && login && pass) {
 			MZ_setValue(numTroll+'.INFOSIT',
 				'bricol$'+system+'$'+login+'$'+hex_md5(pass) );
 		}
-	else
+	}
+	else {
 		MZ_removeValue(numTroll+'.INFOSIT');
 	}
+}
 
 function saveTagsData() {
 	var nom = document.getElementById('tagsSelect').value;
@@ -66,21 +64,21 @@ function saveTagsData() {
 		default:
 			MZ_setValue(numTroll+'.TAGSURL','$'+tagsData[nom]);
 			// $ si url auto
-		}
 	}
+}
 
 function refreshLinks() {
 	document.getElementById('linksBody').innerHTML = '';
 	var anotherURL = MZ_getValue('URL1');
-	if(!anotherURL) addLinkField();
+	if(!anotherURL) { addLinkField(); }
 	var i=1;
 	while(anotherURL && i<99) {
 		addLinkField(i,anotherURL,
 			MZ_getValue('URL'+i+'.nom'),MZ_getValue('URL'+i+'.ico') );
 		i++;
 		anotherURL = MZ_getValue('URL'+i);
-		}
 	}
+}
 
 function saveLinks() {
 	var numLinks = document.getElementById('linksBody').childNodes.length;
@@ -93,27 +91,29 @@ function saveLinks() {
 		var url = document.getElementById('url'+i).value;
 		var nom = document.getElementById('nom'+i).value;
 		var ico = document.getElementById('ico'+i).value;
-		if(url && (nom || ico) )
+		if(url && (nom || ico) ) {
 			data.push( [url, nom ? nom : '', ico ? ico : ''] );
 		}
+	}
 	/* Sauvegarde */
 	for(var i=1 ; i<data.length ; i++) {
 		MZ_setValue('URL'+i,data[i][0]);
 		MZ_setValue('URL'+i+'.nom',data[i][1]);
 		MZ_setValue('URL'+i+'.ico',data[i][2]);
-		}
 	}
+}
 
 function saveAll() {
 	MZ_setValue('VUEEXT',document.getElementById('vueext').value);
 	
 	var maxcdm = parseInt(document.getElementById('maxcdm').value);
-	if(maxcdm)
+	if(maxcdm) {
 		MZ_setValue(numTroll+'.MAXCDM', maxcdm );
+	}
 	else {
 		MZ_removeValue(numTroll+'.MAXCDM');
 		document.getElementById('maxcdm').value = '';
-		}
+	}
 	
 	// Pourquoi Tilk stockait-il tout en str ?
 	// -> parce que les booléens c'est foireux (vérifié)
@@ -123,19 +123,24 @@ function saveAll() {
 		document.getElementById('infocarac').checked ? 'true' : 'false');
 	//MZ_setValue(numTroll+'.SEND_IDT',
 	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
+	// Fonctionnalité désactivée
 	MZ_setValue('NOINFOEM',
 		document.getElementById('noInfoEM').checked ? 'true' : 'false');
 	MZ_setValue(numTroll+'.AUTOCDM',
 		document.getElementById('autoCdM').checked ? 'true' : 'false');
 	MZ_setValue('VUECARAC',
 		document.getElementById('vueCarac').checked ? 'true' : 'false');
+	MZ_setValue('CONFIRMEDECALAGE',
+		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
 	
 	if(document.getElementById('usepoiss').checked
-		&& document.getElementById('passpoiss').value)
+		&& document.getElementById('passpoiss').value) {
 		MZ_setValue(numTroll+'.POISS',
 			hex_md5(document.getElementById('passpoiss').value));
-	else if(!document.getElementById('usepoiss').checked)
+	}
+	else if(!document.getElementById('usepoiss').checked) {
 		MZ_removeValue(numTroll+'.POISS');
+	}
 	
 	saveLinks();
 	refreshLinks();
@@ -145,7 +150,7 @@ function saveAll() {
 	var bouton = document.getElementById('saveAll');
 	bouton.value = (bouton.value=='Sauvegardé !') ?	
 		'Re-sauvegardé !' : 'Sauvegardé !';
-	}
+}
 
 
 /*-[functions]----------------- EventListeners -------------------------------*/
@@ -163,7 +168,7 @@ function onChangeIT() {
 			var arr = str.split('$');
 			var system = arr[1];
 			var login = arr[2];
-			}
+		}
 		appendText(td,'Nom du système : ');
 		appendTextbox(td,'text','urlbricol',20,50,system);
 		td = appendTd(tr);
@@ -172,8 +177,8 @@ function onChangeIT() {
 		td = appendTd(tr);
 		appendText(td,'Mot de passe du compte : ');
 		appendTextbox(td,'password','passbricol',20,50);
-		}
 	}
+}
 
 function onChangeTags() {
 	var value = document.getElementById('tagsSelect').value;
@@ -182,17 +187,19 @@ function onChangeTags() {
 	if(value=='other') {
 		var td = appendTdText(appendTr(tagsBody),'Url du fichier de tags : ');
 		var mem = MZ_getValue(numTroll+'.TAGSURL'), url = '';
-		if(mem && mem[0]=='#')
+		if(mem && mem[0]=='#') {
 			url = mem.substr(1);
-		appendTextbox(td,'text','tagsInput',50,150,url);
 		}
-	else
+		appendTextbox(td,'text','tagsInput',50,150,url);
+	}
+	else {
 		tagsBody.innerHTML = '';
 	}
+}
 
 function addLinkField(i,url,nom,ico) {
 	var linksBody = document.getElementById('linksBody');
-	if(!(i>0)) i = linksBody.childNodes.length+1;
+	if(!(i>0)) { i = linksBody.childNodes.length+1; }
 	var tr = appendTr(linksBody);
 	var td = appendTdCenter(tr);
 	appendText(td,'Lien '+i+' : ');
@@ -203,7 +210,7 @@ function addLinkField(i,url,nom,ico) {
 	td = appendTdCenter(tr);
 	appendText(td,'Icône : ');
 	appendTextbox(td,'text','ico'+i,40,150,ico);
-	}
+}
 
 function removeLinkField() {
 	var linksBody = document.getElementById('linksBody');
@@ -212,8 +219,8 @@ function removeLinkField() {
 	MZ_removeValue('URL'+i+'.nom');
 	MZ_removeValue('URL'+i+'.ico');
 	linksBody.removeChild(linksBody.lastChild);
-	if(linksBody.childNodes.length==0) addLinkField();
-	}
+	if(linksBody.childNodes.length==0) { addLinkField(); }
+}
 
 
 /*-[functions]-------------- Fonctions d'insertion ---------------------------*/
@@ -223,7 +230,7 @@ function insertTitle(next,txt) {
 	div.className = 'titre2';
 	appendText(div,txt);
 	insertBefore(next,div);
-	}
+}
 
 function insertMainTable(next) {
 	var table = document.createElement('table');
@@ -237,7 +244,7 @@ function insertMainTable(next) {
 	table.appendChild(tbody);
 	insertBefore(next,table);
 	return tbody;
-	}
+}
 
 function appendSubTable(node) {
 	var table = document.createElement('table');
@@ -246,7 +253,7 @@ function appendSubTable(node) {
 	table.appendChild(tbody);
 	node.appendChild(table);
 	return tbody;
-	}
+}
 
 function insertOptionTable(insertPt) {
 	var mainBody = insertMainTable(insertPt);
@@ -279,11 +286,14 @@ function insertOptionTable(insertPt) {
 		'Vue du CCM',
 		'Vue Gloumfs 2D',
 		'Vue Gloumfs 3D',
-		'Grouky Vue!'];
-	for(var i=0 ; i<listeVues2D.length ; i++)
+		'Grouky Vue!'
+	];
+	for(var i=0 ; i<listeVues2D.length ; i++) {
 		appendOption(select,listeVues2D[i],listeVues2D[i]);
-	if(MZ_getValue('VUEEXT'))
+	}
+	if(MZ_getValue('VUEEXT')) {
 		select.value = MZ_getValue('VUEEXT');
+	}
 	
 	td = appendTd(tr);
 	appendCheckBox(td,'noInfoEM',MZ_getValue('NOINFOEM')=='true');
@@ -315,7 +325,7 @@ function insertOptionTable(insertPt) {
 	if(str) {
 		select.value = str.slice(0,str.indexOf('$'));
 		onChangeIT();
-		}
+	}
 	
 	/* Tags de Trõlls */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
@@ -327,9 +337,10 @@ function insertOptionTable(insertPt) {
 	str = str ? str.slice(1) : '';
 	for(var tags in tagsData) {
 		appendOption(select,tags,tags);
-		if(str && str==tagsData[tags])
+		if(str && str==tagsData[tags]) {
 			select.value = tags;
 		}
+	}
 	appendOption(select,'other','Autre');
 	td.appendChild(select);
 	
@@ -340,7 +351,7 @@ function insertOptionTable(insertPt) {
 	if(str && str[0]=='#') {
 		select.value = 'other';
 		onChangeTags();
-		}
+	}
 	
 	/* Poissotron */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
@@ -374,12 +385,16 @@ function insertOptionTable(insertPt) {
 	appendText(td,' Envoyer les objets identifiés au système de stats');*/
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'autoCdM',MZ_getValue(numTroll+'.AUTOCDM')=='true')
+	appendCheckBox(td,'autoCdM',MZ_getValue(numTroll+'.AUTOCDM')=='true');
 	appendText(td,' Envoyer automatiquement les CdM vers la base MountyZilla');
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'vueCarac',MZ_getValue('VUECARAC')=='true')
+	appendCheckBox(td,'vueCarac',MZ_getValue('VUECARAC')=='true');
 	appendText(td,' Afficher la Vue avec les caractéristique dans le Profil');
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'confirmeDecalage',MZ_getValue('CONFIRMEDECALAGE')=='true');
+	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
 	
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
@@ -415,6 +430,8 @@ function insertCreditsTable(insertPt) {
 	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... '
 		+'et tous les participants au projet ZoryaZilla');
 	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
+	appendLI(ul,'Rokü Menton-brûlant (108387) pour m\'avoir incité à passer '
+		+'sur GitHub');
 	appendLI(ul,'Tous les testeurs de la nouvelle génération '
 		+'oubliés par Dabihul');
 	}

@@ -190,7 +190,7 @@ var mh_caracs = {
 		['armure',0,0,0,0,-1,3,0,0,0,15,30,0,0,0,0.00,30.00,30.00],
 	'turban':
 		['casque',0,0,0,0,0,0,0,0,0,10,20,0,0,0,0.00,2.50,2.50]
-	}
+}
 
 // liste des templates
 // mh_templates['Nom'] = [ 'AttP', 'AttM', 'DegP', 'DegM', 'Esq',
@@ -245,31 +245,39 @@ var mh_templates = {
 		[0,0,0,0,-1,0,2,0,0,0,0,0,0,0,0,0,0],
 	'du Sable':
 		[0,0,0,0,3,0,-1,-1,0,0,0,0,0,0,0,0,0],
+	'acéré':
+		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'acérée':
+		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'équilibré':
+		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'équilibrée':
+		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	'léger':
-		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
 	'légère':
-		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
 	'renforcé':
-		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
 	'renforcée':
-		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
 	'robuste':
-		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-	}
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]
+}
 
-Array.prototype.clone = function() {
+function clone(arr) {
 	// Clonage rapide
-	return this.slice(0);
-	}
+	return arr.slice(0);
+}
 
 function addArray(arr1,arr2) {
 	// Somme matricielle
-	var res = arr1.clone();
+	var res = clone(arr1);
 	for(i=res.length-1 ; i>=0 ; i--) {
 		res[i] += arr2[i];
-		}
-	return res;
 	}
+	return res;
+}
 
 function getTemplates(nomItem) {
 	// Déstructure le nom de l'item en array [nom, template1, ...]
@@ -279,55 +287,56 @@ function getTemplates(nomItem) {
 	while(tempFound) {
 		tempFound = false;
 		for(var temp in mh_templates) {
-			if(str.slice(-temp.length)!=temp) {
-				continue;
-				}
+			// on teste la fin du nom contre chaque template
+			if(str.slice(-temp.length)!=temp) { continue; }
 			tempFound = true;
 			str = str.slice(0,-temp.length-1);
 			arr.unshift(temp);
 			if(str.slice(-3)==' et') {
 				str = str.slice(0,-3);
-				}
 			}
 		}
+	}
 	arr.unshift(str);
 	return arr;
-	}
+}
 
 function addMithril(arrayCaracs,typeItem) {
 	// Ajoute l'effet du Mithril sur les caracs
 	if(typeItem=='arme') {
 		if(arrayCaracs[0]<0) {
 			arrayCaracs[0] = Math.ceil(arrayCaracs[0]/2);
-			}
 		}
+	}
 	else {
 		if(arrayCaracs[4]<0) {
 			arrayCaracs[4] = Math.ceil(arrayCaracs[4]/2);
-			}
 		}
+	}
 	arrayCaracs[15] /= 2;
 	arrayCaracs[16] /= 2;
 	return arrayCaracs;
-	}
+}
 
 function addRenfort(arrayCaracs,template) {
 	// Ajoute l'effet des pseudo-templates sur les caracs
 	// S'applique APRÈS le mithril
 	// WARNING - Cette formule n'a rien d'officiel, gare !
-	if(template=='léger' || template=='légère') {
-		arrayCaracs[4]++;
-		arrayCaracs[5]--;
-		var coef = -1;
-		}
-	else {
-		arrayCaracs[5]++;
-		var coef = 1;
-		}
-	arrayCaracs[15] = arrayCaracs[15]+coef*Math.floor(arrayCaracs[15]/10);
-	arrayCaracs[16] = arrayCaracs[16]+coef*Math.floor(arrayCaracs[16]/10);
-	return arrayCaracs;
+	var coef = 0;
+	if(/^légere?$/.test(template)) {
+		coef = -1;
 	}
+	else if(/^renforcée?$/.test(template)
+		|| template==='robuste') {
+		coef = 1;
+	}
+	if(coef) {
+		arrayCaracs[15] = arrayCaracs[15]+coef*Math.floor(arrayCaracs[15]/10);
+		arrayCaracs[16] = arrayCaracs[16]+coef*Math.floor(arrayCaracs[16]/10);
+	}
+	arrayCaracs = addArray(arrayCaracs,mh_templates[template]);
+	return arrayCaracs;
+}
 
 function getCaracs(item) {
 	// Calcule les caractéristiques de l'item
@@ -335,59 +344,55 @@ function getCaracs(item) {
 	var caracs = mh_caracs[templates[0]];
 	if(!caracs) {
 		return [];
-		}
+	}
 	var typeItem = caracs[0];
 	caracs.shift();
 	templates.shift();
 	if(templates[templates.length-1]=='en Mithril') {
 		caracs = addMithril(caracs,typeItem);
 		templates.pop();
-		}
-	if(templates[0]=='léger' || templates[0]=='légère' ||
-		templates[0]=='renforcé' || templates[0]=='renforcée' ||
-		templates[0]=='robuste') {
+	}
+	if(/^acérée?$/.test(templates[0])
+		|| /^équilibrée?$/.test(templates[0])
+		|| /^légere?$/.test(templates[0])
+		|| /^renforcée?$/.test(templates[0])
+		|| templates[0]=='robuste') {
 		caracs = addRenfort(caracs,templates[0]);
 		templates.shift();
-		}
+	}
 	for(var i=templates.length-1 ; i>=0 ; i--) {
 		caracs = addArray(caracs,mh_templates[templates[i]]);
-		}
-	return caracs;
 	}
+	return caracs;
+}
 
 function getLine(tab) {
 	// Préparation de la ligne à afficher lors d'un mouseover
 	var str = '';
 	if(tab[0]!=0 || tab[1]!=0) {
 		str += '<b>Att : </b>'+aff(tab[0]);
-		if(tab[1]!=0) {
-			str += '/'+aff(tab[1]);
-			}
+		if(tab[1]!=0) { str += '/'+aff(tab[1]); }
 		str += ' | ';
-		}
+	}
 	if(tab[4]!=0) {
 		str += '<b>Esq : </b>'+aff(tab[4])+' | ';
-		}
+	}
 	if(tab[2]!=0 || tab[3]!=0) {
 		str += '<b>Deg : </b>'+aff(tab[2]);
-		if(tab[3]!=0) {
-			str += '/'+aff(tab[3]);
-			}
+		if(tab[3]!=0) { str += '/'+aff(tab[3]); }
 		str += ' | ';
-		}
+	}
 	if(tab[8]!=0) {
 		str += '<b>Reg : </b>'+aff(tab[8])+' | ';
-		}
+	}
 	if(tab[7]!=0) {
 		str += '<b>Vue : </b>'+aff(tab[7])+' | ';
-		}
+	}
 	if(tab[5]!=0 || tab[6]!=0) {
 		str += '<b>Arm : </b>'+aff(tab[5]);
-		if(tab[6]!=0) {
-			str += '/'+aff(tab[6]);
-			}
+		if(tab[6]!=0) { str += '/'+aff(tab[6]); }
 		str += ' | ';
-		}
+	}
 	if(tab[9]!=0 || tab[10]!=0) {
 		str += '<b>RM : </b>'+aff(tab[9])+'%';
 		if(tab[9]!=tab[10]) {
@@ -397,23 +402,21 @@ function getLine(tab) {
 		}
 	if(tab[11]!=0 || tab[12]!=0) {
 		str += '<b>MM : </b>'+aff(tab[11])+'%';
-		if(tab[11]!=tab[12]) {
-			str += '/'+aff(tab[12])+'%';
-			}
+		if(tab[11]!=tab[12]) { str += '/'+aff(tab[12])+'%'; }
 		str += ' | ';
-		}
+	}
 	if(tab[13]!=0) {
 		str += '<b>PV : </b>'+aff(tab[13])+' | ';
-		}
+	}
 	if(tab[14]!=0) {
 		str += '<b>DLA : </b>'+aff(tab[14])+' min | ';
-		}
+	}
 	str += '<b>Poids : </b>'+tab[15]+' min';
 	if(tab[15]!=tab[16]) {
 		str += ' / '+tab[16]+' min';
-		}
-	return str;
 	}
+	return str;
+}
 
 function toolTipInit() {
 	DivInfo = document.createElement('div');
@@ -428,38 +431,32 @@ function toolTipInit() {
 	document.body.appendChild(DivInfo);
 	document.onmousemove = getXY;
 	document.onclick = changeFreezeStatus;
-	}
+}
 
 function getXY(evt) {
 	if(!freezed && DivInfo.style.visibility=='visible') {
 		DivInfo.style.left = evt.pageX+'px';
 		DivInfo.style.top = evt.pageY+10+'px';
-		}
 	}
+}
 
 function changeFreezeStatus() {
 	if(DivInfo.style.visibility=='visible') {
 		freezed = !freezed;
-		if(!freezed) {
-			hideInfos();
-			}
-		}
+		if(!freezed) { hideInfos(); }
 	}
+}
 
 function showInfos() {
-	if(freezed) {
-		return;
-		}
+	if(freezed) { return; } 
 	var currentInfos = this.infos;
 	DivInfo.innerHTML = currentInfos;
 	DivInfo.style.visibility = 'visible';
-	}
+}
 
 function hideInfos() {
-	if(!freezed) {
-		DivInfo.style.visibility = 'hidden';
-		}
-	}
+	if(!freezed) { DivInfo.style.visibility = 'hidden'; }
+}
 
 function treateEquipement() {
 	// Extrait les données du matos et réinjecte les infos déduites
@@ -478,13 +475,15 @@ function treateEquipement() {
 			var next = node.nextSibling;
 			var nnext = next.nextSibling;
 			var nom = next.nodeValue.toLowerCase();
-			if(nnext.childNodes.length==1)
+			if(nnext.childNodes.length==1) {
 				nom += nnext.firstChild.nodeValue;
+			}
 			nom = nom.trim();
 			// gestion winpostrophe
 			var c = String.fromCharCode(180);
-			while(nom.indexOf(c)!=-1)
+			while(nom.indexOf(c)!=-1) {
 				nom = nom.replace(c,"'");
+			}
 			var arr = getCaracs(nom);
 			if(arr.length>0) {
 				faireLigne = true;
@@ -496,8 +495,8 @@ function treateEquipement() {
 				span.onmouseover = showInfos;
 				span.onmouseout = hideInfos;
 				insertBefore(node.nextSibling,span);
-				}
 			}
+		}
 		
 		if(faireLigne) {
 			var node = document.evaluate("//td/b[text()='Equipement Utilisé']",
@@ -505,8 +504,8 @@ function treateEquipement() {
 			node.infos = getLine(caracs);
 			node.onmouseover = showInfos;
 			node.onmouseout = hideInfos;
-			}
 		}
+	}
 	else {
 		// Si CSS avancée
 		nodes = document.evaluate("//dd[@class='equipement']/ul/li",
@@ -517,29 +516,30 @@ function treateEquipement() {
 				var nom = node.firstChild.nodeValue.toLowerCase();
 				if(node.childNodes.length>1) {
 					nom += node.childNodes[1].firstChild.nodeValue;
-					}
+				}
 				nom = nom.trim();
 				// gestion winpostrophe
 				var c = String.fromCharCode(180);
-				while(nom.indexOf(c)!=-1)
+				while(nom.indexOf(c)!=-1) {
 					nom = nom.replace(c,"'");
+				}
 				var arr = getCaracs(nom);
 				if(arr.length!=0) {
 					caracs = addArray(caracs,arr);
 					node.infos = getLine(arr);
 					node.onmouseover = showInfos;
 					node.onmouseout = hideInfos;
-					}
 				}
+			}
 			var nodes = document.evaluate("//dt[@class='equipement']",
 				document, null, 7, null);
 			var node = nodes.snapshotItem(0);
 			node.infos = getLine(caracs);
 			node.onmouseover = showInfos;
 			node.onmouseout = hideInfos;
-			}
 		}
 	}
+}
 
 
 treateEquipement();

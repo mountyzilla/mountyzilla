@@ -1245,8 +1245,8 @@ function competences(comp,niveau) {
 			+'créer des colonies d\'une variété donnée de champignon à partir de '
 			+'quelques exemplaires préalablement enterrés.';
 	else if(comp.indexOf('Regeneration Accrue')!=-1)
-		texte = 'Régénération : <b>'+Math.floor(pvbase/15)+'</b> D3'
-			+' => <b>+'+2*Math.floor(pvbase/15)+'</b> PV';
+		texte = 'Régénération : <b>'+Math.floor(pvmax/15)+'</b> D3'
+			+' => <b>+'+2*Math.floor(pvmax/15)+'</b> PV';
 	else if(comp.indexOf('Reparation')!=-1)
 		texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, '
 			+'et réparez vous-même votre matériel !';

@@ -1,25 +1,24 @@
-/*********************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
 
 /* TODO
  * getLvl pour Explo, Rotobaffe et cie
  */
-
 
 var pageNivURL = 'http://mountypedia.free.fr/mz/niveau_monstre_combat.php';
 //var idtURL = "http://mh.byethost5.com/idt_serveur.php";
@@ -117,7 +116,7 @@ function getLevel() {
 }
 
 
-/*                            Messages du bot : MM/RM                           */
+/*-[functions]------------- Messages du bot : MM/RM --------------------------*/
 
 function insertInfoMagie(node, intitule, magie) {
 	if(node.nextSibling) {
@@ -125,76 +124,82 @@ function insertInfoMagie(node, intitule, magie) {
 		insertBr(node);
 		insertText(node, intitule);
 		insertText(node, magie, true);
-		}
+	}
 	else {
 		node = node.parentNode;
 		appendBr(node);
 		appendText(node, intitule);
 		appendText(node, magie, true);
-		}		
-	}
+	}		
+}
 
 function getMM(sr) {
-	sr = parseInt(sr.match(/\d+/));
-	if(sr==10)
+	sr = Number(sr.match(/\d+/));
+	if(sr==10) {
 		return '\u2265 ' + Math.round(50*rmTroll/sr);
-	if(sr<=50)
-		return Math.round(50*rmTroll/sr);
-	if(sr<90)
-		return Math.round((100-sr)*rmTroll/50);
-	return '\u2264 ' + Math.round((100-sr)*rmTroll/50);
 	}
+	if(sr<=50) {
+		return Math.round(50*rmTroll/sr);
+	}
+	if(sr<90) {
+		return Math.round((100-sr)*rmTroll/50);
+	}
+	return '\u2264 ' + Math.round((100-sr)*rmTroll/50);
+}
 
 function traiteMM() {
-	var node = document.evaluate("//b[contains(preceding::text()[1], 'Seuil de Résistance')]/text()[1]",
-							document, null, 9, null).singleNodeValue;
+	var node = document.evaluate(
+		"//b[contains(preceding::text()[1], 'Seuil de Résistance')]/text()[1]",
+		document, null, 9, null).singleNodeValue;
 	
 	if(node) {
 		var mm = getMM(node.nodeValue);
 		node = node.parentNode.nextSibling.nextSibling.nextSibling;
-		}
+	}
 	else {
-		var node = document.evaluate("//p/text()[contains(., 'Seuil de Résistance')]",
-								document, null, 9, null).singleNodeValue;
-		if(!node)
+		var node = document.evaluate(
+			"//p/text()[contains(., 'Seuil de Résistance')]",
+			document, null, 9, null).singleNodeValue;
+		if(!node) {
 			return;
+		}
 		var mm = getMM(node.nodeValue);
 		node = node.nextSibling.nextSibling;
-		}
-	insertInfoMagie(node, 'MM approximative de l\'Attaquant...: ', mm);
 	}
+	insertInfoMagie(node,'MM approximative de l\'Attaquant...: ',mm);
+}
 
-function getRM(sr, tsr, i) {
-	sr = parseInt(sr.match(/\d+/));
+function getRM(sr) {
+	sr = Number(sr.match(/\d+/));
 	var rm;
 	if(mmTroll<=0)
 		rm = 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
 	else if(sr==10)
-		rm = '\u2264 ' + Math.round(sr*mmTroll/50);
+		rm = '\u2264 '+Math.round(sr*mmTroll/50);
 	else if(sr<=50)
 		rm = Math.round(sr*mmTroll/50);
 	else if(sr<90)
 		rm = Math.round(50*mmTroll/(100-sr));
 	else
-		rm = '\u2265 ' + Math.round(50*mmTroll/(100-sr));
-	if(tsr)
-		tsr[i] = (sr>10 && sr<90) ? rm : -1;
+		rm = '\u2265 '+Math.round(50*mmTroll/(100-sr));
 	return rm;
-	}
+}
 
 function traiteRM() {
-	var nodes = document.evaluate("//b[contains(preceding::text()[1],'Seuil de Résistance')]"
-						+"/text()[1]", document, null, 7, null);
-	if(nodes.snapshotLength==0) return;
+	var nodes = document.evaluate(
+		"//b[contains(preceding::text()[1],'Seuil de Résistance')]/text()[1]",
+		document, null, 7, null);
+	if(nodes.snapshotLength==0) {
+		return;
+	}
 	
-	var tsr = new Array();
-	for (var i=0 ; i<nodes.snapshotLength ; i++) {
+	for(var i=0 ; i<nodes.snapshotLength ; i++) {
 		var node = nodes.snapshotItem(i);
-		var rm = getRM(node.nodeValue, tsr, i);
+		var rm = getRM(node.nodeValue);
 		node = node.parentNode.nextSibling.nextSibling.nextSibling;
 		insertInfoMagie(node, 'RM approximative de la Cible.......: ', rm);
-		}
 	}
+}
 
 
 /*                            Fonction Poissotron                             */
@@ -209,8 +214,9 @@ function sendDices() {
 	var seuil_tot = 0;
 	var chaineDes = '';
 	
-	var node = document.evaluate("//td/text()[contains(., 'Page générée en')]",
-						document, null, 2, null).stringValue;
+	var node = document.evaluate(
+		"//td/text()[contains(., 'Page générée en')]",
+		document, null, 2, null).stringValue;
 	if(node)
 		chaineDes += 'temps='+node.substring(node.indexOf('générée')+11, node.indexOf('sec')-1)+'&';
 	
@@ -340,59 +346,111 @@ function sendDices() {
 	return true;
 }*/
 
-/*                                         Alerte Mundi                                          */
+
+/*-[functions]------------------- Décalage DLA -------------------------------*/
+
+function confirmeDecalage() {
+	var DLA = document.getElementsByTagName('script')[1]
+		.textContent.match(/\d+/g);
+	var newDLA = new Date( DLA[1],DLA[2],DLA[3],DLA[4],DLA[5],DLA[6] );
+	newDLA.setMinutes(
+		newDLA.getMinutes()+parseInt(document.getElementById('ai_NbMinutes').value)
+	);
+	return window.confirm(
+		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
+		+'\nConfirmez-vous cette heure ?'
+	);
+}
+
+function newsubmitDLA(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	if(confirmeDecalage()) {
+		this.submit();
+	}
+}
+
+function changeActionDecalage() {
+	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
+		return;
+	}
+	var form = document.getElementsByName('ActionForm')[0];
+	if(form) {
+		form.addEventListener('submit', newsubmitDLA, true);
+	}
+}
+
+/*-[functions]------------------- Alerte Mundi -------------------------------*/
 
 function prochainMundi() {
-	var node = document.evaluate("//form/descendant::div/b/"
-						+"text()[contains(.,'cycle après Ragnarok')]",
-						document, null, 9, null).singleNodeValue;
-	if(!node) return;
+	var node = document.evaluate(
+		"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
+		document, null, 9, null).singleNodeValue;
+	if(!node) {
+		return;
+	}
 	var jour = 29-getNumber(node.nodeValue);
 	if(node.nodeValue.indexOf('Mundidey')!=-1) jour=28;
 	var txt = '[Prochain Mundidey ';
-	if(jour>1)
+	if(jour>1) {
 		txt += 'dans '+jour+' jours]';
-	else
-		txt += 'demain]';
-	insertText(node.parentNode.parentNode.nextSibling,txt,true);
 	}
+	else {
+		txt += 'demain]';
+	}
+	insertText(node.parentNode.parentNode.nextSibling,txt,true);
+}
+
 
 /*                            Fonction principale                             */
 
 function dispatch() {
-	if(isPage('MH_Play/Play_action')) {
+	if(isPage('MH_Play/Play_action.php')) {
 		prochainMundi();
-		}
+	}
+	else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+		changeActionDecalage();
+	}
 	else if(isPage('MH_Play/Actions')) {
 		sendDices();
-		if(document.evaluate("//form/descendant::p/text()[contains(., 'Zone Piégée')]",
-							document, null, 2, null).stringValue)
+		if(document.evaluate(
+				"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
+				document, null, 2, null).stringValue) {
 			traiteMM();
-		else if(document.evaluate("//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
-									document, null, 2, null).stringValue) {
+		}
+		else if(document.evaluate(
+				"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
+				document, null, 2, null).stringValue) {
 			//getIdt();
 			traiteRM();
-			}
+		}
 		else {
 			traiteRM();
 			getLevel();
-			}
 		}
-	else { // traitement des messages du bot
+	}
+	else {
+		/* Traitement des messages du bot */
 		var messageTitle = document.evaluate("//form/table/tbody/tr[1]/td[1]/"
-											+"descendant::text()[contains(.,'[MountyHall]')]",
-											document, null, 2, null).stringValue;
-		if(messageTitle.indexOf('Attaquant') != -1 && messageTitle.indexOf('sur') != -1) {
+			+"descendant::text()[contains(.,'[MountyHall]')]",
+			document, null, 2, null).stringValue;
+		if(messageTitle.indexOf('Attaquant') != -1
+			&& messageTitle.indexOf('sur') != -1) {
 			getLevel();
 			traiteRM();
-			}
-		else if(messageTitle.indexOf('Résultat du pouvoir') != -1 	|| messageTitle.indexOf('Défenseur') != -1)
+		}
+		else if(messageTitle.indexOf('Résultat du pouvoir') != -1
+			|| messageTitle.indexOf('Défenseur') != -1) {
 			traiteMM();
+		}
 		else if(messageTitle.indexOf('Identification des trésors') != -1
-					|| messageTitle.indexOf('Explosion') != -1) // à replacer avec Attaque après révision getLvl
+			// à replacer avec Attaque après révision getLvl :
+			|| messageTitle.indexOf('Explosion') != -1
+			|| messageTitle.indexOf('Insulte') != -1) {
 			traiteRM();
 		}
 	}
+}
 
 
 start_script(31);
