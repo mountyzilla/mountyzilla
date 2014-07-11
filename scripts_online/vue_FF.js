@@ -266,12 +266,15 @@ function synchroniseFiltres() {
 
 /* [functions] Insertion raccourcis urls */
 function putExternalLinks() {
-	// Insertion dans la vue des liens déclarés dans les options MZ
-	var Rdiv = document.evaluate("//div/a[contains(./text(),'Logout')]/..",
-		document, null, 9, null).singleNodeValue;
-	if(!Rdiv) return;
+	// = Insère dans la vue des liens déclarés dans les options MZ
+	// DEBUG: à revoir lors du passage en html5 (div+float)
+	var Rdiv = document.evaluate(
+		"//div/a[contains(./text(),'Logout')]/..",
+		document, null, 9, null
+	).singleNodeValue;
+	if(!Rdiv) { return; }
 	var anotherURL = MZ_getValue('URL1');
-	if(!anotherURL) return;
+	if(!anotherURL) { return; }
 	/* Insertion du div [Logout] dans une table */
 	var table = document.createElement('table');
 	table.width = '100%';
@@ -298,15 +301,17 @@ function putExternalLinks() {
 			var txt = nom ? nom : '';
 			var img = createImage(ico,txt);
 			a.appendChild(img);
-			}
-		else
+		}
+		else {
 			appendText(a,'['+nom+']');
+		}
 		i++;
 		anotherURL = MZ_getValue('URL'+i);
-		}
 	}
+}
 
 /* [functions] Menu Vue 2D */
+// DEBUG: à refaire plus clairement en JSON
 var vue2Ddata = {
 	'Bricol\' Vue':
 		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
@@ -321,7 +326,7 @@ var vue2Ddata = {
 	'Grouky Vue!':
 		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
 		getVueScript, ['type_vue', 'V5b1'] ]
-	};
+};
 
 function refresh2DViewButton() {
 	// = EventListener menu+bouton vue 2D
@@ -336,43 +341,50 @@ function refresh2DViewButton() {
 	var listeParams = vue2Ddata[vueext][3];
 	for(var i=0 ; i<listeParams.length ; i+=2) {
 		appendHidden(form, listeParams[i], listeParams[i+1]);
-		}
+	}
 	appendSubmit(form, 'Voir',
 		function() {
 			document.getElementsByName(vue2Ddata[vueext][1])[0].value =
 				vue2Ddata[vueext][2]();
-			}
-		);
-	}
+		}
+	);
+}
 
 function set2DViewSystem() {
+	// = Initialiseur du système de vue 2D
 	var vueext = MZ_getValue('VUEEXT');
-	if(!vueext || !vue2Ddata[vueext]) vueext = 'Bricol\' Vue';
+	if(!vueext || !vue2Ddata[vueext]) {
+		// La vue Bricol'Trolls est employée par défaut
+		vueext = 'Bricol\' Vue';
+	}
 	
-	/* Choix de la vue sans passer par les options */
+	/* Création du sélecteur de vue */
 	selectVue2D = document.createElement('select');
 	selectVue2D.id = 'selectVue2D';
 	selectVue2D.className = 'SelectboxV2';
-	for(var view in vue2Ddata)
+	for(var view in vue2Ddata) {
 		appendOption(selectVue2D, view, view);
+	}
 	selectVue2D.value = vueext;
 	selectVue2D.onchange = refresh2DViewButton;
 	
+	/* Création du formulaire d'envoi (vide, le submit est géré via handler) */
 	var form = document.createElement('form');
 	form.id = 'viewForm';
 	
+	/* Insertion du système de vue */
 	var center = document.getElementById('titre2').nextSibling;
 	var table = document.createElement('table');
 	var tr = appendTr(table);
 	var td = appendTd(tr);
 	td.appendChild(selectVue2D);
 	td = appendTd(tr);
-	td.style = 'font-size:0px;';
-	// gère la fameuse erreur de l'extra character
+	td.style.fontSize = '0px'; // gère l'erreur de l'extra character
 	td.appendChild(form);
 	center.insertBefore(table,center.firstChild);
 	insertBr(center.childNodes[1]);
 	
+	/* Appelle le handler pour initialiser le bouton de submit */
 	refresh2DViewButton();
 	}
 
@@ -387,13 +399,13 @@ function creerTableauInfos() {
 	td.onmouseover = function() {
 		this.style.cursor = 'pointer';
 		this.className = 'mh_tdpage';
-		};
+	};
 	td.onmouseout = function() {
 		this.className = 'mh_tdtitre';
-		};
+	};
 	td.onclick = function() {
 		toggleTableauInfos(false);
-		};
+	};
 	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
 	infoTab.replaceChild(thead,infoTab.firstChild);
 	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
@@ -405,58 +417,58 @@ function creerTableauInfos() {
 	// DEBUG : à quoi servent les ids si on utilise des var globales ?
 	checkBoxGG = appendCheckBoxSpan(
 		td,'delgg',filtreTresors," Les GG'"
-		).firstChild;
+	).firstChild;
 	checkBoxCompos = appendCheckBoxSpan(
 		td,'delcomp',filtreTresors,' Les Compos'
-		).firstChild;
+	).firstChild;
 	checkBoxBidouilles = appendCheckBoxSpan(
 		td,'delbid',filtreTresors,' Les Bidouilles'
-		).firstChild;
+	).firstChild;
 	checkBoxIntangibles = appendCheckBoxSpan(
 		td,'delint',filtreTrolls,' Les Intangibles'
-		).firstChild;
+	).firstChild;
 	checkBoxGowaps = appendCheckBoxSpan(
 		td,'delgowap',filtreMonstres,' Les Gowaps'
-		).firstChild;
+	).firstChild;
 	checkBoxEngages = appendCheckBoxSpan(
 		td,'delengage',filtreMonstres,' Les Engagés'
-		).firstChild;
+	).firstChild;
 	checkBoxLevels = appendCheckBoxSpan(
 		td,'delniveau',toggleLevelColumn,' Les Niveaux'
-		).firstChild;
+	).firstChild;
 	checkBoxDiplo = appendCheckBoxSpan(
 		td,'deldiplo',refreshDiplo,' La Diplo'
-		).firstChild;
+	).firstChild;
 	checkBoxTrou = appendCheckBoxSpan(
 		td,'deltrou',filtreLieux,' Les Trous'
-		).firstChild;
+	).firstChild;
 	checkBoxMythiques = appendCheckBoxSpan(
 		td,'delmyth',filtreMonstres,' Les Mythiques'
-		).firstChild;
+	).firstChild;
 	if(MZ_getValue('NOINFOEM')!='true') {
 		checkBoxEM = appendCheckBoxSpan(
 			td,'delem',filtreMonstres,' Les Composants EM'
-			).firstChild;
-		}
+		).firstChild;
+	}
 	checkBoxTresorsNonLibres = appendCheckBoxSpan(
 		td,'deltres',filtreTresors,' Les Trésors non libres'
-		).firstChild;
+	).firstChild;
 	checkBoxTactique = appendCheckBoxSpan(
 		td,'deltactique',updateTactique,' Les Infos tactiques'
-		).firstChild;
+	).firstChild;
 	
 	if(MZ_getValue('INFOPLIE')) {
 		toggleTableauInfos(true);
-		}
 	}
+}
 
 function toggleTableauInfos(firstRun) {
-	if(cursorOnLink) return; // héritage Tilk, utilité inconnue ???
+	if(cursorOnLink) { return; } // DEBUG: héritage Tilk, utilité inconnue
 	
 	var infoTab = document.getElementById('infoTab');
 	if(!firstRun) {
 		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
-		}
+	}
 	if(MZ_getValue('INFOPLIE')) {
 		var vues = getPorteVue();
 		var pos = getPosition();
@@ -465,20 +477,21 @@ function toggleTableauInfos(firstRun) {
 			' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
 			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
 			true
-			);
+		);
 		infoTab.childNodes[1].style.display = 'none';
-		}
+	}
 	else {
 		var titre = infoTab.firstChild.firstChild.firstChild.childNodes[1];
 		titre.parentNode.removeChild(titre);
 		infoTab.childNodes[1].style.display = '';
-		}
 	}
+}
 
 /* [functions] Filtres */
 function prepareFiltrage(ref,width) {
+	// = Initialise le filtre 'ref'
 	var tdTitre = document.getElementsByName(ref)[0].parentNode;
-	if(width) tdTitre.width = width;
+	if(width) { tdTitre.width = width; }
 	// Ajout du tr de Filtrage (masqué)
 	var tbody = tdTitre.parentNode.parentNode;
 	var tr = appendTr(tbody,'mh_tdpage');
@@ -493,32 +506,33 @@ function prepareFiltrage(ref,width) {
 	btn.id = 'btn_filtre_'+ref;
 	btn.onclick =	function() {
 		debutFiltrage(ref)
-		};
+	};
 	return td;
-	}
+}
 
 function debutFiltrage(ref) {
+	// = Handler de début de filtrage (filtre 'ref')
 	document.getElementById('tr_filtre_'+ref).style.display = '';
 	var btn = document.getElementById('btn_filtre_'+ref);
 	btn.value = 'Annuler Filtre';
 	btn.onclick = function() {
 		finFiltrage(ref);
-		};
-	}
+	};
+}
 
 function finFiltrage(ref) {
+	// = Handler de fin de filtrage (filtre 'ref')
+	/* On réassigne le bouton 'Filtrer' */
 	document.getElementById('tr_filtre_'+ref).style.display = 'none';
 	var btn = document.getElementById('btn_filtre_'+ref);
 	btn.value = 'Filtrer';
 	btn.onclick = function() {
 		debutFiltrage(ref);
-		};
-	// réinitialisation filtres
+	};
+	/* Réinitialisation filtres et nettoyage */
 	document.getElementById('str_'+ref).value = '';
-	// DEBUG
-	//if(ref=='trolls') document.getElementById('str_guildes').value = '';
-	// et clean up
-	/*var str = 'filtre'+ref[0].toUpperCase()+ref.slice(1);
+	/* DEBUG
+	var str = 'filtre'+ref[0].toUpperCase()+ref.slice(1);
 	window[str](); // Fonction non trouvée. Aucune fonction MZ en fait ?! */
 	switch(ref) {
 		case 'monstres':
@@ -535,30 +549,25 @@ function finFiltrage(ref) {
 			break;
 		case 'lieux':
 			filtreLieux();
-		}
 	}
-
-/*var str =''
-for(var key in window) {
-	str += key+'\n';
-	}
-window.alert(str);*/
+}
 
 function ajoutFiltreStr(td,nomBouton,id,onClick) {
 	var bouton = appendButton(td,nomBouton,onClick);
 	appendText(td,'\u00a0');
 	var textbox = appendTextbox(td,'text',id,15,30);
-	textbox.onkeypress =
-		function(event){
-			try {
-				if(event.keyCode==13) {
-					event.preventDefault();
-					bouton.click();
-					}
-				}
-			catch(e){window.alert(e)}
-			};
-	}
+	textbox.onkeypress = function(event) {
+		try {
+			if(event.keyCode==13) {
+				event.preventDefault();
+				bouton.click();
+			}
+		}
+		catch(e){
+			window.alert(e)
+		}
+	};
+}
 
 function ajoutFiltreMenu(tr,id,onChange) {
 	var select = document.createElement('select');
@@ -567,10 +576,10 @@ function ajoutFiltreMenu(tr,id,onChange) {
 	appendOption(select,0,'Aucun');
 	for(var i=1 ; i<=60 ; i++) {
 		appendOption(select,i,i);
-		}
+	}
 	tr.appendChild(select);
 	return select;
-	}
+}
 
 function ajoutDesFiltres() {
 	/* Monstres */
@@ -593,7 +602,7 @@ function ajoutDesFiltres() {
 	/* Lieux */
 	td = prepareFiltrage('lieux',40);
 	ajoutFiltreStr(td,'Nom du lieu:','str_lieux',filtreLieux);
-	}
+}
 
 /* [functions] Boutons d'envoi d'infos aux bases */
 function appendSendBouton(paren, url, id, func, text) {
@@ -1073,21 +1082,22 @@ function putBoutonPXMP() {
 	td.style.verticalAlign = 'top';
 	var bouton = appendButton(td,'Envoyer...',prepareEnvoi);
 	bouton.id = 'btn_envoi';
-	}
+}
 
 function prepareEnvoi() {
 	// = EventListener bouton d'envoi
+	
 	/* Ajout de la colonne des CheckBoxes */
 	var td = insertTdText(getTrollNomNode(0),'');
 	td.width = 5;
 	for(var i=nbTrolls ; i>0 ; i--) {
 		td = insertTd(getTrollNomNode(i));
 		appendCheckBox(td,'envoi'+i);
-		}
+	}
 	
 	/* Ajout du radio de choix PX ou MP */
 	var btnEnvoi = document.getElementById('btn_envoi');
-	if(!btnEnvoi) return;
+	if(!btnEnvoi) { return; }
 	var tdEnvoi = btnEnvoi.parentNode;
 	appendText(tdEnvoi,' ');
 	var span = document.createElement('span');
@@ -1111,7 +1121,7 @@ function prepareEnvoi() {
 	
 	/* Modification de l'effet du bouton Envoi */
 	document.getElementById('btn_envoi').onclick = effectueEnvoi;
-	}
+}
 
 function annuleEnvoi() {
 	// = EventListener du bouton Annuler
@@ -1120,7 +1130,7 @@ function annuleEnvoi() {
 	var tdEnvoi = btnEnvoi.parentNode;
 	while(tdEnvoi.firstChild) {
 		tdEnvoi.removeChild(tdEnvoi.firstChild);
-		}
+	}
 	/* Retour à l'effet de base du bouton Envoi */
 	btnEnvoi.onclick = prepareEnvoi;
 	tdEnvoi.appendChild(btnEnvoi);
@@ -1128,24 +1138,26 @@ function annuleEnvoi() {
 	for(var i=nbTrolls ; i>=0 ; i--) {
 		var td = getTrollNomNode(i);
 		td.parentNode.removeChild(td);
-		}
 	}
+}
 
 function effectueEnvoi() {
 	// = Second Listener du bouton d'envoi PX MP (charge un nouveau frame)
 	var str='';
 	for(var i=nbTrolls ; i>0 ; i--) {
 		var chb = document.getElementById('envoi'+i);
-		if(chb.checked)	str += (str?',':'')+getTrollID(i);
+		if(chb.checked)	{
+			str += (str?',':'')+getTrollID(i);
 		}
+	}
 	var PXchecked = document.getElementById('radioPX').checked;
 	if(PXchecked) {
 		window.open('Actions/Play_a_DonPX.php?cat=8&dest='+str,'Contenu');
-		}
+	}
 	else {
 		window.open('../Messagerie/MH_Messagerie.php?cat=3&dest='+str,'Contenu');
-		}
 	}
+}
 
 /*-[functions]---------------- Fonctions Trésors -----------------------------*/
 
