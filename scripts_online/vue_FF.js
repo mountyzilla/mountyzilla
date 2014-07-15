@@ -95,6 +95,45 @@ var x_champis = tr_champis;
 var x_lieux = tr_lieux;
 /*-------------------------------- FIN DEBUG ---------------------------------*/
 
+function getPositionStr(pos) {
+	// À renommer. Grave.
+	return pos[0]+';'+pos[1]+';'+pos[2];
+}
+
+/* [functions] Récup données Utilisateur */
+function getPosition() {
+	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
+	var pos = document.evaluate("//li/b/text()[contains(.,'X = ')]",
+				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue;
+	var posx = pos.substring(pos.indexOf('=') + 2, pos.indexOf(','));
+	pos = pos.substr(pos.indexOf(',') + 1);
+	return new Array(posx, pos.substring(pos.indexOf('=') + 2, pos.indexOf(',')), pos.substr(pos.lastIndexOf('=') + 2));
+}
+
+function getPorteVue() {
+	// Retourne [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
+	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
+	var array = [];
+	var infoTab = document.getElementById('infoTab');
+	var nodes = document.evaluate(
+		".//li/b/text()[contains(.,'horizontalement') "
+		+"or contains(.,'verticalement')]",
+		infoTab, null, 7, null);
+	if(nodes.snapshotLength!=4) {
+		return null;
+		}
+	for(var i=0 ; i<4 ; i++) {
+		array.push(parseInt(nodes.snapshotItem(i).nodeValue));
+		}
+	return array;
+	}
+
+function getVue() {
+	// Retourne [vueHpure, vueVpure]
+	var vues = getPorteVue();
+	return [ vues[0], vues[1] ];
+	}
+
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
 	return tr_monstres[i].firstChild.firstChild.nodeValue;
@@ -123,7 +162,7 @@ function getMonstreTdNom(i) {
 		return tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
 		}
 	catch(e) {
-		window.alert('Impossible de trouver le monstre '+i);
+		window.alert('[getMonstreTdNom] Impossible de trouver le monstre '+i);
 		}
 	}
 
@@ -133,7 +172,7 @@ function getMonstreNom(i) {
 			.firstChild.firstChild.nodeValue;
 		}
 	catch(e) {
-		window.alert('Impossible de trouver le monstre '+i);
+		window.alert('[getMonstreNom] Impossible de trouver le monstre '+i);
 		}
 	}
 
@@ -149,6 +188,27 @@ function getMonstrePosition(i) {
 			tds[4+c].firstChild.nodeValue,
 			tds[5+c].firstChild.nodeValue ];
 	}
+
+function appendMonstres(txt) {
+	for(var i=1; i<=nbMonstres ; i++)
+		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+getPositionStr(getMonstrePosition(i))+'\n';
+	return txt;
+}
+
+function getMonstres() {
+	var vue = getVue();
+	return appendMonstres(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+}
+
+function bddMonstres() {
+	var txt='';
+	for(var i=1 ; i<=Math.min(nbMonstres,10) ; i++) {
+		txt += getMonstreID(i)+';'
+			+getMonstreNom(i)+' test MZ'+';'
+			+getPositionStr(getMonstrePosition(i))+'\n';
+	}
+	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES' : '';
+}
 
 /* [functions] Récup données Trolls */
 function getTrollDistance(i) {
@@ -200,6 +260,19 @@ function getTresorPosition(i) {
 		tds[5].firstChild.nodeValue ];
 	}
 
+function bddTresors() {
+	var txt='';
+	for(var i=1; i<=Math.min(nbTresors,10) ; i++) {
+		var tds = tr_tresors[i].childNodes;
+		txt += tds[1].firstChild.nodeValue+';'
+			+getTresorNom(i)+';' // NE PAS remplacer par tds[2].machin
+			+tds[3].firstChild.nodeValue+';'
+			+tds[4].firstChild.nodeValue+';'
+			+tds[5].firstChild.nodeValue+'\n';
+	}
+	return txt ? '#DEBUT TRESORS\n'+txt+'#FIN TRESORS' : '';
+}
+
 /* [functions] Récup données Lieux */
 function getLieuDistance(i) {
 	return parseInt(tr_lieux[i].firstChild.firstChild.nodeValue);
@@ -208,6 +281,33 @@ function getLieuDistance(i) {
 function getLieuNom(i) { /* DEBUG - en test */
 	return tr_lieux[i].childNodes[2].childNodes[1].textContent;
 	}
+
+function appendLieux(txt) {
+	for(var i = 1; i < nbLieux+1; i++) {
+		var tds = x_lieux[i].childNodes;
+		txt += tds[1].firstChild.nodeValue + ";" + getLieuNom(i) + ";" + tds[3].firstChild.nodeValue + ";"
+				+ tds[4].firstChild.nodeValue + ";" + tds[5].firstChild.nodeValue + "\n";
+	}
+	return txt;
+}
+
+function getLieux() {
+	var vue = getVue();
+	return appendLieux(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+}
+
+function bddLieux() {
+	var txt='';
+	for(var i=1; i<=Math.min(nbLieux,10) ; i++) {
+		var tds = tr_lieux[i].childNodes;
+		txt += tds[1].firstChild.nodeValue+';'
+			+getLieuNom(i)+';' // NE PAS remplacer par tds[2].machin
+			+tds[3].firstChild.nodeValue+';'
+			+tds[4].firstChild.nodeValue+';'
+			+tds[5].firstChild.nodeValue+'\n';
+	}
+	return txt ? '#DEBUT LIEUX\n'+txt+'#FIN LIEUX' : '';
+}
 
 
 /*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
@@ -327,6 +427,30 @@ var vue2Ddata = {
 		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
 		getVueScript, ['type_vue', 'V5b1'] ]
 };
+
+function getVueScript() {
+	try
+	{
+		txt = '#DEBUT TROLLS\n'+numTroll+';'+getPositionStr(getPosition())+'\n';
+		for(var i=1; i <=nbTrolls ; i++) {
+			txt += getTrollID(i)+';'+getPositionStr(getTrollPosition(i))+'\n';
+			}
+		txt = appendMonstres(txt+'#FIN TROLLS\n#DEBUT MONSTRES\n')+'#FIN MONSTRES\n#DEBUT TRESORS\n';
+		for(var i=1 ; i<=nbTresors ; i++) {
+			var tds = x_tresors[i].childNodes;
+			txt += tds[1].firstChild.nodeValue+';'+getTresorNom(i)+';'+tds[3].firstChild.nodeValue+';'
+				+tds[4].firstChild.nodeValue+';'+tds[5].firstChild.nodeValue+'\n';
+			}
+	    txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+'#FIN LIEUX\n#DEBUT CHAMPIGNONS\n';
+	    for(var i=1 ; i <=nbChampis ; i++) {
+			var tds = x_champis[i].childNodes;
+			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
+				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
+			}
+		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getVue()[0]+';'+getPositionStr(getPosition())+'\n#FIN ORIGINE\n';
+	}
+	catch(e) {window.alert(e)}
+	}
 
 function refresh2DViewButton() {
 	// = EventListener menu+bouton vue 2D
@@ -620,7 +744,7 @@ function appendSendBouton(paren, url, id, func, text) {
 		);
 	paren.appendChild(myForm);
 	}
-
+/*
 function putBoutonMonstres() {
 	var td = document.getElementById('td_insert_monstres');
 	td = insertTd(td.nextSibling);
@@ -630,6 +754,45 @@ function putBoutonMonstres() {
 		'listemonstres', getMonstres,
 		'Envoyer les monstres aux Teubreux');
 	}
+*/
+
+function envoiVersTroogle() {
+	var txt = bddMonstres()+'\n'
+		+bddTresors()+'\n'
+		+bddLieux();
+	//window.alert(txt);
+	MZ_xmlhttpRequest({
+		method: 'POST',
+		url: 'http://troogle-beta.aacg.be/view_submission',
+		headers : {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey'
+		},
+		data: txt,
+		onload:	function(responseDetails) {
+			try {
+				window.alert(responseDetails.responseText);
+			}
+			catch(e) {
+				console.error(e);
+			}
+		}
+	});
+}
+
+function putBoutonTroogle() {
+	var td = document.getElementById('td_insert_monstres');
+	td = insertTd(td.nextSibling);
+	td.style.fontSize = '0px';
+	var bouton = document.createElement('input');
+	bouton.type = 'button';
+	bouton.className = 'mh_form_submit';
+	bouton.value = 'Envoyer les données vers Troogle';
+	bouton.onmouseover = function(){
+		this.style.cursor='pointer';
+	};
+	bouton.onclick = envoiVersTroogle;
+	td.appendChild(bouton);
+}
 
 function putBoutonLieux() {
 	var td = document.getElementById('td_insert_lieux');
@@ -1214,95 +1377,6 @@ function filtreLieux() {
 				&& getLieuDistance(i)>1)
 			? 'none' : '';
 		}
-	}
-
-
-// SCRIPTS
-
-function getPosition() {
-	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
-	var pos = document.evaluate("//li/b/text()[contains(.,'X = ')]",
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue;
-	var posx = pos.substring(pos.indexOf('=') + 2, pos.indexOf(','));
-	pos = pos.substr(pos.indexOf(',') + 1);
-	return new Array(posx, pos.substring(pos.indexOf('=') + 2, pos.indexOf(',')), pos.substr(pos.lastIndexOf('=') + 2));
-}
-
-function getPorteVue() {
-	// Retourne [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
-	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
-	var array = [];
-	var infoTab = document.getElementById('infoTab');
-	var nodes = document.evaluate(
-		".//li/b/text()[contains(.,'horizontalement') "
-		+"or contains(.,'verticalement')]",
-		infoTab, null, 7, null);
-	if(nodes.snapshotLength!=4) {
-		return null;
-		}
-	for(var i=0 ; i<4 ; i++) {
-		array.push(parseInt(nodes.snapshotItem(i).nodeValue));
-		}
-	return array;
-	}
-
-function getPositionStr(pos) {
-	return pos[0]+';'+pos[1]+';'+pos[2];
-	}
-
-function getVue() {
-	// Retourne [vueHpure, vueVpure]
-	var vues = getPorteVue();
-	return [ vues[0], vues[1] ];
-	}
-
-function appendMonstres(txt) {
-	for(var i=1; i<=nbMonstres ; i++)
-		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+getPositionStr(getMonstrePosition(i))+'\n';
-	return txt;
-}
-
-function getMonstres() {
-	var vue = getVue();
-	return appendMonstres(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
-}
-
-function appendLieux(txt) {
-	for(var i = 1; i < nbLieux+1; i++) {
-		var tds = x_lieux[i].childNodes;
-		txt += tds[1].firstChild.nodeValue + ";" + getLieuNom(i) + ";" + tds[3].firstChild.nodeValue + ";"
-				+ tds[4].firstChild.nodeValue + ";" + tds[5].firstChild.nodeValue + "\n";
-	}
-	return txt;
-}
-
-function getLieux() {
-	var vue = getVue();
-	return appendLieux(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
-}
-
-function getVueScript() {
-	try
-	{
-		txt = '#DEBUT TROLLS\n'+numTroll+';'+getPositionStr(getPosition())+'\n';
-		for(var i=1; i <=nbTrolls ; i++) {
-			txt += getTrollID(i)+';'+getPositionStr(getTrollPosition(i))+'\n';
-			}
-		txt = appendMonstres(txt+'#FIN TROLLS\n#DEBUT MONSTRES\n')+'#FIN MONSTRES\n#DEBUT TRESORS\n';
-		for(var i=1 ; i<=nbTresors ; i++) {
-			var tds = x_tresors[i].childNodes;
-			txt += tds[1].firstChild.nodeValue+';'+getTresorNom(i)+';'+tds[3].firstChild.nodeValue+';'
-				+tds[4].firstChild.nodeValue+';'+tds[5].firstChild.nodeValue+'\n';
-			}
-	    txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+'#FIN LIEUX\n#DEBUT CHAMPIGNONS\n';
-	    for(var i=1 ; i <=nbChampis ; i++) {
-			var tds = x_champis[i].childNodes;
-			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
-				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
-			}
-		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getVue()[0]+';'+getPositionStr(getPosition())+'\n#FIN ORIGINE\n';
-	}
-	catch(e) {window.alert(e)}
 	}
 
 
@@ -1911,7 +1985,8 @@ creerTableauInfos();
 ajoutDesFiltres();
 putExternalLinks();
 set2DViewSystem();
-putBoutonMonstres();
+//putBoutonMonstres();
+putBoutonTroogle();
 putBoutonLieux();
 putBoutonPXMP();
 
