@@ -134,9 +134,12 @@ function insertInfoMagie(node, intitule, magie) {
 }
 
 function getMM(sr) {
+	if(rmTroll<=0) {
+		return 'Inconnue (quelle idée d\'avoir une RM valant'+rmTroll+' !)';
+	}
 	sr = Number(sr.match(/\d+/));
 	if(sr==10) {
-		return '\u2265 ' + Math.round(50*rmTroll/sr);
+		return '\u2265 '+5*rmTroll;
 	}
 	if(sr<=50) {
 		return Math.round(50*rmTroll/sr);
@@ -144,7 +147,7 @@ function getMM(sr) {
 	if(sr<90) {
 		return Math.round((100-sr)*rmTroll/50);
 	}
-	return '\u2264 ' + Math.round((100-sr)*rmTroll/50);
+	return '\u2264 '+Math.round(rmTroll/5);
 }
 
 function traiteMM() {
@@ -170,19 +173,20 @@ function traiteMM() {
 }
 
 function getRM(sr) {
+	if(mmTroll<=0) {
+		return 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
+	}
 	sr = Number(sr.match(/\d+/));
-	var rm;
-	if(mmTroll<=0)
-		rm = 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
-	else if(sr==10)
-		rm = '\u2264 '+Math.round(sr*mmTroll/50);
-	else if(sr<=50)
-		rm = Math.round(sr*mmTroll/50);
-	else if(sr<90)
-		rm = Math.round(50*mmTroll/(100-sr));
-	else
-		rm = '\u2265 '+Math.round(50*mmTroll/(100-sr));
-	return rm;
+	if(sr==10) {
+		return '\u2264 '+Math.round(mmTroll/5);
+	}
+	if(sr<=50) {
+		return Math.round(sr*mmTroll/50);
+	}
+	if(sr<90) {
+		return Math.round(50*mmTroll/(100-sr));
+	}
+	return '\u2265 '+5*mmTroll;
 }
 
 function traiteRM() {
