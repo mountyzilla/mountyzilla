@@ -22,7 +22,6 @@
  * - vérfier la gestion des enchants
  */
 
-var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
@@ -35,6 +34,9 @@ var mmTroll = MZ_getValue(numTroll+'.caracs.mm');
 var rmTroll = MZ_getValue(numTroll+'.caracs.rm');
 // utilisé dans actions et vue (calculs SR)
 
+/* DEBUG: NETTOYAGE */
+MZ_removeValue(numTroll+'.POISS');
+/* FIN DEBUG */
 
 /*-[functions]------------ Fonctions durée de script -------------------------*/
 var date_debut = null;

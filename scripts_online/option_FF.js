@@ -133,15 +133,6 @@ function saveAll() {
 	MZ_setValue('CONFIRMEDECALAGE',
 		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
 	
-	if(document.getElementById('usepoiss').checked
-		&& document.getElementById('passpoiss').value) {
-		MZ_setValue(numTroll+'.POISS',
-			hex_md5(document.getElementById('passpoiss').value));
-	}
-	else if(!document.getElementById('usepoiss').checked) {
-		MZ_removeValue(numTroll+'.POISS');
-	}
-	
 	saveLinks();
 	refreshLinks();
 	saveTagsData();
@@ -353,25 +344,6 @@ function insertOptionTable(insertPt) {
 		onChangeTags();
 	}
 	
-	/* Poissotron */
-	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
-	appendText(td,'Poissotron : ',true);
-	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	tbody = appendSubTable(td);
-
-	tr = appendTr(tbody);
-	td = appendTd(tr);
-	appendCheckBox(td,'usepoiss',MZ_getValue(numTroll+'.POISS'));
-	appendText(td,' Envoyer vos jets de dés au ');
-	var link = document.createElement('a');
-	link.href = 'http://www.fur4x-hebergement.net/minitilk';
-	link.target = '_blank';
-	appendText(link,'Poissotron');
-	td.appendChild(link);
-	
-	td = appendTdText(tr,'Mot de passe pour le Poissotron : ');
-	appendTextbox(td,'password','passpoiss',20,50);
-	
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
 	appendText(td,'Options diverses :',true);
@@ -441,7 +413,7 @@ function insertCreditsTable(insertPt) {
 
 start_script(712);
 
-// Pour cryptage des mdp IT & Poissotron
+// Pour cryptage des mdp IT
 appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
 
 var insertPoint = document.getElementById('footer2');
