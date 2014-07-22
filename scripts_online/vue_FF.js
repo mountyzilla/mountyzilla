@@ -793,11 +793,12 @@ function envoiVersTroogle() {
 	if(window.confirm(txt)) {
 		MZ_xmlhttpRequest({
 			method: 'POST',
-			url: 'http://troogle-beta.aacg.be/view_submission',
+			//url: 'http://troogle-beta.aacg.be/view_submission',
+			url: 'http://weblocal/POST_RESULT/index.php',
 			headers : {
 				'Content-type':'application/x-www-form-urlencoded'
 			},
-			data: txt,
+			data: "view="+txt, //.replace(/\n/g,'\\n'),
 			onload:	function(responseDetails) {
 				try {
 					window.alert(responseDetails.responseText);
