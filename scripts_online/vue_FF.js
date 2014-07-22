@@ -413,21 +413,50 @@ function putExternalLinks() {
 }
 
 /* [functions] Menu Vue 2D */
-// DEBUG: à refaire plus clairement en JSON
 var vue2Ddata = {
-	'Bricol\' Vue':
-		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
-		getVueScript, ['mode','vue_SP_Vue2','screen_width',screen.width] ],
-	'Vue du CCM':
-		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
-		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
-	'Vue Gloumfs 2D' :
-		['http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Vue Gloumfs 3D':
-		['http://gloumf.free.fr/vue3d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Grouky Vue!':
-		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
-		getVueScript, ['type_vue', 'V5b1'] ]
+	'Bricol\' Vue': {
+		url: 'http://trolls.ratibus.net/mountyhall/vue_form.php',
+		paramid: 'vue',
+		func: getVueScript,
+		extra_params: {
+			'mode': 'vue_SP_Vue2',
+			'screen_width': screen.width
+		}
+	},
+	'Vue du CCM': {
+		url: 'http://clancentremonde.free.fr/Vue2/RecupVue.php',
+		paramid: 'vue',
+		func: getVueScript,
+		extra_params: {
+			'id': numTroll+';'+getPositionStr(getPosition())
+		}
+	},
+	'Vue Gloumfs 2D': {
+		url: 'http://gloumf.free.fr/vue2d.php',
+		paramid: 'vue_mountyzilla',
+		func: getVueScript,
+		extra_params: {}
+	},
+	'Vue Gloumfs 3D': {
+		url: 'http://gloumf.free.fr/vue3d.php',
+		paramid: 'vue_mountyzilla',
+		func: getVueScript,
+		extra_params: {}
+	},
+	'Grouky Vue!': {
+		url: 'http://ythogtha.org/MH/grouky.py/grouky',
+		paramid: 'vue',
+		func: getVueScript,
+		extra_params: {
+			'type_vue': 'V5b1'
+		}
+	},
+	'DEBUG': {
+		url: 'http://weblocal/testeur.php',
+		paramid: 'vue',
+		func: getVueScript,
+		extra_params: {}
+	}
 };
 
 function getVueScript() {
@@ -461,17 +490,16 @@ function refresh2DViewButton() {
 	var form = document.getElementById('viewForm');
 	form.innerHTML = '';
 	form.method = 'post';
-	form.action = vue2Ddata[vueext][0];
+	form.action = vue2Ddata[vueext].url;
 	form.target = '_blank';
-	appendHidden(form, vue2Ddata[vueext][1], '');
-	var listeParams = vue2Ddata[vueext][3];
-	for(var i=0 ; i<listeParams.length ; i+=2) {
-		appendHidden(form, listeParams[i], listeParams[i+1]);
+	appendHidden(form, vue2Ddata[vueext].paramid, '');
+	for(var key in vue2Ddata[vueext].extra_params) {
+		appendHidden(form, key, vue2Ddata[vueext].extra_params[key]);
 	}
 	appendSubmit(form, 'Voir',
 		function() {
-			document.getElementsByName(vue2Ddata[vueext][1])[0].value =
-				vue2Ddata[vueext][2]();
+			document.getElementsByName(vue2Ddata[vueext].paramid)[0].value =
+				vue2Ddata[vueext].func();
 		}
 	);
 }
@@ -512,7 +540,7 @@ function set2DViewSystem() {
 	
 	/* Appelle le handler pour initialiser le bouton de submit */
 	refresh2DViewButton();
-	}
+}
 
 /* [functions] Tableau d'Infos */
 function creerTableauInfos() {
