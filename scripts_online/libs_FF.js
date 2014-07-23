@@ -69,8 +69,8 @@ function displayScriptTime() {
 /*-[functions]-------------- Insertion de scripts ----------------------------*/
 
 function isPage(url) {
-	return currentURL.indexOf(MHURL+url)==0;
-	}
+	return window.location.href.indexOf(MHURL+url)==0;
+}
 
 function chargerScript(script) {
 	// (mauvaise) Détection du chargement de la page
