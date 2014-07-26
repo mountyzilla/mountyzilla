@@ -270,7 +270,7 @@ function initAll() {
 		}
 
 	/* initAnatrolliseur() */
-	function amelio_dtb(dtb) {
+/*	function amelio_dtb(dtb) {
 		if(dtb>555) {
 			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
 			}
@@ -302,7 +302,7 @@ function initAll() {
 		+'|reg='+amelio_reg+','+Nbrs['reg'][2]+','+Nbrs['reg'][3]
 		+'|arm='+amelio_arm+','+armbmp+','+armbmm
 		+'|mm='+mmTroll
-		+'|rm='+rmTroll+'|';
+		+'|rm='+rmTroll+'|';*/
 	}
 
 function saveProfil() {
@@ -346,12 +346,13 @@ function saveProfil() {
 /*-[functions]----------- Fonctions modifiant la page ------------------------*/
 
 function setAnatrolliseur() {
-	appendButton(mainTR.snapshotItem(0).childNodes[1],'Anatrolliser!',
+	appendButton(
+		mainTR.snapshotItem(0).childNodes[1],'Anatrolliser!',
 		function(){
 			window.open(urlAnatrolliseur,'_blank')
-			}
-		);
-	}
+		}
+	);
+}
 
 function setInfoDateCreation() {
 	var node = mainTR.snapshotItem(0).childNodes[3].childNodes[6];
@@ -1582,7 +1583,7 @@ try {
 	setNextDLA();
 	setInfosPV();
 	setInfosPxPi();
-	if(MZ_getValue('VUECARAC')=='true') vueCarac();
+	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
 	setLieu();
 	setStabilite();
 	setCurrentEsquive();
@@ -1590,12 +1591,12 @@ try {
 	setTotauxMagie();
 	traitementTalents();
 	// À lancer après traitementTalents() :
-	setAnatrolliseur();
+	//setAnatrolliseur();
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
-	if(race=='Kastar') setAccel();
+	if(race=='Kastar') { setAccel(); }
 	saveProfil();
 	displayScriptTime();
-	}
+}
 catch(e) {
 	window.alert(e)
-	}
+}
