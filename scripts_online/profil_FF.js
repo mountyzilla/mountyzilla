@@ -270,7 +270,7 @@ function initAll() {
 		}
 
 	/* initAnatrolliseur() */
-/*	function amelio_dtb(dtb) {
+	function amelio_dtb(dtb) {
 		if(dtb>555) {
 			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
 			}
@@ -302,7 +302,7 @@ function initAll() {
 		+'|reg='+amelio_reg+','+Nbrs['reg'][2]+','+Nbrs['reg'][3]
 		+'|arm='+amelio_arm+','+armbmp+','+armbmm
 		+'|mm='+mmTroll
-		+'|rm='+rmTroll+'|';*/
+		+'|rm='+rmTroll+'|';
 	}
 
 function saveProfil() {
@@ -1591,7 +1591,7 @@ try {
 	setTotauxMagie();
 	traitementTalents();
 	// À lancer après traitementTalents() :
-	//setAnatrolliseur();
+	setAnatrolliseur();
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
 	if(race=='Kastar') { setAccel(); }
 	saveProfil();
