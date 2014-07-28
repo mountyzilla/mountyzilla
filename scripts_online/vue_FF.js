@@ -204,7 +204,8 @@ function bddMonstres() {
 	var txt='';
 	for(var i=1 ; i<=nbMonstres ; i++) {
 		txt += getMonstreID(i)+';'
-			+getMonstreNom(i)+' test MZ'+';'
+			//+getMonstreNom(i)+' test MZ'+';' // DEBUG
+			+getMonstreNom(i)
 			+getPositionStr(getMonstrePosition(i))+'\n';
 	}
 	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES' : '';
@@ -770,10 +771,11 @@ function appendSendBouton(paren, url, id, func, text) {
 	appendSubmit(myForm,text,
 		function() {
 			document.getElementsByName(id)[0].value = func();
-			}
-		);
+		}
+	);
 	paren.appendChild(myForm);
-	}
+}
+
 /*
 function putBoutonMonstres() {
 	var td = document.getElementById('td_insert_monstres');
@@ -787,52 +789,46 @@ function putBoutonMonstres() {
 */
 
 function envoiVersTroogle() {
-	var txt = bddMonstres()+'\n'
+	var data = bddMonstres()+'\n'
 		+bddTresors()+'\n'
 		+bddLieux();
-	if(window.confirm(txt)) {
-		MZ_xmlhttpRequest({
-			method: 'POST',
-			//url: 'http://troogle-beta.aacg.be/view_submission',
-			url: 'http://weblocal/POST_RESULT/index.php',
-			headers : {
-				'Content-type':'application/x-www-form-urlencoded'
-			},
-			data: "view="+txt, //.replace(/\n/g,'\\n'),
-			onload:	function(responseDetails) {
-				try {
-					window.alert(responseDetails.responseText);
+	MZ_xmlhttpRequest({
+		method: 'POST',
+		url: 'http://troogle-beta.aacg.be/view_submission',
+		//url: 'http://weblocal/POST_RESULT/index.php',
+		headers : {
+			'Content-type': 'application/x-www-form-urlencoded'
+		},
+		data: 'view='+encodeURIComponent(data),
+		onload:	function(responseDetails) {
+			try {
+				var bouton = document.getElementById('bouton_Troogle');
+				var txt = responseDetails.responseText;
+				if(txt.indexOf('succès')==-1) {
+					bouton.value = 'L\'envoi a échoué';
 				}
-				catch(e) {
-					console.error(e);
+				else {
+					bouton.value = 'Envoi réussi';
 				}
 			}
-		});
-	}
+			catch(e) {
+				console.error(e);
+				return;
+			}
+			bouton.info = txt;
+			bouton.onclick = lireInfosTroogle;
+		}
+	});
 }
 
-function envoiVersTroogleB() {
-	var txt = bddMonstres()+'\n'
-		+bddTresors()+'\n'
-		+bddLieux();
-	//if(window.confirm(JSON.stringify({'view': txt}))) {
-	if(window.confirm('view='+escape(txt))) {
-		var request = new XMLHttpRequest()
-		request.open('post','http://troogle-beta.aacg.be/view_submission');
-		//request.setRequestHeader('Content-type','application/json')
-		request.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-		request.onreadystatechange = function() {
-			if(request.readyState == 4) {
-				window.alert(
-					'Details:'+responseDetails+'\n'+
-					'Statut:'+request.status+'\n'+
-					request.responseText
-				);
-			}
-		}
-		//request.send(JSON.stringify({'view': txt}));
-		request.send('view='+escape(txt));
+function lireInfosTroogle() {
+	try {
+		var infos = document.getElementById('bouton_Troogle').info;
 	}
+	catch(e) {
+		return;
+	}
+	window.alert(infos);
 }
 
 function putBoutonTroogle() {
@@ -841,6 +837,7 @@ function putBoutonTroogle() {
 	td.style.fontSize = '0px';
 	var bouton = document.createElement('input');
 	bouton.type = 'button';
+	bouton.id = 'bouton_Troogle';
 	bouton.className = 'mh_form_submit';
 	bouton.value = 'Envoyer les données vers Troogle';
 	bouton.onmouseover = function(){
