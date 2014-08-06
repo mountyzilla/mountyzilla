@@ -200,12 +200,15 @@ function getMonstres() {
 	return appendMonstres(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
-function bddMonstres() {
+function bddMonstres(start,stop) {
+	if(!start) { var start = 1; }
+	if(!stop) { var stop = nbMonstres; }
+	stop = Math.min(nbMonstres,stop);
 	var txt='';
-	for(var i=1 ; i<=nbMonstres ; i++) {
+	for(var i=start ; i<=stop ; i++) {
 		txt += getMonstreID(i)+';'
-			//+getMonstreNom(i)+' test MZ'+';' // DEBUG
-			+getMonstreNom(i)
+			+getMonstreNom(i)+' test MZ'+';' // DEBUG
+			//+getMonstreNom(i)
 			+getPositionStr(getMonstrePosition(i))+'\n';
 	}
 	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES' : '';
@@ -261,9 +264,12 @@ function getTresorPosition(i) {
 		tds[5].firstChild.nodeValue ];
 	}
 
-function bddTresors() {
+function bddTresors(start,stop) {
+	if(!start) { var start = 1; }
+	if(!stop) { var stop = nbTresors; }
+	stop = Math.min(nbTresors,stop);
 	var txt='';
-	for(var i=1; i<=nbTresors ; i++) {
+	for(var i=start ; i<=stop ; i++) {
 		if(getTresorDistance(i)>=1) {
 			var tds = tr_tresors[i].childNodes;
 			txt += tds[1].firstChild.nodeValue+';'
@@ -299,9 +305,12 @@ function getLieux() {
 	return appendLieux(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
-function bddLieux() {
+function bddLieux(start,stop) {
+	if(!start) { var start = 1; }
+	if(!stop) { var stop = nbLieux; }
+	stop = Math.min(nbLieux,stop);
 	var txt='';
-	for(var i=1; i<=nbLieux ; i++) {
+	for(var i=start ; i<=stop ; i++) {
 		var tds = tr_lieux[i].childNodes;
 		txt += tds[1].firstChild.nodeValue+';'
 			+getLieuNom(i)+';' // NE PAS remplacer par tds[2].machin
@@ -789,36 +798,46 @@ function putBoutonMonstres() {
 */
 
 function envoiVersTroogle() {
-	var data = bddMonstres()+'\n'
-		+bddTresors()+'\n'
-		+bddLieux();
-	MZ_xmlhttpRequest({
-		method: 'POST',
-		url: 'http://troogle-beta.aacg.be/view_submission',
-		//url: 'http://weblocal/POST_RESULT/index.php',
-		headers : {
-			'Content-type': 'application/x-www-form-urlencoded'
-		},
-		data: 'view='+encodeURIComponent(data),
-		onload:	function(responseDetails) {
-			try {
-				var bouton = document.getElementById('bouton_Troogle');
-				var txt = responseDetails.responseText;
-				if(txt.indexOf('succès')==-1) {
-					bouton.value = 'L\'envoi a échoué';
+	var debutLot = 1;
+	var maxDonnees = Math.max(
+		nbMonstres,
+		nbTresors,
+		nbLieux
+	);
+	while(debutLot<=maxDonnees) {
+		var data = '#'+numTroll
+			+bddMonstres(debutLot,debutLot+999)+'\n'
+			+bddTresors(debutLot,debutLot+999)+'\n'
+			+bddLieux(debutLot,debutLot+999);
+		MZ_xmlhttpRequest({
+			method: 'POST',
+			//url: 'http://troogle-beta.aacg.be/view_submission',
+			url: 'http://weblocal/POST_RESULT/index.php',
+			headers : {
+				'Content-type': 'application/x-www-form-urlencoded'
+			},
+			data: 'view='+encodeURIComponent(data)+'&from='+debutLot,
+			onload:	function(responseDetails) {
+				/*try {
+					var bouton = document.getElementById('bouton_Troogle');
+					var txt = responseDetails.responseText;
+					if(txt.indexOf('succès')==-1) {
+						bouton.value = 'L\'envoi a échoué';
+					}
+					else {
+						bouton.value = 'Envoi réussi';
+					}
 				}
-				else {
-					bouton.value = 'Envoi réussi';
+				catch(e) {
+					console.error(e);
+					return;
 				}
+				bouton.info = txt;
+				bouton.onclick = lireInfosTroogle;*/
 			}
-			catch(e) {
-				console.error(e);
-				return;
-			}
-			bouton.info = txt;
-			bouton.onclick = lireInfosTroogle;
-		}
-	});
+		});
+	debutLot += 1000;
+	}
 }
 
 function lireInfosTroogle() {
