@@ -249,9 +249,9 @@ function appendSubTable(node) {
 function insertOptionTable(insertPt) {
 	var mainBody = insertMainTable(insertPt);
 	
-	/* Liens dans Vue */
+	/* Liens dans le Menu */
 	var tr = appendTr(mainBody,'mh_tdtitre');
-	var td = appendTdText(tr,'Hyperliens ajoutés dans la Vue :',true);
+	var td = appendTdText(tr,'Hyperliens ajoutés dans le Menu :',true);
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	var tbody = appendSubTable(td);
 	tbody.id = 'linksBody';

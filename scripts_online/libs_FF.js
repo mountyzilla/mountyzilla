@@ -1814,10 +1814,10 @@ var infoTagTrolls = [], infoTagGuildes = [];
 
 /* [functions] Gestion des popups de tag */
 function initTagPopup() {
-	if(tagPopup!=null) return;
+	if(tagPopup!=null) { return; }
 	tagPopup = document.createElement('div');
 	tagPopup.id = 'tagPopup';
-	tagPopup.classNAme = 'mh_textbox';
+	tagPopup.className = 'mh_textbox';
 	tagPopup.style =
 		'position:absolute;'
 		+'border:1px solid #000000;'
