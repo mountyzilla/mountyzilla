@@ -26,7 +26,7 @@ var DivInfo;
 var freezed = false;
 
 // liste du matos
-// mh_caracs ['Nom'] = [ 'Type', 'AttP','AttM', 'DegP','DegM', 'Esq',
+// mh_caracs ['Nom'] = [ 'Type', 'AttP', 'AttM', 'DegP','DegM', 'Esq',
 // 'ArmP','ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
 // 'PV', 'DLA', 'Poids_Min', 'Poids_Max' ];
 var mh_caracs = {
@@ -268,12 +268,12 @@ var mh_templates = {
 }
 
 function clone(arr) {
-	// Clonage rapide
+// Clonage rapide
 	return arr.slice(0);
 }
 
 function addArray(arr1,arr2) {
-	// Somme matricielle
+// Somme matricielle
 	var res = clone(arr1);
 	for(i=res.length-1 ; i>=0 ; i--) {
 		res[i] += arr2[i];
@@ -282,7 +282,7 @@ function addArray(arr1,arr2) {
 }
 
 function getTemplates(nomItem) {
-	// Déstructure le nom de l'item en array [nom, template1, ...]
+// Déstructure le nom de l'item en array [nom, template1, ...]
 	var tempFound = true;
 	var str = nomItem.trim();
 	var arr = [];
@@ -304,7 +304,7 @@ function getTemplates(nomItem) {
 }
 
 function addMithril(arrayCaracs,typeItem) {
-	// Ajoute l'effet du Mithril sur les caracs
+// Ajoute l'effet du Mithril sur les caracs
 	if(typeItem=='arme') {
 		if(arrayCaracs[0]<0) {
 			arrayCaracs[0] = Math.ceil(arrayCaracs[0]/2);
@@ -321,11 +321,11 @@ function addMithril(arrayCaracs,typeItem) {
 }
 
 function addRenfort(arrayCaracs,template) {
-	// Ajoute l'effet des pseudo-templates sur les caracs
-	// S'applique APRÈS le mithril
-	// WARNING - Cette formule n'a rien d'officiel, gare !
+// Ajoute l'effet des pseudo-templates sur les caracs
+// S'applique APRÈS le mithril
+// WARNING - Cette formule n'a rien d'officiel, gare !
 	var coef = 0;
-	if(/^légere?$/.test(template)) {
+	if(/^lég[e,è]re?$/.test(template)) {
 		coef = -1;
 	}
 	else if(/^renforcée?$/.test(template)
@@ -341,12 +341,13 @@ function addRenfort(arrayCaracs,template) {
 }
 
 function getCaracs(item) {
-	// Calcule les caractéristiques de l'item
+// Calcule les caractéristiques de l'item
 	var templates = getTemplates(item);
-	var caracs = mh_caracs[templates[0]];
-	if(!caracs) {
+	if(!mh_caracs[templates[0]]) {
+		// Si l'item est inconnu
 		return [];
 	}
+	var caracs = clone(mh_caracs[templates[0]]);
 	var typeItem = caracs[0];
 	caracs.shift();
 	templates.shift();
@@ -356,7 +357,7 @@ function getCaracs(item) {
 	}
 	if(/^acérée?$/.test(templates[0])
 		|| /^équilibrée?$/.test(templates[0])
-		|| /^légere?$/.test(templates[0])
+		|| /^lég[e,è]re?$/.test(templates[0])
 		|| /^renforcée?$/.test(templates[0])
 		|| templates[0]=='robuste') {
 		caracs = addRenfort(caracs,templates[0]);
@@ -369,7 +370,7 @@ function getCaracs(item) {
 }
 
 function getLine(tab) {
-	// Préparation de la ligne à afficher lors d'un mouseover
+// Préparation de la ligne à afficher lors d'un mouseover
 	var str = '';
 	if(tab[0]!=0 || tab[1]!=0) {
 		str += '<b>Att : </b>'+aff(tab[0]);
@@ -461,8 +462,8 @@ function hideInfos() {
 }
 
 function treateEquipement() {
-	// Extrait les données du matos et réinjecte les infos déduites
-	if(MZ_getValue('INFOCARAC')=='false') return;
+// Extrait les données du matos et réinjecte les infos déduites
+	if(MZ_getValue('INFOCARAC')=='false') { return; }
 	
 	var faireLigne = false;
 	var caracs = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -542,7 +543,6 @@ function treateEquipement() {
 		}
 	}
 }
-
 
 treateEquipement();
 toolTipInit();
