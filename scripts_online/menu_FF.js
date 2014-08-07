@@ -22,26 +22,33 @@ function updateData() {
 	var inputs = document.getElementsByTagName('input');
 	var divs = document.getElementsByTagName('div');
 	
-	numTroll = inputs[0].getAttribute('value');
+	numTroll = inputs[0].value;
 	MZ_setValue('NUM_TROLL', numTroll);
-	MZ_setValue('NIV_TROLL',inputs[1].getAttribute('value'));
-	if (!MZ_getValue(numTroll+'.caracs.rm'))
-		MZ_setValue(numTroll+'.caracs.rm', 0); // assure l'init des 4 var de libs
-	MZ_setValue(numTroll+'.caracs.mm',inputs[2].getAttribute('value'));
+	MZ_setValue('NIV_TROLL',inputs[1].value);
+	if(!MZ_getValue(numTroll+'.caracs.rm')) {
+		MZ_setValue(numTroll+'.caracs.rm',0);
+		// assure l'init des 4 var de libs
+	}
+	MZ_setValue(numTroll+'.caracs.mm',inputs[2].value);
 	
-	var DLA = new Date( StringToDate(divs[1].firstChild.nodeValue.substring(5)) );
-	if (MZ_getValue(numTroll+'.DLA.encours')) {
-		var DLAstockee = new Date( StringToDate(MZ_getValue(numTroll+'.DLA.encours')) );
-		if (DLA>DLAstockee)
-			MZ_setValue(numTroll+'.DLA.ancienne', DateToString(DLAstockee) );
+	var DLA = new Date(
+		StringToDate(divs[1].firstChild.nodeValue.slice(5))
+	);
+	if(MZ_getValue(numTroll+'.DLA.encours')) {
+		var DLAstockee = new Date(
+			StringToDate(MZ_getValue(numTroll+'.DLA.encours'))
+		);
+		if(DLA>DLAstockee) {
+			MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLAstockee));
 		}
-	MZ_setValue(numTroll+'.DLA.encours', DateToString(DLA) );
+	}
+	MZ_setValue(numTroll+'.DLA.encours',DateToString(DLA));
 	
 	var listePos = divs[1].childNodes[2].nodeValue.split('=');
-	MZ_setValue(numTroll+'.position.X', parseInt(listePos[1]) );
-	MZ_setValue(numTroll+'.position.Y', parseInt(listePos[2]) );
-	MZ_setValue(numTroll+'.position.N', parseInt(listePos[3]) );
-	}
+	MZ_setValue(numTroll+'.position.X',parseInt(listePos[1]));
+	MZ_setValue(numTroll+'.position.Y',parseInt(listePos[2]));
+	MZ_setValue(numTroll+'.position.N',parseInt(listePos[3]));
+}
 
 start_script(31);
 
