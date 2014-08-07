@@ -18,6 +18,8 @@
 
 // n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
 
+var menuRac, menuWidth, menuHeight;
+
 function updateData() {
 	var inputs = document.getElementsByTagName('input');
 	var divs = document.getElementsByTagName('div');
@@ -50,6 +52,69 @@ function updateData() {
 	MZ_setValue(numTroll+'.position.N',parseInt(listePos[3]));
 }
 
+function initRaccourcis() {
+	var anotherURL = MZ_getValue('URL1');
+	if(!anotherURL) { return; }
+	
+	/* Création de l'icône faisant apparaître le menu */
+	var iconeMZ = document.createElement('img');
+	iconeMZ.src = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+	iconeMZ.alt = 'MZ';
+	iconeMZ.style = 'position:fixed; top:0px; left:0px';
+	iconeMZ.onmouseover = afficheMenu;
+	document.body.appendChild(iconeMZ);
+	
+	/* Création du menu des Raccourcis */
+	menuRac = document.createElement('div');
+	menuRac.className = 'mh_tdpage mh_tdborder';
+	menuRac.style =
+		'position:fixed; top:10px; left:10px;'+
+		'max-width:190px;'+
+	 	'border-radius: 4px; padding: 4px;'+
+	 	'z-index: 500;'+
+	 	'visibility:hidden;';
+	document.body.appendChild(menuRac);
+	document.addEventListener('mousemove',cacheMenu,false);
+	var i=1;
+	while(anotherURL) {
+		var a = document.createElement('a');
+		var url = MZ_getValue('URL'+i);
+		var nom = MZ_getValue('URL'+i+'.nom');
+		var ico = MZ_getValue('URL'+i+'.ico');
+		a.href = url;
+		a.target = '_blank';
+		if(ico) {
+			var txt = nom ? nom : '';
+			var img = createImage(ico,txt);
+			a.appendChild(img);
+		}
+		else {
+			appendText(a,'['+nom+']');
+		}
+		menuRac.appendChild(a);
+		appendBr(menuRac);
+		i++;
+		anotherURL = MZ_getValue('URL'+i);
+	}
+	menuWidth = menuRac.getBoundingClientRect().width;
+	menuHeight = menuRac.getBoundingClientRect().height;
+}
+
+function afficheMenu() {
+	menuRac.style.visibility = 'visible';
+}
+
+function cacheMenu(e) {
+	var ptX = e.clientX;
+	var ptY = e.clientY;
+	if(menuRac.style.visibility=='visible'
+		&& (ptX>24 || ptY>24)
+		&& (ptX<10 || ptX>10+menuWidth || ptY<10 || ptY>10+menuHeight)) {
+		menuRac.style.visibility = 'hidden';
+	}
+}
+
 start_script(31);
 
 updateData();
+initRaccourcis();
