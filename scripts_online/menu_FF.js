@@ -18,7 +18,7 @@
 
 // n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
 
-var menuRac, menuWidth, menuHeight;
+var menuRac, mainIco;
 
 function updateData() {
 	var inputs = document.getElementsByTagName('input');
@@ -57,22 +57,26 @@ function initRaccourcis() {
 	if(!anotherURL) { return; }
 	
 	/* Création de l'icône faisant apparaître le menu */
-	var iconeMZ = document.createElement('img');
-	iconeMZ.src = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
-	iconeMZ.alt = 'MZ';
-	iconeMZ.style = 'position:fixed; top:0px; left:0px';
-	iconeMZ.onmouseover = afficheMenu;
-	document.body.appendChild(iconeMZ);
+	mainIco = document.createElement('img');
+	var urlIco = MZ_getValue(numTroll+'.ICOMENU');
+	if(!urlIco) {
+		urlIco = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+	}
+	mainIco.src = urlIco;
+	mainIco.alt = 'MZ';
+	mainIco.style = 'position:fixed; top:0px; left:0px';
+	mainIco.onmouseover = afficheMenu;
+	document.body.appendChild(mainIco);
 	
 	/* Création du menu des Raccourcis */
 	menuRac = document.createElement('div');
-	menuRac.className = 'mh_tdpage mh_tdborder';
+	menuRac.className = 'mh_textbox';
 	menuRac.style =
 		'position:fixed; top:10px; left:10px;'+
 		'max-width:190px;'+
 	 	'border-radius: 4px; padding: 4px;'+
 	 	'z-index: 500;'+
-	 	'visibility:hidden;';
+	 	'visibility: hidden;';
 	document.body.appendChild(menuRac);
 	document.addEventListener('mousemove',cacheMenu,false);
 	var i=1;
@@ -96,8 +100,6 @@ function initRaccourcis() {
 		i++;
 		anotherURL = MZ_getValue('URL'+i);
 	}
-	menuWidth = menuRac.getBoundingClientRect().width;
-	menuHeight = menuRac.getBoundingClientRect().height;
 }
 
 function afficheMenu() {
@@ -105,11 +107,16 @@ function afficheMenu() {
 }
 
 function cacheMenu(e) {
+	if(menuRac.style.visibility=='hidden') { return; }
+	// Position souris
 	var ptX = e.clientX;
 	var ptY = e.clientY;
-	if(menuRac.style.visibility=='visible'
-		&& (ptX>24 || ptY>24)
-		&& (ptX<10 || ptX>10+menuWidth || ptY<10 || ptY>10+menuHeight)) {
+	// On recalcule en live les BoundingBox pour mainIco et menuRac
+	// Moins optimal, mais évite des erreurs (d'originie inconnue)
+	var menuRect = menuRac.getBoundingClientRect();
+	var icoRect = mainIco.getBoundingClientRect();
+	if((ptX>icoRect.width || ptY>icoRect.height) &&
+		(ptX<10 || ptX>10+menuRect.width || ptY<10 || ptY>10+menuRect.height)) {
 		menuRac.style.visibility = 'hidden';
 	}
 }
