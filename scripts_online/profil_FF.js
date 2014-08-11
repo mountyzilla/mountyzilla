@@ -67,9 +67,10 @@ function resiste(Ddeg,bm) {
 	}
 
 function getPortee(param) {
+	param = Math.max(0,Number(param));
 	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
 	// ça devrait être floor, +10.25, -2.5
-	}
+}
 
 function retourAZero(fatig) {
 	var varfat = fatig; var raz = 0;
