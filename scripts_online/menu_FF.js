@@ -60,7 +60,8 @@ function initRaccourcis() {
 	mainIco = document.createElement('img');
 	var urlIco = MZ_getValue(numTroll+'.ICOMENU');
 	if(!urlIco) {
-		urlIco = 'http://weblocal/mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+		urlIco =
+			'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
 	}
 	mainIco.src = urlIco;
 	mainIco.alt = 'MZ';
