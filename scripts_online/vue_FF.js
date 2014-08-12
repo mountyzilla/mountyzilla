@@ -417,7 +417,7 @@ function creerTableauInfos() {
 }
 
 function toggleTableauInfos(firstRun) {
-	if(cursorOnLink) { return; } // DEBUG: héritage Tilk, utilité inconnue
+	if(cursorOnLink) { return; } // DEBUG: héritage Tilk, utilité inconnue
 	
 	var infoTab = document.getElementById('infoTab');
 	if(!firstRun) {
@@ -1051,7 +1051,7 @@ function prepareEnvoi() {
 	
 	/* Ajout du radio de choix PX ou MP */
 	var btnEnvoi = document.getElementById('btn_envoi');
-	if(!btnEnvoi) { return; }
+	if(!btnEnvoi) { return; }
 	var tdEnvoi = btnEnvoi.parentNode;
 	appendText(tdEnvoi,' ');
 	var span = document.createElement('span');

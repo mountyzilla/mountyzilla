@@ -356,7 +356,7 @@ function getCaracs(item) {
 		templates.pop();
 	}
 	if(/^acérée?$/.test(templates[0])
-		|| /^équilibrée?$/.test(templates[0])
+		|| /^équilibrée?$/.test(templates[0])
 		|| /^lég[e,è]re?$/.test(templates[0])
 		|| /^renforcée?$/.test(templates[0])
 		|| templates[0]=='robuste') {
@@ -463,7 +463,7 @@ function hideInfos() {
 
 function treateEquipement() {
 // Extrait les données du matos et réinjecte les infos déduites
-	if(MZ_getValue('INFOCARAC')=='false') { return; }
+	if(MZ_getValue('INFOCARAC')=='false') { return; }
 	
 	var faireLigne = false;
 	var caracs = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];

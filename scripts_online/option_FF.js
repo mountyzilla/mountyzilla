@@ -201,7 +201,7 @@ function refreshLinks() {
 
 function addLinkField(i,url,nom,ico) {
 	var linksBody = document.getElementById('linksBody');
-	if(!(i>0)) { i = linksBody.childNodes.length+1; }
+	if(!(i>0)) { i = linksBody.childNodes.length+1; }
 	var tr = appendTr(linksBody);
 	var td = appendTdCenter(tr);
 	appendText(td,'Lien '+i+' : ');
@@ -221,7 +221,7 @@ function removeLinkField() {
 	MZ_removeValue('URL'+i+'.nom');
 	MZ_removeValue('URL'+i+'.ico');
 	linksBody.removeChild(linksBody.lastChild);
-	if(linksBody.childNodes.length==0) { addLinkField(); }
+	if(linksBody.childNodes.length==0) { addLinkField(); }
 }
 
 function resetMainIco() {

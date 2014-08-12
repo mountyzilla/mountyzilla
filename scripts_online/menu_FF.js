@@ -117,7 +117,7 @@ function cacheMenu(e) {
 	var menuRect = menuRac.getBoundingClientRect();
 	var icoRect = mainIco.getBoundingClientRect();
 	if((ptX>icoRect.width || ptY>icoRect.height) &&
-		(ptX<10 || ptX>10+menuRect.width || ptY<10 || ptY>10+menuRect.height)) {
+		(ptX<10 || ptX>10+menuRect.width || ptY<10 || ptY>10+menuRect.height)) {
 		menuRac.style.visibility = 'hidden';
 	}
 }

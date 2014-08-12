@@ -1310,7 +1310,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		if(vuetotale>3) { texte += 's'; }
 		texte += '<br/>Portée verticale : <b>'
 			+Math.floor((vuetotale+1)/4)+'</b> case';
-		if(vuetotale>7) { texte += 's'; } 
+		if(vuetotale>7) { texte += 's'; } 
 	}
 	else if(sort.indexOf('Armure Etheree')!=-1)
 		texte = decumul_buff('AE','Armure magique',reg);
@@ -1585,7 +1585,7 @@ try {
 	setNextDLA();
 	setInfosPV();
 	setInfosPxPi();
-	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
+	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
 	setLieu();
 	setStabilite();
 	setCurrentEsquive();
@@ -1595,7 +1595,7 @@ try {
 	// À lancer après traitementTalents() :
 	setAnatrolliseur();
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
-	if(race=='Kastar') { setAccel(); }
+	if(race=='Kastar') { setAccel(); }
 	saveProfil();
 	displayScriptTime();
 }
