@@ -264,52 +264,6 @@ function synchroniseFiltres() {
 
 /*-[functions]-------- Initialisation: Ajout des Boutons ---------------------*/
 
-/* [functions] Insertion raccourcis urls */
-function putExternalLinks() {
-	// = Insère dans la vue des liens déclarés dans les options MZ
-	// DEBUG: à revoir lors du passage en html5 (div+float)
-	var Rdiv = document.evaluate(
-		"//div/a[contains(./text(),'Logout')]/..",
-		document, null, 9, null
-	).singleNodeValue;
-	if(!Rdiv) { return; }
-	var anotherURL = MZ_getValue('URL1');
-	if(!anotherURL) { return; }
-	/* Insertion du div [Logout] dans une table */
-	var table = document.createElement('table');
-	table.width = '100%';
-	var tr = appendTr(table);
-	var td = appendTd(tr);
-	var Ldiv = document.createElement('div');
-	Ldiv.setAttribute('align','left');
-	td.appendChild(Ldiv);
-	td = appendTd(tr);
-	Rdiv.parentNode.replaceChild(table,Rdiv);
-	td.appendChild(Rdiv);
-	/* Insertion Liens */
-	var i=1;
-	while(anotherURL) {
-		var a = document.createElement('a');
-		Ldiv.appendChild(a);
-		var url = MZ_getValue('URL'+i);
-		var nom = MZ_getValue('URL'+i+'.nom');
-		var ico = MZ_getValue('URL'+i+'.ico');
-		a.href = url;
-		a.target = '_blank';
-		a.className = 'AllLinks'; // ??? DEBUG
-		if(ico) {
-			var txt = nom ? nom : '';
-			var img = createImage(ico,txt);
-			a.appendChild(img);
-		}
-		else {
-			appendText(a,'['+nom+']');
-		}
-		i++;
-		anotherURL = MZ_getValue('URL'+i);
-	}
-}
-
 /* [functions] Menu Vue 2D */
 // DEBUG: à refaire plus clairement en JSON
 var vue2Ddata = {
@@ -1909,7 +1863,6 @@ start_script(31);
 
 creerTableauInfos();
 ajoutDesFiltres();
-putExternalLinks();
 set2DViewSystem();
 putBoutonMonstres();
 putBoutonLieux();
