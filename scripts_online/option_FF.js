@@ -67,19 +67,6 @@ function saveTagsData() {
 	}
 }
 
-function refreshLinks() {
-	document.getElementById('linksBody').innerHTML = '';
-	var anotherURL = MZ_getValue('URL1');
-	if(!anotherURL) { addLinkField(); }
-	var i=1;
-	while(anotherURL && i<99) {
-		addLinkField(i,anotherURL,
-			MZ_getValue('URL'+i+'.nom'),MZ_getValue('URL'+i+'.ico') );
-		i++;
-		anotherURL = MZ_getValue('URL'+i);
-	}
-}
-
 function saveLinks() {
 	var numLinks = document.getElementById('linksBody').childNodes.length;
 	var data=[ [] ];
@@ -104,6 +91,17 @@ function saveLinks() {
 }
 
 function saveAll() {
+	var urlIco = document.getElementById('icoMenuIco').value;
+	if(urlIco) {
+		MZ_setValue(numTroll+'.ICOMENU', urlIco );
+	}
+	else {
+		MZ_removeValue(numTroll+'.ICOMENU', urlIco );
+		document.getElementById('icoMenuIco').value = '';
+	}
+	saveLinks();
+	refreshLinks();
+	
 	MZ_setValue('VUEEXT',document.getElementById('vueext').value);
 	
 	var maxcdm = parseInt(document.getElementById('maxcdm').value);
@@ -114,6 +112,9 @@ function saveAll() {
 		MZ_removeValue(numTroll+'.MAXCDM');
 		document.getElementById('maxcdm').value = '';
 	}
+
+	MZ_setValue('NOINFOEM',
+		document.getElementById('noInfoEM').checked ? 'true' : 'false');
 	
 	// Pourquoi Tilk stockait-il tout en str ?
 	// -> parce que les booléens c'est foireux (vérifié)
@@ -124,26 +125,14 @@ function saveAll() {
 	//MZ_setValue(numTroll+'.SEND_IDT',
 	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
 	// Fonctionnalité désactivée
-	MZ_setValue('NOINFOEM',
-		document.getElementById('noInfoEM').checked ? 'true' : 'false');
+
 	MZ_setValue(numTroll+'.AUTOCDM',
 		document.getElementById('autoCdM').checked ? 'true' : 'false');
 	MZ_setValue('VUECARAC',
 		document.getElementById('vueCarac').checked ? 'true' : 'false');
 	MZ_setValue('CONFIRMEDECALAGE',
 		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
-	
-	if(document.getElementById('usepoiss').checked
-		&& document.getElementById('passpoiss').value) {
-		MZ_setValue(numTroll+'.POISS',
-			hex_md5(document.getElementById('passpoiss').value));
-	}
-	else if(!document.getElementById('usepoiss').checked) {
-		MZ_removeValue(numTroll+'.POISS');
-	}
-	
-	saveLinks();
-	refreshLinks();
+
 	saveTagsData();
 	saveITData();
 	
@@ -197,9 +186,22 @@ function onChangeTags() {
 	}
 }
 
+function refreshLinks() {
+	document.getElementById('linksBody').innerHTML = '';
+	var anotherURL = MZ_getValue('URL1');
+	if(!anotherURL) { addLinkField(); }
+	var i=1;
+	while(anotherURL && i<99) {
+		addLinkField(i,anotherURL,
+			MZ_getValue('URL'+i+'.nom'),MZ_getValue('URL'+i+'.ico') );
+		i++;
+		anotherURL = MZ_getValue('URL'+i);
+	}
+}
+
 function addLinkField(i,url,nom,ico) {
 	var linksBody = document.getElementById('linksBody');
-	if(!(i>0)) { i = linksBody.childNodes.length+1; }
+	if(!(i>0)) { i = linksBody.childNodes.length+1; }
 	var tr = appendTr(linksBody);
 	var td = appendTdCenter(tr);
 	appendText(td,'Lien '+i+' : ');
@@ -219,9 +221,13 @@ function removeLinkField() {
 	MZ_removeValue('URL'+i+'.nom');
 	MZ_removeValue('URL'+i+'.ico');
 	linksBody.removeChild(linksBody.lastChild);
-	if(linksBody.childNodes.length==0) { addLinkField(); }
+	if(linksBody.childNodes.length==0) { addLinkField(); }
 }
 
+function resetMainIco() {
+	document.getElementById('icoMenuIco').value=
+		'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+}
 
 /*-[functions]-------------- Fonctions d'insertion ---------------------------*/
 
@@ -258,9 +264,18 @@ function appendSubTable(node) {
 function insertOptionTable(insertPt) {
 	var mainBody = insertMainTable(insertPt);
 	
-	/* Liens dans Vue */
+	/* Liens dans le Menu */
 	var tr = appendTr(mainBody,'mh_tdtitre');
-	var td = appendTdText(tr,'Hyperliens ajoutés dans la Vue :',true);
+	var td = appendTdText(tr,'Hyperliens ajoutés dans le Menu :',true);
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendText(td,'Icône du Menu: ');
+	var url = MZ_getValue(numTroll+'.ICOMENU');
+	if(!url) { 
+		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+	}
+	appendTextbox(td,'text','icoMenuIco',50,200,url);
+	appendButton(td,'Réinitialiser',resetMainIco);
+	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	var tbody = appendSubTable(td);
 	tbody.id = 'linksBody';
@@ -353,25 +368,6 @@ function insertOptionTable(insertPt) {
 		onChangeTags();
 	}
 	
-	/* Poissotron */
-	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
-	appendText(td,'Poissotron : ',true);
-	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	tbody = appendSubTable(td);
-
-	tr = appendTr(tbody);
-	td = appendTd(tr);
-	appendCheckBox(td,'usepoiss',MZ_getValue(numTroll+'.POISS'));
-	appendText(td,' Envoyer vos jets de dés au ');
-	var link = document.createElement('a');
-	link.href = 'http://www.fur4x-hebergement.net/minitilk';
-	link.target = '_blank';
-	appendText(link,'Poissotron');
-	td.appendChild(link);
-	
-	td = appendTdText(tr,'Mot de passe pour le Poissotron : ');
-	appendTextbox(td,'password','passpoiss',20,50);
-	
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
 	appendText(td,'Options diverses :',true);
@@ -441,7 +437,7 @@ function insertCreditsTable(insertPt) {
 
 start_script(712);
 
-// Pour cryptage des mdp IT & Poissotron
+// Pour cryptage des mdp IT
 appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
 
 var insertPoint = document.getElementById('footer2');

@@ -22,7 +22,6 @@
  * - vérfier la gestion des enchants
  */
 
-var poissotron = 'http://minitilk.fur4x-hebergement.net/getDice2.php';
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
@@ -35,6 +34,9 @@ var mmTroll = MZ_getValue(numTroll+'.caracs.mm');
 var rmTroll = MZ_getValue(numTroll+'.caracs.rm');
 // utilisé dans actions et vue (calculs SR)
 
+/* DEBUG: NETTOYAGE */
+MZ_removeValue(numTroll+'.POISS');
+/* FIN DEBUG */
 
 /*-[functions]------------ Fonctions durée de script -------------------------*/
 var date_debut = null;
@@ -67,8 +69,8 @@ function displayScriptTime() {
 /*-[functions]-------------- Insertion de scripts ----------------------------*/
 
 function isPage(url) {
-	return currentURL.indexOf(MHURL+url)==0;
-	}
+	return window.location.href.indexOf(MHURL+url)==0;
+}
 
 function chargerScript(script) {
 	// (mauvaise) Détection du chargement de la page
@@ -1812,10 +1814,10 @@ var infoTagTrolls = [], infoTagGuildes = [];
 
 /* [functions] Gestion des popups de tag */
 function initTagPopup() {
-	if(tagPopup!=null) return;
+	if(tagPopup!=null) { return; }
 	tagPopup = document.createElement('div');
 	tagPopup.id = 'tagPopup';
-	tagPopup.classNAme = 'mh_textbox';
+	tagPopup.className = 'mh_textbox';
 	tagPopup.style =
 		'position:absolute;'
 		+'border:1px solid #000000;'

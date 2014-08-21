@@ -1,6 +1,9 @@
-/*window.alert(	window.self.location.toString()+'\n'
-		+currentURL
-		);*/
+/*window.alert(
+	window.location.toString()+'\n'+
+	window.self.location.toString()+'\n'+
+	window.location.href+'\n'+
+	currentURL
+);*/
 
 /*try{
 var node = document.evaluate("//table[@id='no_way_in_hell']", document, null, 9, null).singleNodeValue;
