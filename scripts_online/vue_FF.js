@@ -273,7 +273,7 @@ function bddTresors(start,stop) {
 		if(getTresorDistance(i)>=1) {
 			var tds = tr_tresors[i].childNodes;
 			txt += tds[1].firstChild.nodeValue+';'
-				+getTresorNom(i)+';' // NE PAS remplacer par tds[2].machin
+				+getTresorNom(i)+' test MZ'+';' // NE PAS remplacer par tds[2].machin
 				+tds[3].firstChild.nodeValue+';'
 				+tds[4].firstChild.nodeValue+';'
 				+tds[5].firstChild.nodeValue+'\n';
@@ -313,7 +313,7 @@ function bddLieux(start,stop) {
 	for(var i=start ; i<=stop ; i++) {
 		var tds = tr_lieux[i].childNodes;
 		txt += tds[1].firstChild.nodeValue+';'
-			+getLieuNom(i)+';' // NE PAS remplacer par tds[2].machin
+			+getLieuNom(i)+' test MZ'+';' // NE PAS remplacer par tds[2].machin
 			+tds[3].firstChild.nodeValue+';'
 			+tds[4].firstChild.nodeValue+';'
 			+tds[5].firstChild.nodeValue+'\n';
@@ -752,45 +752,70 @@ function putBoutonMonstres() {
 */
 
 function envoiVersTroogle() {
-	var debutLot = 1;
+	try {
+		var bouton = document.getElementById('bouton_Troogle');
+	}
+	catch(e) {
+		console.log('Bouton d\'envoi non trouvé.');
+		return;
+	}
+	bouton.onclick = lireInfosTroogle;
+	bouton.value = 'Envoi en cours';
+	var responses = {}, erreur = false;
 	var maxDonnees = Math.max(
 		nbMonstres,
 		nbTresors,
 		nbLieux
 	);
-	while(debutLot<=maxDonnees) {
+	var parLot = 100;
+	var lotStop = Math.ceil(maxDonnees/parLot);
+	for(var i=0 ; i<lotStop ; i++) {
+		var debutLot = parLot*i+1;
+		var finLot = parLot*(i+1);
 		var data = '#'+numTroll
-			+bddMonstres(debutLot,debutLot+999)+'\n'
-			+bddTresors(debutLot,debutLot+999)+'\n'
-			+bddLieux(debutLot,debutLot+999);
+			+bddMonstres(debutLot,finLot)+'\n'
+			+bddTresors(debutLot,finLot)+'\n'
+			+bddLieux(debutLot,finLot);
 		MZ_xmlhttpRequest({
 			method: 'POST',
-			//url: 'http://troogle-beta.aacg.be/view_submission',
-			url: 'http://weblocal/POST_RESULT/index.php',
+			url: 'http://troogle-beta.aacg.be/view_submission',
+			//url: 'http://weblocal/POST_RESULT/index.php',
 			headers : {
 				'Content-type': 'application/x-www-form-urlencoded'
 			},
-			data: 'view='+encodeURIComponent(data)+'&from='+debutLot,
+			data: 'view='+encodeURIComponent(data), //+'&from='+debutLot,
+			lot: i,
+			debutLot: debutLot,
+			finLot: finLot,
 			onload:	function(responseDetails) {
-				/*try {
-					var bouton = document.getElementById('bouton_Troogle');
-					var txt = responseDetails.responseText;
-					if(txt.indexOf('succès')==-1) {
-						bouton.value = 'L\'envoi a échoué';
-					}
-					else {
-						bouton.value = 'Envoi réussi';
+				try {
+					var resp = responseDetails.responseText;
+					responses[this.lot] = 'Envoi des éléments '+this.debutLot+
+						' à '+Math.min(maxDonnees,this.finLot)+' :\n'+resp;
+					if(resp.indexOf('succès')==-1) {
+						erreur = true;
 					}
 				}
 				catch(e) {
 					console.error(e);
 					return;
 				}
+				var txt = '';
+				var fini = true;
+				for(var j=0 ; j<lotStop ; j++) {
+					if(responses[j]) {
+						txt += txt ? '\n'+responses[j] : responses[j];
+					}
+					else {
+						fini = false;
+					}
+				}
 				bouton.info = txt;
-				bouton.onclick = lireInfosTroogle;*/
+				if(fini) {
+					bouton.value = erreur ? 'Erreur' : 'Envoi réussi';
+				}
 			}
 		});
-	debutLot += 1000;
 	}
 }
 
