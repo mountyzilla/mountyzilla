@@ -25,18 +25,13 @@
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
+// utilisé pour accès bdd (un peu partout) :
 var numTroll = MZ_getValue('NUM_TROLL');
-// utilisé pour accès bdd (un peu partout)
+// utilisé dans vue pour PX :
 var nivTroll = MZ_getValue('NIV_TROLL');
-// utilisé dans vue pour PX
+// utilisés dans actions et vue (calculs SR) :
 var mmTroll = MZ_getValue(numTroll+'.caracs.mm');
-// utilisé dans actions et vue (calculs SR)
 var rmTroll = MZ_getValue(numTroll+'.caracs.rm');
-// utilisé dans actions et vue (calculs SR)
-
-/* DEBUG: NETTOYAGE */
-MZ_removeValue(numTroll+'.POISS');
-/* FIN DEBUG */
 
 /*-[functions]------------ Fonctions durée de script -------------------------*/
 var date_debut = null;
