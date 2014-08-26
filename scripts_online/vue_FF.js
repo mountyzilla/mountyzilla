@@ -161,7 +161,7 @@ function getTrollID(i) {
 
 function getTrollNomNode(i) {
 	var isEnvoiOn =
-		document.getElementById('btn_envoi').parentNode.childNodes.length>1;
+		document.getElementById('btnEnvoi').parentNode.childNodes.length>1;
 	return tr_trolls[i].childNodes[ isEnvoiOn ? 3 : 2 ];
 	}
 
@@ -243,8 +243,8 @@ function synchroniseFiltres() {
 	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
 	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
 	if(numBool) {
-		debutFiltrage('monstres');
-		}
+		debutFiltrage('Monstres');
+	}
 	recallCheckBox(checkBoxGowaps,'NOGOWAP');
 	recallCheckBox(checkBoxMythiques,'NOMYTH');
 	recallCheckBox(checkBoxEngages,'NOENGAGE');
@@ -259,7 +259,7 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
 	if(MZ_getValue('NOINFOEM')!='true')
 		recallCheckBox(checkBoxEM,'NOEM');
-	}
+}
 
 
 /*-[functions]-------- Initialisation: Ajout des Boutons ---------------------*/
@@ -443,21 +443,21 @@ function toggleTableauInfos(firstRun) {
 
 /* [functions] Filtres */
 function prepareFiltrage(ref,width) {
-	// = Initialise le filtre 'ref'
-	var tdTitre = document.getElementsByName(ref)[0].parentNode;
+// = Initialise le filtre 'ref'
+	var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
 	if(width) { tdTitre.width = width; }
 	// Ajout du tr de Filtrage (masqué)
 	var tbody = tdTitre.parentNode.parentNode;
 	var tr = appendTr(tbody,'mh_tdpage');
 	tr.style.display = 'none';
-	tr.id = 'tr_filtre_'+ref;
+	tr.id = 'trFiltre'+ref;
 	var td = appendTd(tr);
 	td.colSpan = 5;
 	// Ajout du bouton de gestion de Filtrage
 	var tdBtn = insertTd(tdTitre.nextSibling);
-	tdBtn.id = 'td_insert_'+ref;
+	tdBtn.id = 'tdInsert'+ref;
 	var btn = appendButton(tdBtn,'Filtrer');
-	btn.id = 'btn_filtre_'+ref;
+	btn.id = 'btnFiltre'+ref;
 	btn.onclick =	function() {
 		debutFiltrage(ref)
 	};
@@ -466,8 +466,8 @@ function prepareFiltrage(ref,width) {
 
 function debutFiltrage(ref) {
 	// = Handler de début de filtrage (filtre 'ref')
-	document.getElementById('tr_filtre_'+ref).style.display = '';
-	var btn = document.getElementById('btn_filtre_'+ref);
+	document.getElementById('trFiltre'+ref).style.display = '';
+	var btn = document.getElementById('btnFiltre'+ref);
 	btn.value = 'Annuler Filtre';
 	btn.onclick = function() {
 		finFiltrage(ref);
@@ -475,35 +475,27 @@ function debutFiltrage(ref) {
 }
 
 function finFiltrage(ref) {
-	// = Handler de fin de filtrage (filtre 'ref')
+// = Handler de fin de filtrage (filtre 'ref')
 	/* On réassigne le bouton 'Filtrer' */
-	document.getElementById('tr_filtre_'+ref).style.display = 'none';
-	var btn = document.getElementById('btn_filtre_'+ref);
+	document.getElementById('trFiltre'+ref).style.display = 'none';
+	var btn = document.getElementById('btnFiltre'+ref);
 	btn.value = 'Filtrer';
 	btn.onclick = function() {
 		debutFiltrage(ref);
 	};
-	/* Réinitialisation filtres et nettoyage */
-	document.getElementById('str_'+ref).value = '';
-	/* DEBUG
-	var str = 'filtre'+ref[0].toUpperCase()+ref.slice(1);
-	window[str](); // Fonction non trouvée. Aucune fonction MZ en fait ?! */
+	/* Réinitialisation filtres */
+	document.getElementById('str'+ref).value = '';
 	switch(ref) {
-		case 'monstres':
-			document.getElementById('niv_min_monstres').value = 0;
-			document.getElementById('niv_max_monstres').value = 0;
-			filtreMonstres();
+		case 'Monstres':
+			document.getElementById('nivMinMonstres').value = 0;
+			document.getElementById('nivMaxMonstres').value = 0;
 			break;
-		case 'trolls':
-			document.getElementById('str_guildes').value = '';
-			filtreTrolls();
-			break;
-		case 'tresors':
-			filtreTresors();
-			break;
-		case 'lieux':
-			filtreLieux();
+		case 'Trolls':
+			document.getElementById('strGuildes').value = '';
 	}
+	/* Nettoyage (=lance le filtre) */
+	// Ici this = MZ.global (!= window), permet d'accéder aux fonctions MZ
+	this['filtre'+ref]();
 }
 
 function ajoutFiltreStr(td,nomBouton,id,onClick) {
@@ -537,25 +529,25 @@ function ajoutFiltreMenu(tr,id,onChange) {
 
 function ajoutDesFiltres() {
 	/* Monstres */
-	var td = prepareFiltrage('monstres',120);
-	ajoutFiltreStr(td,'Nom du monstre:','str_monstres',filtreMonstres);
+	var td = prepareFiltrage('Monstres',120);
+	ajoutFiltreStr(td,'Nom du monstre:','strMonstres',filtreMonstres);
 	appendText(td,'\u00a0\u00a0\u00a0');
 	appendText(td,'Niveau Min: ');
-	comboBoxNiveauMin = ajoutFiltreMenu(td,'niv_min_monstres',filtreMonstres);
+	comboBoxNiveauMin = ajoutFiltreMenu(td,'nivMinMonstres',filtreMonstres);
 	appendText(td,'\u00a0');
 	appendText(td,'Niveau Max: ');
-	comboBoxNiveauMax = ajoutFiltreMenu(td,'niv_max_monstres',filtreMonstres);
+	comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
 	/* Trõlls */
-	td = prepareFiltrage('trolls',50);
-	ajoutFiltreStr(td,'Nom du trõll:','str_trolls',filtreTrolls);
+	td = prepareFiltrage('Trolls',50);
+	ajoutFiltreStr(td,'Nom du trõll:','strTrolls',filtreTrolls);
 	appendText(td,'\u00a0\u00a0\u00a0');
-	ajoutFiltreStr(td,'Nom de guilde:','str_guildes',filtreTrolls);
+	ajoutFiltreStr(td,'Nom de guilde:','strGuildes',filtreTrolls);
 	/* Trésors */
-	td = prepareFiltrage('tresors',55);
-	ajoutFiltreStr(td,'Nom du trésor:','str_tresors',filtreTresors);
+	td = prepareFiltrage('Tresors',55);
+	ajoutFiltreStr(td,'Nom du trésor:','strTresors',filtreTresors);
 	/* Lieux */
-	td = prepareFiltrage('lieux',40);
-	ajoutFiltreStr(td,'Nom du lieu:','str_lieux',filtreLieux);
+	td = prepareFiltrage('Lieux',40);
+	ajoutFiltreStr(td,'Nom du lieu:','strLieux',filtreLieux);
 }
 
 /* [functions] Boutons d'envoi d'infos aux bases */
@@ -576,22 +568,22 @@ function appendSendBouton(paren, url, id, func, text) {
 	}
 
 function putBoutonMonstres() {
-	var td = document.getElementById('td_insert_monstres');
+	var td = document.getElementById('tdInsertMonstres');
 	td = insertTd(td.nextSibling);
 	td.style.fontSize = '0px';
 	appendSendBouton(td,
 		'http://mountyhall.clubs.resel.fr/script/v2/get_monstres.php',
-		'listemonstres', getMonstres,
+		'listeMonstres', getMonstres,
 		'Envoyer les monstres aux Teubreux');
 	}
 
 function putBoutonLieux() {
-	var td = document.getElementById('td_insert_lieux');
+	var td = document.getElementById('tdInsertLieux');
 	td = insertTd(td.nextSibling);
 	td.style.fontSize = '0px';
 	appendSendBouton(td,
 		'http://mountyzilla.tilk.info/scripts/lieux.php',
-		'listelieux', getLieux,
+		'listeLieux', getLieux,
 		'Ajouter les lieux à la base MZ');
 	}
 
@@ -702,18 +694,18 @@ function filtreMonstres() {
 	var oldNOEM = true, noEM = true;
 	if(MZ_getValue('NOINFOEM')!='true')
 		noEM = saveCheckBox(checkBoxEM, 'NOEM'); // wtf ?
+	// Filtrage par nom
+	var strMonstre = document.getElementById('strMonstres').value.toLowerCase();
 	/* Génère la liste des mobs engagés */
 	if(noEngages && !isEngagesComputed) {
 		for(var i=nbTrolls ; i>0 ; i--) {
 			var pos = getTrollPosition(i);
-			if(!listeEngages[pos[0]]) listeEngages[pos[0]] = [];
-			if(!listeEngages[pos[0]][pos[1]]) listeEngages[pos[0]][pos[1]] = [];
+			if(!listeEngages[pos[0]]) { listeEngages[pos[0]] = {}; }
+			if(!listeEngages[pos[0]][pos[1]]) { listeEngages[pos[0]][pos[1]] = {}; }
 			listeEngages[pos[0]][pos[1]][pos[2]] = 1;
-			}
-		isEngagesComputed = true;
 		}
-	/* Filtrage par nom */
-	var strMonstre = document.getElementById('str_monstres').value.toLowerCase();
+		isEngagesComputed = true;
+	}
 	
 	/* FILTRAGE */
 	for(var i=nbMonstres ; i>0 ; i--) {
@@ -886,8 +878,8 @@ function retrieveCDMs() {
 
 function filtreTrolls() {
 	var noIntangibles = saveCheckBox(checkBoxIntangibles,'NOINT');
-	var strTroll = document.getElementById('str_trolls').value.toLowerCase();
-	var strGuilde = document.getElementById('str_guildes').value.toLowerCase();
+	var strTroll = document.getElementById('strTrolls').value.toLowerCase();
+	var strGuilde = document.getElementById('strGuildes').value.toLowerCase();
 	for(var i=1 ; i<=nbTrolls ; i++) {
 		var tds = tr_trolls[i].childNodes;
 		tr_trolls[i].style.display =
@@ -1029,17 +1021,17 @@ function hidePXTroll() {
 
 /* [functions] Envoi PX / MP */
 function putBoutonPXMP() {
-	// Bouton d'initialisation du mode Envoi
-	var td = document.getElementById('td_insert_trolls');
+// Bouton d'initialisation du mode Envoi
+	var td = document.getElementById('tdInsertTrolls');
 	td.width = 100;
 	td = insertTd(td.nextSibling);
 	td.style.verticalAlign = 'top';
 	var bouton = appendButton(td,'Envoyer...',prepareEnvoi);
-	bouton.id = 'btn_envoi';
+	bouton.id = 'btnEnvoi';
 }
 
 function prepareEnvoi() {
-	// = EventListener bouton d'envoi
+// = 1er Handler du bouton d'envoi
 	
 	/* Ajout de la colonne des CheckBoxes */
 	var td = insertTdText(getTrollNomNode(0),'');
@@ -1050,7 +1042,7 @@ function prepareEnvoi() {
 	}
 	
 	/* Ajout du radio de choix PX ou MP */
-	var btnEnvoi = document.getElementById('btn_envoi');
+	var btnEnvoi = document.getElementById('btnEnvoi');
 	if(!btnEnvoi) { return; }
 	var tdEnvoi = btnEnvoi.parentNode;
 	appendText(tdEnvoi,' ');
@@ -1074,13 +1066,13 @@ function prepareEnvoi() {
 	insertButton(btnEnvoi,'Annuler',annuleEnvoi);
 	
 	/* Modification de l'effet du bouton Envoi */
-	document.getElementById('btn_envoi').onclick = effectueEnvoi;
+	document.getElementById('btnEnvoi').onclick = effectueEnvoi;
 }
 
 function annuleEnvoi() {
-	// = EventListener du bouton Annuler
+// = Handler bouton Annuler
 	/* Nettoyage du td du bouton Envoi */
-	var btnEnvoi = document.getElementById('btn_envoi');
+	var btnEnvoi = document.getElementById('btnEnvoi');
 	var tdEnvoi = btnEnvoi.parentNode;
 	while(tdEnvoi.firstChild) {
 		tdEnvoi.removeChild(tdEnvoi.firstChild);
@@ -1096,7 +1088,7 @@ function annuleEnvoi() {
 }
 
 function effectueEnvoi() {
-	// = Second Listener du bouton d'envoi PX MP (charge un nouveau frame)
+// = 2e Handler du bouton d'envoi (charge un nouveau frame)
 	var str='';
 	for(var i=nbTrolls ; i>0 ; i--) {
 		var chb = document.getElementById('envoi'+i);
@@ -1130,7 +1122,7 @@ function filtreTresors() {
 			}
 		isEngagesComputed = true;
 		}
-	var strTresor = document.getElementById('str_tresors').value.toLowerCase();
+	var strTresor = document.getElementById('strTresors').value.toLowerCase();
 	for(var i=nbTresors ; i>0 ; i--) {
 		var nom = getTresorNom(i);
 		var pos = getTresorPosition(i);
@@ -1158,7 +1150,7 @@ function filtreTresors() {
 function filtreLieux() {
 	// = EventListener ChB trous
 	var noTrou = saveCheckBox(checkBoxTrou,'NOTROU');
-	var strLieu = document.getElementById('str_lieux').value.toLowerCase();
+	var strLieu = document.getElementById('strLieux').value.toLowerCase();
 	for(var i=nbLieux ; i>0 ; i--) {
 		tr_lieux[i].style.display =
 			(strLieu
