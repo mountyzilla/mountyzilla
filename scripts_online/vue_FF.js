@@ -772,8 +772,8 @@ function envoiVersTroogle() {
 	for(var i=0 ; i<lotStop ; i++) {
 		var debutLot = parLot*i+1;
 		var finLot = parLot*(i+1);
-		var data = '#'+numTroll
-			+bddMonstres(debutLot,finLot)+'\n'
+		var data = //'#'+numTroll+
+			bddMonstres(debutLot,finLot)+'\n'
 			+bddTresors(debutLot,finLot)+'\n'
 			+bddLieux(debutLot,finLot);
 		MZ_xmlhttpRequest({
