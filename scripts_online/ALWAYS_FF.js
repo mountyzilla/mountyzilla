@@ -38,3 +38,14 @@ if(isPage('MH_Play/Play_menu')
 	//zalert();
 }
 
+/*window.alert(
+	'ON! sur page:\n'+window.location
+);*/
+
+/*if(isPage('MH_Play/PlayStart')) {
+	var date = DateToString(new Date());
+	MZ_setValue('temp',date);
+}
+else if(isPage('MH_Play/TurnStart')) {
+	window.alert('Heure lancement MH:\n'+MZ_getValue('temp'));
+}*/
