@@ -834,40 +834,38 @@ function initPopup() {
 	popup.id = 'popup';
 	popup.className = 'mh_textbox';
 	popup.style =
-		'position: absolute;'
-		+'border: 1px solid #000000;'
-		+'visibility: hidden;'
-		+'display: inline;'
-		+'z-index: 3;'
-		+'max-width: 400px;';
+		'position: absolute;'+
+		'border: 1px solid #000000;'+
+		'visibility: hidden;'+
+		'display: inline;'+
+		'z-index: 3;'+
+		'max-width: 400px;';
 	document.body.appendChild(popup);
-	}
+}
 
-function showPopup2(evt) {
-	var id = this.getAttribute("id");
-	var nom = this.getAttribute("nom");
+function showPopupTactique(evt) {
+	var id = this.id;
+	var nom = this.nom;
 	var texte = getAnalyseTactique(id,nom);
-	if(texte=="")
-		return;
+	if(texte=='') { return; }
 	popup.innerHTML = texte;
-	popup.style.left = Math.min(evt.pageX + 15,window.innerWidth-400) + 'px';
-	popup.style.top = evt.pageY+15 + 'px';
-	popup.style.visibility = "visible";
+	popup.style.left = Math.min(evt.pageX+15,window.innerWidth-400)+'px';
+	popup.style.top = (evt.pageY+15)+'px';
+	popup.style.visibility = 'visible';
 }
 
 function hidePopup() {
-	popup.style.visibility = "hidden";
+	popup.style.visibility = 'hidden';
 }
 
-function createPopupImage2(url, id, nom)
-{
+function createImageTactique(url,id,nom) {
 	var img = document.createElement('img');
-	img.setAttribute('src',url);
-	img.setAttribute('align','ABSMIDDLE');
-	img.setAttribute("id",id);
-	img.setAttribute("nom",nom);
-	img.addEventListener("mouseover", showPopup2,true);
-	img.addEventListener("mouseout", hidePopup,true);
+	img.src = url;
+	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÈTE
+	img.id = id;
+	img.nom = nom;
+	img.onmouseover = showPopupTactique;
+	img.onmouseout = hidePopup;
 	return img;
 }
 
@@ -1051,7 +1049,7 @@ function computeTactique(begin, end) {
 				var td = getMonstreTdNom(j);
 				appendText(td,' ');
 				td.appendChild(
-					createPopupImage2(MZimg+'calc2.png', id, nom)
+					createImageTactique(MZimg+'calc2.png', id, nom)
 				);
 			}
 		}
@@ -1847,7 +1845,6 @@ function computeTag()
 {
 	try
 	{
-	initPopup();
 	if(MZ_getValue(numTroll+'.TAGSURL')==null || MZ_getValue(numTroll+'.TAGSURL')=='')
 		return false;
 	var tagsurl = MZ_getValue(numTroll+'.TAGSURL');
@@ -1919,11 +1916,12 @@ savePosition();
 	if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
 	if(noTrou) filtreLieux();
 }
+initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
 refreshDiplo();
 initPXTroll();
 computeTag();
 computeTelek();
-computeChargeProjo();
+computeChargeProjo(); // TODO À décomposer
 putScriptExterne();
 
 displayScriptTime();
