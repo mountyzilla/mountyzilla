@@ -788,30 +788,44 @@ function drag(evt) {
 }
 /* FIN DEBUG */
 
-function afficherCDM(nom, id) {
+function afficherCDM(nom,id) {
+// Crée la table de CdM du mob n° id
 	var donneesMonstre = listeCDM[id];
-	var table = createCDMTable(id,nom,donneesMonstre);
-	table.setAttribute('id', 'popupCDM'+id );
-	table.setAttribute('style', 'display: none; position: fixed; z-index: 1; top: '+ (300
-			+ (30 * nbCDM)) % (30 * Math.floor((window.innerHeight - 400) / 30)) + 'px; left: '
-			+ (window.innerWidth - 365) + 'px; width: 300px; height: 200px;');
-	mainTabs[0].parentNode.appendChild(table);
-
+	/* Début création table */
+	var table = createCDMTable(id,nom,donneesMonstre); // voir Libs
+	table.id = 'popupCDM'+id;
+	table.style =
+		'position:fixed;'+
+		'z-index:1;'+
+		'top:'+(300+(30*nbCDM))%(30*Math.floor((window.innerHeight-400)/30))+'px;'+
+		'left:'+(window.innerWidth-365)+'px;'+
+		'width:300px;'+
+		'height:200px;';
+	/* Ajout du titre avec gestion Drag & Drop */
 	var tr = table.firstChild;
-	tr.setAttribute('style', 'cursor:move;');
-	tr.addEventListener("mousedown", startDrag, true);
-//	tr.addEventListener("mousemove", drag, true);
-	tr.addEventListener("mouseup", stopDrag, true);
+	tr.style.cursor = 'move';
+	tr.onmousedown = startDrag;
+	tr.onmouseup = stopDrag;
+	/* Ajout du bouton "Fermer" */
 	tr = appendTr(table.childNodes[1], 'mh_tdtitre');
-	tr.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
-	tr.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
-	tr.setAttribute('cdmindex',id);
-	tr.addEventListener("click", function() {id=this.getAttribute("cdmindex");cacherPopupCDM( 'popupCDM' + id); this.className = 'mh_tdtitre';},true);
-	td = appendTdText(tr, 'Fermer', true);
-	td.setAttribute('colspan', '2');
-	td.setAttribute('style', 'text-align:center;');
+	tr.onmouseover = function() {
+		this.style.cursor = 'pointer';
+		this.className = 'mh_tdpage';
+	};
+	tr.onmouseout = function() {
+		this.className = 'mh_tdtitre';
+	};
+	tr.idcdm = id;
+	tr.onclick = function() {
+		cacherPopupCDM('popupCDM'+this.idcdm);
+		this.className = 'mh_tdtitre';
+	};
+	td = appendTdText(tr,'Fermer',true);
+	td.colSpan = 2;
+	td.style = 'text-align:center;';
 	nbCDM++;
-	table.style.display = '';
+	/* Fin création table & Affichage */
+	document.body.appendChild(table);
 }
 
 /* [functions] Gestion de l'AFFICHAGE des Infos de combat */
