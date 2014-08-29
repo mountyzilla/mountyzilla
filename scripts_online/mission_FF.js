@@ -29,7 +29,6 @@ function saveMission(num,obEtape) {
 		catch(e) { console.error('Erreur Mission:\n'+e) }
 	}
 	obMissions[num] = obEtape;
-	window.alert(JSON.stringify(obMissions));
 	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
@@ -41,16 +40,10 @@ function traiteMission() {
 		var tdLibelle = document.evaluate(
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 			missionForm, null, 9, null).singleNodeValue;
-		/*window.alert(
-			titreMission.textContent+'\n'+
-			numMission+'\n'+
-			missionForm.name+'\n'+
-			tdLibelle.textContent
-		);*/
 	} catch(e) { console.error(e); return; }
 	if(!numMission || !tdLibelle) { return; }
 	
-	var libelle = trim(tdLibelle.textContent);
+	var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
 	var siMundidey = libelle.indexOf('Mundidey')!=-1;
 	if(libelle.indexOf('niveau égal à')!=-1) {
 		var nbKills = 1, niveau, mod;
@@ -60,7 +53,7 @@ function traiteMission() {
 			niveau = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
 			// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
 			mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-			mod = mod ? Number(mod) : 'plus';
+			mod = mod ? mod : 'plus';
 		}
 		else {
 			// Étape de kill unique de niveau donné
@@ -70,7 +63,6 @@ function traiteMission() {
 		}
 		saveMission(numMission,{
 			type: 'Niveau',
-			nbKills: nbKills,
 			niveau: niveau,
 			mod: mod,
 			mundidey: siMundidey,
@@ -90,7 +82,6 @@ function traiteMission() {
 		}
 		saveMission(numMission,{
 			type: 'Race',
-			nbKills: nbKills,
 			race: race.replace(/\"/g,''),
 			mundidey: siMundidey,
 			libelle: libelle
@@ -109,7 +100,6 @@ function traiteMission() {
 		}
 		saveMission(numMission,{
 			type: 'Famille',
-			nbKills: nbKills,
 			famille: famille,
 			mundidey: siMundidey,
 			libelle: libelle

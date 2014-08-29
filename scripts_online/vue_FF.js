@@ -958,55 +958,68 @@ function computeMission(begin,end) {
 	computeVLC(begin,end);
 	if(!begin) begin=1;
 	if(!end) end=nbMonstres;
-	if(!MZ_getValue(numTroll+'.MISSION') || MZ_getValue(numTroll+'.MISSION')=='') return false;
+	var str = MZ_getValue(numTroll+'.MISSIONS');
+	if(!str) { return; }
 	
-	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/mission.png';
-	var infosMission = MZ_getValue(numTroll+'.MISSION').split('$');
+	var urlImg = MZimg+'mission.png';
+	var infosMissions = JSON.parse(str);
+	
 	for(var i=end ; i>=begin ; i--) {
-		var id = getMonstreID(i);
-		var nom = getMonstreNom(i).toLowerCase();
-		if(infosMission[0]=='R') { // Si étape Race
-			if(epure(nom).indexOf(epure(infosMission[2].toLowerCase()))!=-1) {
-				var tr = tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-				tr.appendChild(document.createTextNode(' '));
-				tr.appendChild(createImage(urlImg,infosMission[4]));
-				}
-			}
-		else if(infosMission[0]=='N') { // Si étape Niveau
-			var donneesMonstre = listeCDM[id];
-			if(donneesMonstre) {
-				var niveau = parseInt(infosMission[2]);
-				var mod = infosMission[3];
-				if(parseInt(mod) && Math.abs(parseInt(donneesMonstre[0])-niveau)<=parseInt(mod)
-					|| mod=='plus' && donneesMonstre[0]>=niveau) {
-					var tr = tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-					tr.appendChild(document.createTextNode(' '));
-					tr.appendChild(createImage(urlImg, infosMission[5]));
+		var mess = '';
+		for(var num in infosMissions) {
+			var mobMission = false;
+			switch(infosMissions[num].type) {
+				case 'Race':
+					var race = epure(infosMissions[num].race.toLowerCase());
+					var nom = epure(getMonstreNom(i).toLowerCase());
+					if(nom.indexOf(race)!=-1) {
+						mobMission = true;
 					}
-				}
-			}
-		else if(infosMission[0]=='F') { // Si étape Famille
-			var donneesMonstre = listeCDM[id];
-			if(donneesMonstre) {
-				if(epure(donneesMonstre[1]).toLowerCase().indexOf(epure(infosMission[2].toLowerCase()))!=-1) {
-					var tr = tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-					tr.appendChild(document.createTextNode(' '));
-					tr.appendChild(createImage(urlImg, infosMission[4]));
+					break;
+				case 'Niveau':
+					var donneesMonstre = listeCDM[getMonstreID(i)];
+					if(donneesMonstre) {
+						var nivMob = Number(donneesMonstre[0]);
+						var	nivMimi = Number(infosMissions[num].niveau),
+							mod = infosMissions[num].mod;
+						if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
+							|| (isNaN(mod) && nivMob>=nivMimi)) {
+							mobMission = true;
+						}
 					}
-				}
-			}
-		else if(infosMission[0]=='E') { // Si étape 'sous l'effet d'une capa'
-			var donneesMonstre = listeCDM[id];
-			if(donneesMonstre) {
-				if(epure(donneesMonstre[10]).toLowerCase().indexOf(epure(infosMission[2].toLowerCase())+' =>')!=-1) {
-					var tr = tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-					tr.appendChild(document.createTextNode(' '));
-					tr.appendChild(createImage(urlImg, infosMission[4]));
+					break;
+				case 'Famille':
+					var donneesMonstre = listeCDM[getMonstreID(i)];
+					if(donneesMonstre) {
+						var familleMimi = epure(infosMissions[num].famille.toLowerCase());
+						var familleMob = epure(donneesMonstre[1].toLowerCase());
+						if(familleMob.indexOf(familleMimi)!=-1) {
+							mobMission = true;
+						}
 					}
-				}
+					break;
+				case 'Pouvoir':
+					var donneesMonstre = listeCDM[getMonstreID(i)];
+					if(donneesMonstre) {
+						var pvrMimi = epure(infosMission[2].toLowerCase());
+						var pvrMob = epure(donneesMonstre[10].toLowerCase());
+						if(pvrMob.indexOf(pvrMimi)!=-1) {
+							mobMission = true;
+						}
+					}
+			}
+			if(mobMission) {
+				mess += mess ? '\n\n' : '';
+				mess += 'Mission '+num+' :\n'+infosMissions[num].libelle;
 			}
 		}
+		if(mess) {
+			var td = getMonstreTdNom(i);
+			appendText(td,' ');
+			td.appendChild(createImage(urlImg,mess));
+		}
 	}
+}
 
 function computeVLC(begin,end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeMission
