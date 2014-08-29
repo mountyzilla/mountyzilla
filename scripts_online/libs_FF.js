@@ -966,10 +966,10 @@ function removeAllTalents() {
 		}
 	}
 
-function isProfilActif() { // what for ? 
+function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 	var att = MZ_getValue(numTroll+'.caracs.attaque');
-	var attbmp = MZ_getValue(numTroll+'.caracs.attaque.bmp');;
-	var attbmm = MZ_getValue(numTroll+'.caracs.attaque.bmm');;
+	var attbmp = MZ_getValue(numTroll+'.caracs.attaque.bmp');
+	var attbmm = MZ_getValue(numTroll+'.caracs.attaque.bmm');
 	var mm = MZ_getValue(numTroll+'.caracs.mm');
 	var deg = MZ_getValue(numTroll+'.caracs.degats');
 	var degbmp = MZ_getValue(numTroll+'.caracs.degats.bmp');
@@ -983,7 +983,7 @@ function isProfilActif() { // what for ?
 	}
 
 
-/*-[functions]---------------- Gestions des CDMs -----------------------------*/
+/*-[functions]---------------- Gestion des CDMs ------------------------------*/
 
 function getPVsRestants(pv,bless,vue) {
 	bless = Number(bless.match(/\d+/));
