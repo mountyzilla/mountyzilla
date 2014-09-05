@@ -70,7 +70,7 @@ function sendDiplo() {
 			param += "te[]=" + texte + '&';
 	}
 	if (param != "")
-		MZ_xmlhttpRequest({
+		FF_XMLHttpRequest({
 			method: 'GET',
 			url: getDiploURL + '?num=' + numTroll + '&' + param,
 			headers : {

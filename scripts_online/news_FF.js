@@ -47,7 +47,7 @@ function appendTitledTable(node,titre,description) {
 
 function traiterJubilaires() {
 	try {
-		MZ_xmlhttpRequest({
+		FF_XMLHttpRequest({
 			method: 'GET',
 			url: annivURL,
 			headers: {
@@ -112,7 +112,7 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	try {
-		MZ_xmlhttpRequest({
+		FF_XMLHttpRequest({
 			method: 'GET',
 			url: rssURL,
 			headers: {

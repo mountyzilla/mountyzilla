@@ -93,6 +93,26 @@ function appendNewScript(src,paren) {
 	MZ_appendNewScript(src);
 	}
 
+function FF_XMLHttpRequest(MZ_XHR_Ob) {
+	var request = new XMLHttpRequest();
+	request.open(MZ_XHR_Ob.method,MZ_XHR_Ob.url);
+	for(var head in MZ_XHR_Ob.headers) {
+		request.setRequestHeader(head,MZ_XHR_Ob.headers[head]);
+	}
+	request.onreadystatechange = function() {
+		if(request.readyState!=4) { return; }
+		if(request.error) {
+			if(MZ_XHR_Ob.onerror) {
+				MZ_XHR_Ob.onerror(request);
+			}
+		}
+		else if(MZ_XHR_Ob.onload) {
+			/* DEBUG: Ajouter à request les pptés de MZ_XHR_Ob à transmettre */
+			MZ_XHR_Ob.onload(request);
+		}
+	};
+	request.send(MZ_XHR_Ob.data);
+}
 
 /*-[functions]-------------- Modifications du DOM ----------------------------*/
 
@@ -1862,7 +1882,7 @@ try {
 	nbTagFile = listeTagsURL.length;
 	for(var i=0 ; i<listeTagsURL.length ; i++) {
 		if(listeTagsURL[i].toLowerCase().indexOf('http')==0) {
-			MZ_xmlhttpRequest({
+			FF_XMLHttpRequest({
 				method: 'GET',
 				url: listeTagsURL[i],
 				headers: {

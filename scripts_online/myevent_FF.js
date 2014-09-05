@@ -40,7 +40,7 @@ function treateMission() {
 		str += 'nom[]=' + escape(nomMonstre) + '$'+idMonstre+'&';
 		if (i % 50 == 49 || i == nodes.snapshotLength - 1) 
 		{
-			MZ_xmlhttpRequest({
+			FF_XMLHttpRequest({
 				method: 'GET',
 				url: 'http://mountypedia.free.fr/mz/monstres_0.9_FF.php?begin='+Math.floor(i/50)+'&idcdm=' + MZ_getValue('CDMID') + '&' + str,
 				headers : {

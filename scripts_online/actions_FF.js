@@ -231,7 +231,7 @@ function traiteRM() {
 		nomIdt = nomIdt.slice(0, nomIdt.indexOf("(") - 1);
 		nomIdt = nomIdt.replace(regExpBeginning, "").replace(regExpEnd, "");
 	}
-	MZ_xmlhttpRequest({
+	FF_XMLHttpRequest({
 		method: 'GET',
 		url: idtURL + "?item=" + escape(nomIdt) + "&descr=" + escape(caracIdt),
 		headers : {
