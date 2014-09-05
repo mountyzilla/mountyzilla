@@ -877,7 +877,7 @@ function retrieveCDMs() {
 		if(i%500==0 || i==max) { // demandes de CdM par lots de 500 max
 			var url = 'http://mountypedia.free.fr/mz/monstres_0.9_post_FF.php';
 			
-			MZ_xmlhttpRequest({
+			FF_XMLHttpRequest({
 				method: 'POST',
 				url: url,
 				headers : {
@@ -959,7 +959,7 @@ function refreshDiplo() {
 		}
 	
 	if(!isDiploComputed) {
-		MZ_xmlhttpRequest({
+		FF_XMLHttpRequest({
 			method: 'GET',
 			url: 'http://mountyzilla.tilk.info/scripts_0.9/getTroll_FF.php?num='
 				+numTroll,
@@ -1612,7 +1612,7 @@ function computeTag()
 		if(listeTagsURL[i].toLowerCase().indexOf("http")==0)
 		{
 			//appendNewScript(listeTagsURL[i]);
-			MZ_xmlhttpRequest({
+			FF_XMLHttpRequest({
 			    method: 'GET',
 			    url: listeTagsURL[i],
 			    headers: {
