@@ -98,7 +98,7 @@ function sendInfoCDM() {
 	MZ_setValue('CDMID', 1+parseInt(MZ_getValue('CDMID')) );
 	var buttonCDM = this;
 	var texte = '';
-	FF_XMLHttpRequest({
+	MZ_xmlhttpRequest({
 		method: 'GET',
 		url: pageDispatcher+'?cdm='+escape(cdm),
 		headers : {

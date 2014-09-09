@@ -877,7 +877,7 @@ function retrieveCDMs() {
 		if(i%500==0 || i==max) { // demandes de CdM par lots de 500 max
 			var url = 'http://mountypedia.free.fr/mz/monstres_0.9_post_FF.php';
 			
-			FF_XMLHttpRequest({
+			MZ_xmlhttpRequest({
 				method: 'POST',
 				url: url,
 				headers : {

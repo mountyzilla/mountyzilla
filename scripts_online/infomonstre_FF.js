@@ -33,7 +33,7 @@ function treateMonstre() {
 	if(nomMonstre.indexOf(']') != -1)
 		nomMonstre = nomMonstre.substring(0,nomMonstre.indexOf(']')+1);
 	idMonstre = texte.substring(texte.indexOf('(')+1,texte.indexOf(')'))*1;
-	FF_XMLHttpRequest({
+	MZ_xmlhttpRequest({
 		method: 'GET',
 		url: 'http://mountypedia.free.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm=' + MZ_getValue('CDMID') + '&nom[]=' + escape(nomMonstre) + '$' + idMonstre,
 		headers : {

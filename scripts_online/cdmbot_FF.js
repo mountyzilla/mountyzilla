@@ -102,7 +102,7 @@ function sendCDM() {
 		}
 	cdm = cdm.replace(/<br>/g,'\n');
 	
-	FF_XMLHttpRequest({
+	MZ_xmlhttpRequest({
 				method: 'GET',
 				url: pageDispatcher+'?cdm='+escape(cdm),
 				headers : {
