@@ -188,7 +188,7 @@ function getTresorDistance(i) {
 	}
 
 function getTresorNom(i) {
-	var nom = tr_tresors[i].childNodes[2].firstChild.childNodes;
+	var nom = tr_tresors[i].childNodes[2].childNodes;
 	return (nom.length==1) ? nom[0].nodeValue : nom[1].firstChild.nodeValue;
 	}
 
@@ -996,7 +996,7 @@ function refreshDiplo() {
 					putRealDiplo();
 					}
 				catch(e) {
-					window.alert('Erreur Diplo :\n'+e)
+					console.error('Erreur Diplo :\n'+e);
 					}
 				}
 			});
