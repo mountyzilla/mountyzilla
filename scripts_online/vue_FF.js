@@ -188,9 +188,9 @@ function getTresorDistance(i) {
 	}
 
 function getTresorNom(i) {
-	var nom = tr_tresors[i].childNodes[2].childNodes;
-	return (nom.length==1) ? nom[0].nodeValue : nom[1].firstChild.nodeValue;
-	}
+	// Utilisation de textContent pour régler le "bug de Pollux"
+	return trim(tr_tresors[i].cells[2].textContent);
+}
 
 function getTresorPosition(i) {
 	var tds = tr_tresors[i].childNodes;
