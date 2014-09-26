@@ -25,8 +25,6 @@
 /*--------------------------- Variables Globales -----------------------------*/
 
 // Infos remplies par des scripts extérieurs
-var cg = [], ct = []; // Couleur Guilde, Couleur Trõll (Diplo)
-
 var listeCDM = [], listeLevels = [];
 
 var listeTags = [], listeTagsInfos = [],
@@ -37,6 +35,20 @@ var winCurr = null;
 var offsetX, offsetY;
 document.onmousemove = drag;
 
+// Diplomatie
+var Diplo = {
+	deGuilde: {
+		Guilde: {},
+		Troll: {}
+	},
+	perso: {
+		Guilde: {},
+		Troll: {},
+		Monstre: {}
+	}
+};
+var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
+
 // Infos de combat (& tags)
 var popup;
 
@@ -44,7 +56,6 @@ var popup;
 var nbCDM = 0;
 
 var isCDMsRetrieved = false; // = si les CdM ont déjà été DL
-var isDiploComputed = false; // = si la Diplo a déjà été DL
 
 // Utilisé pour supprimer les monstres "engagés"
 var listeEngages = {};
@@ -56,9 +67,9 @@ var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
 
 // Checkboxes de filtrage
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
-	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
-	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
-	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
+	checkBoxDiploGuilde, checkBoxDiploPerso, checkBoxTrou, checkBoxEM,
+	checkBoxTresorsNonLibres,	checkBoxTactique, checkBoxLevels, checkBoxGowaps,
+	checkBoxEngages, checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
@@ -334,7 +345,8 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxGG,'NOGG');
 	recallCheckBox(checkBoxCompos,'NOCOMP');
 	recallCheckBox(checkBoxBidouilles,'NOBID');
-	recallCheckBox(checkBoxDiplo,'NODIPLO');
+	recallCheckBox(checkBoxDiploGuilde,numTroll+'.diplo.guilde.off');
+	recallCheckBox(checkBoxDiploPerso,numTroll+'.diplo.perso.off');
 	recallCheckBox(checkBoxTrou,'NOTROU');
 	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
 	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
@@ -495,8 +507,11 @@ function creerTableauInfos() {
 	checkBoxLevels = appendCheckBoxSpan(
 		td,'delniveau',toggleLevelColumn,' Les Niveaux'
 	).firstChild;
-	checkBoxDiplo = appendCheckBoxSpan(
-		td,'deldiplo',refreshDiplo,' La Diplo'
+	checkBoxDiploGuilde = appendCheckBoxSpan(
+		td,'delDiploG',refreshDiplo,' Ma Diplo de guilde'
+	).firstChild;
+	checkBoxDiploPerso = appendCheckBoxSpan(
+		td,'delDiploP',refreshDiplo,' Ma Diplo perso'
 	).firstChild;
 	checkBoxTrou = appendCheckBoxSpan(
 		td,'deltrou',filtreLieux,' Les Trous'
@@ -1334,60 +1349,121 @@ function computeChargeProjo()
 /* [functions] Diplomatie */
 // TODO à revoir
 function refreshDiplo() {
-	if(saveCheckBox(checkBoxDiplo,'NODIPLO')) {
-		for(var i=nbTrolls ; i>0 ; i--) {
-			tr_trolls[i].style.backgroundColor = '';
-			tr_trolls[i].className = 'mh_tdpage';
-			}
-		return;
-		}
+	MZ_setValue(numTroll+'.diplo.guilde.off',
+		checkBoxDiploGuilde.checked?'true':'false'
+	);
+	MZ_setValue(numTroll+'.diplo.perso.off',
+		checkBoxDiploPerso.checked?'true':'false'
+	);
+	if(isDiploRaw) { computeDiplo(); }
+	appliqueDiplo();
+}
+
+function computeDiplo() {
+// On extrait les données de colueur et on les stocke par id
+// Ordre de préséance :
+//  source Guilde < source Perso
+//  guilde cible < troll cible
 	
-	if(!isDiploComputed) {
-		FF_XMLHttpRequest({
-			method: 'GET',
-			url: 'http://mountyzilla.tilk.info/scripts_0.9/getTroll_FF.php?num='
-				+numTroll,
-			headers: {
-				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
-				'Accept': 'application/xml,text/xml',
-				},
-			onload: function(responseDetails) {
-				try	{
-					responseDetails.responseXML =
-						new DOMParser().parseFromString(
-							responseDetails.responseText,'text/xml'
-							);
-					var infosDiplo = responseDetails.responseXML;
-					if(infosDiplo.getElementsByTagName('error').length>0) {
-						MZ_setValue('NODIPLO','true');
-						var bouton=document.getElementsByName('deldiplo')[0];
-						bouton.checked=true;
-						window.alert(infosDiplo.getElementsByTagName('error')[0]
-							.firstChild.nodeValue);
-						return;
+	/* Diplo de Guilde */
+	if(!checkBoxDiploGuilde.checked) {
+		var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+			JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+		// Guilde perso
+		if(diploGuilde.guilde) {
+			Diplo.deGuilde.Guilde[diploGuilde.guilde.id] = {
+				couleur: diploGuilde.guilde.couleur,
+				titre: ''
+			};
+		}
+		// Guildes/Trolls A/E
+		for(var AE in {Amis:0,Ennemis:0}) {
+			for(var i=0 ; i<5 ; i++) {
+				if(diploGuilde[AE+i]) {
+					for(var type in {Guilde:0,Troll:0}) {
+						var liste = diploGuilde[AE+i][type].split(';');
+						for(var j=liste.length-2 ; j>=0 ; j--) {
+							Diplo.deGuilde[type][liste[j]] = {
+								couleur: diploGuilde[AE+i].couleur,
+								titre: diploGuilde[AE+i].titre
+							};
 						}
-					var infosDiploTrolls = infosDiplo.getElementsByTagName('troll');
-					for(var i=0 ; i<infosDiploTrolls.length ; i++) {
-						ct[parseInt(infosDiploTrolls[i].firstChild.nodeValue)] =
-							infosDiploTrolls[i].getAttribute("couleur");
-						}
-					var infosDiploGuildes = infosDiplo.getElementsByTagName('guilde');
-					for(var i=0 ; i<infosDiploGuildes.length ; i++) {
-						cg[parseInt(infosDiploGuildes[i].firstChild.nodeValue)] =
-							infosDiploGuildes[i].getAttribute("couleur");
-						}
-					isDiploComputed = true;
-					putRealDiplo();
-					}
-				catch(e) {
-					console.error('Erreur Diplo :\n'+e);
 					}
 				}
-			});
+			}
 		}
-	else
-		putRealDiplo();
 	}
+	
+	/* Diplo Perso */
+	// idem
+	if(!checkBoxDiploPerso.checked) {
+		var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+			JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+			for(var id in diploPerso[type]) {
+				Diplo.perso[type][id] = diploPerso[type][id];
+			}
+		}
+	}
+	console.log(JSON.stringify(Diplo))
+	isDiploRaw = false;
+}
+
+function appliqueDiplo() {
+	/* Évite de recomputer la Diplo */
+	if(checkBoxDiploGuilde.checked) {
+		Diplo.deGuilde.TrollOff = Diplo.deGuilde.Troll;
+		Diplo.deGuilde.GuildeOff = Diplo.deGuilde.Guilde;
+		Diplo.deGuilde.Troll = {};
+		Diplo.deGuilde.Guilde = {};
+	} else if(Diplo.deGuilde.TrollOff!=undefined) {
+		Diplo.deGuilde.Troll = Diplo.deGuilde.TrollOff;
+		Diplo.deGuilde.Guilde = Diplo.deGuilde.GuildeOff;
+	}
+	if(checkBoxDiploPerso.checked) {
+		Diplo.persoOff = Diplo.perso;
+		delete Diplo.perso;
+	} else if(Diplo.persoOff) {
+		Diplo.perso = Diplo.persoOff;
+	}
+	
+	/* On applique "Diplo" */
+	for(var i=1 ; i<=nbTrolls ; i++) {
+		var idG = getTrollGuildeID(i);
+		var idT = getTrollID(i);
+		var tr = tr_trolls[i];
+		if(Diplo.perso.Troll[idT]) {
+			tr.className = '';
+			tr.style.backgroundColor = Diplo.perso.Troll[idT];
+		} else if(Diplo.perso.Guilde[idG]) {
+			tr.className = '';
+			tr.style.backgroundColor = Diplo.perso.Guilde[idG];
+		} else if(Diplo.deGuilde.Troll[idT]) {
+			tr.className = '';
+			getTrollNomNode(i).title = Diplo.deGuilde.Troll[idT].titre;
+			tr.style.backgroundColor = Diplo.deGuilde.Troll[idT].couleur;
+		} else if(Diplo.deGuilde.Guilde[idG]) {
+			tr.className = '';
+			getTrollNomNode(i).title = Diplo.deGuilde.Guilde[idG].titre;
+			tr.style.backgroundColor = Diplo.deGuilde.Guilde[idG].couleur;
+		} else {
+			tr.title = '';
+			tr.className = 'mh_tdpage';
+		}
+	}
+	
+	// DEBUG: à déplacer vers filtreMonstres
+	for(var i=1 ; i<=nbMonstres ; i++) {
+		var id = getMonstreID(i);
+		if(Diplo.perso.Monstre[id]) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = Diplo.Troll[idT];
+		} else {
+			tr_monstres[i].className = 'mh_tdpage';
+		}
+	}
+	avertissement('JSON:\n'+JSON.stringify(Diplo.deGuilde));
+}
 
 function putRealDiplo() {
 	var useCss = MZ_getValue(numTroll+'.USECSS') == 'true';
@@ -1894,52 +1970,47 @@ function computeTag()
 
 /*                             Partie principale                              */
 
-try
-{
-start_script(31);
-	
+try {
+	start_script(31);
 
-creerTableauInfos();
-ajoutDesFiltres();
-set2DViewSystem();
-putBoutonMonstres();
-putBoutonLieux();
-putBoutonPXMP();
+	creerTableauInfos();
+	ajoutDesFiltres();
+	set2DViewSystem();
+	putBoutonMonstres();
+	putBoutonLieux();
+	putBoutonPXMP();
 
+	//800 ms
+	synchroniseFiltres();
+	toggleLevelColumn();
+	savePosition();
 
-//800 ms
-synchroniseFiltres();
-toggleLevelColumn();
-savePosition();
+	//400 ms
+	{
+		var noGG = saveCheckBox(checkBoxGG, "NOGG");
+		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
+		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
+		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
+		var noMythiques = saveCheckBox(checkBoxMythiques, "NOMYTH");
+		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
+		var noTresorsEngages =
+			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
+		var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
+		var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
+		filtreMonstres();
+		if(noIntangibles) filtreTrolls();
+		if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
+		if(noTrou) filtreLieux();
+	}
+	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
+	refreshDiplo();
+	initPXTroll();
+	computeTag();
+	computeTelek();
+	computeChargeProjo(); // TODO À décomposer
+	putScriptExterne();
 
-//400 ms
-{
-	var noGG = saveCheckBox(checkBoxGG, "NOGG");
-	var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-	var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-	var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
-	var noMythiques = saveCheckBox(checkBoxMythiques, "NOMYTH");
-	var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-	var noTresorsEngages =
-		saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
-	filtreMonstres();
-	if(noIntangibles) filtreTrolls();
-	if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
-	if(noTrou) filtreLieux();
-}
-initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
-refreshDiplo();
-initPXTroll();
-computeTag();
-computeTelek();
-computeChargeProjo(); // TODO À décomposer
-putScriptExterne();
-
-displayScriptTime();
-}
-catch(e)
-{
-window.alert(e);
+	displayScriptTime();
+} catch(e) {
+	console.error(e);
 }
