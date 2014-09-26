@@ -88,6 +88,9 @@ function appendNewScript(src,paren) {
 	MZ_appendNewScript(src);
 	}
 
+
+/*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
+
 function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	var request = new XMLHttpRequest();
 	request.open(MZ_XHR_Ob.method,MZ_XHR_Ob.url);
@@ -108,6 +111,43 @@ function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	};
 	request.send(MZ_XHR_Ob.data);
 }
+
+
+/*-[functions]-------------- Interface utilisateur ---------------------------*/
+
+function avertissement(txt) {
+	var div = document.createElement('div');
+	// On numérote les avertissements pour destruction sélective
+	var num = document.getElementsByName('avertissement').length;
+	div.num = num;
+	// Numéro enregistré dans le DOM pour récupération sur getElementsByName()
+	div.setAttribute('name','avertissement');
+	div.className = 'mh_textbox';
+	div.style =
+		'position:fixed;'+
+		'top:'+(10+15*num)+'px;'+
+		'left:'+(10+5*num)+'px;'+
+		'border:1px solid #000000;'+
+		'z-index:'+(2+num)+';'+
+		'cursor:crosshair;';
+	div.innerHTML = txt;
+	div.onclick=function(){ tueAvertissement(this.num) };
+	document.body.appendChild(div);
+	// Destruction automatique de l'avertissement après 3 sec :
+	window.setTimeout(function(){ tueAvertissement(num) },3000);
+}
+
+function tueAvertissement(num) {
+	var divs = document.getElementsByName('avertissement');
+	if(divs.length==0) { return; }
+	for(var i=0 ; i<divs.length ; i++) {
+		if(divs[i].num==num) {
+			divs[i].parentNode.removeChild(divs[i]);
+			return;
+		}
+	}
+}
+
 
 /*-[functions]-------------- Modifications du DOM ----------------------------*/
 
