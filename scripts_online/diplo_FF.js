@@ -73,7 +73,9 @@ function appendChoixCouleur(node,id) {
 		couleur = diploGuilde[id];
 	}
 	appendText(span,' - Couleur HTML: ');
-	appendTextbox(span,'text',id,7,7,couleur);
+	var input = appendTextbox(span,'text',id,7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onkeyup();
 	node.appendChild(span);
 }
 
@@ -89,7 +91,9 @@ function insertChoixCouleur(node,id) {
 		couleur = diploGuilde[id].couleur;
 	}
 	appendText(span,' - Couleur HTML: ');
-	appendTextbox(span,'text',id,7,7,couleur);
+	var input = appendTextbox(span,'text',id,7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onkeyup();
 	insertBefore(node,span);
 }
 
@@ -201,10 +205,12 @@ function creeTablePrincipale() {
 			diploGuilde.guilde.id : ''
 	);
 	appendText(td,' - Couleur HTML: ');
-	appendTextbox(td,'text','couleurGuilde',7,7,
+	var input = appendTextbox(td,'text','couleurGuilde',7,7,
 		diploGuilde.guilde && diploGuilde.guilde.couleur ?
 			diploGuilde.guilde.couleur : '#BBBBFF'
 	);
+	input.onkeyup = previewCouleur;
+	input.onkeyup();
 }
 
 function refreshDiploPerso() {
@@ -230,6 +236,20 @@ function toggleDetails() {
 				(isDetailOn?'':'none');
 		}
 	}
+}
+
+function previewCouleur() {
+	var value = this.value;
+	if(/^#[0-9A-F]{6}$/i.test(value)) {
+		this.style.backgroundColor = value;
+	}
+}
+
+function valideChamp(champ) {
+// Format des champs:
+// menu(Guilde|Troll|Monstre), text(num), text|menu(couleur), text(titre)
+	return /^\d+$/.test(champ.cells[1].value) &&
+		/^#[0-9A-F]{6}$/i.test(champ.cells[2].value)
 }
 
 function validation() {
