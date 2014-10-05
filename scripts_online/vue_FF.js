@@ -21,12 +21,9 @@
  * prévoir fix ("delete infos")
  */
 
-
 /*--------------------------- Variables Globales -----------------------------*/
 
 // Infos remplies par des scripts extérieurs
-var cg = [], ct = []; // Couleur Guilde, Couleur Trõll (Diplo)
-
 var listeCDM = [], listeLevels = [];
 
 var listeTags = [], listeTagsInfos = [],
@@ -37,6 +34,14 @@ var winCurr = null;
 var offsetX, offsetY;
 document.onmousemove = drag;
 
+// Diplomatie
+var Diplo = {
+	Guilde: {},
+	Troll: {},
+	Monstre: {}
+};
+var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
+
 // Infos de combat (& tags)
 var popup;
 
@@ -44,7 +49,6 @@ var popup;
 var nbCDM = 0;
 
 var isCDMsRetrieved = false; // = si les CdM ont déjà été DL
-var isDiploComputed = false; // = si la Diplo a déjà été DL
 
 // Utilisé pour supprimer les monstres "engagés"
 var listeEngages = {};
@@ -58,7 +62,7 @@ var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
 	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
-	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
+	comboBoxNiveauMin, comboBoxNiveauMax;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
@@ -334,7 +338,7 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxGG,'NOGG');
 	recallCheckBox(checkBoxCompos,'NOCOMP');
 	recallCheckBox(checkBoxBidouilles,'NOBID');
-	recallCheckBox(checkBoxDiplo,'NODIPLO');
+	recallCheckBox(checkBoxDiplo,numTroll+'.diplo.off');
 	recallCheckBox(checkBoxTrou,'NOTROU');
 	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
 	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
@@ -496,7 +500,7 @@ function creerTableauInfos() {
 		td,'delniveau',toggleLevelColumn,' Les Niveaux'
 	).firstChild;
 	checkBoxDiplo = appendCheckBoxSpan(
-		td,'deldiplo',refreshDiplo,' La Diplo'
+		td,'delDiplo',refreshDiplo,' La Diplomatie'
 	).firstChild;
 	checkBoxTrou = appendCheckBoxSpan(
 		td,'deltrou',filtreLieux,' Les Trous'
@@ -1146,7 +1150,6 @@ function filtreMonstres() {
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MZ_getValue(numTroll+'.USECSS')=='true';
 	var noGowaps = saveCheckBox(checkBoxGowaps,'NOGOWAP'),
-		noMythiques = saveCheckBox(checkBoxMythiques,'NOMYTH'),
 		noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE'),
 		nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE'),
 		nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
@@ -1177,7 +1180,7 @@ function filtreMonstres() {
 	 * - Mission (nécessite CdM)
  	 * - mob VlC (nécessite CdM)
 	 * Sans computation :
-	 * - Mythique ? Gowap ? engagé ?
+	 * - Gowap ? engagé ?
 	 */
 	for(var i=nbMonstres ; i>0 ; i--) {
 		var pos = getMonstrePosition(i);
@@ -1234,24 +1237,6 @@ function filtreMonstres() {
 				&& getMonstreDistance(i)!=-1
 				&& nom.toLowerCase().indexOf("kilamo") == -1
 			) ? 'none' : '';
-		
-		if(nom.indexOf('liche')==0
-			|| nom.indexOf('hydre')==0
-			|| nom.indexOf('balrog')==0
-			|| nom.indexOf('beholder')==0) {
-			if(!noMythiques) {
-				if(useCss)
-					x_monstres[i].setAttribute('class', 'mh_trolls_ennemis');
-				else {
-					x_monstres[i].setAttribute('class', '');
-					x_monstres[i].style.backgroundColor = '#FFAAAA';
-				}
-			}
-		}
-		else {
-			x_monstres[i].style.backgroundColor = '';
-			x_monstres[i].setAttribute('class', 'mh_tdpage');
-		}
 	}
 	
 	if(MZ_getValue('NOINFOEM')!='true') {
@@ -1332,96 +1317,126 @@ function computeChargeProjo()
 }
 
 /* [functions] Diplomatie */
-// TODO à revoir
 function refreshDiplo() {
-	if(saveCheckBox(checkBoxDiplo,'NODIPLO')) {
-		for(var i=nbTrolls ; i>0 ; i--) {
-			tr_trolls[i].style.backgroundColor = '';
-			tr_trolls[i].className = 'mh_tdpage';
-			}
-		return;
-		}
-	
-	if(!isDiploComputed) {
-		FF_XMLHttpRequest({
-			method: 'GET',
-			url: 'http://mountyzilla.tilk.info/scripts_0.9/getTroll_FF.php?num='
-				+numTroll,
-			headers: {
-				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
-				'Accept': 'application/xml,text/xml',
-				},
-			onload: function(responseDetails) {
-				try	{
-					responseDetails.responseXML =
-						new DOMParser().parseFromString(
-							responseDetails.responseText,'text/xml'
-							);
-					var infosDiplo = responseDetails.responseXML;
-					if(infosDiplo.getElementsByTagName('error').length>0) {
-						MZ_setValue('NODIPLO','true');
-						var bouton=document.getElementsByName('deldiplo')[0];
-						bouton.checked=true;
-						window.alert(infosDiplo.getElementsByTagName('error')[0]
-							.firstChild.nodeValue);
-						return;
-						}
-					var infosDiploTrolls = infosDiplo.getElementsByTagName('troll');
-					for(var i=0 ; i<infosDiploTrolls.length ; i++) {
-						ct[parseInt(infosDiploTrolls[i].firstChild.nodeValue)] =
-							infosDiploTrolls[i].getAttribute("couleur");
-						}
-					var infosDiploGuildes = infosDiplo.getElementsByTagName('guilde');
-					for(var i=0 ; i<infosDiploGuildes.length ; i++) {
-						cg[parseInt(infosDiploGuildes[i].firstChild.nodeValue)] =
-							infosDiploGuildes[i].getAttribute("couleur");
-						}
-					isDiploComputed = true;
-					putRealDiplo();
-					}
-				catch(e) {
-					console.error('Erreur Diplo :\n'+e);
-					}
-				}
-			});
-		}
-	else
-		putRealDiplo();
-	}
+	MZ_setValue(numTroll+'.diplo.off',
+		checkBoxDiplo.checked?'true':'false'
+	);
+	if(isDiploRaw) { computeDiplo(); }
+	appliqueDiplo();
+}
 
-function putRealDiplo() {
-	var useCss = MZ_getValue(numTroll+'.USECSS') == 'true';
-	for(var i=1 ; i<=nbTrolls ; i++) {
-		var troll = tr_trolls[i];
-		var cl = ct[getTrollID(i)];
-		var guildeID = getTrollGuildeID(i);
-		if(cl) {
-			if(useCss && cl=='#AAFFAA')
-				troll.className = 'mh_trolls_amis';
-			else if(useCss && cl=='#FFAAAA')
-				troll.className = 'mh_trolls_ennemis';
-			else {
-				troll.className = '';
-				troll.style.backgroundColor = cl;
-				}
-			}
-		else if(guildeID!=1) {
-			cl = cg[guildeID];
-			if(!cl)
-				continue;
-			if(useCss && cl == '#AAFFAA')
-				troll.className = 'mh_guildes_amis';
-			else if(useCss && cl == '#FFAAAA')
-				troll.className = 'mh_guildes_ennemis';
-			else if(useCss && cl == '#BBBBFF')
-				troll.className = 'mh_guildes_perso';
-			else {
-				troll.className = '';
-				troll.style.backgroundColor = cl;
+function computeDiplo() {
+// On extrait les données de colueur et on les stocke par id
+// Ordre de préséance :
+//  source Guilde < source Perso
+//  guilde cible < troll cible
+	
+	/* Diplo de Guilde */
+	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+	if(diploGuilde && diploGuilde.isOn=='true') {
+		// Guilde perso
+		if(diploGuilde.guilde) {
+			Diplo.Guilde[diploGuilde.guilde.id] = {
+				couleur: diploGuilde.guilde.couleur,
+			};
+		}
+		// Guildes/Trolls A/E
+		for(var AE in {Amis:0,Ennemis:0}) {
+			for(var i=0 ; i<5 ; i++) {
+				if(diploGuilde[AE+i]) {
+					for(var type in {Guilde:0,Troll:0}) {
+						var liste = diploGuilde[AE+i][type].split(';');
+						for(var j=liste.length-2 ; j>=0 ; j--) {
+							Diplo[type][liste[j]] = {
+								couleur: diploGuilde[AE+i].couleur,
+								titre: diploGuilde[AE+i].titre
+							};
+						}
+					}
 				}
 			}
 		}
 	}
+	
+	/* Diplo Perso */
+	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+	if(diploPerso && diploPerso.isOn=='true') {
+		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+			for(var id in diploPerso[type]) {
+				Diplo[type][id] = diploPerso[type][id];
+			}
+		}
+	}
+	if(diploPerso.mythiques) {
+		Diplo.mythiques = diploPerso.mythiques;
+	}
+	
+	isDiploRaw = false;
+}
+
+function appliqueDiplo() {
+	/* Évite de recomputer la Diplo */
+	var aAppliquer = Diplo;
+	if(checkBoxDiplo.checked) {
+		aAppliquer = {
+			Guilde: {},
+			Troll: {},
+			Monstre: {}
+		};
+	}
+	
+	/* On applique "aAppliquer" */
+	// Diplo Trõlls
+	for(var i=nbTrolls ; i>0 ; i--) {
+		var idG = getTrollGuildeID(i);
+		var idT = getTrollID(i);
+		var tr = tr_trolls[i];
+		if(aAppliquer.Troll[idT]) {
+			tr.className = '';
+			var descr = aAppliquer.Troll[idT].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
+		} else if(aAppliquer.Guilde[idG]) {
+			tr.className = '';
+			var descr = aAppliquer.Guilde[idG].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+		} else {
+			tr.className = 'mh_tdpage';
+			getTrollNomNode(i).title = '';
+		}
+	}
+	
+	// Diplo Monstres
+	for(var i=nbMonstres ; i>0 ; i--) {
+		var id = getMonstreID(i);
+		var nom = getMonstreNom(i).toLowerCase();
+		if(aAppliquer.Monstre[id]) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			var descr = aAppliquer.Monstre[id].titre;
+			if(descr) {
+				getMonstreTdNom(i).title = descr
+			}
+		} else if(aAppliquer.mythiques &&
+			(nom.indexOf('liche')==0 ||
+			nom.indexOf('hydre')==0 ||
+			nom.indexOf('balrog')==0 ||
+			nom.indexOf('beholder')==0)) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			getMonstreTdNom(i).title = 'Monstre Mythique';
+		} else {
+			tr_monstres[i].className = 'mh_tdpage';
+		}
+	}
+}
 
 /* [functions] Bulle PX Trolls */
 var bulle;
@@ -1894,52 +1909,46 @@ function computeTag()
 
 /*                             Partie principale                              */
 
-try
-{
-start_script(31);
+try {
+	start_script(31);
+
+	creerTableauInfos();
+	ajoutDesFiltres();
+	set2DViewSystem();
+	putBoutonMonstres();
+	putBoutonLieux();
+	putBoutonPXMP();
+
+	synchroniseFiltres();
+	toggleLevelColumn();
+	savePosition();
 	
+	refreshDiplo();
+	
+	//400 ms
+	{
+		var noGG = saveCheckBox(checkBoxGG, "NOGG");
+		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
+		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
+		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
+		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
+		var noTresorsEngages =
+			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
+		var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
+		var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
+		filtreMonstres();
+		if(noIntangibles) filtreTrolls();
+		if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
+		if(noTrou) filtreLieux();
+	}
+	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
+	initPXTroll();
+	computeTag();
+	computeTelek();
+	computeChargeProjo(); // TODO À décomposer
+	putScriptExterne();
 
-creerTableauInfos();
-ajoutDesFiltres();
-set2DViewSystem();
-putBoutonMonstres();
-putBoutonLieux();
-putBoutonPXMP();
-
-
-//800 ms
-synchroniseFiltres();
-toggleLevelColumn();
-savePosition();
-
-//400 ms
-{
-	var noGG = saveCheckBox(checkBoxGG, "NOGG");
-	var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-	var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-	var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
-	var noMythiques = saveCheckBox(checkBoxMythiques, "NOMYTH");
-	var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-	var noTresorsEngages =
-		saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
-	filtreMonstres();
-	if(noIntangibles) filtreTrolls();
-	if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
-	if(noTrou) filtreLieux();
-}
-initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
-refreshDiplo();
-initPXTroll();
-computeTag();
-computeTelek();
-computeChargeProjo(); // TODO À décomposer
-putScriptExterne();
-
-displayScriptTime();
-}
-catch(e)
-{
-window.alert(e);
+	displayScriptTime();
+} catch(e) {
+	console.error(e);
 }
