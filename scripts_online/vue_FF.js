@@ -350,7 +350,7 @@ function synchroniseFiltres() {
 var vue2Ddata = {
 	'Bricol\' Vue':
 		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
-		getVueScript, ['mode','vue_SP_Vue2','screen_width',screen.width] ],
+		getVueScript, ['mode','vue_SP_Vue2','screen_width',window.screen.width] ],
 	'Vue du CCM':
 		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
 		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
