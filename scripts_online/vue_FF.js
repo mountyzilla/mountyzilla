@@ -21,7 +21,6 @@
  * prévoir fix ("delete infos")
  */
 
-
 /*--------------------------- Variables Globales -----------------------------*/
 
 // Infos remplies par des scripts extérieurs
@@ -37,15 +36,9 @@ document.onmousemove = drag;
 
 // Diplomatie
 var Diplo = {
-	deGuilde: {
-		Guilde: {},
-		Troll: {}
-	},
-	perso: {
-		Guilde: {},
-		Troll: {},
-		Monstre: {}
-	}
+	Guilde: {},
+	Troll: {},
+	Monstre: {}
 };
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
@@ -67,9 +60,9 @@ var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
 
 // Checkboxes de filtrage
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
-	checkBoxDiploGuilde, checkBoxDiploPerso, checkBoxTrou, checkBoxEM,
-	checkBoxTresorsNonLibres,	checkBoxTactique, checkBoxLevels, checkBoxGowaps,
-	checkBoxEngages, checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
+	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
+	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
+	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
@@ -345,8 +338,7 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxGG,'NOGG');
 	recallCheckBox(checkBoxCompos,'NOCOMP');
 	recallCheckBox(checkBoxBidouilles,'NOBID');
-	recallCheckBox(checkBoxDiploGuilde,numTroll+'.diplo.guilde.off');
-	recallCheckBox(checkBoxDiploPerso,numTroll+'.diplo.perso.off');
+	recallCheckBox(checkBoxDiplo,numTroll+'.diplo.guilde.off');
 	recallCheckBox(checkBoxTrou,'NOTROU');
 	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
 	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
@@ -362,7 +354,7 @@ function synchroniseFiltres() {
 var vue2Ddata = {
 	'Bricol\' Vue':
 		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
-		getVueScript, ['mode','vue_SP_Vue2','screen_width',screen.width] ],
+		getVueScript, ['mode','vue_SP_Vue2','screen_width',window.screen.width] ],
 	'Vue du CCM':
 		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
 		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
@@ -507,11 +499,8 @@ function creerTableauInfos() {
 	checkBoxLevels = appendCheckBoxSpan(
 		td,'delniveau',toggleLevelColumn,' Les Niveaux'
 	).firstChild;
-	checkBoxDiploGuilde = appendCheckBoxSpan(
-		td,'delDiploG',refreshDiplo,' Ma Diplo de guilde'
-	).firstChild;
-	checkBoxDiploPerso = appendCheckBoxSpan(
-		td,'delDiploP',refreshDiplo,' Ma Diplo perso'
+	checkBoxDiplo = appendCheckBoxSpan(
+		td,'delDiplo',refreshDiplo,' La Diplomatie'
 	).firstChild;
 	checkBoxTrou = appendCheckBoxSpan(
 		td,'deltrou',filtreLieux,' Les Trous'
@@ -1350,10 +1339,7 @@ function computeChargeProjo()
 // TODO à revoir
 function refreshDiplo() {
 	MZ_setValue(numTroll+'.diplo.guilde.off',
-		checkBoxDiploGuilde.checked?'true':'false'
-	);
-	MZ_setValue(numTroll+'.diplo.perso.off',
-		checkBoxDiploPerso.checked?'true':'false'
+		checkBoxDiplo.checked?'true':'false'
 	);
 	if(isDiploRaw) { computeDiplo(); }
 	appliqueDiplo();
@@ -1366,14 +1352,13 @@ function computeDiplo() {
 //  guilde cible < troll cible
 	
 	/* Diplo de Guilde */
-	if(!checkBoxDiploGuilde.checked) {
-		var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
-			JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+	if(diploGuilde && diploGuilde.isOn=='true') {
 		// Guilde perso
 		if(diploGuilde.guilde) {
-			Diplo.deGuilde.Guilde[diploGuilde.guilde.id] = {
+			Diplo.Guilde[diploGuilde.guilde.id] = {
 				couleur: diploGuilde.guilde.couleur,
-				titre: ''
 			};
 		}
 		// Guildes/Trolls A/E
@@ -1383,7 +1368,7 @@ function computeDiplo() {
 					for(var type in {Guilde:0,Troll:0}) {
 						var liste = diploGuilde[AE+i][type].split(';');
 						for(var j=liste.length-2 ; j>=0 ; j--) {
-							Diplo.deGuilde[type][liste[j]] = {
+							Diplo[type][liste[j]] = {
 								couleur: diploGuilde[AE+i].couleur,
 								titre: diploGuilde[AE+i].titre
 							};
@@ -1395,109 +1380,71 @@ function computeDiplo() {
 	}
 	
 	/* Diplo Perso */
-	// idem
-	if(!checkBoxDiploPerso.checked) {
-		var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
-			JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
-		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
-			for(var id in diploPerso[type]) {
-				Diplo.perso[type][id] = diploPerso[type][id];
+	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+	if(diploPerso && diploPerso.isOn=='true') {
+		if(diploPerso && diploPerso.isPersoOn!='false') {
+			for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+				for(var id in diploPerso[type]) {
+					Diplo[type][id] = diploPerso[type][id];
+				}
 			}
 		}
 	}
-	console.log(JSON.stringify(Diplo))
 	isDiploRaw = false;
 }
 
 function appliqueDiplo() {
 	/* Évite de recomputer la Diplo */
-	if(checkBoxDiploGuilde.checked) {
-		Diplo.deGuilde.TrollOff = Diplo.deGuilde.Troll;
-		Diplo.deGuilde.GuildeOff = Diplo.deGuilde.Guilde;
-		Diplo.deGuilde.Troll = {};
-		Diplo.deGuilde.Guilde = {};
-	} else if(Diplo.deGuilde.TrollOff!=undefined) {
-		Diplo.deGuilde.Troll = Diplo.deGuilde.TrollOff;
-		Diplo.deGuilde.Guilde = Diplo.deGuilde.GuildeOff;
-	}
-	if(checkBoxDiploPerso.checked) {
-		Diplo.persoOff = Diplo.perso;
-		delete Diplo.perso;
-	} else if(Diplo.persoOff) {
-		Diplo.perso = Diplo.persoOff;
+	var aAppliquer = Diplo;
+	if(checkBoxDiplo.checked) {
+		aAppliquer = {
+			Guilde: {},
+			Troll: {},
+			Monstre: {}
+		};
 	}
 	
-	/* On applique "Diplo" */
+	/* On applique "aAppliquer" */
 	for(var i=1 ; i<=nbTrolls ; i++) {
 		var idG = getTrollGuildeID(i);
 		var idT = getTrollID(i);
 		var tr = tr_trolls[i];
-		if(Diplo.perso.Troll[idT]) {
+		if(aAppliquer.Troll[idT]) {
 			tr.className = '';
-			tr.style.backgroundColor = Diplo.perso.Troll[idT];
-		} else if(Diplo.perso.Guilde[idG]) {
+			var descr = aAppliquer.Troll[idT].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
+		} else if(aAppliquer.Guilde[idG]) {
 			tr.className = '';
-			tr.style.backgroundColor = Diplo.perso.Guilde[idG];
-		} else if(Diplo.deGuilde.Troll[idT]) {
-			tr.className = '';
-			getTrollNomNode(i).title = Diplo.deGuilde.Troll[idT].titre;
-			tr.style.backgroundColor = Diplo.deGuilde.Troll[idT].couleur;
-		} else if(Diplo.deGuilde.Guilde[idG]) {
-			tr.className = '';
-			getTrollNomNode(i).title = Diplo.deGuilde.Guilde[idG].titre;
-			tr.style.backgroundColor = Diplo.deGuilde.Guilde[idG].couleur;
+			var descr = aAppliquer.Guilde[idG].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
 		} else {
-			tr.title = '';
 			tr.className = 'mh_tdpage';
+			getTrollNomNode(i).title = '';
 		}
 	}
 	
 	// DEBUG: à déplacer vers filtreMonstres
 	for(var i=1 ; i<=nbMonstres ; i++) {
 		var id = getMonstreID(i);
-		if(Diplo.perso.Monstre[id]) {
+		if(aAppliquer.Monstre[id]) {
 			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = Diplo.Troll[idT];
+			var descr = aAppliquer.Monstre[id].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
 		} else {
 			tr_monstres[i].className = 'mh_tdpage';
 		}
 	}
-	avertissement('JSON:\n'+JSON.stringify(Diplo.deGuilde));
 }
-
-function putRealDiplo() {
-	var useCss = MZ_getValue(numTroll+'.USECSS') == 'true';
-	for(var i=1 ; i<=nbTrolls ; i++) {
-		var troll = tr_trolls[i];
-		var cl = ct[getTrollID(i)];
-		var guildeID = getTrollGuildeID(i);
-		if(cl) {
-			if(useCss && cl=='#AAFFAA')
-				troll.className = 'mh_trolls_amis';
-			else if(useCss && cl=='#FFAAAA')
-				troll.className = 'mh_trolls_ennemis';
-			else {
-				troll.className = '';
-				troll.style.backgroundColor = cl;
-				}
-			}
-		else if(guildeID!=1) {
-			cl = cg[guildeID];
-			if(!cl)
-				continue;
-			if(useCss && cl == '#AAFFAA')
-				troll.className = 'mh_guildes_amis';
-			else if(useCss && cl == '#FFAAAA')
-				troll.className = 'mh_guildes_ennemis';
-			else if(useCss && cl == '#BBBBFF')
-				troll.className = 'mh_guildes_perso';
-			else {
-				troll.className = '';
-				troll.style.backgroundColor = cl;
-				}
-			}
-		}
-	}
 
 /* [functions] Bulle PX Trolls */
 var bulle;

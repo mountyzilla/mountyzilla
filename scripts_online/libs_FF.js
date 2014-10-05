@@ -249,7 +249,7 @@ function appendTextbox(paren,type,nam,size,maxlength,value) {
 	input.name = nam;
 	input.id = nam;
 	input.size = size;
-	input.maxlength = maxlength;
+	input.maxLength = maxlength;
 	if(value) input.value = value;
 	paren.appendChild(input);
 	return input;
