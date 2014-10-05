@@ -28,13 +28,14 @@ TODO:
  Actuelles:
  	numTroll.USECSS,
  	numTroll.NODIPLO
+ 	NOMYTH
  Nouvelles:
  	TODO numTroll.USECSS
  	numTroll.diplo.off (remplace NODIPLO)
  	numTroll.diplo.guilde
  	numTroll.diplo.perso
  
- Structure de diplo.guilde :
+ Structure de diplo.guilde:
  isOn: 'true' ou 'false'
  isDetailOn: 'true' ou 'false'
  guilde
@@ -47,8 +48,9 @@ TODO:
  	> titre
  	> couleur
  
- Structure de diplo.perso :
+ Structure de diplo.perso:
  isOn: 'true' ou 'false'
+ mythiques: couleur
  Troll,Guilde,Monstre:
  	> id
  	> couleur
@@ -66,6 +68,9 @@ function couleurAleatoire() {
 	return clr;
 }
 
+function isCouleur(str) {
+	return /^#[0-9A-F]{6}$/i.test(str);
+}
 
 /*-[functions]---------------- Analyse de la page ----------------------------*/
 
@@ -182,14 +187,20 @@ function toggleDetails() {
 	}
 }
 
+function toggleMythiques() {
+	isMythiquesOn = !isMythiquesOn;
+	document.getElementById('spanMythiques').style.display =
+		(isMythiquesOn?'':'none');
+}
+
 function previewCouleur() {
 	var value = this.value;
-	if(/^#[0-9A-F]{6}$/i.test(value)) {
+	if(isCouleur(value)) {
 		this.style.backgroundColor = value;
 		this.title = '';
 	} else {
 		this.style.backgroundColor = '';
-		this.title = 'Entrez une couleur au format #XXXXXX pour prévisualiser';
+		this.title = 'Entrez une couleur au format #789ABC pour prévisualiser';
 	}
 }
 
@@ -240,7 +251,7 @@ function retireCeChamp() {
 
 function valideChamp(champ) {
 	var isValide = /^\d+$/.test(champ.cells[1].childNodes[1].value) &&
-		/^#[0-9A-F]{6}$/i.test(champ.cells[2].childNodes[1].value);
+		isCouleur(champ.cells[2].childNodes[1].value);
 	if(isValide) {
 		champ.cells[4].firstChild.style.visibility = 'visible';
 	} else {
@@ -287,6 +298,10 @@ function sauvegarderTout() {
 		Troll: {},
 		Monstre: {}
 	};
+	if(isMythiquesOn &&
+		isCouleur(document.getElementById('couleurMythiques').value)) {
+		diploPerso.mythiques = document.getElementById('couleurMythiques').value;
+	}
 	for(var i=0 ; i<champs.rows.length ; i++) {
 		if(valideChamp(champs.rows[i])) {
 			var type = champs.rows[i].cells[0].firstChild.value;
@@ -321,18 +336,38 @@ function creeTablePrincipale() {
 	tr = insertTr(insertPt,'mh_tdpage');
 	td = appendTdText(tr,'Diplomatie de guilde:',true);
 	appendBr(td);
-	chb = appendCheckBox(td,'isGuildeOn',diploGuilde.isOn!='false');
+	appendCheckBox(td,'isGuildeOn',diploGuilde.isOn!='false');
 	appendText(td,'Afficher la diplomatie de guilde dans la Vue');
 	appendBr(td);
-	chb = appendCheckBox(td,'detailOn',isDetailOn,toggleDetails);
+	appendCheckBox(td,'detailOn',isDetailOn,toggleDetails);
 	appendText(td,'Utiliser des couleurs détaillées (10)');
 	
 	/* Diplo personnelle */
 	tr = insertTr(insertPt,'mh_tdpage');
 	td = appendTdText(tr,'Diplomatie personnelle:',true);
 	appendBr(td);
-	chb = appendCheckBox(td,'isPersoOn',diploPerso.isOn!='false');
-	appendText(td,'Afficher la diplomatie personnelle dans la Vue');
+	// Diplo Mythiques
+	appendCheckBox(td,'isMythiquesOn',isMythiquesOn,toggleMythiques);
+	appendText(td,'Ajouter les monstres Mythiques à la Diplomatie');
+	var span = document.createElement('span');
+	span.id = 'spanMythiques';
+	if(!isMythiquesOn) {
+		span.style.display = 'none';
+	}
+	var couleur = '#FFAAAA';
+	if(diploPerso.mythiques) {
+		couleur = diploPerso.mythiques;
+	}
+	appendText(span,' - couleur HTML:');
+	var input = appendTextbox(span,'text','couleurMythiques',7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+	td.appendChild(span);
+	appendBr(td);
+	// Diplo éditable
+	appendCheckBox(td,'isPersoOn',diploPerso.isOn!='false');
+	appendText(td,'Afficher la diplomatie personnelle dans la Vue:');
 	appendBr(td);
 	var table = document.createElement('table');
 	table.id = 'diploPerso'
@@ -375,9 +410,10 @@ function creeTablePrincipale() {
 
 var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
 	JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+var isDetailOn = diploGuilde.isDetailOn=='true';
 var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
 	JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
-var isDetailOn = diploGuilde.isDetailOn=='true';
+var isMythiquesOn = diploPerso.mythiques!=undefined;
 
 if(setChoixCouleurs() && fetchDiploGuilde()) {
 	creeTablePrincipale();

@@ -62,7 +62,7 @@ var needComputeEnchantement = MZ_getValue(numTroll+'.enchantement.liste')
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
 	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
-	checkBoxMythiques, comboBoxNiveauMin, comboBoxNiveauMax;
+	comboBoxNiveauMin, comboBoxNiveauMax;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
@@ -338,7 +338,7 @@ function synchroniseFiltres() {
 	recallCheckBox(checkBoxGG,'NOGG');
 	recallCheckBox(checkBoxCompos,'NOCOMP');
 	recallCheckBox(checkBoxBidouilles,'NOBID');
-	recallCheckBox(checkBoxDiplo,numTroll+'.diplo.guilde.off');
+	recallCheckBox(checkBoxDiplo,numTroll+'.diplo.off');
 	recallCheckBox(checkBoxTrou,'NOTROU');
 	recallCheckBox(checkBoxTresorsNonLibres,'NOTRESORSNONLIBRES');
 	recallCheckBox(checkBoxTactique,'NOTACTIQUE');
@@ -1150,7 +1150,6 @@ function filtreMonstres() {
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MZ_getValue(numTroll+'.USECSS')=='true';
 	var noGowaps = saveCheckBox(checkBoxGowaps,'NOGOWAP'),
-		noMythiques = saveCheckBox(checkBoxMythiques,'NOMYTH'),
 		noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE'),
 		nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE'),
 		nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
@@ -1181,7 +1180,7 @@ function filtreMonstres() {
 	 * - Mission (nécessite CdM)
  	 * - mob VlC (nécessite CdM)
 	 * Sans computation :
-	 * - Mythique ? Gowap ? engagé ?
+	 * - Gowap ? engagé ?
 	 */
 	for(var i=nbMonstres ; i>0 ; i--) {
 		var pos = getMonstrePosition(i);
@@ -1238,24 +1237,6 @@ function filtreMonstres() {
 				&& getMonstreDistance(i)!=-1
 				&& nom.toLowerCase().indexOf("kilamo") == -1
 			) ? 'none' : '';
-		
-		if(nom.indexOf('liche')==0
-			|| nom.indexOf('hydre')==0
-			|| nom.indexOf('balrog')==0
-			|| nom.indexOf('beholder')==0) {
-			if(!noMythiques) {
-				if(useCss)
-					x_monstres[i].setAttribute('class', 'mh_trolls_ennemis');
-				else {
-					x_monstres[i].setAttribute('class', '');
-					x_monstres[i].style.backgroundColor = '#FFAAAA';
-				}
-			}
-		}
-		else {
-			x_monstres[i].style.backgroundColor = '';
-			x_monstres[i].setAttribute('class', 'mh_tdpage');
-		}
 	}
 	
 	if(MZ_getValue('NOINFOEM')!='true') {
@@ -1336,9 +1317,8 @@ function computeChargeProjo()
 }
 
 /* [functions] Diplomatie */
-// TODO à revoir
 function refreshDiplo() {
-	MZ_setValue(numTroll+'.diplo.guilde.off',
+	MZ_setValue(numTroll+'.diplo.off',
 		checkBoxDiplo.checked?'true':'false'
 	);
 	if(isDiploRaw) { computeDiplo(); }
@@ -1383,14 +1363,16 @@ function computeDiplo() {
 	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
 		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
 	if(diploPerso && diploPerso.isOn=='true') {
-		if(diploPerso && diploPerso.isPersoOn!='false') {
-			for(var type in {Guilde:0,Troll:0,Monstre:0}) {
-				for(var id in diploPerso[type]) {
-					Diplo[type][id] = diploPerso[type][id];
-				}
+		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+			for(var id in diploPerso[type]) {
+				Diplo[type][id] = diploPerso[type][id];
 			}
 		}
 	}
+	if(diploPerso.mythiques) {
+		Diplo.mythiques = diploPerso.mythiques;
+	}
+	
 	isDiploRaw = false;
 }
 
@@ -1406,7 +1388,8 @@ function appliqueDiplo() {
 	}
 	
 	/* On applique "aAppliquer" */
-	for(var i=1 ; i<=nbTrolls ; i++) {
+	// Diplo Trõlls
+	for(var i=nbTrolls ; i>0 ; i--) {
 		var idG = getTrollGuildeID(i);
 		var idT = getTrollID(i);
 		var tr = tr_trolls[i];
@@ -1430,16 +1413,25 @@ function appliqueDiplo() {
 		}
 	}
 	
-	// DEBUG: à déplacer vers filtreMonstres
-	for(var i=1 ; i<=nbMonstres ; i++) {
+	// Diplo Monstres
+	for(var i=nbMonstres ; i>0 ; i--) {
 		var id = getMonstreID(i);
+		var nom = getMonstreNom(i).toLowerCase();
 		if(aAppliquer.Monstre[id]) {
 			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
 			var descr = aAppliquer.Monstre[id].titre;
 			if(descr) {
-				getTrollNomNode(i).title = descr
+				getMonstreTdNom(i).title = descr
 			}
-			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+		} else if(aAppliquer.mythiques &&
+			(nom.indexOf('liche')==0 ||
+			nom.indexOf('hydre')==0 ||
+			nom.indexOf('balrog')==0 ||
+			nom.indexOf('beholder')==0)) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			getMonstreTdNom(i).title = 'Monstre Mythique';
 		} else {
 			tr_monstres[i].className = 'mh_tdpage';
 		}
@@ -1927,18 +1919,18 @@ try {
 	putBoutonLieux();
 	putBoutonPXMP();
 
-	//800 ms
 	synchroniseFiltres();
 	toggleLevelColumn();
 	savePosition();
-
+	
+	refreshDiplo();
+	
 	//400 ms
 	{
 		var noGG = saveCheckBox(checkBoxGG, "NOGG");
 		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
 		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
 		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
-		var noMythiques = saveCheckBox(checkBoxMythiques, "NOMYTH");
 		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
 		var noTresorsEngages =
 			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
@@ -1950,7 +1942,6 @@ try {
 		if(noTrou) filtreLieux();
 	}
 	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
-	refreshDiplo();
 	initPXTroll();
 	computeTag();
 	computeTelek();
