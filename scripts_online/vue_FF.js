@@ -862,17 +862,6 @@ function hidePopup() {
 	popup.style.visibility = 'hidden';
 }
 
-function createImageTactique(url,id,nom) {
-	var img = document.createElement('img');
-	img.src = url;
-	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÈTE
-	img.id = id;
-	img.nom = nom;
-	img.onmouseover = showPopupTactique;
-	img.onmouseout = hidePopup;
-	return img;
-}
-
 /* [functions] Récupération / Computation des Infos Tactiques */
 // TODO à revoir
 function retireMarquage(nom) {

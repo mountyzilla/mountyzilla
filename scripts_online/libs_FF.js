@@ -1086,6 +1086,17 @@ var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
 	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
 	'Capacité spéciale','Résistance Magique','Autres'];
 
+function createImageTactique(url,id,nom) {
+	var img = document.createElement('img');
+	img.src = url;
+	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÈTE
+	img.id = id;
+	img.nom = nom;
+	img.onmouseover = showPopupTactique;
+	img.onmouseout = hidePopup;
+	return img;
+}
+
 function createCDMTable(id,nom,donneesMonstre) {
 try {
 	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -1100,24 +1111,24 @@ try {
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,
 		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
-		true);
+		true
+	);
 	td.colSpan = 2;
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
 	
 	for(var i=0 ; i<listeTitres.length-3 ; i++) {
-		//window.alert(listeTitres[i]);
 		createCase(listeTitres[i],tbody,80);
-		}
-	//window.alert(tbody.childNodes.length);
+	}
 	var TypeMonstre = getEM(nom);
 	var infosCompo='';
-	if(TypeMonstre!='')
+	if(TypeMonstre!='') {
 	   infosCompo = compoEM(TypeMonstre);
-	
+	}
 	var nodes = tbody.childNodes;
-	nodes[0].childNodes[1].innerHTML = bbcode(donneesMonstre[0]) + analysePX(bbcode(donneesMonstre[0]));
+	nodes[0].childNodes[1].innerHTML =
+		bbcode(donneesMonstre[0])+analysePX(bbcode(donneesMonstre[0]));
 	nodes[1].childNodes[1].firstChild.nodeValue = bbcode(donneesMonstre[1]);
 	nodes[2].childNodes[1].innerHTML = bbcode(donneesMonstre[2]);
 	nodes[3].childNodes[1].innerHTML = bbcode(donneesMonstre[11]);
@@ -1212,7 +1223,7 @@ try {
 		
 		if(profilActif && nom.indexOf("Gowap Apprivoisé")==-1 && nom.indexOf("Gowap Sauvage")==-1)
 		{
-			td.appendChild(createPopupImage2(urlImg+"calc.png",id,nom));
+			td.appendChild(createImageTactique(urlImg+"calc.png",id,nom));
 		}
 	}
 	
