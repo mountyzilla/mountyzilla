@@ -67,9 +67,10 @@ function resiste(Ddeg,bm) {
 	}
 
 function getPortee(param) {
+	param = Math.max(0,Number(param));
 	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
 	// ça devrait être floor, +10.25, -2.5
-	}
+}
 
 function retourAZero(fatig) {
 	var varfat = fatig; var raz = 0;
@@ -1302,15 +1303,15 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	if(mainCall) {
 		var pcA = (bmDAttM) ? bmDAttM : false;
 		var pcD = (bmDDegM) ? bmDDegM : false;
-		}
+	}
 	if(sort.indexOf('Analyse Anatomique')!=-1) {
 		texte = 'Portée horizontale : <b>'
 			+Math.floor(vuetotale/2)+'</b> case';
-		if(vuetotale>3) texte += 's';
+		if(vuetotale>3) { texte += 's'; }
 		texte += '<br/>Portée verticale : <b>'
 			+Math.floor((vuetotale+1)/4)+'</b> case';
-		if(vuetotale>7) texte += 's';
-		}
+		if(vuetotale>7) { texte += 's'; } 
+	}
 	else if(sort.indexOf('Armure Etheree')!=-1)
 		texte = decumul_buff('AE','Armure magique',reg);
 	else if(sort.indexOf('Augmentation')!=-1 && sort.indexOf('Attaque')!=-1)
@@ -1319,12 +1320,12 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = decumul_buff('AdE','Esquive',1+Math.floor((esq-3)/2));
 	else if(sort.indexOf('Augmentation des Degats')!=-1)
 		texte = decumul_buff('AdD','Dégâts physiques',1+Math.floor((deg-3)/2));
-	else if(sort.indexOf('Bulle Anti-Magie')!=-1)
-		texte = 'RM : <b>+'+rm+'</b> (Total : <b>'+(2*rm+rmbm)+'</b>)<br/>'
-			+'MM : <b>-'+mm+'</b> (Total : <b>'+mmbm+'</b>)';
-	else if(sort.indexOf('Bulle Magique')!=-1)
-		texte = 'RM : <b>-'+rm+'</b> (Total : <b>'+rmbm+'</b>)<br/>'
-			+'MM : <b>+'+mm+'</b> (Total : <b>'+(2*mm+mmbm)+'</b>)';
+	else if(sort.indexOf('Bulle Anti-Magie')!=-1) {
+		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
+	}
+	else if(sort.indexOf('Bulle Magique')!=-1) {
+		texte = 'RM : <b>-'+rm+'</b><br/>MM : <b>+'+mm+'</b>';
+	}
 	else if(sort.indexOf('Explosion')!=-1)
 		texte = 'Dégâts : <b>'
 			+Math.floor( 1+(deg+Math.floor(pvbase/10))/2 )+'</b> D3 '
@@ -1408,25 +1409,26 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			'Rafale Psychique',
 			'Siphon des Ames',
 			'Vampirisme',
-			'Griffe du Sorcier'];
+			'Griffe du Sorcier'
+		];
 		if(sort.indexOf('Puissance')!=-1) {
 			eps = -1; str='PuM';
-			}
+		}
 		for(var i=1 ; i<4 ; i++) {
-			if(texte) texte += '<hr>';
+			if(texte) { texte += '<hr>'; }
 			texte += '<b>'+i+'<sup>e</sup> '+str+' ('+aff(pc)+' %) :</b><br/>';
 			newSort = false;
 			for(var j=0 ; j<5 ; j++) {
 				if(getTalent(sortAtt[j])) {
-					if(newSort) texte += '<br/><br/>';
+					if(newSort) { texte += '<br/><br/>'; }
 					texte += '<i>'+sortAtt[j]+' :</i><br/>'
 						+sortileges(sortAtt[j],false,eps*pc,-eps*pc);
 					newSort = true;
-					}
 				}
-			pc = decumulPumPrem(pc);
 			}
-		}	
+			pc = decumulPumPrem(pc);
+		}
+	}
 	else if(sort.indexOf('Projectile Magique')!=-1) {
 		var modD = 0;
 		var portee = getPortee(vuetotale);
@@ -1583,7 +1585,7 @@ try {
 	setNextDLA();
 	setInfosPV();
 	setInfosPxPi();
-	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
+	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
 	setLieu();
 	setStabilite();
 	setCurrentEsquive();
@@ -1593,7 +1595,7 @@ try {
 	// À lancer après traitementTalents() :
 	setAnatrolliseur();
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
-	if(race=='Kastar') { setAccel(); }
+	if(race=='Kastar') { setAccel(); }
 	saveProfil();
 	displayScriptTime();
 }

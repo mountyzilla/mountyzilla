@@ -25,18 +25,13 @@
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
+// utilisé pour accès bdd (un peu partout) :
 var numTroll = MZ_getValue('NUM_TROLL');
-// utilisé pour accès bdd (un peu partout)
+// utilisé dans vue pour PX :
 var nivTroll = MZ_getValue('NIV_TROLL');
-// utilisé dans vue pour PX
+// utilisés dans actions et vue (calculs SR) :
 var mmTroll = MZ_getValue(numTroll+'.caracs.mm');
-// utilisé dans actions et vue (calculs SR)
 var rmTroll = MZ_getValue(numTroll+'.caracs.rm');
-// utilisé dans actions et vue (calculs SR)
-
-/* DEBUG: NETTOYAGE */
-MZ_removeValue(numTroll+'.POISS');
-/* FIN DEBUG */
 
 /*-[functions]------------ Fonctions durée de script -------------------------*/
 var date_debut = null;
@@ -93,6 +88,9 @@ function appendNewScript(src,paren) {
 	MZ_appendNewScript(src);
 	}
 
+
+/*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
+
 function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	var request = new XMLHttpRequest();
 	request.open(MZ_XHR_Ob.method,MZ_XHR_Ob.url);
@@ -113,6 +111,43 @@ function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	};
 	request.send(MZ_XHR_Ob.data);
 }
+
+
+/*-[functions]-------------- Interface utilisateur ---------------------------*/
+
+function avertissement(txt) {
+	var div = document.createElement('div');
+	// On numérote les avertissements pour destruction sélective
+	var num = document.getElementsByName('avertissement').length;
+	div.num = num;
+	// Numéro enregistré dans le DOM pour récupération sur getElementsByName()
+	div.setAttribute('name','avertissement');
+	div.className = 'mh_textbox';
+	div.style =
+		'position:fixed;'+
+		'top:'+(10+15*num)+'px;'+
+		'left:'+(10+5*num)+'px;'+
+		'border:1px solid #000000;'+
+		'z-index:'+(2+num)+';'+
+		'cursor:crosshair;';
+	div.innerHTML = txt;
+	div.onclick=function(){ tueAvertissement(this.num) };
+	document.body.appendChild(div);
+	// Destruction automatique de l'avertissement après 3 sec :
+	window.setTimeout(function(){ tueAvertissement(num) },3000);
+}
+
+function tueAvertissement(num) {
+	var divs = document.getElementsByName('avertissement');
+	if(divs.length==0) { return; }
+	for(var i=0 ; i<divs.length ; i++) {
+		if(divs[i].num==num) {
+			divs[i].parentNode.removeChild(divs[i]);
+			return;
+		}
+	}
+}
+
 
 /*-[functions]-------------- Modifications du DOM ----------------------------*/
 
@@ -214,7 +249,7 @@ function appendTextbox(paren,type,nam,size,maxlength,value) {
 	input.name = nam;
 	input.id = nam;
 	input.size = size;
-	input.maxlength = maxlength;
+	input.maxLength = maxlength;
 	if(value) input.value = value;
 	paren.appendChild(input);
 	return input;
@@ -991,10 +1026,10 @@ function removeAllTalents() {
 		}
 	}
 
-function isProfilActif() { // what for ? 
+function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 	var att = MZ_getValue(numTroll+'.caracs.attaque');
-	var attbmp = MZ_getValue(numTroll+'.caracs.attaque.bmp');;
-	var attbmm = MZ_getValue(numTroll+'.caracs.attaque.bmm');;
+	var attbmp = MZ_getValue(numTroll+'.caracs.attaque.bmp');
+	var attbmm = MZ_getValue(numTroll+'.caracs.attaque.bmm');
 	var mm = MZ_getValue(numTroll+'.caracs.mm');
 	var deg = MZ_getValue(numTroll+'.caracs.degats');
 	var degbmp = MZ_getValue(numTroll+'.caracs.degats.bmp');
@@ -1008,7 +1043,7 @@ function isProfilActif() { // what for ?
 	}
 
 
-/*-[functions]---------------- Gestions des CDMs -----------------------------*/
+/*-[functions]---------------- Gestion des CDMs ------------------------------*/
 
 function getPVsRestants(pv,bless,vue) {
 	bless = Number(bless.match(/\d+/));
@@ -1051,6 +1086,17 @@ var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
 	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
 	'Capacité spéciale','Résistance Magique','Autres'];
 
+function createImageTactique(url,id,nom) {
+	var img = document.createElement('img');
+	img.src = url;
+	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÈTE
+	img.id = id;
+	img.nom = nom;
+	img.onmouseover = showPopupTactique;
+	img.onmouseout = hidePopup;
+	return img;
+}
+
 function createCDMTable(id,nom,donneesMonstre) {
 try {
 	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -1065,24 +1111,24 @@ try {
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,
 		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
-		true);
+		true
+	);
 	td.colSpan = 2;
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
 	
 	for(var i=0 ; i<listeTitres.length-3 ; i++) {
-		//window.alert(listeTitres[i]);
 		createCase(listeTitres[i],tbody,80);
-		}
-	//window.alert(tbody.childNodes.length);
+	}
 	var TypeMonstre = getEM(nom);
 	var infosCompo='';
-	if(TypeMonstre!='')
+	if(TypeMonstre!='') {
 	   infosCompo = compoEM(TypeMonstre);
-	
+	}
 	var nodes = tbody.childNodes;
-	nodes[0].childNodes[1].innerHTML = bbcode(donneesMonstre[0]) + analysePX(bbcode(donneesMonstre[0]));
+	nodes[0].childNodes[1].innerHTML =
+		bbcode(donneesMonstre[0])+analysePX(bbcode(donneesMonstre[0]));
 	nodes[1].childNodes[1].firstChild.nodeValue = bbcode(donneesMonstre[1]);
 	nodes[2].childNodes[1].innerHTML = bbcode(donneesMonstre[2]);
 	nodes[3].childNodes[1].innerHTML = bbcode(donneesMonstre[11]);
@@ -1177,7 +1223,7 @@ try {
 		
 		if(profilActif && nom.indexOf("Gowap Apprivoisé")==-1 && nom.indexOf("Gowap Sauvage")==-1)
 		{
-			td.appendChild(createPopupImage2(urlImg+"calc.png",id,nom));
+			td.appendChild(createImageTactique(urlImg+"calc.png",id,nom));
 		}
 	}
 	
@@ -1834,10 +1880,10 @@ var infoTagTrolls = [], infoTagGuildes = [];
 
 /* [functions] Gestion des popups de tag */
 function initTagPopup() {
-	if(tagPopup!=null) return;
+	if(tagPopup!=null) { return; }
 	tagPopup = document.createElement('div');
 	tagPopup.id = 'tagPopup';
-	tagPopup.classNAme = 'mh_textbox';
+	tagPopup.className = 'mh_textbox';
 	tagPopup.style =
 		'position:absolute;'
 		+'border:1px solid #000000;'
