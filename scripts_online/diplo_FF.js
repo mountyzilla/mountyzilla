@@ -386,6 +386,20 @@ function creeTablePrincipale() {
 		ajouteChamp();
 	}
 	appendButton(td,'Ajouter',ajouteChamp)
+	// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
+	appendText(td,' ');
+	appendButton(td,
+		'Exemples de couleur',
+		function() {
+			var fenetre = window.open(
+				'/mountyhall/MH_Play/Options/Play_o_Color.php',
+				'Divers',
+				'width=500,height=550,toolbar=0,location=0,directories=0,'+
+				'status=0,menubar=0,resizable=1,scrollbars=1'
+			);
+			fenetre.focus();
+		}
+	);
 	
 	/* Couleur de Guilde */
 	tr = insertTr(insertPt,'mh_tdtitre');
