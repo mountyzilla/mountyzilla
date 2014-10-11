@@ -1216,12 +1216,12 @@ function filtreMonstres() {
 			(strMonstre!=''
 				&& nom.indexOf(strMonstre)==-1) ||
 			(nivMin>0
-				&& getMonstreLevel(i)<=nivMin
+				&& getMonstreLevel(i)<nivMin
 				&& getMonstreDistance(i)>1
 				&& getMonstreDistance(i)!=-1 // wtf ?
 				&& nom.toLowerCase().indexOf("kilamo")==-1) ||
 			(nivMax>0
-				&& getMonstreLevel(i)>=nivMax
+				&& getMonstreLevel(i)>nivMax
 				&& getMonstreDistance(i)>1
 				&& getMonstreDistance(i)!=-1
 				&& nom.toLowerCase().indexOf("kilamo") == -1
