@@ -894,9 +894,9 @@ function retrieveCDMs() {
 			+ (getMonstreDistance(i) <= 5 ? getMonstreID(i) : -getMonstreID(i)) + '&';
 		
 		if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
-			var url = 'http://mountypedia.free.fr/mz/monstres_0.9_post_FF.php';
+			var url = 'http://mountypedia.ratibus.net/mz/monstres_0.9_post_FF.php';
 			
-			MZ_xmlhttpRequest({
+			FF_XMLHttpRequest({
 				method: 'POST',
 				url: url,
 				headers : {

@@ -20,10 +20,10 @@
  * - patch dégueu pour gérer la décomposition P/M de l'armure
  */
 
-var pageDispatcher = "http://mountypedia.free.fr/mz/cdmdispatcher.php";
+var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
 //var pageDispatcher = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
 //var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
-var pageEffetDispatcher = "http://mountypedia.free.fr/mz/effetdispatcher.php";
+//var pageEffetDispatcher = "http://mountypedia.ratibus.net/mz/effetdispatcher.php";
 var buttonCDM;
 
 /*******************************************************************************************
@@ -102,7 +102,7 @@ function sendCDM() {
 		}
 	cdm = cdm.replace(/<br>/g,'\n');
 	
-	MZ_xmlhttpRequest({
+	FF_XMLHttpRequest({
 				method: 'GET',
 				url: pageDispatcher+'?cdm='+escape(cdm),
 				headers : {
