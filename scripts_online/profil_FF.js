@@ -193,6 +193,7 @@ function initAll() {
 	regbm = Nbrs['reg'][2]+Nbrs['reg'][3];
 	regmoy = 2*reg+regbm;
 	appendTdText(caracs[0],'(moyenne : '+regmoy+')');
+	regmoy = Math.max(0,regmoy);
 	/* Temps récupéré par reg (propale R') */
 	var titre = 'Temps moyen récupéré par régénération : '
 		+Math.floor(250*regmoy/pvmax)+' min';

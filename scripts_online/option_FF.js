@@ -22,9 +22,9 @@
 
 var tagsData = {
 	'Types de Trolls (Ancien)':
-		'http://mountypedia.free.fr/mz/typeTrolls.csv',
+		'http://mountyzilla.tilk.info/resources/typeTrolls.csv',
 	'Types de Trolls (Nouveau)':
-		'http://mountypedia.free.fr/mz/typeTrolls_new.csv',
+		'http://mountyzilla.tilk.info/resources/typeTrolls_new.csv',
 	'Pogo 2009':
 		'http://mountyzilla.tilk.info/resources/pogo2009.csv'
 };
