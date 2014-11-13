@@ -46,7 +46,7 @@ function traiteMonstre() {
 		method: 'GET',
 		url: 'http://mountypedia.ratibus.net/mz/monstres_0.9_FF.php?begin=-1&idcdm='
 			+MZ_getValue('CDMID')
-			+'&nom[]='+encodeURIComponent(nomMonstre)+'$'+idMonstre,
+			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
 		headers : {
 			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 			'Accept': 'application/atom+xml,application/xml,text/xml'
