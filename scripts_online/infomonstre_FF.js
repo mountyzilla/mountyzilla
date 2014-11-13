@@ -42,11 +42,11 @@ function traiteMonstre() {
 		nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
 	}
 	idMonstre = texte.match(/\d+/);
-	MZ_xmlhttpRequest({
+	FF_XMLHttpRequest({
 		method: 'GET',
-		url: 'http://mountypedia.free.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm='
+		url: 'http://mountypedia.ratibus.net/mz/monstres_0.9_FF.php?begin=-1&idcdm='
 			+MZ_getValue('CDMID')
-			+'&nom[]='+encodeURIComponent(nomMonstre)+'$'+idMonstre,
+			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
 		headers : {
 			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 			'Accept': 'application/atom+xml,application/xml,text/xml'
