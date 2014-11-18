@@ -39,6 +39,7 @@ var Diplo = {
 	Guilde: {},
 	Troll: {},
 	Monstre: {}
+	// .mythiques: uniquement si option activée
 };
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
@@ -717,7 +718,11 @@ function insertLevelColumn() {
 			this.className = 'mh_tdtitre';
 		};
 		td.onmouseout = function() {
-			this.className = 'mh_tdpage';
+			if(this.parentNode.diploActive=='oui') {
+				this.className = '';
+			} else {
+				this.className = 'mh_tdpage';
+			}
 		};
 		td.style = 'font-weight:bold;text-align:center;';
 		if(isCDMsRetrieved) {
@@ -1315,7 +1320,7 @@ function refreshDiplo() {
 }
 
 function computeDiplo() {
-// On extrait les données de colueur et on les stocke par id
+// On extrait les données de couleur et on les stocke par id
 // Ordre de préséance :
 //  source Guilde < source Perso
 //  guilde cible < troll cible
@@ -1366,9 +1371,9 @@ function computeDiplo() {
 }
 
 function appliqueDiplo() {
-	/* Évite de recomputer la Diplo */
 	var aAppliquer = Diplo;
 	if(checkBoxDiplo.checked) {
+		// Pour retour à l'affichage basique sur désactivation de la diplo
 		aAppliquer = {
 			Guilde: {},
 			Troll: {},
@@ -1409,9 +1414,10 @@ function appliqueDiplo() {
 		if(aAppliquer.Monstre[id]) {
 			tr_monstres[i].className = '';
 			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			tr_monstres[i].diploActive = 'oui';
 			var descr = aAppliquer.Monstre[id].titre;
 			if(descr) {
-				getMonstreTdNom(i).title = descr
+				getMonstreTdNom(i).title = descr;
 			}
 		} else if(aAppliquer.mythiques &&
 			(nom.indexOf('liche')==0 ||
@@ -1420,9 +1426,11 @@ function appliqueDiplo() {
 			nom.indexOf('beholder')==0)) {
 			tr_monstres[i].className = '';
 			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			tr_monstres[i].diploActive = 'oui';
 			getMonstreTdNom(i).title = 'Monstre Mythique';
 		} else {
 			tr_monstres[i].className = 'mh_tdpage';
+			tr_monstres[i].diploActive = '';
 		}
 	}
 }

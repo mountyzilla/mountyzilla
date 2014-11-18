@@ -22,7 +22,7 @@ TODO:
  V Étape 2: Gestion couleurs par catégorie (10 couleurs)
  V Étape 3: Ajout de la diplo perso
  X Étape 4: Gestion distante (sécurisée par mdp) de cette option
- X Étape 5: Ajout des fioritures (preview de la couleur...)
+ V Étape 5: Ajout des fioritures (preview de la couleur...)
  
  Options Globales:
  Actuelles:
