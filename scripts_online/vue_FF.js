@@ -1333,6 +1333,7 @@ function computeDiplo() {
 		if(diploGuilde.guilde) {
 			Diplo.Guilde[diploGuilde.guilde.id] = {
 				couleur: diploGuilde.guilde.couleur,
+				titre: 'Ma Guilde'
 			};
 		}
 		// Guildes/Trolls A/E
@@ -1701,7 +1702,7 @@ function putInfosTrolls() {
 	for(i=nbTrolls ; i>0 ; i--) {
 		var infos = infosTrolls[getTrollID(i)];
 		if(infos) {
-			/* PAs dipos */
+			/* PAs dispos */
 			var span = document.createElement('span');
 			span.title = infos[3];
 			appendText(span, infos[4]+' PA' );
