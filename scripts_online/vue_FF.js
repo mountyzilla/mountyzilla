@@ -79,7 +79,7 @@ var nbMonstres = 0, nbTrolls = 0, nbTresors = 0, nbLieux = 0;
 function fetchData(type) {
 	try {
 		var node = document.getElementById('mh_vue_hidden_'+type);
-		// this = sandBox de travail de MZ dans ce cadre
+		// this = MZ.global = sandBox de travail de MZ
 		// On définit donc des variables MZ-globales
 		this['tr_'+type] = node.getElementsByTagName('tr');
 		this['nb'+type[0].toUpperCase()+type.slice(1)] = this['tr_'+type].length-1;
@@ -580,7 +580,12 @@ function toggleTableauInfos(firstRun) {
 /* [functions] Filtres */
 function prepareFiltrage(ref,width) {
 // = Initialise le filtre 'ref'
-	var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
+	try {
+		var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
+	} catch(e) {
+		console.warn('[MZ Vue] Référence filtrage '+ref+' non trouvée\n'+e);
+		return false;
+	}
 	if(width) { tdTitre.width = width; }
 	// Ajout du tr de Filtrage (masqué)
 	var tbody = tdTitre.parentNode.parentNode;
@@ -630,7 +635,7 @@ function finFiltrage(ref) {
 			document.getElementById('strGuildes').value = '';
 	}
 	/* Nettoyage (=lance le filtre) */
-	// Ici this = MZ.global (!= window), permet d'accéder aux fonctions MZ
+	// Ici this = MZ.global = sandBox de travail de MZ
 	this['filtre'+ref]();
 }
 
@@ -666,24 +671,32 @@ function ajoutFiltreMenu(tr,id,onChange) {
 function ajoutDesFiltres() {
 	/* Monstres */
 	var td = prepareFiltrage('Monstres',120);
-	ajoutFiltreStr(td,'Nom du monstre:','strMonstres',filtreMonstres);
-	appendText(td,'\u00a0\u00a0\u00a0');
-	appendText(td,'Niveau Min: ');
-	comboBoxNiveauMin = ajoutFiltreMenu(td,'nivMinMonstres',filtreMonstres);
-	appendText(td,'\u00a0');
-	appendText(td,'Niveau Max: ');
-	comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
+	if(td) {
+		ajoutFiltreStr(td,'Nom du monstre:','strMonstres',filtreMonstres);
+		appendText(td,'\u00a0\u00a0\u00a0');
+		appendText(td,'Niveau Min: ');
+		comboBoxNiveauMin = ajoutFiltreMenu(td,'nivMinMonstres',filtreMonstres);
+		appendText(td,'\u00a0');
+		appendText(td,'Niveau Max: ');
+		comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
+	}
 	/* Trõlls */
 	td = prepareFiltrage('Trolls',50);
-	ajoutFiltreStr(td,'Nom du trõll:','strTrolls',filtreTrolls);
-	appendText(td,'\u00a0\u00a0\u00a0');
-	ajoutFiltreStr(td,'Nom de guilde:','strGuildes',filtreTrolls);
+	if(td) {
+		ajoutFiltreStr(td,'Nom du trõll:','strTrolls',filtreTrolls);
+		appendText(td,'\u00a0\u00a0\u00a0');
+		ajoutFiltreStr(td,'Nom de guilde:','strGuildes',filtreTrolls);
+	}
 	/* Trésors */
 	td = prepareFiltrage('Tresors',55);
-	ajoutFiltreStr(td,'Nom du trésor:','strTresors',filtreTresors);
+	if(td) {
+		ajoutFiltreStr(td,'Nom du trésor:','strTresors',filtreTresors);
+	}
 	/* Lieux */
 	td = prepareFiltrage('Lieux',40);
-	ajoutFiltreStr(td,'Nom du lieu:','strLieux',filtreLieux);
+	if(td) {
+		ajoutFiltreStr(td,'Nom du lieu:','strLieux',filtreLieux);
+	}
 }
 
 /* [functions] Boutons d'envoi d'infos aux bases */
@@ -1499,7 +1512,9 @@ function hidePXTroll() {
 /* [functions] Envoi PX / MP */
 function putBoutonPXMP() {
 // Bouton d'initialisation du mode Envoi
+// WARNING - Nécessite que le Filtre Trõll ait été mis en place
 	var td = document.getElementById('tdInsertTrolls');
+	if(!td) { return; }
 	td.width = 100;
 	td = insertTd(td.nextSibling);
 	td.style.verticalAlign = 'top';
