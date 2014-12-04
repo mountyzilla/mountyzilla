@@ -65,6 +65,57 @@ var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
 	comboBoxNiveauMin, comboBoxNiveauMax;
 
+/* Acquisition & Stockage des données de DB */
+const typesAFetcher = {
+	'monstres':1,
+	'trolls':1,
+	'tresors':1,
+	//'champignons':1,
+	'lieux':1
+}
+var tr_monstres = {}, tr_trolls = {}, tr_tresors = {}, tr_lieux = {};
+var nbMonstres = 0, nbTrolls = 0, nbTresors = 0, nbLieux = 0;
+
+function fetchData(type) {
+	try {
+		var node = document.getElementById('mh_vue_hidden_'+type);
+		// this = sandBox de travail de MZ dans ce cadre
+		// On définit donc des variables MZ-globales
+		this['tr_'+type] = node.getElementsByTagName('tr');
+		this['nb'+type[0].toUpperCase()+type.slice(1)] = this['tr_'+type].length-1;
+	} catch(e) {
+		console.warn('[MZ Vue] Erreur acquisition type '+type+'\n'+e);
+	}
+}
+
+for(var type in typesAFetcher) {
+	fetchData(type);
+}
+
+/*var node = document.getElementById('mh_vue_hidden_monstres');
+var tr_monstres = node.getElementsByTagName('tr');
+var nbMonstres = tr_monstres.length-1;
+node = document.getElementById('mh_vue_hidden_trolls');
+var tr_trolls = node.getElementsByTagName('tr');
+var nbTrolls = tr_trolls.length-1;
+node = document.getElementById('mh_vue_hidden_tresors');
+var tr_tresors = node.getElementsByTagName('tr');
+var nbTresors = tr_tresors.length-1;
+node = document.getElementById('mh_vue_hidden_champignons');
+var tr_champis = node.getElementsByTagName('tr');
+var nbChampis = tr_champis.length-1;
+node = document.getElementById('mh_vue_hidden_lieux');
+var tr_lieux = node.getElementsByTagName('tr');
+var nbLieux = tr_lieux.length-1;*/
+/*---------------------------------- DEBUG -----------------------------------*/
+var mainTabs = document.getElementsByClassName('mh_tdborder');
+var x_monstres = tr_monstres;
+var x_trolls = tr_trolls;
+var x_tresors = tr_tresors;
+//var x_champis = tr_champis;
+var x_lieux = tr_lieux;
+/*-------------------------------- FIN DEBUG ---------------------------------*/
+
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
 function getPortee(param) {
@@ -86,31 +137,6 @@ function savePosition() {
  * les tables-listings sont identifiables via l'ID du tr conteneur
  * (mh_vue_hidden_XXX, XXX=trolls, champis, etc)
  */
-
-/* Acquisition & Stockage des données  */
-var node = document.getElementById('mh_vue_hidden_monstres');
-var tr_monstres = node.getElementsByTagName('tr');
-var nbMonstres = tr_monstres.length-1;
-node = document.getElementById('mh_vue_hidden_trolls');
-var tr_trolls = node.getElementsByTagName('tr');
-var nbTrolls = tr_trolls.length-1;
-node = document.getElementById('mh_vue_hidden_tresors');
-var tr_tresors = node.getElementsByTagName('tr');
-var nbTresors = tr_tresors.length-1;
-node = document.getElementById('mh_vue_hidden_champignons');
-var tr_champis = node.getElementsByTagName('tr');
-var nbChampis = tr_champis.length-1;
-node = document.getElementById('mh_vue_hidden_lieux');
-var tr_lieux = node.getElementsByTagName('tr');
-var nbLieux = tr_lieux.length-1;
-/*---------------------------------- DEBUG -----------------------------------*/
-var mainTabs = document.getElementsByClassName('mh_tdborder');
-var x_monstres = tr_monstres;
-var x_trolls = tr_trolls;
-var x_tresors = tr_tresors;
-var x_champis = tr_champis;
-var x_lieux = tr_lieux;
-/*-------------------------------- FIN DEBUG ---------------------------------*/
 
 function getPositionStr(pos) {
 	// À renommer. Grave.
