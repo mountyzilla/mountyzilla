@@ -70,11 +70,13 @@ const typesAFetcher = {
 	'monstres':1,
 	'trolls':1,
 	'tresors':1,
-	//'champignons':1,
+	'champignons':1,
 	'lieux':1
 }
-var tr_monstres = {}, tr_trolls = {}, tr_tresors = {}, tr_lieux = {};
-var nbMonstres = 0, nbTrolls = 0, nbTresors = 0, nbLieux = 0;
+var tr_monstres = {}, tr_trolls = {}, tr_tresors = {},
+	tr_champignons = {}, tr_lieux = {};
+var nbMonstres = 0, nbTrolls = 0, nbTresors = 0,
+	nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
 	try {
@@ -112,7 +114,7 @@ var mainTabs = document.getElementsByClassName('mh_tdborder');
 var x_monstres = tr_monstres;
 var x_trolls = tr_trolls;
 var x_tresors = tr_tresors;
-//var x_champis = tr_champis;
+var x_champis = tr_champignons;
 var x_lieux = tr_lieux;
 /*-------------------------------- FIN DEBUG ---------------------------------*/
 
@@ -408,7 +410,7 @@ function getVueScript() {
 				+tds[4].firstChild.nodeValue+';'+tds[5].firstChild.nodeValue+'\n';
 			}
 	    txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+'#FIN LIEUX\n#DEBUT CHAMPIGNONS\n';
-	    for(var i=1 ; i <=nbChampis ; i++) {
+	    for(var i=1 ; i <=nbChampignons ; i++) {
 			var tds = x_champis[i].childNodes;
 			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
 				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
