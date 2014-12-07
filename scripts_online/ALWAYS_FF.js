@@ -49,3 +49,18 @@ if(isPage('MH_Play/Play_menu')
 else if(isPage('MH_Play/TurnStart')) {
 	window.alert('Heure lancement MH:\n'+MZ_getValue('temp'));
 }*/
+
+/*if(isPage('MH_Missions/Mission_Liste.php')) {
+	avertissement(
+		JSON.stringify(
+			JSON.parse(MZ_getValue(numTroll+'.MISSIONS')),
+			null,
+			'\t'
+		).
+			replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;').
+			replace(/\n/g,'<br />').
+			replace(/\\\"/g,'"'),
+		10000
+	);
+}*/
+
