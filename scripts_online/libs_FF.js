@@ -404,9 +404,9 @@ function aff(nb) {
 	}
 
 function getNumber(str) {
-	var nbrs = str.match(/\d+/);
-	return Number(nbrs);
-	}
+	var nbr = str.match(/\d+/);
+	return nbr ? Number(nbr[0]) : Number.NaN;
+}
 
 function getNumbers(str) {
 	var nbrs = str.match(/-?\d+/g);
@@ -1047,7 +1047,7 @@ function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 /*-[functions]---------------- Gestion des CDMs ------------------------------*/
 
 function getPVsRestants(pv,bless,vue) {
-	bless = Number(bless.match(/\d+/));
+	bless = Number(bless.match(/\d+/)[0]);
 	if(bless==0) return null;
 	var pvminmax = pv.match(/\d+/g);
 	if(bless==95) {

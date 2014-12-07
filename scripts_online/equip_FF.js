@@ -70,7 +70,7 @@ function traiteMinerai() {
 		var node = trlist.snapshotItem(i);
 		var nature = node.childNodes[7].textContent,
 			caracs = node.childNodes[9].textContent;
-		var taille = Number(caracs.match(/\d+/));
+		var taille = Number(caracs.match(/\d+/)[0]);
 		var coef = 1;
 		if(caracs.indexOf('Moyen')!=-1) coef = 2;
 		else if(caracs.indexOf('Normale')!=-1) coef = 3;

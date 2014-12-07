@@ -101,7 +101,7 @@ function traiteMouches() {
 		var caracs = effet.split(' | ');
 		for(var j=0 ; j<caracs.length ; j++) {
 			var carac = caracs[j].substring(0,caracs[j].indexOf(':')-1);
-			var valeur = Number(caracs[j].match(/-?\d+/));
+			var valeur = Number(caracs[j].match(/-?\d+/)[0]);
 			if(effetsActifs[carac]===void(0)) {
 				effetsActifs[carac] = valeur;
 			} else {
@@ -124,7 +124,7 @@ function traiteMouches() {
 		var carac = trim(
 			effetsTheoriques[i].substring(0,effetsTheoriques[i].indexOf(':')-1)
 		);
-		var valeur = effetsTheoriques[i].match(/-?\d+/);
+		var valeur = effetsTheoriques[i].match(/-?\d+/)[0];
 		if(effetsActifs[carac]!==void(0) && effetsActifs[carac]==valeur) {
 			texte += effetsTheoriques[i];
 		} else {

@@ -137,7 +137,7 @@ function getMM(sr) {
 	if(rmTroll<=0) {
 		return 'Inconnue (quelle idée d\'avoir une RM valant'+rmTroll+' !)';
 	}
-	sr = Number(sr.match(/\d+/));
+	sr = Number(sr.match(/\d+/)[0]);
 	if(sr==10) {
 		return '\u2265 '+5*rmTroll;
 	}
@@ -176,7 +176,7 @@ function getRM(sr) {
 	if(mmTroll<=0) {
 		return 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
 	}
-	sr = Number(sr.match(/\d+/));
+	sr = Number(sr.match(/\d+/)[0]);
 	if(sr==10) {
 		return '\u2264 '+Math.round(mmTroll/5);
 	}

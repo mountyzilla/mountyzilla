@@ -20,7 +20,7 @@ function checkLesMimis() {
 	
 	var enCours = {};
 	for(var i=0 ; i<titresMimis.snapshotLength ; i++) {
-		var num = titresMimis.snapshotItem(i).textContent.match(/\d+/);
+		var num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
 		enCours[num] = true;
 	}
 	

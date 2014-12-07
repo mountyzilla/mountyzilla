@@ -41,7 +41,7 @@ function traiteMonstre() {
 	if(nomMonstre.indexOf(']')!=-1) {
 		nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
 	}
-	idMonstre = texte.match(/\d+/);
+	idMonstre = texte.match(/\d+/)[0];
 	FF_XMLHttpRequest({
 		method: 'GET',
 		url: 'http://mountypedia.ratibus.net/mz/monstres_0.9_FF.php?begin=-1&idcdm='
