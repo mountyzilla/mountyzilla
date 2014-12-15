@@ -960,15 +960,15 @@ function computeMission(begin,end) {
 	if(!str) { return; }
 	
 	var urlImg = MZimg+'mission.png';
-	var infosMissions = JSON.parse(str);
+	var obMissions = JSON.parse(str);
 	
 	for(var i=end ; i>=begin ; i--) {
 		var mess = '';
-		for(var num in infosMissions) {
+		for(var num in obMissions) {
 			var mobMission = false;
-			switch(infosMissions[num].type) {
+			switch(obMissions[num].type) {
 				case 'Race':
-					var race = epure(infosMissions[num].race.toLowerCase());
+					var race = epure(obMissions[num].race.toLowerCase());
 					var nom = epure(getMonstreNom(i).toLowerCase());
 					if(nom.indexOf(race)!=-1) {
 						mobMission = true;
@@ -978,8 +978,8 @@ function computeMission(begin,end) {
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
 						var nivMob = Number(donneesMonstre[0]);
-						var	nivMimi = Number(infosMissions[num].niveau),
-							mod = infosMissions[num].mod;
+						var	nivMimi = Number(obMissions[num].niveau),
+							mod = obMissions[num].mod;
 						if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
 							|| (isNaN(mod) && nivMob>=nivMimi)) {
 							mobMission = true;
@@ -989,7 +989,7 @@ function computeMission(begin,end) {
 				case 'Famille':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
-						var familleMimi = epure(infosMissions[num].famille.toLowerCase());
+						var familleMimi = epure(obMissions[num].famille.toLowerCase());
 						var familleMob = epure(donneesMonstre[1].toLowerCase());
 						if(familleMob.indexOf(familleMimi)!=-1) {
 							mobMission = true;
@@ -999,7 +999,7 @@ function computeMission(begin,end) {
 				case 'Pouvoir':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
-						var pvrMimi = epure(infosMission[2].toLowerCase());
+						var pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
 						var pvrMob = epure(donneesMonstre[10].toLowerCase());
 						if(pvrMob.indexOf(pvrMimi)!=-1) {
 							mobMission = true;
@@ -1008,7 +1008,7 @@ function computeMission(begin,end) {
 			}
 			if(mobMission) {
 				mess += mess ? '\n\n' : '';
-				mess += 'Mission '+num+' :\n'+infosMissions[num].libelle;
+				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
 			}
 		}
 		if(mess) {
