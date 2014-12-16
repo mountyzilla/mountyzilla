@@ -32,7 +32,11 @@ function saveMission(num,obEtape) {
 			return;
 		}
 	}
-	obMissions[num] = obEtape;
+	if(obEtape) {
+		obMissions[num] = obEtape;
+	} else if(obMissions[num]) {
+		delete obMissions[num];
+	}
 	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
@@ -113,6 +117,8 @@ function traiteMission() {
 			pouvoir: pouvoir,
 			libelle: libelle
 		});
+	} else {
+		saveMission(numMission,false);
 	}
 }
 
