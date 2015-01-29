@@ -52,7 +52,12 @@ function traiteMission() {
 		console.error('[MZ Mission] Erreur récupération mission:\n'+e);
 		return;
 	}
-	if(!numMission || !tdLibelle) { return; }
+	if(!numMission) { return; }
+	if(!tdLibelle) {
+		// S'il n'y a plus d'étape en cours (=mission finie), on supprime
+		saveMission(numMission,false);
+		return;
+	}
 	
 	var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
 	var siMundidey = libelle.indexOf('Mundidey')!=-1;
