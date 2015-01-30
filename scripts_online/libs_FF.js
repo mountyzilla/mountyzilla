@@ -115,7 +115,8 @@ function FF_XMLHttpRequest(MZ_XHR_Ob) {
 
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
 
-function avertissement(txt) {
+function avertissement(txt,duree) {
+	if(!duree) { duree = 3000; }
 	var div = document.createElement('div');
 	// On numérote les avertissements pour destruction sélective
 	var num = document.getElementsByName('avertissement').length;
@@ -134,7 +135,7 @@ function avertissement(txt) {
 	div.onclick=function(){ tueAvertissement(this.num) };
 	document.body.appendChild(div);
 	// Destruction automatique de l'avertissement après 3 sec :
-	window.setTimeout(function(){ tueAvertissement(num) },3000);
+	window.setTimeout(function(){ tueAvertissement(num) },duree);
 }
 
 function tueAvertissement(num) {
@@ -403,9 +404,9 @@ function aff(nb) {
 	}
 
 function getNumber(str) {
-	var nbrs = str.match(/\d+/);
-	return Number(nbrs);
-	}
+	var nbr = str.match(/\d+/);
+	return nbr ? Number(nbr[0]) : Number.NaN;
+}
 
 function getNumbers(str) {
 	var nbrs = str.match(/-?\d+/g);
@@ -1046,7 +1047,7 @@ function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 /*-[functions]---------------- Gestion des CDMs ------------------------------*/
 
 function getPVsRestants(pv,bless,vue) {
-	bless = Number(bless.match(/\d+/));
+	bless = Number(bless.match(/\d+/)[0]);
 	if(bless==0) return null;
 	var pvminmax = pv.match(/\d+/g);
 	if(bless==95) {

@@ -17,7 +17,9 @@
 *******************************************************************************/
 
 /* TODO
- * MZ2.0 : ajouter un nettoyage sur la page de la liste des missions
+ * MZ2.0 : gérer le nettoyage des missions terminées via script principal
+ *
+ * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
  */
 
 function saveMission(num,obEtape) {
@@ -25,23 +27,37 @@ function saveMission(num,obEtape) {
 	if(MZ_getValue(numTroll+'.MISSIONS')) {
 		try {
 			obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
+		} catch(e) {
+			console.error('[MZ Mission] Erreur parsage:\n'+e);
+			return;
 		}
-		catch(e) { console.error('Erreur Mission:\n'+e) }
 	}
-	obMissions[num] = obEtape;
+	if(obEtape) {
+		obMissions[num] = obEtape;
+	} else if(obMissions[num]) {
+		delete obMissions[num];
+	}
 	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
 function traiteMission() {
 	try {
 		var titreMission = document.getElementsByClassName('titre2')[0];
-		var numMission = titreMission.textContent.match(/\d+/);
+		var numMission = titreMission.textContent.match(/\d+/)[0];
 		var missionForm = document.getElementsByName('ActionForm')[0];
 		var tdLibelle = document.evaluate(
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 			missionForm, null, 9, null).singleNodeValue;
-	} catch(e) { console.error(e); return; }
-	if(!numMission || !tdLibelle) { return; }
+	} catch(e) {
+		console.error('[MZ Mission] Erreur récupération mission:\n'+e);
+		return;
+	}
+	if(!numMission) { return; }
+	if(!tdLibelle) {
+		// S'il n'y a plus d'étape en cours (=mission finie), on supprime
+		saveMission(numMission,false);
+		return;
+	}
 	
 	var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
 	var siMundidey = libelle.indexOf('Mundidey')!=-1;
@@ -49,17 +65,16 @@ function traiteMission() {
 		var nbKills = 1, niveau, mod;
 		if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
 			// Étape de kill multiple de niveau donné
-			nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-			niveau = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
 			// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
 			mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-			mod = mod ? mod : 'plus';
-		}
-		else {
+			mod = mod ? Number(mod[0]) : 'plus';
+		} else {
 			// Étape de kill unique de niveau donné
-			niveau = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
 			mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-			mod = mod ? mod : 'plus';
+			mod = mod ? Number(mod[0]) : 'plus';
 		}
 		saveMission(numMission,{
 			type: 'Niveau',
@@ -68,15 +83,13 @@ function traiteMission() {
 			mundidey: siMundidey,
 			libelle: libelle
 		});
-	}
-	else if(libelle.indexOf('de la race')!=-1) {
+	} else if(libelle.indexOf('de la race')!=-1) {
 		var nbKills = 1, race;
 		if(tdLibelle.firstChild.nodeValue.indexOf('de la race')==-1) {
 			// Étape de kill multiple de race donnée
-			nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-		}
-		else {
+		} else {
 			// Étape de kill unique de race donnée
 			race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 		}
@@ -86,15 +99,13 @@ function traiteMission() {
 			mundidey: siMundidey,
 			libelle: libelle
 		});
-	}
-	else if(libelle.indexOf('de la famille')!=-1) {
+	} else if(libelle.indexOf('de la famille')!=-1) {
 		var nbKills = 1, famille;
-		if (tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
+		if(tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
 			// Étape de kill multiple de famille donnée
-			nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-		}
-		else {
+		} else {
 			// Étape de kill unique de famille donnée
 			famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 		}
@@ -104,21 +115,20 @@ function traiteMission() {
 			mundidey: siMundidey,
 			libelle: libelle
 		});
-	}
-	else if(enonce.indexOf('capacité spéciale')!=-1) {
+	} else if(libelle.indexOf('capacité spéciale')!=-1) {
 		var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 		saveMission(numMission,{
 			type: 'Pouvoir',
 			pouvoir: pouvoir,
 			libelle: libelle
 		});
+	} else {
+		saveMission(numMission,false);
 	}
 }
 
 start_script(60);
 
-/* DEBUG : pour nettoyage */
-MZ_removeValue(numTroll+'.MISSION');
 traiteMission();
 
 displayScriptTime();

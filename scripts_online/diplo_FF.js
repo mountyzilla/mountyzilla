@@ -22,7 +22,7 @@ TODO:
  V Étape 2: Gestion couleurs par catégorie (10 couleurs)
  V Étape 3: Ajout de la diplo perso
  X Étape 4: Gestion distante (sécurisée par mdp) de cette option
- X Étape 5: Ajout des fioritures (preview de la couleur...)
+ V Étape 5: Ajout des fioritures (preview de la couleur...)
  
  Options Globales:
  Actuelles:
@@ -145,23 +145,21 @@ function fetchDiploGuilde() {
 				/* Récup des A/E de rang i */
 				var td = document.getElementById('td'+AE+i);
 				var ligne = td.getElementsByTagName('table')[0].rows;
-				if(ligne.length>1) {
-					var titre = trim(td.firstChild.textContent);
-					// On laisse la gestion des couleurs à setChoixCouleurs:
-					var couleur = document.getElementById(AE+i).value;
-					diploGuilde[AE+i] = {
-						Troll:'',
-						Guilde:'',
-						titre: titre,
-						couleur: couleur
-					};
-					for(var j=1 ; j<ligne.length ; j++) {
-						var str = trim(ligne[j].cells[0].textContent);
-						var idx = str.lastIndexOf('(');
-						var num = str.slice(idx+1,-1);
-						var type = trim(ligne[j].cells[1].textContent);
-						diploGuilde[AE+i][type] += num+';';
-					}
+				var titre = trim(td.firstChild.textContent);
+				// On laisse la gestion des couleurs à setChoixCouleurs:
+				var couleur = document.getElementById(AE+i).value;
+				diploGuilde[AE+i] = {
+					Troll:'',
+					Guilde:'',
+					titre: titre,
+					couleur: couleur
+				};
+				for(var j=1 ; j<ligne.length ; j++) {
+					var str = trim(ligne[j].cells[0].textContent);
+					var idx = str.lastIndexOf('(');
+					var num = str.slice(idx+1,-1);
+					var type = trim(ligne[j].cells[1].textContent);
+					diploGuilde[AE+i][type] += num+';';
 				}
 			}
 		}
@@ -243,7 +241,7 @@ function ajouteChamp(type,num,couleur,descr) {
 }
 
 function retireCeChamp() {
-	thisTr = this.parentNode.parentNode;
+	var thisTr = this.parentNode.parentNode;
 	thisTr.parentNode.removeChild(thisTr);
 	var champs = document.getElementById('diploPerso');
 	if(champs.rows.length==0) { ajouteChamp(); }
@@ -278,13 +276,10 @@ function sauvegarderTout() {
 	for(var AE in {Amis:0,Ennemis:0}) {
 		diploGuilde['All'+AE] = document.getElementById('All'+AE).value;
 		for(var i=0 ; i<5 ; i++) {
-			if(diploGuilde[AE+i]) {
-				diploGuilde[AE+i].titre = diploGuilde[AE+i].titre;
-				if(isDetailOn) {
-					diploGuilde[AE+i].couleur = diploGuilde[AE+i].couleur;
-				} else {
-					diploGuilde[AE+i].couleur = diploGuilde['All'+AE];
-				}
+			if(isDetailOn) {
+				diploGuilde[AE+i].couleur = document.getElementById(AE+i).value;
+			} else {
+				diploGuilde[AE+i].couleur = diploGuilde['All'+AE];
 			}
 		}
 	}

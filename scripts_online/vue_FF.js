@@ -39,6 +39,7 @@ var Diplo = {
 	Guilde: {},
 	Troll: {},
 	Monstre: {}
+	// .mythiques: uniquement si option activée
 };
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
@@ -717,7 +718,11 @@ function insertLevelColumn() {
 			this.className = 'mh_tdtitre';
 		};
 		td.onmouseout = function() {
-			this.className = 'mh_tdpage';
+			if(this.parentNode.diploActive=='oui') {
+				this.className = '';
+			} else {
+				this.className = 'mh_tdpage';
+			}
 		};
 		td.style = 'font-weight:bold;text-align:center;';
 		if(isCDMsRetrieved) {
@@ -955,15 +960,15 @@ function computeMission(begin,end) {
 	if(!str) { return; }
 	
 	var urlImg = MZimg+'mission.png';
-	var infosMissions = JSON.parse(str);
+	var obMissions = JSON.parse(str);
 	
 	for(var i=end ; i>=begin ; i--) {
 		var mess = '';
-		for(var num in infosMissions) {
+		for(var num in obMissions) {
 			var mobMission = false;
-			switch(infosMissions[num].type) {
+			switch(obMissions[num].type) {
 				case 'Race':
-					var race = epure(infosMissions[num].race.toLowerCase());
+					var race = epure(obMissions[num].race.toLowerCase());
 					var nom = epure(getMonstreNom(i).toLowerCase());
 					if(nom.indexOf(race)!=-1) {
 						mobMission = true;
@@ -973,8 +978,8 @@ function computeMission(begin,end) {
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
 						var nivMob = Number(donneesMonstre[0]);
-						var	nivMimi = Number(infosMissions[num].niveau),
-							mod = infosMissions[num].mod;
+						var	nivMimi = Number(obMissions[num].niveau),
+							mod = obMissions[num].mod;
 						if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
 							|| (isNaN(mod) && nivMob>=nivMimi)) {
 							mobMission = true;
@@ -984,7 +989,7 @@ function computeMission(begin,end) {
 				case 'Famille':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
-						var familleMimi = epure(infosMissions[num].famille.toLowerCase());
+						var familleMimi = epure(obMissions[num].famille.toLowerCase());
 						var familleMob = epure(donneesMonstre[1].toLowerCase());
 						if(familleMob.indexOf(familleMimi)!=-1) {
 							mobMission = true;
@@ -994,7 +999,7 @@ function computeMission(begin,end) {
 				case 'Pouvoir':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
-						var pvrMimi = epure(infosMission[2].toLowerCase());
+						var pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
 						var pvrMob = epure(donneesMonstre[10].toLowerCase());
 						if(pvrMob.indexOf(pvrMimi)!=-1) {
 							mobMission = true;
@@ -1003,7 +1008,7 @@ function computeMission(begin,end) {
 			}
 			if(mobMission) {
 				mess += mess ? '\n\n' : '';
-				mess += 'Mission '+num+' :\n'+infosMissions[num].libelle;
+				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
 			}
 		}
 		if(mess) {
@@ -1315,7 +1320,7 @@ function refreshDiplo() {
 }
 
 function computeDiplo() {
-// On extrait les données de colueur et on les stocke par id
+// On extrait les données de couleur et on les stocke par id
 // Ordre de préséance :
 //  source Guilde < source Perso
 //  guilde cible < troll cible
@@ -1328,6 +1333,7 @@ function computeDiplo() {
 		if(diploGuilde.guilde) {
 			Diplo.Guilde[diploGuilde.guilde.id] = {
 				couleur: diploGuilde.guilde.couleur,
+				titre: 'Ma Guilde'
 			};
 		}
 		// Guildes/Trolls A/E
@@ -1366,9 +1372,9 @@ function computeDiplo() {
 }
 
 function appliqueDiplo() {
-	/* Évite de recomputer la Diplo */
 	var aAppliquer = Diplo;
 	if(checkBoxDiplo.checked) {
+		// Pour retour à l'affichage basique sur désactivation de la diplo
 		aAppliquer = {
 			Guilde: {},
 			Troll: {},
@@ -1409,9 +1415,10 @@ function appliqueDiplo() {
 		if(aAppliquer.Monstre[id]) {
 			tr_monstres[i].className = '';
 			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			tr_monstres[i].diploActive = 'oui';
 			var descr = aAppliquer.Monstre[id].titre;
 			if(descr) {
-				getMonstreTdNom(i).title = descr
+				getMonstreTdNom(i).title = descr;
 			}
 		} else if(aAppliquer.mythiques &&
 			(nom.indexOf('liche')==0 ||
@@ -1420,9 +1427,11 @@ function appliqueDiplo() {
 			nom.indexOf('beholder')==0)) {
 			tr_monstres[i].className = '';
 			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			tr_monstres[i].diploActive = 'oui';
 			getMonstreTdNom(i).title = 'Monstre Mythique';
 		} else {
 			tr_monstres[i].className = 'mh_tdpage';
+			tr_monstres[i].diploActive = '';
 		}
 	}
 }
@@ -1693,7 +1702,7 @@ function putInfosTrolls() {
 	for(i=nbTrolls ; i>0 ; i--) {
 		var infos = infosTrolls[getTrollID(i)];
 		if(infos) {
-			/* PAs dipos */
+			/* PAs dispos */
 			var span = document.createElement('span');
 			span.title = infos[3];
 			appendText(span, infos[4]+' PA' );

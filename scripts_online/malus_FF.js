@@ -295,7 +295,7 @@ function traiteMalus() {
 		tr = listeBM.snapshotItem(nb); nb++;
 		var effetsT = tr.childNodes[5].textContent.split(' | ');
 		var phymag = tr.childNodes[9].textContent;
-		var duree = parseInt( tr.childNodes[11].textContent.match(/\d+/) );
+		var duree = Number(tr.childNodes[11].textContent.match(/\d+/)[0]);
 		var type = tr.childNodes[3].textContent, nom;
 		// si c'est un type à décumul
 		switch(type) {
@@ -323,7 +323,7 @@ function traiteMalus() {
 			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
 			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
-			var bm = parseInt( effetsT[i].match(/-?\d+/) );
+			var bm = Number(effetsT[i].match(/-?\d+/)[0]);
 			uniListe[nb]['caracs'][carac] = bm;
 			listeDurees[duree] = true;
 			}

@@ -509,14 +509,14 @@ function setInfosPV() { // pour AM et Sacro
 
 function setCurrentEsquive() {
 	var pnode = mainTR.snapshotItem(6).childNodes[3].firstChild;
-	var attmod = pnode.childNodes[3].nodeValue.match(/\d+/);
+	var attmod = pnode.childNodes[3].nodeValue.match(/\d+/)[0];
 	pnode.childNodes[3].nodeValue +=
 		' (moyenne attaque : '+Math.max(attmoy-3.5*attmod,attbm,0)+')';
-	var esqmod = pnode.childNodes[5].nodeValue.match(/\d+/);
+	var esqmod = pnode.childNodes[5].nodeValue.match(/\d+/)[0];
 	pnode.childNodes[5].nodeValue +=
 		' (moyenne esquive : '+Math.max(esqmoy-3.5*esqmod,esqbm,0)+')';
 	nbattaques = parseInt(esqmod);
-	var armmod = pnode.childNodes[7].nodeValue.match(/\d+/);
+	var armmod = pnode.childNodes[7].nodeValue.match(/\d+/)[0];
 	pnode.childNodes[7].nodeValue +=	
 		' (moyenne armure : '+Math.max(armmoy-2*armmod,armbmp+armbmm,0)+')';
 	}
