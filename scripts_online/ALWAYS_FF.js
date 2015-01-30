@@ -50,7 +50,7 @@ else if(isPage('MH_Play/TurnStart')) {
 	window.alert('Heure lancement MH:\n'+MZ_getValue('temp'));
 }*/
 
-/*if(isPage('MH_Missions/Mission_Liste.php')) {
+if(isPage('MH_Missions/Mission_Liste.php')) {
 	avertissement(
 		JSON.stringify(
 			JSON.parse(MZ_getValue(numTroll+'.MISSIONS')),
@@ -62,5 +62,5 @@ else if(isPage('MH_Play/TurnStart')) {
 			replace(/\\\"/g,'"'),
 		10000
 	);
-}*/
+}
 
