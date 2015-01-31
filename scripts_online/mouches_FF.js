@@ -25,7 +25,7 @@ function initialiseMouches() {
 		tr_mouches = document.evaluate('./tbody/tr', mainTab, null, 7, null);
 	} catch(e) {
 		avertissement('Erreur MZ:<br />Consulter la console.');
-		console.error('Erreur MZ mouches:\n'+e);
+		window.console.error('Erreur MZ mouches:\n'+e);
 		return;
 	}
 	if(mainTab===void(0) || tr_mouches.snapshotLength==0) { return; }

@@ -28,7 +28,7 @@ function saveMission(num,obEtape) {
 		try {
 			obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
-			console.error('[MZ Mission] Erreur parsage:\n'+e);
+			window.console.error('[MZ Mission] Erreur parsage:\n'+e);
 			return;
 		}
 	}
@@ -49,7 +49,7 @@ function traiteMission() {
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 			missionForm, null, 9, null).singleNodeValue;
 	} catch(e) {
-		console.error('[MZ Mission] Erreur récupération mission:\n'+e);
+		window.console.error('[MZ Mission] Erreur récupération mission:\n'+e);
 		return;
 	}
 	if(!numMission) { return; }
