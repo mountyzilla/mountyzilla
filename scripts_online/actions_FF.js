@@ -279,19 +279,23 @@ function changeActionDecalage() {
 /*-[functions]------------------- Alerte Mundi -------------------------------*/
 
 function prochainMundi() {
-	var node = document.evaluate(
-		"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
-		document, null, 9, null).singleNodeValue;
-	if(!node) {
+	try {
+		var node = document.evaluate(
+			"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
+			document, null, 9, null).singleNodeValue;
+	} catch(e) {
+		window.console.log('[Erreur prochainMundi] Node introuvable');
 		return;
 	}
-	var jour = 29-getNumber(node.nodeValue);
-	if(node.nodeValue.indexOf('Mundidey')!=-1) jour=28;
+	if(!node) { return; }
+	
+	var longueurMois = node.nodeValue.indexOf('Saison du Hum')==-1?28:14;
+	var jour = longueurMois+1-getNumber(node.nodeValue);
+	if(node.nodeValue.indexOf('Mundidey')!=-1) { jour=longueurMois; }
 	var txt = '[Prochain Mundidey ';
 	if(jour>1) {
 		txt += 'dans '+jour+' jours]';
-	}
-	else {
+	} else {
 		txt += 'demain]';
 	}
 	insertText(node.parentNode.parentNode.nextSibling,txt,true);
