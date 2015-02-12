@@ -33,7 +33,7 @@ function traiteMonstre() {
 		).singleNodeValue;
 		var texte = nodeTitre.firstChild.nodeValue;
 	} catch(e) {
-		console.log(e);
+		window.console.log(e);
 		return;
 	}
 	
@@ -116,7 +116,7 @@ function computeMission() {
 			document, null, 9, null
 		).singleNodeValue;
 	} catch(e) {
-		console.log(e);
+		window.console.log(e);
 		return;
 	}
 	var table = createCDMTable(idMonstre,nomMonstre,listeCDM[idMonstre]);

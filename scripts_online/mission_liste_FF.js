@@ -14,7 +14,7 @@ function checkLesMimis() {
 		);
 		var obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
 	} catch(e) {
-		console.error('[MZ mission_liste] Erreur initialisation:\n'+e);
+		window.console.error('[MZ mission_liste] Erreur initialisation:\n'+e);
 		return;
 	}
 	

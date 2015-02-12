@@ -266,7 +266,7 @@ function initAll() {
 		HeureServeur = new Date( StringToDate(str) );
 		}
 	catch(e) {
-		console.warn('MZ: Heure Serveur introuvable, '
+		window.console.warn('MZ: Heure Serveur introuvable, '
 			+"utilisation de l'heure actuelle à la place\n"+e);
 		HeureServeur = new Date();
 		}

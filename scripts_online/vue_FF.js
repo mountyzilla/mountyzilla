@@ -940,7 +940,7 @@ function retrieveCDMs() {
 					}
 					catch(e)
 					{
-						console.error(e+'\n'+url+'\n'+texte);
+						window.console.error(e+'\n'+url+'\n'+texte);
 					}
 					}
 				});
@@ -1948,5 +1948,5 @@ try {
 
 	displayScriptTime();
 } catch(e) {
-	console.error(e);
+	window.console.error(e);
 }

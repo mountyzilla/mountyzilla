@@ -123,7 +123,7 @@ function setChoixCouleurs() {
 			form, null, 7, null
 		);
 	} catch(e) {
-		console.error('[Diplomatie] Structure de la page non reconnue');
+		window.console.error('[Diplomatie] Structure de la page non reconnue');
 		return false;
 	};
 	nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
@@ -164,7 +164,7 @@ function fetchDiploGuilde() {
 			}
 		}
 	} catch(e) {
-		console.error('[Diplomatie] Échec de récupération de la diplo\n'+e);
+		window.console.error('[Diplomatie] Échec de récupération de la diplo\n'+e);
 		return false;
 	}
 	return true;
