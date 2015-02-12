@@ -2069,9 +2069,16 @@ function analyseTags(data) {
 if(!isPage("MH_Play/Play_vue.php") && !isPage("MH_Play/Play_menu.php"))
 	performTagComputation();
 
+/* DEBUG - En attendant l'upgrade vers MZ2 */
 if(isPage('MH_Missions/Mission_Liste.php')
 	&& MZ_getValue(numTroll+'.MISSIONS')) {
 	MZ_appendNewScript(
 		'http://mountyzilla.tilk.info/scripts_0.9/mission_liste_FF.js'
+	);
+}
+
+if(isPage('MH_Play/Play_action')) {
+	appendNewScript(
+		'http://mountyzilla.tilk.info/scripts_0.9/actions_FF.js'
 	);
 }
