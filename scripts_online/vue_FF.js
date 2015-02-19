@@ -86,7 +86,7 @@ function fetchData(type) {
 		this['tr_'+type] = node.getElementsByTagName('tr');
 		this['nb'+type[0].toUpperCase()+type.slice(1)] = this['tr_'+type].length-1;
 	} catch(e) {
-		console.warn('[MZ Vue] Erreur acquisition type '+type+'\n'+e);
+		window.console.warn('[MZ Vue] Erreur acquisition type '+type+'\n'+e);
 	}
 }
 
@@ -94,21 +94,6 @@ for(var type in typesAFetcher) {
 	fetchData(type);
 }
 
-/*var node = document.getElementById('mh_vue_hidden_monstres');
-var tr_monstres = node.getElementsByTagName('tr');
-var nbMonstres = tr_monstres.length-1;
-node = document.getElementById('mh_vue_hidden_trolls');
-var tr_trolls = node.getElementsByTagName('tr');
-var nbTrolls = tr_trolls.length-1;
-node = document.getElementById('mh_vue_hidden_tresors');
-var tr_tresors = node.getElementsByTagName('tr');
-var nbTresors = tr_tresors.length-1;
-node = document.getElementById('mh_vue_hidden_champignons');
-var tr_champis = node.getElementsByTagName('tr');
-var nbChampis = tr_champis.length-1;
-node = document.getElementById('mh_vue_hidden_lieux');
-var tr_lieux = node.getElementsByTagName('tr');
-var nbLieux = tr_lieux.length-1;*/
 /*---------------------------------- DEBUG -----------------------------------*/
 var mainTabs = document.getElementsByClassName('mh_tdborder');
 var x_monstres = tr_monstres;
@@ -585,7 +570,7 @@ function prepareFiltrage(ref,width) {
 	try {
 		var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
 	} catch(e) {
-		console.warn('[MZ Vue] Référence filtrage '+ref+' non trouvée\n'+e);
+		window.console.warn('[MZ Vue] Référence filtrage '+ref+' non trouvée\n'+e);
 		return false;
 	}
 	if(width) { tdTitre.width = width; }
@@ -981,7 +966,7 @@ function retrieveCDMs() {
 					}
 					catch(e)
 					{
-						console.error(e+'\n'+url+'\n'+texte);
+						window.console.error(e+'\n'+url+'\n'+texte);
 					}
 					}
 				});
@@ -1991,5 +1976,5 @@ try {
 
 	displayScriptTime();
 } catch(e) {
-	console.error(e);
+	window.console.error(e);
 }
