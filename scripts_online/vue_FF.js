@@ -125,7 +125,7 @@ function savePosition() {
  * (mh_vue_hidden_XXX, XXX=trolls, champis, etc)
  */
 
-function getPositionStr(pos) {
+function position2Str(pos) {
 	// À renommer. Grave.
 	return pos[0]+';'+pos[1]+';'+pos[2];
 }
@@ -221,13 +221,13 @@ function getMonstrePosition(i) {
 
 function appendMonstres(txt) {
 	for(var i=1; i<=nbMonstres ; i++)
-		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+getPositionStr(getMonstrePosition(i))+'\n';
+		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+position2Str(getMonstrePosition(i))+'\n';
 	return txt;
 }
 
 function getMonstres() {
 	var vue = getVue();
-	return appendMonstres(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+	return appendMonstres(position2Str(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
 /* [functions] Récup données Trolls */
@@ -305,7 +305,7 @@ function appendLieux(txt) {
 
 function getLieux() {
 	var vue = getVue();
-	return appendLieux(getPositionStr(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+	return appendLieux(position2Str(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
 
@@ -371,7 +371,7 @@ var vue2Ddata = {
 		getVueScript, ['mode','vue_SP_Vue2','screen_width',window.screen.width] ],
 	'Vue du CCM':
 		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
-		getVueScript, ['id',numTroll+';'+getPositionStr(getPosition())] ],
+		getVueScript, ['id',numTroll+';'+position2Str(getPosition())] ],
 	'Vue Gloumfs 2D' :
 		['http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla', getVueScript, [] ],
 	'Vue Gloumfs 3D':
@@ -384,9 +384,9 @@ var vue2Ddata = {
 function getVueScript() {
 	try
 	{
-		txt = '#DEBUT TROLLS\n'+numTroll+';'+getPositionStr(getPosition())+'\n';
+		txt = '#DEBUT TROLLS\n'+numTroll+';'+position2Str(getPosition())+'\n';
 		for(var i=1; i <=nbTrolls ; i++) {
-			txt += getTrollID(i)+';'+getPositionStr(getTrollPosition(i))+'\n';
+			txt += getTrollID(i)+';'+position2Str(getTrollPosition(i))+'\n';
 			}
 		txt = appendMonstres(txt+'#FIN TROLLS\n#DEBUT MONSTRES\n')+'#FIN MONSTRES\n#DEBUT TRESORS\n';
 		for(var i=1 ; i<=nbTresors ; i++) {
@@ -400,7 +400,7 @@ function getVueScript() {
 			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
 				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
 			}
-		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getVue()[0]+';'+getPositionStr(getPosition())+'\n#FIN ORIGINE\n';
+		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getVue()[0]+';'+position2Str(getPosition())+'\n#FIN ORIGINE\n';
 	}
 	catch(e) {window.alert(e)}
 	}
@@ -1769,7 +1769,38 @@ function putInfosTrolls() {
 	}
 
 
-/* [functions] Gros tas de fonctions à ranger */
+/* Mode Tétalanvert! ---------------------------------------------------------*/
+
+function calculeDistance(maPos,posArr) {
+	return Math.max(
+		Math.abs(maPos[0]-posArr[0]),
+		Math.abs(maPos[1]-posArr[1]),
+		Math.abs(maPos[2]-posArr[2])
+	);
+}
+
+function inversionCoord() {
+	var maPos = getPosition();
+	var listeOffsets = {
+		'monstres':checkBoxLevels.checked?4:3,
+		'trolls':6,
+	};
+	for(var type in listeOffsets) {
+		var trList = this['tr_'+type];
+		var offset = listeOffsets[type];
+		for(var i=trList.length-1 ; i>0 ; i--) {
+			var oldX = parseInt(trList[i].cells[offset].textContent);
+			var oldY = parseInt(trList[i].cells[offset+1].textContent);
+			var oldN = parseInt(trList[i].cells[offset+2].textContent);
+			trList[i].cells[offset].innerHTML = oldY;
+			trList[i].cells[offset+1].innerHTML = oldX;
+			trList[i].cells[0].innerHTML = calculeDistance(maPos,[oldY,oldX,oldN]);
+		}
+	}
+}
+
+
+/* [functions] Gros tas de fonctions à ranger (Tags seulement?) --------------*/
 
 // POPUP TAGS
 
@@ -1939,6 +1970,11 @@ try {
 	start_script(31);
 
 	creerTableauInfos();
+	
+	if(MZ_getValue(numTroll+'.VERLAN')=='true') {
+		inversionCoord();
+	}
+	
 	ajoutDesFiltres();
 	set2DViewSystem();
 	putBoutonMonstres();
@@ -1973,7 +2009,7 @@ try {
 	computeTelek();
 	computeChargeProjo(); // TODO À décomposer
 	putScriptExterne();
-
+	
 	displayScriptTime();
 } catch(e) {
 	window.console.error(e);
