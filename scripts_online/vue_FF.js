@@ -257,10 +257,11 @@ function getTrollPosition(i) {
 	var tds = tr_trolls[i].childNodes;
 	var l = tds.length;
 	return [
+		tds[l-4].firstChild.nodeValue,
 		tds[l-3].firstChild.nodeValue,
-		tds[l-2].firstChild.nodeValue,
-		tds[l-1].firstChild.nodeValue ];
-	}
+		tds[l-2].firstChild.nodeValue
+	];
+}
 
 /* [functions] Récup données Trésors */
 function getTresorDistance(i) {
