@@ -377,12 +377,12 @@ function setNextDLA() {
 	while(DLAsuivMSec<HeureServeur) {
 		DLAsuivMSec += DureeTour;
 		loupes++;
-		}
+	}
 	DLAsuiv = new Date( DLAsuivMSec );
 	appendBr(node);
 	appendText(node,
 		'---> Prochaine DLA (estimée)............: '+DateToString(DLAsuiv)
-		);
+	);
 	/* Estimation des DLA suivantes */
 	var title = '';
 	var nextPv = pv;
@@ -394,17 +394,21 @@ function setNextDLA() {
 			+'DLA +'+i+': '+DateToString( new Date(DLAsuivMSec) )
 			+' ('+nextPv+'PV, durée: '+dureeHM(nextTour)+')';
 		DLAsuivMSec += nextTour*6e4;
-		}
+	}
 	node.parentNode.title = title;
 	/* Affichage des tours manqués */
 	if(loupes==1) {
-		node.nextSibling.nodeValue = ' (Vous avez manqué votre dernier tour)';
-		}
-	else if(loupes>1) {
-		node.nextSibling.nodeValue =
-			' (Vous avez manqué vos '+loupes+' derniers tours)';
-		}
+		appendText(
+			node.parentNode,
+			' (Vous avez manqué votre dernier tour)'
+		);
+	} else if(loupes>1) {
+		appendText(
+			node.parentNode,
+			' (Vous avez manqué vos '+loupes+' derniers tours)'
+		);
 	}
+}
 
 function vueCarac() {
 	var caracBody = mainTR.snapshotItem(5).childNodes[3].childNodes[1];
@@ -522,13 +526,13 @@ function setCurrentEsquive() {
 	}
 
 function setStabilite() {
-	var node = mainTR.snapshotItem(5).childNodes[3].childNodes[2];
+	var node = mainTR.snapshotItem(5).childNodes[3].childNodes[3];
 	appendBr(node);
 	appendText(node,
 		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
 		+' (moyenne : '+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+')'
-		);
-	}
+	);
+}
 
 function setRatioKillDeath() {
 	try{
