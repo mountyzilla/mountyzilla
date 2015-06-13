@@ -400,7 +400,7 @@ function getVueScript() {
 			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
 				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
 			}
-		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getVue()[0]+';'+position2Str(getPosition())+'\n#FIN ORIGINE\n';
+		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getPorteVue()[2]+';'+position2Str(getPosition())+'\n#FIN ORIGINE\n';
 	}
 	catch(e) {window.alert(e)}
 	}
