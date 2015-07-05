@@ -166,58 +166,58 @@ function getVue() {
 
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
-	return tr_monstres[i].firstChild.firstChild.nodeValue;
-	}
+	return tr_monstres[i].cells[0].firstChild.nodeValue;
+}
 
 function getMonstreID(i) {
-	return tr_monstres[i].childNodes[1].firstChild.nodeValue;
-	}
+	return tr_monstres[i].cells[1].firstChild.nodeValue;
+}
 
 function getMonstreIDByTR(tr) {
-	return tr.childNodes[1].firstChild.nodeValue;
-	}
+	return tr.cells[1].firstChild.nodeValue;
+}
 
 function getMonstreLevelNode(i) {
-	return tr_monstres[i].childNodes[2];
-	}
+	return tr_monstres[i].cells[2];
+}
 
 function getMonstreLevel(i) {
 	if(!isCDMsRetrieved) return -1;
 	var donneesMonstre = listeCDM[getMonstreID(i)];
 	return donneesMonstre ? parseInt(donneesMonstre[0]) : -1;
-	}
+}
 
-function getMonstreTdNom(i) {
+function getMonstreNomNode(i) {
 	try {
-		return tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-		}
-	catch(e) {
-		window.alert('[getMonstreTdNom] Impossible de trouver le monstre '+i);
-		}
+		return tr_monstres[i].cells[checkBoxLevels.checked ? 2 : 3];
+	} catch(e) {
+		window.alert('[getMonstreNomNode] Impossible de trouver le monstre '+i);
 	}
+}
 
 function getMonstreNom(i) {
 	try {
-		return tr_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3]
-			.firstChild.firstChild.nodeValue;
-		}
-	catch(e) {
+		return tr_monstres[i].cells[checkBoxLevels.checked ? 2 : 3].
+			firstChild.firstChild.nodeValue;
+	} catch(e) {
 		window.alert('[getMonstreNom] Impossible de trouver le monstre '+i);
-		}
 	}
+}
 
 function getMonstreNomByTR(tr) {
-	return tr.childNodes[checkBoxLevels.checked ? 2 : 3]
-		.firstChild.firstChild.nodeValue;
-	}
+	return tr.cells[checkBoxLevels.checked ? 2 : 3].
+		firstChild.firstChild.nodeValue;
+}
 
 function getMonstrePosition(i) {
 	var tds = tr_monstres[i].childNodes;
-	var c = checkBoxLevels.checked ? 0 : 1;
-	return [ tds[3+c].firstChild.nodeValue,
-			tds[4+c].firstChild.nodeValue,
-			tds[5+c].firstChild.nodeValue ];
-	}
+	var X = checkBoxLevels.checked ? 3 : 4;
+	return [
+		tds[X].firstChild.nodeValue,
+		tds[X+1].firstChild.nodeValue,
+		tds[X+2].firstChild.nodeValue
+	];
+}
 
 function appendMonstres(txt) {
 	for(var i=1; i<=nbMonstres ; i++)
@@ -232,26 +232,35 @@ function getMonstres() {
 
 /* [functions] Récup données Trolls */
 function getTrollDistance(i) {
-	return tr_trolls[i].firstChild.firstChild.nodeValue;
-	}
+	return tr_trolls[i].cells[0].firstChild.nodeValue;
+}
 
 function getTrollID(i) {
-	return tr_trolls[i].childNodes[1].firstChild.nodeValue;
-	}
+	return tr_trolls[i].cells[1].firstChild.nodeValue;
+}
 
 function getTrollNomNode(i) {
 	var isEnvoiOn =
 		document.getElementById('btnEnvoi').parentNode.childNodes.length>1;
-	return tr_trolls[i].childNodes[ isEnvoiOn ? 3 : 2 ];
-	}
+	return tr_trolls[i].cells[ isEnvoiOn ? 2 : 3 ];
+}
+
+function getTrollNivNode(i) {
+	// Pas de test sur isEnvoiOn, n'est appelé qu'au pageload
+	return tr_trolls[i].cells[3];
+}
+
+function getTrollGuildeNode(i) {
+	return tr_trolls[i].cells[5];
+}
 
 function getTrollGuildeID(i) {
-	if(tr_trolls[i].childNodes[5].firstChild.childNodes.length>0) {
+	if(tr_trolls[i].childNodes[5].childNodes.length>0) {
 		var href = tr_trolls[i].childNodes[5].firstChild.getAttribute('href');
 		return href.substring(href.indexOf('(')+1,href.indexOf(','));
-		}
-	return -1;
 	}
+	return -1;
+}
 
 function getTrollPosition(i) {
 	var tds = tr_trolls[i].childNodes;
@@ -259,16 +268,17 @@ function getTrollPosition(i) {
 	return [
 		tds[l-3].firstChild.nodeValue,
 		tds[l-2].firstChild.nodeValue,
-		tds[l-1].firstChild.nodeValue ];
-	}
+		tds[l-1].firstChild.nodeValue
+	];
+}
 
 /* [functions] Récup données Trésors */
 function getTresorDistance(i) {
-	return tr_tresors[i].firstChild.firstChild.nodeValue;
+	return tr_tresors[i].cells[0].firstChild.nodeValue;
 }
 
 function getTresorTdNom(i) {
-	return tr_tresors[i].childNodes[2];
+	return tr_tresors[i].cells[2];
 }
 
 function getTresorNom(i) {
@@ -291,7 +301,7 @@ function getLieuDistance(i) {
 }
 
 function getLieuNom(i) { /* DEBUG - en test */
-	return tr_lieux[i].childNodes[2].childNodes[1].textContent;
+	return tr_lieux[i].cells[2].childNodes[1].textContent;
 }
 
 function appendLieux(txt) {
@@ -366,44 +376,70 @@ function synchroniseFiltres() {
 /* [functions] Menu Vue 2D */
 // DEBUG: à refaire plus clairement en JSON
 var vue2Ddata = {
-	'Bricol\' Vue':
-		['http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
-		getVueScript, ['mode','vue_SP_Vue2','screen_width',window.screen.width] ],
-	'Vue du CCM':
-		['http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
-		getVueScript, ['id',numTroll+';'+position2Str(getPosition())] ],
-	'Vue Gloumfs 2D' :
-		['http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Vue Gloumfs 3D':
-		['http://gloumf.free.fr/vue3d.php', 'vue_mountyzilla', getVueScript, [] ],
-	'Grouky Vue!':
-		['http://ythogtha.org/MH/grouky.py/grouky', 'vue',
-		getVueScript, ['type_vue', 'V5b1'] ]
+	'Bricol\' Vue': [
+		'http://trolls.ratibus.net/mountyhall/vue_form.php', 'vue',
+		getVueScript, ['mode','vue_SP_Vue2','screen_width',window.screen.width]
+	],
+	'Vue du CCM': [
+		'http://clancentremonde.free.fr/Vue2/RecupVue.php', 'vue',
+		getVueScript, ['id',numTroll+';'+position2Str(getPosition())]
+	],
+	'Vue Gloumfs 2D' : [
+		'http://gloumf.free.fr/vue2d.php', 'vue_mountyzilla',
+		getVueScript, []
+	],
+	'Vue Gloumfs 3D': [
+		'http://gloumf.free.fr/vue3d.php', 'vue_mountyzilla',
+		getVueScript, []
+	],
+	'Grouky Vue!': [
+		'http://ythogtha.org/MH/grouky.py/grouky', 'vue',
+		getVueScript, ['type_vue', 'V5b1']
+	]
 };
 
 function getVueScript() {
-	try
-	{
+	try {
+		
 		txt = '#DEBUT TROLLS\n'+numTroll+';'+position2Str(getPosition())+'\n';
-		for(var i=1; i <=nbTrolls ; i++) {
+		for(var i=1 ; i <=nbTrolls ; i++) {
 			txt += getTrollID(i)+';'+position2Str(getTrollPosition(i))+'\n';
-			}
-		txt = appendMonstres(txt+'#FIN TROLLS\n#DEBUT MONSTRES\n')+'#FIN MONSTRES\n#DEBUT TRESORS\n';
+		}
+		
+		txt = appendMonstres(txt+'#FIN TROLLS\n#DEBUT MONSTRES\n')+
+			'#FIN MONSTRES\n#DEBUT TRESORS\n';
+		
 		for(var i=1 ; i<=nbTresors ; i++) {
-			var tds = x_tresors[i].childNodes;
-			txt += tds[1].firstChild.nodeValue+';'+getTresorNom(i)+';'+tds[3].firstChild.nodeValue+';'
-				+tds[4].firstChild.nodeValue+';'+tds[5].firstChild.nodeValue+'\n';
-			}
-	    txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+'#FIN LIEUX\n#DEBUT CHAMPIGNONS\n';
-	    for(var i=1 ; i <=nbChampignons ; i++) {
-			var tds = x_champis[i].childNodes;
-			txt += ';'+tds[1].firstChild.nodeValue+';'+tds[2].firstChild.nodeValue+';'
-				+tds[3].firstChild.nodeValue+';'+tds[4].firstChild.nodeValue+'\n';
-			}
-		return txt+'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+getPorteVue()[2]+';'+position2Str(getPosition())+'\n#FIN ORIGINE\n';
+			var tds = tr_tresors[i].childNodes;
+			txt +=
+				tds[2].firstChild.nodeValue+';'+
+				getTresorNom(i)+';'+
+				tds[3].firstChild.nodeValue+';'+
+				tds[4].firstChild.nodeValue+';'+
+				tds[5].firstChild.nodeValue+'\n';
+		}
+		
+		txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+
+			'#FIN LIEUX\n#DEBUT CHAMPIGNONS\n';
+		
+		for(var i=1 ; i <=nbChampignons ; i++) {
+			var tds = tr_champignons[i].childNodes;
+			txt +=
+				';'+
+				tds[1].firstChild.nodeValue+';'+
+				tds[2].firstChild.nodeValue+';'+
+				tds[3].firstChild.nodeValue+';'+
+				tds[4].firstChild.nodeValue+'\n';
+		}
+		
+		return txt+
+			'#FIN CHAMPIGNONS\n#DEBUT ORIGINE\n'+
+			getPorteVue()[2]+';'+position2Str(getPosition())+
+			'\n#FIN ORIGINE\n';
+	} catch(e) {
+		window.alert('[getVueScript]\n'+e)
 	}
-	catch(e) {window.alert(e)}
-	}
+}
 
 function refresh2DViewButton() {
 	// = EventListener menu+bouton vue 2D
@@ -763,8 +799,7 @@ function toggleLevelColumn() {
 	if(!saveCheckBox(checkBoxLevels,'NOLEVEL')) {
 		insertLevelColumn();
 		if(!isCDMsRetrieved) { retrieveCDMs(); }
-	}
-	else if(getMonstreLevelNode(0).textContent=='Niveau') {
+	} else if(getMonstreLevelNode(0).textContent=='Niveau') {
 		for(var i=0 ; i<=nbMonstres ; i++) {
 			if(isCDMsRetrieved) {
 				// Mémorisation des niveaux pour rappel éventuel
@@ -918,11 +953,15 @@ function retrieveCDMs() {
 	if(MZ_getValue('CDMID')==null) MZ_setValue('CDMID',1); // à quoi sert CDMID ??
 	
 	for(var i=1 ; i<=cdmMax ; i++) {
-		var nomMonstre = retireMarquage(getMonstreNom(i,true));
-		if(nomMonstre.indexOf(']') != -1)
-			nomMonstre = nomMonstre.substring(0,nomMonstre.indexOf(']')+1);
-		str += 'nom[]=' + escape(nomMonstre) + '$'
-			+ (getMonstreDistance(i) <= 5 ? getMonstreID(i) : -getMonstreID(i)) + '&';
+		var nomMonstre = retireMarquage(getMonstreNom(i));
+		if(nomMonstre.indexOf(']') != -1) {
+			nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
+		}
+		// *** WARNING : PROXY RATIBUS ***
+		// *** NE PAS CHANGER la fonction obsolète 'escape' ***
+		str += 'nom[]='+escape(nomMonstre)+'$'+(
+			getMonstreDistance(i)<=5 ? getMonstreID(i) : -getMonstreID(i)
+		)+'&';
 		
 		if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
 			var url = 'http://mountypedia.ratibus.net/mz/monstres_0.9_post_FF.php';
@@ -937,45 +976,42 @@ function retrieveCDMs() {
 				},
 				data: 'begin='+begin+'&idcdm='+MZ_getValue('CDMID')+'&'+str,
 				onload: function(responseDetails) {
-					try
-					{
+					try {
 						var texte = responseDetails.responseText;
 						var lines = texte.split('\n');
-						if(lines.length==0)
-							return;
-						var begin2,end2,index;
-						for(var j=0;j<lines.length;j++) {
+						if(lines.length==0) { return; }
+						var begin2, end2, index;
+						for(var j=0 ; j<lines.length ; j++) {
 							var infos = lines[j].split(';');
-							if(infos.length<4)
-								continue;
+							if(infos.length<4) { continue; }
 							var idMonstre=infos[0];
 							var isCDM = infos[1];
 							index = parseInt(infos[2]);
 							var level = infos[3];
-							infos=infos.slice(3);
-							if(begin2==null)
-								begin2=index;
-							end2=index;
+							infos = infos.slice(3);
+							if(begin2==null) { begin2 = index; }
+							end2 = index;
 							listeCDM[idMonstre] = infos;
-							if(isCDM==1)
-								x_monstres[index].childNodes[2].innerHTML='<i>'+level+'</i>';
-							else
-								x_monstres[index].childNodes[2].innerHTML=level;
+							if(isCDM==1) {
+								getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
+							} else {
+								getMonstreLevelNode(index).innerHTML = level;
 							}
+						}
 						computeMission(begin2,end2);
+					} catch(e) {
+						window.console.error(
+							'[retrieveCDMs]\n'+e+'\n'+url+'\n'+texte
+						);
 					}
-					catch(e)
-					{
-						window.console.error(e+'\n'+url+'\n'+texte);
-					}
-					}
-				});
+				}
+			});
 			str = '';
-			begin = i + 1;
-			}
+			begin = i+1;
 		}
-	isCDMsRetrieved=true;
 	}
+	isCDMsRetrieved=true;
+}
 
 function computeMission(begin,end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance
@@ -1038,7 +1074,7 @@ function computeMission(begin,end) {
 			}
 		}
 		if(mess) {
-			var td = getMonstreTdNom(i);
+			var td = getMonstreNomNode(i);
 			appendText(td,' ');
 			td.appendChild(createImage(urlImg,mess));
 		}
@@ -1083,7 +1119,7 @@ function computeTactique(begin, end) {
 			var nom = getMonstreNom(j);
 			var donneesMonstre = listeCDM[id];
 			if(donneesMonstre && nom.indexOf('Gowap')==-1) {
-				var td = getMonstreTdNom(j);
+				var td = getMonstreNomNode(j);
 				appendText(td,' ');
 				td.appendChild(
 					createImageTactique(MZimg+'calc2.png', id, nom)
@@ -1104,7 +1140,7 @@ function updateTactique() {
 	
 	if(noTactique) {
 		for(var i=nbMonstres ; i>0 ; i--) {
-			var tr = getMonstreTdNom(i);
+			var tr = getMonstreNomNode(i);
 			var img = document.evaluate("img[@src='"+MZimg+"calc2.png']",
 				tr, null, 9, null).singleNodeValue;
 			if(img) {
@@ -1209,13 +1245,13 @@ function filtreMonstres() {
 			if(noEM) {
 				// Si noEM passe de false à true, on nettoie les td "Nom"
 				// DEBUG: Sauf que ce serait carrément mieux avec des id...
-				var tr = getMonstreTdNom(i);
+				var tr = getMonstreNomNode(i);
 				while(tr.childNodes.length>1) {
 					tr.removeChild(tr.childNodes[1]);
 				}
 			}
 			else {
-				var tr = getMonstreTdNom(i);
+				var tr = getMonstreNomNode(i);
 				var TypeMonstre=getEM(nom);
 				if(TypeMonstre!='') {
 					var infosCompo=compoMobEM(TypeMonstre);
@@ -1229,7 +1265,7 @@ function filtreMonstres() {
 		if(needComputeEnchantement || (noEM!=oldNOEM && noEM)) {
 			var texte = getInfoEnchantementFromMonstre(nom);
 			if(texte!='') {
-				var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
+				var tr = getMonstreNomNode(i);
 				tr.appendChild(document.createTextNode(' '));
 				tr.appendChild(createImage(urlEnchantImg, texte));
 			}
@@ -1279,14 +1315,18 @@ function filtreTrolls() {
 	var strGuilde = document.getElementById('strGuildes').value.toLowerCase();
 	for(var i=1 ; i<=nbTrolls ; i++) {
 		var tds = tr_trolls[i].childNodes;
-		tr_trolls[i].style.display =
-			(noIntangibles && tds[2].firstChild.className=='mh_trolls_0')
-			|| (strTroll!=''
-				&& getTrollNomNode(i).textContent.toLowerCase().indexOf(strTroll)==-1)
-			|| (strGuilde!=''
-				&& (!tds[5].firstChild.firstChild
-					|| tds[5].textContent.toLowerCase().indexOf(strGuilde)==-1) )
-			? 'none' : '';
+		tr_trolls[i].style.display = (
+			noIntangibles &&
+			getTrollNomNode(i).firstChild.className=='mh_trolls_0'
+		) || (
+			strTroll!='' &&
+			getTrollNomNode(i).textContent.toLowerCase().indexOf(strTroll)==-1
+		) || (
+			strGuilde!='' && (
+				!getTrollGuildeNode(i).firstChild.firstChild ||
+				getTrollGuildeNode(i).textContent.toLowerCase().indexOf(strGuilde)==-1
+			)
+		) ? 'none' : '';
 	}
 }
 
@@ -1444,7 +1484,7 @@ function appliqueDiplo() {
 			tr_monstres[i].diploActive = 'oui';
 			var descr = aAppliquer.Monstre[id].titre;
 			if(descr) {
-				getMonstreTdNom(i).title = descr;
+				getMonstreNomNode(i).title = descr;
 			}
 		} else if(aAppliquer.mythiques &&
 			(nom.indexOf('liche')==0 ||
@@ -1454,7 +1494,7 @@ function appliqueDiplo() {
 			tr_monstres[i].className = '';
 			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
 			tr_monstres[i].diploActive = 'oui';
-			getMonstreTdNom(i).title = 'Monstre Mythique';
+			getMonstreNomNode(i).title = 'Monstre Mythique';
 		} else {
 			tr_monstres[i].className = 'mh_tdpage';
 			tr_monstres[i].diploActive = '';
@@ -1478,7 +1518,7 @@ function initPXTroll() {
 	document.body.appendChild(bulle);
 
 	for(var i=nbTrolls ; i>0 ; i--) {
-		var td_niv = tr_trolls[i].childNodes[3];
+		var td_niv = getTrollNivNode(i);
 		td_niv.onmouseover = showPXTroll;
 		td_niv.onmouseout = hidePXTroll;
 	}
