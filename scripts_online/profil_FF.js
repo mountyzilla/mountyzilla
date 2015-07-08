@@ -1607,5 +1607,6 @@ try {
 	displayScriptTime();
 }
 catch(e) {
-	window.alert(e)
+	avertissement(e, 10000);
+	window.console.debug(e);
 }
