@@ -895,7 +895,6 @@ function injecteInfosBulles(liste,fonction) {
 	for(var i=0 ; i<liste.length ; i++) {
 		var node = document.evaluate("./td/a[starts-with(@href, 'javascript:Enter')]",
 			liste[i], null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		window.console.debug(node);
 		var nom = epure(trim(node.textContent));
 		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
 			.firstChild.nodeValue);
