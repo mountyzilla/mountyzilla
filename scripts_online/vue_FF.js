@@ -1099,7 +1099,8 @@ function computeVLC(begin,end) {
 		{
 			if(donneesMonstre[12]==1)
 			{
-				var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
+				tr = document.evaluate("./td/a[starts-with(@href, 'javascript:EMV')]/..",
+						x_monstres[i], null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null).iterateNext();
 				tr.appendChild(document.createTextNode(" "));
 				tr.appendChild(createImage(urlImg, "Voit le caché"));
 			}
