@@ -196,17 +196,18 @@ function getMonstreTdNom(i) {
 }
 
 function getMonstreNom(i) {
-	try {
-		return tr_monstres[i].cells[checkBoxLevels.checked ? 3 : 4].
-			firstChild.firstChild.nodeValue;
-	} catch(e) {
-		window.alert('[getMonstreNom] Impossible de trouver le monstre '+i);
-	}
+	return getMonstreNomByTR(tr_monstres[i]);
 }
 
 function getMonstreNomByTR(tr) {
-	return tr.cells[checkBoxLevels.checked ? 3 : 4].
-		firstChild.firstChild.nodeValue;
+	try {
+		nom = document.evaluate("./td/a[starts-with(@href, 'javascript:EMV')]/text()",
+				tr, null, XPathResult.STRING_TYPE, null).stringValue;
+		return nom;
+	} catch(e) {
+		avertissement('[getMonstreNom] Impossible de trouver le monstre '+i, 10000);
+		window.console.debug(e);
+	}
 }
 
 function getMonstrePosition(i) {
