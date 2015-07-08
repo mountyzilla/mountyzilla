@@ -893,8 +893,10 @@ function traitementTalents() {
 function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
 	for(var i=0 ; i<liste.length ; i++) {
-		var node = liste[i].childNodes[3].firstChild;
-		var nom = epure(trim(node.firstChild.nodeValue));
+		var node = document.evaluate("./td/a[starts-with(@href, 'javascript:Enter')]",
+			liste[i], null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		window.console.debug(node);
+		var nom = epure(trim(node.textContent));
 		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
 			.firstChild.nodeValue);
 		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
