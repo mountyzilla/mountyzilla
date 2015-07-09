@@ -124,13 +124,12 @@ function insertInfoMagie(node, intitule, magie) {
 		insertBr(node);
 		insertText(node, intitule);
 		insertText(node, magie, true);
-	}
-	else {
+	} else {
 		node = node.parentNode;
 		appendBr(node);
 		appendText(node, intitule);
 		appendText(node, magie, true);
-	}		
+	}
 }
 
 function getMM(sr) {
@@ -158,8 +157,7 @@ function traiteMM() {
 	if(node) {
 		var mm = getMM(node.nodeValue);
 		node = node.parentNode.nextSibling.nextSibling.nextSibling;
-	}
-	else {
+	} else {
 		var node = document.evaluate(
 			"//p/text()[contains(., 'Seuil de Résistance')]",
 			document, null, 9, null).singleNodeValue;
@@ -284,7 +282,7 @@ function prochainMundi() {
 			"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
 			document, null, 9, null).singleNodeValue;
 	} catch(e) {
-		window.console.log('[Erreur prochainMundi] Node introuvable');
+		window.console.log('[prochainMundi] Node introuvable');
 		return;
 	}
 	if(!node) { return; }
@@ -312,7 +310,6 @@ function dispatch() {
 		changeActionDecalage();
 	}
 	else if(isPage('MH_Play/Actions')) {
-		sendDices();
 		if(document.evaluate(
 				"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
 				document, null, 2, null).stringValue) {
