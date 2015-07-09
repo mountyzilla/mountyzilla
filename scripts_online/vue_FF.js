@@ -1292,133 +1292,6 @@ function filtreTrolls() {
 	}
 }
 
-
-/* [functions] Diplomatie */
-function refreshDiplo() {
-	MZ_setValue(numTroll+'.diplo.off',
-		checkBoxDiplo.checked?'true':'false'
-	);
-	if(isDiploRaw) { computeDiplo(); }
-	appliqueDiplo();
-}
-
-function computeDiplo() {
-// On extrait les données de couleur et on les stocke par id
-// Ordre de préséance :
-//  source Guilde < source Perso
-//  guilde cible < troll cible
-	
-	/* Diplo de Guilde */
-	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
-		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
-	if(diploGuilde && diploGuilde.isOn=='true') {
-		// Guilde perso
-		if(diploGuilde.guilde) {
-			Diplo.Guilde[diploGuilde.guilde.id] = {
-				couleur: diploGuilde.guilde.couleur,
-				titre: 'Ma Guilde'
-			};
-		}
-		// Guildes/Trolls A/E
-		for(var AE in {Amis:0,Ennemis:0}) {
-			for(var i=0 ; i<5 ; i++) {
-				if(diploGuilde[AE+i]) {
-					for(var type in {Guilde:0,Troll:0}) {
-						var liste = diploGuilde[AE+i][type].split(';');
-						for(var j=liste.length-2 ; j>=0 ; j--) {
-							Diplo[type][liste[j]] = {
-								couleur: diploGuilde[AE+i].couleur,
-								titre: diploGuilde[AE+i].titre
-							};
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	/* Diplo Perso */
-	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
-		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
-	if(diploPerso && diploPerso.isOn=='true') {
-		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
-			for(var id in diploPerso[type]) {
-				Diplo[type][id] = diploPerso[type][id];
-			}
-		}
-	}
-	if(diploPerso.mythiques) {
-		Diplo.mythiques = diploPerso.mythiques;
-	}
-	
-	isDiploRaw = false;
-}
-
-function appliqueDiplo() {
-	var aAppliquer = Diplo;
-	if(checkBoxDiplo.checked) {
-		// Pour retour à l'affichage basique sur désactivation de la diplo
-		aAppliquer = {
-			Guilde: {},
-			Troll: {},
-			Monstre: {}
-		};
-	}
-	
-	/* On applique "aAppliquer" */
-	// Diplo Trõlls
-	for(var i=nbTrolls ; i>0 ; i--) {
-		var idG = getTrollGuildeID(i);
-		var idT = getTrollID(i);
-		var tr = tr_trolls[i];
-		if(aAppliquer.Troll[idT]) {
-			tr.className = '';
-			var descr = aAppliquer.Troll[idT].titre;
-			if(descr) {
-				getTrollNomNode(i).title = descr
-			}
-			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
-		} else if(aAppliquer.Guilde[idG]) {
-			tr.className = '';
-			var descr = aAppliquer.Guilde[idG].titre;
-			if(descr) {
-				getTrollNomNode(i).title = descr
-			}
-			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
-		} else {
-			tr.className = 'mh_tdpage';
-			getTrollNomNode(i).title = '';
-		}
-	}
-	
-	// Diplo Monstres
-	for(var i=nbMonstres ; i>0 ; i--) {
-		var id = getMonstreID(i);
-		var nom = getMonstreNom(i).toLowerCase();
-		if(aAppliquer.Monstre[id]) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
-			tr_monstres[i].diploActive = 'oui';
-			var descr = aAppliquer.Monstre[id].titre;
-			if(descr) {
-				getMonstreTdNom(i).title = descr;
-			}
-		} else if(aAppliquer.mythiques &&
-			(nom.indexOf('liche')==0 ||
-			nom.indexOf('hydre')==0 ||
-			nom.indexOf('balrog')==0 ||
-			nom.indexOf('beholder')==0)) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
-			tr_monstres[i].diploActive = 'oui';
-			getMonstreTdNom(i).title = 'Monstre Mythique';
-		} else {
-			tr_monstres[i].className = 'mh_tdpage';
-			tr_monstres[i].diploActive = '';
-		}
-	}
-}
-
 /* [functions] Bulle PX Trolls */
 var bulle;
 
@@ -1579,22 +1452,6 @@ function filtreTresors() {
 	}
 }
 
-function computeTelek() {
-	if(getSortComp('Télékinésie')==0) { return; }
-	var urlImg = MZimg+'Sorts/telekinesie.png';
-	var posN = getPosition()[2];
-	for(var i=nbTresors ; i>0 ; i--) {
-		var pos = getTresorPosition(i);
-		if(pos[2]==posN) {
-			var td = getTresorTdNom(i);
-			appendText(td,' ');
-			td.appendChild(
-				createImage(urlImg,'Trésor transportable par Télékinésie')
-			);
-		}
-	}
-}
-
 
 /*-[functions]----------------- Fonctions Lieux ------------------------------*/
 
@@ -1610,6 +1467,134 @@ function filtreLieux() {
 				&& getLieuNom(i).toLowerCase().indexOf("trou de météorite")!=-1
 				&& getLieuDistance(i)>1)
 			? 'none' : '';
+	}
+}
+
+
+/*-[functions]-------------------- Diplomatie --------------------------------*/
+
+function refreshDiplo() {
+	MZ_setValue(numTroll+'.diplo.off',
+		checkBoxDiplo.checked?'true':'false'
+	);
+	if(isDiploRaw) { computeDiplo(); }
+	appliqueDiplo();
+}
+
+function computeDiplo() {
+// On extrait les données de couleur et on les stocke par id
+// Ordre de préséance :
+//  source Guilde < source Perso
+//  guilde cible < troll cible
+	
+	/* Diplo de Guilde */
+	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+	if(diploGuilde && diploGuilde.isOn=='true') {
+		// Guilde perso
+		if(diploGuilde.guilde) {
+			Diplo.Guilde[diploGuilde.guilde.id] = {
+				couleur: diploGuilde.guilde.couleur,
+				titre: 'Ma Guilde'
+			};
+		}
+		// Guildes/Trolls A/E
+		for(var AE in {Amis:0,Ennemis:0}) {
+			for(var i=0 ; i<5 ; i++) {
+				if(diploGuilde[AE+i]) {
+					for(var type in {Guilde:0,Troll:0}) {
+						var liste = diploGuilde[AE+i][type].split(';');
+						for(var j=liste.length-2 ; j>=0 ; j--) {
+							Diplo[type][liste[j]] = {
+								couleur: diploGuilde[AE+i].couleur,
+								titre: diploGuilde[AE+i].titre
+							};
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/* Diplo Perso */
+	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+	if(diploPerso && diploPerso.isOn=='true') {
+		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+			for(var id in diploPerso[type]) {
+				Diplo[type][id] = diploPerso[type][id];
+			}
+		}
+	}
+	if(diploPerso.mythiques) {
+		Diplo.mythiques = diploPerso.mythiques;
+	}
+	
+	isDiploRaw = false;
+}
+
+function appliqueDiplo() {
+	var aAppliquer = Diplo;
+	if(checkBoxDiplo.checked) {
+		// Pour retour à l'affichage basique sur désactivation de la diplo
+		aAppliquer = {
+			Guilde: {},
+			Troll: {},
+			Monstre: {}
+		};
+	}
+	
+	/* On applique "aAppliquer" */
+	// Diplo Trõlls
+	for(var i=nbTrolls ; i>0 ; i--) {
+		var idG = getTrollGuildeID(i);
+		var idT = getTrollID(i);
+		var tr = tr_trolls[i];
+		if(aAppliquer.Troll[idT]) {
+			tr.className = '';
+			var descr = aAppliquer.Troll[idT].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
+		} else if(aAppliquer.Guilde[idG]) {
+			tr.className = '';
+			var descr = aAppliquer.Guilde[idG].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+		} else {
+			tr.className = 'mh_tdpage';
+			getTrollNomNode(i).title = '';
+		}
+	}
+	
+	// Diplo Monstres
+	for(var i=nbMonstres ; i>0 ; i--) {
+		var id = getMonstreID(i);
+		var nom = getMonstreNom(i).toLowerCase();
+		if(aAppliquer.Monstre[id]) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			tr_monstres[i].diploActive = 'oui';
+			var descr = aAppliquer.Monstre[id].titre;
+			if(descr) {
+				getMonstreTdNom(i).title = descr;
+			}
+		} else if(aAppliquer.mythiques &&
+			(nom.indexOf('liche')==0 ||
+			nom.indexOf('hydre')==0 ||
+			nom.indexOf('balrog')==0 ||
+			nom.indexOf('beholder')==0)) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			tr_monstres[i].diploActive = 'oui';
+			getMonstreTdNom(i).title = 'Monstre Mythique';
+		} else {
+			tr_monstres[i].className = 'mh_tdpage';
+			tr_monstres[i].diploActive = '';
+		}
 	}
 }
 
@@ -1669,6 +1654,23 @@ function computeProjo() {
 		'Cible à portée de Projectile'
 	);
 }
+
+function computeTelek() {
+	if(getSortComp('Télékinésie')==0) { return; }
+	var urlImg = MZimg+'Sorts/telekinesie.png';
+	var posN = getPosition()[2];
+	for(var i=nbTresors ; i>0 ; i--) {
+		var pos = getTresorPosition(i);
+		if(pos[2]==posN) {
+			var td = getTresorTdNom(i);
+			appendText(td,' ');
+			td.appendChild(
+				createImage(urlImg,'Trésor transportable par Télékinésie')
+			);
+		}
+	}
+}
+
 
 /*-[functions]--------------- Systèmes Tactiques -----------------------------*/
 
