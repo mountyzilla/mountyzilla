@@ -33,7 +33,7 @@ var tr_comps, tr_sorts;
 var urlAnatrolliseur;
 
 /* Bulles */
-var hauteur = 50, bulleStyle = null, FREEZE = false;
+var hauteur = 50, bulleStyle = null;
 
 var race;
 var posX, posY, posN;
@@ -893,8 +893,6 @@ function traitementTalents() {
 	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
-	listeComp.parentNode.onclick = toggleFreeze;
-	listeSort.parentNode.onclick = toggleFreeze;
 	return true;
 }
 
@@ -992,7 +990,6 @@ function creerBulleVide() {
 		+'visibility:hidden;'
 		+'z-index:800;'
 		+'height:auto;';
-	table.onclick = toggleFreeze;
 	var tr = appendTr(table,'mh_tdtitre');
 	appendTdText(tr,'Titre');
 	tr = appendTr(table,'mh_tdpage');
@@ -1001,13 +998,8 @@ function creerBulleVide() {
 	aList[aList.length-1].parentNode.appendChild(table);
 	}
 
-function toggleFreeze() {
-	FREEZE = !FREEZE;
-	if(!FREEZE) cacherBulle();
-	}
-
 function cacherBulle() {
-	if(bulleStyle && !FREEZE) bulleStyle.visibility = 'hidden';
+	if(bulleStyle) bulleStyle.visibility = 'hidden';
 	}
 
 function setBulle(evt) {
