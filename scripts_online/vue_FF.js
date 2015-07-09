@@ -189,9 +189,14 @@ function getMonstreLevel(i) {
 
 function getMonstreTdNom(i) {
 	try {
-		return tr_monstres[i].cells[checkBoxLevels.checked ? 3 : 4];
+		var td = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:EMV')]/..",
+			tr_monstres[i], null, 9, null
+		).singleNodeValue;
+		return td;
 	} catch(e) {
-		window.alert('[getMonstreTdNom] Impossible de trouver le monstre '+i);
+		avertissement('[getMonstreTdNom] Impossible de trouver le monstre '+i);
+		window.console.debug(e);
 	}
 }
 
@@ -201,11 +206,13 @@ function getMonstreNom(i) {
 
 function getMonstreNomByTR(tr) {
 	try {
-		nom = document.evaluate("./td/a[starts-with(@href, 'javascript:EMV')]/text()",
-				tr, null, XPathResult.STRING_TYPE, null).stringValue;
+		var nom = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:EMV')]/text()",
+			tr, null, 2, null
+		).stringValue;
 		return nom;
 	} catch(e) {
-		avertissement('[getMonstreNom] Impossible de trouver le monstre '+i, 10000);
+		avertissement('[getMonstreNom] Impossible de trouver le monstre '+i);
 		window.console.debug(e);
 	}
 }

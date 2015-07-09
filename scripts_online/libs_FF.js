@@ -116,7 +116,7 @@ function FF_XMLHttpRequest(MZ_XHR_Ob) {
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
 
 function avertissement(txt,duree) {
-	if(!duree) { duree = 3000; }
+	if(!duree) { duree = 5000; }
 	var div = document.createElement('div');
 	// On numérote les avertissements pour destruction sélective
 	var num = document.getElementsByName('avertissement').length;

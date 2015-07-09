@@ -871,42 +871,55 @@ function refreshAccel() {
 
 function traitementTalents() {
 	removeAllTalents();
-	try{
-		var talTabs = document.evaluate("./tbody/tr/td/table",
-			mainTab[1],null,7,null);
+	try {
+		var talTabs = document.evaluate(
+			"./tbody/tr/td/table",
+			mainTab[1], null, 7, null
+		);
 		var listeComp = talTabs.snapshotItem(0);
 		tr_comps = listeComp.getElementsByTagName('tr');
 		var listeSort = talTabs.snapshotItem(1);
 		tr_sorts = listeSort.getElementsByTagName('tr');
-		var titres = document.evaluate("./tbody/tr/td/b/text()",
-			mainTab[1],null,7,null);
-		}
-	catch(e) {return;}
+		var titres = document.evaluate(
+			"./tbody/tr/td/b/text()",
+			mainTab[1], null, 7, null
+		);
+	} catch(e) {
+		avertissement('[traitementTalents] Données non trouvées')
+		window.console.debug(e);
+		return false;
+	}
 	var totalComp = injecteInfosBulles(tr_comps,'competences');
 	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
 	listeComp.parentNode.onclick = toggleFreeze;
 	listeSort.parentNode.onclick = toggleFreeze;
-	}
+	return true;
+}
 
 function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
 	for(var i=0 ; i<liste.length ; i++) {
-		var node = document.evaluate("./td/a[starts-with(@href, 'javascript:Enter')]",
-			liste[i], null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		var node = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:Enter')]",
+			liste[i], null, 9, null
+		).singleNodeValue;
 		var nom = epure(trim(node.textContent));
-		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
-			.firstChild.nodeValue);
+		var nbrs = getNumbers(
+			liste[i].childNodes[5].firstChild.firstChild.nodeValue
+		);
 		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
-			var lstNoms = trim(epure(liste[i].childNodes[3].lastChild.nodeValue))
-				.slice(1,-1).split(', ');
-			for(var j=0 ; j<lstNoms.length ; j++)
+			var lstNoms = trim(
+				epure(liste[i].childNodes[3].lastChild.nodeValue)
+			).slice(1,-1).split(', ');
+			for(var j=0 ; j<lstNoms.length ; j++) {
 				setTalent(lstNoms[j],nbrs[1],nbrs[0]);
+			}
 			setInfos(node,lstNoms.join(', '),fonction,nbrs[0]);
 			totalpc += nbrs[1];
 			continue;
-			}
+		}
 		setInfos(node,nom,fonction,nbrs[0]);
 		setTalent(nom,nbrs[1],nbrs[0]);
 		totalpc += nbrs[1];
@@ -914,10 +927,10 @@ function injecteInfosBulles(liste,fonction) {
 			nbrs = getNumbers(liste[i].childNodes[5].childNodes[j].nodeValue);
 			setTalent(nom,nbrs[1],nbrs[0]);
 			totalpc += nbrs[1];
-			}
 		}
-	return totalpc;
 	}
+	return totalpc;
+}
 
 function setInfos(node,nom,fonction,niveau) {
 	node.nom = nom;
@@ -925,7 +938,7 @@ function setInfos(node,nom,fonction,niveau) {
 	node.niveau = niveau;
 	node.onmouseover = setBulle;
 	node.onmouseout = cacherBulle;
-	}
+}
 
 var arrayModifAnatroll = {
 	'Glue':'Glu',
@@ -934,15 +947,14 @@ var arrayModifAnatroll = {
 	//'Insultes':'Insu',
 	'Pistage':'Pist',
 	'PuC':'Planter'
-	}
+}
 
 function setTalent(nom,pc,niveau) {
 	// Nota : voir plus tard si stocker les effets des comps/sorts directement 
 	// (et pas les % dont osf) ne serait pas plus rentable
 	var nomEnBase = arrayTalents[epure(nom)];
-	if(!nomEnBase) return;
-	pc = parseInt(pc);
-	if(!niveau) niveau = 1;
+	if(!nomEnBase) { return; }
+	if(!niveau) { niveau = 1; }
 	
 	switch(nomEnBase) {
 		case 'Insultes':
@@ -962,10 +974,10 @@ function setTalent(nom,pc,niveau) {
 		default:
 			urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ? 
 				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
-		}
+	}
 	
 	MZ_setValue(numTroll+'.talent.'+nomEnBase,pc);
-	}
+}
 
 function creerBulleVide() {
 	var table = document.createElement('table');
@@ -1597,15 +1609,14 @@ try {
 	setCurrentEsquive();
 	setRatioKillDeath();
 	setTotauxMagie();
-	traitementTalents();
-	// À lancer après traitementTalents() :
-	setAnatrolliseur();
+	if(traitementTalents()) {
+		setAnatrolliseur();
+	}
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
 	if(race=='Kastar') { setAccel(); }
 	saveProfil();
 	displayScriptTime();
-}
-catch(e) {
+} catch(e) {
 	avertissement(e, 10000);
 	window.console.debug(e);
 }
