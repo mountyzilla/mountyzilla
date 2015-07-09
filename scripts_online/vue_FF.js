@@ -296,10 +296,11 @@ function getTresorNom(i) {
 
 function getTresorPosition(i) {
 	var tds = tr_tresors[i].childNodes;
+	var l = tds.length;
 	return [
-		tds[4].firstChild.nodeValue,
-		tds[5].firstChild.nodeValue,
-		tds[6].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
@@ -1601,18 +1602,19 @@ function appliqueDiplo() {
 
 /*-[functions]---------------- Actions à distance ----------------------------*/
 
-function computeActionDistante(dmin,dmax,urlIcon,message) {
+function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 	var monN = parseInt(getPosition()[2]);
 	
-	for(var type in {'Monstre':1, 'Troll':1}) {
-		for(var i=this['nb'+type+'s'] ; i>0 ; i--)  {
-			var tr = this['tr_'+type.toLowerCase()+'s'][i];
-			var sonN = this['get'+type+'Position'](i)[2];
-			var d = this['get'+type+'Distance'](i);
+	for(var type in keltypes) {
+		alt = oussa=='self' ? type.slice(0,-1) : oussa;
+		for(var i=this['nb'+type] ; i>0 ; i--)  {
+			var tr = this['tr_'+type.toLowerCase()][i];
+			var sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
+			var d = this['get'+type.slice(0,-1)+'Distance'](i);
 			
 			if(sonN==monN && d>=dmin && d<=dmax) {
 				var iconeAction = document.evaluate(
-					"./descendant::img[@alt='Attaquer']",
+					"./descendant::img[@alt='"+alt+"']",
 					tr, null, 9, null
 				).singleNodeValue;
 				if(iconeAction) {
@@ -1622,10 +1624,14 @@ function computeActionDistante(dmin,dmax,urlIcon,message) {
 						iconeAction.title = message;
 					}
 					iconeAction.src = urlIcon;
+					window.console.debug(type+" n°"+i+" : "+message);
 				} else {
 					var tdAction = tr.getElementsByTagName('td')[1];
-					var icon = createAltImage(urlIcon,'Attaquer',message)
+					var icon = document.createElement('img');
+					icon.src = urlIcon;
 					icon.height = 20;
+					icon.alt = alt;
+					icon.title = message;
 					tdAction.appendChild(icon);
 				}
 			}
@@ -1639,6 +1645,8 @@ function computeCharge() {
 			Math.ceil(MZ_getValue(numTroll+".caracs.pv")/10)+
 			MZ_getValue(numTroll+".caracs.regeneration")
 		),
+		{'Monstres':1, 'Trolls':1},
+		'Attaquer',
 		MHicons+'E_Metal09.png',
 		'Cible à portée de Charge'
 	);
@@ -1650,25 +1658,37 @@ function computeProjo() {
 			MZ_getValue(numTroll+".caracs.vue")+
 			MZ_getValue(numTroll+".caracs.vue.bm")
 		),
+		{'Monstres':1, 'Trolls':1},
+		'Attaquer',
 		MHicons+'S_Fire05.png',
-		'Cible à portée de Projectile'
+		'Cible à portée de Projo'
 	);
 }
 
 function computeTelek() {
-	if(getSortComp('Télékinésie')==0) { return; }
-	var urlImg = MZimg+'Sorts/telekinesie.png';
-	var posN = getPosition()[2];
-	for(var i=nbTresors ; i>0 ; i--) {
-		var pos = getTresorPosition(i);
-		if(pos[2]==posN) {
-			var td = getTresorTdNom(i);
-			appendText(td,' ');
-			td.appendChild(
-				createImage(urlImg,'Trésor transportable par Télékinésie')
-			);
-		}
-	}
+	computeActionDistante(0,
+		Math.floor((
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		)/2),
+		{'Tresors':1},
+		'Telek',
+		MHicons+'S_Magic04.png',
+		'Trésor à portée de Télékinésie'
+	);
+}
+
+function computeLdP() {
+	computeActionDistante(0,
+		2+Math.floor((
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		)/5),
+		{'Monstres':1, 'Trolls':1},
+		'self',
+		MHicons+'P_Red01.png',
+		'Cible à portée de Lancer de Potions'
+	);
 }
 
 
@@ -2027,12 +2047,17 @@ try {
 	initPXTroll();
 	computeTag();
 
-	computeTelek();
 	if(getTalent("Projectile Magique")!=0) {
 		computeProjo();
 	}
 	if(getTalent("Charger")!=0) {
 		computeCharge();
+	}
+	if(getTalent("Télékinésie")!=0) {
+		computeTelek();
+	}
+	if(getTalent("Lancer de Potions")!=0) {
+		computeLdP();
 	}
 	
 	putScriptExterne();
