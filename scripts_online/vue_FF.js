@@ -166,7 +166,7 @@ function getVue() {
 
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
-	return tr_monstres[i].cells[0].firstChild.nodeValue;
+	return parseInt(tr_monstres[i].cells[0].textContent);
 }
 
 function getMonstreID(i) {
@@ -219,11 +219,11 @@ function getMonstreNomByTR(tr) {
 
 function getMonstrePosition(i) {
 	var tds = tr_monstres[i].childNodes;
-	var X = checkBoxLevels.checked ? 4 : 5;
+	var l = tds.length;
 	return [
-		tds[X].firstChild.nodeValue,
-		tds[X+1].firstChild.nodeValue,
-		tds[X+2].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
@@ -240,7 +240,7 @@ function getMonstres() {
 
 /* [functions] Récup données Trolls */
 function getTrollDistance(i) {
-	return tr_trolls[i].cells[0].firstChild.nodeValue;
+	return parseInt(tr_trolls[i].cells[0].textContent);
 }
 
 function getTrollID(i) {
@@ -274,9 +274,9 @@ function getTrollPosition(i) {
 	var tds = tr_trolls[i].childNodes;
 	var l = tds.length;
 	return [
-		tds[l-3].firstChild.nodeValue,
-		tds[l-2].firstChild.nodeValue,
-		tds[l-1].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
@@ -305,7 +305,7 @@ function getTresorPosition(i) {
 
 /* [functions] Récup données Lieux */
 function getLieuDistance(i) {
-	return parseInt(tr_lieux[i].firstChild.firstChild.nodeValue);
+	return parseInt(tr_lieux[i].cells[0].textContent);
 }
 
 function getLieuNom(i) { /* DEBUG - en test */
@@ -1106,10 +1106,9 @@ function computeVLC(begin,end) {
 		{
 			if(donneesMonstre[12]==1)
 			{
-				tr = document.evaluate("./td/a[starts-with(@href, 'javascript:EMV')]/..",
-						x_monstres[i], null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null).iterateNext();
-				tr.appendChild(document.createTextNode(" "));
-				tr.appendChild(createImage(urlImg, "Voit le caché"));
+				var td = getMonstreTdNom(i);
+				td.appendChild(document.createTextNode(" "));
+				td.appendChild(createImage(urlImg, "Voit le caché"));
 			}
 		}
 	}
@@ -1160,51 +1159,6 @@ function updateTactique() {
 		}
 	else
 		computeTactique();
-}
-
-function computeChargeProjoMonstre()
-{
-	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
-	var charger = getSortComp("Charger")!=0;
-	var projo = getSortComp("Projectile Magique")!=0;
-	var trolln = getPosition()[2];
-	if(!charger && !projo)
-	{
-		return false;
-	}
-	var porteeCharge = -1;
-	var porteeProjo = -1;
-	if(charger)
-	{
-		var aux = Math.ceil(MZ_getValue(numTroll+".caracs.pv") / 10) + MZ_getValue(numTroll+".caracs.regeneration");
-		porteeCharge = getPortee(aux);
-	}
-	if(projo)
-	{
-		porteeProjo = getPortee(MZ_getValue(numTroll+".caracs.vue.bm")+MZ_getValue(numTroll+".caracs.vue"));
-	}
-	
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
-	for(var i = nbMonstres+1; --i >= 1;) 
-	{
-		var id = getMonstreID(i);
-		var pos = getMonstrePosition(i);
-		var dist = getMonstreDistance(i);
-		if(dist>0 && pos[2] == trolln && dist<=porteeCharge)
-		{
-			var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgCharge, "Accessible en charge"));
-		}
-		if(pos[2] == trolln && dist<=porteeProjo)
-		{
-			var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgProjo, "Touchable avec un projectile magique"));
-		}
-	}
-	return true;
 }
 
 function filtreMonstres() {
@@ -1258,8 +1212,7 @@ function filtreMonstres() {
 				while(tr.childNodes.length>1) {
 					tr.removeChild(tr.childNodes[1]);
 				}
-			}
-			else {
+			} else {
 				var tr = getMonstreTdNom(i);
 				var TypeMonstre=getEM(nom);
 				if(TypeMonstre!='') {
@@ -1339,51 +1292,6 @@ function filtreTrolls() {
 	}
 }
 
-function computeChargeProjo()
-{
-	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
-
-	var trolln = getPosition()[2];
-	if(!computeChargeProjoMonstre()) return false;
-	
-	var charger = getSortComp("Charger")!=0;
-	var projo = getSortComp("Projectile Magique")!=0;
-	if(!charger && !projo)
-	{
-		return false;
-	}
-	var porteeCharge = -1;
-	var porteeProjo = -1;
-	if(charger)
-	{
-		var aux = Math.ceil(MZ_getValue(numTroll+".caracs.pv") / 10) + MZ_getValue(numTroll+".caracs.regeneration");
-		porteeCharge = getPortee(aux);
-	}
-	if(projo)
-	{
-		porteeProjo = getPortee(MZ_getValue(numTroll+".caracs.vue.bm")+MZ_getValue(numTroll+".caracs.vue"));
-	}
-	for(var i = 1; i < nbTrolls+1; i++) 
-	{
-		var id = getTrollID(i);
-		var pos = getTrollPosition(i);
-		var dist = getTrollDistance(i);
-		if(dist>0 && pos[2] == trolln && dist<=porteeCharge)
-		{
-			var tr = x_trolls[i].childNodes[2];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgCharge, "Accessible en charge"));
-		}
-		if(pos[2] == trolln && dist<=porteeProjo)
-		{
-			var tr = x_trolls[i].childNodes[2];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgProjo, "Touchable avec un projectile magique"));
-		}
-
-	}
-}
 
 /* [functions] Diplomatie */
 function refreshDiplo() {
@@ -1705,6 +1613,62 @@ function filtreLieux() {
 	}
 }
 
+
+/*-[functions]---------------- Actions à distance ----------------------------*/
+
+function computeActionDistante(dmin,dmax,urlIcon,message) {
+	var monN = parseInt(getPosition()[2]);
+	
+	for(var type in {'Monstre':1, 'Troll':1}) {
+		for(var i=this['nb'+type+'s'] ; i>0 ; i--)  {
+			var tr = this['tr_'+type.toLowerCase()+'s'][i];
+			var sonN = this['get'+type+'Position'](i)[2];
+			var d = this['get'+type+'Distance'](i);
+			
+			if(sonN==monN && d>=dmin && d<=dmax) {
+				var iconeAction = document.evaluate(
+					"./descendant::img[@alt='Attaquer']",
+					tr, null, 9, null
+				).singleNodeValue;
+				if(iconeAction) {
+					if(iconeAction.title) {
+						iconeAction.title += "\n"+message;
+					} else {
+						iconeAction.title = message;
+					}
+					iconeAction.src = urlIcon;
+				} else {
+					var tdAction = tr.getElementsByTagName('td')[1];
+					var icon = createAltImage(urlIcon,'Attaquer',message)
+					icon.height = 20;
+					tdAction.appendChild(icon);
+				}
+			}
+		}
+	}
+}
+
+function computeCharge() {
+	computeActionDistante(1,
+		getPortee(
+			Math.ceil(MZ_getValue(numTroll+".caracs.pv")/10)+
+			MZ_getValue(numTroll+".caracs.regeneration")
+		),
+		MHicons+'E_Metal09.png',
+		'Cible à portée de Charge'
+	);
+}
+
+function computeProjo() {
+	computeActionDistante(0,
+		getPortee(
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		),
+		MHicons+'S_Fire05.png',
+		'Cible à portée de Projectile'
+	);
+}
 
 /*-[functions]--------------- Systèmes Tactiques -----------------------------*/
 
@@ -2037,29 +2001,42 @@ try {
 	refreshDiplo();
 	
 	//400 ms
-	{
-		var noGG = saveCheckBox(checkBoxGG, "NOGG");
-		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
-		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-		var noTresorsEngages =
-			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-		var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-		var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
-		filtreMonstres();
-		if(noIntangibles) filtreTrolls();
-		if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
-		if(noTrou) filtreLieux();
+	var noGG = saveCheckBox(checkBoxGG, "NOGG");
+	var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
+	var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
+	var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
+	var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
+	var noTresorsEngages =
+		saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
+	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
+	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
+	filtreMonstres();
+	if(noIntangibles) {
+		filtreTrolls();
 	}
+	if(noGG || noCompos || noBidouilles || noTresorsEngages) {
+		filtreTresors();
+	}
+	if(noTrou) {
+		filtreLieux();
+	}
+
 	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
 	initPXTroll();
 	computeTag();
+
 	computeTelek();
-	computeChargeProjo(); // TODO À décomposer
+	if(getTalent("Projectile Magique")!=0) {
+		computeProjo();
+	}
+	if(getTalent("Charger")!=0) {
+		computeCharge();
+	}
+	
 	putScriptExterne();
 	
 	displayScriptTime();
 } catch(e) {
+	avertissement("[MZ] Une erreur s'est produite.");
 	window.console.error(e);
 }

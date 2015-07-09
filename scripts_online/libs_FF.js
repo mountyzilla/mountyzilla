@@ -23,6 +23,7 @@
  */
 
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
+var MHicons = '/mountyhall/Images/Icones/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
