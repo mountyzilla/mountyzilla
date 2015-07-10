@@ -26,9 +26,6 @@
 // Infos remplies par des scripts extérieurs
 var listeCDM = [], listeLevels = [];
 
-var listeTags = [], listeTagsInfos = [],
-	listeTagsGuilde = [], listeTagsInfosGuilde = [];
-
 // Fenêtres déplaçables
 var winCurr = null;
 var offsetX, offsetY;
@@ -43,7 +40,7 @@ var Diplo = {
 };
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
-// Infos de combat (& tags)
+// Infos tactiques
 var popup;
 
 // Gère l'affichage en cascade des popups de CdM
@@ -1624,7 +1621,6 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 						iconeAction.title = message;
 					}
 					iconeAction.src = urlIcon;
-					window.console.debug(type+" n°"+i+" : "+message);
 				} else {
 					var tdAction = tr.getElementsByTagName('td')[1];
 					var icon = document.createElement('img');
@@ -1835,170 +1831,6 @@ function inversionCoord() {
 }
 
 
-/* [functions] Gros tas de fonctions à ranger (Tags seulement?) --------------*/
-
-// POPUP TAGS
-
-function showPopup(evt) {
-	var texte = this.getAttribute('texteinfo');
-	popup.innerHTML = texte;
-	popup.style.left = evt.pageX + 15 + 'px';
-	popup.style.top = evt.pageY + 'px';
-	popup.style.visibility = "visible";
-}
-
-function createPopupImage(url, text)
-{
-	var img = document.createElement('img');
-	img.setAttribute('src',url);
-	img.setAttribute('align','ABSMIDDLE');
-	img.setAttribute("texteinfo",text);
-	img.addEventListener("mouseover", showPopup,true);
-	img.addEventListener("mouseout", hidePopup,true);
-	return img;
-}
-
-function recomputeTypeTrolls()
-{
-	for(var i = 0; i < listeTags; i++) 
-	{
-		computeTypeTrolls(listeTags[i],listeTagsInfos[i]);
-	}
-	for(var i = 0; i < listeTagsGuilde; i++) 
-	{
-		computeTypeGuildes(listeTagsGuilde[i],listeTagsInfosGuilde[i]);
-	}
-}
-
-function setAllTags(infoTrolls,infoGuildes)
-{
-	for(var i = 1; i < nbTrolls+1; i++) 
-	{
-		var infos = infoGuildes[getTrollGuildeID(i)];
-		if(infos) 
-		{
-			var tr = document.evaluate("td/a[contains(@href,'EAV')]/..",
-			x_trolls[i], null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-			for(var j=0;j<infos.length;j++)
-			{
-				tr.appendChild(document.createTextNode(" "));
-				tr.appendChild(createPopupImage(infos[j][0], infos[j][1]));
-			}
-		}
-		infos = infoTrolls[getTrollID(i)];
-		if(infos) 
-		{
-			var tr = document.evaluate("td/a[contains(@href,'EPV')]/..",
-			x_trolls[i], null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-			for(var j=0;j<infos.length;j++)
-			{
-				tr.appendChild(document.createTextNode(" "));
-				tr.appendChild(createPopupImage(infos[j][0], infos[j][1]));
-			}
-		}
-	}
-}
-
-function analyseTagFile(data)
-{
-	var icones = new Array();
-	var descriptions = new Array();
-	var infoTrolls = new Array();
-	var infoGuildes = new Array();
-	
-	var lignes = data.split("\n");
-	for(var i=0;i<lignes.length;i++)
-	{
-		try
-		{
-			var data = lignes[i].split(";");
-			if(data.length<=1)
-				continue;
-			if(data[0]=="I")
-			{
-				icones.push(lignes[i].substring(lignes[i].indexOf(";")+1));
-			}
-			else if(data[0]=="D")
-			{
-				descriptions.push(bbcode(lignes[i].substring(lignes[i].indexOf(";")+1)));
-			}
-			else if(data[0]=="T")
-			{
-				if(data.length<=2)
-				continue;
-				var id = data[1]*1;
-				var icone = icones[data[2]*1];
-				var texte = "";
-				for(var j=3;j<data.length;j++)
-					texte+=descriptions[data[j]*1];
-				var info = new Array(icone,texte);
-				if(infoTrolls[id] == null)
-					infoTrolls[id] = new Array();
-				infoTrolls[id].push(info);
-			}
-			else if(data[0]=="G")
-			{
-				if(data.length<=2)
-					continue;
-				var id = data[1]*1;
-				var icone = icones[data[2]*1];
-				var texte = "";
-				for(var j=3;j<data.length;j++)
-					texte+=descriptions[data[j]*1];
-				var info = new Array(icone,texte);
-				if(infoGuildes[id] == null)
-					infoGuildes[id] = new Array();
-				infoGuildes[id].push(info);
-			}
-		}
-		catch(e)
-		{
-			window.alert(e);
-			break;
-		}
-	}
-	if(infoGuildes.length!=0 || infoTrolls.length!=0)
-		setAllTags(infoTrolls,infoGuildes);
-}
-
-function computeTag()
-{
-	try
-	{
-	if(MZ_getValue(numTroll+'.TAGSURL')==null || MZ_getValue(numTroll+'.TAGSURL')=='')
-		return false;
-	var tagsurl = MZ_getValue(numTroll+'.TAGSURL');
-	var listeTagsURL = tagsurl.split("$");
-	for(var i=0;i<listeTagsURL.length;i++)
-	{
-		if(listeTagsURL[i].toLowerCase().indexOf("http")==0)
-		{
-			//appendNewScript(listeTagsURL[i]);
-			FF_XMLHttpRequest({
-			    method: 'GET',
-			    url: listeTagsURL[i],
-			    headers: {
-			        'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
-			        'Accept': 'application/xml,text/xml',
-			    },
-			    onload: function(responseDetails) {
-					try
-					{
-						analyseTagFile(responseDetails.responseText);
-					}
-					catch(e)
-					{
-						window.alert(e);
-					}
-				}
-			});
-		}
-	}
-	}
-	catch(e) {window.alert(e);}
-}
-
-
 /*                             Partie principale                              */
 
 try {
@@ -2043,9 +1875,8 @@ try {
 		filtreLieux();
 	}
 
-	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
+	initPopup();
 	initPXTroll();
-	computeTag();
 
 	if(getTalent("Projectile Magique")!=0) {
 		computeProjo();
