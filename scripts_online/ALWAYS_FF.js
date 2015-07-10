@@ -1,3 +1,9 @@
+window.console.debug('GOD MODE ON: +Invi +Projo +Telek +Charger');
+MZ_setValue(numTroll+'.talent.Invi',80);
+MZ_setValue(numTroll+'.talent.Projo',80);
+MZ_setValue(numTroll+'.talent.Telek',80);
+MZ_setValue(numTroll+'.talent.Charger',90);
+
 /*window.alert(
 	window.location.toString()+'\n'+
 	window.self.location.toString()+'\n'+

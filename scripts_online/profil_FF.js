@@ -33,7 +33,7 @@ var tr_comps, tr_sorts;
 var urlAnatrolliseur;
 
 /* Bulles */
-var hauteur = 50, bulleStyle = null, FREEZE = false;
+var hauteur = 50, bulleStyle = null;
 
 var race;
 var posX, posY, posN;
@@ -377,12 +377,12 @@ function setNextDLA() {
 	while(DLAsuivMSec<HeureServeur) {
 		DLAsuivMSec += DureeTour;
 		loupes++;
-		}
+	}
 	DLAsuiv = new Date( DLAsuivMSec );
 	appendBr(node);
 	appendText(node,
 		'---> Prochaine DLA (estimée)............: '+DateToString(DLAsuiv)
-		);
+	);
 	/* Estimation des DLA suivantes */
 	var title = '';
 	var nextPv = pv;
@@ -394,17 +394,21 @@ function setNextDLA() {
 			+'DLA +'+i+': '+DateToString( new Date(DLAsuivMSec) )
 			+' ('+nextPv+'PV, durée: '+dureeHM(nextTour)+')';
 		DLAsuivMSec += nextTour*6e4;
-		}
+	}
 	node.parentNode.title = title;
 	/* Affichage des tours manqués */
 	if(loupes==1) {
-		node.nextSibling.nodeValue = ' (Vous avez manqué votre dernier tour)';
-		}
-	else if(loupes>1) {
-		node.nextSibling.nodeValue =
-			' (Vous avez manqué vos '+loupes+' derniers tours)';
-		}
+		appendText(
+			node.parentNode,
+			' (Vous avez manqué votre dernier tour)'
+		);
+	} else if(loupes>1) {
+		appendText(
+			node.parentNode,
+			' (Vous avez manqué vos '+loupes+' derniers tours)'
+		);
 	}
+}
 
 function vueCarac() {
 	var caracBody = mainTR.snapshotItem(5).childNodes[3].childNodes[1];
@@ -522,13 +526,13 @@ function setCurrentEsquive() {
 	}
 
 function setStabilite() {
-	var node = mainTR.snapshotItem(5).childNodes[3].childNodes[2];
+	var node = mainTR.snapshotItem(5).childNodes[3].childNodes[3];
 	appendBr(node);
 	appendText(node,
 		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
 		+' (moyenne : '+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+')'
-		);
-	}
+	);
+}
 
 function setRatioKillDeath() {
 	try{
@@ -867,41 +871,53 @@ function refreshAccel() {
 
 function traitementTalents() {
 	removeAllTalents();
-	try{
-		var talTabs = document.evaluate("./tbody/tr/td/table",
-			mainTab[1],null,7,null);
+	try {
+		var talTabs = document.evaluate(
+			"./tbody/tr/td/table",
+			mainTab[1], null, 7, null
+		);
 		var listeComp = talTabs.snapshotItem(0);
 		tr_comps = listeComp.getElementsByTagName('tr');
 		var listeSort = talTabs.snapshotItem(1);
 		tr_sorts = listeSort.getElementsByTagName('tr');
-		var titres = document.evaluate("./tbody/tr/td/b/text()",
-			mainTab[1],null,7,null);
-		}
-	catch(e) {return;}
+		var titres = document.evaluate(
+			"./tbody/tr/td/b/text()",
+			mainTab[1], null, 7, null
+		);
+	} catch(e) {
+		avertissement('[traitementTalents] Données non trouvées')
+		window.console.debug(e);
+		return false;
+	}
 	var totalComp = injecteInfosBulles(tr_comps,'competences');
 	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
 	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
-	listeComp.parentNode.onclick = toggleFreeze;
-	listeSort.parentNode.onclick = toggleFreeze;
-	}
+	return true;
+}
 
 function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
 	for(var i=0 ; i<liste.length ; i++) {
-		var node = liste[i].childNodes[3].firstChild;
-		var nom = epure(trim(node.firstChild.nodeValue));
-		var nbrs = getNumbers(liste[i].childNodes[5].firstChild
-			.firstChild.nodeValue);
+		var node = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:Enter')]",
+			liste[i], null, 9, null
+		).singleNodeValue;
+		var nom = epure(trim(node.textContent));
+		var nbrs = getNumbers(
+			liste[i].childNodes[5].firstChild.firstChild.nodeValue
+		);
 		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
-			var lstNoms = trim(epure(liste[i].childNodes[3].lastChild.nodeValue))
-				.slice(1,-1).split(', ');
-			for(var j=0 ; j<lstNoms.length ; j++)
+			var lstNoms = trim(
+				epure(liste[i].childNodes[3].lastChild.nodeValue)
+			).slice(1,-1).split(', ');
+			for(var j=0 ; j<lstNoms.length ; j++) {
 				setTalent(lstNoms[j],nbrs[1],nbrs[0]);
+			}
 			setInfos(node,lstNoms.join(', '),fonction,nbrs[0]);
 			totalpc += nbrs[1];
 			continue;
-			}
+		}
 		setInfos(node,nom,fonction,nbrs[0]);
 		setTalent(nom,nbrs[1],nbrs[0]);
 		totalpc += nbrs[1];
@@ -909,10 +925,10 @@ function injecteInfosBulles(liste,fonction) {
 			nbrs = getNumbers(liste[i].childNodes[5].childNodes[j].nodeValue);
 			setTalent(nom,nbrs[1],nbrs[0]);
 			totalpc += nbrs[1];
-			}
 		}
-	return totalpc;
 	}
+	return totalpc;
+}
 
 function setInfos(node,nom,fonction,niveau) {
 	node.nom = nom;
@@ -920,7 +936,7 @@ function setInfos(node,nom,fonction,niveau) {
 	node.niveau = niveau;
 	node.onmouseover = setBulle;
 	node.onmouseout = cacherBulle;
-	}
+}
 
 var arrayModifAnatroll = {
 	'Glue':'Glu',
@@ -929,15 +945,14 @@ var arrayModifAnatroll = {
 	//'Insultes':'Insu',
 	'Pistage':'Pist',
 	'PuC':'Planter'
-	}
+}
 
 function setTalent(nom,pc,niveau) {
 	// Nota : voir plus tard si stocker les effets des comps/sorts directement 
 	// (et pas les % dont osf) ne serait pas plus rentable
 	var nomEnBase = arrayTalents[epure(nom)];
-	if(!nomEnBase) return;
-	pc = parseInt(pc);
-	if(!niveau) niveau = 1;
+	if(!nomEnBase) { return; }
+	if(!niveau) { niveau = 1; }
 	
 	switch(nomEnBase) {
 		case 'Insultes':
@@ -957,10 +972,10 @@ function setTalent(nom,pc,niveau) {
 		default:
 			urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ? 
 				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
-		}
+	}
 	
 	MZ_setValue(numTroll+'.talent.'+nomEnBase,pc);
-	}
+}
 
 function creerBulleVide() {
 	var table = document.createElement('table');
@@ -975,7 +990,6 @@ function creerBulleVide() {
 		+'visibility:hidden;'
 		+'z-index:800;'
 		+'height:auto;';
-	table.onclick = toggleFreeze;
 	var tr = appendTr(table,'mh_tdtitre');
 	appendTdText(tr,'Titre');
 	tr = appendTr(table,'mh_tdpage');
@@ -984,13 +998,8 @@ function creerBulleVide() {
 	aList[aList.length-1].parentNode.appendChild(table);
 	}
 
-function toggleFreeze() {
-	FREEZE = !FREEZE;
-	if(!FREEZE) cacherBulle();
-	}
-
 function cacherBulle() {
-	if(bulleStyle && !FREEZE) bulleStyle.visibility = 'hidden';
+	if(bulleStyle) bulleStyle.visibility = 'hidden';
 	}
 
 function setBulle(evt) {
@@ -1592,14 +1601,14 @@ try {
 	setCurrentEsquive();
 	setRatioKillDeath();
 	setTotauxMagie();
-	traitementTalents();
-	// À lancer après traitementTalents() :
-	setAnatrolliseur();
+	if(traitementTalents()) {
+		setAnatrolliseur();
+	}
 	// Cette fonction modifie lourdement le DOM, à placer en dernier :
 	if(race=='Kastar') { setAccel(); }
 	saveProfil();
 	displayScriptTime();
-}
-catch(e) {
-	window.alert(e)
+} catch(e) {
+	avertissement(e, 10000);
+	window.console.debug(e);
 }

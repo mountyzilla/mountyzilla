@@ -166,19 +166,19 @@ function getVue() {
 
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
-	return tr_monstres[i].cells[0].firstChild.nodeValue;
+	return parseInt(tr_monstres[i].cells[0].textContent);
 }
 
 function getMonstreID(i) {
-	return tr_monstres[i].cells[1].firstChild.nodeValue;
+	return tr_monstres[i].cells[2].firstChild.nodeValue;
 }
 
 function getMonstreIDByTR(tr) {
-	return tr.cells[1].firstChild.nodeValue;
+	return tr.cells[2].firstChild.nodeValue;
 }
 
 function getMonstreLevelNode(i) {
-	return tr_monstres[i].cells[2];
+	return tr_monstres[i].cells[3];
 }
 
 function getMonstreLevel(i) {
@@ -189,33 +189,41 @@ function getMonstreLevel(i) {
 
 function getMonstreNomNode(i) {
 	try {
-		return tr_monstres[i].cells[checkBoxLevels.checked ? 2 : 3];
+		var td = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:EMV')]/..",
+			tr_monstres[i], null, 9, null
+		).singleNodeValue;
+		return td;
 	} catch(e) {
-		window.alert('[getMonstreNomNode] Impossible de trouver le monstre '+i);
+		avertissement('[getMonstreNomNode] Impossible de trouver le monstre '+i);
+		window.console.error(e);
 	}
 }
 
 function getMonstreNom(i) {
-	try {
-		return tr_monstres[i].cells[checkBoxLevels.checked ? 2 : 3].
-			firstChild.firstChild.nodeValue;
-	} catch(e) {
-		window.alert('[getMonstreNom] Impossible de trouver le monstre '+i);
-	}
+	return getMonstreNomByTR(tr_monstres[i]);
 }
 
 function getMonstreNomByTR(tr) {
-	return tr.cells[checkBoxLevels.checked ? 2 : 3].
-		firstChild.firstChild.nodeValue;
+	try {
+		var nom = document.evaluate(
+			"./td/a[starts-with(@href, 'javascript:EMV')]/text()",
+			tr, null, 2, null
+		).stringValue;
+		return nom;
+	} catch(e) {
+		avertissement('[getMonstreNom] Impossible de trouver le monstre '+i);
+		window.console.error(e);
+	}
 }
 
 function getMonstrePosition(i) {
 	var tds = tr_monstres[i].childNodes;
-	var X = checkBoxLevels.checked ? 3 : 4;
+	var l = tds.length;
 	return [
-		tds[X].firstChild.nodeValue,
-		tds[X+1].firstChild.nodeValue,
-		tds[X+2].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
@@ -232,31 +240,31 @@ function getMonstres() {
 
 /* [functions] Récup données Trolls */
 function getTrollDistance(i) {
-	return tr_trolls[i].cells[0].firstChild.nodeValue;
+	return parseInt(tr_trolls[i].cells[0].textContent);
 }
 
 function getTrollID(i) {
-	return tr_trolls[i].cells[1].firstChild.nodeValue;
+	return tr_trolls[i].cells[2].firstChild.nodeValue;
 }
 
 function getTrollNomNode(i) {
 	var isEnvoiOn =
 		document.getElementById('btnEnvoi').parentNode.childNodes.length>1;
-	return tr_trolls[i].cells[ isEnvoiOn ? 2 : 3 ];
+	return tr_trolls[i].cells[ isEnvoiOn ? 4 : 3 ];
 }
 
 function getTrollNivNode(i) {
 	// Pas de test sur isEnvoiOn, n'est appelé qu'au pageload
-	return tr_trolls[i].cells[3];
+	return tr_trolls[i].cells[4];
 }
 
 function getTrollGuildeNode(i) {
-	return tr_trolls[i].cells[5];
+	return tr_trolls[i].cells[6];
 }
 
 function getTrollGuildeID(i) {
-	if(tr_trolls[i].childNodes[5].childNodes.length>0) {
-		var href = tr_trolls[i].childNodes[5].firstChild.getAttribute('href');
+	if(tr_trolls[i].childNodes[6].childNodes.length>0) {
+		var href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
 		return href.substring(href.indexOf('(')+1,href.indexOf(','));
 	}
 	return -1;
@@ -266,9 +274,9 @@ function getTrollPosition(i) {
 	var tds = tr_trolls[i].childNodes;
 	var l = tds.length;
 	return [
-		tds[l-3].firstChild.nodeValue,
-		tds[l-2].firstChild.nodeValue,
-		tds[l-1].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
@@ -278,30 +286,31 @@ function getTresorDistance(i) {
 }
 
 function getTresorTdNom(i) {
-	return tr_tresors[i].cells[2];
+	return tr_tresors[i].cells[3];
 }
 
 function getTresorNom(i) {
 	// Utilisation de textContent pour régler le "bug de Pollux"
-	return trim(tr_tresors[i].cells[2].textContent);
+	return trim(tr_tresors[i].cells[3].textContent);
 }
 
 function getTresorPosition(i) {
 	var tds = tr_tresors[i].childNodes;
+	var l = tds.length;
 	return [
-		tds[3].firstChild.nodeValue,
-		tds[4].firstChild.nodeValue,
-		tds[5].firstChild.nodeValue
+		parseInt(tds[l-3].textContent),
+		parseInt(tds[l-2].textContent),
+		parseInt(tds[l-1].textContent)
 	];
 }
 
 /* [functions] Récup données Lieux */
 function getLieuDistance(i) {
-	return parseInt(tr_lieux[i].firstChild.firstChild.nodeValue);
+	return parseInt(tr_lieux[i].cells[0].textContent);
 }
 
 function getLieuNom(i) { /* DEBUG - en test */
-	return tr_lieux[i].cells[2].childNodes[1].textContent;
+	return tr_lieux[i].cells[3].childNodes[1].textContent;
 }
 
 function appendLieux(txt) {
@@ -414,9 +423,9 @@ function getVueScript() {
 			txt +=
 				tds[2].firstChild.nodeValue+';'+
 				getTresorNom(i)+';'+
-				tds[3].firstChild.nodeValue+';'+
 				tds[4].firstChild.nodeValue+';'+
-				tds[5].firstChild.nodeValue+'\n';
+				tds[5].firstChild.nodeValue+';'+
+				tds[6].firstChild.nodeValue+'\n';
 		}
 		
 		txt = appendLieux(txt+'#FIN TRESORS\n#DEBUT LIEUX\n')+
@@ -426,10 +435,10 @@ function getVueScript() {
 			var tds = tr_champignons[i].childNodes;
 			txt +=
 				';'+
-				tds[1].firstChild.nodeValue+';'+
 				tds[2].firstChild.nodeValue+';'+
 				tds[3].firstChild.nodeValue+';'+
-				tds[4].firstChild.nodeValue+'\n';
+				tds[4].firstChild.nodeValue+';'+
+				tds[5].firstChild.nodeValue+'\n';
 		}
 		
 		return txt+
@@ -1098,9 +1107,9 @@ function computeVLC(begin,end) {
 		{
 			if(donneesMonstre[12]==1)
 			{
-				var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-				tr.appendChild(document.createTextNode(" "));
-				tr.appendChild(createImage(urlImg, "Voit le caché"));
+				var td = getMonstreNomNode(i);
+				td.appendChild(document.createTextNode(" "));
+				td.appendChild(createImage(urlImg, "Voit le caché"));
 			}
 		}
 	}
@@ -1151,51 +1160,6 @@ function updateTactique() {
 		}
 	else
 		computeTactique();
-}
-
-function computeChargeProjoMonstre()
-{
-	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
-	var charger = getSortComp("Charger")!=0;
-	var projo = getSortComp("Projectile Magique")!=0;
-	var trolln = getPosition()[2];
-	if(!charger && !projo)
-	{
-		return false;
-	}
-	var porteeCharge = -1;
-	var porteeProjo = -1;
-	if(charger)
-	{
-		var aux = Math.ceil(MZ_getValue(numTroll+".caracs.pv") / 10) + MZ_getValue(numTroll+".caracs.regeneration");
-		porteeCharge = getPortee(aux);
-	}
-	if(projo)
-	{
-		porteeProjo = getPortee(MZ_getValue(numTroll+".caracs.vue.bm")+MZ_getValue(numTroll+".caracs.vue"));
-	}
-	
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
-	for(var i = nbMonstres+1; --i >= 1;) 
-	{
-		var id = getMonstreID(i);
-		var pos = getMonstrePosition(i);
-		var dist = getMonstreDistance(i);
-		if(dist>0 && pos[2] == trolln && dist<=porteeCharge)
-		{
-			var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgCharge, "Accessible en charge"));
-		}
-		if(pos[2] == trolln && dist<=porteeProjo)
-		{
-			var tr = x_monstres[i].childNodes[checkBoxLevels.checked ? 2 : 3];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgProjo, "Touchable avec un projectile magique"));
-		}
-	}
-	return true;
 }
 
 function filtreMonstres() {
@@ -1249,8 +1213,7 @@ function filtreMonstres() {
 				while(tr.childNodes.length>1) {
 					tr.removeChild(tr.childNodes[1]);
 				}
-			}
-			else {
+			} else {
 				var tr = getMonstreNomNode(i);
 				var TypeMonstre=getEM(nom);
 				if(TypeMonstre!='') {
@@ -1327,178 +1290,6 @@ function filtreTrolls() {
 				getTrollGuildeNode(i).textContent.toLowerCase().indexOf(strGuilde)==-1
 			)
 		) ? 'none' : '';
-	}
-}
-
-function computeChargeProjo()
-{
-	var urlImgCharge = "http://mountyzilla.tilk.info/scripts_0.9/images/Competences/charger.png";
-	var urlImgProjo = "http://mountyzilla.tilk.info/scripts_0.9/images/Sorts/projectileMagique.png";
-
-	var trolln = getPosition()[2];
-	if(!computeChargeProjoMonstre()) return false;
-	
-	var charger = getSortComp("Charger")!=0;
-	var projo = getSortComp("Projectile Magique")!=0;
-	if(!charger && !projo)
-	{
-		return false;
-	}
-	var porteeCharge = -1;
-	var porteeProjo = -1;
-	if(charger)
-	{
-		var aux = Math.ceil(MZ_getValue(numTroll+".caracs.pv") / 10) + MZ_getValue(numTroll+".caracs.regeneration");
-		porteeCharge = getPortee(aux);
-	}
-	if(projo)
-	{
-		porteeProjo = getPortee(MZ_getValue(numTroll+".caracs.vue.bm")+MZ_getValue(numTroll+".caracs.vue"));
-	}
-	for(var i = 1; i < nbTrolls+1; i++) 
-	{
-		var id = getTrollID(i);
-		var pos = getTrollPosition(i);
-		var dist = getTrollDistance(i);
-		if(dist>0 && pos[2] == trolln && dist<=porteeCharge)
-		{
-			var tr = x_trolls[i].childNodes[2];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgCharge, "Accessible en charge"));
-		}
-		if(pos[2] == trolln && dist<=porteeProjo)
-		{
-			var tr = x_trolls[i].childNodes[2];
-			tr.appendChild(document.createTextNode(" "));
-			tr.appendChild(createImage(urlImgProjo, "Touchable avec un projectile magique"));
-		}
-
-	}
-}
-
-/* [functions] Diplomatie */
-function refreshDiplo() {
-	MZ_setValue(numTroll+'.diplo.off',
-		checkBoxDiplo.checked?'true':'false'
-	);
-	if(isDiploRaw) { computeDiplo(); }
-	appliqueDiplo();
-}
-
-function computeDiplo() {
-// On extrait les données de couleur et on les stocke par id
-// Ordre de préséance :
-//  source Guilde < source Perso
-//  guilde cible < troll cible
-	
-	/* Diplo de Guilde */
-	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
-		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
-	if(diploGuilde && diploGuilde.isOn=='true') {
-		// Guilde perso
-		if(diploGuilde.guilde) {
-			Diplo.Guilde[diploGuilde.guilde.id] = {
-				couleur: diploGuilde.guilde.couleur,
-				titre: 'Ma Guilde'
-			};
-		}
-		// Guildes/Trolls A/E
-		for(var AE in {Amis:0,Ennemis:0}) {
-			for(var i=0 ; i<5 ; i++) {
-				if(diploGuilde[AE+i]) {
-					for(var type in {Guilde:0,Troll:0}) {
-						var liste = diploGuilde[AE+i][type].split(';');
-						for(var j=liste.length-2 ; j>=0 ; j--) {
-							Diplo[type][liste[j]] = {
-								couleur: diploGuilde[AE+i].couleur,
-								titre: diploGuilde[AE+i].titre
-							};
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	/* Diplo Perso */
-	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
-		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
-	if(diploPerso && diploPerso.isOn=='true') {
-		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
-			for(var id in diploPerso[type]) {
-				Diplo[type][id] = diploPerso[type][id];
-			}
-		}
-	}
-	if(diploPerso.mythiques) {
-		Diplo.mythiques = diploPerso.mythiques;
-	}
-	
-	isDiploRaw = false;
-}
-
-function appliqueDiplo() {
-	var aAppliquer = Diplo;
-	if(checkBoxDiplo.checked) {
-		// Pour retour à l'affichage basique sur désactivation de la diplo
-		aAppliquer = {
-			Guilde: {},
-			Troll: {},
-			Monstre: {}
-		};
-	}
-	
-	/* On applique "aAppliquer" */
-	// Diplo Trõlls
-	for(var i=nbTrolls ; i>0 ; i--) {
-		var idG = getTrollGuildeID(i);
-		var idT = getTrollID(i);
-		var tr = tr_trolls[i];
-		if(aAppliquer.Troll[idT]) {
-			tr.className = '';
-			var descr = aAppliquer.Troll[idT].titre;
-			if(descr) {
-				getTrollNomNode(i).title = descr
-			}
-			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
-		} else if(aAppliquer.Guilde[idG]) {
-			tr.className = '';
-			var descr = aAppliquer.Guilde[idG].titre;
-			if(descr) {
-				getTrollNomNode(i).title = descr
-			}
-			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
-		} else {
-			tr.className = 'mh_tdpage';
-			getTrollNomNode(i).title = '';
-		}
-	}
-	
-	// Diplo Monstres
-	for(var i=nbMonstres ; i>0 ; i--) {
-		var id = getMonstreID(i);
-		var nom = getMonstreNom(i).toLowerCase();
-		if(aAppliquer.Monstre[id]) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
-			tr_monstres[i].diploActive = 'oui';
-			var descr = aAppliquer.Monstre[id].titre;
-			if(descr) {
-				getMonstreNomNode(i).title = descr;
-			}
-		} else if(aAppliquer.mythiques &&
-			(nom.indexOf('liche')==0 ||
-			nom.indexOf('hydre')==0 ||
-			nom.indexOf('balrog')==0 ||
-			nom.indexOf('beholder')==0)) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
-			tr_monstres[i].diploActive = 'oui';
-			getMonstreNomNode(i).title = 'Monstre Mythique';
-		} else {
-			tr_monstres[i].className = 'mh_tdpage';
-			tr_monstres[i].diploActive = '';
-		}
 	}
 }
 
@@ -1662,22 +1453,6 @@ function filtreTresors() {
 	}
 }
 
-function computeTelek() {
-	if(getSortComp('Télékinésie')==0) { return; }
-	var urlImg = MZimg+'Sorts/telekinesie.png';
-	var posN = getPosition()[2];
-	for(var i=nbTresors ; i>0 ; i--) {
-		var pos = getTresorPosition(i);
-		if(pos[2]==posN) {
-			var td = getTresorTdNom(i);
-			appendText(td,' ');
-			td.appendChild(
-				createImage(urlImg,'Trésor transportable par Télékinésie')
-			);
-		}
-	}
-}
-
 
 /*-[functions]----------------- Fonctions Lieux ------------------------------*/
 
@@ -1694,6 +1469,226 @@ function filtreLieux() {
 				&& getLieuDistance(i)>1)
 			? 'none' : '';
 	}
+}
+
+
+/*-[functions]-------------------- Diplomatie --------------------------------*/
+
+function refreshDiplo() {
+	MZ_setValue(numTroll+'.diplo.off',
+		checkBoxDiplo.checked?'true':'false'
+	);
+	if(isDiploRaw) { computeDiplo(); }
+	appliqueDiplo();
+}
+
+function computeDiplo() {
+// On extrait les données de couleur et on les stocke par id
+// Ordre de préséance :
+//  source Guilde < source Perso
+//  guilde cible < troll cible
+	
+	/* Diplo de Guilde */
+	var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+	if(diploGuilde && diploGuilde.isOn=='true') {
+		// Guilde perso
+		if(diploGuilde.guilde) {
+			Diplo.Guilde[diploGuilde.guilde.id] = {
+				couleur: diploGuilde.guilde.couleur,
+				titre: 'Ma Guilde'
+			};
+		}
+		// Guildes/Trolls A/E
+		for(var AE in {Amis:0,Ennemis:0}) {
+			for(var i=0 ; i<5 ; i++) {
+				if(diploGuilde[AE+i]) {
+					for(var type in {Guilde:0,Troll:0}) {
+						var liste = diploGuilde[AE+i][type].split(';');
+						for(var j=liste.length-2 ; j>=0 ; j--) {
+							Diplo[type][liste[j]] = {
+								couleur: diploGuilde[AE+i].couleur,
+								titre: diploGuilde[AE+i].titre
+							};
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/* Diplo Perso */
+	var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+		JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+	if(diploPerso && diploPerso.isOn=='true') {
+		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+			for(var id in diploPerso[type]) {
+				Diplo[type][id] = diploPerso[type][id];
+			}
+		}
+	}
+	if(diploPerso.mythiques) {
+		Diplo.mythiques = diploPerso.mythiques;
+	}
+	
+	isDiploRaw = false;
+}
+
+function appliqueDiplo() {
+	var aAppliquer = Diplo;
+	if(checkBoxDiplo.checked) {
+		// Pour retour à l'affichage basique sur désactivation de la diplo
+		aAppliquer = {
+			Guilde: {},
+			Troll: {},
+			Monstre: {}
+		};
+	}
+	
+	/* On applique "aAppliquer" */
+	// Diplo Trõlls
+	for(var i=nbTrolls ; i>0 ; i--) {
+		var idG = getTrollGuildeID(i);
+		var idT = getTrollID(i);
+		var tr = tr_trolls[i];
+		if(aAppliquer.Troll[idT]) {
+			tr.className = '';
+			var descr = aAppliquer.Troll[idT].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
+		} else if(aAppliquer.Guilde[idG]) {
+			tr.className = '';
+			var descr = aAppliquer.Guilde[idG].titre;
+			if(descr) {
+				getTrollNomNode(i).title = descr
+			}
+			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+		} else {
+			tr.className = 'mh_tdpage';
+			getTrollNomNode(i).title = '';
+		}
+	}
+	
+	// Diplo Monstres
+	for(var i=nbMonstres ; i>0 ; i--) {
+		var id = getMonstreID(i);
+		var nom = getMonstreNom(i).toLowerCase();
+		if(aAppliquer.Monstre[id]) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			tr_monstres[i].diploActive = 'oui';
+			var descr = aAppliquer.Monstre[id].titre;
+			if(descr) {
+				getMonstreNomNode(i).title = descr;
+			}
+		} else if(aAppliquer.mythiques &&
+			(nom.indexOf('liche')==0 ||
+			nom.indexOf('hydre')==0 ||
+			nom.indexOf('balrog')==0 ||
+			nom.indexOf('beholder')==0)) {
+			tr_monstres[i].className = '';
+			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
+			tr_monstres[i].diploActive = 'oui';
+			getMonstreNomNode(i).title = 'Monstre Mythique';
+		} else {
+			tr_monstres[i].className = 'mh_tdpage';
+			tr_monstres[i].diploActive = '';
+		}
+	}
+}
+
+
+/*-[functions]---------------- Actions à distance ----------------------------*/
+
+function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
+	var monN = parseInt(getPosition()[2]);
+	
+	for(var type in keltypes) {
+		alt = oussa=='self' ? type.slice(0,-1) : oussa;
+		for(var i=this['nb'+type] ; i>0 ; i--)  {
+			var tr = this['tr_'+type.toLowerCase()][i];
+			var sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
+			var d = this['get'+type.slice(0,-1)+'Distance'](i);
+			
+			if(sonN==monN && d>=dmin && d<=dmax) {
+				var iconeAction = document.evaluate(
+					"./descendant::img[@alt='"+alt+"']",
+					tr, null, 9, null
+				).singleNodeValue;
+				if(iconeAction) {
+					if(iconeAction.title) {
+						iconeAction.title += "\n"+message;
+					} else {
+						iconeAction.title = message;
+					}
+					iconeAction.src = urlIcon;
+					window.console.debug(type+" n°"+i+" : "+message);
+				} else {
+					var tdAction = tr.getElementsByTagName('td')[1];
+					var icon = document.createElement('img');
+					icon.src = urlIcon;
+					icon.height = 20;
+					icon.alt = alt;
+					icon.title = message;
+					tdAction.appendChild(icon);
+				}
+			}
+		}
+	}
+}
+
+function computeCharge() {
+	computeActionDistante(1,
+		getPortee(
+			Math.ceil(MZ_getValue(numTroll+".caracs.pv")/10)+
+			MZ_getValue(numTroll+".caracs.regeneration")
+		),
+		{'Monstres':1, 'Trolls':1},
+		'Attaquer',
+		MHicons+'E_Metal09.png',
+		'Cible à portée de Charge'
+	);
+}
+
+function computeProjo() {
+	computeActionDistante(0,
+		getPortee(
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		),
+		{'Monstres':1, 'Trolls':1},
+		'Attaquer',
+		MHicons+'S_Fire05.png',
+		'Cible à portée de Projo'
+	);
+}
+
+function computeTelek() {
+	computeActionDistante(0,
+		Math.floor((
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		)/2),
+		{'Tresors':1},
+		'Telek',
+		MHicons+'S_Magic04.png',
+		'Trésor à portée de Télékinésie'
+	);
+}
+
+function computeLdP() {
+	computeActionDistante(0,
+		2+Math.floor((
+			MZ_getValue(numTroll+".caracs.vue")+
+			MZ_getValue(numTroll+".caracs.vue.bm")
+		)/5),
+		{'Monstres':1, 'Trolls':1},
+		'self',
+		MHicons+'P_Red01.png',
+		'Cible à portée de Lancer de Potions'
+	);
 }
 
 
@@ -2028,29 +2023,47 @@ try {
 	refreshDiplo();
 	
 	//400 ms
-	{
-		var noGG = saveCheckBox(checkBoxGG, "NOGG");
-		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
-		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-		var noTresorsEngages =
-			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-		var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-		var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
-		filtreMonstres();
-		if(noIntangibles) filtreTrolls();
-		if(noGG || noCompos || noBidouilles || noTresorsEngages) filtreTresors();
-		if(noTrou) filtreLieux();
+	var noGG = saveCheckBox(checkBoxGG, "NOGG");
+	var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
+	var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
+	var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
+	var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
+	var noTresorsEngages =
+		saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
+	var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
+	var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
+	filtreMonstres();
+	if(noIntangibles) {
+		filtreTrolls();
 	}
+	if(noGG || noCompos || noBidouilles || noTresorsEngages) {
+		filtreTresors();
+	}
+	if(noTrou) {
+		filtreLieux();
+	}
+
 	initPopup(); // XXX Sert à la fois aux infos tactiques et aux tags XXX
 	initPXTroll();
 	computeTag();
-	computeTelek();
-	computeChargeProjo(); // TODO À décomposer
+
+	if(getTalent("Projectile Magique")!=0) {
+		computeProjo();
+	}
+	if(getTalent("Charger")!=0) {
+		computeCharge();
+	}
+	if(getTalent("Télékinésie")!=0) {
+		computeTelek();
+	}
+	if(getTalent("Lancer de Potions")!=0) {
+		computeLdP();
+	}
+	
 	putScriptExterne();
 	
 	displayScriptTime();
 } catch(e) {
+	avertissement("[MZ] Une erreur s'est produite.");
 	window.console.error(e);
 }

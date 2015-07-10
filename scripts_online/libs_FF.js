@@ -23,6 +23,7 @@
  */
 
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
+var MHicons = '/mountyhall/Images/Icones/';
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
@@ -116,7 +117,7 @@ function FF_XMLHttpRequest(MZ_XHR_Ob) {
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
 
 function avertissement(txt,duree) {
-	if(!duree) { duree = 3000; }
+	if(!duree) { duree = 5000; }
 	var div = document.createElement('div');
 	// On numérote les avertissements pour destruction sélective
 	var num = document.getElementsByName('avertissement').length;
