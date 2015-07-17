@@ -276,13 +276,171 @@ function changeActionDecalage() {
 
 /*-[functions]------------------- Alerte Mundi -------------------------------*/
 
+function date_HommeVersTroll(dateH) {
+// Entrée : arr(3) [jour, mois, an] humain
+// Sortie : arr(3) [jour, mundi, cycle] trõll
+	var jour = dateH[0], mois = dateH[1], an = dateH[2];
+	
+	// 26/08/2001 = 1° jour de la Saison du Hum du 1° cycle après Ragnarok
+	var jour1 = new Date(2001,7,26);
+	var date = new Date(an,mois-1,jour);
+	var nbJours = Math.floor((date-jour1)/864e5);
+	if(nbJours<0) {
+		return  [nbJours, 0, 0];
+	}
+	
+	var numCycle = Math.floor(nbJours/378);
+	nbJours-=378*numCycle;
+	numCycle+=1;
+	if(nbJours<15) {
+		var numMundi = 0;
+	} else {
+		nbJours-=14;
+		var numMundi = Math.floor(nbJours/28);
+		nbJours-=28*numMundi;
+		numMundi+=1;
+	}
+	nbJours+=1;
+	
+	return [nbJours,numMundi,numCycle];
+}
+
+function isPaques(jour,mois,an) {
+// Calcul du jour de Pâques grégorien, année>1583
+// Algorithme "de Butcher", benchmark-optimal
+	var nbCyclesMeton = an%19;
+	var siecle = Math.floor(an/100);
+	var dansSiecle = an-100*siecle;
+	var nbCycles400a = Math.floor(siecle/4);
+	var dansCycle400a = siecle-4*nbCycles400a;
+	var proemptose = Math.floor((siecle+8)/25);
+	var metemptpose = Math.floor((siecle-proemptose+1)/3);
+	var epacte = (19*nbCyclesMeton+siecle-nbCycles400a-metemptpose+15)%30;
+	var nbCycles4a = Math.floor(dansSiecle/4);
+	var dansCycle4a = dansSiecle-4*nbCycles4a;
+	var numLettreDom = (32+2*dansCycle400a+2*nbCycles4a-epacte-dansCycle4a)%7;
+	var corr = Math.floor((nbCyclesMeton+11*epacte+22*numLettreDom)/451);
+	var x = epacte+numLettreDom-7*corr+114;
+	var moisPaques = Math.floor(x/31);
+	var jourPaques = x+1-31*moisPaques;
+	
+	return jour==jourPaques && mois==moisPaques;
+}
+
+function chaineDateTrolle(dateT,dateH) {
+	// Assignation des données de base
+	var numJour = dateT[0], numMundi = dateT[1], numCycle = dateT[2];
+	var jour = dateH[0], mois = dateH[1], an = dateH[2];
+	var nomMundi = [
+		'de la Saison du Hum',
+		'du Phoenix',
+		'de la Mouche',
+		'du Dindon',
+		'du Goblin',
+		'du Démon',
+		'de la Limace',
+		'du Rat',
+		"de l'Hydre",
+		'du Ver',
+		'du Fungus',
+		'de la Vouivre',
+		'du Gnu',
+		'du Scarabée'
+	];
+	
+	// Dates anté-Ragnarok
+	if(numJour<0) {
+		return (-numJour)+'° jour avant Ragnarok';
+	}
+	
+	// Chaîne de base
+	var str = "[";
+	if(numJour==1) {
+		str += "Mundidey ";
+	} else {
+		str += numJour+"° jour ";
+	}
+	str+=nomMundi[numMundi]+" du "+numCycle+"° cycle après Ragnarok]";
+	
+	// Ajout Z'nits & Fêtes
+	if(jour==19 && mois==3) {
+		str+=" [Z'nit du Silence]";
+	} else if(jour==21 && mois==6) {
+		str+=" [Z'nit de l'Obscurité]";
+	} else if(jour==21 && mois==6) {
+		str+=" [Z'nit du Jeûn]";
+	} else if(jour==21 && mois==6) {
+		str+=" [Z'nit de Folie]";
+	} else if(jour==1 && mois==3) {
+		str+=' [Jour du Sang]';
+	} else if(jour==31 && mois==10) {
+		str+=" [Fête d'Alouïne]";
+	} else if(jour==25 && mois==12) {
+		str+=" [Fête de N'hoyël]"
+	} else if(jour==25 && mois==10) {
+		str+=" [Journée d'la Paquerette]";
+	} else if(isPaques(jour,mois,an)) {
+		str+=" [Fête de Pähäk]";
+	}
+	// Ajout Sainte Malchance
+	if(numJour==13) {
+		str+=" [Jour de la Sainte Malchance]";
+	}
+	
+	return str;
+}
+
+function corrigeLaDate() {
+	try {
+		var node = document.evaluate(
+			"//div[@class='dateAction']/b",
+			document, null, 9, null
+		).singleNodeValue;
+	} catch(e) {
+		window.console.error('[corrigeLaDate] Node introuvable');
+		return;
+	}
+	if(!node) { return; }
+	
+	// Construction chaîne date trõlle
+	var ceJour = new Date();
+	var dateH = [
+		ceJour.getDate(),
+		ceJour.getMonth()+1,
+		ceJour.getFullYear()
+	];
+	var dateT = date_HommeVersTroll(dateH);
+	var strDate = chaineDateTrolle(dateT,dateH);
+	
+	// Construction chaîne prochain Mundi
+	var longueurMundi = (dateT[1]==0)?14:28;
+	var avantMundi = longueurMundi+1-dateT[0];
+	var strMundi = '[Prochain Mundidey ';
+	if(avantMundi>1) {
+		strMundi += 'dans '+avantMundi+' jours]';
+	} else {
+		strMundi += 'demain]';
+	}
+	
+	// Déploiement
+	node.innerHTML = strDate;
+	try {
+		node.parentNode.parentNode.replaceChild(
+			document.createTextNode(strMundi),
+			node.parentNode.nextSibling
+		);
+	} catch(e) {
+		window.console.error('[corrigeLaDate/prochainMundi] Node introuvable');
+	}
+}
+
 function prochainMundi() {
 	try {
 		var node = document.evaluate(
 			"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
 			document, null, 9, null).singleNodeValue;
 	} catch(e) {
-		window.console.log('[prochainMundi] Node introuvable');
+		window.console.error('[prochainMundi] Node introuvable');
 		return;
 	}
 	if(!node) { return; }
@@ -303,8 +461,8 @@ function prochainMundi() {
 /*                            Fonction principale                             */
 
 function dispatch() {
-	if(isPage('MH_Play/Play_action.php')) {
-		prochainMundi();
+	if(isPage('MH_Play/Play_action')) {
+		corrigeLaDate();
 	}
 	else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
 		changeActionDecalage();
@@ -348,7 +506,6 @@ function dispatch() {
 		}
 	}
 }
-
 
 start_script(31);
 dispatch();
