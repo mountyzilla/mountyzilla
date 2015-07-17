@@ -463,45 +463,43 @@ function prochainMundi() {
 function dispatch() {
 	if(isPage('MH_Play/Play_action')) {
 		corrigeLaDate();
-	}
-	else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+	} else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
 		changeActionDecalage();
-	}
-	else if(isPage('MH_Play/Actions')) {
+	} else if(isPage('MH_Play/Actions')) {
 		if(document.evaluate(
-				"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
-				document, null, 2, null).stringValue) {
+			"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
+			document, null, 2, null
+		).stringValue) {
 			traiteMM();
-		}
-		else if(document.evaluate(
-				"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
-				document, null, 2, null).stringValue) {
+		} else if(document.evaluate(
+			"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
+			document, null, 2, null
+		).stringValue) {
 			//getIdt();
 			traiteRM();
-		}
-		else {
+		} /*else {
+			// Est censé se lancer sur quoi *précisément* ?
 			traiteRM();
 			getLevel();
-		}
-	}
-	else {
+		}*/
+	} else {
 		/* Traitement des messages du bot */
-		var messageTitle = document.evaluate("//form/table/tbody/tr[1]/td[1]/"
+		var messageTitle = document.evaluate(
+			"//form/table/tbody/tr[1]/td[1]/"
 			+"descendant::text()[contains(.,'[MountyHall]')]",
-			document, null, 2, null).stringValue;
-		if(messageTitle.indexOf('Attaquant') != -1
-			&& messageTitle.indexOf('sur') != -1) {
+			document, null, 2, null
+		).stringValue;
+		if(messageTitle.indexOf('Attaquant') != -1 &&
+			messageTitle.indexOf('sur') != -1) {
 			getLevel();
 			traiteRM();
-		}
-		else if(messageTitle.indexOf('Résultat du pouvoir') != -1
-			|| messageTitle.indexOf('Défenseur') != -1) {
+		} else if(messageTitle.indexOf('Résultat du pouvoir') != -1 ||
+			messageTitle.indexOf('Défenseur') != -1) {
 			traiteMM();
-		}
-		else if(messageTitle.indexOf('Identification des trésors') != -1
+		} else if(messageTitle.indexOf('Identification des trésors') != -1 ||
 			// à replacer avec Attaque après révision getLvl :
-			|| messageTitle.indexOf('Explosion') != -1
-			|| messageTitle.indexOf('Insulte') != -1) {
+			messageTitle.indexOf('Explosion') != -1 ||
+			messageTitle.indexOf('Insulte') != -1) {
 			traiteRM();
 		}
 	}
