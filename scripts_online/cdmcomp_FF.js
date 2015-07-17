@@ -99,7 +99,7 @@ function traiteCdM() {
 		appendText(p,'CdM envoyée vers la base MountyZilla !');
 		insertBefore(document.getElementsByName('as_Action')[0].parentNode,p);
 	} else {
-		var button = insertButtonCdm('as_Action', sendInfoCDM);
+		insertButtonCdm('as_Action', sendInfoCDM);
 	}
 
 	// Insertion de l'estimation des PV restants
@@ -136,3 +136,4 @@ function sendInfoCDM() {
 
 start_script(31);
 traiteCdM();
+displayScriptTime();
