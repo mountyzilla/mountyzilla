@@ -244,15 +244,13 @@ function traiteRM() {
 /*-[functions]------------------- Décalage DLA -------------------------------*/
 
 function confirmeDecalage() {
-	var DLA = document.getElementsByTagName('script')[1]
-		.textContent.match(/\d+/g);
-	var newDLA = new Date( DLA[1],DLA[2],DLA[3],DLA[4],DLA[5],DLA[6] );
+	var newDLA = new Date( oldDLA );
 	newDLA.setMinutes(
 		newDLA.getMinutes()+parseInt(document.getElementById('ai_NbMinutes').value)
 	);
 	return window.confirm(
 		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
-		+'\nConfirmez-vous cette heure ?'
+		+'\nConfirmez-vous ce décalage ?'
 	);
 }
 
@@ -268,9 +266,28 @@ function changeActionDecalage() {
 	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
 		return;
 	}
+	try {
+		// On récupère le contenu du script JS MH de calcul du décalage
+		var scriptTxt = document.evaluate(
+			".//script[ not(@src) ]",
+			document, null, 9, null
+		).singleNodeValue.textContent;
+		// On en extrait la DLA courante
+		scriptTxt = scriptTxt.slice(scriptTxt.indexOf('new Date(')+9);
+		scriptTxt = scriptTxt.split('\n')[0];
+		var nbs = scriptTxt.match(/\d+/g);
+		oldDLA = new Date( nbs[0],nbs[1],nbs[2],nbs[3],nbs[4],nbs[5] );
+	} catch(e) {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] DLA non trouvée',e);
+		return;
+	}
 	var form = document.getElementsByName('ActionForm')[0];
 	if(form) {
 		form.addEventListener('submit', newsubmitDLA, true);
+	} else {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] ActionForm non trouvé');
 	}
 }
 
@@ -422,7 +439,7 @@ function corrigeLaDate() {
 		strMundi += 'demain]';
 	}
 	
-	// Déploiement
+	// Affichage
 	node.innerHTML = strDate;
 	try {
 		node.parentNode.parentNode.replaceChild(
@@ -464,6 +481,7 @@ function dispatch() {
 	if(isPage('MH_Play/Play_action')) {
 		corrigeLaDate();
 	} else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+		var oldDLA;
 		changeActionDecalage();
 	} else if(isPage('MH_Play/Actions')) {
 		if(document.evaluate(
