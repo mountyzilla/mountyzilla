@@ -244,10 +244,12 @@ function traiteRM() {
 /*-[functions]------------------- Décalage DLA -------------------------------*/
 
 function confirmeDecalage() {
+	// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
+	var nbMinutes = document.getElementById('ai_NbMinutes').value;
+	if(!nbMinutes || isNaN(nbMinutes) || nbMinutes<1) { return false; }
+	
 	var newDLA = new Date( oldDLA );
-	newDLA.setMinutes(
-		newDLA.getMinutes()+parseInt(document.getElementById('ai_NbMinutes').value)
-	);
+	newDLA.setMinutes( newDLA.getMinutes()+nbMinutes );
 	return window.confirm(
 		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
 		+'\nConfirmez-vous ce décalage ?'
