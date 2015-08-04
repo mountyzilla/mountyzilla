@@ -369,7 +369,9 @@ function setInfoDateCreation() {
 	}
 
 function setNextDLA() {
-	var node = mainTR.snapshotItem(1).childNodes[3].childNodes[8].childNodes[1];
+	var node = mainTR.snapshotItem(1).cells[1].
+		getElementsByTagName('p')[1].
+		getElementsByTagName('b')[0];
 	var nbrs = node.firstChild.nodeValue.match(/\d+/g);
 	DureeTour = nbrs[0]*36e5+nbrs[1]*6e4;
 	var DLAsuivMSec = DLA.getTime()+DureeTour;
@@ -512,7 +514,8 @@ function setInfosPV() { // pour AM et Sacro
 	}
 
 function setCurrentEsquive() {
-	var pnode = mainTR.snapshotItem(6).childNodes[3].firstChild;
+	var pnode = mainTR.snapshotItem(6).cells[1].
+		getElementsByTagName('p')[0];
 	var attmod = pnode.childNodes[3].nodeValue.match(/\d+/)[0];
 	pnode.childNodes[3].nodeValue +=
 		' (moyenne attaque : '+Math.max(attmoy-3.5*attmod,attbm,0)+')';
@@ -526,7 +529,8 @@ function setCurrentEsquive() {
 	}
 
 function setStabilite() {
-	var node = mainTR.snapshotItem(5).childNodes[3].childNodes[3];
+	var node = mainTR.snapshotItem(5).cells[1].
+		getElementsByTagName('p')[0];
 	appendBr(node);
 	appendText(node,
 		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
@@ -769,7 +773,7 @@ function setAccel() {
 		appendTdText(ligneMin,'30\'');
 		
 		if(!BMfrais && bmfatigue) { // si les BM n'ont pas été rafraîchis
-			appendText(td,'/!\\ Visitez la page des Bonus/Malus'
+			appendText(td,'/!\\ Visitez la page des Bonus/Malus '
 				+'pour mettre à jour votre fatigue. /!\\',
 				true);
 			appendBr(td);
@@ -793,7 +797,7 @@ function setAccel() {
 		lastDLA = new Date( DLA );
 		MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLA));
 		pva = Math.min(pv+regmoy,pvmax);
-		appendText(td,'/!\\ Votre DLA est dépassée,'
+		appendText(td,'/!\\ Votre DLA est dépassée, '
 			+'calculs basés sur des estimations. /!\\',
 			true);
 		appendBr(td);
@@ -886,7 +890,7 @@ function traitementTalents() {
 		);
 	} catch(e) {
 		avertissement('[traitementTalents] Données non trouvées')
-		window.console.debug(e);
+		window.console.error(e);
 		return false;
 	}
 	var totalComp = injecteInfosBulles(tr_comps,'competences');
@@ -898,33 +902,48 @@ function traitementTalents() {
 
 function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
+	// on parse la liste des talents du type 'fonction'
 	for(var i=0 ; i<liste.length ; i++) {
-		var node = document.evaluate(
-			"./td/a[starts-with(@href, 'javascript:Enter')]",
-			liste[i], null, 9, null
-		).singleNodeValue;
+		var node = liste[i].cells[1].getElementsByTagName('a')[0];
 		var nom = epure(trim(node.textContent));
 		var nbrs = getNumbers(
-			liste[i].childNodes[5].firstChild.firstChild.nodeValue
+			liste[i].cells[2].textContent
 		);
 		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
+			// pour piège et golemo, on extrait les sous-comps pour stockage
+			// est-ce bien utile ?...
 			var lstNoms = trim(
-				epure(liste[i].childNodes[3].lastChild.nodeValue)
+				epure(liste[i].cells[1].lastChild.nodeValue)
 			).slice(1,-1).split(', ');
 			for(var j=0 ; j<lstNoms.length ; j++) {
 				setTalent(lstNoms[j],nbrs[1],nbrs[0]);
 			}
 			setInfos(node,lstNoms.join(', '),fonction,nbrs[0]);
 			totalpc += nbrs[1];
-			continue;
-		}
-		setInfos(node,nom,fonction,nbrs[0]);
-		setTalent(nom,nbrs[1],nbrs[0]);
-		totalpc += nbrs[1];
-		for(var j=3 ; j<liste[i].childNodes[5].childNodes.length ; j+=2) {
-			nbrs = getNumbers(liste[i].childNodes[5].childNodes[j].nodeValue);
+		} else {
+			// pour les autres talents, stockage direct
+			//window.console.debug(nom,fonction,nbrs);
+			setInfos(node,nom,fonction,nbrs[0]);
 			setTalent(nom,nbrs[1],nbrs[0]);
 			totalpc += nbrs[1];
+		}
+
+		// teste si l'affichage "(max: xx%)" est présent
+		var affichagePourri = liste[i].cells[2].textContent.indexOf("(max")!=0;
+		// ... et le passe en title le cas échéant
+		if(affichagePourri) {
+			var nodeTopNiv = liste[i].cells[2].getElementsByTagName('b')[0];
+			var nodeMax = nodeTopNiv.nextSibling;
+			var title = trim(nodeMax.nodeValue).slice(1,-1);
+			nodeTopNiv.title = title;
+			liste[i].cells[2].removeChild(nodeMax);
+		}
+		
+		// stockage des niveaux inférieurs du talent si présents
+		for(var j=affichagePourri?3:2 ; j<nbrs.length ; j+=2) {
+			//window.console.debug("setTalent(",nom,nbrs[j+1],nbrs[j],")");
+			setTalent(nom,nbrs[j+1],nbrs[j]);
+			totalpc += nbrs[j+1];
 		}
 	}
 	return totalpc;
@@ -1609,6 +1628,6 @@ try {
 	saveProfil();
 	displayScriptTime();
 } catch(e) {
-	avertissement(e, 10000);
-	window.console.debug(e);
+	avertissement(e);
+	window.console.error("[MZ] Erreur générale profil",e);
 }
