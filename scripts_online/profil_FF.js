@@ -874,25 +874,21 @@ function refreshAccel() {
 /*-[functions]-------- Fonctions gérant les infos-bulles ---------------------*/
 
 function traitementTalents() {
-	removeAllTalents();
 	try {
-		var talTabs = document.evaluate(
-			"./tbody/tr/td/table",
-			mainTab[1], null, 7, null
-		);
-		var listeComp = talTabs.snapshotItem(0);
-		tr_comps = listeComp.getElementsByTagName('tr');
-		var listeSort = talTabs.snapshotItem(1);
-		tr_sorts = listeSort.getElementsByTagName('tr');
+		tr_comps = document.getElementById('competences').rows;
+		tr_sorts = document.getElementById('sortileges').rows;
 		var titres = document.evaluate(
 			"./tbody/tr/td/b/text()",
-			mainTab[1], null, 7, null
+			document.getElementById('competences').parentNode.
+				parentNode.parentNode.parentNode,
+			null, 7, null
 		);
 	} catch(e) {
 		avertissement('[traitementTalents] Données non trouvées')
 		window.console.error(e);
 		return false;
 	}
+	removeAllTalents();
 	var totalComp = injecteInfosBulles(tr_comps,'competences');
 	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
 	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
@@ -903,13 +899,13 @@ function traitementTalents() {
 function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
 	// on parse la liste des talents du type 'fonction'
-	for(var i=0 ; i<liste.length ; i++) {
+	for(var i=1 ; i<liste.length ; i++) {
 		var node = liste[i].cells[1].getElementsByTagName('a')[0];
 		var nom = epure(trim(node.textContent));
 		var nbrs = getNumbers(
-			liste[i].cells[2].textContent
+			liste[i].cells[7].textContent
 		);
-		if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
+		/*if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
 			// pour piège et golemo, on extrait les sous-comps pour stockage
 			// est-ce bien utile ?...
 			var lstNoms = trim(
@@ -922,25 +918,18 @@ function injecteInfosBulles(liste,fonction) {
 			totalpc += nbrs[1];
 		} else {
 			// pour les autres talents, stockage direct
-			//window.console.debug(nom,fonction,nbrs);
+			window.console.debug(nom,fonction,nbrs);
 			setInfos(node,nom,fonction,nbrs[0]);
 			setTalent(nom,nbrs[1],nbrs[0]);
 			totalpc += nbrs[1];
-		}
+		}*/
+		//window.console.debug(nom,fonction,nbrs);
+		setInfos(node,nom,fonction,nbrs[0]);
+		setTalent(nom,nbrs[1],nbrs[0]);
+		totalpc += nbrs[1];
 
-		// teste si l'affichage "(max: xx%)" est présent
-		var affichagePourri = liste[i].cells[2].textContent.indexOf("(max")!=0;
-		// ... et le passe en title le cas échéant
-		if(affichagePourri) {
-			var nodeTopNiv = liste[i].cells[2].getElementsByTagName('b')[0];
-			var nodeMax = nodeTopNiv.nextSibling;
-			var title = trim(nodeMax.nodeValue).slice(1,-1);
-			nodeTopNiv.title = title;
-			liste[i].cells[2].removeChild(nodeMax);
-		}
-		
 		// stockage des niveaux inférieurs du talent si présents
-		for(var j=affichagePourri?3:2 ; j<nbrs.length ; j+=2) {
+		for(var j=2 ; j<nbrs.length ; j+=2) {
 			//window.console.debug("setTalent(",nom,nbrs[j+1],nbrs[j],")");
 			setTalent(nom,nbrs[j+1],nbrs[j]);
 			totalpc += nbrs[j+1];
