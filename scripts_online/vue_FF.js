@@ -559,14 +559,27 @@ function refresh2DViewButton() {
 }
 
 function set2DViewSystem() {
-	// = Initialiseur du système de vue 2D
+// Initialise le système de vue 2D
+	// Recherche du point d'insertion
+	try {
+		var center = document.evaluate(
+			"//h2[@id='titre2']/following-sibling::center",
+			document, null, 9, null
+		).singleNodeValue;
+	} catch(e) {
+		avertissement("Erreur d'initialisation du système de vue 2D");
+		window.console.error("[MZ] set2DViewSystem",e);
+		return;
+	}
+	
+	// Récupération de la dernière vue utilisée
 	var vueext = MZ_getValue('VUEEXT');
 	if(!vueext || !vue2Ddata[vueext]) {
-		// La vue Bricol'Trolls est employée par défaut
+		// sinon, la vue Bricol'Trolls est employée par défaut
 		vueext = 'Bricol\' Vue';
 	}
 	
-	/* Création du sélecteur de vue */
+	// Création du sélecteur de vue externe
 	selectVue2D = document.createElement('select');
 	selectVue2D.id = 'selectVue2D';
 	selectVue2D.className = 'SelectboxV2';
@@ -576,23 +589,22 @@ function set2DViewSystem() {
 	selectVue2D.value = vueext;
 	selectVue2D.onchange = refresh2DViewButton;
 	
-	/* Création du formulaire d'envoi (vide, le submit est géré via handler) */
+	// Création du formulaire d'envoi (vide, le submit est géré via handler)
 	var form = document.createElement('form');
 	form.id = 'viewForm';
 	
-	/* Insertion du système de vue */
-	var center = document.getElementById('titre2').nextSibling;
+	// Insertion du système de vue
 	var table = document.createElement('table');
 	var tr = appendTr(table);
 	var td = appendTd(tr);
 	td.appendChild(selectVue2D);
 	td = appendTd(tr);
-	td.style.fontSize = '0px'; // gère l'erreur de l'extra character
+	td.style.fontSize = '0px'; // gère le bug de l'extra character
 	td.appendChild(form);
 	center.insertBefore(table,center.firstChild);
 	insertBr(center.childNodes[1]);
 	
-	/* Appelle le handler pour initialiser le bouton de submit */
+	// Appelle le handler pour initialiser le bouton de submit
 	refresh2DViewButton();
 }
 
@@ -1996,7 +2008,7 @@ try {
 	set2DViewSystem();
 	//putBoutonTroogle();
 	putBoutonPXMP();
-
+	
 	synchroniseFiltres();
 	toggleLevelColumn();
 	savePosition();
@@ -2045,5 +2057,5 @@ try {
 	displayScriptTime();
 } catch(e) {
 	avertissement("[MZ] Une erreur s'est produite.");
-	window.console.error('[Vue]\n'+e);
+	window.console.error("[MZ] Erreur générale Vue",e);
 }
