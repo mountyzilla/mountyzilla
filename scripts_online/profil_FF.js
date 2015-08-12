@@ -16,46 +16,55 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-/* TODO
- * - révision des formules de trimul --> sera traité en externe dans MZ 2.0
- * - ajouter la gestion des bm de PV et du vampi... pour le trimul aussi
-  --> manque d'infos
- * - (ou pas) gérer les décumuls avec la page des BM
-  --> trop accessoire, ne sera pas fait
- */
 
+/*---------------------------- Variables globales ----------------------------*/
 
-/* structure générale données */
-var mainTab, mainTR, pvTR;
-var tr_comps, tr_sorts;
-
-/* Anatrolliseur */
-var urlAnatrolliseur;
-
-/* Bulles */
-var hauteur = 50, bulleStyle = null;
-
-var race;
-var posX, posY, posN;
-var vue, vuebm, vuetotale;
-var pvbase, pvmax, pv, pvdispo;
-var fatigue, bmfatigue;
-// variables spéciales Kastars
-var pva, minParPV, overDLA;
-var inJour, inMois, inAn, inHr, inMin, inSec; // édition manuelle lastDLA
-var lastDLAZone, maxAMZone, cumulZone; // auto-refresh lastDLA
-var lastDLA, DLAaccel;
-//
-var reg, regbm, regmoy;
-var att, attbm, attbmm, attmoy;
-var esq, esqbm, esqmoy;
-var deg, degbm, degbmm, degmoy;
-var arm, armbmp, armbmm, armmoy;
-var rm, rmbm, mm, mmbm;
-var nbattaques, bmDDegM, bmDAttM; // nbattaques obsolète
-var dtb, pdm, bmt; // détails durée du tour (calcul pvdispo)
-var DLA, DLAsuiv, HeureServeur, DureeTour;
-var NBjours;
+var	
+	// Structure générale des données
+	mainTab, mainTR, pvTR,
+	tr_comps, tr_sorts,
+	
+	// Anatrolliseur
+	urlAnatrolliseur,
+	
+	// Infobulles talents
+	hauteur = 50, bulleStyle = null,
+	
+	// Caractéristiques (ordre de la page)
+		// pour setAccel()
+	race,
+		// utilisée pour les moyennes MM/jour, kill/jour, etc
+	NBjours,
+		// calcul des DLA suivantes
+	DLA, DLAsuiv, HeureServeur, DureeTour,
+		// détails durée du tour (calcul pvdispo) :
+	dtb, pdm, bmt,
+		//posale
+	posX, posY, posN,
+		// caracs physiques
+	vue, vuebm, vuetotale,
+	pvbase, pvmax, pv, pvdispo,
+	fatigue, bmfatigue,
+	reg, regbm, regmoy,
+	att, attbm, attbmm, attmoy,
+	esq, esqbm, esqmoy,
+	deg, degbm, degbmm, degmoy,
+	arm, armbmp, armbmm, armmoy,
+	rm, rmbm, mm, mmbm,
+	
+	// Modificateurs
+	// DEBUG: revoir le fonctionnement de "nbattaques" (obsolète) :
+	//  |-> gestion x3 : malusDAtt, malusDEsq, malusDArm
+	//  |-> réinit. sur menu
+	nbattaques, bmDDegM, bmDAttM,
+	
+	// Variables spéciales Kastars
+	pva, minParPV, overDLA,
+		// id pour édition manuelle de lastDLA :
+	inJour, inMois, inAn, inHr, inMin, inSec,
+		// id pour auto-refresh lastDLA :
+	lastDLAZone, maxAMZone, cumulZone,
+	lastDLA, DLAaccel;
 
 
 /*-[functions]----------------- Fonctions utiles -----------------------------*/
