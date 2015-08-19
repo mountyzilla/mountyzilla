@@ -21,7 +21,7 @@
 
 var	
 	// Structure générale des données
-	mainTab, mainTR, pvTR,
+	lignesProfil, lignesPV,
 	tr_comps, tr_sorts,
 	
 	// Anatrolliseur
@@ -36,7 +36,7 @@ var
 		// utilisée pour les moyennes MM/jour, kill/jour, etc
 	NBjours,
 		// calcul des DLA suivantes
-	DLA, DLAsuiv, HeureServeur, DureeTour,
+	DLA, DLAsuiv, HeureServeur,
 		// détails durée du tour (calcul pvdispo) :
 	dtb, pdm, bmt,
 		//posale
@@ -54,7 +54,7 @@ var
 	
 	// Modificateurs
 	// DEBUG: revoir le fonctionnement de "nbattaques" (obsolète) :
-	//  |-> gestion x3 : malusDAtt, malusDEsq, malusDArm
+	//  |-> gestion (x3) : malusDAtt, malusDEsq, malusDArm
 	//  |-> réinit. sur menu
 	nbattaques, bmDDegM, bmDAttM,
 	
@@ -71,9 +71,10 @@ var
 
 function resiste(Ddeg,bm) {
 	// version naive mais compréhensible ^^
+	// DEBUG: à revoir
 	if(!bm) return Math.floor(Ddeg);
 	return Math.floor(Ddeg)+Math.round(bm/2);
-	}
+}
 
 function getPortee(param) {
 	param = Math.max(0,Number(param));
@@ -82,239 +83,283 @@ function getPortee(param) {
 }
 
 function retourAZero(fatig) {
-	var varfat = fatig; var raz = 0;
-	while(varfat>0) {
+	var fat = fatig, raz = 0;
+	while(fat>0) {
 		raz++;
-		varfat = Math.floor(varfat/1.25);
-		}
-	return raz;
+		fat = Math.floor(fat/1.25);
 	}
+	return raz;
+}
 
 function decumulPumPrem(bonus) {
 	switch(bonus) {
-	case 20:
-		return 33;
-	case 33:
-		return 41;
-	case 41:
-		return 46;
-	case 46:
-		return 49;
-	case 49:
-		return 51;
-	default:
-		return 20;
-		}
+		case 20: return 33;
+		case 33: return 41;
+		case 41: return 46;
+		case 46: return 49;
+		case 49: return 51;
+		default: return 20;
 	}
+}
 
 function coefDecumul(i) {
 	switch(i) {
-	case 2:
-		return 0.67;
-	case 3:
-		return 0.4;
-	case 4:
-		return 0.25;
-	case 5:
-		return 0.15;
-	default:
-		return 0.1;
-		}
+		case 2: return 0.67;
+		case 3: return 0.4;
+		case 4: return 0.25;
+		case 5: return 0.15;
+		default: return 0.1;
 	}
+}
 
 function dureeHM(dmin) {
-	var ret = '';
+	var ret = "";
 	dmin = Math.floor(dmin);
-	if(dmin>59) ret = Math.floor(dmin/60)+'h';
+	if(dmin>59) { ret = Math.floor(dmin/60)+"h"; }
 	var mins = dmin%60;
-	if(mins!=0) ret += (ret) ? addZero(mins)+'min' : mins+'min';
-	return (ret) ? ret : '-';
-	}
+	if(mins!=0) { ret += (ret) ? addZero(mins)+"min" : mins+"min"; }
+	return (ret) ? ret : "-";
+}
 
 
 /*-[functions]------- Extraction / Sauvegarde des données --------------------*/
 
 function initAll() {
-	mainTab = document.getElementsByClassName('mh_tdborder');
-	mainTR = document.evaluate('./tbody/tr',mainTab[0],null,7,null);
-	pvTR = mainTR.snapshotItem(4).childNodes[3].childNodes[1]
-		.getElementsByTagName('tr');
+	var tablePrincipale, lignesCaracs, Nbrs={},
+		lignes, paragraphes, str;
 	
-	var Nbrs = {};
-	var node = mainTR.snapshotItem(1).childNodes[3].childNodes[7];
-	Nbrs['dtb'] = node.firstChild.nodeValue;
-	if(node.childNodes.length<6) {
-		// la ligne n'existe pas si pas de bm de temps
-		Nbrs['bmt'] = '0_0';
-		Nbrs['pdm'] = node.childNodes[4].nodeValue;
+	// On recherche la table principale du profil et on en extrait les "lignes"
+	tablePrincipale = document.evaluate(
+		"//h2[@id='titre2']/following-sibling::table",
+		document, null, 9, null
+	).singleNodeValue;
+	
+	// ***INIT GLOBALE*** lignesProfil
+	// On utilise un snapshot pour continuer à accéder aux lignes dans l'ordre
+	// original même si on en ajoute (e.g. fatigue des Kastars)
+	lignesProfil = document.evaluate(
+		"./tbody/tr",
+		tablePrincipale, null, 7, null
+	);
+	
+	// EXTRACTION DES DONNEES BRUTES
+	lignes = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
+		childNodes;
+	// dtb = Durée Tour de Base, bmt = BM Temps, pdm = Poids Du Matos
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,5)) {
+			case "Durée": Nbrs["dtb"] = str; continue;
+			case "Bonus": Nbrs["bmt"] = str; continue;
+			case "Poids": Nbrs["pdm"] = str; continue;
 		}
-	else {
-		Nbrs['bmt'] = node.childNodes[2].nodeValue;
-		Nbrs['pdm'] = node.childNodes[6].nodeValue;
+	}
+	
+	lignes = lignesProfil.snapshotItem(2).cells[1].childNodes;
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,3)) {
+			case "X =": Nbrs["pos"] = str; continue;
+			case "Vue": Nbrs["vue"] = str; continue;
 		}
-	Nbrs['pos'] = mainTR.snapshotItem(2).childNodes[3].firstChild.nodeValue;
-	Nbrs['vue'] = mainTR.snapshotItem(2).childNodes[3].childNodes[3].nodeValue;
-	Nbrs['niv'] = mainTR.snapshotItem(3).childNodes[3].firstChild.nodeValue;
-	Nbrs['pva'] = pvTR[0].childNodes[1].childNodes[1].firstChild.nodeValue;
-	Nbrs['pvm'] = pvTR[2].childNodes[1].firstChild.nodeValue;
-	Nbrs['fat'] = pvTR[4].childNodes[1].firstChild.nodeValue;
-	var caracs =  mainTR.snapshotItem(5).childNodes[3].childNodes[1]
-		.getElementsByTagName('tr');
-	Nbrs['reg'] = caracs[0].textContent;
-	Nbrs['att'] = caracs[1].textContent;
-	Nbrs['esq'] = caracs[2].textContent;
-	Nbrs['deg'] = caracs[3].textContent;
-	Nbrs['arm'] = caracs[4].textContent;
-	node = mainTR.snapshotItem(9).childNodes[3];
-	Nbrs['rm'] = node.firstChild.nodeValue;
-	Nbrs['mm'] = node.childNodes[2].nodeValue;
-	for(var key in Nbrs)
+	}
+
+	Nbrs["niv"] = document.evaluate(
+		"./text()[contains(.,'Niveau')]",
+		lignesProfil.snapshotItem(3).cells[1],
+		null, 9, null
+	).singleNodeValue.nodeValue;
+	
+	// ***INIT GLOBALE*** lignesPV
+	// Il y a 4 lignes :
+	// 0) PV actuels+barre de PVs, 1) PV max, 2) vide, 3) fatigue
+	lignesPV = lignesProfil.snapshotItem(4).cells[1].
+		getElementsByTagName("table")[0].rows;
+	Nbrs["pva"] = lignesPV[0].cells[0].textContent;
+	Nbrs["pvm"] = lignesPV[1].cells[0].textContent;
+	Nbrs["fat"] = lignesPV[3].cells[0].textContent;
+	
+	lignesCaracs = lignesProfil.snapshotItem(5).cells[1].
+		getElementsByTagName("table")[0].rows;
+	for(var i=lignesCaracs.length-1 ; i>=0 ; --i) {
+		str = trim(lignesCaracs[i].cells[0].textContent).slice(0,3).toLowerCase().
+			replace(/é/,'e');
+		Nbrs[str] = lignesCaracs[i].textContent;
+	}
+	
+	lignes = lignesProfil.snapshotItem(9).cells[1].childNodes;
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,3)) {
+			case "Rés": Nbrs["rm"] = str; continue;
+			case "Maî": Nbrs["mm"] = str; continue;
+		}
+	}
+	
+	// TRAITEMENT DES DONNEES
+	for(var key in Nbrs) {
+		//window.console.debug(key,Nbrs[key]);
 		Nbrs[key] = getNumbers(Nbrs[key]);
+		//window.console.debug("traitement:",Nbrs[key]);
+	}
 	
-	dtb = Nbrs['dtb'][0]*60+Nbrs['dtb'][1]; // durée tour de base
-	bmt = Nbrs['bmt'][0]*60+Nbrs['bmt'][1]; // bm temps
-	pdm = Nbrs['pdm'][0]*60+Nbrs['pdm'][1]; // poids du matos
+	dtb = Nbrs["dtb"][0]*60+Nbrs["dtb"][1];
+	// la ligne des bm de temps n'existe pas si bmt=0 :
+	bmt = Nbrs["bmt"] ? Nbrs["bmt"][0]*60+Nbrs["bmt"][1] : 0;
+	pdm = Nbrs["pdm"][0]*60+Nbrs["pdm"][1];
 	
-	posX = Nbrs['pos'][0];
-	posY = Nbrs['pos'][1];
-	posN = Nbrs['pos'][2];
+	posX = Nbrs["pos"][0];
+	posY = Nbrs["pos"][1];
+	posN = Nbrs["pos"][2];
 	
-	vue = Nbrs['vue'][0];
-	vuebm = Nbrs['vue'][1];
+	vue = Nbrs["vue"][0];
+	vuebm = Nbrs["vue"][1];
 	vuetotale = Math.max(0,vue+vuebm);
 	
-	nivTroll = Nbrs['niv'][0];
+	nivTroll = Nbrs["niv"][0];
 	
-	pv = Nbrs['pva'][0];
-	pvbase = Nbrs['pvm'][0];
+	pv = Nbrs["pva"][0];
+	pvbase = Nbrs["pvm"][0];
 	pvmax = pvbase;
-	if(Nbrs['pvm'].length>1) {
+	if(Nbrs["pvm"].length>1) {
 		// s'il y a des BM de PV
-		pvmax += Nbrs['pvm'][1];
-		}
+		pvmax += Nbrs["pvm"][1];
+	}
 	
-	fatigue = Nbrs['fat'][0];
-	bmfatigue = (Nbrs['fat'].length>1) ? Nbrs['fat'][1] : 0;
+	fatigue = Nbrs["fat"][0];
 	// bmfat = 0 si pas de BM fat
+	bmfatigue = (Nbrs["fat"].length>1) ? Nbrs["fat"][1] : 0;
 	
-	reg = Nbrs['reg'][0];
 	// les Nbrs[...][1] contiennent les 3 ou les 6 de "D3" ou "D6"
-	regbm = Nbrs['reg'][2]+Nbrs['reg'][3];
+	reg = Nbrs["reg"][0];
+	regbm = Nbrs["reg"][2]+Nbrs["reg"][3];
 	regmoy = 2*reg+regbm;
-	appendTdText(caracs[0],'(moyenne : '+regmoy+')');
+	appendTdText(lignesCaracs[0],"(moyenne : "+regmoy+")");
 	regmoy = Math.max(0,regmoy);
-	/* Temps récupéré par reg (propale R') */
-	var titre = 'Temps moyen récupéré par régénération : '
-		+Math.floor(250*regmoy/pvmax)+' min';
+	// Temps récupéré par reg (propale R')
+	str = "Temps moyen récupéré par régénération : "+
+		Math.floor(250*regmoy/pvmax)+
+		" min";
 	var sec = Math.floor(15000*regmoy/pvmax)%60;
-	if(sec!=0) titre += ' '+sec+' sec';
-	caracs[0].title = titre;
+	if(sec!=0) { str += " "+sec+" sec"; }
+	lignesCaracs[0].title = str;
 	
-	att = Nbrs['att'][0];
-	attbmm = Nbrs['att'][3];
-	attbm = Nbrs['att'][2]+attbmm;
+	att = Nbrs["att"][0];
+	attbmm = Nbrs["att"][3];
+	attbm = Nbrs["att"][2]+attbmm;
 	attmoy = 3.5*att+attbm;
-	appendTdText(caracs[1],'(moyenne : '+attmoy+')');
+	appendTdText(lignesCaracs[1],"(moyenne : "+attmoy+")");
 	
-	esq = Nbrs['esq'][0];
-	esqbm = Nbrs['esq'][2]+Nbrs['esq'][3];
+	esq = Nbrs["esq"][0];
+	esqbm = Nbrs["esq"][2]+Nbrs["esq"][3];
 	esqmoy = 3.5*esq+esqbm;
-	appendTdText(caracs[2],'(moyenne : '+esqmoy+')');
+	appendTdText(lignesCaracs[2],"(moyenne : "+esqmoy+")");
 	
-	deg = Nbrs['deg'][0];
-	degbmm = Nbrs['deg'][3];
-	degbm = Nbrs['deg'][2]+degbmm;
+	deg = Nbrs["deg"][0];
+	degbmm = Nbrs["deg"][3];
+	degbm = Nbrs["deg"][2]+degbmm;
 	degmoy = 2*deg+degbm;
-	appendTdText(caracs[3],
-		'(moyenne : '+degmoy+'/'+(2*Math.floor(1.5*deg)+degbm)+')'
-		);
+	appendTdText(lignesCaracs[3],
+		"(moyenne : "+degmoy+"/"+(2*Math.floor(1.5*deg)+degbm)+")"
+	);
 	
-	rm = Nbrs['rm'][0];
-	rmbm = Nbrs['rm'][1];
+	rm = Nbrs["rm"][0];
+	rmbm = Nbrs["rm"][1];
 	rmTroll = rm+rmbm;
-	mm = Nbrs['mm'][0];
-	mmbm = Nbrs['mm'][1];
+	mm = Nbrs["mm"][0];
+	mmbm = Nbrs["mm"][1];
 	mmTroll = mm+mmbm;
 	
-	arm = Nbrs['arm'][0];
-	if(Nbrs['arm'].length>4) {
+	arm = Nbrs["arm"][0];
+	if(Nbrs["arm"].length>4) {
 		// s'il y a des D d'armure non activés
-		armbmp = Nbrs['arm'][4];
-		armbmm = Nbrs['arm'][5];
-		}
-	else {
-		armbmp = Nbrs['arm'][2];
-		armbmm = Nbrs['arm'][3];
-		}
+		armbmp = Nbrs["arm"][4];
+		armbmm = Nbrs["arm"][5];
+	} else {
+		armbmp = Nbrs["arm"][2];
+		armbmm = Nbrs["arm"][3];
+	}
 	armmoy = 2*arm+armbmp+armbmm;
-	appendTdText(caracs[4],'(moyenne : '+armmoy+')');
+	appendTdText(lignesCaracs[4],"(moyenne : "+armmoy+")");
 	
-	/* Race */
-	var strRace = mainTR.snapshotItem(0).childNodes[3].childNodes[4].nodeValue;
-	race = trim(strRace.slice(strRace.indexOf(':')+2));
+	// Race
+	str = lignesProfil.snapshotItem(0).cells[1].innerHTML.split("<br>")[1];
+	race = trim(str.slice(str.indexOf(":")+2));
 	
-	/* PuM/PréM */
-	var nodes = document.evaluate("./td[2]/p/text()[contains(.,'Bonus')]",
-		mainTR.snapshotItem(6),null,7,null);
-	if(nodes.snapshotLength>0) {
-		bmDAttM = getNumbers( nodes.snapshotItem(0).nodeValue )[0];
-		bmDDegM = getNumbers( nodes.snapshotItem(1).nodeValue )[0];
+	// PuM/PréM
+	paragraphes = lignesProfil.snapshotItem(6).cells[1].getElementsByTagName("p");
+	if(paragraphes.length>2) {
+		lignes = paragraphes[1].childNodes;
+		for(var i=lignes.length-1 ; i>=0 ; --i) {
+			if(lignes[i].nodeType!=3) { continue; }
+			str = lignes[i].nodeValue;
+			if(str.indexOf("Dés d'attaque")!=-1) {
+				bmDAttM = getNumbers(str)[0];
+			} else if(str.indexOf("Dés de dégâts")!=-1) {
+				bmDDegM = getNumbers(str)[0];
+			}
 		}
+	}
+	//window.console.debug("PuM/PréM",bmDAttM,bmDDegM);
 	
-	/* setDLA() */
-	var str = mainTR.snapshotItem(1).childNodes[3].childNodes[1]
-		.firstChild.nodeValue;
+	// setDLA()
+	str = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[0].
+		getElementsByTagName("b")[0].textContent;
 	DLA = new Date( StringToDate(str) );
-
-	/* setHeureServeur() */
+	
+	// setHeureServeur()
 	try {
-		var footerNode = document.getElementById('footer2');
-		var str = document.evaluate(".//text()[contains(.,'Serveur')]",
-			footerNode,null,9,null).singleNodeValue.nodeValue;
-		str = str.slice(str.indexOf('/')-2,str.lastIndexOf(':')+3);
+		str = document.evaluate(
+			".//text()[contains(.,'Serveur')]",
+			document.getElementById("footer2"),
+			null, 9, null
+		).singleNodeValue.nodeValue;
+		str = str.slice(str.indexOf("/")-2,str.lastIndexOf(":")+3);
 		HeureServeur = new Date( StringToDate(str) );
-		}
-	catch(e) {
-		window.console.warn('MZ: Heure Serveur introuvable, '
-			+"utilisation de l'heure actuelle à la place\n"+e);
+	} catch(e) {
+		window.console.warn(
+			"[MZ] Heure Serveur introuvable, utilisation de l'heure actuelle", e
+		);
 		HeureServeur = new Date();
-		}
-
-	/* initAnatrolliseur() */
-	function amelio_dtb(dtb) {
+	}
+	
+	// initAnatrolliseur()
+	var amelio_dtb = function(dtb) {
 		if(dtb>555) {
 			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
-			}
-		return 10+Math.ceil((555-dtb)/2.5);
 		}
+		return 10+Math.ceil((555-dtb)/2.5);
+	},
+		amelio_pv = Math.floor(pvbase/10)-3,
+		amelio_vue = vue-3,
+		amelio_att = att-3,
+		amelio_esq = esq-3,
+		amelio_deg = deg-3,
+		amelio_reg = reg-1,
+		amelio_arm = arm-1;
+	if(race==="Darkling") { amelio_reg--; }
+	if(race==="Durakuir") { amelio_pv-- ; }
+	if(race==="Kastar")   { amelio_deg--; }
+	if(race==="Skrim")    { amelio_att--; }
+	if(race==="Tomawak")  { amelio_vue--; }
 	
-	var amelio_pv = Math.floor(pvbase/10)-3;
-	var amelio_vue = vue-3;
-	var amelio_att = att-3;
-	var amelio_esq = esq-3;
-	var amelio_deg = deg-3;
-	var amelio_reg = reg-1;
-	var amelio_arm = arm-1;
-	if(race==='Darkling') amelio_reg--;
-	if(race==='Durakuir') amelio_pv--;
-	if(race==='Kastar') amelio_deg--;
-	if(race==='Skrim') amelio_att--;
-	if(race==='Tomawak') amelio_vue--;
-	
-	urlAnatrolliseur = 'http://mountyhall.dispas.net/dynamic/'
-		+'outils_anatrolliseur.php?anatrolliseur=v8'
-		+'|r='+race.toLowerCase()
-		+'|dla='+amelio_dtb(dtb)
-		+'|pv='+amelio_pv+',0,'+(pvmax-pvbase)
-		+'|vue='+amelio_vue+',0,'+vuebm
-		+'|att='+amelio_att+','+Nbrs['att'][2]+','+attbmm
-		+'|esq='+amelio_esq+','+Nbrs['esq'][2]+','+Nbrs['esq'][3]
-		+'|deg='+amelio_deg+','+Nbrs['deg'][2]+','+degbmm
-		+'|reg='+amelio_reg+','+Nbrs['reg'][2]+','+Nbrs['reg'][3]
-		+'|arm='+amelio_arm+','+armbmp+','+armbmm
-		+'|mm='+mmTroll
-		+'|rm='+rmTroll+'|';
-	}
+	urlAnatrolliseur = "http://mountyhall.dispas.net/dynamic/"
+		+"outils_anatrolliseur.php?anatrolliseur=v8"
+		+"|r="+race.toLowerCase()
+		+"|dla="+amelio_dtb(dtb)
+		+"|pv="+amelio_pv+",0,"+(pvmax-pvbase)
+		+"|vue="+amelio_vue+",0,"+vuebm
+		+"|att="+amelio_att+","+Nbrs["att"][2]+","+attbmm
+		+"|esq="+amelio_esq+","+Nbrs["esq"][2]+","+Nbrs["esq"][3]
+		+"|deg="+amelio_deg+","+Nbrs["deg"][2]+","+degbmm
+		+"|reg="+amelio_reg+","+Nbrs["reg"][2]+","+Nbrs["reg"][3]
+		+"|arm="+amelio_arm+","+armbmp+","+armbmm
+		+"|mm="+mmTroll
+		+"|rm="+rmTroll+"|";
+}
 
 function saveProfil() {
 	//MZ_setValue(numTroll+'.profilON',true); // pour remplacer isProfilActif ?
@@ -358,105 +403,133 @@ function saveProfil() {
 
 function setAnatrolliseur() {
 	appendButton(
-		mainTR.snapshotItem(0).childNodes[1],'Anatrolliser!',
+		lignesProfil.snapshotItem(0).cells[0],
+		"Anatrolliser!",
 		function(){
-			window.open(urlAnatrolliseur,'_blank')
+			window.open(urlAnatrolliseur,"_blank")
 		}
 	);
 }
 
 function setInfoDateCreation() {
-	var node = mainTR.snapshotItem(0).childNodes[3].childNodes[6];
-	var dateC = node.nodeValue;
-	dateC = dateC.substring(dateC.indexOf('(')+1,dateC.indexOf(')'));
-	dateC = new Date( StringToDate(dateC) );
-	NBjours = Math.floor((HeureServeur-dateC)/86400000)+1;
-	if(NBjours!=1)
-		node.nodeValue += ' ('+NBjours+' jours dans le hall)';
-	else
-		node.nodeValue += ' (Bienvenue à toi pour ton premier jour dans le hall)';
-	}
+	var strCreation, dateCreation, txt;
+	
+	strCreation = lignesProfil.snapshotItem(0).cells[1].textContent;
+	strCreation = strCreation.slice(
+		strCreation.indexOf("(")+1, strCreation.indexOf(")")
+	);
+	dateCreation = new Date( StringToDate(strCreation) );
+	
+	// ***INIT GLOBALE*** NBjours
+	NBjours = Math.floor((HeureServeur-dateCreation)/864e5)+1;
+	
+	txt = (NBjours!=1) ?
+		"("+NBjours+" jours dans le hall)" :
+		"(Bienvenue à toi pour ton premier jour dans le hall)" ;
+	appendText(lignesProfil.snapshotItem(0).cells[1], txt, false);
+}
 
 function setNextDLA() {
-	var node = mainTR.snapshotItem(1).cells[1].
-		getElementsByTagName('p')[1].
-		getElementsByTagName('b')[0];
-	var nbrs = node.firstChild.nodeValue.match(/\d+/g);
-	DureeTour = nbrs[0]*36e5+nbrs[1]*6e4;
-	var DLAsuivMSec = DLA.getTime()+DureeTour;
-	var loupes = 0;
-	while(DLAsuivMSec<HeureServeur) {
-		DLAsuivMSec += DureeTour;
-		loupes++;
-	}
-	DLAsuiv = new Date( DLAsuivMSec );
-	appendBr(node);
-	appendText(node,
-		'---> Prochaine DLA (estimée)............: '+DateToString(DLAsuiv)
+	var
+		parDLAsuiv, dureeTourMS, DLAsuivMS, nbLoupes,
+		title, nextPv, nextTour,
+		str, nbrs;
+	
+	// ***INIT GLOBALE*** DLAsuiv
+	parDLAsuiv = lignesProfil.snapshotItem(1).cells[1].
+		getElementsByTagName("p")[3];
+	str = parDLAsuiv.getElementsByTagName("i")[0].textContent;
+	DLAsuiv = new Date( StringToDate(str) );
+	
+	// Affichage des tours manqués
+	nbrs = getNumbers(
+		lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
+		getElementsByTagName("b")[0].textContent
 	);
-	/* Estimation des DLA suivantes */
-	var title = '';
-	var nextPv = pv;
-	for(var i=1 ; i<4 ; i++) {
+	dureeTourMS = nbrs[0]*36e5+nbrs[1]*6e4;
+	DLAsuivMS = DLA.getTime()+dureeTourMS;
+	nbLoupes = 0;
+	while(DLAsuivMS<HeureServeur) {
+		DLAsuivMS += dureeTourMS;
+		nbLoupes++;
+	}
+	if(nbLoupes>0) {
+		// ***RE-INIT GLOBALE*** DLAsuiv
+		DLAsuiv = new Date( DLAsuivMS );
+		txt = "(+"+nbLoupes+" tour"+
+			(nbLoupes>1?"s":"")+" : "+
+			DateToString( DLAsuiv )+
+			")";
+		appendBr(parDLAsuiv);
+		appendText(parDLAsuiv, txt, false);
+	}
+
+	// Estimation des DLA suivantes
+	title = ""; nextPv = pv;
+	for(var i=1 ; i<4 ; ++i) {
 		nextPv = Math.min(nextPv+regmoy,pvmax);
-		var nextTour =
-			dtb+Math.max(0,pdm+bmt+Math.floor(500*(pvmax-nextPv)/pvmax)/2);
-		title += (title ? '\n' : '')
-			+'DLA +'+i+': '+DateToString( new Date(DLAsuivMSec) )
-			+' ('+nextPv+'PV, durée: '+dureeHM(nextTour)+')';
-		DLAsuivMSec += nextTour*6e4;
+		nextTour = dtb +
+			Math.max( 0, pdm+bmt + Math.floor(500*(pvmax-nextPv)/pvmax)/2 );
+		title += (title?"\n":"")+
+			"DLA +"+i+": "+
+			DateToString( new Date(DLAsuivMS) )+
+			" ("+nextPv+"PV, durée: "+dureeHM(nextTour)+")";
+		DLAsuivMS += nextTour*6e4;
 	}
-	node.parentNode.title = title;
-	/* Affichage des tours manqués */
-	if(loupes==1) {
-		appendText(
-			node.parentNode,
-			' (Vous avez manqué votre dernier tour)'
-		);
-	} else if(loupes>1) {
-		appendText(
-			node.parentNode,
-			' (Vous avez manqué vos '+loupes+' derniers tours)'
-		);
-	}
+	parDLAsuiv.title = title;
 }
 
 function vueCarac() {
-	var caracBody = mainTR.snapshotItem(5).childNodes[3].childNodes[1];
-	var tr = document.createElement('tr');
-	appendTdText(tr,'Vue..................:');
-	var td = appendTdText(tr,vue+' Cases');
-	td.colSpan = '2';
-	td.align = 'right';
+	var tableCaracs, nodeVue, parentNodeVue,
+		tr, td;
+	
+	// On insère la Vue dans les caracs
+	tableCaracs = lignesProfil.snapshotItem(5).cells[1].
+		getElementsByTagName("table")[0];
+	tr = tableCaracs.insertRow(0);
+	appendTdText(tr,"Vue..................:");
+	td = appendTdText(tr,vue+" Cases");
+	td.colSpan = 2;
+	td.align = "right";
 	td = appendTdText(tr,aff(vuebm));
-	td.align = 'right';
-	insertBefore(caracBody.firstChild,tr);
-	var vueParent = mainTR.snapshotItem(2).childNodes[3];
-	vueParent.removeChild(vueParent.childNodes[2]);
-	vueParent.removeChild(vueParent.childNodes[2]);
-	}
+	td.align = "right";
+	
+	// On retire la Vue de la ligne "Position"
+	parentNodeVue = lignesProfil.snapshotItem(2).cells[1];
+	nodeVue = document.evaluate(
+		"./text()[contains(.,'Vue')]",
+		parentNodeVue,
+		null, 9, null
+	).singleNodeValue;
+	parentNodeVue.removeChild(nodeVue.previousSibling);
+	parentNodeVue.removeChild(nodeVue);
+}
 
 function setLieu() {
-	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'
-		+'?search=position&orderBy=distance&posx='
-		+posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
-	if(MZ_getValue('VUECARAC')=='true')
-		insertButton(mainTR.snapshotItem(2).childNodes[3].childNodes[2],
-			'Lieux à proximité',function(){window.open(urlBricol,'_blank')}
-			);
-	else {
-		appendBr(mainTR.snapshotItem(2).childNodes[1]);
-		appendButton(mainTR.snapshotItem(2).childNodes[1],
-			'Lieux à proximité',function(){window.open(urlBricol,'_blank')}
-			);
-		}
+	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
+		'?search=position&orderBy=distance&posx='+
+		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
+	if(MZ_getValue('VUECARAC')=='true') {
+		insertButton(
+			lignesProfil.snapshotItem(2).cells[1].getElementsByTagName("b")[0],
+			'Lieux à proximité',
+			function(){ window.open(urlBricol,'_blank') }
+		);
+	} else {
+		appendBr(lignesProfil.snapshotItem(2).cells[0]);
+		appendButton(
+			lignesProfil.snapshotItem(2).cells[0],
+			'Lieux à proximité',
+			function(){ window.open(urlBricol,'_blank') }
+		);
 	}
+}
 
 function setInfosPxPi() {
 	if(nivTroll==60) return;
 	
 	/* Extraction des données */
-	var TDexp = mainTR.snapshotItem(3).childNodes[3];
+	var TDexp = lignesProfil.snapshotItem(3).cells[1];
 	var node = TDexp.firstChild;
 	var str = node.nodeValue;
 	var pi_tot = parseInt(str.match(/\d+/g)[1]);
@@ -492,39 +565,43 @@ function setInfosPxPi() {
 	}
 
 function setInfosPV() { // pour AM et Sacro
-	var texte = '1 PV de perdu = +'+Math.floor(250/pvmax)+' min';
-	var sec = Math.floor(15000/pvmax)%60;
-	if(sec!=0) texte += ' '+sec+' sec';
+	var
+		txt = "1 PV de perdu = +"+Math.floor(250/pvmax)+" min",
+		sec = Math.floor(15000/pvmax)%60,
+		lifebar = lignesPV[0].cells[1].getElementsByTagName("table")[0];
+	if(sec!=0) { txt += " "+sec+" sec"; }
+	if(lifebar) { lifebar.title = txt; }
+	if(pv<=0) { return; }
 	
-	var lifebar = pvTR[1].childNodes[1].firstChild;
-	if(lifebar) lifebar.title = texte;
-
-	/* Différence PV p/r à équilibre de temps (propale R') */
-	if(pv<=0) return;
-	// pvmin0malus = pvm + ceiling(pvm/250*(bmt+pdm))
+	// Différence PV p/r à équilibre de temps (propale R')
+	// Note : pvmin pour 0 malus = pvmax + ceiling(pvmax/250*(bmt+pdm))
+	// ***INIT GLOBALE*** pvdispo
 	pvdispo = pv-pvmax-Math.ceil((bmt+pdm)*pvmax/250);
-	var td = appendTd(pvTR[3]);
-	var span = document.createElement('span');
-	span.title = texte;
-	var i = document.createElement('i');
-	if(bmt+pdm>=0)
-		texte = 'Vous ne pouvez compenser aucune blessure actuellement.';
-	else if(pvdispo>0)
-		texte = 'Vous pouvez encore perdre '+Math.min(pvdispo,pv)
-			+' PV sans malus de temps.';
-	else if(pvdispo<0)
-		texte = 'Il vous manque '+(-pvdispo)
-			+' PV pour ne plus avoir de malus de temps.';
-	else
-		texte = '';
-	appendText(i,texte);
-	span.appendChild(i);
-	td.appendChild(span);
+	var	
+		td = appendTd(lignesPV[2]),
+		span = document.createElement("span");
+	span.title = txt;
+	span.style.fontStyle = "italic";
+	if(bmt+pdm>=0) {
+		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
+	} else if(pvdispo>0) {
+		txt = "Vous pouvez encore perdre "+
+			Math.min(pvdispo,pv)+
+			" PV sans malus de temps.";
+	} else if(pvdispo<0) {
+		txt = "Il vous manque "
+			+(-pvdispo)
+			+" PV pour ne plus avoir de malus de temps.";
+	} else {
+		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
 	}
+	appendText(span,txt);
+	td.appendChild(span);
+}
 
 function setCurrentEsquive() {
-	var pnode = mainTR.snapshotItem(6).cells[1].
-		getElementsByTagName('p')[0];
+	var pnode = lignesProfil.snapshotItem(6).cells[1].
+		getElementsByTagName("p")[0];
 	var attmod = pnode.childNodes[3].nodeValue.match(/\d+/)[0];
 	pnode.childNodes[3].nodeValue +=
 		' (moyenne attaque : '+Math.max(attmoy-3.5*attmod,attbm,0)+')';
@@ -538,8 +615,7 @@ function setCurrentEsquive() {
 	}
 
 function setStabilite() {
-	var node = mainTR.snapshotItem(5).cells[1].
-		getElementsByTagName('p')[0];
+	var node = lignesProfil.snapshotItem(5).getElementsByTagName("p")[0];
 	appendBr(node);
 	appendText(node,
 		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
@@ -551,7 +627,7 @@ function setRatioKillDeath() {
 	try{
 		var node = document.evaluate(
 			"./td[2]/p[contains(./text(),'Adversaires tués')]",
-			mainTR.snapshotItem(6),null,9,null).singleNodeValue;
+			lignesProfil.snapshotItem(6),null,9,null).singleNodeValue;
 		var killnode = node.firstChild;
 		var deathnode = node.childNodes[2];
 		}
@@ -577,7 +653,7 @@ function setRatioKillDeath() {
 	}
 
 function setTotauxMagie() {
-	var td = mainTR.snapshotItem(9).childNodes[3];
+	var td = lignesProfil.snapshotItem(9).cells[1];
 	/* RM */
 	var span = document.createElement('span');
 	span.title = (Math.round(10*rm/NBjours)/10)
@@ -599,21 +675,21 @@ function setTotauxMagie() {
 
 /*-[functions]----------- Fonctions spéciales Kastars ------------------------*/
 
-function minParPVsac(fatig,bm) {
+function minParPVsac(fat,bm) {
+// Calcule le nombre de min gagnées / PV sacrifiés pour une AM réalisée sous
+// fatigue = 'fat', sans et avec un bm de fatigue = 'bm'
 	var out = [];
-	if(fatig>4)
-		out[0] = Math.floor(120/( fatig*(1+Math.floor(fatig/10)) ));
-	else
-		out[0] = 30;
+	out[0] = (fat>4) ?
+		Math.floor(120/( fat*(1+Math.floor(fat/10)) )) :
+		30;
 	if(bm && bm>0) {
-		var totalfat=fatig+bm;
-		if(totalfat>4)
-			out[1] = Math.floor(120/( totalfat*(1+Math.floor(totalfat/10)) ));
-		else
-			out[1] = 30; // inutile avec bmfat >= 15 mais bon
-		}
-	return out;
+		var totalfat=fat+bm;
+		out[1] = (totalfat>4) ?
+			Math.floor(120/( totalfat*(1+Math.floor(totalfat/10)) )) :
+			30; // en principe inutile pour des bm fat >= 15 mais bon...
 	}
+	return out;
+}
 
 function toInt(str) {
 	str = parseInt(str);
@@ -659,121 +735,137 @@ function inputMode() {
 	}
 
 function setAccel() {
-	/* Création d'une nouvelle ligne du profil spéciale AM */
-	var tr = document.createElement('tr');
+	var
+		BMfrais=false,
+		fat=fatigue, listeBmFat=[], minppv,
+		tr, td, insertPt;
+
+	// Création d'une nouvelle ligne du profil spéciale AM
+	tr = document.createElement('tr');
 	tr.className = 'mh_tdpage';
-	var td = document.createElement('td');
+	td = document.createElement('td');
 	td.className = 'mh_tdtitre';
 	td.vAlign = 'top';
 	appendText(td,'Fatigue et AM',true);
 	tr.appendChild(td);
-	td = document.createElement('td');
-	tr.appendChild(td);
-	// si pas PDA, augmenter hauteur bannière
-	if(mainTR.snapshotItem(0).childNodes.length>5) {
-		mainTR.snapshotItem(0).childNodes[5].rowSpan = 12;
-		}
-	insertBefore(mainTR.snapshotItem(5),tr);
+	insertPt = document.createElement('td');
+	tr.appendChild(insertPt);
+	// si pas PDA, augmenter la hauteur de la bannière de pub
+	if(lignesProfil.snapshotItem(0).cells.length>2) {
+		lignesProfil.snapshotItem(0).cells[2].rowSpan = 12;
+	}
+	insertBefore(lignesProfil.snapshotItem(5),tr);
 	
-	/* Récupération des données */
+	// Est-on en over-DLA ?
+	// ***INIT GLOBALE*** overDLA
 	overDLA = (HeureServeur>DLA.getTime()+3e5);
-	fatigue = (overDLA) ? Math.floor(fatigue/1.25) : fatigue ;
-	var varfat = fatigue;
-	var BMfrais = false;
-	var varbm = [];
+	if(overDLA) {
+		fatigue = Math.floor(fatigue/1.25);
+		fat=fatigue;
+	}
+
+	// Gestion des BM de fatigue
 	if(bmfatigue>0) {
-		/* Récupération des BM de fatigue depuis la page des BM */
+		// On tente de récupérer les BM de fatigue de la page des BM
 		if(MZ_getValue(numTroll+'.bm.fatigue')) {
-			var listefat = MZ_getValue(numTroll+'.bm.fatigue').split(';');
-			listefat.pop();
+			var BMmemoire = MZ_getValue(numTroll+'.bm.fatigue').split(';');
+			BMmemoire.pop();
 			var tour = 0;
-			for(var i=0 ; i<listefat.length ; i++) {
-				var nbrs = listefat[i].match(/\d+/g); // [tour,fatigue]
+			for(var i=0 ; i<BMmemoire.length ; i++) {
+				var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
 				while(tour<=parseInt(nbrs[0])) {
-					varbm[tour]=parseInt(nbrs[1]);
+					listeBmFat[tour]=parseInt(nbrs[1]);
 					tour++;
-					}
 				}
 			}
-		if(varbm[0]==bmfatigue) {
+		}
+		if(listeBmFat[0]==bmfatigue) {
+			// Si (bm profil=1er bm stocké), on suppose que les bm stockés sont à jour
 			BMfrais = true;
-			}
+			MZ_removeValue(numTroll+".bm.fatigue");
 		}
-	else
+	} else {
+		// S'il n'y a pas de bm de fatigue sur le profil, on est à jour
 		BMfrais = true;
+	}
 	if(!BMfrais && bmfatigue>0) {
-		// si les BM n'ont pas été rafraîchis
+		// si les BM n'ont pas été rafraîchis, on conjecture le pire:
 		if(bmfatigue==15) {
-			varbm = [15,15,15];
-			}
-		else {
-			varbm = [30,30,15];
-			}
+			listeBmFat = [15,15,15];
+		} else {
+			listeBmFat = [30,30,15];
 		}
-	if(overDLA) { varbm.shift(); } // décalage BM en overDLA
-	var minppv = minParPVsac(varfat,varbm[0]);
-	minParPV = (varbm[0]==undefined) ? minppv[0] : minppv[1];
+	}
+	if(overDLA) {
+		// Si on est en over-DLA, on décale les bm d'un tour
+		listeBmFat.shift();
+	}
 	
-	/* Tableau des fatigues et accel futures */
-	if(fatigue>0 || varbm[0]>0) {
-		var table = document.createElement('table');
+	// Tableau des fatigues et accel futures
+	var
+		minppv = minParPVsac(fat,listeBmFat[0]),
+		table, tbody,
+		ligneTour, ligneFat, ligneMin,
+		col;
+	// ***INIT GLOBALE*** minParPV
+	minParPV = (listeBmFat[0]==void(0)) ? minppv[0] : minppv[1];
+	if(fatigue>0 || listeBmFat[0]>0) {
+		table = document.createElement('table');
 		table.className = 'mh_tdborder';
 		table.border = 0;
 		table.cellSpacing = 1;
 		table.cellPadding = 1;
-		table.style = 'text-align:center;';
-		var tbody = document.createElement('tbody');
+		table.style.textAlign = "center";
+		tbody = document.createElement('tbody');
 		table.appendChild(tbody);
-		td.appendChild(table);
+		insertPt.appendChild(table);
 		
-		var ligneTour = appendTr(tbody,'mh_tdtitre');
-		ligneTour.style = 'font-weight:bold;';
-		var tdl = appendTdText(ligneTour,'Tour :',true);
-		tdl.align = 'left';
-		var ligneFat = appendTr(tbody,'mh_tdpage');
-		tdl = appendTdText(ligneFat,'Fatigue :',true);
-		tdl.className = 'mh_tdtitre';
-		tdl.align = 'left';
-		var ligneMin = appendTr(tbody,'mh_tdpage');
-		tdl = appendTdText(ligneMin,'1 PV =',true);
-		tdl.className = 'mh_tdtitre';
-		tdl.align = 'left';
-		var col=0;
-		while(col<9 && (varfat>0 || varbm[col])) {
+		ligneTour = appendTr(tbody,'mh_tdtitre');
+		ligneTour.style.fontWeight = "bold";
+		td = appendTdText(ligneTour,'Tour :',true);
+		td.align = 'left';
+		ligneFat = appendTr(tbody,'mh_tdpage');
+		td = appendTdText(ligneFat,'Fatigue :',true);
+		td.className = 'mh_tdtitre';
+		td.align = 'left';
+		ligneMin = appendTr(tbody,'mh_tdpage');
+		td = appendTdText(ligneMin,'1 PV =',true);
+		td.className = 'mh_tdtitre';
+		td.align = 'left';
+		col=0;
+		while(col<9 && (fat>0 || listeBmFat[col])) {
 			if(col==0) {
 				if(overDLA) {
 					var i = document.createElement('i');
 					appendText(i,'À activer');
 					ligneTour.appendChild(i);
-					}
-				else
+				} else {
 					appendTdText(ligneTour,'En cours');
 				}
-			else
+			} else {
 				appendTdText(ligneTour,'\u00A0\u00A0+'+col+'\u00A0\u00A0');
-			if(varbm[col]) {
-				if(BMfrais || (!overDLA && col==0)) {
-					appendTdText(ligneFat,varfat+'+'+varbm[col]);
-					appendTdText(ligneMin,minppv[1]+'\'');
-					}
-				else {
-					appendTdText(ligneFat,varfat+'+'+varbm[col]+' (?)');
-					appendTdText(ligneMin,minppv[1]+'\' ('+minppv[0]+'\')');
-					}
-				}
-			else {
-				appendTdText(ligneFat,varfat);
-				appendTdText(ligneMin,minppv[0]+'\'');
-				}
-			col++;
-			varfat = Math.floor(varfat / 1.25);
-			minppv = minParPVsac(varfat,varbm[col]);
 			}
-		if(varfat>1 || (varfat==1 && !overDLA)) {
+			if(listeBmFat[col]) {
+				if(BMfrais || (!overDLA && col==0)) {
+					appendTdText(ligneFat,fat+'+'+listeBmFat[col]);
+					appendTdText(ligneMin,minppv[1]+'\'');
+				} else {
+					appendTdText(ligneFat,fat+'+'+listeBmFat[col]+' (?)');
+					appendTdText(ligneMin,minppv[1]+'\' ('+minppv[0]+'\')');
+				}
+			} else {
+				appendTdText(ligneFat,fat);
+				appendTdText(ligneMin,minppv[0]+'\'');
+			}
+			col++;
+			fat = Math.floor(fat / 1.25);
+			minppv = minParPVsac(fat,listeBmFat[col]);
+		}
+		if(fat>1 || (fat==1 && !overDLA)) {
 			appendTdText(ligneTour,'\u00A0 ... \u00A0',true);
 			appendTdText(ligneFat,'-');
 			appendTdText(ligneMin,'-');
-			}
+		}
 		col = (overDLA) ?	
 			Math.max(retourAZero(fatigue)-1,col) :
 			Math.max(retourAZero(fatigue),col);
@@ -781,81 +873,95 @@ function setAccel() {
 		appendTdText(ligneFat,'0');
 		appendTdText(ligneMin,'30\'');
 		
-		if(!BMfrais && bmfatigue) { // si les BM n'ont pas été rafraîchis
-			appendText(td,'/!\\ Visitez la page des Bonus/Malus '
-				+'pour mettre à jour votre fatigue. /!\\',
-				true);
-			appendBr(td);
-			}
-		appendBr(td);
+		if(!BMfrais && bmfatigue) {
+			// si les BM n'ont pas été rafraîchis, on signale:
+			appendText(
+				insertPt,
+				'/!\\ Visitez la page des Bonus/Malus '+
+				'pour mettre à jour votre fatigue. /!\\',
+				true
+			);
+			appendBr(insertPt);
 		}
+		appendBr(insertPt);
+	}
 	
 	if(pv<=0) {
-		appendText(td,'Aucun calcul possible : vous êtes mort voyons !');
+		appendText(insertPt,'Aucun calcul possible : vous êtes mort voyons !');
 		return;
-		}
+	}
 	
 	if(fatigue>30) {
-		appendText(td,'Vous êtes trop fatigué pour accélérer.');
+		appendText(insertPt,'Vous êtes trop fatigué pour accélérer.');
 		return;
-		}
+	}
 	
-	/* Setup lastDLAZone */
-	if(overDLA) { // bypass des infos de "menu_FF.js" en cas d'overDLA
+	// Setup lastDLAZone
+	if(overDLA) {
+		// bypass des infos de "menu_FF.js" en cas d'overDLA
 		DLAaccel = new Date( DLAsuiv );
 		lastDLA = new Date( DLA );
 		MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLA));
+		// ***INIT GLOBALE*** pva
 		pva = Math.min(pv+regmoy,pvmax);
-		appendText(td,'/!\\ Votre DLA est dépassée, '
-			+'calculs basés sur des estimations. /!\\',
-			true);
-		appendBr(td);
-		}
-	else {
-		DLAaccel = new Date(DLA);
+		appendText(
+			insertPt,
+			'/!\\ Votre DLA est dépassée, calculs basés sur des estimations. /!\\',
+			true
+		);
+		appendBr(insertPt);
+	} else {
+		DLAaccel = new Date( DLA );
 		pva = pv;
-		if(MZ_getValue(numTroll+'.DLA.ancienne'))
+		if(MZ_getValue(numTroll+'.DLA.ancienne')) {
 			lastDLA = new Date(StringToDate(MZ_getValue(numTroll+'.DLA.ancienne')));
-		else
+		} else {
 			lastDLA = false;
 		}
-	appendText(td,'Dernière DLA enregistrée : ');	
+	}
+	appendText(insertPt,'Dernière DLA enregistrée : ');	
 	lastDLAZone = document.createElement('span');
 	lastDLAZone.style.cursor = 'pointer';
 	var b = document.createElement('b');
 	b.onclick = inputMode;
 	lastDLAZone.appendChild(b);
-	td.appendChild(lastDLAZone);
-	if(lastDLA)
-		appendText(b,DateToString(lastDLA) );
-	else
+	insertPt.appendChild(lastDLAZone);
+	if(lastDLA) {
+		appendText(b,DateToString(lastDLA));
+	} else {
 		appendText(b,'aucune');
-	appendBr(td);
+	}
+	appendBr(insertPt);
 	
-	/* Setup maxAMZone et cumulZone */
-	appendText(td,'Accélération maximale possible : ');
+	// Setup maxAMZone et cumulZone
+	appendText(insertPt,'Accélération maximale possible : ');
 	maxAMZone = document.createElement('b');
-	td.appendChild(maxAMZone);
-	appendBr(td);
+	insertPt.appendChild(maxAMZone);
+	appendBr(insertPt);
 	cumulZone = document.createElement('span');
-	td.appendChild(cumulZone);
+	insertPt.appendChild(cumulZone);
 	
 	refreshAccel();
-	}
+}
 
 function refreshAccel() {
-	/* Accélération pour cumul instantané */
+	var pvs, pvsmax;
+	
+	// Accélération pour cumul instantané
+	//window.console.debug('refreshAccel',pva,DLAaccel,lastDLA,minParPV);
 	if(lastDLA) {
-		pvsmax = Math.min(pva-1,
-			Math.ceil( Math.floor((DLAaccel-lastDLA)/6e4)/minParPV ));
-		maxAMZone.innerHTML = pvsmax+' PV';
-		}
-	else {
+		pvsmax = Math.min(
+			pva-1,
+			Math.ceil( Math.floor((DLAaccel-lastDLA)/6e4)/minParPV )
+		);
+		maxAMZone.innerHTML = pvsmax+" PV";
+	} else {
 		pvsmax = pva-1;
-		maxAMZone.innerHTML = 'inconnue'
-		}
+		maxAMZone.innerHTML = "inconnue";
+	}
+	
 	// pvAccel = (nb min avant DLA (arr. sup) / nb min p/ PVsac) (arrondi sup)
-	var pvs = Math.ceil( Math.ceil((DLAaccel-HeureServeur)/6e4) / minParPV );
+	pvs = Math.ceil( Math.ceil((DLAaccel-HeureServeur)/6e4) / minParPV );
 	cumulZone.innerHTML = '';
 	if(pvs<=pvsmax) {
 		appendText(cumulZone,'Vous devez accélérer d\'au moins ');
@@ -864,20 +970,23 @@ function refreshAccel() {
 		if(pvs!=1) {
 			var gainSec = Math.floor((DLAaccel-HeureServeur)/1e3)
 				-(pvs-1)*60*minParPV;
-			appendText(cumulZone,
-							' ('+(pvs-1)+' PV dans '
-							+Math.floor(gainSec/60)+'min'+addZero(gainSec%60)+'s)'
-							);
-			}
+			appendText(
+				cumulZone,
+				' ('+(pvs-1)+' PV dans '+
+				Math.floor(gainSec/60)+'min'+
+				addZero(gainSec%60)+'s)'
+			);
 		}
-	else {
+	} else {
 		var avantDLA = new Date( DLAaccel-HeureServeur-pvsmax*minParPV*6e4 );
-		appendText(cumulZone,
-					'Après votre accélération maximale, il vous faudra encore attendre '
-					+dureeHM(avantDLA/6e4)+' avant de réactiver.'
-					);
-		}
+		appendText(
+			cumulZone,
+			'Après votre accélération maximale, il vous faudra encore attendre '+
+			dureeHM(avantDLA/6e4)+
+			' avant de réactiver.'
+		);
 	}
+}
 
 
 /*-[functions]-------- Fonctions gérant les infos-bulles ---------------------*/
@@ -1606,14 +1715,16 @@ function sortileges(sort,mainCall,pcA,pcD) {
 
 try {
 	start_script(31);
-	creerBulleVide();
+
 	initAll();
+
+	creerBulleVide();
 	setInfoDateCreation();
 	setNextDLA();
-	setInfosPV();
-	setInfosPxPi();
 	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
 	setLieu();
+	setInfosPV();
+	setInfosPxPi();
 	setStabilite();
 	setCurrentEsquive();
 	setRatioKillDeath();
@@ -1626,6 +1737,6 @@ try {
 	saveProfil();
 	displayScriptTime();
 } catch(e) {
-	avertissement(e);
-	window.console.error("[MZ] Erreur générale profil",e);
+	avertissement("[MZ] Une erreur s'est produite.");
+	window.console.error("[MZ] Erreur générale Profil",e);
 }
