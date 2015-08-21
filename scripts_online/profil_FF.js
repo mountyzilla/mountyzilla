@@ -179,7 +179,11 @@ function initAll() {
 		getElementsByTagName("table")[0].rows;
 	Nbrs["pva"] = lignesPV[0].cells[0].textContent;
 	Nbrs["pvm"] = lignesPV[1].cells[0].textContent;
-	Nbrs["fat"] = lignesPV[3].cells[0].textContent;
+	Nbrs["fat"] = document.evaluate(
+		"./text()[contains(.,'atigue')]",
+		lignesPV[3].cells[0],
+		null, 9, null
+	).singleNodeValue.nodeValue;
 	
 	lignesCaracs = lignesProfil.snapshotItem(5).cells[1].
 		getElementsByTagName("table")[0].rows;
