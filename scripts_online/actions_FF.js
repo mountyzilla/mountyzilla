@@ -124,13 +124,12 @@ function insertInfoMagie(node, intitule, magie) {
 		insertBr(node);
 		insertText(node, intitule);
 		insertText(node, magie, true);
-	}
-	else {
+	} else {
 		node = node.parentNode;
 		appendBr(node);
 		appendText(node, intitule);
 		appendText(node, magie, true);
-	}		
+	}
 }
 
 function getMM(sr) {
@@ -158,8 +157,7 @@ function traiteMM() {
 	if(node) {
 		var mm = getMM(node.nodeValue);
 		node = node.parentNode.nextSibling.nextSibling.nextSibling;
-	}
-	else {
+	} else {
 		var node = document.evaluate(
 			"//p/text()[contains(., 'Seuil de Résistance')]",
 			document, null, 9, null).singleNodeValue;
@@ -246,15 +244,15 @@ function traiteRM() {
 /*-[functions]------------------- Décalage DLA -------------------------------*/
 
 function confirmeDecalage() {
-	var DLA = document.getElementsByTagName('script')[1]
-		.textContent.match(/\d+/g);
-	var newDLA = new Date( DLA[1],DLA[2],DLA[3],DLA[4],DLA[5],DLA[6] );
-	newDLA.setMinutes(
-		newDLA.getMinutes()+parseInt(document.getElementById('ai_NbMinutes').value)
-	);
+	// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
+	var nbMinutes = document.getElementById('ai_NbMinutes').value;
+	if(!nbMinutes || isNaN(nbMinutes) || nbMinutes<1) { return false; }
+	
+	var newDLA = new Date( oldDLA );
+	newDLA.setMinutes( newDLA.getMinutes()+nbMinutes );
 	return window.confirm(
 		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
-		+'\nConfirmez-vous cette heure ?'
+		+'\nConfirmez-vous ce décalage ?'
 	);
 }
 
@@ -270,9 +268,28 @@ function changeActionDecalage() {
 	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
 		return;
 	}
+	try {
+		// On récupère le contenu du script JS MH de calcul du décalage
+		var scriptTxt = document.evaluate(
+			".//script[ not(@src) ]",
+			document, null, 9, null
+		).singleNodeValue.textContent;
+		// On en extrait la DLA courante
+		scriptTxt = scriptTxt.slice(scriptTxt.indexOf('new Date(')+9);
+		scriptTxt = scriptTxt.split('\n')[0];
+		var nbs = scriptTxt.match(/\d+/g);
+		oldDLA = new Date( nbs[0],nbs[1],nbs[2],nbs[3],nbs[4],nbs[5] );
+	} catch(e) {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] DLA non trouvée',e);
+		return;
+	}
 	var form = document.getElementsByName('ActionForm')[0];
 	if(form) {
 		form.addEventListener('submit', newsubmitDLA, true);
+	} else {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] ActionForm non trouvé');
 	}
 }
 
@@ -281,77 +298,75 @@ function changeActionDecalage() {
 function prochainMundi() {
 	try {
 		var node = document.evaluate(
-			"//form/descendant::div/b/text()[contains(.,'cycle après Ragnarok')]",
-			document, null, 9, null).singleNodeValue;
+			"//div[@class='dateAction']/b",
+			document, null, 9, null
+		).singleNodeValue;
 	} catch(e) {
-		window.console.log('[Erreur prochainMundi] Node introuvable');
+		window.console.error('[prochainMundi] Date introuvable',e);
 		return;
 	}
 	if(!node) { return; }
 	
-	var longueurMois = node.nodeValue.indexOf('Saison du Hum')==-1?28:14;
-	var jour = longueurMois+1-getNumber(node.nodeValue);
-	if(node.nodeValue.indexOf('Mundidey')!=-1) { jour=longueurMois; }
+	var longueurMois = node.textContent.indexOf('Saison du Hum')==-1?28:14;
+	var jour = longueurMois+1-getNumber(node.textContent);
+	if(node.textContent.indexOf('Mundidey')!=-1) { jour=longueurMois; }
 	var txt = '[Prochain Mundidey ';
 	if(jour>1) {
 		txt += 'dans '+jour+' jours]';
 	} else {
 		txt += 'demain]';
 	}
-	insertText(node.parentNode.parentNode.nextSibling,txt,true);
+	insertText(node.parentNode.nextSibling,txt,true);
 }
 
 
 /*                            Fonction principale                             */
 
 function dispatch() {
-	if(isPage('MH_Play/Play_action.php')) {
+	if(isPage('MH_Play/Play_action')) {
 		prochainMundi();
-	}
-	else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+	} else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+		var oldDLA;
 		changeActionDecalage();
-	}
-	else if(isPage('MH_Play/Actions')) {
-		sendDices();
+	} else if(isPage('MH_Play/Actions')) {
 		if(document.evaluate(
-				"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
-				document, null, 2, null).stringValue) {
+			"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
+			document, null, 2, null
+		).stringValue) {
 			traiteMM();
-		}
-		else if(document.evaluate(
-				"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
-				document, null, 2, null).stringValue) {
+		} else if(document.evaluate(
+			"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
+			document, null, 2, null
+		).stringValue) {
 			//getIdt();
 			traiteRM();
-		}
-		else {
+		} /*else {
+			// Est censé se lancer sur quoi *précisément* ?
 			traiteRM();
 			getLevel();
-		}
-	}
-	else {
+		}*/
+	} else {
 		/* Traitement des messages du bot */
-		var messageTitle = document.evaluate("//form/table/tbody/tr[1]/td[1]/"
+		var messageTitle = document.evaluate(
+			"//form/table/tbody/tr[1]/td[1]/"
 			+"descendant::text()[contains(.,'[MountyHall]')]",
-			document, null, 2, null).stringValue;
-		if(messageTitle.indexOf('Attaquant') != -1
-			&& messageTitle.indexOf('sur') != -1) {
+			document, null, 2, null
+		).stringValue;
+		if(messageTitle.indexOf('Attaquant') != -1 &&
+			messageTitle.indexOf('sur') != -1) {
 			getLevel();
 			traiteRM();
-		}
-		else if(messageTitle.indexOf('Résultat du pouvoir') != -1
-			|| messageTitle.indexOf('Défenseur') != -1) {
+		} else if(messageTitle.indexOf('Résultat du pouvoir') != -1 ||
+			messageTitle.indexOf('Défenseur') != -1) {
 			traiteMM();
-		}
-		else if(messageTitle.indexOf('Identification des trésors') != -1
+		} else if(messageTitle.indexOf('Identification des trésors') != -1 ||
 			// à replacer avec Attaque après révision getLvl :
-			|| messageTitle.indexOf('Explosion') != -1
-			|| messageTitle.indexOf('Insulte') != -1) {
+			messageTitle.indexOf('Explosion') != -1 ||
+			messageTitle.indexOf('Insulte') != -1) {
 			traiteRM();
 		}
 	}
 }
-
 
 start_script(31);
 dispatch();
