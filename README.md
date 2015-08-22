@@ -34,25 +34,58 @@ pour laquelle il a été spécifiquement conçu.
 est par exemple appelée sur toutes les pages.)
 
 
-## Environnement de travail pour le développement
+## Participer au développement
 
-### Codage ponctuel : créez votre propre script maître.
+Si vous souhaitez participer au développement, il suffit de suivre les étapes
+décrites ci-dessous. Durant vos tests, pensez à vider votre cache
+de temps en temps : que vos scripts soient locaux où en ligne,
+votre navigateur rechignera à les mettre à jour si vous les sollicitez beaucoup.
 
-Le plus simple, si vous êtes un codeur occasionnel,
-est de commenter les lignes du script maître associées
-aux pages sur lesquelles vous travaillez,
-et d'ajouter votre script comme un script complémentaire.
-Simple et efficace.
+### Si vous êtes un habitué de git / github :
 
-### Codage avancé : recréer un MountyHall local
+Forkez ce repo et clonez-le sur votre machine.
+Placez-vous sur la branche "dev".
 
-Si vous souhaitez vous investir davantage dans le développement,
-il vous faudra probablement faire de très nombreux tests sur
-de très nombreuses pages : impossible dès lors de tester en live sur MountyHall.
-Le plus simple dans ce cas est de monter un serveur local
-pour simuler le jeu et y faire vos tests.
-Créez-vous un serveur dédié, et déposez-y une batterie de pages Mountyhall
-modifiables à l'envi pour vos tests.
+Dans le répertoire de base du repo, vous trouverez un fichier
+`script_principal_dev.js`. Éditez-le et indiquez comme variable `scriptsDev`
+le répertoire où se trouve votre clone local.
+(Laissez l'indication du sous-répertoire "scripts_online").
+
+Dans les Préférences de l'add-on MountyZilla, changez le script principal
+pour le `script_principal_dev.js` que vous venez d'éditer.
+
+C'est terminé ! MountyZilla ira désormais lire vos scripts locaux au lieu
+de ses scripts distants habituels.
+
+Si vous ne souhaitez réaliser que de petits ajustements, vous pouvez travailler
+directement sur la branche `dev` puis déposer un pull request.
+Si au contraire vous souhaitez faire des modifications profondes,
+ou développer des fonctionnalités inédites, travaillez plutôt dans une
+sous-branche de feature de `dev`.
+
+### Si vous voulez juste bidouiller du javascript :
+
+Téléchargez
+[l'archive](https://github.com/Mountyzilla/mountyzilla/archive/dev.zip)
+de la version courante des scripts de développement, et décompressez-là.
+
+Dans le répertoire général, vous trouverez un fichier
+`script_principal_dev.js`. Éditez-le et indiquez comme variable `scriptsDev`
+le répertoire où vous avez décompressé l'archive.
+(Laissez l'indication du sous-répertoire "scripts_online").
+
+Dans les Préférences de l'add-on MountyZilla, changez le script principal
+pour le `script_principal_dev.js` que vous venez d'éditer. MountyZilla ira
+désormais lire vos scripts locaux au lieu de ses scripts distants habituels.
+
+Vous pouvez alors éditer les fichiers relatifs à chaque page, situés dans le
+répertoire `scripts_online`. Une fois satisfait de votre travail,
+contactez-moi IG pour que je puisse intégrer vos modifications au projet.
+
+### Si vous souhaitez vous attaquer coeur de l'add-on :
+
+Dans ce cas il est probable que vous soyez plus calé que moi sur la question.
+N'hésitez pas à me contacter IG pour en disctuer.
 
 
 ## Quelques consignes avant de contribuer
