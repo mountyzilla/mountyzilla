@@ -72,8 +72,10 @@ var
 function resiste(Ddeg,bm) {
 	// version naive mais compréhensible ^^
 	// DEBUG: à revoir
-	if(!bm) return Math.floor(Ddeg);
-	return Math.floor(Ddeg)+Math.round(bm/2);
+	if(!bm) {
+		return 2*Math.floor(Ddeg/2);
+	}
+	return 2*Math.floor(Ddeg/2)+Math.round(bm/2);
 }
 
 function getPortee(param) {
@@ -1468,9 +1470,9 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	}
 	else if(sort.indexOf('Explosion')!=-1)
 		texte = 'Dégâts : <b>'
-			+Math.floor( 1+(deg+Math.floor(pvbase/10))/2 )+'</b> D3 '
-			+' => <b>'+2*Math.floor( 1+(deg+Math.floor(pvbase/10))/2 )
-			+' ('+resiste( 1+(deg+Math.floor(pvbase/10))/2 )+')</b>';
+			+Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )+'</b> D3 '
+			+' => <b>'+2*Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )
+			+' ('+resiste( 1+(deg+Math.floor(pvmax/10))/2 )+')</b>';
 	else if(sort.indexOf('Faiblesse Passagere')!=-1) {
 		if(pv<=0)
 			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
