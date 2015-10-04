@@ -369,7 +369,7 @@ start_script(712);
 // Pour cryptage des mdp IT
 appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
 
-var insertPoint = document.getElementById('footer2');
+var insertPoint = document.getElementById('footer1');
 insertBefore(insertPoint,document.createElement('p'));
 insertTitle(insertPoint,'Mountyzilla : Options');
 insertOptionTable(insertPoint);
