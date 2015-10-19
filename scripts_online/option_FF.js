@@ -104,6 +104,8 @@ function saveAll() {
 		document.getElementById('vueCarac').checked ? 'true' : 'false');
 	MZ_setValue('CONFIRMEDECALAGE',
 		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
+	MZ_setValue(numTroll+".OLDSCHOOL",
+		document.getElementById("oldShoolStyle").checked ? "true" : "false");
 
 	saveITData();
 	
@@ -320,6 +322,10 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'confirmeDecalage',MZ_getValue('CONFIRMEDECALAGE')=='true');
 	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
+	
+	td = appendTd(appendTr(mainBody,"mh_tdpage"));
+	appendCheckBox(td,"oldShoolStyle",MZ_getValue(numTroll+".OLDSCHOOL")=="true");
+	appendText(td," Ouvrir l'ancien profil par défaut");
 	
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));

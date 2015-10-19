@@ -407,6 +407,16 @@ function saveProfil() {
 
 /*-[functions]----------- Fonctions modifiant la page ------------------------*/
 
+function newStyleLink() {
+	appendButton(
+		document.getElementById("titre2"),
+		"Nouveau Profil",
+		function(){
+			window.open("Play_profil2.php","Contenu");
+		}
+	);
+}
+
 function setAnatrolliseur() {
 	appendButton(
 		lignesProfil.snapshotItem(0).cells[0],
@@ -1725,6 +1735,7 @@ try {
 	initAll();
 
 	creerBulleVide();
+	newStyleLink();
 	setInfoDateCreation();
 	setNextDLA();
 	if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
