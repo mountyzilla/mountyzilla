@@ -130,11 +130,19 @@ function savePosition() {
 /* [functions] Récup données Utilisateur */
 function getPosition() {
 	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
-	var pos = document.evaluate("//li/b/text()[contains(.,'X = ')]",
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.nodeValue;
-	var posx = pos.substring(pos.indexOf('=') + 2, pos.indexOf(','));
-	pos = pos.substr(pos.indexOf(',') + 1);
-	return new Array(posx, pos.substring(pos.indexOf('=') + 2, pos.indexOf(',')), pos.substr(pos.lastIndexOf('=') + 2));
+	try {
+		var
+			infoTab = document.getElementById("infoTab"),
+			strPos = document.evaluate(
+				".//li/b/text()[contains(.,'X = ')]",
+				infoTab, null, 9, null
+			).singleNodeValue.nodeValue,
+			pos = getNumbers(strPos);
+	} catch(e) {
+		window.console.error("[MZ Vue] Échec getPosition()",e);
+		return [0,0,0];
+	}
+	return pos;
 }
 
 function getPorteVue() {
@@ -245,7 +253,7 @@ function bddMonstres(start,stop) {
 			getMonstreNom(i)+';'+
 			positionToString(getMonstrePosition(i))+'\n';
 	}
-	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES' : '';
+	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES\n' : '';
 }
 
 /* [functions] Récup données Trolls */
@@ -338,7 +346,7 @@ function bddTresors(dmin,start,stop) {
 				positionToString(getTresorPosition(i))+'\n';
 		}
 	}
-	return txt ? '#DEBUT TRESORS\n'+txt+'#FIN TRESORS' : '';
+	return txt ? '#DEBUT TRESORS\n'+txt+'#FIN TRESORS\n' : '';
 }
 
 /* [functions] Récup données Champignons */
@@ -364,7 +372,7 @@ function bddChampignons() {
 			getChampignonNom(i)+';'+
 			positionToString(getChampignonPosition(i))+'\n';
 	}
-	return txt ? '#DEBUT CHAMPIGNONS\n'+txt+'#FIN CHAMPIGNONS' : '';
+	return txt ? '#DEBUT CHAMPIGNONS\n'+txt+'#FIN CHAMPIGNONS\n' : '';
 }
 
 /* [functions] Récup données Lieux */
@@ -415,7 +423,7 @@ function bddLieux(start,stop) {
 			epure(getLieuNom(i))+';'+
 			positionToString(getLieuPosition(i))+'\n';
 	}
-	return txt ? '#DEBUT LIEUX\n'+txt+'#FIN LIEUX' : '';
+	return txt ? '#DEBUT LIEUX\n'+txt+'#FIN LIEUX\n' : '';
 }
 
 
@@ -505,7 +513,7 @@ var vue2Ddata = {
 		extra_params: {}
 	},
 	'Grouky Vue!': {
-		url: 'http://ythogtha.org/MH/grouky.py/grouky',
+		url: 'http://mh.ythogtha.org/grouky.py/grouky',
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {
@@ -522,18 +530,18 @@ var vue2Ddata = {
 
 function getVueScript() {
 	try {
-		var txt = bddTrolls()+'\n'+
-			bddMonstres()+'\n'+
-			bddChampignons()+'\n'+
-			bddTresors()+'\n'+
+		var txt = bddTrolls()+
+			bddMonstres()+
+			bddChampignons()+
+			bddTresors()+
 			bddLieux()+
-			'\n#DEBUT ORIGINE\n'+
+			'#DEBUT ORIGINE\n'+
 			getPorteVue()[2]+';'+positionToString(getPosition())+
 			'\n#FIN ORIGINE\n';
 		return txt;
 	} catch(e) {
 		avertissement("[getVueScript] Erreur d'export vers Vue externe");
-		window.console.error('[getVueScript]\n'+e)
+		window.console.error('[MZ getVueScript]\n',e)
 	}
 }
 
