@@ -17,7 +17,7 @@
 *******************************************************************************/
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv LIGNE A EDITER vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-var scriptsDev = "file:///répertoire_du_repo_git/scripts_online/";
+var scriptsDev = "file:///repertoire_du_repo_git/scripts_online/";
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 var scriptsMZ = "http://mountyzilla.tilk.info/scripts_0.9/";
 
@@ -66,6 +66,8 @@ if(isPage("Messagerie/ViewMessageBot")) {
 	chargerScriptDev("option");
 } else if(isPage("View/PJView")) {
 	chargerScriptDev("pjview");
+} else if(isPage("MH_Play/Play_profil2")) {
+    chargerScriptDev("profil2");
 } else if(isPage("MH_Play/Play_profil")) {
 	chargerScriptDev("profil");
 } else if(isPage("MH_Taniere/TanierePJ_o_Stock") ||
