@@ -64,7 +64,7 @@ var
 
 /*-[functions]----------------- Fonctions utiles -----------------------------*/
 // Active l'affichage des log de DEBUG (fonction debug(str))
-var MZ_DEBUG = true;
+var MZ_DEBUG = false;
 function debugMZ(str){
 	if(MZ_DEBUG){
 		window.console.debug('[MZ_DEBUG] '+str);
