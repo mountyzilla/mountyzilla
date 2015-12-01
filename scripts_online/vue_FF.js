@@ -26,6 +26,9 @@
 // Infos remplies par des scripts extérieurs
 var listeCDM = [], listeLevels = [];
 
+// Position actuelle
+var currentPosition=[0,0,0];
+
 // Fenêtres déplaçables
 var winCurr = null;
 var offsetX, offsetY;
@@ -102,6 +105,16 @@ var x_lieux = tr_lieux;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
+// Active l'affichage des log de DEBUG (fonction debug(str))
+var MZ_DEBUG = false;
+function debugMZ(str){
+    if(MZ_DEBUG){
+        window.console.debug('[MZ_DEBUG:Vue] '+str);
+        if(typeof str === "object"){
+            window.console.debug(str);
+        }
+    }
+}
 
 function positionToString(arr) {
 	return arr.join(';');
@@ -111,13 +124,27 @@ function getPortee(param) {
 	return Math.ceil((Math.sqrt(19 + 8 * (param + 3)) - 7) / 2);
 }
 
-function savePosition() {
-	var pos = getPosition();
-	MZ_setValue(numTroll+'.position.X',pos[0]);
-	MZ_setValue(numTroll+'.position.Y',pos[1]);
-	MZ_setValue(numTroll+'.position.N',pos[2]);
+function retrievePosition(){
+    var X, Y,N;
+    X = MZ_getValue(numTroll+'.position.X');
+    Y = MZ_getValue(numTroll+'.position.Y');
+    N = MZ_getValue(numTroll+'.position.N');
+    if(!X || !Y ||!N){
+        var infoTab = document.getElementById('infoTab');
+        if(!infoTab) {
+            infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
+        }
+        var strPos = document.evaluate(".//li/b/text()[contains(.,'X = ')]",
+                infoTab, null, 9, null
+        ).singleNodeValue.nodeValue;
+        currentPosition = getNumbers(strPos);
+        MZ_setValue(numTroll+'.position.X',currentPosition[0]);
+        MZ_setValue(numTroll+'.position.Y',currentPosition[1]);
+        MZ_setValue(numTroll+'.position.N',currentPosition[2]);
+    }else{
+        currentPosition = [X,Y,N];
+    }
 }
-
 
 /*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
 /* INFOS :
@@ -129,20 +156,10 @@ function savePosition() {
 
 /* [functions] Récup données Utilisateur */
 function getPosition() {
-	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
-	try {
-		var
-			infoTab = document.getElementById("infoTab"),
-			strPos = document.evaluate(
-				".//li/b/text()[contains(.,'X = ')]",
-				infoTab, null, 9, null
-			).singleNodeValue.nodeValue,
-			pos = getNumbers(strPos);
-	} catch(e) {
-		window.console.error("[MZ Vue] Échec getPosition()",e);
-		return [0,0,0];
-	}
-	return pos;
+    if(!currentPosition){
+        retrievePosition();
+    }
+    return currentPosition;
 }
 
 function getPorteVue() {
@@ -519,8 +536,8 @@ var vue2Ddata = {
 		extra_params: {
 			'type_vue': 'V5b1'
 		}
-	},
-	/*'DEBUG': {
+	}
+	/*,'DEBUG': {
 		url: 'http://weblocal/testeur.php',
 		paramid: 'vue',
 		func: getVueScript,
@@ -1984,7 +2001,7 @@ function inversionCoord() {
 	var maPos = getPosition();
 	var listeOffsets = {
 		'monstres':checkBoxLevels.checked?4:3,
-		'trolls':6,
+		'trolls':6
 	};
 	for(var type in listeOffsets) {
 		var trList = this['tr_'+type];
@@ -2005,9 +2022,9 @@ function inversionCoord() {
 
 try {
 	start_script(31);
-
+    retrievePosition();
 	creerTableauInfos();
-	
+
 	if(MZ_getValue(numTroll+'.VERLAN')=='true') {
 		inversionCoord();
 	}
@@ -2019,8 +2036,7 @@ try {
 	
 	synchroniseFiltres();
 	toggleLevelColumn();
-	savePosition();
-	
+
 	refreshDiplo();
 	
 	//400 ms
@@ -2061,7 +2077,6 @@ try {
 	}
 	
 	putScriptExterne();
-	
 	displayScriptTime();
 } catch(e) {
 	avertissement("[MZ] Une erreur s'est produite.");
