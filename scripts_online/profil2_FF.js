@@ -532,25 +532,37 @@ function setInfosEtatPV() { // pour AM et Sacro
 
 // Complete le cadre "Experience"
 function setInfosExp() {
+    var tdNiv = document.querySelector("#exp #niv");
+
+        // Calcul niveau monstre/troll min pour gain PX
+    var nivCibleMin = Math.ceil((2*nivTroll-10)/3);
+    tdNiv.innerHTML+="<br><i>Tuer un monstre ou un troll ne vous rapporte des PX que s'il est de niveau supérieur à "+nivCibleMin+"</i>";
+
+        // Calcul PX restant
+    var pxRestant=(pxdistribuables+pxperso)-2*nivTroll;
+    debugMZ(pxRestant);
+    if(pxRestant>=0 ){
+        var tdinfoEntrainement = document.querySelector("#exp table tr:nth-child(4) td span");
+        tdinfoEntrainement.innerHTML+=" <i>Il vous restera "+pxRestant+" PX</i>";
+    }
+
 		// Calul pi/jour
-	trNiv = document.querySelector("#exp #niv").parentElement;
+    var trNiv = tdNiv.parentElement;
 	trNiv.title=(Math.round(10*(pitotal+pxperso+pxdistribuables)/NBjours)/10)+' PI par jour';
 
 		// Rapports meurtres,morts
-	tdKill=document.querySelector("#exp #kill");
+    var tdKill=document.querySelector("#exp #kill");
 	tdKill.setAttribute("colspan",1);
 	appendTdText(tdKill.parentElement,(Math.round(10*NBjours/nbmeurtres)/10)+' jours/kill',false);
 
-
-
-
-	tdMort=document.querySelector("#exp #mort");
+    var tdMort=document.querySelector("#exp #mort");
 	tdMort.setAttribute("colspan",1);
 	appendTdText(tdMort.parentElement,(Math.round(10*NBjours/nbmorts)/10)+' jours/mort',false);
 
-
 	tdKill.parentElement.title='Rapport meurtres/décès: '+Math.floor((nbmeurtres/nbmorts)*100)/100;
 	tdMort.parentElement.title='Rapport décès/meurtres: '+Math.floor((nbmorts/nbmeurtres)*100)/100;
+
+
 }
 
 
@@ -1286,11 +1298,12 @@ function decumul_buff(nom,str,buff) {
 
 
 function sortileges(sort,mainCall,pcA,pcD) {
-	// Si mainCall==false, affichage réduit des infos (pour PuM/PréM)
+	// Si mainCall==false, affichage réduit des infos des sorts d'attaque pour PuM/PréM
 	var texte = '';
 	if (mainCall) {
-		var pcA = (atttour) ? atttour : false;
-		var pcD = (degtour) ? degtour : false;
+        /* pourcentages Des bonus/malus du a PuM/PreM : Att et Deg*/
+		pcA = 0;
+		pcD = 0;
 	}
 	if (sort.indexOf('Analyse Anatomique') != -1) {
 		texte = 'Portée horizontale : <b>'
@@ -1347,18 +1360,17 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		/* Frappe */
 		var modD = 0;
 		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA){
-			modD = parseInt(att+pcA);
+		if(pcA>0){
+			modD = parseInt(att*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
-			+' => <b>'+(Math.round(3.5*(att+atttour))+attbm)+'</b><br/>'
+			+' => <b>'+(Math.round(3.5*(att+modD))+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
-		if(pcD) {
-			modD = parseInt(Math.floor(deg/2)+pcD);
+		if(pcD>0) {
+			modD = parseInt(Math.floor(deg/2)*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
-		}
-		else
+		}else
 			modD = 0;
 		texte += aff(degbm)+' => <b>'
 			+(2*(Math.floor(deg/2)+modD)+degbm)
@@ -1412,7 +1424,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			if(texte) { texte += '<hr>'; }
 			texte += '<b>'+i+'<sup>e</sup> '+str+' ('+aff(pc)+' %) :</b><br/>';
 			newSort = false;
-			for(var j=0 ; j<5 ; j++) {
+			for(var j=0 ; j<sortAtt.length ; j++) {
 				if(getTalent(sortAtt[j])) {
 					if(newSort) { texte += '<br/><br/>'; }
 					texte += '<i>'+sortAtt[j]+' :</i><br/>'
@@ -1427,19 +1439,18 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		var modD = 0;
 		var portee = getPortee(vuetotale);
 		texte = 'Attaque : <b>'+vue+'</b> D6 ';
-		if(pcA) {
-			modD = parseInt(vue+pcA);
+		if(pcA>0) {
+			modD = parseInt(vue*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
-			}
+		}
 		texte += aff(attbm)
 			+' => <b>'+(Math.round(3.5*(vue+modD))+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
-		if(pcD) {
+		if(pcD>0) {
 			modD = parseInt(Math.floor(vue/2)+pcD);
 			texte += '<i>'+aff(modD)+'D3</i> ';
-			}
-		else
-			{ modD = 0; }
+		}else
+            modD = 0;
 		texte += aff(degbm)
 			+' => <b>'+(2*(Math.floor(vue/2)+modD)+degbm)
 			+'/'+(2*(Math.floor(1.5*Math.floor(vue/2))+modD)+degbm)
@@ -1458,8 +1469,8 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Rafale Psychique')!=-1) {
 		var modD = 0;
 		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD) {
-			modD = parseInt(deg+pcD);
+		if(pcD>0) {
+			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}
 		texte += aff(degbm)
@@ -1494,18 +1505,17 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Siphon')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA) {
-			modD = parseInt(att+pcA);
+		if(pcA>0) {
+			modD = parseInt(att*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(att+modD)+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+reg+'</b> D3 ';
-		if(pcD) {
-			modD = parseInt(reg+pcD);
+		if(pcD>0) {
+			modD = parseInt(reg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
-		}
-		else
+		}else
 			modD = 0;
 		texte += aff(degbm)
 			+' => <b>'+(2*(reg+modD)+degbm)+'/'+(2*(Math.floor(1.5*reg)+modD)+degbm)
@@ -1537,18 +1547,17 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Vampirisme')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+Math.floor(2*deg/3)+'</b> D6 ';
-		if(pcA) {
-			modD = parseInt(Math.floor(2*deg/3)+pcA);
+		if(pcA>0) {
+			modD = parseInt(Math.floor(2*deg/3)*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
-			}
+		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD) {
-			modD = parseInt(deg+pcD);
+		if(pcD>0) {
+			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
-		}
-		else
+		}else
 			modD = 0;
 		texte += aff(degbm)
 			+' => <b>'+(2*(deg+modD)+degbm)+'/'+(2*(Math.floor(1.5*deg)+modD)+degbm)
