@@ -509,7 +509,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 	// Difference PV p/r a equilibre de temps (propale R')
 	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(bmt+pdm))
 	// ***INIT GLOBALE*** pvdispo
-	pvdispo = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
+	var pvdispo = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
 	var	span = document.createElement("span");
 	span.title = txt;
 	span.style.fontStyle = "italic";
@@ -1472,22 +1472,24 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			return '<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>';
 
 		function perteSacro(sac) {
-			return ' (-'+(sac+2*Math.floor(sac/5)+2)+' PV)';
+			return ' (-'+(sac+2*(1+Math.floor(sac/5)))+' PV)';
 		}
 
 		var sac = Math.floor((pvcourant-1)/2);
 		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Soin maximal : <b>'+sac+'</b> PV'+perteSacro(sac);
-		/* Sacros max et optimal sans malus (propale R') - TODO A revoir */
-		sac = Math.floor(pvcourant/1.4)-1;
+		/* Sacros max et optimal sans malus (propale R') */
+        var pvdispoSansMalusTemps = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
+        sac = Math.floor((pvdispoSansMalusTemps-2)*5/7);
 		if(sac>0)
-			texte += '<hr>Soin maximal sans malus de temps : <b>'
-				+sac+'</b> PV'+perteSacro(sac);
-		if(sac>3) {
+			texte += '<hr>Soin maximum limitant les risques de malus de temps : <b>' +sac+'</b> PV'+perteSacro(sac);
+        else
+            texte += '<hr>Vous ne pouvez pas compenser de blessures dues à un sacrifice';
+		/*if(sac>3) {
 			sac = 5*Math.floor((sac+1)/5)-1;
 			texte += '<br/>Soin optimal sans malus de temps : <b>'
 				+sac+'</b> PV'+perteSacro(sac);
-		}
+		}*/
 	}
 	else if(sort.indexOf('Siphon')!=-1) {
 		var modD = 0;
