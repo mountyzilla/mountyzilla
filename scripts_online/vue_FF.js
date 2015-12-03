@@ -105,17 +105,6 @@ var x_lieux = tr_lieux;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
-// Active l'affichage des log de DEBUG (fonction debug(str))
-var MZ_DEBUG = false;
-function debugMZ(str){
-    if(MZ_DEBUG){
-        window.console.debug('[MZ_DEBUG:Vue] '+str);
-        if(typeof str === "object"){
-            window.console.debug(str);
-        }
-    }
-}
-
 function positionToString(arr) {
 	return arr.join(';');
 }
@@ -125,25 +114,16 @@ function getPortee(param) {
 }
 
 function retrievePosition(){
-    var X, Y,N;
-    X = MZ_getValue(numTroll+'.position.X');
-    Y = MZ_getValue(numTroll+'.position.Y');
-    N = MZ_getValue(numTroll+'.position.N');
-    if(!X || !Y ||!N){
-        var infoTab = document.getElementById('infoTab');
-        if(!infoTab) {
-            infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
-        }
-        var strPos = document.evaluate(".//li/b/text()[contains(.,'X = ')]",
-                infoTab, null, 9, null
-        ).singleNodeValue.nodeValue;
-        currentPosition = getNumbers(strPos);
-        MZ_setValue(numTroll+'.position.X',currentPosition[0]);
-        MZ_setValue(numTroll+'.position.Y',currentPosition[1]);
-        MZ_setValue(numTroll+'.position.N',currentPosition[2]);
-    }else{
-        currentPosition = [X,Y,N];
+    // La position doit être tirée de la page et non du fetch car
+    // non à jour lors des déplacements.
+    var infoTab = document.getElementById('infoTab');
+    if(!infoTab) {
+        infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
     }
+    var strPos = document.evaluate(".//li/b/text()[contains(.,'X = ')]",
+            infoTab, null, 9, null
+    ).singleNodeValue.nodeValue;
+    currentPosition = getNumbers(strPos);
 }
 
 /*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/

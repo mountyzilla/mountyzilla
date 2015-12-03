@@ -26,10 +26,10 @@ var
 	hauteur = 50, bulleStyle = null,
 	// Caracteristiques
 		// Infos troll
-	race, niv, idtroll, nomtroll, datecrea,
+	race, niv, idtroll, datecrea,
 		// Etats du troll
 	fatigue, bmfatigue,
-	conc,
+
 		// Experience, Pi, ...
 	pxdistribuables, pxperso,
 	piutilisable, pitotal,
@@ -39,7 +39,7 @@ var
 		// calcul des DLA suivantes
 	DLA, DLAsuiv, HeureServeur,
 		// details duree du tour (calcul pvdispo) :
-	dtb, pdm, bmt, adb,
+	dtb, pdm, bmt, adb, dpt,
 		//posale
 	posX, posY, posN,
 		// caracs physiques
@@ -63,16 +63,6 @@ var
 
 
 /*-[functions]----------------- Fonctions utiles -----------------------------*/
-// Active l'affichage des log de DEBUG (fonction debug(str))
-var MZ_DEBUG = false;
-function debugMZ(str){
-	if(MZ_DEBUG){
-		window.console.debug('[MZ_DEBUG] '+str);
-		if(typeof str === "object"){
-			window.console.debug(str);
-		}
-	}
-}
 
 // Retourne la valeur de l'element unique et identifie par son "selector" (cf querySelector())
 // http://www.w3schools.com/jsref/met_document_queryselector.asp
@@ -166,97 +156,94 @@ function dureeHM(dmin) {
 /*-[functions]------- Extraction / Sauvegarde des donnees --------------------*/
 
 function extractionDonnees() {
-	// Variables temporaires
+	    // Variables temporaires
 	var Nbrs = {};
 
-	// *********************
-	// Cadre "Description"
-	// *********************
+// *********************
+// Cadre "Description"
+// *********************
 	race = getUniqueStringValueBySelector('#descr #race');
 	debugMZ("Race : " + race);
 	idtroll = getUniqueStringValueBySelector('#descr #id');
 	debugMZ("Id troll : " + idtroll);
-	nomtroll = getUniqueStringValueBySelector('#descr #nom');
-	debugMZ("Nom troll : " + nomtroll);
-	strDateCrea = getUniqueStringValueBySelector('#descr td#crea>span');
+	var strDateCrea = getUniqueStringValueBySelector('#descr td#crea>span');
 	strDateCrea = strDateCrea.slice(strDateCrea.indexOf("(") + 1, strDateCrea.indexOf(")"));
 	datecrea = new Date(StringToDate(strDateCrea));
 	debugMZ("Date creation : " + datecrea);
 
-	// *******************
-	// Cadre "Experience"
-	// *******************
-	// Niveau de troll
+// *******************
+// Cadre "Experience"
+// *******************
+        // Niveau de troll
 	niv = getUniqueIntValueBySelector('#exp #niv');
 	nivTroll = niv;
 	debugMZ("Niveau : " + niv);
+        // PX
 	pxdistribuables = getUniqueIntValueBySelector('#exp #px');
 	pxperso = getUniqueIntValueBySelector('#exp #px_perso');
 	debugMZ("Px Distrib/Perso: "+pxdistribuables+" / "+pxperso);
+        // PI
 	piutilisable = getUniqueIntValueBySelector('#exp #pi');
 	pitotal = parseInt(document.querySelector('#exp #pi').parentElement.nextElementSibling.childNodes[2].textContent);
 	debugMZ("PI utilisables/total: "+piutilisable+" / "+pitotal);
+        // Meutres/Morts
 	nbmeurtres = getUniqueIntValueBySelector('#exp #kill');
 	nbmorts = getUniqueIntValueBySelector('#exp #mort');
 	debugMZ("Nb Meutres/Morts: "+nbmeurtres+" / "+nbmorts);
 
-	// *********************
-	// Cadre "Tour de Jeu"
-	// *********************
-	// DLA
+// *********************
+// Cadre "Tour de Jeu"
+// *********************
+	    // DLA
 	Nbrs["dla"] = getUniqueStringValueBySelector("#dla #dla>b");
 	DLA = new Date(StringToDate(Nbrs["dla"]));
 	debugMZ("DLA: " + DLA);
-	// DLA suivante
+	    // DLA suivante
 	Nbrs["dlasuiv"] = getUniqueStringValueBySelector("#dla #dla_next");
 	DLAsuiv = new Date(StringToDate(Nbrs["dlasuiv"]));
 	debugMZ("DLAsuiv: " + DLAsuiv);
-	// Duree normale de mon Tour
+	    // Duree normale de mon Tour
 	Nbrs["dtb"] = getNumbers(getUniqueStringValueBySelector("#dla #tour"));
 	dtb = Nbrs["dtb"][0] * 60 + Nbrs["dtb"][1];
 	debugMZ("Duree normale de mon Tour : " + dtb);
-	// Bonus/Malus sur la duree
+	    // Bonus/Malus sur la duree
 	Nbrs["bmt"] = getNumbers(getUniqueStringValueBySelector("#dla #bm"));
 	bmt = Nbrs["bmt"][0] * 60 + Nbrs["bmt"][1];
 	debugMZ("Bonus/Malus sur la duree : " + bmt);
-	// Augmentation due aux blessures
+	    // Augmentation due aux blessures
 	Nbrs["adb"] = getNumbers(getUniqueStringValueBySelector("#dla #blessure"));
 	adb = Nbrs["adb"][0] * 60 + Nbrs["adb"][1];
 	debugMZ("Augmentation due aux blessures : " + adb);
-	// Poids de l'equipement
+	    // Poids de l'equipement
 	Nbrs["pdm"] = getNumbers(getUniqueStringValueBySelector("#dla #poids"));
 	pdm = Nbrs["pdm"][0] * 60 + Nbrs["pdm"][1];
 	debugMZ("Poids de l'equipement : " + pdm);
-	// Duree de mon prochain Tour
+	    // Duree de mon prochain Tour
 	Nbrs["dpt"] = getNumbers(getUniqueStringValueBySelector("#dla #duree>b"));
 	dpt = Nbrs["dpt"][0] * 60 + Nbrs["dpt"][1];
 	debugMZ('Duree de mon prochain Tour : ' + dpt);
 
-	// ****************
-	// Cadre "Etats"
-	// ****************
-	// Position du troll :
+// ****************
+// Cadre "Etats"
+// ****************
+	    // Position du troll :
 	posX = getUniqueIntValueBySelector('#pos #x');
 	posY = getUniqueIntValueBySelector('#pos #y');
 	posN = getUniqueIntValueBySelector('#pos #n');
 	debugMZ("(X Y Z) : " + posX + " " + posY + " " + posN);
-
-	// PV actuel
+	    // PV actuel
 	pvcourant = getUniqueIntValueBySelector('#pos #pv_courant');
 	pvActuelKastar = pvcourant;
 	debugMZ("PV actuel : " + pvcourant)
-	// Bonus concentration
-	conc = getUniqueIntValueBySelector('#pos #conc');
-	debugMZ("Concentration : " + conc);
-	// Fatigue
+	    // Fatigue
 	fatigue = getUniqueIntValueBySelector('#pos #fatigue');
 	debugMZ('Fatigue : ' + fatigue);// bmfat = 0 si pas de BM fat
 	bmfatigue = 0;
 
-	// **************************
-	// Cadre "Caracteristiques"
-	// **************************
-	// Attaque
+// **************************
+// Cadre "Caracteristiques"
+// **************************
+	    // Attaque
 	att = getUniqueIntValueBySelector('#carac #att');
 	attbp = getUniqueIntValueBySelector('#carac #att_p');
 	attbm = getUniqueIntValueBySelector('#carac #att_m');
@@ -264,7 +251,7 @@ function extractionDonnees() {
 	attmoy = 3.5*att + attbp + attbm;
 	attmoytour = 3.5*(att+atttour) + attbp + attbm;
 	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; att/tour:"+atttour+" ;AttMoyTour:"+attmoytour);
-	// Esquive
+	    // Esquive
 	esq = getUniqueIntValueBySelector('#carac #esq');
 	esqbp = getUniqueIntValueBySelector('#carac #esq_p');
 	esqbm = getUniqueIntValueBySelector('#carac #esq_m');
@@ -272,7 +259,7 @@ function extractionDonnees() {
 	esqmoy = 3.5*esq + esqbp+esqbm;
 	esqmoytour = 3.5*(esq+esqtour) + esqbp+esqbm;
 	debugMZ("ESQ: "+esq+"+("+esqbp+")+("+esqbm+") ;EsqMoy:"+esqmoy+"; esq/tour:"+esqtour+" ;EsqMoyTour:"+esqmoytour);
-	// Degat
+	    // Degat
 	deg = getUniqueIntValueBySelector('#carac #deg');
 	degbp = getUniqueIntValueBySelector('#carac #deg_p');
 	degbm = getUniqueIntValueBySelector('#carac #deg_m');
@@ -282,19 +269,19 @@ function extractionDonnees() {
 	degmoytour = 2 * (deg + degtour) + degbp + degbm;
 	degmoycrittour = 3 * (deg + degtour) + degbp + degbm;
 	debugMZ("DEG: "+deg+"+("+degbp+")+("+degbm+") ;DegMoy:"+degmoy+"/"+degmoycrit+" ;deg/tour:"+degtour+"; DegMoyTour:"+degmoytour+"/"+degmoycrittour);
-	// PV
+	    // PV
 	pvbase = getUniqueIntValueBySelector('#carac #pv');
 	pvbp = getUniqueIntValueBySelector('#carac #pv_p');
 	pvbm = getUniqueIntValueBySelector('#carac #pv_m');
 	pvtotal = getUniqueIntValueBySelector('#carac #pv_tot');
 	debugMZ("PV: " + pvbase + " + (" + pvbp + ") + (" + pvbm + ") = " + pvtotal);
-	// Regeneration
+	    // Regeneration
 	reg = getUniqueIntValueBySelector('#carac #reg');
 	regbp = getUniqueIntValueBySelector('#carac #reg_p');
 	regbm = getUniqueIntValueBySelector('#carac #reg_m');
 	regmoy = 2 * reg + regbp + regbm; // D3
 	debugMZ("REG: "+reg+"+("+regbp+")+("+regbm+") ;RegMoy:" + regmoy);
-	// Armure
+	    // Armure
 	arm = getUniqueIntValueBySelector('#carac #arm');
 	armbp = getUniqueIntValueBySelector('#carac #arm_p');
 	armbm = getUniqueIntValueBySelector('#carac #arm_m');
@@ -303,20 +290,20 @@ function extractionDonnees() {
 	armmoytour = 2*(arm+armtour) + armbp+armbm;
 	debugMZ("ARM: "+arm+"+("+armbp+")+("+armbm+"); ArmMoy:"+armmoy+"; arm/tour:"+armtour+"; ArmMoyTour:"+armmoytour);
 	// TODO : D d'armure non active
-	// Vue
+	    // Vue
 	vue = getUniqueIntValueBySelector('#carac #vue');
 	vuebp = getUniqueIntValueBySelector('#carac #vue_p');
 	vuebm = getUniqueIntValueBySelector('#carac #vue_m');
 	vuetotale = getUniqueIntValueBySelector('#carac #vue_tot');
 	debugMZ("Vue: " + vue + " + (" + vuebp + ") + (" + vuebm + ") = " + vuetotale);
-	// RM
+	    // RM
 	rm = getUniqueIntValueBySelector('#carac #rm');
 	rmbp = getUniqueIntValueBySelector('#carac #rm_p');
 	rmbm = getUniqueIntValueBySelector('#carac #rm_m');
 	rmtotale = getUniqueIntValueBySelector('#carac #rm_tot');
 	rmTroll = rmtotale;
 	debugMZ("RM: " + rm + " + (" + rmbp + ") + (" + rmbm + ") = " + rmtotale);
-	// MM
+	    // MM
 	mm = getUniqueIntValueBySelector('#carac #mm');
 	mmbp = getUniqueIntValueBySelector('#carac #mm_p');
 	mmbm = getUniqueIntValueBySelector('#carac #mm_m');
@@ -326,13 +313,9 @@ function extractionDonnees() {
 
 	// Heure Serveur
 	try {
-		str = document.evaluate(
-			".//text()[contains(.,'Serveur')]",
-			document.getElementById("footer2"),
-			null, 9, null
-		).singleNodeValue.nodeValue;
-		str = str.slice(str.indexOf("/") - 2, str.lastIndexOf(":") + 3);
-		HeureServeur = new Date(StringToDate(str));
+        var heureServeurSTR = document.querySelector("#hserveur").innerHTML;
+        heureServeurSTR = heureServeurSTR.slice(heureServeurSTR.indexOf("/") - 2, heureServeurSTR.lastIndexOf(":") + 3);
+		HeureServeur = new Date(StringToDate(heureServeurSTR));
 	} catch (e) {
 		window.console.warn(
 			"[MZ] Heure Serveur introuvable, utilisation de l'heure actuelle", e
@@ -344,8 +327,8 @@ function extractionDonnees() {
 	// ***INIT GLOBALE*** NBjours
 	NBjours = Math.floor((HeureServeur-datecrea)/864e5)+1;
 
-	// Calcul debut lien anatroliseur avec les caracteristiques connues
-	amelio_dtb = function(dtb) {
+	    // Calcul debut lien anatroliseur avec les caracteristiques connues
+	var amelio_dtb = function(dtb) {
 			if(dtb>555) {
 				return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
 			}
@@ -381,42 +364,43 @@ function extractionDonnees() {
 
 function saveProfil() {
 	MZ_setValue(idtroll+'.caracs.attaque',att);
-	MZ_setValue(idtroll+'.caracs.attaque.bmtot',(attbp+attbm));
-	MZ_setValue(idtroll+'.caracs.attaque.bp',attbp);
-	MZ_setValue(idtroll+'.caracs.attaque.bm',attbm);
-	MZ_setValue(idtroll+'.caracs.attaque.atttour',atttour);
+	MZ_setValue(idtroll+'.caracs.attaque.bm',(attbp+attbm));
+	MZ_setValue(idtroll+'.caracs.attaque.bmp',attbp);
+	MZ_setValue(idtroll+'.caracs.attaque.bmm',attbm);
+    if(atttour) MZ_setValue(idTroll+'.bonus.DAttM',atttour);
 	MZ_setValue(idtroll+'.caracs.esquive',esq);
-	MZ_setValue(idtroll+'.caracs.esquive.bmtot',(esqbp+esqbm));
-	MZ_setValue(idtroll+'.caracs.esquive.bp',esqbp);
-	MZ_setValue(idtroll+'.caracs.esquive.bm',esqbm);
-	MZ_setValue(idtroll+'.caracs.esquive.esqtour',esqtour);
+    MZ_setValue(idtroll+'.caracs.esquive.bm',(esqbp+esqbm));
+	MZ_setValue(idtroll+'.caracs.esquive.bmp',esqbp);
+	MZ_setValue(idtroll+'.caracs.esquive.bmm',esqbm);
+    MZ_setValue(idTroll+'.caracs.esquive.nbattaques',esqtour);
 	MZ_setValue(idtroll+'.caracs.degats',deg);
-	MZ_setValue(idtroll+'.caracs.degats.bmtot',(degbp+degbm));
-	MZ_setValue(idtroll+'.caracs.degats.bp',degbp);
-	MZ_setValue(idtroll+'.caracs.degats.bm',degbm);
+    MZ_setValue(idtroll+'.caracs.degats.bm',(degbp+degbm));
+	MZ_setValue(idtroll+'.caracs.degats.bmp',degbp);
+	MZ_setValue(idtroll+'.caracs.degats.bmm',degbm);
+    if(degtour) MZ_setValue(idtroll+'.bonus.DDegM',degtour);
 	MZ_setValue(idtroll+'.caracs.regeneration',reg);
-	MZ_setValue(idtroll+'.caracs.regeneration.bmtot',(regbp+regbm));
-	MZ_setValue(idtroll+'.caracs.regeneration.bp',regbp);
-	MZ_setValue(idtroll+'.caracs.regeneration.bm',regbm);
+	MZ_setValue(idtroll+'.caracs.regeneration.bm',(regbp+regbm));
+	MZ_setValue(idtroll+'.caracs.regeneration.bmp',regbp);
+	MZ_setValue(idtroll+'.caracs.regeneration.bmm',regbm);
 	MZ_setValue(idtroll+'.caracs.vue',vue);
-	MZ_setValue(idtroll+'.caracs.vue.bmtot',(vuebp+vuebm));
-	MZ_setValue(idtroll+'.caracs.vue.bp',vuebp);
-	MZ_setValue(idtroll+'.caracs.vue.bm',vuebm);
+	MZ_setValue(idtroll+'.caracs.vue.bm',(vuebp+vuebm));
+	MZ_setValue(idtroll+'.caracs.vue.bmp',vuebp);
+	MZ_setValue(idtroll+'.caracs.vue.bmm',vuebm);
 	MZ_setValue(idtroll+'.caracs.pv',pvcourant);
 	MZ_setValue(idtroll+'.caracs.pv.base',pvbase);
 	MZ_setValue(idtroll+'.caracs.pv.max',pvtotal);
 	MZ_setValue(idtroll+'.caracs.rm',rm);
-	MZ_setValue(idtroll+'.caracs.rm.bp',rmbp);
-	MZ_setValue(idtroll+'.caracs.rm.bm',rmbm);
-	MZ_setValue(idtroll+'.caracs.rm.totale',(rm+rmbp+rmbm));
+    MZ_setValue(idtroll+'.caracs.rm.bm',(rm+rmbp+rmbm));
+	MZ_setValue(idtroll+'.caracs.rm.bmp',rmbp);
+	MZ_setValue(idtroll+'.caracs.rm.bmm',rmbm);
 	MZ_setValue(idtroll+'.caracs.mm',mm);
-	MZ_setValue(idtroll+'.caracs.mm.bp',mmbp);
-	MZ_setValue(idtroll+'.caracs.mm.bm',mmbm);
-	MZ_setValue(idtroll+'.caracs.mm.totale',(mm+mmbp+mmbm));
+    MZ_setValue(idtroll+'.caracs.mm.bm',(mm+mmbp+mmbm));
+	MZ_setValue(idtroll+'.caracs.mm.bmp',mmbp);
+	MZ_setValue(idtroll+'.caracs.mm.bmm',mmbm);
 	MZ_setValue(idtroll+'.caracs.armure',arm);
-	MZ_setValue(idtroll+'.caracs.armure.bmtot',armbp+armbm);
-	MZ_setValue(idtroll+'.caracs.armure.bp',armbp);
-	MZ_setValue(idtroll+'.caracs.armure.bm',armbm);
+	MZ_setValue(idtroll+'.caracs.armure.bm',(armbp+armbm));
+	MZ_setValue(idtroll+'.caracs.armure.bmp',armbp);
+	MZ_setValue(idtroll+'.caracs.armure.bmm',armbm);
 	MZ_setValue(idtroll+'.position.X',posX);
 	MZ_setValue(idtroll+'.position.Y',posY);
 	MZ_setValue(idtroll+'.position.N',posN);
@@ -428,57 +412,62 @@ function saveProfil() {
 /*-[functions]----------- Fonctions modifiant la page ------------------------*/
 
 function setInfosCaracteristiques() {
-	// Ajout des informations calculees
-	tdAttaque = document.querySelector("table#caracs td#att").parentElement;
-	tdAttaque.title="Attaque moyenne: "+attmoy;
-	if(atttour>0){tdAttaque.title+=" ; Attaque moyenne pour ce tour: "+attmoytour;}
+        // Modification de l'entete
+    var thTotal = document.querySelector("table#caracs>thead>tr>th:nth-child(6)");
+    thTotal.innerHTML+='|<i>Moyenne</i>';
+    thTotal.title="Moyenne (Moyenne ce tour)";
 
-	tdEsquive = document.querySelector("table#caracs td#esq").parentElement;
-	tdEsquive.title="Esquive moyenne: "+esqmoy;
-	if(esqtour>0){tdEsquive.title+=" ; Esquive moyenne pour ce tour: "+esqmoytour;}
+	    // Ajout des informations calculees
+	var tdAttTotal = document.querySelector("table#caracs td#att").parentElement.children[5];
+	tdAttTotal.innerHTML="<i>"+attmoy+"</i>";
+	if(atttour>0){tdAttTotal.innerHTML+=" ("+attmoytour+")";}
 
-	tdDegat = document.querySelector("table#caracs td#deg").parentElement;
-	tdDegat.title="Dégâts moyens/critiques: "+degmoy+"/"+degmoycrit;
-	if(degtour>0){tdDegat.title+=" ; Dégâts moyens/critiques pour ce tour: "+degmoytour+"/"+degmoycrittour;}
+	var tdEsqTotal = document.querySelector("table#caracs td#esq").parentElement.children[5];
+    tdEsqTotal.innerHTML="<i>"+esqmoy+"</i>";
+	if(esqtour>0){tdEsqTotal.innerHTML+=" ("+esqmoytour+")";}
 
-	tdRegeneration = document.querySelector("table#caracs td#reg").parentElement;
-	regTitle = "Régénération moyenne: "+regmoy;
-	// Temps recupere par reg (propale R')
-	regmoyTemp = Math.max(0, regmoy);
-	regTitle += "\nTemps moyen récupéré par régénération: " + Math.floor(250 * regmoyTemp / pvtotal) + " min";
+	var tdDegTotal = document.querySelector("table#caracs td#deg").parentElement.children[5];
+	tdDegTotal.innerHTML="<i>"+degmoy+"/"+degmoycrit+"</i>";
+	if(degtour>0){tdDegTotal.innerHTML+=" ("+degmoytour+"/"+degmoycrittour+")";}
+
+	var trRegeneration = document.querySelector("table#caracs td#reg").parentElement;
+    var tdRegTotal = trRegeneration.children[5];
+    tdRegTotal.innerHTML = "<i>"+regmoy+"</i>";
+	    // Temps recupere par reg (propale R')
+	var regmoyTemp = Math.max(0, regmoy);
+	var regTitle = "Temps moyen récupéré par régénération: " + Math.floor(250 * regmoyTemp / pvtotal) + " min";
 	var sec = Math.floor(15000 * regmoyTemp / pvtotal) % 60;
 	if (sec != 0) {
 		regTitle += " " + sec + " sec";
 	}
-	tdRegeneration.title = regTitle;
+	trRegeneration.title = regTitle;
 
-	tdArmure = document.querySelector("table#caracs td#arm").parentElement;
-	tdArmure.title = "Armure moyenne: "+armmoy;
-	if(armtour>0){tdArmure.title+=" ; Armure moyenne pour ce tour: "+armmoytour;}
+	var tdArmTotal = document.querySelector("table#caracs td#arm").parentElement.children[5];
+	tdArmTotal.innerHTML= "<i>"+armmoy+"</i>";
+	if(armtour>0){tdArmTotal.innerHTML+=" ("+armmoytour+")";}
 
-	trRM=document.querySelector("table#caracs #rm").parentElement;
+	var trRM=document.querySelector("table#caracs #rm").parentElement;
 	trRM.title = (Math.round(10*rm/NBjours)/10)+' ('+(Math.round(10*rmTroll/NBjours)/10)+') points de RM par jour | '
 				+(Math.round(10*rm/niv)/10)+' ('+(Math.round(10*rmtotale/niv)/10)+') points de RM par niveau';
 
 
-	trMM=document.querySelector("table#caracs #mm").parentElement;
+	var trMM=document.querySelector("table#caracs #mm").parentElement;
 	trMM.title = (Math.round(10*mm/NBjours)/10)+' ('+(Math.round(10*mmTroll/NBjours)/10)+') points de MM  par jour | '
 				+(Math.round(10*mm/niv)/10)+' ('+(Math.round(10*mmtotale/niv)/10)+') points de MM par niveau';
 }
 
 function setLienAnatrolliseur(){
-	h3Description=document.querySelector("#descr>div>h3");
-	appendBr(h3Description);
-	appendButton(
-		h3Description,
-		"Anatrolliser!",
-		function(){
-			window.open(urlAnatrolliseur,"_blank")
-		}
-	);
+	var tdNom = document.querySelector("#descr #nom").parentElement.parentElement;
+    tdNom.innerHTML+=" - ";
+    var aElt = document.createElement("a");
+    aElt.setAttribute("href",urlAnatrolliseur);
+    aElt.setAttribute("target","_blank");
+    aElt.className="AllLinks";
+    aElt.innerHTML="Anatrolliser";
+    tdNom.appendChild(aElt);
 }
 function setInfoDescription() {
-	txtDateCrea = (NBjours!=1) ?
+	var txtDateCrea = (NBjours!=1) ?
 		" ("+NBjours+" jours dans le hall)" :
 		" (Bienvenue à toi pour ton premier jour dans le hall)" ;
 	appendText(document.querySelector("#descr td#crea"), txtDateCrea, false);
@@ -488,13 +477,14 @@ function setInfosEtatLieux() {
 	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
 		'?search=position&orderBy=distance&posx='+
 		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
-	tdPosition = document.querySelector("#pos td span#x").parentElement;
+	var tdPosition = document.querySelector("#pos td span#x").parentElement;
 	appendBr(tdPosition);
-	appendButton(
-		tdPosition,
-		'Lieux à proximité',
-		function(){ window.open(urlBricol,'_blank') }
-	);
+    var aElt = document.createElement("a");
+    aElt.setAttribute("href",urlBricol);
+    aElt.setAttribute("target","_blank");
+    aElt.className="AllLinks";
+    aElt.innerHTML="Lieux à proximité";
+    tdPosition.appendChild(aElt);
 }
 
 function setInfosEtatPV() { // pour AM et Sacro
@@ -534,35 +524,32 @@ function setInfosEtatPV() { // pour AM et Sacro
 function setInfosExp() {
     var tdNiv = document.querySelector("#exp #niv");
 
-        // Calcul niveau monstre/troll min pour gain PX
-    var nivCibleMin = Math.ceil((2*nivTroll-10)/3);
-    tdNiv.innerHTML+="<br><i>Tuer un monstre ou un troll ne vous rapporte des PX que s'il est de niveau supérieur à "+nivCibleMin+"</i>";
+    // Calcul niveau monstre/troll min pour gain PX
+    var nivCibleMin = Math.ceil((2 * nivTroll - 10) / 3);
+    tdNiv.parentElement.title = "Vos cibles doivent être au minim de niveau " + nivCibleMin + " pour qu'elles vous rapportent des PX";
 
-        // Calcul PX restant
-    var pxRestant=(pxdistribuables+pxperso)-2*nivTroll;
-    debugMZ(pxRestant);
-    if(pxRestant>=0 ){
+    // Calcul PX restant
+    var pxRestant = (pxdistribuables + pxperso) - 2 * nivTroll;
+    if (pxRestant >= 0) {
         var tdinfoEntrainement = document.querySelector("#exp table tr:nth-child(4) td span");
-        tdinfoEntrainement.innerHTML+=" <i>Il vous restera "+pxRestant+" PX</i>";
+        tdinfoEntrainement.innerHTML += " <i>Il vous restera " + pxRestant + " PX</i>";
     }
 
-		// Calul pi/jour
+    // Calul pi/jour
     var trNiv = tdNiv.parentElement;
-	trNiv.title=(Math.round(10*(pitotal+pxperso+pxdistribuables)/NBjours)/10)+' PI par jour';
+    trNiv.title += "\n" + (Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour';
 
-		// Rapports meurtres,morts
-    var tdKill=document.querySelector("#exp #kill");
-	tdKill.setAttribute("colspan",1);
-	appendTdText(tdKill.parentElement,(Math.round(10*NBjours/nbmeurtres)/10)+' jours/kill',false);
+    // Rapports meurtres,morts
+    var tdKill = document.querySelector("#exp #kill");
+    tdKill.setAttribute("colspan", 1);
+    appendTdText(tdKill.parentElement, (Math.round(10 * NBjours / nbmeurtres) / 10) + ' jours/kill', false);
 
-    var tdMort=document.querySelector("#exp #mort");
-	tdMort.setAttribute("colspan",1);
-	appendTdText(tdMort.parentElement,(Math.round(10*NBjours/nbmorts)/10)+' jours/mort',false);
+    var tdMort = document.querySelector("#exp #mort");
+    tdMort.setAttribute("colspan", 1);
+    appendTdText(tdMort.parentElement, (Math.round(10 * NBjours / nbmorts) / 10) + ' jours/mort', false);
 
-	tdKill.parentElement.title='Rapport meurtres/décès: '+Math.floor((nbmeurtres/nbmorts)*100)/100;
-	tdMort.parentElement.title='Rapport décès/meurtres: '+Math.floor((nbmorts/nbmeurtres)*100)/100;
-
-
+    tdKill.parentElement.title = 'Rapport meurtres/décès: ' + Math.floor((nbmeurtres / nbmorts) * 100) / 100;
+    tdMort.parentElement.title = 'Rapport décès/meurtres: ' + Math.floor((nbmorts / nbmeurtres) * 100) / 100;
 }
 
 
@@ -707,7 +694,7 @@ function setAccel() {
 		
 		ligneTour = appendTr(tbody,'mh_tdtitre');
 		ligneTour.style.fontWeight = "bold";
-		td = appendTdText(ligneTour,'Tour :',true);
+		var td = appendTdText(ligneTour,'Tour :',true);
 		td.align = 'left';
 		ligneFat = appendTr(tbody,'mh_tdpage');
 		td = appendTdText(ligneFat,'Fatigue :',true);
@@ -890,15 +877,16 @@ function injecteInfosBulles(liste,fonction) {
 	var totalpc = 0;
 	// on parse la liste des talents du type 'fonction'
 	for(var i=0 ; i<liste.length ; i++) {
-		trTalent=liste[i];
-		node=trTalent.cells[1].querySelector('a');
-		nomTalent=epure(trim(node.textContent));
-		indiceTDniveaux=7;
+		var
+            trTalent=liste[i],
+		    node=trTalent.cells[1].querySelector('a'),
+		    nomTalent=epure(trim(node.textContent)),
+		    indiceTDniveaux=7;
 		if(fonction=="competences"){
 			// un TD en plus pour des information complementaire liees a la comp
 			indiceTDniveaux++;
 		}
-		niveauxMaitrisesTalentArray=getNumbers(trTalent.cells[indiceTDniveaux].textContent);
+		var niveauxMaitrisesTalentArray=getNumbers(trTalent.cells[indiceTDniveaux].textContent);
 		setInfos(node,nomTalent,fonction,niveauxMaitrisesTalentArray[0]);
 		setTalent(nomTalent,niveauxMaitrisesTalentArray[1],niveauxMaitrisesTalentArray[0]);
 		totalpc += niveauxMaitrisesTalentArray[1];
@@ -981,8 +969,9 @@ function creerBulleVide() {
 	}
 
 function cacherBulle() {
-	if(bulleStyle) bulleStyle.visibility = 'hidden';
-	}
+	if(bulleStyle)
+        bulleStyle.visibility = 'hidden';
+}
 
 function setBulle(evt) {
 	var nom = this.nom;
@@ -1012,7 +1001,7 @@ function setBulle(evt) {
 		bulleStyle = element.style;
 		element.firstChild.firstChild.innerHTML = '<b>'+nom+'</b>';
 		element.childNodes[1].firstChild.innerHTML = str;
-		}
+	}
 	if(bulleStyle) {
 		if(xfenetre>bulleWidth+offset)
 			xpage -= bulleWidth+offset;
@@ -1024,8 +1013,8 @@ function setBulle(evt) {
 		bulleStyle.left = xpage + 'px';
 		bulleStyle.top = ypage + 'px';
 		bulleStyle.visibility = 'visible';
-		}
-	}
+    }
+}
 
 
 /*-[functions] Textes des infos-bulles pour les competences et sortileges ----*/
@@ -1036,7 +1025,7 @@ function competences(comp,niveau) {
 		texte = '<b>1</b> PV = <b>'+minParPV+'</b> minute';
 		if(minParPV>1) texte += 's';
 		if(overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
-		}
+	}
 	else if(comp.indexOf('Attaque Precise')!=-1) {
 		var pc, lastmax=0, espatt=0;
 		var notMaxedOut = false;
@@ -1055,25 +1044,44 @@ function competences(comp,niveau) {
 				if(i<niveau) notMaxedOut = true;
 				}
 			lastmax = pc;
-			}
+		}
 		if(notMaxedOut) {
 			texte += 'Attaque moyenne (si réussite) : <b>'
 				+Math.floor(10*espatt/lastmax)/10+'</b><br/>'
-				}
+        }
 		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)
 			+' => <b>'+degmoy+'/'+degmoycrit+'</b>';
-		}
+	}
 	else if(comp.indexOf('Balayage')!=-1)
 		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbp+attbm)
-			+' => <b>'+degmoy+'</b><br/>'
+			+' => <b>'+attmoy+'</b><br/>'
 			+'Effet : <b>Met à terre l\'adversaire</b>';
 	else if(comp.indexOf('Bidouille')!=-1)
 		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
 			+'de votre inventaire avec le texte de votre choix.';
-	else if(comp.indexOf('Baroufle')!=-1)
+	else if(comp.indexOf('Baroufle')!=-1){
 		texte = 'Vous voulez encourager vos compagnons de chasse ? '
-			+'Ramassez quelques Coquillages, et en avant la musique !';
-	else if(comp.indexOf('Botte Secrete')!=-1){
+			+'Ramassez quelques Coquillages, et en avant la musique !<br>';
+        texte +='<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
+            '<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th></tr>' +
+            '<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Whoooom</td><td>concentration +2</td></tr>' +
+            '<tr class="mh_tdpage"><td>Krouiiik</td><td>concentration -2</td></tr>' +
+            '<tr class="mh_tdpage"><td>Tuutuuuut</td><td>att -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Gaaaw</td><td>Fatigue +1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Huitsch</td><td>deg -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Kliketiiik</td><td>esq -1 / concentration -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Kssksss</td><td>esq +1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Praaaouuut</td><td>reg-1 </td></tr>'+
+            '<tr class="mh_tdpage"><td>Sssrileur</td><td>seuil 6, rend visible</td></tr>' +
+            '<tr class="mh_tdpage"><td>Tagadagada</td><td>augmente le nombre de tours (1 tour par tranche de 2)</td></tr>' +
+            '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
+            '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
+        '</tbody></table>';
+    }
+    else if(comp.indexOf('Botte Secrete')!=-1){
 		texte = 'Attaque : <b>'
 			+Math.floor(2*att/3)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2))
 			+' => <b>'

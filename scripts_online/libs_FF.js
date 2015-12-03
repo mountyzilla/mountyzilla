@@ -96,6 +96,16 @@ function appendNewScript(src,paren) {
 
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
+// Active l'affichage des log de DEBUG (fonction debug(str))
+var MZ_DEBUG = false;
+function debugMZ(str){
+    if(MZ_DEBUG){
+        window.console.debug('[MZ_DEBUG] '+str);
+        if(typeof str === "object"){
+            window.console.debug(str);
+        }
+    }
+}
 
 function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	var request = new XMLHttpRequest();
@@ -312,8 +322,8 @@ function appendHidden(form,nam,value) {
 function appendButton(paren,value,onClick) {
 	var input = document.createElement('input');
 	input.type = 'button';
-	input.className = 'mh_form_submit';
-	input.value = value;
+    input.className = 'mh_form_submit';
+    input.value = value;
 	input.onmouseover = function(){this.style.cursor='pointer';};
 	if(onClick) input.onclick = onClick;
 	paren.appendChild(input);
@@ -1891,4 +1901,10 @@ if(isPage('MH_Play/Play_action')) {
 	appendNewScript(
 		'http://mountyzilla.tilk.info/scripts_0.9/actions_FF.js'
 	);
+}
+
+if(isPage('MH_Play/Play_profil2')) {
+    appendNewScript(
+        'http://mountyzilla.tilk.info/scripts_0.9/profil2_FF.js'
+    );
 }
