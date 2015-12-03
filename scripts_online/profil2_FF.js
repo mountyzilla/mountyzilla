@@ -367,7 +367,7 @@ function saveProfil() {
 	MZ_setValue(idtroll+'.caracs.attaque.bm',(attbp+attbm));
 	MZ_setValue(idtroll+'.caracs.attaque.bmp',attbp);
 	MZ_setValue(idtroll+'.caracs.attaque.bmm',attbm);
-    if(atttour) MZ_setValue(idTroll+'.bonus.DAttM',atttour);
+    if(atttour) MZ_setValue(idtroll+'.bonus.DAttM',atttour);
 	MZ_setValue(idtroll+'.caracs.esquive',esq);
     MZ_setValue(idtroll+'.caracs.esquive.bm',(esqbp+esqbm));
 	MZ_setValue(idtroll+'.caracs.esquive.bmp',esqbp);
