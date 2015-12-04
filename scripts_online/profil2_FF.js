@@ -1321,8 +1321,8 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	var texte = '';
 	if (mainCall) {
         /* pourcentages Des bonus/malus du a PuM/PreM : Att et Deg*/
-		pcA = 0;
-		pcD = 0;
+		pcA = (atttourP+atttourM);
+		pcD = (degtourP+degtourM);
 	}
 	if (sort.indexOf('Analyse Anatomique') != -1) {
 		texte = 'Portée horizontale : <b>'
@@ -1379,14 +1379,14 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		/* Frappe */
 		var modD = 0;
 		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA>0){
+		if(pcA!=0){
 			modD = parseInt(att*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
 			+' => <b>'+(Math.round(3.5*(att+modD))+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
-		if(pcD>0) {
+		if(pcD!=0) {
 			modD = parseInt(Math.floor(deg/2)*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}else
@@ -1426,7 +1426,8 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
 	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
-		var eps = 1, pc = 20;
+		var eps = 1,
+            pc = 20;
 		var str = 'PréM';
 		var newSort;
 		var sortAtt = [
@@ -1458,14 +1459,14 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		var modD = 0;
 		var portee = getPortee(vuetotale);
 		texte = 'Attaque : <b>'+vue+'</b> D6 ';
-		if(pcA>0) {
+		if(pcA!=0) {
 			modD = parseInt(vue*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
 			+' => <b>'+(Math.round(3.5*(vue+modD))+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
-		if(pcD>0) {
+		if(pcD!=0) {
 			modD = parseInt(Math.floor(vue/2)+pcD);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}else
@@ -1488,7 +1489,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Rafale Psychique')!=-1) {
 		var modD = 0;
 		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD>0) {
+		if(pcD!=0) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}
@@ -1524,14 +1525,14 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Siphon')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA>0) {
+		if(pcA!=0) {
 			modD = parseInt(att*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(att+modD)+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+reg+'</b> D3 ';
-		if(pcD>0) {
+		if(pcD!=0) {
 			modD = parseInt(reg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}else
@@ -1566,14 +1567,14 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Vampirisme')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+Math.floor(2*deg/3)+'</b> D6 ';
-		if(pcA>0) {
+		if(pcA!=0) {
 			modD = parseInt(Math.floor(2*deg/3)*pcA/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbm)+'</b><br/>'
 			+'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD>0) {
+		if(pcD!=0) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
 		}else
