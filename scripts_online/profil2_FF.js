@@ -46,10 +46,10 @@ var
 	vue, vuebp, vuebm, vuetotale,
 	pvbase, pvbp, pvbm, pvtotal, pvcourant,
 	reg, regbp, regbm, regmoy,
-	att, attbp, attbm, attmoy, atttour, attmoytour,
-	esq, esqbp, esqbm, esqmoy, esqtour,  esqmoytour,
-	deg, degbp, degbm, degmoy, degmoycrit, degtour, degmoytour, degmoycrittour,
-	arm, armbp, armbm, armmoy, armtour, armmoytour,
+	att, attbp, attbm, attmoy, atttourD,atttourP,atttourM, attmoytour,
+	esq, esqbp, esqbm, esqmoy, esqtourD,  esqmoytour,
+	deg, degbp, degbm, degmoy, degmoycrit, degtourP,degtourM, degmoytour, degmoycrittour,
+	arm, armbp, armbm, armmoy, armtourD, armmoytour,
 	rm, rmbp, rmbm, rmtotale,
 	mm, mmbp, mmbm, mmtotale,
 
@@ -67,7 +67,7 @@ var
 // Retourne la valeur de l'element unique et identifie par son "selector" (cf querySelector())
 // http://www.w3schools.com/jsref/met_document_queryselector.asp
 function getUniqueValueBySelector(selector, defaultValue){
-	valNode = document.querySelector(selector);
+	var valNode = document.querySelector(selector);
 	if(valNode!=null){
 		if(valNode.hasChildNodes()) {
 			return valNode.childNodes[0].nodeValue;
@@ -76,22 +76,22 @@ function getUniqueValueBySelector(selector, defaultValue){
 		}
 	} else{
 		debugMZ("Pas d'element trouve correspondant au selecteur : " + selector);
-		return null;
+		return defaultValue;
 	}
 }
 function getUniqueStringValueBySelector(selector){
-	return getUniqueValueBySelector(selector,"");
+    return getUniqueValueBySelector(selector,"");
 }
 function getUniqueIntValueBySelector(selector){
-	ret = getUniqueValueBySelector(selector,0);
-	if( /^\s*$/.test(ret)){ // test si chaine de caracteres composee de " "
+	var ret = getUniqueValueBySelector(selector,0);
+	if(ret==null || /^\s*$/.test(ret)){ // test si chaine de caracteres composee de " "
 		ret = 0;
 	}
 	return parseInt(ret);
 }
 function getUniqueFloatValueBySelector(selector){
-	ret = getUniqueValueBySelector(selector,0.0);
-	if( /^\s*$/.test(ret)){  // test si chaine de caracteres composee de " "
+	var ret = getUniqueValueBySelector(selector,0.0);
+	if(ret==null || /^\s*$/.test(ret)){  // test si chaine de caracteres composee de " "
 		ret = 0.0;
 	}
 	return parseFloat(ret);
@@ -247,28 +247,33 @@ function extractionDonnees() {
 	att = getUniqueIntValueBySelector('#carac #att');
 	attbp = getUniqueIntValueBySelector('#carac #att_p');
 	attbm = getUniqueIntValueBySelector('#carac #att_m');
-	atttour = getUniqueIntValueBySelector('#carac #att_tour');
+	atttourD = getUniqueIntValueBySelector('#carac #att_tour_d');
+    atttourP = getUniqueIntValueBySelector('#carac #att_tour_p');
+    atttourM = getUniqueIntValueBySelector('#carac #att_tour_m');
 	attmoy = 3.5*att + attbp + attbm;
-	attmoytour = 3.5*(att+atttour) + attbp + attbm;
-	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; att/tour:"+atttour+" ;AttMoyTour:"+attmoytour);
+    var bmDAttTotalTour = atttourD + Math.floor(((att+atttourD)*(atttourP+atttourM)/100));
+	attmoytour = 3.5*(att+bmDAttTotalTour) + attbp + attbm;
+	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; BM Dé att/tour:("+atttourD+"D;"+atttourP+"%;"+atttourM+"%)"+bmDAttTotalTour+" ;AttMoyTour:"+attmoytour);
 	    // Esquive
 	esq = getUniqueIntValueBySelector('#carac #esq');
 	esqbp = getUniqueIntValueBySelector('#carac #esq_p');
 	esqbm = getUniqueIntValueBySelector('#carac #esq_m');
-	esqtour = getUniqueIntValueBySelector('#carac #esq_tour');
+	esqtourD = getUniqueIntValueBySelector('#carac #esq_tour_d');
 	esqmoy = 3.5*esq + esqbp+esqbm;
-	esqmoytour = 3.5*(esq+esqtour) + esqbp+esqbm;
-	debugMZ("ESQ: "+esq+"+("+esqbp+")+("+esqbm+") ;EsqMoy:"+esqmoy+"; esq/tour:"+esqtour+" ;EsqMoyTour:"+esqmoytour);
+	esqmoytour = 3.5*(esq+esqtourD) + esqbp+esqbm;
+	debugMZ("ESQ: "+esq+"+("+esqbp+")+("+esqbm+") ;EsqMoy:"+esqmoy+"; esq/tour:"+esqtourD+" ;EsqMoyTour:"+esqmoytour);
 	    // Degat
 	deg = getUniqueIntValueBySelector('#carac #deg');
 	degbp = getUniqueIntValueBySelector('#carac #deg_p');
 	degbm = getUniqueIntValueBySelector('#carac #deg_m');
-	degtour = getUniqueIntValueBySelector('#carac #deg_tour');
+	degtourP = getUniqueIntValueBySelector('#carac #deg_tour_p');
+    degtourM = getUniqueIntValueBySelector('#carac #deg_tour_m');
 	degmoy = 2*deg + degbp+degbm;
 	degmoycrit = 3*deg + degbp+degbm;
-	degmoytour = 2 * (deg + degtour) + degbp + degbm;
-	degmoycrittour = 3 * (deg + degtour) + degbp + degbm;
-	debugMZ("DEG: "+deg+"+("+degbp+")+("+degbm+") ;DegMoy:"+degmoy+"/"+degmoycrit+" ;deg/tour:"+degtour+"; DegMoyTour:"+degmoytour+"/"+degmoycrittour);
+    var bmDDegTotalTour = Math.floor(deg*(degtourP+degtourM)/100);
+	degmoytour = 2*(deg + bmDDegTotalTour) + degbp + degbm;
+	degmoycrittour = 3 * (deg + bmDDegTotalTour) + degbp + degbm;
+	debugMZ("DEG: "+deg+"+("+degbp+")+("+degbm+") ;DegMoy:"+degmoy+"/"+degmoycrit+" ;deg/tour:("+degtourP+"%;"+degtourM+"%)"+bmDDegTotalTour+"; DegMoyTour:"+degmoytour+"/"+degmoycrittour);
 	    // PV
 	pvbase = getUniqueIntValueBySelector('#carac #pv');
 	pvbp = getUniqueIntValueBySelector('#carac #pv_p');
@@ -285,10 +290,10 @@ function extractionDonnees() {
 	arm = getUniqueIntValueBySelector('#carac #arm');
 	armbp = getUniqueIntValueBySelector('#carac #arm_p');
 	armbm = getUniqueIntValueBySelector('#carac #arm_m');
-	armtour = getUniqueIntValueBySelector('#carac #arm_tour');
+	armtourD = getUniqueIntValueBySelector('#carac #arm_tour_d');
 	armmoy = 2*arm + armbp+armbm;
-	armmoytour = 2*(arm+armtour) + armbp+armbm;
-	debugMZ("ARM: "+arm+"+("+armbp+")+("+armbm+"); ArmMoy:"+armmoy+"; arm/tour:"+armtour+"; ArmMoyTour:"+armmoytour);
+	armmoytour = 2*(arm+armtourD) + armbp+armbm;
+	debugMZ("ARM: "+arm+"+("+armbp+")+("+armbm+"); ArmMoy:"+armmoy+"; arm/tour:"+armtourD+"; ArmMoyTour:"+armmoytour);
 	// TODO : D d'armure non active
 	    // Vue
 	vue = getUniqueIntValueBySelector('#carac #vue');
@@ -367,17 +372,23 @@ function saveProfil() {
 	MZ_setValue(idtroll+'.caracs.attaque.bm',(attbp+attbm));
 	MZ_setValue(idtroll+'.caracs.attaque.bmp',attbp);
 	MZ_setValue(idtroll+'.caracs.attaque.bmm',attbm);
-    if(atttour) MZ_setValue(idtroll+'.bonus.DAttM',atttour);
+    if(atttourD||atttourP||atttourM) {
+        var bmDAttTotalTour = atttourD + Math.floor(((att+atttourD)*(atttourP+atttourM)/100));
+        MZ_setValue(idtroll+'.bonus.DAttM',bmDAttTotalTour);
+    }
 	MZ_setValue(idtroll+'.caracs.esquive',esq);
     MZ_setValue(idtroll+'.caracs.esquive.bm',(esqbp+esqbm));
 	MZ_setValue(idtroll+'.caracs.esquive.bmp',esqbp);
 	MZ_setValue(idtroll+'.caracs.esquive.bmm',esqbm);
-    MZ_setValue(idTroll+'.caracs.esquive.nbattaques',esqtour);
+    MZ_setValue(idtroll+'.caracs.esquive.nbattaques',esqtourD);
 	MZ_setValue(idtroll+'.caracs.degats',deg);
     MZ_setValue(idtroll+'.caracs.degats.bm',(degbp+degbm));
 	MZ_setValue(idtroll+'.caracs.degats.bmp',degbp);
 	MZ_setValue(idtroll+'.caracs.degats.bmm',degbm);
-    if(degtour) MZ_setValue(idtroll+'.bonus.DDegM',degtour);
+    if(degtourP||degtourM){
+        var bmDDegTotalTour = Math.floor(deg*(degtourP+degtourM)/100);
+        MZ_setValue(idtroll+'.bonus.DDegM',bmDDegTotalTour);
+    }
 	MZ_setValue(idtroll+'.caracs.regeneration',reg);
 	MZ_setValue(idtroll+'.caracs.regeneration.bm',(regbp+regbm));
 	MZ_setValue(idtroll+'.caracs.regeneration.bmp',regbp);
@@ -420,15 +431,15 @@ function setInfosCaracteristiques() {
 	    // Ajout des informations calculees
 	var tdAttTotal = document.querySelector("table#caracs td#att").parentElement.children[5];
 	tdAttTotal.innerHTML="<i>"+attmoy+"</i>";
-	if(atttour>0){tdAttTotal.innerHTML+=" ("+attmoytour+")";}
+	if(attmoy!=attmoytour){tdAttTotal.innerHTML+=" ("+attmoytour+")";}
 
 	var tdEsqTotal = document.querySelector("table#caracs td#esq").parentElement.children[5];
     tdEsqTotal.innerHTML="<i>"+esqmoy+"</i>";
-	if(esqtour>0){tdEsqTotal.innerHTML+=" ("+esqmoytour+")";}
+	if(esqmoy!=esqmoytour){tdEsqTotal.innerHTML+=" ("+esqmoytour+")";}
 
 	var tdDegTotal = document.querySelector("table#caracs td#deg").parentElement.children[5];
 	tdDegTotal.innerHTML="<i>"+degmoy+"/"+degmoycrit+"</i>";
-	if(degtour>0){tdDegTotal.innerHTML+=" ("+degmoytour+"/"+degmoycrittour+")";}
+	if(degmoy!=degmoytour){tdDegTotal.innerHTML+=" ("+degmoytour+"/"+degmoycrittour+")";}
 
 	var trRegeneration = document.querySelector("table#caracs td#reg").parentElement;
     var tdRegTotal = trRegeneration.children[5];
@@ -444,7 +455,7 @@ function setInfosCaracteristiques() {
 
 	var tdArmTotal = document.querySelector("table#caracs td#arm").parentElement.children[5];
 	tdArmTotal.innerHTML= "<i>"+armmoy+"</i>";
-	if(armtour>0){tdArmTotal.innerHTML+=" ("+armmoytour+")";}
+	if(armmoy!=armmoytour){tdArmTotal.innerHTML+=" ("+armmoytour+")";}
 
 	var trRM=document.querySelector("table#caracs #rm").parentElement;
 	trRM.title = (Math.round(10*rm/NBjours)/10)+' ('+(Math.round(10*rmTroll/NBjours)/10)+') points de RM par jour | '
