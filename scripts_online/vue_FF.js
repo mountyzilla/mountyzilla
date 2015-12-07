@@ -26,6 +26,9 @@
 // Infos remplies par des scripts extérieurs
 var listeCDM = [], listeLevels = [];
 
+// Position actuelle
+var currentPosition=[0,0,0];
+
 // Fenêtres déplaçables
 var winCurr = null;
 var offsetX, offsetY;
@@ -112,6 +115,8 @@ function getPortee(param) {
 }
 
 function savePosition() {
+	// Stocke la position (à jour) de la vue pour les autres scripts
+	// DEBUG: Lesquels et pourquoi?
 	var pos = getPosition();
 	MZ_setValue(numTroll+'.position.X',pos[0]);
 	MZ_setValue(numTroll+'.position.Y',pos[1]);
@@ -128,21 +133,29 @@ function savePosition() {
  */
 
 /* [functions] Récup données Utilisateur */
-function getPosition() {
-	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
+function retrievePosition(){
+// On lance après créerInfoTab qui se charge de poser l'id infoTab
+// Inutile de tenter le même getByName si le 1er a planté
 	try {
 		var
 			infoTab = document.getElementById("infoTab"),
 			strPos = document.evaluate(
 				".//li/b/text()[contains(.,'X = ')]",
 				infoTab, null, 9, null
-			).singleNodeValue.nodeValue,
-			pos = getNumbers(strPos);
+			).singleNodeValue.nodeValue;
+		currentPosition = getNumbers(strPos);
+		debugMZ("retrievePosition(): "+currentPosition);
 	} catch(e) {
-		window.console.error("[MZ Vue] Échec getPosition()",e);
-		return [0,0,0];
+		// Si jamais on ne trouve pas le "X ="
+		window.console.error("[MZ Vue] Échec retrievePosition()",e);
 	}
-	return pos;
+}
+
+function getPosition() {
+	if(!currentPosition){
+		retrievePosition();
+	}
+	return currentPosition;
 }
 
 function getPorteVue() {
@@ -2005,9 +2018,12 @@ function inversionCoord() {
 
 try {
 	start_script(31);
-
-	creerTableauInfos();
 	
+	creerTableauInfos();
+	retrievePosition();
+	savePosition();
+
+	// Fonctionnalité "Têtalenvert" cachée, en test :
 	if(MZ_getValue(numTroll+'.VERLAN')=='true') {
 		inversionCoord();
 	}
@@ -2019,8 +2035,7 @@ try {
 	
 	synchroniseFiltres();
 	toggleLevelColumn();
-	savePosition();
-	
+
 	refreshDiplo();
 	
 	//400 ms
