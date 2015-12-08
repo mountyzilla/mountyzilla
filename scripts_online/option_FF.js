@@ -104,6 +104,8 @@ function saveAll() {
 		document.getElementById('vueCarac').checked ? 'true' : 'false');
 	MZ_setValue('CONFIRMEDECALAGE',
 		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
+	MZ_setValue(numTroll+".OLDSCHOOL",
+		document.getElementById("oldShoolStyle").checked ? "true" : "false");
 
 	saveITData();
 	
@@ -321,6 +323,10 @@ function insertOptionTable(insertPt) {
 	appendCheckBox(td,'confirmeDecalage',MZ_getValue('CONFIRMEDECALAGE')=='true');
 	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
 	
+	td = appendTd(appendTr(mainBody,"mh_tdpage"));
+	appendCheckBox(td,"oldShoolStyle",MZ_getValue(numTroll+".OLDSCHOOL")=="true");
+	appendText(td," Ouvrir l'ancien profil par défaut");
+	
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
 	input = appendButton(td,'Sauvegarder',saveAll);
@@ -369,7 +375,7 @@ start_script(712);
 // Pour cryptage des mdp IT
 appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
 
-var insertPoint = document.getElementById('footer2');
+var insertPoint = document.getElementById('footer1');
 insertBefore(insertPoint,document.createElement('p'));
 insertTitle(insertPoint,'Mountyzilla : Options');
 insertOptionTable(insertPoint);

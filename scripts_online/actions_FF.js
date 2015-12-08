@@ -249,7 +249,7 @@ function confirmeDecalage() {
 	if(!nbMinutes || isNaN(nbMinutes) || nbMinutes<1) { return false; }
 	
 	var newDLA = new Date( oldDLA );
-	newDLA.setMinutes( newDLA.getMinutes()+nbMinutes );
+	newDLA.setMinutes( newDLA.getMinutes()+Number(nbMinutes) );
 	return window.confirm(
 		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
 		+'\nConfirmez-vous ce décalage ?'

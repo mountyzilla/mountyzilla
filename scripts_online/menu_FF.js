@@ -42,6 +42,7 @@ function updateData() {
 		);
 		if(DLA>DLAstockee) {
 			MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLAstockee));
+			// Pose un pb en cas de décalage de DLA
 		}
 	}
 	MZ_setValue(numTroll+'.DLA.encours',DateToString(DLA));
@@ -122,7 +123,19 @@ function cacheMenu(e) {
 	}
 }
 
-start_script(31);
+function oldSchoolProfile() {
+	try {
+		var lienProfil = document.getElementById("Image1").parentNode;
+		lienProfil.href = "Play_profil.php";
+	} catch(e) {
+		avertissement();
+		window.console.log("[MZ menu] Lien vers le profil non trouvé",e);
+	}
+}
 
 updateData();
 initRaccourcis();
+if(MZ_getValue(numTroll+".OLDSCHOOL")=="true") {
+	oldSchoolProfile();
+}
+

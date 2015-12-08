@@ -24,6 +24,8 @@
 
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 var MHicons = '/mountyhall/Images/Icones/';
+// Active l'affichage des log de DEBUG (fonction debugMZ(str))
+var MZ_DEBUG = false;
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
@@ -96,6 +98,15 @@ function appendNewScript(src,paren) {
 
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
+
+function debugMZ(str){
+    if(MZ_DEBUG){
+        window.console.debug('[MZ_DEBUG] '+str);
+        if(typeof str === "object"){
+            window.console.debug(str);
+        }
+    }
+}
 
 function FF_XMLHttpRequest(MZ_XHR_Ob) {
 	var request = new XMLHttpRequest();
@@ -1891,4 +1902,10 @@ if(isPage('MH_Play/Play_action')) {
 	appendNewScript(
 		'http://mountyzilla.tilk.info/scripts_0.9/actions_FF.js'
 	);
+}
+
+if(isPage('MH_Play/Play_profil2')) {
+    appendNewScript(
+        'http://mountyzilla.tilk.info/scripts_0.9/profil2_FF.js'
+    );
 }
