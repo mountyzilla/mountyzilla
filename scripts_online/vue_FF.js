@@ -601,11 +601,12 @@ function set2DViewSystem() {
 
 /* [functions] Tableau d'Infos */
 function initialiseInfos() {
+	// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
 	var
 		infoTab = document.getElementsByName('LimitViewForm')[0].
 			getElementsByTagName('table')[0],
-		tbody = infoTab.getElementsByTagName('tbody')[0],
-		thead = document.createElement('thead'),
+		tbody = infoTab.tBodies[0],
+		thead = infoTab.createTHead(),
 		tr = appendTr(thead,'mh_tdtitre'),
 		td = appendTdText(tr,'INFORMATIONS',true),
 		span = document.createElement('span');
@@ -643,9 +644,8 @@ function initialiseInfos() {
 	}
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
-	infoTab.rows[0].cells[0].colSpan = 2;
-	infoTab.replaceChild(thead,infoTab.firstChild);
 	tbody.id = 'corpsInfoTab';
+	tbody.rows[0].cells[0].colSpan = 2;
 	td.colSpan = 3;
 	td.onmouseover = function() {
 		this.style.cursor = 'pointer';
