@@ -465,17 +465,22 @@ function setInfosCaracteristiques() {
 	var trMM=document.querySelector("table#caracs #mm").parentElement;
 	trMM.title = (Math.round(10*mm/NBjours)/10)+' ('+(Math.round(10*mmTroll/NBjours)/10)+') points de MM  par jour | '
 				+(Math.round(10*mm/niv)/10)+' ('+(Math.round(10*mmtotale/niv)/10)+') points de MM par niveau';
+
+    var tdRefl=document.querySelector("#refl");
+    // TODO : prendre en compte bonus/malus D esq du tour ?
+    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + (esqbp);
+    tdRefl.innerHTML+=" <i>(moyenne : "+refMoy+")</i>";
 }
 
 function setLienAnatrolliseur(){
-	var tdNom = document.querySelector("#descr #nom").parentElement.parentElement;
-    tdNom.innerHTML+=" - ";
+	var pTableAmelio = document.querySelector("#carac>div>p");
+    pTableAmelio.innerHTML+=" - ";
     var aElt = document.createElement("a");
     aElt.setAttribute("href",urlAnatrolliseur);
     aElt.setAttribute("target","_blank");
     aElt.className="AllLinks";
     aElt.innerHTML="Anatrolliser";
-    tdNom.appendChild(aElt);
+    pTableAmelio.appendChild(aElt);
 }
 function setInfoDescription() {
 	var txtDateCrea = (NBjours!=1) ?
@@ -547,8 +552,11 @@ function setInfosExp() {
     }
 
     // Calul pi/jour
-    var trNiv = tdNiv.parentElement;
-    trNiv.title += "\n" + (Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour';
+    var
+    	tdPiTotal=document.querySelector("#exp #pitot").parentElement,
+    	tdPi = document.querySelector("#exp #pi").parentElement;
+    tdPiTotal.title=(Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour'
+    tdPi.title = tdPiTotal.title;
 
     // Rapports meurtres,morts
     var tdKill = document.querySelector("#exp #kill");
