@@ -26,7 +26,7 @@ function isPage(url) {
 }
 
 function chargerScriptMZ(script) {
-	// (mauvaise) Détection du chargement de la page
+	// (mauvaise) Detection du chargement de la page
 	if(document.getElementsByTagName("A").length>0) {
 		MZ_appendNewScript(
 			script.indexOf("http://") != -1 ?
@@ -50,7 +50,7 @@ function chargerScriptDev(script) {
 chargerScriptDev("libs");
 chargerScriptDev("ALWAYS");
 
-// Détection de la page à traiter
+// Detection de la page a traiter
 if(isPage("Messagerie/ViewMessageBot")) {
 	chargerScriptDev("cdmbot");
 } else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {

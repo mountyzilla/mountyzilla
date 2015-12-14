@@ -29,6 +29,9 @@ var listeCDM = [], listeLevels = [];
 // Position actuelle
 var currentPosition=[0,0,0];
 
+// Portées de la vue : [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
+var porteeVue=[0,0,0,0];
+
 // Fenêtres déplaçables
 var winCurr = null;
 var offsetX, offsetY;
@@ -105,6 +108,7 @@ var x_lieux = tr_lieux;
 
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
+
 function positionToString(arr) {
 	return arr.join(';');
 }
@@ -113,18 +117,15 @@ function getPortee(param) {
 	return Math.ceil((Math.sqrt(19 + 8 * (param + 3)) - 7) / 2);
 }
 
-function retrievePosition(){
-    // La position doit être tirée de la page et non du fetch car
-    // non à jour lors des déplacements.
-    var infoTab = document.getElementById('infoTab');
-    if(!infoTab) {
-        infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
-    }
-    var strPos = document.evaluate(".//li/b/text()[contains(.,'X = ')]",
-            infoTab, null, 9, null
-    ).singleNodeValue.nodeValue;
-    currentPosition = getNumbers(strPos);
+function savePosition() {
+	// Stocke la position (à jour) de la vue pour les autres scripts
+	// DEBUG: Lesquels et pourquoi?
+	var pos = getPosition();
+	MZ_setValue(numTroll+'.position.X',pos[0]);
+	MZ_setValue(numTroll+'.position.Y',pos[1]);
+	MZ_setValue(numTroll+'.position.N',pos[2]);
 }
+
 
 /*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
 /* INFOS :
@@ -136,29 +137,14 @@ function retrievePosition(){
 
 /* [functions] Récup données Utilisateur */
 function getPosition() {
-    if(!currentPosition){
-        retrievePosition();
-    }
-    return currentPosition;
+	// Pour rétrocompatibilité
+	return currentPosition;
 }
 
 function getPorteVue() {
-	// Retourne [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
-	// DEBUG : et pourquoi c'est pas juste stocké en var globale... ?
-	var array = [];
-	var infoTab = document.getElementById('infoTab');
-	var nodes = document.evaluate(
-		".//li/b/text()[contains(.,'horizontalement') "
-		+"or contains(.,'verticalement')]",
-		infoTab, null, 7, null);
-	if(nodes.snapshotLength!=4) {
-		return null;
-		}
-	for(var i=0 ; i<4 ; i++) {
-		array.push(parseInt(nodes.snapshotItem(i).nodeValue));
-		}
-	return array;
-	}
+	// Pour rétrocompatibilité
+	return porteeVue;
+}
 
 function getVue() {
 	// Retourne [vueHpure, vueVpure]
@@ -516,8 +502,8 @@ var vue2Ddata = {
 		extra_params: {
 			'type_vue': 'V5b1'
 		}
-	}
-	/*,'DEBUG': {
+	},
+	/*'DEBUG': {
 		url: 'http://weblocal/testeur.php',
 		paramid: 'vue',
 		func: getVueScript,
@@ -614,12 +600,52 @@ function set2DViewSystem() {
 }
 
 /* [functions] Tableau d'Infos */
-function creerTableauInfos() {
-	var infoTab = document.getElementsByName('LimitViewForm')[0].childNodes[1];
-	infoTab.id = 'infoTab';
-	var thead = document.createElement('thead');
-	var tr = appendTr(thead,'mh_tdtitre');
-	var td = appendTdText(tr,'INFORMATIONS',true);
+function initialiseInfos() {
+	// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
+	var
+		infoTab = document.getElementsByName('LimitViewForm')[0].
+			getElementsByTagName('table')[0],
+		tbody = infoTab.tBodies[0],
+		thead = infoTab.createTHead(),
+		tr = appendTr(thead,'mh_tdtitre'),
+		td = appendTdText(tr,'INFORMATIONS',true),
+		span = document.createElement('span');
+	
+	// Récupération de la position du joueur
+	try {
+		var strPos = document.evaluate(
+				".//li/b/text()[contains(.,'X = ')]",
+				infoTab, null, 9, null
+			).singleNodeValue.nodeValue;
+		// ***INIT GLOBALE*** currentPosition
+		currentPosition = getNumbers(strPos);
+		debugMZ("retrievePosition(): "+currentPosition);
+	} catch(e) {
+		// Si on ne trouve pas le "X ="
+		window.console.error("[MZ Vue] Position joueur non trouvée",e);
+	}
+	
+	// Récupération des portées (max et limitée) de la vue
+	try {
+		var	
+			nodes = document.evaluate(
+				".//li/b/text()[contains(.,'horizontalement') "+
+				"or contains(.,'verticalement')]",
+				infoTab, null, 7, null
+			),
+			array = [];
+		for(var i=0 ; i<4 ; i++) {
+			array.push(parseInt(nodes.snapshotItem(i).nodeValue));
+		}
+		// ***INIT GLOBALE*** porteeVue
+		porteeVue = array;
+	} catch(e) {
+		window.console.error("[MZ Vue] Portées Vue non trouvées",e);
+	}
+
+	infoTab.id = 'infoTab'; // Pour scripts externes
+	tbody.id = 'corpsInfoTab';
+	tbody.rows[0].cells[0].colSpan = 2;
 	td.colSpan = 3;
 	td.onmouseover = function() {
 		this.style.cursor = 'pointer';
@@ -631,9 +657,21 @@ function creerTableauInfos() {
 	td.onclick = function() {
 		toggleTableauInfos(false);
 	};
-	infoTab.childNodes[1].firstChild.childNodes[1].colSpan = 2;
-	infoTab.replaceChild(thead,infoTab.firstChild);
-	tr = appendTr(infoTab.childNodes[1],'mh_tdpage');
+	
+	span.id = 'msgInfoTab';
+	span.style.display = 'none';
+	appendText(
+		span,
+		' => Position : X = '+currentPosition[0]+
+		', Y = '+currentPosition[1]+
+		', N = '+currentPosition[2]+
+		' --- Vue : '+porteeVue[0]+'/'+porteeVue[1]+
+		' ('+porteeVue[2]+'/'+porteeVue[3]+')',
+		true
+	);
+	td.appendChild(span);
+	
+	tr = appendTr(tbody,'mh_tdpage');
 	td = appendTdText(tr,'EFFACER : ',true);
 	td.align = 'center';
 	td.className = 'mh_tdtitre';
@@ -688,27 +726,18 @@ function creerTableauInfos() {
 }
 
 function toggleTableauInfos(firstRun) {
-	if(cursorOnLink) { return; } // DEBUG: héritage Tilk, utilité inconnue
-	
-	var infoTab = document.getElementById('infoTab');
+	var
+		msg = document.getElementById('msgInfoTab'),
+		corps = document.getElementById('corpsInfoTab');
 	if(!firstRun) {
 		MZ_setValue('INFOPLIE', !MZ_getValue('INFOPLIE') );
 	}
 	if(MZ_getValue('INFOPLIE')) {
-		var vues = getPorteVue();
-		var pos = getPosition();
-		appendText(
-			infoTab.firstChild.firstChild.firstChild,
-			' => Position : X = '+pos[0]+', Y = '+pos[1]+', N = '+pos[2]
-			+' --- Vue : '+vues[0]+'/'+vues[1]+' ('+vues[2]+'/'+vues[3]+')',
-			true
-		);
-		infoTab.childNodes[1].style.display = 'none';
-	}
-	else {
-		var titre = infoTab.firstChild.firstChild.firstChild.childNodes[1];
-		titre.parentNode.removeChild(titre);
-		infoTab.childNodes[1].style.display = '';
+		msg.style.display = '';
+		corps.style.display = 'none';
+	} else {
+		msg.style.display = 'none';
+		corps.style.display = '';
 	}
 }
 
@@ -1981,7 +2010,7 @@ function inversionCoord() {
 	var maPos = getPosition();
 	var listeOffsets = {
 		'monstres':checkBoxLevels.checked?4:3,
-		'trolls':6
+		'trolls':6,
 	};
 	for(var type in listeOffsets) {
 		var trList = this['tr_'+type];
@@ -2002,9 +2031,11 @@ function inversionCoord() {
 
 try {
 	start_script(31);
-    retrievePosition();
-	creerTableauInfos();
+	
+	initialiseInfos();
+	savePosition();
 
+	// Fonctionnalité "Têtalenvert" cachée, en test :
 	if(MZ_getValue(numTroll+'.VERLAN')=='true') {
 		inversionCoord();
 	}
@@ -2057,6 +2088,7 @@ try {
 	}
 	
 	putScriptExterne();
+	
 	displayScriptTime();
 } catch(e) {
 	avertissement("[MZ] Une erreur s'est produite.");

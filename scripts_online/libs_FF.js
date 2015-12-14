@@ -24,6 +24,8 @@
 
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
 var MHicons = '/mountyhall/Images/Icones/';
+// Active l'affichage des log de DEBUG (fonction debugMZ(str))
+var MZ_DEBUG = false;
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
@@ -96,8 +98,7 @@ function appendNewScript(src,paren) {
 
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
-// Active l'affichage des log de DEBUG (fonction debug(str))
-var MZ_DEBUG = false;
+
 function debugMZ(str){
     if(MZ_DEBUG){
         window.console.debug('[MZ_DEBUG] '+str);
@@ -322,8 +323,8 @@ function appendHidden(form,nam,value) {
 function appendButton(paren,value,onClick) {
 	var input = document.createElement('input');
 	input.type = 'button';
-    input.className = 'mh_form_submit';
-    input.value = value;
+	input.className = 'mh_form_submit';
+	input.value = value;
 	input.onmouseover = function(){this.style.cursor='pointer';};
 	if(onClick) input.onclick = onClick;
 	paren.appendChild(input);
@@ -943,7 +944,7 @@ arrayTalents = {
 	'Camouflage':'Camou',
 	'Charger':'Charger',
 	'Connaissance des Monstres':'CdM',
-	//'Construire un Piege':'Piege',
+	'Construire un Piege':'Piege',
 	'Piege a Feu':'PiegeFeu',
 	'Piege a Glue':'PiegeGlue',
 	'Contre-Attaquer':'CA',
@@ -953,7 +954,7 @@ arrayTalents = {
 	'Dressage':'Dressage',
 	'Ecriture Magique':'EM',
 	'Frenesie':'Frenesie',
-	//'Golemologie':'Golemo',
+	'Golemologie':'Golemo',
 	'Golem de cuir':'GolemCuir',
 	'Golem de metal':'GolemMetal',
 	'Golem de mithril':'GolemMithril',
