@@ -237,8 +237,8 @@ function extractionDonnees() {
 	debugMZ("PV actuel : " + pvcourant)
 	    // Fatigue
 	fatigue = getUniqueIntValueBySelector('#pos #fatigue');
-	debugMZ('Fatigue : ' + fatigue);// bmfat = 0 si pas de BM fat
-	bmfatigue = 0;
+    bmfatigue = getUniqueIntValueBySelector('#pos #fatiguebm');
+	debugMZ('Fatigue : '+fatigue+" + "+bmfatigue);
 
 // **************************
 // Cadre "Caracteristiques"
@@ -1063,7 +1063,7 @@ function competences(comp,niveau) {
 	else if(comp.indexOf('Attaque Precise')!=-1) {
 		var pc, lastmax=0, espatt=0;
 		var notMaxedOut = false;
-		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
+		for(var i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
 			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+
