@@ -1197,29 +1197,24 @@ function competences(comp,niveau) {
 	else if(comp.indexOf('Attaque Precise')!=-1) {
 		var pc, lastmax=0, espatt=0;
 		var notMaxedOut = false;
-		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
+		for(var i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
-			if(i>niveau) texte += '<i>';
 			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+attbm;
-			texte += 'Attaque (niveau '+i+') : <b>'
-				+Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbm)
-				+' => <b>'+jetatt+'</b>';
-			if(i>niveau) texte += '</i><hr>';
-			else {
-				texte += '<br/>';
-				espatt += (pc-lastmax)*jetatt;
-				if(i<niveau) notMaxedOut = true;
-				}
+			texte += 'Attaque niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbm)+
+				' => <b>'+jetatt+'</b><br/>';
+			espatt += (pc-lastmax)*jetatt;
 			lastmax = pc;
-			}
+			if(i<niveau) notMaxedOut = true;
+		}
 		if(notMaxedOut) {
-			texte += 'Attaque moyenne (si réussite) : <b>'
-				+Math.floor(10*espatt/lastmax)/10+'</b><br/>'
-				}
+			texte += '<i>Attaque moyenne (si réussite) : <b>'+
+				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
+		}
 		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
 			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
-		}
+	}
 	else if(comp.indexOf('Balayage')!=-1)
 		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbm)
 			+' => <b>'+(Math.round(3.5*att)+attbm)+'</b><br/>'
@@ -1292,28 +1287,23 @@ function competences(comp,niveau) {
 		var notMaxedOut = false;
 		texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
 			+' => <b>'+attmoy+'</b>';
-		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
+		for(var i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
-			if(i>niveau) texte += '<hr><i>';
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+degbm;
-			texte += 'Dégats (niveau '+i+') : <b>'
-				+Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff(degbm)
-				+' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
-			if(i>niveau) texte += '</i><hr>';
-			else {
-				texte += '<br/>';
-				espdeg += (pc-lastmax)*jetdeg;
-				if(i<niveau) notMaxedOut = true;
-				}
+			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff(degbm)+
+				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
+			espdeg += (pc-lastmax)*jetdeg;
 			lastmax = pc;
-			}
-		if(notMaxedOut) {
-			texte += 'Dégâts moyens (si réussite) : <b>'
-				+Math.floor(10*espdeg/lastmax)/10+'/'+
-				+(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b><br/>';
-				}
+			if(i<niveau) notMaxedOut = true;
 		}
+		if(notMaxedOut) {
+			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
+				Math.floor(10*espdeg/lastmax)/10+'/'+
+				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
+		}
+	}
 	else if(comp.indexOf('Course')!=-1)
 		texte = 'Déplacement gratuit : <b>'
 			+Math.floor(getTalent('Course')/2)

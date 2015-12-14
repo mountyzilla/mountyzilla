@@ -465,17 +465,22 @@ function setInfosCaracteristiques() {
 	var trMM=document.querySelector("table#caracs #mm").parentElement;
 	trMM.title = (Math.round(10*mm/NBjours)/10)+' ('+(Math.round(10*mmTroll/NBjours)/10)+') points de MM  par jour | '
 				+(Math.round(10*mm/niv)/10)+' ('+(Math.round(10*mmtotale/niv)/10)+') points de MM par niveau';
+
+    var tdRefl=document.querySelector("#refl");
+    // TODO : prendre en compte bonus/malus D esq du tour ?
+    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + (esqbp);
+    tdRefl.innerHTML+=" <i>(moyenne : "+refMoy+")</i>";
 }
 
 function setLienAnatrolliseur(){
-	var tdNom = document.querySelector("#descr #nom").parentElement.parentElement;
-    tdNom.innerHTML+=" - ";
+	var pTableAmelio = document.querySelector("#carac>div>p");
+    pTableAmelio.innerHTML+=" - ";
     var aElt = document.createElement("a");
     aElt.setAttribute("href",urlAnatrolliseur);
     aElt.setAttribute("target","_blank");
     aElt.className="AllLinks";
     aElt.innerHTML="Anatrolliser";
-    tdNom.appendChild(aElt);
+    pTableAmelio.appendChild(aElt);
 }
 function setInfoDescription() {
 	var txtDateCrea = (NBjours!=1) ?
@@ -547,8 +552,11 @@ function setInfosExp() {
     }
 
     // Calul pi/jour
-    var trNiv = tdNiv.parentElement;
-    trNiv.title += "\n" + (Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour';
+    var
+    	tdPiTotal=document.querySelector("#exp #pitot").parentElement,
+    	tdPi = document.querySelector("#exp #pi").parentElement;
+    tdPiTotal.title=(Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour'
+    tdPi.title = tdPiTotal.title;
 
     // Rapports meurtres,morts
     var tdKill = document.querySelector("#exp #kill");
@@ -889,22 +897,30 @@ function injecteInfosBulles(liste,fonction) {
 	// on parse la liste des talents du type 'fonction'
 	for(var i=0 ; i<liste.length ; i++) {
 		var
-            trTalent=liste[i],
-		    node=trTalent.cells[1].querySelector('a'),
-		    nomTalent=epure(trim(node.textContent)),
-		    indiceTDniveaux=7;
+			trTalent=liste[i],
+			node=trTalent.cells[1].querySelector('a'),
+			nomTalent=epure(trim(node.textContent)),
+			indiceTDniveaux=7,
+			indiceTDSousCompetence=2,
+			sousCompetences=undefined;
 		if(fonction=="competences"){
 			// un TD en plus pour des information complementaire liees a la comp
 			indiceTDniveaux++;
+			// chercher les sous-compétence (type de golem, type de piège) s'il y a
+			sousCompetences = trTalent.cells[indiceTDSousCompetence].textContent.split(',');
+			for (var j=0; j < sousCompetences.length; j++) {
+				sousCompetences[j] = sousCompetences[j].epure().trim();
+				if (arrayTalents[sousCompetences[j]]) sousCompetences[j] = arrayTalents[sousCompetences[j]];
+			}
 		}
 		var niveauxMaitrisesTalentArray=getNumbers(trTalent.cells[indiceTDniveaux].textContent);
 		setInfos(node,nomTalent,fonction,niveauxMaitrisesTalentArray[0]);
-		setTalent(nomTalent,niveauxMaitrisesTalentArray[1],niveauxMaitrisesTalentArray[0]);
+		setTalent(nomTalent,niveauxMaitrisesTalentArray[1],niveauxMaitrisesTalentArray[0],sousCompetences);
 		totalpc += niveauxMaitrisesTalentArray[1];
 
 		// stockage des niveaux inferieurs du talent si presents
 		for(var j=2 ; j<niveauxMaitrisesTalentArray.length ; j+=2) {
-			setTalent(nomTalent,niveauxMaitrisesTalentArray[j+1],niveauxMaitrisesTalentArray[j]);
+			setTalent(nomTalent,niveauxMaitrisesTalentArray[j+1],niveauxMaitrisesTalentArray[j],sousCompetences);
 			totalpc+=niveauxMaitrisesTalentArray[j+1];
 		}
 	}
@@ -928,7 +944,7 @@ var arrayModifAnatroll = {
 	'PuC':'Planter'
 }
 
-function setTalent(nom,pc,niveau) {
+function setTalent(nom,pc,niveau,sousCompetences) {
 	// Nota : voir plus tard si stocker les effets des comps/sorts directement 
 	// (et pas les % dont osf) ne serait pas plus rentable
 	var nomEnBase = arrayTalents[epure(nom)];
@@ -940,6 +956,13 @@ function setTalent(nom,pc,niveau) {
 			urlAnatrolliseur += 'Insu'+niveau+'|';
 		case 'IdT':
 			nomEnBase += niveau;
+			break;
+		case 'Golemo':
+		case 'Piege':
+			for (var i=0 ; i < sousCompetences.length ; i++) {
+				urlAnatrolliseur += (arrayModifAnatroll[sousCompetences[i]] ? 
+					arrayModifAnatroll[sousCompetences[i]] : sousCompetences[i]) + '|';
+			}
 			break;
 		case 'AP':
 		case 'Baroufle':
@@ -1043,25 +1066,21 @@ function competences(comp,niveau) {
 		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
-			if(i>niveau) texte += '<i>';
-			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+attbp+attbm;
-			texte += 'Attaque (niveau '+i+') : <b>'
-				+Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbp+attbm)
-				+' => <b>'+jetatt+'</b>';
-			if(i>niveau) texte += '</i><hr>';
-			else {
-				texte += '<br/>';
-				espatt += (pc-lastmax)*jetatt;
-				if(i<niveau) notMaxedOut = true;
-				}
+			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+
+				attbp+attbm;
+			texte += 'Attaque niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbp+attbm)+
+				' => <b>'+jetatt+'</b><br/>';
+			espatt += (pc-lastmax)*jetatt;
 			lastmax = pc;
+			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += 'Attaque moyenne (si réussite) : <b>'
-				+Math.floor(10*espatt/lastmax)/10+'</b><br/>'
-        }
-		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)
-			+' => <b>'+degmoy+'/'+degmoycrit+'</b>';
+			texte += '<i>Attaque moyenne (si réussite) : <b>'+
+				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
+		}
+		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)+
+			' => <b>'+degmoy+'/'+degmoycrit+'</b>';
 	}
 	else if(comp.indexOf('Balayage')!=-1)
 		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbp+attbm)
@@ -1157,27 +1176,21 @@ function competences(comp,niveau) {
 		var notMaxedOut = false;
 		texte = 'Attaque : <b>'+att+'</b> D6 '+aff((attbp+attbm))
 			+' => <b>'+attmoy+'</b>';
-		for(var i=Math.min(niveau+1,5) ; i>0 ; i--) {
+		for(var i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
-			if(i>niveau) texte += '<hr><i>';
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+(degbp+degbm);
-			texte += 'Dégâts (niveau '+i+') : <b>'
-				+Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff((degbp+degbm))
-				+' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
-			if(i>niveau)
-				texte += '</i><hr>';
-			else {
-				texte += '<br/>';
-				espdeg += (pc-lastmax)*jetdeg;
-				if(i<niveau) notMaxedOut = true;
-			}
+			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff((degbp+degbm))+
+				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
+			espdeg += (pc-lastmax)*jetdeg;
 			lastmax = pc;
+			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += 'Dégâts moyens (si réussite) : <b>'
-				+Math.floor(10*espdeg/lastmax)/10+'/'+
-				+(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b><br/>';
+			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
+				Math.floor(10*espdeg/lastmax)/10+'/'+
+				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
 		}
 	}
 	else if(comp.indexOf('Course')!=-1)
