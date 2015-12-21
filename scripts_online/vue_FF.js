@@ -1164,7 +1164,7 @@ function retrieveCDMs() {
 		)+'&';
 		
 		if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
-			var url = 'http://mountypedia.ratibus.net/mz/monstres_0.9_post_FF.php';
+			var url = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
 			
 			FF_XMLHttpRequest({
 				method: 'POST',
