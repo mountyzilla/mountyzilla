@@ -44,7 +44,7 @@ function traiteMonstre() {
 	idMonstre = texte.match(/\d+/)[0];
 	FF_XMLHttpRequest({
 		method: 'GET',
-		url: 'http://mountypedia.ratibus.net/mz/monstres_0.9_FF.php?begin=-1&idcdm='
+		url: 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm='
 			+MZ_getValue('CDMID')
 			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
 		headers : {
