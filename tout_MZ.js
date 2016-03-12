@@ -1882,7 +1882,6207 @@ function analyseTactique(donneesMonstre,nom) {
 	catch(e) { window.alert(e);}
 	}
 
-	// x~~x	marque pour s'y retrouver sous l'éditeur
+// x~~x	marque pour s'y retrouver sous l'éditeur
+
+/*
+ * This file is part of MountyZilla (http://mountyzilla.tilk.info/),
+ * published under GNU License v2.
+ *
+ * Patch :
+ * gestion des missions terminées
+ */
+ 
+ // x~x mission_liste
+
+function checkLesMimis() {
+	try {
+		var titresMimis = document.evaluate(
+			"//div[@class='mh_titre3']/b/a[contains(@href,'Mission_')]",
+			document, null, 7, null
+		);
+		var obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
+	} catch(e) {
+		window.console.error('[MZ mission_liste] Erreur initialisation:\n'+e);
+		return;
+	}
+	
+	var enCours = {};
+	for(var i=0 ; i<titresMimis.snapshotLength ; i++) {
+		var num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
+		enCours[num] = true;
+	}
+	
+	for(var numMimi in obMissions) {
+		if(!enCours[numMimi]) {
+			delete obMissions[numMimi];
+		}
+	}
+	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
+}
+
+function do_mission_liste() {
+	checkLesMimis();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x actions
+
+/* TODO
+ * getLvl pour Explo, Rotobaffe et cie
+ */
+
+var pageNivURL = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
+//var idtURL = "http://mh.byethost5.com/idt_serveur.php";
+
+
+/*                                Page de combat                                */
+
+function getLevel() {
+	var divList = document.getElementsByTagName('div');
+	if(divList.length <= 2)
+		return;
+	
+	// On essaie de voir si cette action était une attaque
+	var pList = document.getElementsByTagName('p');
+	var nomM = '';
+	// Modification pour Frénésie by TetDure
+	var numAtt = 0;
+	for (var i = 0; i < pList.length; i++) {
+		if(pList[i].firstChild) {
+			nomM = pList[i].firstChild.nodeValue;
+			if(nomM && nomM.indexOf('Vous avez attaqué un') == 0)
+				numAtt++;
+			}
+		}
+	
+	if(nomM == '')
+		return;
+	
+	// Si c'est une attaque normale, un seul PX
+	var comPX = 1;
+	if(divList[2].firstChild.nodeValue.indexOf('Attaque Normale') == -1 && numAtt != 2)
+		comPX++;
+
+	// Extraction des infos du monstre attaqué
+	var idM;
+	var male;
+	if(nomM.slice(20, 21) == 'e') {
+		male = false;
+		idM = nomM.substring(nomM.indexOf('(') + 1, nomM.indexOf(')'));
+		nomM = nomM.slice(22, nomM.indexOf('(') - 1);
+		}
+	else {
+		male = true;
+		idM = nomM.substring(nomM.indexOf('(') + 1, nomM.indexOf(')'));
+		nomM = nomM.slice(21, nomM.indexOf('(') - 1);
+		}
+	
+	if(idM == '')
+		return;
+	
+	var bList = document.getElementsByTagName('b');
+	var niveau = '';
+	for (var i = 0; i < bList.length; i++) {
+		var b = bList[i];
+		if(b.childNodes[0].nodeValue != "TUÉ")
+			continue;
+		var nbPX = "";
+		for (i++; i < bList.length; i++) {
+			// Si plusieurs monstres ont été tués (par ex. explo), on ne peut pas déduire leurs niveaux
+			if(bList[i].childNodes[0].nodeValue == "TUÉ")
+				return;
+			if(bList[i].childNodes[0].nodeValue.indexOf("PX") != -1) {
+				nbPX = bList[i].childNodes[0].nodeValue;
+				break;
+			}
+		}
+		if(nbPX == '')
+			return;
+		// Si on arrive ici c'est qu'on a trouvé un (et un seul) monstre tué et les PX gagnés
+		nbPX = parseInt(nbPX.slice(0, nbPX.indexOf("P") - 1));
+		if(!nbPX)
+			nbPX = 0;
+		chaine = (male ? "Il" : "Elle") + " était de niveau ";
+		niveau = (nbPX * 1 + 2 * nivTroll - 10 - comPX) / 3;
+		if(comPX > nbPX) {
+			chaine += "inférieur ou égal à " + Math.floor(niveau) + ".";
+			niveau = "";
+		} else if(Math.floor(niveau) == niveau) {
+			chaine += niveau + ".";
+		} else {
+			chaine = "Mountyzilla n'est pas arrivé à calculer le niveau du monstre.";
+			niveau = "";
+		}
+		insertBr(b.nextSibling.nextSibling.nextSibling);
+		insertText(b.nextSibling.nextSibling.nextSibling, chaine);
+	}
+
+	if(niveau != '') {
+		var button = insertButtonCdm('as_Action');
+		button.setAttribute("onClick","window.open('" + pageNivURL + "?id=" + (idM * 1) + "&monstre="
+				+ escape(nomM) + "&niveau=" + escape(niveau)
+				+ "', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
+				+ "this.value = 'Merci de votre participation'; this.disabled = true;");
+	}
+}
+
+
+/*-[functions]------------- Messages du bot : MM/RM --------------------------*/
+
+function insertInfoMagie(node, intitule, magie) {
+	if(node.nextSibling) {
+		node = node.nextSibling;
+		insertBr(node);
+		insertText(node, intitule);
+		insertText(node, magie, true);
+	} else {
+		node = node.parentNode;
+		appendBr(node);
+		appendText(node, intitule);
+		appendText(node, magie, true);
+	}
+}
+
+function getMM(sr) {
+	if(rmTroll<=0) {
+		return 'Inconnue (quelle idée d\'avoir une RM valant'+rmTroll+' !)';
+	}
+	sr = Number(sr.match(/\d+/)[0]);
+	if(sr==10) {
+		return '\u2265 '+5*rmTroll;
+	}
+	if(sr<=50) {
+		return Math.round(50*rmTroll/sr);
+	}
+	if(sr<90) {
+		return Math.round((100-sr)*rmTroll/50);
+	}
+	return '\u2264 '+Math.round(rmTroll/5);
+}
+
+function traiteMM() {
+	var node = document.evaluate(
+		"//b[contains(preceding::text()[1], 'Seuil de Résistance')]/text()[1]",
+		document, null, 9, null).singleNodeValue;
+	
+	if(node) {
+		var mm = getMM(node.nodeValue);
+		node = node.parentNode.nextSibling.nextSibling.nextSibling;
+	} else {
+		var node = document.evaluate(
+			"//p/text()[contains(., 'Seuil de Résistance')]",
+			document, null, 9, null).singleNodeValue;
+		if(!node) {
+			return;
+		}
+		var mm = getMM(node.nodeValue);
+		node = node.nextSibling.nextSibling;
+	}
+	insertInfoMagie(node,'MM approximative de l\'Attaquant...: ',mm);
+}
+
+function getRM(sr) {
+	if(mmTroll<=0) {
+		return 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
+	}
+	sr = Number(sr.match(/\d+/)[0]);
+	if(sr==10) {
+		return '\u2264 '+Math.round(mmTroll/5);
+	}
+	if(sr<=50) {
+		return Math.round(sr*mmTroll/50);
+	}
+	if(sr<90) {
+		return Math.round(50*mmTroll/(100-sr));
+	}
+	return '\u2265 '+5*mmTroll;
+}
+
+function traiteRM() {
+	var nodes = document.evaluate(
+		"//b[contains(preceding::text()[1],'Seuil de Résistance')]/text()[1]",
+		document, null, 7, null);
+	if(nodes.snapshotLength==0) {
+		return;
+	}
+	
+	for(var i=0 ; i<nodes.snapshotLength ; i++) {
+		var node = nodes.snapshotItem(i);
+		var rm = getRM(node.nodeValue);
+		node = node.parentNode.nextSibling.nextSibling.nextSibling;
+		insertInfoMagie(node, 'RM approximative de la Cible.......: ', rm);
+	}
+}
+
+
+/*                      Fonction stats IdT par Raistlin                       */
+	
+/*function getIdt() {
+	if(MZ_getValue("SEND_IDT") == "non")
+		return false;
+		
+	var regExpBeginning = /^\s+/;
+	var regExpEnd       = /\s+$/;
+
+	var nomIdt = document.evaluate(
+			"//tr/td[contains(p/text(),'identification a donné le résultat suivant : ')]/b/text()",
+			document, null, XPathResult.STRING_TYPE, null).stringValue;
+	if(!nomIdt)
+		return false;
+
+	var caracIdt;
+	if(nomIdt.indexOf("Malédiction !") != -1) {
+		caracIdt = "";
+		nomIdt = "Mission maudite";
+	} else {
+		caracIdt = nomIdt.slice(nomIdt.indexOf("(") + 1, nomIdt.indexOf(")"));
+		nomIdt = nomIdt.slice(nomIdt.indexOf(" - ")+3);
+		nomIdt = nomIdt.slice(0, nomIdt.indexOf("(") - 1);
+		nomIdt = nomIdt.replace(regExpBeginning, "").replace(regExpEnd, "");
+	}
+	FF_XMLHttpRequest({
+		method: 'GET',
+		url: idtURL + "?item=" + escape(nomIdt) + "&descr=" + escape(caracIdt),
+		headers : {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+			'Accept': 'application/atom+xml,application/xml,text/xml',
+		}
+	});
+	return true;
+}*/
+
+
+/*-[functions]------------------- Décalage DLA -------------------------------*/
+
+function confirmeDecalage() {
+	// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
+	var nbMinutes = document.getElementById('ai_NbMinutes').value;
+	if(!nbMinutes || isNaN(nbMinutes) || nbMinutes<1) { return false; }
+	
+	var newDLA = new Date( oldDLA );
+	newDLA.setMinutes( newDLA.getMinutes()+Number(nbMinutes) );
+	return window.confirm(
+		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
+		+'\nConfirmez-vous ce décalage ?'
+	);
+}
+
+function newsubmitDLA(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	if(confirmeDecalage()) {
+		this.submit();
+	}
+}
+
+function changeActionDecalage() {
+	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
+		return;
+	}
+	try {
+		// On récupère le contenu du script JS MH de calcul du décalage
+		var scriptTxt = document.evaluate(
+			".//script[ not(@src) ]",
+			document, null, 9, null
+		).singleNodeValue.textContent;
+		// On en extrait la DLA courante
+		scriptTxt = scriptTxt.slice(scriptTxt.indexOf('new Date(')+9);
+		scriptTxt = scriptTxt.split('\n')[0];
+		var nbs = scriptTxt.match(/\d+/g);
+		oldDLA = new Date( nbs[0],nbs[1],nbs[2],nbs[3],nbs[4],nbs[5] );
+	} catch(e) {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] DLA non trouvée',e);
+		return;
+	}
+	var form = document.getElementsByName('ActionForm')[0];
+	if(form) {
+		form.addEventListener('submit', newsubmitDLA, true);
+	} else {
+		avertissement('Erreur de parsage : confirmation de décalage impossible');
+		window.console.error('[changeActionDecalage] ActionForm non trouvé');
+	}
+}
+
+/*-[functions]------------------- Alerte Mundi -------------------------------*/
+
+function prochainMundi() {
+	try {
+		var node = document.evaluate(
+			"//div[@class='dateAction']/b",
+			document, null, 9, null
+		).singleNodeValue;
+	} catch(e) {
+		window.console.error('[prochainMundi] Date introuvable',e);
+		return;
+	}
+	if(!node) { return; }
+	
+	var longueurMois = node.textContent.indexOf('Saison du Hum')==-1?28:14;
+	var jour = longueurMois+1-getNumber(node.textContent);
+	if(node.textContent.indexOf('Mundidey')!=-1) { jour=longueurMois; }
+	var txt = '[Prochain Mundidey ';
+	if(jour>1) {
+		txt += 'dans '+jour+' jours]';
+	} else {
+		txt += 'demain]';
+	}
+	insertText(node.parentNode.nextSibling,txt,true);
+}
+
+
+/*                            Fonction principale                             */
+
+function dispatch() {
+	if(isPage('MH_Play/Play_action')) {
+		prochainMundi();
+	} else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+		var oldDLA;
+		changeActionDecalage();
+	} else if(isPage('MH_Play/Actions')) {
+		if(document.evaluate(
+			"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
+			document, null, 2, null
+		).stringValue) {
+			traiteMM();
+		} else if(document.evaluate(
+			"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
+			document, null, 2, null
+		).stringValue) {
+			//getIdt();
+			traiteRM();
+		} /*else {
+			// Est censé se lancer sur quoi *précisément* ?
+			traiteRM();
+			getLevel();
+		}*/
+	} else {
+		/* Traitement des messages du bot */
+		var messageTitle = document.evaluate(
+			"//form/table/tbody/tr[1]/td[1]/"
+			+"descendant::text()[contains(.,'[MountyHall]')]",
+			document, null, 2, null
+		).stringValue;
+		if(messageTitle.indexOf('Attaquant') != -1 &&
+			messageTitle.indexOf('sur') != -1) {
+			getLevel();
+			traiteRM();
+		} else if(messageTitle.indexOf('Résultat du pouvoir') != -1 ||
+			messageTitle.indexOf('Défenseur') != -1) {
+			traiteMM();
+		} else if(messageTitle.indexOf('Identification des trésors') != -1 ||
+			// à replacer avec Attaque après révision getLvl :
+			messageTitle.indexOf('Explosion') != -1 ||
+			messageTitle.indexOf('Insulte') != -1) {
+			traiteRM();
+		}
+	}
+}
+
+function do_actions() {
+	start_script(31);
+	dispatch();
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x pre-echant
+
+/* 2013-08-19 : correction auto syntaxe alert */
+
+var combobox=null;
+
+function changeObject()
+{
+	if(!combobox)
+		return ;
+	var id = combobox.options[combobox.selectedIndex].value;
+	var texte = combobox.options[combobox.selectedIndex].firstChild.nodeValue;
+	if(!id || id=="")
+	{
+		MZ_removeValue(numTroll+".enchantement.lastEquipement");
+		return;
+	}
+	MZ_setValue(numTroll+".enchantement.lastEquipement",id+";"+texte);
+}
+
+function treatePreEnchantement() {
+	var input = document.evaluate("//input[@name='ai_IDLI']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if(!input || input.getAttribute("type")=="hidden")
+	{
+		return false;
+	}
+	MZ_setValue(numTroll+".enchantement.lastEnchanteur",input.getAttribute("value"));
+	combobox = document.evaluate("//select[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if(!combobox)
+	{
+		return true;
+	}
+	combobox.addEventListener('change', changeObject, true);
+	return true;
+}
+
+function treateEnchantement() {
+	var input = document.evaluate("//input[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if(!input || input.getAttribute("type")!="hidden")
+	{
+		return false;
+	}
+	var idEquipement = input.getAttribute("value");
+	var nomEquipement = "Equipement inconnu ("+idEquipement+")";
+	var enchanteur = MZ_getValue(numTroll+".enchantement."+idEquipement+".enchanteur");
+	if(enchanteur && enchanteur != null)
+		return true;
+	input = document.evaluate("//input[@name='ai_IDLI']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if(!input || input.getAttribute("type")!="hidden")
+	{
+		return false;
+	}
+	var idEnchanteur = input.getAttribute("value");
+	
+	var nodes = document.evaluate(
+			"//p/img[@src='../Images/greenball.gif']/following-sibling::text()", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength != 3)
+		return;
+	for(var i=0;i<3;i++)
+	{
+		var texte = trim(nodes.snapshotItem(i).nodeValue);
+		texte = texte.replace(" d'une "," d'un ");
+		var compo = texte.substring(0,texte.indexOf(" d'un "));
+		var monstre = texte.substring(texte.indexOf(" d'un ")+6,texte.indexOf(" d'au minimum"));
+		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
+		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
+		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
+		MZ_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+	}
+	MZ_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MZ_getValue(numTroll+".position.X")+";"+MZ_getValue(numTroll+".position.Y")+";"+MZ_getValue(numTroll+".position.N"));
+	MZ_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
+	var liste = MZ_getValue(numTroll+".enchantement.liste");
+	if(!liste || liste=="")
+	{
+		MZ_setValue(numTroll+".enchantement.liste",idEquipement);
+	}
+	else
+		MZ_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
+}
+
+function do_pre_enchant() {
+	start_script(60);
+	if(!treatePreEnchantement())
+		treateEnchantement();
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x enchant
+
+/* 2013-08-19 : correction auto syntaxe alert */
+
+function treateEnchantement() {
+	var idEnchanteur = MZ_getValue(numTroll+".enchantement.lastEnchanteur");
+	var infoEquipement = MZ_getValue(numTroll+".enchantement.lastEquipement");
+	if(!idEnchanteur || idEnchanteur=="" || !infoEquipement || infoEquipement=="")
+		return;
+	var tab = infoEquipement.split(";");
+	if(tab.length<2)
+		return;
+	var idEquipement = tab[0];
+	var nomEquipement = tab[1];
+	for(var i=2;i<tab.length;i++)
+		nomEquipement += ";"+tab[i];
+	
+	var nodes = document.evaluate(
+			"//p/img[@src='../Images/greenball.gif']/following-sibling::text()", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength != 3)
+		return;
+	for(var i=0;i<3;i++)
+	{
+		var texte = trim(nodes.snapshotItem(i).nodeValue);
+		texte = texte.replace(" d'une "," d'un ");
+		var compo = texte.substring(0,texte.indexOf(" d'un "));
+		var monstre = texte.substring(texte.indexOf(" d'un ")+6,texte.indexOf(" d'au minimum"));
+		monstre = monstre.replace(/ Géante?/,"");
+		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
+		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
+		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
+		MZ_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+	}
+	MZ_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MZ_getValue(numTroll+".position.X")+";"+MZ_getValue(numTroll+".position.Y")+";"+MZ_getValue(numTroll+".position.N"));
+	MZ_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
+	var liste = MZ_getValue(numTroll+".enchantement.liste");
+	if(!liste || liste=="")
+	{
+		MZ_setValue(numTroll+".enchantement.liste",idEquipement);
+	}
+	else
+		MZ_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
+}
+
+function do_enchant() {
+	start_script(60);
+
+	treateEnchantement();
+	MZ_removeValue(numTroll+".enchantement.lastEquipement");
+	MZ_removeValue(numTroll+".enchantement.lastEnchanteur");
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x myevent
+
+// Script désactivé en attendant la màj vers le nouveau système de missions.
+function do_myevent() {
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x malus
+
+/* v1.4 - 2014-01-06
+ * - Gestion des sorts double composante
+ * v1.4.1 - 2014-01-22
+ * - Correction décumul
+ * TODO
+ * - Identifier la position de "PV" dans l'ordre MH
+ */
+
+var listeBM;
+
+
+/* [functions]                     Utilitaires                                  */
+
+function decumul(bmt,nbr) {
+	var bmr;
+	if(!nbr || nbr<2) bmr = bmt;
+	else if(nbr==2) bmr = parseInt(0.67*bmt);
+	else if(nbr==3) bmr = parseInt(0.40*bmt);
+	else if(nbr==4) bmr = parseInt(0.25*bmt);
+	else if(nbr==5) bmr = parseInt(0.15*bmt);
+	else bmr = parseInt(0.1*bmt);
+	if(bmt<0) return Math.min(-1,bmr);
+	return Math.max(1,bmr);
+	}
+
+function triecaracs(a,b) { // version Yoyor, mod by Dab
+	switch( a ) {
+	case 'ATT':
+		return -1;
+	case 'ESQ': 
+		if(b=='ATT') return 1;
+		return -1;
+	case 'DEG': 
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'REG':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Vue':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'TOUR':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Armure':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'RM':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'MM':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Concentration':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+				return 1;
+			default:
+				return -1;
+			}	
+	case 'Fatigue':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Concentration':
+				return 1;
+			default:
+				return -1;
+			}
+	case "Dés d'attaque":
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Concentration':
+			case 'Fatigue':
+				return 1;
+			default:
+				return -1;
+			}
+	case 'Dés de dégâts':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Concentration':
+			case 'Fatigue':
+			case "Dés d'attaque":
+				return 1;
+			default:
+				return -1;
+			}
+	default :
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+			case 'Armure':
+			case 'RM':
+			case 'MM':
+			case 'Concentration':
+			case 'Fatigue':
+			case "Dés d'attaque":
+			case 'Dés de dégâts':
+				return 1;
+			default:
+				return -1;
+			}
+		}
+	}
+
+
+/* [functions]              Fonctions hide / display                            */
+
+function toggleDetails() {
+	if(MZ_getValue('BMDETAIL')!='false') {
+		MZ_setValue('BMDETAIL','false');
+		var trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style.display = 'none';
+		trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style = '';	
+		}
+	else {	
+		MZ_setValue('BMDETAIL','true');
+		var trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style.display = 'none';
+		trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
+		for(var i=0 ; i<trlist.length ; i++)
+			trlist[i].style = '';
+		}
+	}
+
+function toggleBMList() {
+	if(MZ_getValue('BMHIDELIST')=='true') {
+		MZ_setValue('BMHIDELIST','false');
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style = '';
+		document.getElementsByTagName('thead')[0].style = '';
+		document.getElementById('trhelp').style = '';
+		}
+	else {
+		MZ_setValue('BMHIDELIST','true');
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style.display = 'none';
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+		document.getElementById('trhelp').style.display = 'none';
+		}
+	}
+
+function setDisplayBM() {
+	if(!listeBM) return;
+	
+	var titre = document.getElementById('titre2');
+	if(titre) {
+		titre.style.cursor = 'pointer';
+		titre.onclick = toggleBMList;
+		}
+	
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	var tr = document.evaluate("./tr/td/text()[contains(.,'décumul')]/../..",
+								tfoot, null, 9, null).singleNodeValue;
+	tr.id = 'trhelp';
+	
+	if(MZ_getValue('BMHIDELIST')=='true') {
+		for(var i=0 ; i<listeBM.snapshotLength ; i++)
+			listeBM.snapshotItem(i).style.display = 'none';
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+		tr.style.display = 'none';
+		}
+	}
+
+
+/* [functions]                 Fonction principale                              */
+
+function traiteMalus() {
+	var mainTab = document.getElementsByTagName('table')[0];
+	listeBM = document.evaluate('./tbody/tr', mainTab, null, 7, null);
+	if(listeBM.snapshotLength==0) return;
+	
+	/* Suppression des BM de fatigue stockés */
+	if(MZ_getValue(numTroll+'.bm.fatigue'))
+		MZ_removeValue(numTroll+'.bm.fatigue');
+	
+	/* Extraction des données */
+	var uniListe = [], listeDurees = {}, listeDecumuls = {};
+	var nb = 0;
+	while(nb<listeBM.snapshotLength) {
+		tr = listeBM.snapshotItem(nb); nb++;
+		var effetsT = tr.childNodes[5].textContent.split(' | ');
+		var phymag = tr.childNodes[9].textContent;
+		var duree = Number(tr.childNodes[11].textContent.match(/\d+/)[0]);
+		var type = tr.childNodes[3].textContent, nom;
+		// si c'est un type à décumul
+		switch(type) {
+			case 'Potion':
+			case 'Parchemin':
+			case 'Sortilège':
+			case 'Capacité Spéciale':
+				nom = tr.childNodes[1].textContent+phymag;
+				break;
+			default:
+				nom = 'pasdedecumul';
+			}
+		if(nom.indexOf('Amnésie')!=-1) // !! Amnésie = Capa, mais pas décumulée
+			nom = 'pasdedecumul';
+		
+		uniListe[nb] = {
+			'duree':duree,
+			'nom':nom, // permet de gérer le non décumul des sorts à double composante
+			'caracs':{}
+			}
+		for(var i=0 ; i<effetsT.length ; i++) {
+			if(effetsT[i].indexOf(':')==-1) continue;
+			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
+			// nom = 'pasdedecumul' si pas de décumul
+			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
+			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
+				uniListe[nb]['type'] = phymag;
+			var bm = Number(effetsT[i].match(/-?\d+/)[0]);
+			uniListe[nb]['caracs'][carac] = bm;
+			listeDurees[duree] = true;
+			}
+		}
+	
+	/* Gestion des décumuls et cumuls des durées */
+	var toursGeres = [];
+	for(var d in listeDurees) toursGeres.push(d);
+	toursGeres.sort( function (a,b){return b-a;} );
+	// pour sauvegarder les bm de fatigue
+	var strfat = '';
+	// Pour affichage & adpatation à footable.js (statique)
+	var thead = document.getElementsByTagName('thead')[0];
+	var nbHidden = document.evaluate("./tr/th[@style='display: none;']",
+									thead, null, 7, null).snapshotLength;
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	
+	for(var i=0 ; i<toursGeres.length ; i++) {
+		var tour = toursGeres[i];
+		var effetsCeTour = {}; decumulsCeTour = {};
+		for(var nb=1 ; nb<uniListe.length ; nb++) {
+			if(uniListe[nb]['duree']<toursGeres[i]) // si durée pvr < durée analysée, on passe
+				continue;
+			var nom = uniListe[nb]['nom'];
+			if(nom!='pasdedecumul') {
+				if(decumulsCeTour[nom]==null) decumulsCeTour[nom] = 0;
+				decumulsCeTour[nom]++;
+				}
+			for(var carac in uniListe[nb]['caracs']) {
+				var bm = uniListe[nb]['caracs'][carac];
+				if(carac=='ATT' || carac=='DEG' || carac=='Armure') {
+					var type = uniListe[nb]['type'];
+					if(!effetsCeTour[carac])
+						effetsCeTour[carac] = {'Physique':0, 'Magie':0};
+					if(nom=='pasdedecumul')
+						effetsCeTour[carac][type] += bm;
+					else
+						effetsCeTour[carac][type] += decumul(bm,decumulsCeTour[nom]);
+					}
+				else {
+					if(!effetsCeTour[carac]) effetsCeTour[carac]=0;
+					if(nom=='pasdedecumul' || carac=='Fatigue')
+						effetsCeTour[carac] += bm;
+					else if(carac=='TOUR') // les durees se comptent en demi-minutes dans MH
+						effetsCeTour[carac] += decumul(2*bm,decumulsCeTour[nom])/2;
+					else 
+						effetsCeTour[carac] += decumul(bm,decumulsCeTour[nom]);
+					}
+				}
+			}
+		
+		/* Création du bilan du tour */
+		var texteD = '', texteS = '';
+		var caracGerees = [];
+		for(var k in effetsCeTour) caracGerees.push(k);
+		caracGerees.sort( triecaracs );
+		
+		for(var j=0 ; j<caracGerees.length ; j++) {
+			var carac = caracGerees[j], str = '';
+			
+			switch( carac ) {
+				case 'ATT':
+				case 'DEG':
+				case 'Armure':
+					var phy = effetsCeTour[carac]['Physique'];
+					var mag = effetsCeTour[carac]['Magie'];
+					texteD += (phy || mag)? ' | '+carac+' : '+aff(phy)+'/'+aff(mag) : '';
+					texteS += (phy+mag) ? ' | '+carac+' : '+aff(phy+mag) : '';
+					break;
+				case 'TOUR':
+					str = effetsCeTour[carac]? ' | TOUR : '+aff( effetsCeTour[carac] )+' min' : '';
+					break;
+ 				case 'Fatigue':
+					strfat += toursGeres[i]+'-'+effetsCeTour[carac]+';';
+				case 'PV':
+				case 'ESQ':
+				case 'REG':
+				case 'Vue':
+					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] ) : '';
+					break;
+				default:
+					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] )+' %' : '';
+				}
+			if(str) {
+				texteD += str;
+				texteS += str;
+				}
+			}
+		
+		/* Affichage */
+		// Si rien à afficher on passe
+		if(!texteD) continue;
+		// Si BMM+BMP=0
+		texteS = texteS ? texteS.substring(3) : 'Aucun effet';
+		var tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanDetail');
+		if(MZ_getValue('BMDETAIL')=='false')
+			tr.style.display = 'none';
+		var td = appendTdText(tr,texteD.substring(3));
+		td.colSpan = 5-nbHidden;
+		var txttour = toursGeres[i]+' Tour';
+		if(toursGeres[i]>1) txttour += 's';
+		appendTdText(tr,txttour);
+		
+		tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanSomme');
+		if(MZ_getValue('BMDETAIL')!='false')
+			tr.style.display = 'none';
+		td = appendTdText(tr,texteS);
+		td.colSpan = 5-nbHidden;
+		appendTdText(tr,txttour);
+		}
+	
+	/* mise en place toggleDetails */
+	tfoot.style.cursor = 'pointer';
+	tfoot.onclick = toggleDetails;
+	
+	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
+	if(strfat)
+		MZ_setValue(numTroll+'.bm.fatigue',strfat);
+}
+
+function do_malus() {
+	try {
+	start_script();
+	traiteMalus();
+	setDisplayBM();
+	displayScriptTime();
+	}
+	catch(e) {window.alert(e)};
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x mouches
+
+var mainTab, tr_mouches;
+
+function initialiseMouches() {
+// Lanceur global
+	try {
+		mainTab = document.getElementById('mouches');
+		tr_mouches = document.evaluate('./tbody/tr', mainTab, null, 7, null);
+	} catch(e) {
+		avertissement('Erreur MZ:<br />Consulter la console.');
+		window.console.error('Erreur MZ mouches:\n'+e);
+		return;
+	}
+	if(mainTab===void(0) || tr_mouches.snapshotLength==0) { return; }
+	
+	setDisplayMouches();
+	traiteMouches();
+}
+
+function setDisplayMouches() {
+// Initialise l'affichage / l'effacement du détail des mouches
+	var titre = document.getElementById('titre2');
+	if(titre) {
+		titre.style.cursor = 'pointer';
+		titre.onclick = toggleMouches;
+	}
+	
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	if(tfoot) {
+		tfoot.style.cursor = 'pointer';
+		tfoot.onclick = toggleMouches;
+	}
+	
+	if(MZ_getValue('HIDEMOUCHES')=='true') {
+		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
+			tr_mouches.snapshotItem(i).style.display = 'none';
+		}
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+	}
+}
+
+function toggleMouches() {
+// Handler pour afficher / masquer les détasil
+	if(MZ_getValue('HIDEMOUCHES')=='true') {
+		MZ_setValue('HIDEMOUCHES','false');
+		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
+			tr_mouches.snapshotItem(i).style.display = '';
+		}
+		document.getElementsByTagName('thead')[0].style.display = '';
+	} else {
+		MZ_setValue('HIDEMOUCHES','true');
+		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
+			tr_mouches.snapshotItem(i).style.display = 'none';
+		}
+		document.getElementsByTagName('thead')[0].style.display = 'none';
+	}
+}
+
+function traiteMouches() {
+// Traitement complet: présence et effets des mouches
+	var listeTypes = {}, effetsActifs = {};
+	
+	for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
+		var tr = tr_mouches.snapshotItem(i);
+	
+		// La mouche est-elle présente?
+		var etat = document.evaluate(
+			'./img',
+			tr.cells[6], null, 9, null
+		).singleNodeValue.alt;
+		if(etat!='La Mouche est là') { continue; }
+		// Extraction du type de mouche
+		var type = trim(tr.cells[3].textContent);
+		if(!listeTypes[type]) {
+			listeTypes[type] = 1;
+		} else {
+			listeTypes[type]++;
+		}
+		
+		// La mouche a-t-elle un effet?
+		var effet = trim(tr.cells[2].textContent);
+		if(etat!='La Mouche est là' || !effet) { continue; }
+		// Si oui, extraction des effets (multiples pour pogées)
+		var caracs = effet.split(' | ');
+		for(var j=0 ; j<caracs.length ; j++) {
+			var carac = caracs[j].substring(0,caracs[j].indexOf(':')-1);
+			var valeur = Number(caracs[j].match(/-?\d+/)[0]);
+			if(effetsActifs[carac]===void(0)) {
+				effetsActifs[carac] = valeur;
+			} else {
+				effetsActifs[carac] += valeur;
+			}
+		}
+	}
+	
+	// Extraction Effet total et affichage des différences à la normale
+	var tfoot = document.getElementsByTagName('tfoot')[0];
+	if(!tfoot) { return; }
+	var nodeTotal = document.evaluate(
+		".//b[contains(./text(),'Effet total')]",
+		tfoot, null, 9, null
+	).singleNodeValue.nextSibling;
+	var effetsTheoriques = nodeTotal.nodeValue.split('|');
+	var texte = ' ';
+	for(var i=0 ; i<effetsTheoriques.length ; i++) {
+		if(texte.length>1) { texte += ' | '; }
+		var carac = trim(
+			effetsTheoriques[i].substring(0,effetsTheoriques[i].indexOf(':')-1)
+		);
+		var valeur = effetsTheoriques[i].match(/-?\d+/)[0];
+		if(effetsActifs[carac]!==void(0) && effetsActifs[carac]==valeur) {
+			texte += effetsTheoriques[i];
+		} else {
+			texte += '<b>'+carac+' : '+aff(effetsActifs[carac]);
+			if(carac=='TOUR') { texte += ' min'; }
+			texte += '</b>';
+		}
+	}
+	var span = document.createElement('span');
+	span.innerHTML = texte;
+	nodeTotal.parentNode.replaceChild(span,nodeTotal);
+	
+	// Affichage des différences du nombre de mouches de chaque type
+	var mouchesParType = document.evaluate(
+		"./tr/td/ul/li/text()",
+		tfoot, null, 7, null
+	);
+	for(var i=0 ; i<mouchesParType.snapshotLength ; i++) {
+		var node = mouchesParType.snapshotItem(i);
+		var mots = node.nodeValue.split(' ');
+		var type = mots.pop();
+		if(!listeTypes[type]) {
+			node.nodeValue += ' (0 présente)';
+		} else if(mots[0]!=listeTypes[type]) {
+			if(listeTypes[type]==1) {
+				node.nodeValue += ' (1 présente)';
+			} else {
+				node.nodeValue += ' ('+listeTypes[type]+' présentes)';
+			}
+		}
+	}
+}
+
+function do_mouches() {
+	start_script();
+	initialiseMouches();
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x equipgowap
+
+var popup;
+
+function initPopup() {
+	popup = document.createElement('div');
+	popup.setAttribute('id', 'popup');
+	popup.setAttribute('class', 'mh_textbox');
+	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;' +
+			'display: inline; z-index: 3; max-width: 400px;');
+	document.body.appendChild(popup);
+}
+
+function showPopup(evt) {
+	var texte = this.getAttribute("texteinfo");
+	popup.innerHTML = texte;
+	popup.style.left = evt.pageX + 15 + 'px';
+	popup.style.top = evt.pageY + 'px';
+	popup.style.visibility = "visible";
+}
+
+function hidePopup() {
+	popup.style.visibility = "hidden";
+}
+
+function createPopupImage(url, text)
+{
+	var img = document.createElement('img');
+	img.setAttribute('src',url);
+	img.setAttribute('align','ABSMIDDLE');
+	img.setAttribute("texteinfo",text);
+	img.addEventListener("mouseover", showPopup,true);
+	img.addEventListener("mouseout", hidePopup,true);
+	return img;
+}
+
+function formateTexte(texte)
+{
+	texte = texte.replace(/\n/g,"<br/>");
+	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
+	texte = texte.replace(/<br\/>([^<]*) d'un/g,"<br/><b>$1</b> d'un");
+	texte = texte.replace(/(d'une? )([^<]*) d'au/g,"$1<b>$2</b> d'au");
+	texte = texte.replace(/(Qualité )([^<]*) \[/g,"$1<b>$2</b> [");
+	texte = texte.replace(/\[([^<]*)\]/g,"[<b>$1</b>]");
+	return texte;
+}
+
+
+function treateGowaps() {
+	//On récupère les gowaps possédants des composants
+	var tbodys = document.evaluate(
+			"//tr[@class='mh_tdpage_fo']/descendant::img[@alt = 'Composant - Spécial']/../../..",
+			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	for (var j = 0; j < tbodys.snapshotLength; j++) {
+		var tbody = tbodys.snapshotItem(j);
+		var id_gowap = currentURL.substring(currentURL.indexOf("?ai_IdFollower=")+15)*1;
+		//insertButtonComboDB(tbody, 'gowap', id_gowap,'mh_tdpage_fo');
+		if(MZ_getValue("NOINFOEM") != "true")
+			insertEMInfos(tbody);
+		if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
+			insertEnchantInfos(tbody);
+	}
+}
+
+function treateChampi() {
+	if(MZ_getValue("NOINFOEM") == "true")
+		return false;
+	var nodes = document.evaluate("//img[@alt = 'Champignon - Spécial']/../a/text()",
+			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength == 0)
+		return false;
+
+	for (var i = 0; i < nodes.snapshotLength; i++) {
+			var node = nodes.snapshotItem(i);
+			var texte = trim(node.nodeValue.replace(/\240/g, " "));
+			if(texte.indexOf("*")!=-1)
+				texte = texte.substring(0,texte.lastIndexOf(" "));
+			var nomChampi = texte.substring(0,texte.lastIndexOf(" "));
+			if(moisChampi[nomChampi])
+			{
+				appendText(node.parentNode.parentNode," [Mois "+moisChampi[nomChampi]+"]");
+			}
+			
+	}
+}
+
+function do_equipgowap() {
+	start_script();
+
+	treateGowaps();
+	treateChampi();
+	if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
+	{
+		initPopup();
+		computeEnchantementEquipement(createPopupImage,formateTexte);
+	}
+
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*   This file is part of zoryazilla & mountyzilla, published under GNU License   *
+*********************************************************************************/
+
+// x~x ordresgowap
+
+/* v0.2 by Dab - 2013-08-31
+ * - correction acquisition posale initiale
+ * - correction tare et affichage mire
+ */
+
+function setCarteGogo() {
+	try {
+	var pars = document.getElementsByTagName('p');
+	var pos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]",
+								pars[0], null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
+	}
+	catch(e) {return;}
+	var serv_scpt = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
+	var serv_img_trou = "http://mountyzilla.tilk.info/scripts_0.8/images/carte_trou.png";
+	var serv_img_cible = "http://mountyzilla.tilk.info/scripts_0.8/images/rep.png";
+
+	var expreg = /X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
+	var lignes = pars[0].getElementsByTagName('tr');
+	var nbpt = 0;
+	var trajet = pos[0]+','+pos[1]+','+pos[2]+',';
+	for(var i=0 ; i<lignes.length ; i++) {
+		if(lignes[i].className == 'mh_tdpage_fo') {
+			point = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue.match(expreg);
+			if(point) {
+				nbpt++;
+				trajet += point[1]+','+point[2]+','+point[3]+',';
+				}
+			}
+		}
+	var nvdiv = "<div class='mh_tdpage' style='width:510px;height:455px;'><img src='"+serv_img_trou+"' style='position:relative;top:0px;left:0px;z-index:100;border-width:0px' usemap='#coord_trou'/>";
+	var base = [-229,-5];
+	if (nbpt>0) {
+		base = [-684,-5];
+		nvdiv += "<img src='"+serv_scpt+"?trajet="+trajet+"' style='position:relative;top:-455px;left:0px;z-index:500;border-width:0px' usemap='#coord_trou'/>";
+	}
+	nvdiv += "<img src='"+serv_img_cible+"' style='position:relative;top:"+(base[0]-2*pos[1])+"px;left:"+(base[1]+2*pos[0])+"px;z-index:100;'/>";
+
+	nvdiv += '<map name="coord_trou"><area shape="circle" href="#" coords="260,333,3" title="X=5, Y=-49"  ><area shape="circle" href="#" coords="262,335,3" title="X=6, Y=-50"  ><area shape="circle" href="#" coords="260,335,3" title="X=5, Y=-50"  ><area shape="circle" href="#" coords="262,333,3" title="X=6, Y=-49"  ><area shape="circle" href="#" coords="294,163,3" title="X=22, Y=36"  ><area shape="circle" href="#" coords="292,163,3" title="X=21, Y=36"  ><area shape="circle" href="#" coords="294,165,3" title="X=22, Y=35"  ><area shape="circle" href="#" coords="292,165,3" title="X=21, Y=35"  ><area shape="circle" href="#" coords="124,217,3" title="X=-63, Y=9"  ><area shape="circle" href="#" coords="122,217,3" title="X=-64, Y=9"  ><area shape="circle" href="#" coords="124,219,3" title="X=-63, Y=8"  ><area shape="circle" href="#" coords="122,219,3" title="X=-64, Y=8"  ><area shape="circle" href="#" coords="378,95,3" title="X=64, Y=70"  ><area shape="circle" href="#" coords="146,121,3" title="X=-52, Y=57"  ><area shape="circle" href="#" coords="346,313,3" title="X=48, Y=-39"  ><area shape="circle" href="#" coords="310,339,3" title="X=30, Y=-52"  ><area shape="circle" href="#" coords="274,265,3" title="X=12, Y=-15"  ><area shape="circle" href="#" coords="360,95,3" title="X=55, Y=70"  ><area shape="circle" href="#" coords="224,91,3" title="X=-13, Y=72"  ><area shape="circle" href="#" coords="226,91,3" title="X=-12, Y=72"  ><area shape="circle" href="#" coords="224,89,3" title="X=-13, Y=73"  ><area shape="circle" href="#" coords="226,89,3" title="X=-12, Y=73"  ><area shape="circle" href="#" coords="148,281,3" title="X=-51, Y=-23"  ><area shape="circle" href="#" coords="150,281,3" title="X=-50, Y=-23"  ><area shape="circle" href="#" coords="148,279,3" title="X=-51, Y=-22"  ><area shape="circle" href="#" coords="150,279,3" title="X=-50, Y=-22"  ><area shape="circle" href="#" coords="130,301,3" title="X=-60, Y=-33"  ><area shape="circle" href="#" coords="132,301,3" title="X=-59, Y=-33"  ><area shape="circle" href="#" coords="130,299,3" title="X=-60, Y=-32"  ><area shape="circle" href="#" coords="132,299,3" title="X=-59, Y=-32"  ><area shape="circle" href="#" coords="116,311,3" title="X=-67, Y=-38"  ><area shape="circle" href="#" coords="118,311,3" title="X=-66, Y=-38"  ><area shape="circle" href="#" coords="116,309,3" title="X=-67, Y=-37"  ><area shape="circle" href="#" coords="118,309,3" title="X=-66, Y=-37"  ><area shape="circle" href="#" coords="260,173,3" title="X=5, Y=31"  ><area shape="circle" href="#" coords="262,173,3" title="X=6, Y=31"  ><area shape="circle" href="#" coords="260,171,3" title="X=5, Y=32"  ><area shape="circle" href="#" coords="262,171,3" title="X=6, Y=32"  ><area shape="circle" href="#" coords="178,339,3" title="X=-36, Y=-52"  ><area shape="circle" href="#" coords="180,339,3" title="X=-35, Y=-52"  ><area shape="circle" href="#" coords="178,337,3" title="X=-36, Y=-51"  ><area shape="circle" href="#" coords="180,337,3" title="X=-35, Y=-51"  ><area shape="circle" href="#" coords="182,107,3" title="X=-34, Y=64"  ><area shape="circle" href="#" coords="182,105,3" title="X=-34, Y=65"  ><area shape="circle" href="#" coords="270,109,3" title="X=10, Y=63"  ><area shape="circle" href="#" coords="272,109,3" title="X=11, Y=63"  ><area shape="circle" href="#" coords="270,107,3" title="X=10, Y=64"  ><area shape="circle" href="#" coords="272,107,3" title="X=11, Y=64"  ><area shape="circle" href="#" coords="180,207,3" title="X=-35, Y=14"  ><area shape="circle" href="#" coords="182,207,3" title="X=-34, Y=14"  ><area shape="circle" href="#" coords="180,205,3" title="X=-35, Y=15"  ><area shape="circle" href="#" coords="182,205,3" title="X=-34, Y=15"  ><area shape="circle" href="#" coords="398,173,3" title="X=74, Y=31"  ><area shape="circle" href="#" coords="400,173,3" title="X=75, Y=31"  ><area shape="circle" href="#" coords="398,171,3" title="X=74, Y=32"  ><area shape="circle" href="#" coords="400,171,3" title="X=75, Y=32"  ><area shape="circle" href="#" coords="342,133,3" title="X=46, Y=51"  ><area shape="circle" href="#" coords="344,133,3" title="X=47, Y=51"  ><area shape="circle" href="#" coords="342,131,3" title="X=46, Y=52"  ><area shape="circle" href="#" coords="344,131,3" title="X=47, Y=52"  ><area shape="circle" href="#" coords="180,107,3" title="X=-35, Y=64"  ><area shape="circle" href="#" coords="180,105,3" title="X=-35, Y=65"  ><area shape="circle" href="#" coords="108,251,3" title="X=-71, Y=-8"  ><area shape="circle" href="#" coords="110,251,3" title="X=-70, Y=-8"  ><area shape="circle" href="#" coords="108,249,3" title="X=-71, Y=-7"  ><area shape="circle" href="#" coords="110,249,3" title="X=-70, Y=-7"  ><area shape="circle" href="#" coords="346,191,3" title="X=48, Y=22"  ><area shape="circle" href="#" coords="346,189,3" title="X=48, Y=23"  ><area shape="circle" href="#" coords="346,187,3" title="X=48, Y=24"  ><area shape="circle" href="#" coords="346,185,3" title="X=48, Y=25"  ><area shape="circle" href="#" coords="348,195,3" title="X=49, Y=20"  ><area shape="circle" href="#" coords="348,193,3" title="X=49, Y=21"  ><area shape="circle" href="#" coords="348,191,3" title="X=49, Y=22"  ><area shape="circle" href="#" coords="348,189,3" title="X=49, Y=23"  ><area shape="circle" href="#" coords="348,187,3" title="X=49, Y=24"  ><area shape="circle" href="#" coords="348,185,3" title="X=49, Y=25"  ><area shape="circle" href="#" coords="348,183,3" title="X=49, Y=26"  ><area shape="circle" href="#" coords="348,181,3" title="X=49, Y=27"  ><area shape="circle" href="#" coords="350,199,3" title="X=50, Y=18"  ><area shape="circle" href="#" coords="350,197,3" title="X=50, Y=19"  ><area shape="circle" href="#" coords="350,195,3" title="X=50, Y=20"  ><area shape="circle" href="#" coords="350,193,3" title="X=50, Y=21"  ><area shape="circle" href="#" coords="350,191,3" title="X=50, Y=22"  ><area shape="circle" href="#" coords="350,189,3" title="X=50, Y=23"  ><area shape="circle" href="#" coords="350,187,3" title="X=50, Y=24"  ><area shape="circle" href="#" coords="350,185,3" title="X=50, Y=25"  ><area shape="circle" href="#" coords="350,183,3" title="X=50, Y=26"  ><area shape="circle" href="#" coords="350,181,3" title="X=50, Y=27"  ><area shape="circle" href="#" coords="350,179,3" title="X=50, Y=28"  ><area shape="circle" href="#" coords="350,177,3" title="X=50, Y=29"  ><area shape="circle" href="#" coords="352,201,3" title="X=51, Y=17"  ><area shape="circle" href="#" coords="352,199,3" title="X=51, Y=18"  ><area shape="circle" href="#" coords="352,197,3" title="X=51, Y=19"  ><area shape="circle" href="#" coords="352,195,3" title="X=51, Y=20"  ><area shape="circle" href="#" coords="352,193,3" title="X=51, Y=21"  ><area shape="circle" href="#" coords="352,191,3" title="X=51, Y=22"  ><area shape="circle" href="#" coords="352,189,3" title="X=51, Y=23"  ><area shape="circle" href="#" coords="352,187,3" title="X=51, Y=24"  ><area shape="circle" href="#" coords="352,185,3" title="X=51, Y=25"  ><area shape="circle" href="#" coords="352,183,3" title="X=51, Y=26"  ><area shape="circle" href="#" coords="352,181,3" title="X=51, Y=27"  ><area shape="circle" href="#" coords="352,179,3" title="X=51, Y=28"  ><area shape="circle" href="#" coords="352,177,3" title="X=51, Y=29"  ><area shape="circle" href="#" coords="352,175,3" title="X=51, Y=30"  ><area shape="circle" href="#" coords="354,201,3" title="X=52, Y=17"  ><area shape="circle" href="#" coords="354,199,3" title="X=52, Y=18"  ><area shape="circle" href="#" coords="354,197,3" title="X=52, Y=19"  ><area shape="circle" href="#" coords="354,195,3" title="X=52, Y=20"  ><area shape="circle" href="#" coords="354,193,3" title="X=52, Y=21"  ><area shape="circle" href="#" coords="354,191,3" title="X=52, Y=22"  ><area shape="circle" href="#" coords="354,189,3" title="X=52, Y=23"  ><area shape="circle" href="#" coords="354,187,3" title="X=52, Y=24"  ><area shape="circle" href="#" coords="354,185,3" title="X=52, Y=25"  ><area shape="circle" href="#" coords="354,183,3" title="X=52, Y=26"  ><area shape="circle" href="#" coords="354,181,3" title="X=52, Y=27"  ><area shape="circle" href="#" coords="354,179,3" title="X=52, Y=28"  ><area shape="circle" href="#" coords="354,177,3" title="X=52, Y=29"  ><area shape="circle" href="#" coords="354,175,3" title="X=52, Y=30"  ><area shape="circle" href="#" coords="356,203,3" title="X=53, Y=16"  ><area shape="circle" href="#" coords="356,201,3" title="X=53, Y=17"  ><area shape="circle" href="#" coords="356,199,3" title="X=53, Y=18"  ><area shape="circle" href="#" coords="356,197,3" title="X=53, Y=19"  ><area shape="circle" href="#" coords="356,195,3" title="X=53, Y=20"  ><area shape="circle" href="#" coords="356,193,3" title="X=53, Y=21"  ><area shape="circle" href="#" coords="356,191,3" title="X=53, Y=22"  ><area shape="circle" href="#" coords="356,189,3" title="X=53, Y=23"  ><area shape="circle" href="#" coords="356,187,3" title="X=53, Y=24"  ><area shape="circle" href="#" coords="356,185,3" title="X=53, Y=25"  ><area shape="circle" href="#" coords="356,183,3" title="X=53, Y=26"  ><area shape="circle" href="#" coords="356,181,3" title="X=53, Y=27"  ><area shape="circle" href="#" coords="356,179,3" title="X=53, Y=28"  ><area shape="circle" href="#" coords="356,177,3" title="X=53, Y=29"  ><area shape="circle" href="#" coords="356,175,3" title="X=53, Y=30"  ><area shape="circle" href="#" coords="356,173,3" title="X=53, Y=31"  ><area shape="circle" href="#" coords="358,203,3" title="X=54, Y=16"  ><area shape="circle" href="#" coords="358,201,3" title="X=54, Y=17"  ><area shape="circle" href="#" coords="358,199,3" title="X=54, Y=18"  ><area shape="circle" href="#" coords="358,197,3" title="X=54, Y=19"  ><area shape="circle" href="#" coords="358,195,3" title="X=54, Y=20"  ><area shape="circle" href="#" coords="358,193,3" title="X=54, Y=21"  ><area shape="circle" href="#" coords="358,191,3" title="X=54, Y=22"  ><area shape="circle" href="#" coords="358,189,3" title="X=54, Y=23"  ><area shape="circle" href="#" coords="358,187,3" title="X=54, Y=24"  ><area shape="circle" href="#" coords="358,185,3" title="X=54, Y=25"  ><area shape="circle" href="#" coords="358,183,3" title="X=54, Y=26"  ><area shape="circle" href="#" coords="358,181,3" title="X=54, Y=27"  ><area shape="circle" href="#" coords="358,179,3" title="X=54, Y=28"  ><area shape="circle" href="#" coords="358,177,3" title="X=54, Y=29"  ><area shape="circle" href="#" coords="358,175,3" title="X=54, Y=30"  ><area shape="circle" href="#" coords="358,173,3" title="X=54, Y=31"  ><area shape="circle" href="#" coords="360,205,3" title="X=55, Y=15"  ><area shape="circle" href="#" coords="360,203,3" title="X=55, Y=16"  ><area shape="circle" href="#" coords="360,201,3" title="X=55, Y=17"  ><area shape="circle" href="#" coords="360,199,3" title="X=55, Y=18"  ><area shape="circle" href="#" coords="360,197,3" title="X=55, Y=19"  ><area shape="circle" href="#" coords="360,195,3" title="X=55, Y=20"  ><area shape="circle" href="#" coords="360,193,3" title="X=55, Y=21"  ><area shape="circle" href="#" coords="360,191,3" title="X=55, Y=22"  ><area shape="circle" href="#" coords="360,189,3" title="X=55, Y=23"  ><area shape="circle" href="#" coords="360,187,3" title="X=55, Y=24"  ><area shape="circle" href="#" coords="360,185,3" title="X=55, Y=25"  ><area shape="circle" href="#" coords="360,183,3" title="X=55, Y=26"  ><area shape="circle" href="#" coords="360,181,3" title="X=55, Y=27"  ><area shape="circle" href="#" coords="360,179,3" title="X=55, Y=28"  ><area shape="circle" href="#" coords="360,177,3" title="X=55, Y=29"  ><area shape="circle" href="#" coords="360,175,3" title="X=55, Y=30"  ><area shape="circle" href="#" coords="360,173,3" title="X=55, Y=31"  ><area shape="circle" href="#" coords="360,171,3" title="X=55, Y=32"  ><area shape="circle" href="#" coords="362,205,3" title="X=56, Y=15"  ><area shape="circle" href="#" coords="362,203,3" title="X=56, Y=16"  ><area shape="circle" href="#" coords="362,201,3" title="X=56, Y=17"  ><area shape="circle" href="#" coords="362,199,3" title="X=56, Y=18"  ><area shape="circle" href="#" coords="362,197,3" title="X=56, Y=19"  ><area shape="circle" href="#" coords="362,195,3" title="X=56, Y=20"  ><area shape="circle" href="#" coords="362,193,3" title="X=56, Y=21"  ><area shape="circle" href="#" coords="362,191,3" title="X=56, Y=22"  ><area shape="circle" href="#" coords="362,189,3" title="X=56, Y=23"  ><area shape="circle" href="#" coords="362,187,3" title="X=56, Y=24"  ><area shape="circle" href="#" coords="362,185,3" title="X=56, Y=25"  ><area shape="circle" href="#" coords="362,183,3" title="X=56, Y=26"  ><area shape="circle" href="#" coords="362,181,3" title="X=56, Y=27"  ><area shape="circle" href="#" coords="362,179,3" title="X=56, Y=28"  ><area shape="circle" href="#" coords="362,177,3" title="X=56, Y=29"  ><area shape="circle" href="#" coords="362,175,3" title="X=56, Y=30"  ><area shape="circle" href="#" coords="362,173,3" title="X=56, Y=31"  ><area shape="circle" href="#" coords="362,171,3" title="X=56, Y=32"  ><area shape="circle" href="#" coords="364,205,3" title="X=57, Y=15"  ><area shape="circle" href="#" coords="364,203,3" title="X=57, Y=16"  ><area shape="circle" href="#" coords="364,201,3" title="X=57, Y=17"  ><area shape="circle" href="#" coords="364,199,3" title="X=57, Y=18"  ><area shape="circle" href="#" coords="364,197,3" title="X=57, Y=19"  ><area shape="circle" href="#" coords="364,195,3" title="X=57, Y=20"  ><area shape="circle" href="#" coords="364,193,3" title="X=57, Y=21"  ><area shape="circle" href="#" coords="364,191,3" title="X=57, Y=22"  ><area shape="circle" href="#" coords="364,189,3" title="X=57, Y=23"  ><area shape="circle" href="#" coords="364,187,3" title="X=57, Y=24"  ><area shape="circle" href="#" coords="364,185,3" title="X=57, Y=25"  ><area shape="circle" href="#" coords="364,183,3" title="X=57, Y=26"  ><area shape="circle" href="#" coords="364,181,3" title="X=57, Y=27"  ><area shape="circle" href="#" coords="364,179,3" title="X=57, Y=28"  ><area shape="circle" href="#" coords="364,177,3" title="X=57, Y=29"  ><area shape="circle" href="#" coords="364,175,3" title="X=57, Y=30"  ><area shape="circle" href="#" coords="364,173,3" title="X=57, Y=31"  ><area shape="circle" href="#" coords="364,171,3" title="X=57, Y=32"  ><area shape="circle" href="#" coords="366,205,3" title="X=58, Y=15"  ><area shape="circle" href="#" coords="366,203,3" title="X=58, Y=16"  ><area shape="circle" href="#" coords="366,201,3" title="X=58, Y=17"  ><area shape="circle" href="#" coords="366,199,3" title="X=58, Y=18"  ><area shape="circle" href="#" coords="366,197,3" title="X=58, Y=19"  ><area shape="circle" href="#" coords="366,195,3" title="X=58, Y=20"  ><area shape="circle" href="#" coords="366,193,3" title="X=58, Y=21"  ><area shape="circle" href="#" coords="366,191,3" title="X=58, Y=22"  ><area shape="circle" href="#" coords="366,189,3" title="X=58, Y=23"  ><area shape="circle" href="#" coords="366,187,3" title="X=58, Y=24"  ><area shape="circle" href="#" coords="366,185,3" title="X=58, Y=25"  ><area shape="circle" href="#" coords="366,183,3" title="X=58, Y=26"  ><area shape="circle" href="#" coords="366,181,3" title="X=58, Y=27"  ><area shape="circle" href="#" coords="366,179,3" title="X=58, Y=28"  ><area shape="circle" href="#" coords="366,177,3" title="X=58, Y=29"  ><area shape="circle" href="#" coords="366,175,3" title="X=58, Y=30"  ><area shape="circle" href="#" coords="366,173,3" title="X=58, Y=31"  ><area shape="circle" href="#" coords="366,171,3" title="X=58, Y=32"  ><area shape="circle" href="#" coords="368,203,3" title="X=59, Y=16"  ><area shape="circle" href="#" coords="368,201,3" title="X=59, Y=17"  ><area shape="circle" href="#" coords="368,199,3" title="X=59, Y=18"  ><area shape="circle" href="#" coords="368,197,3" title="X=59, Y=19"  ><area shape="circle" href="#" coords="368,195,3" title="X=59, Y=20"  ><area shape="circle" href="#" coords="368,193,3" title="X=59, Y=21"  ><area shape="circle" href="#" coords="368,191,3" title="X=59, Y=22"  ><area shape="circle" href="#" coords="368,189,3" title="X=59, Y=23"  ><area shape="circle" href="#" coords="368,187,3" title="X=59, Y=24"  ><area shape="circle" href="#" coords="368,185,3" title="X=59, Y=25"  ><area shape="circle" href="#" coords="368,183,3" title="X=59, Y=26"  ><area shape="circle" href="#" coords="368,181,3" title="X=59, Y=27"  ><area shape="circle" href="#" coords="368,179,3" title="X=59, Y=28"  ><area shape="circle" href="#" coords="368,177,3" title="X=59, Y=29"  ><area shape="circle" href="#" coords="368,175,3" title="X=59, Y=30"  ><area shape="circle" href="#" coords="368,173,3" title="X=59, Y=31"  ><area shape="circle" href="#" coords="370,203,3" title="X=60, Y=16"  ><area shape="circle" href="#" coords="370,201,3" title="X=60, Y=17"  ><area shape="circle" href="#" coords="370,199,3" title="X=60, Y=18"  ><area shape="circle" href="#" coords="370,197,3" title="X=60, Y=19"  ><area shape="circle" href="#" coords="370,195,3" title="X=60, Y=20"  ><area shape="circle" href="#" coords="370,193,3" title="X=60, Y=21"  ><area shape="circle" href="#" coords="370,191,3" title="X=60, Y=22"  ><area shape="circle" href="#" coords="370,189,3" title="X=60, Y=23"  ><area shape="circle" href="#" coords="370,187,3" title="X=60, Y=24"  ><area shape="circle" href="#" coords="370,185,3" title="X=60, Y=25"  ><area shape="circle" href="#" coords="370,183,3" title="X=60, Y=26"  ><area shape="circle" href="#" coords="370,181,3" title="X=60, Y=27"  ><area shape="circle" href="#" coords="370,179,3" title="X=60, Y=28"  ><area shape="circle" href="#" coords="370,177,3" title="X=60, Y=29"  ><area shape="circle" href="#" coords="370,175,3" title="X=60, Y=30"  ><area shape="circle" href="#" coords="370,173,3" title="X=60, Y=31"  ><area shape="circle" href="#" coords="372,201,3" title="X=61, Y=17"  ><area shape="circle" href="#" coords="372,199,3" title="X=61, Y=18"  ><area shape="circle" href="#" coords="372,197,3" title="X=61, Y=19"  ><area shape="circle" href="#" coords="372,195,3" title="X=61, Y=20"  ><area shape="circle" href="#" coords="372,193,3" title="X=61, Y=21"  ><area shape="circle" href="#" coords="372,191,3" title="X=61, Y=22"  ><area shape="circle" href="#" coords="372,189,3" title="X=61, Y=23"  ><area shape="circle" href="#" coords="372,187,3" title="X=61, Y=24"  ><area shape="circle" href="#" coords="372,185,3" title="X=61, Y=25"  ><area shape="circle" href="#" coords="372,183,3" title="X=61, Y=26"  ><area shape="circle" href="#" coords="372,181,3" title="X=61, Y=27"  ><area shape="circle" href="#" coords="372,179,3" title="X=61, Y=28"  ><area shape="circle" href="#" coords="372,177,3" title="X=61, Y=29"  ><area shape="circle" href="#" coords="372,175,3" title="X=61, Y=30"  ><area shape="circle" href="#" coords="374,201,3" title="X=62, Y=17"  ><area shape="circle" href="#" coords="374,199,3" title="X=62, Y=18"  ><area shape="circle" href="#" coords="374,197,3" title="X=62, Y=19"  ><area shape="circle" href="#" coords="374,195,3" title="X=62, Y=20"  ><area shape="circle" href="#" coords="374,193,3" title="X=62, Y=21"  ><area shape="circle" href="#" coords="374,191,3" title="X=62, Y=22"  ><area shape="circle" href="#" coords="374,189,3" title="X=62, Y=23"  ><area shape="circle" href="#" coords="374,187,3" title="X=62, Y=24"  ><area shape="circle" href="#" coords="374,185,3" title="X=62, Y=25"  ><area shape="circle" href="#" coords="374,183,3" title="X=62, Y=26"  ><area shape="circle" href="#" coords="374,181,3" title="X=62, Y=27"  ><area shape="circle" href="#" coords="374,179,3" title="X=62, Y=28"  ><area shape="circle" href="#" coords="374,177,3" title="X=62, Y=29"  ><area shape="circle" href="#" coords="374,175,3" title="X=62, Y=30"  ><area shape="circle" href="#" coords="376,199,3" title="X=63, Y=18"  ><area shape="circle" href="#" coords="376,197,3" title="X=63, Y=19"  ><area shape="circle" href="#" coords="376,195,3" title="X=63, Y=20"  ><area shape="circle" href="#" coords="376,193,3" title="X=63, Y=21"  ><area shape="circle" href="#" coords="376,191,3" title="X=63, Y=22"  ><area shape="circle" href="#" coords="376,189,3" title="X=63, Y=23"  ><area shape="circle" href="#" coords="376,187,3" title="X=63, Y=24"  ><area shape="circle" href="#" coords="376,185,3" title="X=63, Y=25"  ><area shape="circle" href="#" coords="376,183,3" title="X=63, Y=26"  ><area shape="circle" href="#" coords="376,181,3" title="X=63, Y=27"  ><area shape="circle" href="#" coords="376,179,3" title="X=63, Y=28"  ><area shape="circle" href="#" coords="376,177,3" title="X=63, Y=29"  ><area shape="circle" href="#" coords="378,195,3" title="X=64, Y=20"  ><area shape="circle" href="#" coords="378,193,3" title="X=64, Y=21"  ><area shape="circle" href="#" coords="378,191,3" title="X=64, Y=22"  ><area shape="circle" href="#" coords="378,189,3" title="X=64, Y=23"  ><area shape="circle" href="#" coords="378,187,3" title="X=64, Y=24"  ><area shape="circle" href="#" coords="378,185,3" title="X=64, Y=25"  ><area shape="circle" href="#" coords="378,183,3" title="X=64, Y=26"  ><area shape="circle" href="#" coords="378,181,3" title="X=64, Y=27"  ><area shape="circle" href="#" coords="380,191,3" title="X=65, Y=22"  ><area shape="circle" href="#" coords="380,189,3" title="X=65, Y=23"  ><area shape="circle" href="#" coords="380,187,3" title="X=65, Y=24"  ><area shape="circle" href="#" coords="380,185,3" title="X=65, Y=25"  ></map>';
+
+	var nvspan = document.createElement('div');
+		nvspan.align = 'center';
+		nvspan.valign = 'top';
+		nvspan.innerHTML += nvdiv;
+	pars[1].insertBefore(nvspan,pars[1].firstChild);
+}
+
+function do_ordresgowap() {
+	setCarteGogo();		// Via script des trouillots
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x attaque
+
+// Script désactivé en attendant la màj vers le nouveau système de missions.
+
+function do_attaque() {
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x infomonstre
+
+// DEBUG
+// Utilisation obligatoire de listeCDM à cause de getAnalyseTactique()
+// À corriger, évidemment.
+var listeCDM = {};
+var nomMonstre='';
+var idMonstre=-1;
+var tbody;
+var popup;
+
+function traiteMonstre() {
+	try {
+		var nodeTitre = document.evaluate(
+			"//div[@class='titre2' and contains(text(),'(')]",
+			document, null, 9, null
+		).singleNodeValue;
+		var texte = nodeTitre.firstChild.nodeValue;
+	} catch(e) {
+		window.console.log(e);
+		return;
+	}
+	
+	nomMonstre = texte.slice(0,texte.indexOf('(')-1);
+	if(nomMonstre.indexOf(']')!=-1) {
+		nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
+	}
+	idMonstre = texte.match(/\d+/)[0];
+	FF_XMLHttpRequest({
+		method: 'GET',
+		url: 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm='
+			+MZ_getValue('CDMID')
+			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
+		headers : {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+			'Accept': 'application/atom+xml,application/xml,text/xml'
+		},
+		onload: function(responseDetails) {
+			try {
+				var texte = responseDetails.responseText;
+				var lines = texte.split("\n");
+				if(lines.length>=1) {
+					var infos = lines[0].split(";");
+					if(infos.length<4) { return; }
+					var idMonstre = infos[0];
+					infos=infos.slice(3);
+					listeCDM[idMonstre]=infos;
+					computeMission();
+				}
+			} catch(e) {
+				window.alert(e);
+			}
+		}
+	});
+}
+
+function initPopup() {
+// Initialise le popup tactique (calculs att/deg)
+	popup = document.createElement('div');
+	popup.id = 'popup';
+	popup.className = 'mh_textbox';
+	popup.style =
+		'position: absolute;'+
+		'border: 1px solid #000000;'+
+		'visibility: hidden;'+
+		'display: inline;'+
+		'z-index: 3;'+
+		'max-width: 400px;';
+	document.body.appendChild(popup);
+}
+
+function showPopupTactique(evt) {
+	try {
+		var id = this.id;
+		var nom = this.nom;
+		var texte = getAnalyseTactique(id,nom);
+		if(texte=='') { return; }
+		popup.innerHTML = texte;
+		popup.style.left = Math.min(evt.pageX-120,window.innerWidth-300)+'px';
+		popup.style.top = evt.pageY+15+'px';
+		popup.style.visibility = 'visible';
+	} catch(e) {
+		window.alert(e);
+	}
+}
+
+function hidePopup() {
+	popup.style.visibility = 'hidden';
+}
+
+function toggleTableau() {
+	tbody.style.display = tbody.style.display=='none' ? '' : 'none';
+}
+
+function computeMission() {
+// C'est quoi ce titre de fonction ? (O_o)
+	try {
+		var nodeInsert = document.evaluate(
+			"//div[@class = 'titre3']",
+			document, null, 9, null
+		).singleNodeValue;
+	} catch(e) {
+		window.console.log(e);
+		return;
+	}
+	var table = createCDMTable(idMonstre,nomMonstre,listeCDM[idMonstre]);
+	table.align = 'center';
+	tbody = table.childNodes[1];
+	table.firstChild.firstChild.firstChild.onclick = toggleTableau;
+	table.firstChild.firstChild.onmouseover = function() {
+		this.style.cursor = 'pointer';
+		this.className = 'mh_tdpage';
+	};
+	table.firstChild.firstChild.onmouseout = function() {
+		this.className = 'mh_tdtitre';
+	};
+	tbody.style.display = 'none';
+	table.style.width = '350px';
+	insertBefore(nodeInsert,table);
+}
+
+function do_infomonstre() {
+	start_script();
+	try {
+		initPopup();
+		traiteMonstre();
+	} catch(e) {
+		window.alert('Erreur infoMonstre:\n'+e);
+	}
+	displayScriptTime();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x mission
+
+/* TODO
+ * MZ2.0 : gérer le nettoyage des missions terminées via script principal
+ *
+ * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
+ */
+
+function saveMission(num,obEtape) {
+	var obMissions = {};
+	if(MZ_getValue(numTroll+'.MISSIONS')) {
+		try {
+			obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
+		} catch(e) {
+			window.console.error('[MZ Mission] Erreur parsage:\n'+e);
+			return;
+		}
+	}
+	if(obEtape) {
+		obMissions[num] = obEtape;
+	} else if(obMissions[num]) {
+		delete obMissions[num];
+	}
+	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
+}
+
+function traiteMission() {
+	try {
+		var titreMission = document.getElementsByClassName('titre2')[0];
+		var numMission = titreMission.textContent.match(/\d+/)[0];
+		var missionForm = document.getElementsByName('ActionForm')[0];
+		var tdLibelle = document.evaluate(
+			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
+			missionForm, null, 9, null).singleNodeValue;
+	} catch(e) {
+		window.console.error('[MZ Mission] Erreur récupération mission:\n'+e);
+		return;
+	}
+	if(!numMission) { return; }
+	if(!tdLibelle) {
+		// S'il n'y a plus d'étape en cours (=mission finie), on supprime
+		saveMission(numMission,false);
+		return;
+	}
+	
+	var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
+	var siMundidey = libelle.indexOf('Mundidey')!=-1;
+	if(libelle.indexOf('niveau égal à')!=-1) {
+		var nbKills = 1, niveau, mod;
+		if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
+			// Étape de kill multiple de niveau donné
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
+			// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
+			mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
+			mod = mod ? Number(mod[0]) : 'plus';
+		} else {
+			// Étape de kill unique de niveau donné
+			niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
+			mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
+			mod = mod ? Number(mod[0]) : 'plus';
+		}
+		saveMission(numMission,{
+			type: 'Niveau',
+			niveau: niveau,
+			mod: mod,
+			mundidey: siMundidey,
+			libelle: libelle
+		});
+	} else if(libelle.indexOf('de la race')!=-1) {
+		var nbKills = 1, race;
+		if(tdLibelle.firstChild.nodeValue.indexOf('de la race')==-1) {
+			// Étape de kill multiple de race donnée
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
+		} else {
+			// Étape de kill unique de race donnée
+			race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+		}
+		saveMission(numMission,{
+			type: 'Race',
+			race: race.replace(/\"/g,''),
+			mundidey: siMundidey,
+			libelle: libelle
+		});
+	} else if(libelle.indexOf('de la famille')!=-1) {
+		var nbKills = 1, famille;
+		if(tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
+			// Étape de kill multiple de famille donnée
+			//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+			famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
+		} else {
+			// Étape de kill unique de famille donnée
+			famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+		}
+		saveMission(numMission,{
+			type: 'Famille',
+			famille: famille,
+			mundidey: siMundidey,
+			libelle: libelle
+		});
+	} else if(libelle.indexOf('capacité spéciale')!=-1) {
+		var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
+		saveMission(numMission,{
+			type: 'Pouvoir',
+			pouvoir: pouvoir,
+			libelle: libelle
+		});
+	} else {
+		saveMission(numMission,false);
+	}
+}
+
+function do_mission() {
+	start_script(60);
+
+	traiteMission();
+
+	displayScriptTime();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x move
+
+/*-[variables+function]- Données sur les trous de météorites -----------------*/
+
+var petitsTrous = {
+	'-52;57': true,
+	'55;70': true,
+	'64;70': true,
+	'12;-15': true,
+	'30;-52': true,
+	'48;-39': true
+};
+
+var grosTrous = {
+	'-35;65': true,
+	'-13;73': true,
+	'-64;9': true,
+	'-35;15': true,
+	'5;32': true,
+	'10;64': true,
+	'21;36': true,
+	'46;52': true,
+	'74;32': true,
+	'-71;-7': true,
+	'-67;-37': true,
+	'-60;-32': true,
+	'-51;-22': true,
+	'-36;-51': true,
+	'5;-49': true
+};
+
+var centreCarmine_X = 56.5;
+var centreCarmine_Y = 23.5;
+var rayonCarmine = 8.7;
+
+function isTrou(x,y,n) {
+	if(petitsTrous[x+';'+y]) {
+		return n<0 && n>-60;
+	}
+	if(grosTrous[x+';'+y]
+		|| grosTrous[x-1+';'+y]
+		|| grosTrous[x+';'+y+1]
+		|| grosTrous[x-1+';'+y+1]) {
+		return n<0 && n>-70;
+	}
+	if(Math.sqrt(
+			Math.pow(x-centreCarmine_X,2)+Math.pow(y-centreCarmine_Y,2)
+		)<=rayonCarmine) {
+		return n<0 && n>-100;
+	}
+	return false;
+}
+
+/*-[functions]----------------- Gestion des DEs ------------------------------*/
+
+function validateDestination() {
+	var x = Number(document.getElementsByName('ai_XDepart')[0].value);
+	var y = Number(document.getElementsByName('ai_YDepart')[0].value);
+	var n = Number(document.getElementsByName('ai_NDepart')[0].value);
+	var form = document.getElementsByName('ActionForm')[0];
+	if(form) {
+		for(var i=0 ; i<document.getElementsByName('ai_DeplX').length ; i++) {
+			if(document.getElementsByName('ai_DeplX')[i].checked) {
+				x += Number(document.getElementsByName('ai_DeplX')[i].value);
+			}
+		}
+		for(var i=0 ; i<document.getElementsByName('ai_DeplY').length ; i++)	{
+			if(document.getElementsByName('ai_DeplY')[i].checked) {
+				y += Number(document.getElementsByName('ai_DeplY')[i].value);
+			}
+		}
+		for(var i=0 ; i<document.getElementsByName('ai_DeplN').length ; i++) {
+			if(document.getElementsByName('ai_DeplN')[i].checked) {
+				n += Number(document.getElementsByName('ai_DeplN')[i].value);
+			}
+		}
+		if(isTrou(x,y,n)) {
+			return window.confirm(
+				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
+				+'Vous allez tomber dans un trou de météorite.\n'
+				+'Êtes vous sûr de vouloir effectuer ce déplacement ?'
+			);
+		}
+	}
+	return true;
+}
+
+function newsubmitDE(event) {
+	event.stopPropagation();
+	event.preventDefault();
+	if(validateDestination()) {
+		this.submit();
+	}
+}
+
+function changeValidation() {
+	var form = document.getElementsByName('ActionForm')[0];
+	if(form) {
+		form.addEventListener('submit', newsubmitDE, true);
+	}
+}
+
+
+/*-[functions]----------------- Gestion des TPs ------------------------------*/
+
+function validateTPDestination() {
+	try {
+		var text = document.getElementsByTagName('B')[0];
+		var a = text.firstChild.nodeValue.split('|');
+		var pos_x = a[0].substring(4, a[0].length - 1) * 1;
+		var pos_y = a[1].substring(5, a[1].length - 1) * 1;
+		var pos_n = a[2].substring(5, a[2].length) * 1;
+
+		var nbtrous = 0;
+		for(var signX=-1 ; signX<=1 ; signX+=2) {
+			for(var x=0 ; x<=2 ; x++) {
+				for(var signY=-1 ; signY<=1 ; signY+=2) {
+					for(var y=0 ; y<=2 ; y++) {
+						for(var signN = -1 ; signN <= 1 ; signN+=2) {
+							for(var n = 0 ; n <= 1 ; n++) {
+								if(isTrou(
+										pos_x+signX*x,pos_y+signY*y,Math.min(-1,pos_n+signN*n)
+									)) {
+									nbtrous++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if(nbtrous>0 && nbtrous<72) {
+			return window.confirm(
+				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
+				+'Vous avez '+Math.floor((100*nbtrous)/144)
+				+'% de risque de tomber dans un trou de météorite.\n'
+				+'Êtes-vous sûr de vouloir prendre ce portail ?'
+			);
+		}
+		else if(nbtrous>=72) {
+			return window.confirm(
+				'La voix de  mini TilK (n°36216) tonne dans votre tête :\n'
+				+'Malheureux, vous avez '+Math.floor((100*nbtrous)/144)
+				+'% de risque de tomber dans un trou de météorite !\n'
+				+'Êtes-vous bien certain de vouloir prendre ce portail ?'
+			);
+		}
+		return true;
+	}
+	catch(e) {
+		window.alert(e)
+	}
+}
+
+function newsubmitTP(event) {
+	event.stopPropagation();
+	event.preventDefault();
+	if(validateTPDestination()) {
+		this.submit();
+	}
+}
+
+function changeButtonValidate() {
+	var form = document.getElementsByName('Formulaire')[0];
+	if(form) {
+		if(!form.getAttribute('onsubmit')) {
+			form.setAttribute('onsubmit','return true;');
+		}
+		form.addEventListener('submit', newsubmitTP, true);
+	}
+}
+
+
+/*-[functions]---------------- Partie Principale -----------------------------*/
+
+function do_move() {
+	if(isPage('MH_Play/Actions/Play_a_Move.php')) {
+		changeValidation();
+	}
+	else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
+		changeButtonValidate();
+	}
+}
+
+/*******************************************************************************
+* This file is part of Mountyzilla (http://mountyzilla.tilk.info/)             *
+* Mountyzilla is free software; provided under the GNU General Public License  *
+*******************************************************************************/
+
+// x~x news
+
+// Url de récup des jubilaires:
+const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
+// Flux RSS des news MZ:
+const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
+// Nombre de news à afficher & nb max de caractères par news:
+const nbItems = 5;
+const maxCarDescription = 300;
+
+/*-[functions]------------------- Utilitaires --------------------------------*/
+
+// Ne semble avoir strictement aucun effet:
+String.prototype.epureDescription = function() {
+	return this.replace(/\\(.)/g,"$1");
+	}
+
+function appendTitledTable(node,titre,description) {
+	// Crée les tables contenant les infos (avec titre)
+	var table = document.createElement('table');
+	table.border = 0;
+	table.className = 'mh_tdborder';
+	table.cellSpacing = 1;
+	table.cellPadding = 1;
+	table.style.maxWidth = '98%';
+	table.style.marginLeft = 'auto';
+	table.style.marginRight = 'auto';
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	var tr = appendTr(tbody,'mh_tdtitre');
+	var td = appendTdCenter(tr,2);
+	var span = document.createElement('span');
+	appendText(span,titre,true);
+	if(description) {
+		span.title = description;
+		}
+	td.appendChild(span);
+	node.appendChild(table);
+	return tbody;
+	}
+
+
+/*-[functions]------------------- Jubilaires ---------------------------------*/
+
+function traiterJubilaires() {
+	try {
+		FF_XMLHttpRequest({
+			method: 'GET',
+			url: annivURL,
+			headers: {
+				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
+				'Accept': 'application/xml,text/xml',
+				},
+			onload: function(responseDetails) {
+				var listeTrolls = responseDetails.responseText.split('\n');
+				if(!listeTrolls || listeTrolls.length==0) {
+					return;
+					}
+				afficherJubilaires(listeTrolls);
+				},
+			});
+		}
+	catch(e) {
+		window.alert('Erreur Jubilaires:\n'+e)
+		};
+	}
+
+function afficherJubilaires(listeTrolls) {
+	try {
+		var rappels = document.evaluate(
+			"//p[contains(a/text(),'messagerie')]",
+			document, null, 9, null).singleNodeValue;
+		}
+	catch(e) {
+		return;
+		}
+	var p = document.createElement('p');
+	var tbody = appendTitledTable(p,
+		"Les Trõlls qui fêtent leur anniversaire aujourd'hui:",
+		'Envoyez leur un message ou un cadeau !'
+		);
+	tr = appendTr(tbody,'mh_tdpage');
+	td = appendTdCenter(tr);
+	var small = document.createElement('small');
+	td.appendChild(small);
+	var first = true;
+	for(var i=0 ; i<listeTrolls.length ; i++) {
+		var infos = listeTrolls[i].split(';');
+		if(infos.length!=3 || infos[2]==='0') {
+			continue;
+			}
+		if(first) {
+			first = false;
+			}
+		else {
+			appendText(small,', ');
+			}
+		var a = document.createElement('a');
+		a.href = 'javascript:EPV('+infos[0]+')';
+		appendText(a,infos[1]);
+		small.appendChild(a);
+		appendText(small, ' ('+infos[2]+(infos[2]==='1' ? ' an)' : ' ans)') );
+		}
+	insertBefore(rappels,p);
+	}
+
+
+/*-[functions]--------------------- News MZ ----------------------------------*/
+
+function traiterNouvelles() {
+	try {
+		FF_XMLHttpRequest({
+			method: 'GET',
+			url: rssURL,
+			headers: {
+				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
+				'Accept': 'application/xml,text/xml',
+				},
+			onload: function(responseDetails) {
+				responseDetails.responseXML = new DOMParser().parseFromString(
+						responseDetails.responseText,
+						'text/xml');
+				afficherNouvelles(responseDetails.responseXML);
+				}
+			});
+		}
+	catch(e) {
+		window.alert('Erreur News:\n'+e)
+		};
+	}
+
+function afficherNouvelles(xml_data) {
+	var footer = document.getElementById('footer1');
+	if(!footer) {
+		return;
+		}
+	try {
+		var titre = xml_data.evaluate('//channel/title/text()',
+			xml_data, null, 9, null).singleNodeValue.nodeValue;
+		var description = xml_data.evaluate('//channel/description/text()',
+			xml_data, null, 9, null).singleNodeValue.nodeValue;
+		var items = xml_data.evaluate('//channel/item',
+			xml_data, null, 7, null);
+		}
+	catch(e) {
+		return;
+		}
+	if(!titre || !description || items.snapshotLength==0) {
+		return;
+		}
+	var p = document.createElement('p');
+	var tbody = appendTitledTable(p,titre,description);
+	for(var i=0 ; i<Math.min(items.snapshotLength,nbItems) ; i++) {
+		var item = items.snapshotItem(i);
+		var sousTitre = xml_data.evaluate('title/text()',
+			item, null, 9, null).singleNodeValue.nodeValue;
+		var details = xml_data.evaluate('description/text()',
+			item, null, 9, null).singleNodeValue.nodeValue;
+		if(sousTitre && details) {
+			var tr = appendTr(tbody,'mh_tdpage');
+			var td = appendTdCenter(tr);
+			td.style.verticalAlign = 'middle'; // semble sans effet
+			appendText(td,sousTitre,true);
+			td = appendTd(tr);
+			td.innerHTML = details.epureDescription().slice(0,maxCarDescription);
+			// DEBUG
+			// pourquoi il ajoute une ligne vide sous les listes ??
+			// même avec trim(), il vire le textNode mais pas l'espace !
+			}
+		}
+	insertBefore(footer,p);
+	}
+
+
+/*---------------------------------- Main ------------------------------------*/
+
+function do_news() {
+	start_script();
+
+	traiterJubilaires();
+	traiterNouvelles();
+
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x tabcompo
+
+var popup;
+
+function initPopup() {
+	popup = document.createElement('div');
+	popup.setAttribute('id', 'popup');
+	popup.setAttribute('class', 'mh_textbox');
+	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;'
+						+ 'display: inline; z-index: 3; max-width: 400px;');
+	document.body.appendChild(popup);
+}
+
+function showPopup(evt) {
+	var texte = this.getAttribute("texteinfo");
+	popup.innerHTML = texte;
+	popup.style.left = evt.pageX + 15 + 'px';
+	popup.style.top = evt.pageY + 'px';
+	popup.style.visibility = "visible";
+}
+
+function hidePopup() {
+	popup.style.visibility = "hidden";
+}
+
+function createPopupImage(url, text)
+{
+	var img = document.createElement('img');
+	img.setAttribute('src',url);
+	img.setAttribute('align','ABSMIDDLE');
+	img.setAttribute("texteinfo",text);
+	img.addEventListener("mouseover", showPopup,true);
+	img.addEventListener("mouseout", hidePopup,true);
+	return img;
+}
+
+function formateTexte(texte)
+{
+	texte = texte.replace(/\n/g,"<br/>");
+	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
+	texte = texte.replace(/<br\/>([^<]*) d'un/g,"<br/><b>$1</b> d'un");
+	texte = texte.replace(/(d'une? )([^<]*) d'au/g,"$1<b>$2</b> d'au");
+	texte = texte.replace(/(Qualité )([^<]*) \[/g,"$1<b>$2</b> [");
+	texte = texte.replace(/\[([^<]*)\]/g,"[<b>$1</b>]");
+	return texte;
+}
+
+function arrondi(x) {
+	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
+	}
+
+function traiteMinerai() {
+	if (currentURL.indexOf("as_type=Divers")==-1) return;
+	try {
+	var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'"
+								+" and contains(./tr/th/text(),'Minerai')]",
+								document, null, 9, null).singleNodeValue;
+	node = node.nextSibling.nextSibling;
+	}
+	catch(e) {return;}
+	
+	var trlist = document.evaluate('./tr', node, null, 7, null);
+	for (var i=0 ; i<trlist.snapshotLength ; i++) {
+		var node = trlist.snapshotItem(i);
+		var nature = node.childNodes[5].textContent;
+		var caracs = node.childNodes[7].textContent;
+		var taille = caracs.match(/\d+/)[0];
+		var coef = 1;
+		if (caracs.indexOf('Moyen')!=-1) coef = 2;
+		else if (caracs.indexOf('Normale')!=-1) coef = 3;
+		else if (caracs.indexOf('Bonne')!=-1) coef = 4;
+		else if (caracs.indexOf('Exceptionnelle')!=-1) coef = 5;
+		if (nature.indexOf('Mithril')!=-1) {
+			coef = 0.2*coef;
+			appendText(node.childNodes[7], ' | UM: '+arrondi(taille*coef) );
+			}
+		else {
+			coef = 0.75*coef+1.25;
+			if (nature.indexOf('Taill')!=-1) coef = 1.15*coef;
+			appendText(node.childNodes[7], ' | Carats: '+arrondi(taille*coef) );
+			}
+		}
+	}
+
+function treateComposants() {
+	if (currentURL.indexOf("as_type=Compo")==-1) return;
+	//On récupère les composants
+	var nodes = document.evaluate(
+			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
+			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
+			+ "and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) "
+			+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength == 0) {
+//		window.alert('treateComposants DOWN');
+		return;
+		}
+	window.alert(nodes.snapshotLength);
+
+	var texte = "";
+	for (var i = 0; i < nodes.snapshotLength; i++) {
+		var n1 = nodes.snapshotItem(i).childNodes[1];
+		var n3 = nodes.snapshotItem(i).childNodes[3];
+		var debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
+		var prix = n3.childNodes[0].nodeValue;
+		if (!prix)
+			prix = n3.childNodes[3].getAttribute('value') + " GG'";
+		texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
+				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";"
+				+ prix.replace(/\n/g, '') + "\n";
+	}
+
+	var c = document.evaluate("//div[@class = 'titre2']/text()",
+			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	var id_taniere = c.snapshotItem(0).nodeValue;
+	id_taniere = id_taniere.substring(id_taniere.lastIndexOf('(') + 1, id_taniere.lastIndexOf(')'));
+
+	var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
+			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"));
+	if (form)
+	{
+		if(document.getElementsByTagName('form').length>0)
+			insertBefore(document.getElementsByTagName('form')[0].nextSibling, form);
+		else
+		{
+			var thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			insertBefore(thisP, form);
+		}
+	}
+}
+
+function treateAllComposants() {
+	if(currentURL.indexOf("as_type=Compo")==-1) return;
+	
+	//On récupère les composants
+	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])",
+							document, null, 0, null ).numberValue;
+	var c = (categ == 0 ? 3 : 4);
+	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
+		+ "or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']"
+		+ "/descendant::tr[contains(td[1]/a/b/text(),']') and ("
+			+ "td["+c+"]/text()[1] = '\240-\240' "
+			+ "or contains(td["+c+"]/text()[2],'Tous les trolls') "
+			+ "or contains(td["+c+"]/text()[1],'Tous les trolls') "
+			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
+		+ "and td[1]/img/@alt = 'Identifié']",
+		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength == 0) {
+//		window.alert('treateAllComposants DOWN');
+		return;
+		}
+
+	var texte = "";
+	for (var i = 0; i < nodes.snapshotLength; i++) {
+		var n1 = nodes.snapshotItem(i).childNodes[1];
+		var n3 = nodes.snapshotItem(i).childNodes[3];
+		var debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
+		var prix = n3.childNodes[0].nodeValue;
+		if (!prix)
+		{	
+			if(n3.childNodes[3].getAttribute('value') && n3.childNodes[3].getAttribute('value')!="")
+				prix = n3.childNodes[3].getAttribute('value') + " GG'";
+		}
+		else
+		{
+			prix= prix.replace(/[\240 ]/g, "");
+			if(prix=="-")
+				prix=null;
+		}
+		if(prix)
+			texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
+				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";"
+				+ prix.replace(/\n/g, '') + "\n";
+		else
+			texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
+				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas défini\n";
+	}
+
+	var c = document.evaluate("//div[@class = 'titre2']/text()",
+			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	var id_taniere = c.snapshotItem(0).nodeValue;
+	id_taniere = id_taniere.substring(id_taniere.indexOf('(') + 1, id_taniere.indexOf(')'));
+
+	var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
+			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"),"Vendre tous les composants non réservés sur le Troc de l\'Hydre");
+	if (form)
+	{
+		if(document.getElementsByTagName('form').length>0)
+			insertBefore(document.getElementsByTagName('form')[0].nextSibling, form);
+		else
+		{
+			var thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..",	document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			insertBefore(thisP, form);
+		}
+	}
+}
+
+function treateEM()
+{
+	if(currentURL.indexOf("as_type=Compo")==-1)
+		return false;
+	var urlImg = "http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png";
+	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
+			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength == 0)
+		return false;
+	for (var i = 0; i < nodes.snapshotLength; i++) {
+		var desc = nodes.snapshotItem(i).getElementsByTagName('td') ;
+		var link = desc[2].firstChild ;
+		var nomCompoTotal = desc[2].textContent ;
+		var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
+		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
+		var nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length-1)) ;
+		var locqual = desc[3].textContent ;
+		var qualite = trim(locqual.substring(locqual.indexOf("Qualité:")+9)) ;
+		var localisation = trim(locqual.substring(0,locqual.indexOf("|")-1)) ;
+		if(isEM(nomMonstre).length>0)
+		{
+			var infos = composantEM(nomMonstre, trim(nomCompo), localisation,getQualite(qualite));
+			if(infos.length>0)
+			{
+				var shortDescr = "Variable";
+				var bold = 0;
+				if(infos != "Composant variable")
+				{
+					shortDescr = infos.substring(0,infos.indexOf(" "));
+					if(parseInt(shortDescr)>=0)
+						bold=1;
+				}
+				link.parentNode.appendChild(createImage(urlImg,infos)) ;
+				appendText(link.parentNode," ["+shortDescr+"]",bold) ;
+			}
+		}
+		
+	}
+}
+
+function treateChampi() {
+	if (currentURL.indexOf('as_type=Champi')==-1)
+		return false;
+	var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
+			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (nodes.snapshotLength == 0)
+		return false;
+
+	for (var i = 0; i < nodes.snapshotLength; i++) {
+		var node = nodes.snapshotItem(i);
+		var nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
+		if (moisChampi[nomChampi])
+			appendText(node.parentNode.parentNode,' [Mois '+moisChampi[nomChampi]+']');
+		}
+	}
+
+function treateEnchant()
+{
+	if(currentURL.indexOf("as_type=Compo")==-1)
+		return false;
+	try
+	{
+		if(!listeMonstreEnchantement)
+			computeCompoEnchantement();
+		var nodes = document.evaluate(
+			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
+			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
+			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		if (nodes.snapshotLength == 0)
+			return false;
+		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
+		for (var i = 0; i < nodes.snapshotLength; i++) {
+			var link = nodes.snapshotItem(i);
+			var nomCompoTotal = link.firstChild.nodeValue;
+			var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
+			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
+			var nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
+			nomCompoTotal = link.childNodes[1].childNodes[0].nodeValue;
+			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
+			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
+			if(isEnchant(nomMonstre).length>0)
+			{
+				var infos = composantEnchant(nomMonstre, nomCompo, localisation,getQualite(qualite));
+				if(infos.length>0)
+				{
+					link.parentNode.appendChild(createImage(urlImg,infos));
+				}
+			}
+		}
+	}
+	catch(e)
+	{
+		window.alert(e);
+	}
+}
+
+function treateEquipEnchant()
+{
+	if(currentURL.indexOf('as_type=Arme')==-1 && currentURL.indexOf('as_type=Armure')==-1)
+		return false;
+	initPopup();
+	computeEnchantementEquipement(createPopupImage,formateTexte);
+}
+
+function do_tancompo() {
+	start_script();
+
+	treateAllComposants();
+	treateComposants();
+	traiteMinerai();
+	if (MZ_getValue('NOINFOEM')!='true') {
+		treateChampi();
+		treateEM();
+		}
+	if (MZ_getValue(numTroll+'.enchantement.liste') && MZ_getValue(numTroll+'.enchantement.liste')!='') {
+		treateEnchant();
+		treateEquipEnchant();
+		}
+
+	displayScriptTime();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x profil
+
+/*---------------------------- Variables globales ----------------------------*/
+
+var	
+	// Structure générale des données
+	lignesProfil, lignesPV,
+	tr_comps, tr_sorts,
+	
+	// Anatrolliseur
+	urlAnatrolliseur,
+	
+	// Infobulles talents
+	hauteur = 50, bulleStyle = null,
+	
+	// Caractéristiques (ordre de la page)
+		// pour setAccel()
+	race,
+		// utilisée pour les moyennes MM/jour, kill/jour, etc
+	NBjours,
+		// calcul des DLA suivantes
+	DLA, DLAsuiv, HeureServeur,
+		// détails durée du tour (calcul pvdispo) :
+	dtb, pdm, bmt,
+		//posale
+	posX, posY, posN,
+		// caracs physiques
+	vue, vuebm, vuetotale,
+	pvbase, pvmax, pv, pvdispo,
+	fatigue, bmfatigue,
+	reg, regbm, regmoy,
+	att, attbm, attbmm, attmoy,
+	esq, esqbm, esqmoy,
+	deg, degbm, degbmm, degmoy,
+	arm, armbmp, armbmm, armmoy,
+	rm, rmbm, mm, mmbm,
+	
+	// Modificateurs
+	// DEBUG: revoir le fonctionnement de "nbattaques" (obsolète) :
+	//  |-> gestion (x3) : malusDAtt, malusDEsq, malusDArm
+	//  |-> réinit. sur menu
+	nbattaques, bmDDegM, bmDAttM,
+	
+	// Variables spéciales Kastars
+	pva, minParPV, overDLA,
+		// id pour édition manuelle de lastDLA :
+	inJour, inMois, inAn, inHr, inMin, inSec,
+		// id pour auto-refresh lastDLA :
+	lastDLAZone, maxAMZone, cumulZone,
+	lastDLA, DLAaccel;
+
+
+/*-[functions]----------------- Fonctions utiles -----------------------------*/
+
+function resiste(Ddeg,bm) {
+	// version naive mais compréhensible ^^
+	// DEBUG: à revoir
+	if(!bm) {
+		return 2*Math.floor(Ddeg/2);
+	}
+	return 2*Math.floor(Ddeg/2)+Math.round(bm/2);
+}
+
+function getPortee(param) {
+	param = Math.max(0,Number(param));
+	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
+	// ça devrait être floor, +10.25, -2.5
+}
+
+function retourAZero(fatig) {
+	var fat = fatig, raz = 0;
+	while(fat>0) {
+		raz++;
+		fat = Math.floor(fat/1.25);
+	}
+	return raz;
+}
+
+function decumulPumPrem(bonus) {
+	switch(bonus) {
+		case 20: return 33;
+		case 33: return 41;
+		case 41: return 46;
+		case 46: return 49;
+		case 49: return 51;
+		default: return 20;
+	}
+}
+
+function coefDecumul(i) {
+	switch(i) {
+		case 2: return 0.67;
+		case 3: return 0.4;
+		case 4: return 0.25;
+		case 5: return 0.15;
+		default: return 0.1;
+	}
+}
+
+function dureeHM(dmin) {
+	var ret = "";
+	dmin = Math.floor(dmin);
+	if(dmin>59) { ret = Math.floor(dmin/60)+"h"; }
+	var mins = dmin%60;
+	if(mins!=0) { ret += (ret) ? addZero(mins)+"min" : mins+"min"; }
+	return (ret) ? ret : "-";
+}
+
+
+/*-[functions]------- Extraction / Sauvegarde des données --------------------*/
+
+function initAll() {
+	var tablePrincipale, lignesCaracs, Nbrs={},
+		lignes, paragraphes, str;
+	
+	// On recherche la table principale du profil et on en extrait les "lignes"
+	tablePrincipale = document.evaluate(
+		"//h2[@id='titre2']/following-sibling::table",
+		document, null, 9, null
+	).singleNodeValue;
+	
+	// ***INIT GLOBALE*** lignesProfil
+	// On utilise un snapshot pour continuer à accéder aux lignes dans l'ordre
+	// original même si on en ajoute (e.g. fatigue des Kastars)
+	lignesProfil = document.evaluate(
+		"./tbody/tr",
+		tablePrincipale, null, 7, null
+	);
+	
+	// EXTRACTION DES DONNEES BRUTES
+	lignes = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
+		childNodes;
+	// dtb = Durée Tour de Base, bmt = BM Temps, pdm = Poids Du Matos
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,5)) {
+			case "Durée": Nbrs["dtb"] = str; continue;
+			case "Bonus": Nbrs["bmt"] = str; continue;
+			case "Poids": Nbrs["pdm"] = str; continue;
+		}
+	}
+	
+	lignes = lignesProfil.snapshotItem(2).cells[1].childNodes;
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,3)) {
+			case "X =": Nbrs["pos"] = str; continue;
+			case "Vue": Nbrs["vue"] = str; continue;
+		}
+	}
+
+	Nbrs["niv"] = document.evaluate(
+		"./text()[contains(.,'Niveau')]",
+		lignesProfil.snapshotItem(3).cells[1],
+		null, 9, null
+	).singleNodeValue.nodeValue;
+	
+	// ***INIT GLOBALE*** lignesPV
+	// Il y a 4 lignes :
+	// 0) PV actuels+barre de PVs, 1) PV max, 2) vide, 3) fatigue
+	lignesPV = lignesProfil.snapshotItem(4).cells[1].
+		getElementsByTagName("table")[0].rows;
+	Nbrs["pva"] = lignesPV[0].cells[0].textContent;
+	Nbrs["pvm"] = lignesPV[1].cells[0].textContent;
+	Nbrs["fat"] = document.evaluate(
+		"./text()[contains(.,'atigue')]",
+		lignesPV[3].cells[0],
+		null, 9, null
+	).singleNodeValue.nodeValue;
+	
+	lignesCaracs = lignesProfil.snapshotItem(5).cells[1].
+		getElementsByTagName("table")[0].rows;
+	for(var i=lignesCaracs.length-1 ; i>=0 ; --i) {
+		str = trim(lignesCaracs[i].cells[0].textContent).slice(0,3).toLowerCase().
+			replace(/é/,'e');
+		Nbrs[str] = lignesCaracs[i].textContent;
+	}
+	
+	lignes = lignesProfil.snapshotItem(9).cells[1].childNodes;
+	for(var i=lignes.length-1 ; i>=0 ; --i) {
+		if(lignes[i].nodeType!=3) { continue; }
+		str = trim(lignes[i].nodeValue);
+		switch(str.slice(0,3)) {
+			case "Rés": Nbrs["rm"] = str; continue;
+			case "Maî": Nbrs["mm"] = str; continue;
+		}
+	}
+	
+	// TRAITEMENT DES DONNEES
+	for(var key in Nbrs) {
+		//window.console.debug(key,Nbrs[key]);
+		Nbrs[key] = getNumbers(Nbrs[key]);
+		//window.console.debug("traitement:",Nbrs[key]);
+	}
+	
+	dtb = Nbrs["dtb"][0]*60+Nbrs["dtb"][1];
+	// la ligne des bm de temps n'existe pas si bmt=0 :
+	bmt = Nbrs["bmt"] ? Nbrs["bmt"][0]*60+Nbrs["bmt"][1] : 0;
+	pdm = Nbrs["pdm"][0]*60+Nbrs["pdm"][1];
+	
+	posX = Nbrs["pos"][0];
+	posY = Nbrs["pos"][1];
+	posN = Nbrs["pos"][2];
+	
+	vue = Nbrs["vue"][0];
+	vuebm = Nbrs["vue"][1];
+	vuetotale = Math.max(0,vue+vuebm);
+	
+	nivTroll = Nbrs["niv"][0];
+	
+	pv = Nbrs["pva"][0];
+	pvbase = Nbrs["pvm"][0];
+	pvmax = pvbase;
+	if(Nbrs["pvm"].length>1) {
+		// s'il y a des BM de PV
+		pvmax += Nbrs["pvm"][1];
+	}
+	
+	fatigue = Nbrs["fat"][0];
+	// bmfat = 0 si pas de BM fat
+	bmfatigue = (Nbrs["fat"].length>1) ? Nbrs["fat"][1] : 0;
+	
+	// les Nbrs[...][1] contiennent les 3 ou les 6 de "D3" ou "D6"
+	reg = Nbrs["reg"][0];
+	regbm = Nbrs["reg"][2]+Nbrs["reg"][3];
+	regmoy = 2*reg+regbm;
+	appendTdText(lignesCaracs[0],"(moyenne : "+regmoy+")");
+	regmoy = Math.max(0,regmoy);
+	// Temps récupéré par reg (propale R')
+	str = "Temps moyen récupéré par régénération : "+
+		Math.floor(250*regmoy/pvmax)+
+		" min";
+	var sec = Math.floor(15000*regmoy/pvmax)%60;
+	if(sec!=0) { str += " "+sec+" sec"; }
+	lignesCaracs[0].title = str;
+	
+	att = Nbrs["att"][0];
+	attbmm = Nbrs["att"][3];
+	attbm = Nbrs["att"][2]+attbmm;
+	attmoy = 3.5*att+attbm;
+	appendTdText(lignesCaracs[1],"(moyenne : "+attmoy+")");
+	
+	esq = Nbrs["esq"][0];
+	esqbm = Nbrs["esq"][2]+Nbrs["esq"][3];
+	esqmoy = 3.5*esq+esqbm;
+	appendTdText(lignesCaracs[2],"(moyenne : "+esqmoy+")");
+	
+	deg = Nbrs["deg"][0];
+	degbmm = Nbrs["deg"][3];
+	degbm = Nbrs["deg"][2]+degbmm;
+	degmoy = 2*deg+degbm;
+	appendTdText(lignesCaracs[3],
+		"(moyenne : "+degmoy+"/"+(2*Math.floor(1.5*deg)+degbm)+")"
+	);
+	
+	rm = Nbrs["rm"][0];
+	rmbm = Nbrs["rm"][1];
+	rmTroll = rm+rmbm;
+	mm = Nbrs["mm"][0];
+	mmbm = Nbrs["mm"][1];
+	mmTroll = mm+mmbm;
+	
+	arm = Nbrs["arm"][0];
+	if(Nbrs["arm"].length>4) {
+		// s'il y a des D d'armure non activés
+		armbmp = Nbrs["arm"][4];
+		armbmm = Nbrs["arm"][5];
+	} else {
+		armbmp = Nbrs["arm"][2];
+		armbmm = Nbrs["arm"][3];
+	}
+	armmoy = 2*arm+armbmp+armbmm;
+	appendTdText(lignesCaracs[4],"(moyenne : "+armmoy+")");
+	
+	// Race
+	str = lignesProfil.snapshotItem(0).cells[1].innerHTML.split("<br>")[1];
+	race = trim(str.slice(str.indexOf(":")+2));
+	
+	// PuM/PréM
+	paragraphes = lignesProfil.snapshotItem(6).cells[1].getElementsByTagName("p");
+	if(paragraphes.length>2) {
+		lignes = paragraphes[1].childNodes;
+		for(var i=lignes.length-1 ; i>=0 ; --i) {
+			if(lignes[i].nodeType!=3) { continue; }
+			str = lignes[i].nodeValue;
+			if(str.indexOf("Dés d'attaque")!=-1) {
+				bmDAttM = getNumbers(str)[0];
+			} else if(str.indexOf("Dés de dégâts")!=-1) {
+				bmDDegM = getNumbers(str)[0];
+			}
+		}
+	}
+	//window.console.debug("PuM/PréM",bmDAttM,bmDDegM);
+	
+	// setDLA()
+	str = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[0].
+		getElementsByTagName("b")[0].textContent;
+	DLA = new Date( StringToDate(str) );
+	
+	// setHeureServeur()
+	try {
+		str = document.evaluate(
+			".//text()[contains(.,'Serveur')]",
+			document.getElementById("footer2"),
+			null, 9, null
+		).singleNodeValue.nodeValue;
+		str = str.slice(str.indexOf("/")-2,str.lastIndexOf(":")+3);
+		HeureServeur = new Date( StringToDate(str) );
+	} catch(e) {
+		window.console.warn(
+			"[MZ] Heure Serveur introuvable, utilisation de l'heure actuelle", e
+		);
+		HeureServeur = new Date();
+	}
+	
+	// initAnatrolliseur()
+	var amelio_dtb = function(dtb) {
+		if(dtb>555) {
+			return Math.floor((21-Math.sqrt(8*dtb/3-1479))/2);
+		}
+		return 10+Math.ceil((555-dtb)/2.5);
+	},
+		amelio_pv = Math.floor(pvbase/10)-3,
+		amelio_vue = vue-3,
+		amelio_att = att-3,
+		amelio_esq = esq-3,
+		amelio_deg = deg-3,
+		amelio_reg = reg-1,
+		amelio_arm = arm-1;
+	if(race==="Darkling") { amelio_reg--; }
+	if(race==="Durakuir") { amelio_pv-- ; }
+	if(race==="Kastar")   { amelio_deg--; }
+	if(race==="Skrim")    { amelio_att--; }
+	if(race==="Tomawak")  { amelio_vue--; }
+	
+	urlAnatrolliseur = "http://mountyhall.dispas.net/dynamic/"
+		+"outils_anatrolliseur.php?anatrolliseur=v8"
+		+"|r="+race.toLowerCase()
+		+"|dla="+amelio_dtb(dtb)
+		+"|pv="+amelio_pv+",0,"+(pvmax-pvbase)
+		+"|vue="+amelio_vue+",0,"+vuebm
+		+"|att="+amelio_att+","+Nbrs["att"][2]+","+attbmm
+		+"|esq="+amelio_esq+","+Nbrs["esq"][2]+","+Nbrs["esq"][3]
+		+"|deg="+amelio_deg+","+Nbrs["deg"][2]+","+degbmm
+		+"|reg="+amelio_reg+","+Nbrs["reg"][2]+","+Nbrs["reg"][3]
+		+"|arm="+amelio_arm+","+armbmp+","+armbmm
+		+"|mm="+mmTroll
+		+"|rm="+rmTroll+"|";
+}
+
+function saveProfil() {
+	//MZ_setValue(numTroll+'.profilON',true); // pour remplacer isProfilActif ?
+	//MZ_setValue('NIV_TROLL',nivTroll);
+	MZ_setValue(numTroll+'.caracs.attaque',att);
+	MZ_setValue(numTroll+'.caracs.attaque.bm',attbm);
+	MZ_setValue(numTroll+'.caracs.attaque.bmp',attbm-attbmm);
+	MZ_setValue(numTroll+'.caracs.attaque.bmm',attbmm);
+	MZ_setValue(numTroll+'.caracs.esquive',esq);
+	MZ_setValue(numTroll+'.caracs.esquive.bm',esqbm);
+	MZ_setValue(numTroll+'.caracs.esquive.nbattaques',nbattaques);
+	MZ_setValue(numTroll+'.caracs.degats',deg);
+	MZ_setValue(numTroll+'.caracs.degats.bm',degbm);
+	MZ_setValue(numTroll+'.caracs.degats.bmp',degbm-degbmm);
+	MZ_setValue(numTroll+'.caracs.degats.bmm',degbmm);
+	MZ_setValue(numTroll+'.caracs.regeneration',reg);
+	MZ_setValue(numTroll+'.caracs.regeneration.bm',regbm);
+	MZ_setValue(numTroll+'.caracs.vue',vue);
+	MZ_setValue(numTroll+'.caracs.vue.bm',vuebm);
+	MZ_setValue(numTroll+'.caracs.pv',pv);
+	MZ_setValue(numTroll+'.caracs.pv.base',pvbase);
+	MZ_setValue(numTroll+'.caracs.pv.max',pvmax);
+	MZ_setValue(numTroll+'.caracs.rm',rmTroll);
+	MZ_setValue(numTroll+'.caracs.rm.bm',rmbm);
+	MZ_setValue(numTroll+'.caracs.mm',mmTroll);
+	MZ_setValue(numTroll+'.caracs.mm.bm',mmbm);
+	MZ_setValue(numTroll+'.caracs.armure',arm);
+	MZ_setValue(numTroll+'.caracs.armure.bm',armbmp+armbmm);
+	MZ_setValue(numTroll+'.caracs.armure.bmp',armbmp);
+	MZ_setValue(numTroll+'.caracs.armure.bmm',armbmm);
+	if(bmDAttM) MZ_setValue(numTroll+'.bonus.DAttM',+bmDAttM);
+	if(bmDDegM) MZ_setValue(numTroll+'.bonus.DDegM',bmDDegM);
+	MZ_setValue(numTroll+'.position.X',posX);
+	MZ_setValue(numTroll+'.position.Y',posY);
+	MZ_setValue(numTroll+'.position.N',posN);
+	MZ_setValue(numTroll+'.race',race);
+	}
+
+
+/*-[functions]----------- Fonctions modifiant la page ------------------------*/
+
+function newStyleLink() {
+	appendButton(
+		document.getElementById("titre2"),
+		"Nouveau Profil",
+		function(){
+			window.open("Play_profil2.php","Contenu");
+		}
+	);
+}
+
+function setAnatrolliseur() {
+	appendButton(
+		lignesProfil.snapshotItem(0).cells[0],
+		"Anatrolliser!",
+		function(){
+			window.open(urlAnatrolliseur,"_blank")
+		}
+	);
+}
+
+function setInfoDateCreation() {
+	var strCreation, dateCreation, txt;
+	
+	strCreation = lignesProfil.snapshotItem(0).cells[1].textContent;
+	strCreation = strCreation.slice(
+		strCreation.indexOf("(")+1, strCreation.indexOf(")")
+	);
+	dateCreation = new Date( StringToDate(strCreation) );
+	
+	// ***INIT GLOBALE*** NBjours
+	NBjours = Math.floor((HeureServeur-dateCreation)/864e5)+1;
+	
+	txt = (NBjours!=1) ?
+		"("+NBjours+" jours dans le hall)" :
+		"(Bienvenue à toi pour ton premier jour dans le hall)" ;
+	appendText(lignesProfil.snapshotItem(0).cells[1], txt, false);
+}
+
+function setNextDLA() {
+	var
+		parDLAsuiv, dureeTourMS, DLAsuivMS, nbLoupes,
+		title, nextPv, nextTour,
+		str, nbrs;
+	
+	// ***INIT GLOBALE*** DLAsuiv
+	parDLAsuiv = lignesProfil.snapshotItem(1).cells[1].
+		getElementsByTagName("p")[3];
+	str = parDLAsuiv.getElementsByTagName("i")[0].textContent;
+	DLAsuiv = new Date( StringToDate(str) );
+	
+	// Affichage des tours manqués
+	nbrs = getNumbers(
+		lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
+		getElementsByTagName("b")[0].textContent
+	);
+	dureeTourMS = nbrs[0]*36e5+nbrs[1]*6e4;
+	DLAsuivMS = DLA.getTime()+dureeTourMS;
+	nbLoupes = 0;
+	while(DLAsuivMS<HeureServeur) {
+		DLAsuivMS += dureeTourMS;
+		nbLoupes++;
+	}
+	if(nbLoupes>0) {
+		// ***RE-INIT GLOBALE*** DLAsuiv
+		DLAsuiv = new Date( DLAsuivMS );
+		txt = "(+"+nbLoupes+" tour"+
+			(nbLoupes>1?"s":"")+" : "+
+			DateToString( DLAsuiv )+
+			")";
+		appendBr(parDLAsuiv);
+		appendText(parDLAsuiv, txt, false);
+	}
+
+	// Estimation des DLA suivantes
+	title = ""; nextPv = pv;
+	for(var i=1 ; i<4 ; ++i) {
+		nextPv = Math.min(nextPv+regmoy,pvmax);
+		nextTour = dtb +
+			Math.max( 0, pdm+bmt + Math.floor(500*(pvmax-nextPv)/pvmax)/2 );
+		title += (title?"\n":"")+
+			"DLA +"+i+": "+
+			DateToString( new Date(DLAsuivMS) )+
+			" ("+nextPv+"PV, durée: "+dureeHM(nextTour)+")";
+		DLAsuivMS += nextTour*6e4;
+	}
+	parDLAsuiv.title = title;
+}
+
+function vueCarac() {
+	var tableCaracs, nodeVue, parentNodeVue,
+		tr, td;
+	
+	// On insère la Vue dans les caracs
+	tableCaracs = lignesProfil.snapshotItem(5).cells[1].
+		getElementsByTagName("table")[0];
+	tr = tableCaracs.insertRow(0);
+	appendTdText(tr,"Vue..................:");
+	td = appendTdText(tr,vue+" Cases");
+	td.colSpan = 2;
+	td.align = "right";
+	td = appendTdText(tr,aff(vuebm));
+	td.align = "right";
+	
+	// On retire la Vue de la ligne "Position"
+	parentNodeVue = lignesProfil.snapshotItem(2).cells[1];
+	nodeVue = document.evaluate(
+		"./text()[contains(.,'Vue')]",
+		parentNodeVue,
+		null, 9, null
+	).singleNodeValue;
+	parentNodeVue.removeChild(nodeVue.previousSibling);
+	parentNodeVue.removeChild(nodeVue);
+}
+
+function setLieu() {
+	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
+		'?search=position&orderBy=distance&posx='+
+		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
+	if(MZ_getValue('VUECARAC')=='true') {
+		insertButton(
+			lignesProfil.snapshotItem(2).cells[1].getElementsByTagName("b")[0],
+			'Lieux à proximité',
+			function(){ window.open(urlBricol,'_blank') }
+		);
+	} else {
+		appendBr(lignesProfil.snapshotItem(2).cells[0]);
+		appendButton(
+			lignesProfil.snapshotItem(2).cells[0],
+			'Lieux à proximité',
+			function(){ window.open(urlBricol,'_blank') }
+		);
+	}
+}
+
+function setInfosPxPi() {
+	if(nivTroll==60) return;
+	
+	/* Extraction des données */
+	var TDexp = lignesProfil.snapshotItem(3).cells[1];
+	var node = TDexp.firstChild;
+	var str = node.nodeValue;
+	var pi_tot = parseInt(str.match(/\d+/g)[1]);
+	var nbrs = getNumbers(TDexp.childNodes[2].nodeValue);
+	var px = nbrs[0]+nbrs[1];
+	var pi_nextLvl = nivTroll*(nivTroll+3)*5;
+	var px_ent = 2*nivTroll;
+	if(nivTroll<3) px_ent=Math.max(px_ent,Math.min(px,5));
+	var nb_ent = Math.ceil((pi_nextLvl-pi_tot)/px_ent);
+	
+	/* Modification ligne "Niveau" */
+	str = str.substring(0,str.length-1)+' | Niveau '+(nivTroll+1)+' : '
+		+pi_nextLvl+' PI => '+nb_ent+' entraînement';
+	if(nb_ent>1) str += 's';
+	str += ')';
+	var span = document.createElement('span');
+	span.title = (Math.round(10*(pi_tot+px)/NBjours)/10)+' PI par jour';
+	appendText(span,str);
+	TDexp.replaceChild(span,node);
+	
+	/* Ajout ligne PX entrainement */
+	insertBr(TDexp.childNodes[3]);
+	node = document.createElement('i');
+	if(px<px_ent)
+		appendText(node,
+			'Il vous manque '+(px_ent-px)+' PX pour vous entraîner.'
+			);
+	else
+		appendText(node,
+			'Entraînement possible. Il vous restera '+(px-px_ent)+' PX.'
+			);
+	insertBefore(TDexp.childNodes[4],node);
+	}
+
+function setInfosPV() { // pour AM et Sacro
+	var
+		txt = "1 PV de perdu = +"+Math.floor(250/pvmax)+" min",
+		sec = Math.floor(15000/pvmax)%60,
+		lifebar = lignesPV[0].cells[1].getElementsByTagName("table")[0];
+	if(sec!=0) { txt += " "+sec+" sec"; }
+	if(lifebar) { lifebar.title = txt; }
+	if(pv<=0) { return; }
+	
+	// Différence PV p/r à équilibre de temps (propale R')
+	// Note : pvmin pour 0 malus = pvmax + ceiling(pvmax/250*(bmt+pdm))
+	// ***INIT GLOBALE*** pvdispo
+	pvdispo = pv-pvmax-Math.ceil((bmt+pdm)*pvmax/250);
+	var	
+		td = appendTd(lignesPV[2]),
+		span = document.createElement("span");
+	span.title = txt;
+	span.style.fontStyle = "italic";
+	if(bmt+pdm>=0) {
+		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
+	} else if(pvdispo>0) {
+		txt = "Vous pouvez encore perdre "+
+			Math.min(pvdispo,pv)+
+			" PV sans malus de temps.";
+	} else if(pvdispo<0) {
+		txt = "Il vous manque "
+			+(-pvdispo)
+			+" PV pour ne plus avoir de malus de temps.";
+	} else {
+		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
+	}
+	appendText(span,txt);
+	td.appendChild(span);
+}
+
+function setCurrentEsquive() {
+	var pnode = lignesProfil.snapshotItem(6).cells[1].
+		getElementsByTagName("p")[0];
+	var attmod = pnode.childNodes[3].nodeValue.match(/\d+/)[0];
+	pnode.childNodes[3].nodeValue +=
+		' (moyenne attaque : '+Math.max(attmoy-3.5*attmod,attbm,0)+')';
+	var esqmod = pnode.childNodes[5].nodeValue.match(/\d+/)[0];
+	pnode.childNodes[5].nodeValue +=
+		' (moyenne esquive : '+Math.max(esqmoy-3.5*esqmod,esqbm,0)+')';
+	nbattaques = parseInt(esqmod);
+	var armmod = pnode.childNodes[7].nodeValue.match(/\d+/)[0];
+	pnode.childNodes[7].nodeValue +=	
+		' (moyenne armure : '+Math.max(armmoy-2*armmod,armbmp+armbmm,0)+')';
+	}
+
+function setStabilite() {
+	var node = lignesProfil.snapshotItem(5).getElementsByTagName("p")[0];
+	appendBr(node);
+	appendText(node,
+		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
+		+' (moyenne : '+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+')'
+	);
+}
+
+function setRatioKillDeath() {
+	try{
+		var node = document.evaluate(
+			"./td[2]/p[contains(./text(),'Adversaires tués')]",
+			lignesProfil.snapshotItem(6),null,9,null).singleNodeValue;
+		var killnode = node.firstChild;
+		var deathnode = node.childNodes[2];
+		}
+	catch(e){return;}
+	var kill = getNumbers(killnode.nodeValue)[0];
+	var span = document.createElement('span');
+	span.title  = 'Un kill tous les '
+		+(Math.round(10*NBjours/kill)/10)+' jours';
+	appendText(span,killnode.nodeValue);
+	node.replaceChild(span,killnode);
+	var death = getNumbers(deathnode.nodeValue)[0];
+	if(death) {
+		span = document.createElement('span');
+		span.title = 'Une mort tous les '
+			+(Math.round(10*NBjours/death)/10)+' jours';
+		appendText(span,deathnode.nodeValue);
+		node.replaceChild(span,deathnode);
+		appendBr(node);
+		appendText(node,
+			'Rapport meurtres/décès : '+Math.floor((kill/death)*1000)/1000
+			);
+		}
+	}
+
+function setTotauxMagie() {
+	var td = lignesProfil.snapshotItem(9).cells[1];
+	/* RM */
+	var span = document.createElement('span');
+	span.title = (Math.round(10*rm/NBjours)/10)
+				+' ('+(Math.round(10*rmTroll/NBjours)/10)+') points de RM par jour | '
+				+(Math.round(10*rm/nivTroll)/10)+
+				' ('+(Math.round(10*rmTroll/nivTroll)/10)+') points de RM par niveau';
+	appendText(span,td.firstChild.nodeValue+' (Total : '+rmTroll+')');
+	td.replaceChild(span,td.firstChild);
+	/* MM */
+	span = document.createElement('span');
+	span.title = (Math.round(10*mm/NBjours)/10)
+				+' ('+(Math.round(10*mmTroll/NBjours)/10)+') points de MM  par jour | '
+				+(Math.round(10*mm/nivTroll)/10)
+				+' ('+(Math.round(10*mmTroll/nivTroll)/10)+') points de MM par niveau';
+	appendText(span,td.childNodes[2].nodeValue+' (Total : '+mmTroll+')');
+	td.replaceChild(span,td.childNodes[2]);
+	}
+
+
+/*-[functions]----------- Fonctions spéciales Kastars ------------------------*/
+
+function minParPVsac(fat,bm) {
+// Calcule le nombre de min gagnées / PV sacrifiés pour une AM réalisée sous
+// fatigue = 'fat', sans et avec un bm de fatigue = 'bm'
+	var out = [];
+	out[0] = (fat>4) ?
+		Math.floor(120/( fat*(1+Math.floor(fat/10)) )) :
+		30;
+	if(bm && bm>0) {
+		var totalfat=fat+bm;
+		out[1] = (totalfat>4) ?
+			Math.floor(120/( totalfat*(1+Math.floor(totalfat/10)) )) :
+			30; // en principe inutile pour des bm fat >= 15 mais bon...
+	}
+	return out;
+}
+
+function toInt(str) {
+	str = parseInt(str);
+	return (str) ? str : 0;
+	}
+
+function saveLastDLA() {
+	// pour les calculs d'AM max
+	var str = addZero(toInt(inJour.value))+'/'+addZero(toInt(inMois.value))
+		+'/'+toInt(inAn.value)+' '+addZero(toInt(inHr.value))
+		+':'+addZero(toInt(inMin.value))+':'+addZero(toInt(inSec.value));
+	lastDLA = new Date( StringToDate(str) );
+	MZ_setValue(numTroll+'.DLA.ancienne',str);
+	lastDLAZone.innerHTML = '';
+	var b = document.createElement('b');
+	b.addEventListener('click',inputMode,false);
+	appendText(b,str);
+	lastDLAZone.appendChild(b);
+	refreshAccel();
+	}
+
+function inputMode() {
+	// édition manuelle lastDLA
+	var date;
+	if(lastDLA)
+		date = new Date( lastDLA );
+	else
+		date = new Date( DLAaccel );
+	lastDLAZone.innerHTML = '';
+	inJour = appendTextbox(lastDLAZone,'text','inJour',1,2,date.getDate());
+	appendText(lastDLAZone,'/');
+	inMois = appendTextbox(lastDLAZone,'text','inMois',1,2,1+date.getMonth());
+	appendText(lastDLAZone,'/');
+	inAn = appendTextbox(lastDLAZone,'text','inAn',3,4,date.getFullYear());
+	appendText(lastDLAZone,' - ');
+	inHr = appendTextbox(lastDLAZone,'text','inHr',1,2,date.getHours()+'');
+	appendText(lastDLAZone,':');
+	inMin = appendTextbox(lastDLAZone,'text','inMin',1,2,date.getMinutes()+'');
+	appendText(lastDLAZone,':');
+	inSec = appendTextbox(lastDLAZone,'text','inSec',1,2,date.getSeconds()+'');
+	appendText(lastDLAZone,' - ');
+	appendButton(lastDLAZone,'Enregistrer',saveLastDLA);
+	}
+
+function setAccel() {
+	var
+		BMfrais=false,
+		fat=fatigue, listeBmFat=[], minppv,
+		tr, td, insertPt;
+
+	// Création d'une nouvelle ligne du profil spéciale AM
+	tr = document.createElement('tr');
+	tr.className = 'mh_tdpage';
+	td = document.createElement('td');
+	td.className = 'mh_tdtitre';
+	td.vAlign = 'top';
+	appendText(td,'Fatigue et AM',true);
+	tr.appendChild(td);
+	insertPt = document.createElement('td');
+	tr.appendChild(insertPt);
+	// si pas PDA, augmenter la hauteur de la bannière de pub
+	if(lignesProfil.snapshotItem(0).cells.length>2) {
+		lignesProfil.snapshotItem(0).cells[2].rowSpan = 12;
+	}
+	insertBefore(lignesProfil.snapshotItem(5),tr);
+	
+	// Est-on en over-DLA ?
+	// ***INIT GLOBALE*** overDLA
+	overDLA = (HeureServeur>DLA.getTime()+3e5);
+	if(overDLA) {
+		fatigue = Math.floor(fatigue/1.25);
+		fat=fatigue;
+	}
+
+	// Gestion des BM de fatigue
+	if(bmfatigue>0) {
+		// On tente de récupérer les BM de fatigue de la page des BM
+		if(MZ_getValue(numTroll+'.bm.fatigue')) {
+			var BMmemoire = MZ_getValue(numTroll+'.bm.fatigue').split(';');
+			BMmemoire.pop();
+			var tour = 0;
+			for(var i=0 ; i<BMmemoire.length ; i++) {
+				var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
+				while(tour<=parseInt(nbrs[0])) {
+					listeBmFat[tour]=parseInt(nbrs[1]);
+					tour++;
+				}
+			}
+		}
+		if(listeBmFat[0]==bmfatigue) {
+			// Si (bm profil=1er bm stocké), on suppose que les bm stockés sont à jour
+			BMfrais = true;
+			MZ_removeValue(numTroll+".bm.fatigue");
+		}
+	} else {
+		// S'il n'y a pas de bm de fatigue sur le profil, on est à jour
+		BMfrais = true;
+	}
+	if(!BMfrais && bmfatigue>0) {
+		// si les BM n'ont pas été rafraîchis, on conjecture le pire:
+		if(bmfatigue==15) {
+			listeBmFat = [15,15,15];
+		} else {
+			listeBmFat = [30,30,15];
+		}
+	}
+	if(overDLA) {
+		// Si on est en over-DLA, on décale les bm d'un tour
+		listeBmFat.shift();
+	}
+	
+	// Tableau des fatigues et accel futures
+	var
+		minppv = minParPVsac(fat,listeBmFat[0]),
+		table, tbody,
+		ligneTour, ligneFat, ligneMin,
+		col;
+	// ***INIT GLOBALE*** minParPV
+	minParPV = (listeBmFat[0]==void(0)) ? minppv[0] : minppv[1];
+	if(fatigue>0 || listeBmFat[0]>0) {
+		table = document.createElement('table');
+		table.className = 'mh_tdborder';
+		table.border = 0;
+		table.cellSpacing = 1;
+		table.cellPadding = 1;
+		table.style.textAlign = "center";
+		tbody = document.createElement('tbody');
+		table.appendChild(tbody);
+		insertPt.appendChild(table);
+		
+		ligneTour = appendTr(tbody,'mh_tdtitre');
+		ligneTour.style.fontWeight = "bold";
+		td = appendTdText(ligneTour,'Tour :',true);
+		td.align = 'left';
+		ligneFat = appendTr(tbody,'mh_tdpage');
+		td = appendTdText(ligneFat,'Fatigue :',true);
+		td.className = 'mh_tdtitre';
+		td.align = 'left';
+		ligneMin = appendTr(tbody,'mh_tdpage');
+		td = appendTdText(ligneMin,'1 PV =',true);
+		td.className = 'mh_tdtitre';
+		td.align = 'left';
+		col=0;
+		while(col<9 && (fat>0 || listeBmFat[col])) {
+			if(col==0) {
+				if(overDLA) {
+					var i = document.createElement('i');
+					appendText(i,'À activer');
+					ligneTour.appendChild(i);
+				} else {
+					appendTdText(ligneTour,'En cours');
+				}
+			} else {
+				appendTdText(ligneTour,'\u00A0\u00A0+'+col+'\u00A0\u00A0');
+			}
+			if(listeBmFat[col]) {
+				if(BMfrais || (!overDLA && col==0)) {
+					appendTdText(ligneFat,fat+'+'+listeBmFat[col]);
+					appendTdText(ligneMin,minppv[1]+'\'');
+				} else {
+					appendTdText(ligneFat,fat+'+'+listeBmFat[col]+' (?)');
+					appendTdText(ligneMin,minppv[1]+'\' ('+minppv[0]+'\')');
+				}
+			} else {
+				appendTdText(ligneFat,fat);
+				appendTdText(ligneMin,minppv[0]+'\'');
+			}
+			col++;
+			fat = Math.floor(fat / 1.25);
+			minppv = minParPVsac(fat,listeBmFat[col]);
+		}
+		if(fat>1 || (fat==1 && !overDLA)) {
+			appendTdText(ligneTour,'\u00A0 ... \u00A0',true);
+			appendTdText(ligneFat,'-');
+			appendTdText(ligneMin,'-');
+		}
+		col = (overDLA) ?	
+			Math.max(retourAZero(fatigue)-1,col) :
+			Math.max(retourAZero(fatigue),col);
+		appendTdText(ligneTour,'\u00A0\u00A0+'+col+'\u00A0\u00A0');
+		appendTdText(ligneFat,'0');
+		appendTdText(ligneMin,'30\'');
+		
+		if(!BMfrais && bmfatigue) {
+			// si les BM n'ont pas été rafraîchis, on signale:
+			appendText(
+				insertPt,
+				'/!\\ Visitez la page des Bonus/Malus '+
+				'pour mettre à jour votre fatigue. /!\\',
+				true
+			);
+			appendBr(insertPt);
+		}
+		appendBr(insertPt);
+	}
+	
+	if(pv<=0) {
+		appendText(insertPt,'Aucun calcul possible : vous êtes mort voyons !');
+		return;
+	}
+	
+	if(fatigue>30) {
+		appendText(insertPt,'Vous êtes trop fatigué pour accélérer.');
+		return;
+	}
+	
+	// Setup lastDLAZone
+	if(overDLA) {
+		// bypass des infos de "menu_FF.js" en cas d'overDLA
+		DLAaccel = new Date( DLAsuiv );
+		lastDLA = new Date( DLA );
+		MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLA));
+		// ***INIT GLOBALE*** pva
+		pva = Math.min(pv+regmoy,pvmax);
+		appendText(
+			insertPt,
+			'/!\\ Votre DLA est dépassée, calculs basés sur des estimations. /!\\',
+			true
+		);
+		appendBr(insertPt);
+	} else {
+		DLAaccel = new Date( DLA );
+		pva = pv;
+		if(MZ_getValue(numTroll+'.DLA.ancienne')) {
+			lastDLA = new Date(StringToDate(MZ_getValue(numTroll+'.DLA.ancienne')));
+		} else {
+			lastDLA = false;
+		}
+	}
+	appendText(insertPt,'Dernière DLA enregistrée : ');	
+	lastDLAZone = document.createElement('span');
+	lastDLAZone.style.cursor = 'pointer';
+	var b = document.createElement('b');
+	b.onclick = inputMode;
+	lastDLAZone.appendChild(b);
+	insertPt.appendChild(lastDLAZone);
+	if(lastDLA) {
+		appendText(b,DateToString(lastDLA));
+	} else {
+		appendText(b,'aucune');
+	}
+	appendBr(insertPt);
+	
+	// Setup maxAMZone et cumulZone
+	appendText(insertPt,'Accélération maximale possible : ');
+	maxAMZone = document.createElement('b');
+	insertPt.appendChild(maxAMZone);
+	appendBr(insertPt);
+	cumulZone = document.createElement('span');
+	insertPt.appendChild(cumulZone);
+	
+	refreshAccel();
+}
+
+function refreshAccel() {
+	var pvs, pvsmax;
+	
+	// Accélération pour cumul instantané
+	//window.console.debug('refreshAccel',pva,DLAaccel,lastDLA,minParPV);
+	if(lastDLA) {
+		pvsmax = Math.min(
+			pva-1,
+			Math.ceil( Math.floor((DLAaccel-lastDLA)/6e4)/minParPV )
+		);
+		maxAMZone.innerHTML = pvsmax+" PV";
+	} else {
+		pvsmax = pva-1;
+		maxAMZone.innerHTML = "inconnue";
+	}
+	
+	// pvAccel = (nb min avant DLA (arr. sup) / nb min p/ PVsac) (arrondi sup)
+	pvs = Math.ceil( Math.ceil((DLAaccel-HeureServeur)/6e4) / minParPV );
+	cumulZone.innerHTML = '';
+	if(pvs<=pvsmax) {
+		appendText(cumulZone,'Vous devez accélérer d\'au moins ');
+		appendText(cumulZone,pvs+' PV', true);
+		appendText(cumulZone,' pour activer immédiatement un nouveau tour.');
+		if(pvs!=1) {
+			var gainSec = Math.floor((DLAaccel-HeureServeur)/1e3)
+				-(pvs-1)*60*minParPV;
+			appendText(
+				cumulZone,
+				' ('+(pvs-1)+' PV dans '+
+				Math.floor(gainSec/60)+'min'+
+				addZero(gainSec%60)+'s)'
+			);
+		}
+	} else {
+		var avantDLA = new Date( DLAaccel-HeureServeur-pvsmax*minParPV*6e4 );
+		appendText(
+			cumulZone,
+			'Après votre accélération maximale, il vous faudra encore attendre '+
+			dureeHM(avantDLA/6e4)+
+			' avant de réactiver.'
+		);
+	}
+}
+
+
+/*-[functions]-------- Fonctions gérant les infos-bulles ---------------------*/
+
+function traitementTalents() {
+	try {
+		tr_comps = document.getElementById('competences').rows;
+		tr_sorts = document.getElementById('sortileges').rows;
+		var titres = document.evaluate(
+			"./tbody/tr/td/b/text()",
+			document.getElementById('competences').parentNode.
+				parentNode.parentNode.parentNode,
+			null, 7, null
+		);
+	} catch(e) {
+		avertissement('[traitementTalents] Données non trouvées')
+		window.console.error(e);
+		return false;
+	}
+	removeAllTalents();
+	var totalComp = injecteInfosBulles(tr_comps,'competences');
+	var totalSort = injecteInfosBulles(tr_sorts,'sortileges');
+	titres.snapshotItem(0).nodeValue += ' (Total : '+totalComp+'%)';
+	titres.snapshotItem(1).nodeValue += ' (Total : '+totalSort+'%)';
+	return true;
+}
+
+function injecteInfosBulles(liste,fonction) {
+	var totalpc = 0;
+	// on parse la liste des talents du type 'fonction'
+	for(var i=1 ; i<liste.length ; i++) {
+		var node = liste[i].cells[1].getElementsByTagName('a')[0];
+		var nom = epure(trim(node.textContent));
+		var nbrs = getNumbers(
+			liste[i].cells[7].textContent
+		);
+		/*if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
+			// pour piège et golemo, on extrait les sous-comps pour stockage
+			// est-ce bien utile ?...
+			var lstNoms = trim(
+				epure(liste[i].cells[1].lastChild.nodeValue)
+			).slice(1,-1).split(', ');
+			for(var j=0 ; j<lstNoms.length ; j++) {
+				setTalent(lstNoms[j],nbrs[1],nbrs[0]);
+			}
+			setInfos(node,lstNoms.join(', '),fonction,nbrs[0]);
+			totalpc += nbrs[1];
+		} else {
+			// pour les autres talents, stockage direct
+			window.console.debug(nom,fonction,nbrs);
+			setInfos(node,nom,fonction,nbrs[0]);
+			setTalent(nom,nbrs[1],nbrs[0]);
+			totalpc += nbrs[1];
+		}*/
+		//window.console.debug(nom,fonction,nbrs);
+		setInfos(node,nom,fonction,nbrs[0]);
+		setTalent(nom,nbrs[1],nbrs[0]);
+		totalpc += nbrs[1];
+
+		// stockage des niveaux inférieurs du talent si présents
+		for(var j=2 ; j<nbrs.length ; j+=2) {
+			//window.console.debug("setTalent(",nom,nbrs[j+1],nbrs[j],")");
+			setTalent(nom,nbrs[j+1],nbrs[j]);
+			totalpc += nbrs[j+1];
+		}
+	}
+	return totalpc;
+}
+
+function setInfos(node,nom,fonction,niveau) {
+	node.nom = nom;
+	node.fonction = fonction;
+	node.niveau = niveau;
+	node.onmouseover = setBulle;
+	node.onmouseout = cacherBulle;
+}
+
+var arrayModifAnatroll = {
+	'Glue':'Glu',
+	'PuM':'PuiM',
+	'HE':'Hurlement',
+	//'Insultes':'Insu',
+	'Pistage':'Pist',
+	'PuC':'Planter'
+}
+
+function setTalent(nom,pc,niveau) {
+	// Nota : voir plus tard si stocker les effets des comps/sorts directement 
+	// (et pas les % dont osf) ne serait pas plus rentable
+	var nomEnBase = arrayTalents[epure(nom)];
+	if(!nomEnBase) { return; }
+	if(!niveau) { niveau = 1; }
+	
+	switch(nomEnBase) {
+		case 'Insultes':
+			urlAnatrolliseur += 'Insu'+niveau+'|';
+		case 'IdT':
+			nomEnBase += niveau;
+			break;
+		case 'AP':
+		case 'Baroufle':
+		case 'CdB':
+		case 'CdM':
+		case 'Parer':
+		case 'Retraite':
+		case 'RB':
+		case 'SInterposer':
+			nomEnBase += niveau;
+		default:
+			urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ? 
+				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
+	}
+	
+	MZ_setValue(numTroll+'.talent.'+nomEnBase,pc);
+}
+
+function creerBulleVide() {
+	var table = document.createElement('table');
+	table.id = 'bulle';
+	table.className = 'mh_tdborder';
+	table.width = 300;
+	table.border = 0;
+	table.cellPadding = 5;
+	table.cellSpacing = 1;
+	table.style =	
+		 'position:absolute;'
+		+'visibility:hidden;'
+		+'z-index:800;'
+		+'height:auto;';
+	var tr = appendTr(table,'mh_tdtitre');
+	appendTdText(tr,'Titre');
+	tr = appendTr(table,'mh_tdpage');
+	appendTdText(tr,'Contenu');
+	var aList = document.getElementsByTagName('a');
+	aList[aList.length-1].parentNode.appendChild(table);
+	}
+
+function cacherBulle() {
+	if(bulleStyle) bulleStyle.visibility = 'hidden';
+	}
+
+function setBulle(evt) {
+	var nom = this.nom;
+	var fonction = this.fonction;
+	var niveau = parseInt(this.niveau);
+	var str='';
+	if(fonction=='competences') str=competences(nom,niveau);
+	else if(fonction=='sortileges') str=sortileges(nom,true);
+	if(str=='') return;
+	if(nom.indexOf('Golem')!=-1) nom='Golemologie';
+	
+	var xfenetre, yfenetre, xpage, ypage, element = null;
+	var offset = 15;
+	var bulleWidth = 300;
+	if(!hauteur) hauteur = 50;
+	element = document.getElementById('bulle');
+	xfenetre = evt.clientX;
+	yfenetre = evt.clientY;
+	xpage = xfenetre;
+	ypage = yfenetre;
+	if(evt.pageX) xpage = evt.pageX;
+	if(evt.pageY) ypage = evt.pageY;
+	if(element) {
+		bulleStyle = element.style;
+		element.firstChild.firstChild.innerHTML = '<b>'+nom+'</b>';
+		element.childNodes[1].firstChild.innerHTML = str;
+		}
+	if(bulleStyle) {
+		if(xfenetre>bulleWidth+offset)
+			xpage -= bulleWidth+offset;
+		else
+			xpage += offset;
+		if(yfenetre>hauteur+offset)
+			ypage -= hauteur + offset;
+		bulleStyle.width = bulleWidth;
+		bulleStyle.left = xpage + 'px';
+		bulleStyle.top = ypage + 'px';
+		bulleStyle.visibility = 'visible';
+		}
+	}
+
+
+/*-[functions] Textes des infos-bulles pour les compétences et sortilèges ----*/
+
+function competences(comp,niveau) {
+	var texte = '';
+	if(comp.indexOf('Acceleration du Metabolisme')!=-1 && minParPV!=null) {
+		texte = '<b>1</b> PV = <b>'+minParPV+'</b> minute';
+		if(minParPV>1) texte += 's';
+		if(overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
+		}
+	else if(comp.indexOf('Attaque Precise')!=-1) {
+		var pc, lastmax=0, espatt=0;
+		var notMaxedOut = false;
+		for(var i=niveau ; i>0 ; i--) {
+			pc = getTalent(comp,i);
+			if(lastmax!=0 && pc<=lastmax) continue;
+			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+attbm;
+			texte += 'Attaque niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbm)+
+				' => <b>'+jetatt+'</b><br/>';
+			espatt += (pc-lastmax)*jetatt;
+			lastmax = pc;
+			if(i<niveau) notMaxedOut = true;
+		}
+		if(notMaxedOut) {
+			texte += '<i>Attaque moyenne (si réussite) : <b>'+
+				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
+		}
+		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
+	}
+	else if(comp.indexOf('Balayage')!=-1)
+		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbm)
+			+' => <b>'+(Math.round(3.5*att)+attbm)+'</b><br/>'
+			+'Effet : <b>Met à terre l\'adversaire</b>';
+	else if(comp.indexOf('Bidouille')!=-1)
+		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
+			+'de votre inventaire avec le texte de votre choix.';
+	else if(comp.indexOf('Baroufle')!=-1)
+		texte = 'Vous voulez encourager vos compagnons de chasse ? '
+			+'Ramassez quelques Coquillages, et en avant la musique !';
+	else if(comp.indexOf('Botte Secrete')!=-1)
+		texte = 'Attaque : <b>'
+			+Math.floor(2*att/3)+'</b> D6 '+aff(Math.floor(attbm/2))
+			+' => <b>'
+			+Math.round(3.5*Math.floor(2*att/3)+Math.floor(attbm/2))
+			+'</b><br/>Dégâts : <b>'
+			+Math.floor(att/2)+'</b> D3 '+aff(Math.floor(degbm/2))
+			+' => <b>'
+			+(2*Math.floor(att/2)+Math.floor(degbm/2))
+			+'/'+(2*Math.floor(1.5*Math.floor(att/2))+Math.floor(degbm/2))
+			+'</b>';
+	else if(comp.indexOf('Camouflage')!=-1) {
+		var camou = getTalent('Camouflage');
+		texte = 'Pour conserver son camouflage, il faut réussir un jet sous:<br/>'
+			+'<i>Déplacement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
+			+'<i>Attaque :</i> <b>perte automatique</b>.<br/>'
+			+'<i>Projectile Magique :</i> <b>'+Math.floor(0.25*camou)+'%</b>';
+		}
+	else if(comp.indexOf('Charger')!=-1) {
+		if(pv<=0)
+			return '<i>On ne peut charger personne quand on est mort !</i>';
+		var portee = Math.min(
+			getPortee(reg+Math.floor(pv/10))-Math.floor((fatigue+bmfatigue)/5),
+			vuetotale);
+		if(portee<1)
+			return '<b>Impossible de charger</b>';
+		else {
+			texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
+				+' => <b>'+attmoy+'</b><br/>'
+				+'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+				+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>'
+				+'<br/>Portée : <b>'+portee+'</b> case';
+			if(portee>1) texte += 's';
+			}
+		}
+	else if(comp.indexOf('Connaissance des Monstres')!=-1) {
+		texte = 'Portée horizontale : <b>'+vuetotale+'</b> case';
+		if(vuetotale>1) texte += 's';
+		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		if(vuetotale>2) texte += 's';
+		}
+	else if(comp.indexOf('Piege')!=-1) {
+		if(comp.indexOf('Glue')!=-1)
+			texte = 'Et si vous colliez vos adversaires au sol ?';
+		if(comp.indexOf('Feu')!=-1) {
+			if(texte)
+				texte += ' À moins que vous ne préfériez les envoyer en l\'air !<br/>';
+			texte += 'Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
+				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b>';
+			}
+		}
+	else if(comp.indexOf('Contre-Attaquer')!=-1)
+		texte = 'Attaque : <b>'
+			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor(attbm/2))
+			+' => <b>'+Math.round(3.5*Math.floor(att/2)+Math.floor(attbm/2))
+			+'</b><br/>Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
+	else if(comp.indexOf('Coup de Butoir')!=-1) {
+		var pc, lastmax=0, espdeg=0;
+		var notMaxedOut = false;
+		texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
+			+' => <b>'+attmoy+'</b>';
+		for(var i=niveau ; i>0 ; i--) {
+			pc = getTalent(comp,i);
+			if(lastmax!=0 && pc<=lastmax) continue;
+			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+degbm;
+			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff(degbm)+
+				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
+			espdeg += (pc-lastmax)*jetdeg;
+			lastmax = pc;
+			if(i<niveau) notMaxedOut = true;
+		}
+		if(notMaxedOut) {
+			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
+				Math.floor(10*espdeg/lastmax)/10+'/'+
+				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
+		}
+	}
+	else if(comp.indexOf('Course')!=-1)
+		texte = 'Déplacement gratuit : <b>'
+			+Math.floor(getTalent('Course')/2)
+			+' %</b> de chance';
+	else if(comp.indexOf('Deplacement Eclair')!=-1)
+		texte = 'Permet d\'économiser <b>1</b> PA '
+			+'par rapport au déplacement classique';
+	else if(comp.indexOf('Dressage')!=-1)
+		texte = 'Le dressage permet d\'apprivoiser un gowap redevenu sauvage '
+			+'ou un gnu sauvage.';
+	else if(comp.indexOf('Ecriture Magique')!=-1)
+		texte = 'Réaliser la copie d\'un sortilège après en avoir découvert '
+			+'la formule nécessite de réunir les composants de cette formule, '
+			+'d\'obtenir un parchemin vierge sur lequel écrire, et de récupérer '
+			+'un champignon adéquat pour confectionner l\'encre.';
+	else if(comp.indexOf('Frenesie')!=-1) {
+		texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
+			+' => <b>'+attmoy+'</b><br/>'
+			+'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
+		}
+	else if(comp.indexOf('Golem')!=-1)
+		texte = 'Animez votre golem en assemblant divers matériaux '
+			+'autour d\'un cerveau minéral.'
+	else if(comp.indexOf('Grattage')!=-1) {
+		texte = 'Permet de confectionner un Parchemin Vierge '
+			+'à partir de composants et de Gigots de Gob\'.';
+		}
+	else if(comp.indexOf('Hurlement Effrayant')!=-1)
+		texte = 'Fait fuir un monstre si tout se passe bien.'
+			+'<br/>Lui donne de gros bonus sinon...';
+	else if(comp.indexOf('Identification des Champignons')!=-1) {
+		texte = 'Portée horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		if(vuetotale>2) texte += 's';
+		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
+		if(vuetotale>4) texte += 's';
+		}
+	else if(comp.indexOf('Insultes')!=-1)
+		texte = 'Portée horizontale : <b>'+Math.min(vuetotale,1)+'</b> case';
+	else if(comp.indexOf('interposer')!=-1)
+		texte = 'Jet de réflexe : <b>'
+			+Math.floor(2*(esq+reg)/3)+'</b> D6 '+aff(esqbm)
+			+' => <b>'+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+'</b>';
+	else if(comp.indexOf('Lancer de Potions') != -1)
+		texte = 'Portée : <b>'+(2+Math.floor(vuetotale/5))+'</b> cases';
+	else if(comp.indexOf('Marquage')!=-1)
+		texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut '
+			+'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut '
+			+'se trouver dans la même caverne que le monstre pour le marquer.';
+	else if(comp.indexOf('Melange Magique')!=-1)
+		texte = 'Cette Compétence permet de combiner deux Potions pour '
+			+'en réaliser une nouvelle dont l\'effet est la somme '
+			+'des effets des potions initiales.';
+	else if(comp.indexOf('Miner')!=-1)
+		texte = 'Portée horizontale (officieuse) : <b>'
+			+2*vuetotale+'</b> cases<br/>'
+			+'Portée verticale (officieuse) : <b>'
+			+2*Math.ceil(vuetotale/2)+'</b> cases';
+	else if(comp.indexOf('Necromancie')!=-1)
+		texte = 'La Nécromancie permet à partir des composants d\'un monstre '
+			+'de faire "revivre" ce monstre.';
+	else if(comp.indexOf('Painthure de Guerre')!=-1)
+		texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier '
+			+'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite '
+			+'pour s\'inspirer, et laissez parler votre créativité.'
+	else if(comp.indexOf('Parer')!=-1)
+		texte = 'Jet de parade : <b>'
+			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor(attbm)/2)
+			+' => <b>'
+			+Math.round(3.5*Math.floor(att/2)+Math.floor(attbm/2))
+			+'</b><hr><i>Equivalent esquive : <b>'
+			+(Math.floor(att/2)+esq)+'</b> D6 '+aff(Math.floor(attbm/2)+esqbm)
+			+' => <b>'
+			+(Math.round(3.5*(Math.floor(att/2)+esq)+Math.floor(attbm/2))+esqbm)
+			+'</b></i>';
+	else if(comp.indexOf('Pistage')!=-1)
+		texte = 'Portée horizontale : <b>'
+			+2*vuetotale+'</b> cases<br/>'
+			+'Portée verticale : <b>'
+			+2*Math.ceil(vuetotale/2)+'</b> cases';
+	else if(comp.indexOf('Planter un Champignon')!=-1)
+		texte = 'Planter un Champignon est une compétence qui vous permet de '
+			+'créer des colonies d\'une variété donnée de champignon à partir de '
+			+'quelques exemplaires préalablement enterrés.';
+	else if(comp.indexOf('Regeneration Accrue')!=-1)
+		texte = 'Régénération : <b>'+Math.floor(pvmax/15)+'</b> D3'
+			+' => <b>+'+2*Math.floor(pvmax/15)+'</b> PV';
+	else if(comp.indexOf('Reparation')!=-1)
+		texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, '
+			+'et réparez vous-même votre matériel !';
+	else if(comp.indexOf('Retraite')!=-1)
+		texte = 'Vous jugez la situation avec sagesse et estimez qu\'il serait '
+			+'préférable de préparer un repli stratégique pour déconcerter '
+			+'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! '
+			+'Quelle intelligence démoniaque.';
+	else if(comp.indexOf('Rotobaffe')!=-1) {
+		var Datt = att, vattbm = attbm;
+		var Ddeg = deg, vdegbm = degbm;
+		for(var i=1 ; i<niveau+2 ; i++) {
+			texte += '<b>Attaque n°'+i+' :</b><br/>'
+				+'Attaque : <b>'+Datt+'</b> D6 '+aff(attbm)
+				+' => <b>'+(Math.round(3.5*Datt)+attbm)+'</b><br/>'
+				+'Dégâts : <b>'+Ddeg+'</b> D3 '+aff(degbm)
+				+' => <b>'+(2*Ddeg+degbm)+'</b>';
+			Datt = Math.floor(0.75*Datt); vattbm = Math.floor(0.75*vattbm);
+			Ddeg = Math.floor(0.75*Ddeg); vdegbm = Math.floor(0.75*vdegbm);
+			if(i<niveau+1) texte += '<hr>';
+			}
+		}
+	else if(comp.indexOf('Shamaner')!=-1)
+		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
+			+'des monstres en utilisant des champignons (de 1 à 3).';
+	else if(comp.indexOf('Tailler')!=-1)
+		texte = 'Permet d\'augmenter sensiblement la valeur marchande de certains '
+			+'minerais. Mais cette opération délicate n\'est pas sans risques...';
+	return texte;
+	}
+
+function decumul_buff(nom,str,buff) {
+	// Décumul des sorts de buff
+	var ret = '1<sup>ere</sup>'+nom+' : <b>'+str+' +'+buff+'</b>';
+	var dec = buff, total = buff, i=1;
+	while(i<6) {
+		i++;
+		dec = Math.floor(coefDecumul(i)*buff);
+		if(dec<=1 || i==6) break;
+		total += dec;
+		ret += '<br/><i>'+i+'<sup>e</sup> '+nom+' : '
+			+str+' +'+dec+' (+'+total+')</i>';
+		}
+	ret += '<br/><i>'+i+'<sup>e</sup> et + : '+str+' +'+dec+'</i>';
+	return ret;
+	}
+
+
+function sortileges(sort,mainCall,pcA,pcD) {
+	// Si mainCall==false, affichage réduit des infos (pour PuM/PréM)
+	var texte = '';
+	if(mainCall) {
+		var pcA = (bmDAttM) ? bmDAttM : false;
+		var pcD = (bmDDegM) ? bmDDegM : false;
+	}
+	if(sort.indexOf('Analyse Anatomique')!=-1) {
+		texte = 'Portée horizontale : <b>'
+			+Math.floor(vuetotale/2)+'</b> case';
+		if(vuetotale>3) { texte += 's'; }
+		texte += '<br/>Portée verticale : <b>'
+			+Math.floor((vuetotale+1)/4)+'</b> case';
+		if(vuetotale>7) { texte += 's'; } 
+	}
+	else if(sort.indexOf('Armure Etheree')!=-1)
+		texte = decumul_buff('AE','Armure magique',reg);
+	else if(sort.indexOf('Augmentation')!=-1 && sort.indexOf('Attaque')!=-1)
+		texte = decumul_buff('AdA','Attaque physique',1+Math.floor((att-3)/2));
+	else if(sort.indexOf('Augmentation')!=-1 && sort.indexOf('Esquive')!=-1)
+		texte = decumul_buff('AdE','Esquive',1+Math.floor((esq-3)/2));
+	else if(sort.indexOf('Augmentation des Degats')!=-1)
+		texte = decumul_buff('AdD','Dégâts physiques',1+Math.floor((deg-3)/2));
+	else if(sort.indexOf('Bulle Anti-Magie')!=-1) {
+		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
+	}
+	else if(sort.indexOf('Bulle Magique')!=-1) {
+		texte = 'RM : <b>-'+rm+'</b><br/>MM : <b>+'+mm+'</b>';
+	}
+	else if(sort.indexOf('Explosion')!=-1)
+		texte = 'Dégâts : <b>'
+			+Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )+'</b> D3 '
+			+' => <b>'+2*Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )
+			+' ('+resiste( 1+(deg+Math.floor(pvmax/10))/2 )+')</b>';
+	else if(sort.indexOf('Faiblesse Passagere')!=-1) {
+		if(pv<=0)
+			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
+		texte = 'Portée horizontale : <b>'
+			+Math.min(1,vuetotale)+'</b> case<br/>'
+			+'Dégâts physiques : <b>-'
+			+Math.ceil( (Math.floor(pv/10)+deg-5)/4 )
+			+' (-'+Math.ceil( (Math.floor(pv/10)+deg-5)/8 )+')</b><br/>'
+			+'Dégâts magiques : <b>-'
+			+Math.floor( (Math.floor(pv/10)+deg-4)/4 )
+			+' (-'+Math.floor( (Math.floor(pv/10)+deg-2)/8 )+')</b>';
+		}
+	else if(sort.indexOf('Flash Aveuglant')!=-1)	
+		texte = 'Vue, Attaque, Esquive : <b>-'+(1+Math.floor(vue/5))+'</b>';
+	else if(sort.indexOf('Glue')!=-1) {
+		texte = 'Portée : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
+		if(vuetotale>2) texte += 's';
+		}
+	else if(sort.indexOf('Griffe du Sorcier')!=-1) {
+		/* Frappe */
+		var modD = 0;
+		texte = 'Attaque : <b>'+att+'</b> D6 ';
+		if(pcA) {
+			modD = parseInt(att*pcA/100);
+			texte += '<i>'+aff(modD)+'D6</i> ';
+			}
+		texte += aff(attbmm)
+			+' => <b>'+(Math.round(3.5*(att+modD))+attbmm)+'</b><br/>'
+			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
+		if(pcD) {
+			modD = parseInt(Math.floor(deg/2)*pcD/100);
+			texte += '<i>'+aff(modD)+'D3</i> ';
+			}
+		else
+			modD = 0;
+		texte += aff(degbmm)+' => <b>'
+			+(2*(Math.floor(deg/2)+modD)+degbmm)
+			+'/'+(2*(Math.floor(deg/2)+Math.floor(deg/4)+modD)+degbmm)
+			+' ('+resiste(Math.floor(deg/2)+modD,degbmm)
+			+'/'+resiste(Math.floor(deg/2)+Math.floor(deg/4)+modD,degbmm)
+			+')</b>';
+		if(!mainCall) return texte;
+		/* Venins */
+		function addVenin(type,effet,duree) {
+			var ret = '<b>Venin '+type+' : </b><br/><b>'+effet+'</b> D3'
+				+' pendant <b>'+duree+'</b> tour';
+			if(duree>1) ret += 's';
+			var dred = Math.max(Math.floor(duree/2),1);
+			return ret+' => <b>'+2*effet+' x '+duree+' = '+2*effet*duree
+				+'</b> ('+2*effet+' x '+dred+' = '+2*effet*dred+')';
+			}
+		var effet = 1+Math.floor((Math.floor(pvbase/10)+reg)/3);
+		texte += '<hr>'+addVenin('insidieux',effet,2+Math.floor(vue/5));
+		effet = Math.floor(1.5*effet);
+		texte += '<hr>'+addVenin('virulent',effet,1+Math.floor(vue/10));
+		}
+	else if(sort.indexOf('Hypnotisme')!=-1)
+		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
+			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
+	else if(sort.indexOf('Identification des tresors')!=-1)
+		texte = 'Permet de connaitre les caractéristiques et effets précis '
+			+'d\'un trésor.';
+	else if(sort.indexOf('Invisibilite')!=-1)
+		texte = 'Un troll invisible est indétectable même quand on se trouve '
+			+'sur sa zone. Toute action physique ou sortilège d\'attaque '
+			+'fait disparaître l\'invisibilité.';
+	else if(sort.indexOf('Levitation')!=-1)
+		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
+			+'Comme les pièges ou les trous par exemple...';
+	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
+		var eps = 1, pc = 20;
+		var str = 'PréM';
+		var newSort;
+		var sortAtt = [
+			'Projectile Magique',
+			'Rafale Psychique',
+			'Siphon des Ames',
+			'Vampirisme',
+			'Griffe du Sorcier'
+		];
+		if(sort.indexOf('Puissance')!=-1) {
+			eps = -1; str='PuM';
+		}
+		for(var i=1 ; i<4 ; i++) {
+			if(texte) { texte += '<hr>'; }
+			texte += '<b>'+i+'<sup>e</sup> '+str+' ('+aff(pc)+' %) :</b><br/>';
+			newSort = false;
+			for(var j=0 ; j<5 ; j++) {
+				if(getTalent(sortAtt[j])) {
+					if(newSort) { texte += '<br/><br/>'; }
+					texte += '<i>'+sortAtt[j]+' :</i><br/>'
+						+sortileges(sortAtt[j],false,eps*pc,-eps*pc);
+					newSort = true;
+				}
+			}
+			pc = decumulPumPrem(pc);
+		}
+	}
+	else if(sort.indexOf('Projectile Magique')!=-1) {
+		var modD = 0;
+		var portee = getPortee(vuetotale);
+		texte = 'Attaque : <b>'+vue+'</b> D6 ';
+		if(pcA) {
+			modD = parseInt(vue*pcA/100);
+			texte += '<i>'+aff(modD)+'D6</i> ';
+			}
+		texte += aff(attbmm)
+			+' => <b>'+(Math.round(3.5*(vue+modD))+attbmm)+'</b><br/>'
+			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
+		if(pcD) {
+			modD = parseInt(Math.floor(vue/2)*pcD/100);
+			texte += '<i>'+aff(modD)+'D3</i> ';
+			}
+		else
+			{ modD = 0; }
+		texte += aff(degbmm)
+			+' => <b>'+(2*(Math.floor(vue/2)+modD)+degbmm)
+			+'/'+(2*(Math.floor(1.5*Math.floor(vue/2))+modD)+degbmm)
+			+' ('+resiste(Math.floor(vue/2)+modD,degbmm)
+			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbmm)+')</b>';
+		if(!mainCall) return texte;
+		texte += '<br/>Portée : <b>'+portee+'</b> case';
+		if(portee>1) texte += 's';
+		}
+	else if(sort.indexOf('Projection')!=-1) {
+		texte = 'Si le jet de résistance de la victime est raté:<br/>'
+			+'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
+			+'Si le jet de résistance de la victime est réussi:<br/>'
+			+'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
+		}
+	else if(sort.indexOf('Rafale Psychique')!=-1) {
+		var modD = 0;
+		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
+		if(pcD) {
+			modD = parseInt(deg*pcD/100);
+			texte += '<i>'+aff(modD)+'D3</i> ';
+			}
+		texte += aff(degbmm)
+			+' => <b>'+(2*(deg+modD)+degbmm)+' ('+resiste(deg+modD,degbmm)+')</b>';
+		if(!mainCall) return texte;
+		texte += '<br/>Malus : régénération <b>-'+deg+'</b>';
+		}
+	else if(sort.indexOf('Sacrifice')!=-1) {
+		if(pv<=0)
+			return '<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>';
+		
+		function perteSacro(sac) {
+			return ' (-'+(sac+2*Math.floor(sac/5)+2)+' PV)';
+			}
+		
+		var sac = Math.floor((pv-1)/2);
+		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+			+'Soin maximal : <b>'+sac+'</b> PV'+perteSacro(sac);
+		/* Sacros max et optimal sans malus (propale R') */
+		sac = Math.floor(pvdispo/1.4)-1;
+		if(sac>0)
+			texte += '<hr>Soin maximal sans malus de temps : <b>'
+				+sac+'</b> PV'+perteSacro(sac);
+		if(sac>3) {
+			sac = 5*Math.floor((sac+1)/5)-1;
+			texte += '<br/>Soin optimal sans malus de temps : <b>'
+				+sac+'</b> PV'+perteSacro(sac);
+			}
+		}
+	else if(sort.indexOf('Siphon')!=-1) {
+		var modD = 0;
+		texte = 'Attaque : <b>'+att+'</b> D6 ';
+		if(pcA) {
+			modD = parseInt(att*pcA/100);
+			texte += '<i>'+aff(modD)+'D6</i> ';
+			}
+		texte += aff(attbmm)
+			+' => <b>'+Math.round(3.5*(att+modD)+attbmm)+'</b><br/>'
+			+'Dégâts : <b>'+reg+'</b> D3 ';
+		if(pcD) {
+			modD = parseInt(reg*pcD/100);
+			texte += '<i>'+aff(modD)+'D3</i> ';
+			}
+		else
+			modD = 0;
+		texte += aff(degbmm)
+			+' => <b>'+(2*(reg+modD)+degbmm)+'/'+(2*(Math.floor(1.5*reg)+modD)+degbmm)
+			+' ('+resiste(reg+modD,degbmm)+'/'+resiste(1.5*reg+modD,degbmm)+')</b>';
+		if(!mainCall) return texte;
+		texte += '<br/>Nécrose : attaque magique <b>-'+reg+'</b>';
+		}
+	else if(sort.indexOf('Telekinesie')!=-1) {
+		texte = 'Portée horizontale  :';
+		var vt = Math.floor(vuetotale/2)+2;
+		var strList = ['d\'une Plum\' ou Très Léger','Léger',
+					'Moyen','Lourd','Très Lourd ou d\'une Ton\''];
+		for(var i=0 ; i<5 ; i++) {
+			texte += '<br/><i>Trésor '+strList[i]+' : </i><b>'+vt+'</b> case';
+			if(vt>1) texte += 's';
+			vt=Math.max(0,vt-1);
+			}
+		}
+	else if(sort.indexOf('Teleportation')!=-1) {
+		var portee = getPortee(mmTroll/5);
+		var pmh = (20+vue+portee);
+		var pmv = 3+Math.floor(portee/3);
+		texte = 'Portée horizontale : <b>'+pmh+'</b> cases<br/>'
+			+'Portée verticale : <b>'+pmv+'</b> cases<hr>'
+			+'X compris entre '+(posX-pmh)+' et '+(posX+pmh)+'<br/>'
+			+'Y compris entre '+(posY-pmh)+' et '+(posY+pmh)+'<br/>'
+			+'N compris entre '+(posN-pmv)+' et '+Math.min(-1,posN+pmv)+'<br/>';
+		}
+	else if(sort.indexOf('Vampirisme')!=-1) {
+		var modD = 0;
+		texte = 'Attaque : <b>'+Math.floor(2*deg/3)+'</b> D6 ';
+		if(pcA) {
+			modD = parseInt(Math.floor(2*deg/3)*pcA/100);
+			texte += '<i>'+aff(modD)+'D6</i> ';
+			}
+		texte += aff(attbmm)
+			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbmm)+'</b><br/>'
+			+'Dégâts : <b>'+deg+'</b> D3 ';
+		if(pcD) {
+			modD = parseInt(deg*pcD/100);
+			texte += '<i>'+aff(modD)+'D3</i> ';
+			}
+		else
+			modD = 0;
+		texte += aff(degbmm)
+			+' => <b>'+(2*(deg+modD)+degbmm)+'/'+(2*(Math.floor(1.5*deg)+modD)+degbmm)
+			+' ('+resiste(deg+modD,degbmm)+'/'+resiste(1.5*deg+modD,degbmm)+')</b>';
+		}
+	else if(sort.indexOf('Vision Accrue')!=-1)
+		texte = decumul_buff('VA','Vue',Math.floor(vue/2));
+	else if(sort.indexOf('Vision lointaine')!=-1)
+		texte = 'En ciblant une zone située n\'importe où dans le '
+			+'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
+	else if(sort.indexOf('Voir le Cache')!=-1)
+		texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
+			+Math.min(5,getPortee(vue))+'</b> cases<hr>'
+			+'<b>À distance :</b><br/>Portée horizontale : <b>'
+			+getPortee(vuetotale)+'</b> cases';
+	else if(sort.indexOf('Vue Troublee')!=-1)
+		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+			+'Vue : <b>-'+Math.floor(vue/3)+'</b>';
+	return texte;
+	}
+
+
+/*---------------------------------- Main ------------------------------------*/
+
+function do_profil() {
+	try {
+		start_script(31);
+
+		initAll();
+
+		creerBulleVide();
+		newStyleLink();
+		setInfoDateCreation();
+		setNextDLA();
+		if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
+		setLieu();
+		setInfosPV();
+		setInfosPxPi();
+		setStabilite();
+		setCurrentEsquive();
+		setRatioKillDeath();
+		setTotauxMagie();
+		if(traitementTalents()) {
+			setAnatrolliseur();
+		}
+		// Cette fonction modifie lourdement le DOM, à placer en dernier :
+		if(race=='Kastar') { setAccel(); }
+		saveProfil();
+		displayScriptTime();
+	} catch(e) {
+		avertissement("[MZ] Une erreur s'est produite.");
+		window.console.error("[MZ] Erreur générale Profil",e);
+	}
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x pjview
+
+/* TODO
+ * - MZ2.0 : Implémenter les BDD en dur dans le module interne
+ */
+
+// Bulle d'infos
+var DivInfo;
+// Booléen stockant l'état de freezing de la bulle
+var freezed = false;
+
+// liste du matos
+// mh_caracs ['Nom'] = [ 'Type', 'AttP', 'AttM', 'DegP','DegM', 'Esq',
+// 'ArmP','ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
+// 'PV', 'DLA', 'Poids_Min', 'Poids_Max' ];
+var mh_caracs = {
+	'anneau de protection':
+		['anneau',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00,3.00,13.00],
+	"armure d'anneaux":
+		['armure',0,0,0,0,-8,8,0,0,0,90,180,0,0,0,0.00,80.00,80.00],
+	'armure de bois':
+		['armure',0,0,0,0,-3,5,0,0,0,20,50,0,0,0,0.00,50.00,50.00],
+	'armure de cuir':
+		['armure',0,0,0,0,0,2,0,0,0,10,20,0,0,0,0.00,10.00,10.00],
+	'armure de peaux':
+		['armure',0,0,0,0,-2,4,0,0,0,20,60,0,0,0,0.00,45.00,45.00],
+	'armure de pierre':
+		['armure',0,0,0,0,-6,12,0,0,0,60,150,0,0,0,0.00,120.00,120.00],
+	'armure de plates':
+		['armure',0,0,0,0,-5,10,0,0,0,50,100,0,0,0,0.00,100.00,100.00],
+	'baton lesté':
+		['arme',2,0,-1,0,0,0,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
+	'bâtons de parade':
+		['arme',-4,0,0,0,2,2,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
+	'bottes':
+		['bottes',0,0,0,0,2,0,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
+	'bouclier à pointes':
+		['bouclier',1,0,1,0,-1,4,0,0,0,0,0,0,0,0,0.00,35.00,35.00],
+	'boulet et chaîne':
+		['arme',-3,0,5,0,0,0,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
+	'cagoule':
+		['casque',0,0,0,0,1,0,0,-1,0,0,0,5,10,0,0.00,2.50,2.50],
+	'casque à cornes':
+		['casque',0,0,1,0,-1,3,0,-1,0,5,10,0,0,0,0.00,10.00,10.00],
+	'casque à pointes':
+		['casque',1,0,1,0,0,3,0,-1,0,0,0,0,0,0,0.00,12.50,12.50],
+	'casque en cuir':
+		['casque',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,5.00,5.00],
+	'casque en métal':
+		['casque',0,0,0,0,0,2,0,-1,0,5,10,0,0,0,0.00,10.00,10.00],
+	'chaîne cloutée':
+		['arme',-2,0,4,0,1,0,0,0,0,0,0,0,0,0,0.00,35.00,35.00],
+	'chapeau pointu':
+		['casque',0,0,0,0,0,1,0,0,0,0,0,5,10,0,0.00,5.00,5.00],
+	'collier de dents':
+		['talisman',0,0,1,0,0,0,0,0,0,0,0,0,0,0,5.00,1.00,1.00],
+	'collier de pierre':
+		['talisman',0,0,0,0,0,0,0,0,0,5,10,5,10,0,0.00,2.50,2.50],
+	'collier à pointes':
+		['talisman',0,0,1,0,-1,1,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
+	'cotte de mailles':
+		['armure',0,0,0,0,-3,7,0,0,0,30,60,0,0,0,0.00,70.00,70.00],
+	'couronne de cristal':
+		['casque',0,0,0,1,-1,0,-1,3,0,0,0,0,0,0,0.00,10.00,10.00],
+	"couronne d'obsidienne":
+		['casque',0,0,0,-1,0,1,2,0,-1,0,0,0,0,0,0.00,10.00,10.00],
+	"coutelas d'obsidienne":
+		['arme',2,0,2,0,0,0,0,0,-2,-10,-5,-30,-15,0,0.00,5.00,5.00],
+	'coutelas en os':
+		['arme',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0.00,4.00,4.00],
+	'crochet':
+		['arme',-2,0,3,0,0,0,0,0,0,0,0,0,0,0,0.00,12.50,12.50],
+	'cuir bouilli':
+		['armure',0,0,0,0,-1,3,0,0,0,20,40,0,0,0,0.00,18.00,18.00],
+	"cuirasse d'ossements":
+		['armure',0,0,0,0,-3,5,0,0,0,15,30,15,30,0,0.00,67.50,67.50],
+	"cuirasse d'écailles":
+		['armure',0,0,0,0,-3,6,0,0,0,30,70,0,0,0,0.00,60.00,60.00],
+	'culotte en cuir':
+		['armure',0,0,0,0,1,0,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
+	'dague':
+		['arme',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
+	'epée courte':
+		['arme',0,0,2,0,0,0,0,0,0,0,0,0,0,0,0.00,10.00,10.00],
+	'epée longue':
+		['arme',-2,0,4,0,0,0,0,0,0,0,0,0,0,0,0.00,20.00,20.00],
+	'espadon':
+		['arme',-6,0,8,0,0,0,0,0,0,0,0,0,0,0,0.00,40.00,40.00],
+	'fouet':
+		['arme',4,0,-2,0,0,0,0,0,0,0,0,0,0,0,0.00,7.00,7.00],
+	'fourrures':
+		['armure',0,0,0,0,0,2,0,0,0,15,30,0,0,0,0.00,10.00,10.00],
+	'gantelet':
+		['arme',-2,0,1,0,1,2,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
+	'gorgeron en cuir':
+		['talisman',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
+	'gorgeron en métal':
+		['talisman',0,0,0,0,0,2,0,0,-1,0,0,0,0,0,0.00,5.00,5.00],
+	'gourdin':
+		['arme',-1,0,2,0,0,0,0,0,0,0,0,0,0,0,0.00,12.50,12.50],
+	'gourdin clouté':
+		['arme',-1,0,3,0,0,0,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
+	'grimoire':
+		['bouclier',-2,2,-1,1,0,0,0,0,0,0,0,5,10,0,10.00,25.00,25.00],
+	"gros'porte":
+		['bouclier',0,0,0,0,-1,5,0,0,0,10,20,0,0,0,0.00,50.00,50.00],
+	'grosse racine':
+		['arme',-1,0,3,0,0,0,0,0,0,5,10,0,0,0,0.00,20.00,20.00],
+	'grosse stalagmite':
+		['arme',-20,0,28,0,-15,0,0,-4,0,0,0,0,0,0,0.00,125.00,125.00],
+	'hache de bataille':
+		['arme',-4,0,6,0,0,0,0,0,0,0,0,0,0,0,0.00,40.00,40.00],
+	'hache de guerre en os':
+		['arme',-4,0,6,0,0,0,0,0,0,0,0,0,0,0,0.00,25.00,25.00],
+	'hache de guerre en pierre':
+		['arme',-10,0,14,0,0,0,0,0,0,5,10,0,0,0,0.00,75.00,75.00],
+	"hache à deux mains d'obsidienne":
+		['arme',-8,0,16,0,0,0,0,0,-4,-90,-50,-30,-15,0,0.00,75.00,75.00],
+	'hallebarde':
+		['arme',-10,0,12,0,0,0,0,0,0,0,0,0,0,0,0.00,60.00,60.00],
+	"haubert d'écailles":
+		['armure',0,0,0,0,-4,8,0,0,0,40,80,0,0,0,0.00,80.00,80.00],
+	'haubert de mailles':
+		['armure',0,0,0,0,-4,9,0,0,0,40,90,0,0,0,0.00,90.00,90.00],
+	'heaume':
+		['casque',-1,0,0,0,0,4,0,-2,0,10,20,0,0,0,0.00,20.00,20.00],
+	'jambières en cuir':
+		['bottes',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,10.00,10.00],
+	'jambières en fourrure':
+		['bottes',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,2.50,2.50],
+	'jambières en maille':
+		['bottes',0,0,0,0,-1,3,0,0,0,5,10,0,0,0,0.00,20.00,20.00],
+	'jambières en métal':
+		['bottes',0,0,0,0,-2,4,0,0,0,5,10,0,0,0,0.00,25.00,25.00],
+	'jambières en os':
+		['bottes',0,0,0,0,-1,2,0,0,0,5,10,0,0,0,0.00,10.00,10.00],
+	"lame d'obsidienne":
+		['arme',2,0,6,0,0,0,0,0,-3,-60,-30,-20,-10,0,0.00,20.00,20.00],
+	'lame en os':
+		['arme',0,0,2,0,0,0,0,0,0,0,0,0,0,0,0.00,7.00,7.00],
+	'lame en pierre':
+		['arme',-2,0,4,0,0,0,0,0,0,0,0,0,0,0,0.00,20.00,20.00],
+	'lorgnons':
+		['casque',0,0,0,0,-1,0,0,1,0,0,0,5,10,0,0.00,2.50,2.50],
+	'machette':
+		['arme',1,0,2,0,-1,0,0,0,0,0,0,0,0,0,0.00,20.00,20.00],
+	"masse d'arme":
+		['arme',-1,0,3,0,0,0,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
+	'pagne de mailles':
+		['armure',0,0,0,0,2,1,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
+	'pagne en cuir':
+		['armure',0,0,0,0,2,-1,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
+	'robe de mage':
+		['armure',0,0,0,0,-1,2,1,0,0,10,20,10,20,0,0.00,20.00,20.00],
+	'rondache en bois':
+		['bouclier',0,0,0,0,1,1,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
+	'rondache en métal':
+		['bouclier',0,0,0,0,1,2,0,0,0,0,0,0,0,0,0.00,30.00,30.00],
+	'sandales':
+		['bottes',0,0,0,0,1,0,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
+	'souliers dorés':
+		['bottes',0,0,0,0,-1,1,1,0,0,0,0,0,0,0,0.00,10.00,10.00],
+	"talisman d'obsidienne":
+		['talisman',1,0,2,0,0,0,0,0,-4,20,40,20,40,0,0.00,2.50,2.50],
+	'talisman de pierre':
+		['talisman',0,0,0,0,0,0,0,0,-1,10,20,10,20,0,0.00,2.50,2.50],
+	'targe':
+		['bouclier',0,0,0,0,1,0,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
+	'torche':
+		['arme',1,0,1,0,0,0,0,1,0,0,0,0,0,0,0.00,5.00,5.00],
+	'torque de pierre':
+		['talisman',0,0,0,0,0,0,0,0,-2,20,40,20,40,0,0.00,2.50,2.50],
+	'tunique':
+		['armure',0,0,0,0,1,0,0,0,0,5,10,5,10,0,0.00,2.50,2.50],
+	"tunique d'écailles":
+		['armure',0,0,0,0,-1,3,0,0,0,15,30,0,0,0,0.00,30.00,30.00],
+	'turban':
+		['casque',0,0,0,0,0,0,0,0,0,10,20,0,0,0,0.00,2.50,2.50]
+}
+
+// liste des templates
+// mh_templates['Nom'] = [ 'AttP', 'AttM', 'DegP', 'DegM', 'Esq',
+// 'ArmP', 'ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
+// 'PV', 'DLA', 'Poids_Min', 'Poids_Max');
+var mh_templates = {
+	'de Feu':
+		[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'de Résistance':
+		[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+	"de l'Aigle":
+		[0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+	'de la Salamandre':
+		[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+	'des Cyclopes':
+		[0,1,0,1,0,0,0,-1,0,0,0,0,0,0,0,0,0],
+	'des Enragés':
+		[0,1,0,1,-1,0,0,0,0,0,0,0,0,0,0,0,0],
+	'des Tortues':
+		[0,0,0,0,0,0,2,0,0,0,0,0,0,0,30,0,0],
+	'des Vampires':
+		[0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+	'du Glacier':
+		[0,1,0,0,0,0,1,0,0,5,5,0,0,0,0,0,0],
+	'du Rat':
+		[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+	'du Roc':
+		[0,0,0,0,-1,0,1,0,0,0,0,0,0,0,0,0,0],
+	'du Temps':
+		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,-30,0,0],
+	'du Vent':
+		[0,0,0,-1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+	'en Mithril':
+		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'des Anciens':
+		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'des Champions':
+		[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'des Duellistes':
+		[0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'de la Terre':
+		[0,0,0,0,0,0,0,0,2,0,0,0,0,5,30,0,0],
+	"de l'Orage":
+		[0,0,0,-1,2,0,0,0,0,0,0,0,0,0,0,0,0],
+	"de l'Ours":
+		[0,0,0,2,0,0,0,0,0,0,0,0,0,5,30,0,0],
+	'des Béhémoths':
+		[0,0,0,0,0,0,3,0,0,0,0,0,0,0,30,0,0],
+	'des Mages':
+		[0,0,0,0,0,0,0,0,0,5,5,5,5,0,0,0,0],
+	'du Pic':
+		[0,0,0,0,-1,0,2,0,0,0,0,0,0,0,0,0,0],
+	'du Sable':
+		[0,0,0,0,3,0,-1,-1,0,0,0,0,0,0,0,0,0],
+	'acéré':
+		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'acérée':
+		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'équilibré':
+		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'équilibrée':
+		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	'léger':
+		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
+	'légère':
+		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
+	'renforcé':
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+	'renforcée':
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+	'robuste':
+		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]
+}
+
+function clone(arr) {
+// Clonage rapide
+	return arr.slice(0);
+}
+
+function addArray(arr1,arr2) {
+// Somme matricielle
+	var res = clone(arr1);
+	for(i=res.length-1 ; i>=0 ; i--) {
+		res[i] += arr2[i];
+	}
+	return res;
+}
+
+function getTemplates(nomItem) {
+// Déstructure le nom de l'item en array [nom, template1, ...]
+	var tempFound = true;
+	var str = nomItem.trim();
+	var arr = [];
+	while(tempFound) {
+		tempFound = false;
+		for(var temp in mh_templates) {
+			// on teste la fin du nom contre chaque template
+			if(str.slice(-temp.length)!=temp) { continue; }
+			tempFound = true;
+			str = str.slice(0,-temp.length-1);
+			arr.unshift(temp);
+			if(str.slice(-3)==' et') {
+				str = str.slice(0,-3);
+			}
+		}
+	}
+	arr.unshift(str);
+	return arr;
+}
+
+function addMithril(arrayCaracs,typeItem) {
+// Ajoute l'effet du Mithril sur les caracs
+	if(typeItem=='arme') {
+		if(arrayCaracs[0]<0) {
+			arrayCaracs[0] = Math.ceil(arrayCaracs[0]/2);
+		}
+	}
+	else {
+		if(arrayCaracs[4]<0) {
+			arrayCaracs[4] = Math.ceil(arrayCaracs[4]/2);
+		}
+	}
+	arrayCaracs[15] /= 2;
+	arrayCaracs[16] /= 2;
+	return arrayCaracs;
+}
+
+function addRenfort(arrayCaracs,template) {
+// Ajoute l'effet des pseudo-templates sur les caracs
+// S'applique APRÈS le mithril
+// WARNING - Cette formule n'a rien d'officiel, gare !
+	var coef = 0;
+	if(/^lég[e,è]re?$/.test(template)) {
+		coef = -1;
+	}
+	else if(/^renforcée?$/.test(template)
+		|| template==='robuste') {
+		coef = 1;
+	}
+	if(coef) {
+		arrayCaracs[15] = arrayCaracs[15]+coef*Math.floor(arrayCaracs[15]/10);
+		arrayCaracs[16] = arrayCaracs[16]+coef*Math.floor(arrayCaracs[16]/10);
+	}
+	arrayCaracs = addArray(arrayCaracs,mh_templates[template]);
+	return arrayCaracs;
+}
+
+function getCaracs(item) {
+// Calcule les caractéristiques de l'item
+	var templates = getTemplates(item);
+	if(!mh_caracs[templates[0]]) {
+		// Si l'item est inconnu
+		return [];
+	}
+	var caracs = clone(mh_caracs[templates[0]]);
+	var typeItem = caracs[0];
+	caracs.shift();
+	templates.shift();
+	if(templates[templates.length-1]=='en Mithril') {
+		caracs = addMithril(caracs,typeItem);
+		templates.pop();
+	}
+	if(/^acérée?$/.test(templates[0])
+		|| /^équilibrée?$/.test(templates[0])
+		|| /^lég[e,è]re?$/.test(templates[0])
+		|| /^renforcée?$/.test(templates[0])
+		|| templates[0]=='robuste') {
+		caracs = addRenfort(caracs,templates[0]);
+		templates.shift();
+	}
+	for(var i=templates.length-1 ; i>=0 ; i--) {
+		caracs = addArray(caracs,mh_templates[templates[i]]);
+	}
+	return caracs;
+}
+
+function getLine(tab) {
+// Préparation de la ligne à afficher lors d'un mouseover
+	var str = '';
+	if(tab[0]!=0 || tab[1]!=0) {
+		str += '<b>Att : </b>'+aff(tab[0]);
+		if(tab[1]!=0) { str += '/'+aff(tab[1]); }
+		str += ' | ';
+	}
+	if(tab[4]!=0) {
+		str += '<b>Esq : </b>'+aff(tab[4])+' | ';
+	}
+	if(tab[2]!=0 || tab[3]!=0) {
+		str += '<b>Deg : </b>'+aff(tab[2]);
+		if(tab[3]!=0) { str += '/'+aff(tab[3]); }
+		str += ' | ';
+	}
+	if(tab[8]!=0) {
+		str += '<b>Reg : </b>'+aff(tab[8])+' | ';
+	}
+	if(tab[7]!=0) {
+		str += '<b>Vue : </b>'+aff(tab[7])+' | ';
+	}
+	if(tab[5]!=0 || tab[6]!=0) {
+		str += '<b>Arm : </b>'+aff(tab[5]);
+		if(tab[6]!=0) { str += '/'+aff(tab[6]); }
+		str += ' | ';
+	}
+	if(tab[9]!=0 || tab[10]!=0) {
+		str += '<b>RM : </b>'+aff(tab[9])+'%';
+		if(tab[9]!=tab[10]) {
+			str += '/'+aff(tab[10])+'%';
+			}
+		str += ' | ';
+		}
+	if(tab[11]!=0 || tab[12]!=0) {
+		str += '<b>MM : </b>'+aff(tab[11])+'%';
+		if(tab[11]!=tab[12]) { str += '/'+aff(tab[12])+'%'; }
+		str += ' | ';
+	}
+	if(tab[13]!=0) {
+		str += '<b>PV : </b>'+aff(tab[13])+' | ';
+	}
+	if(tab[14]!=0) {
+		str += '<b>DLA : </b>'+aff(tab[14])+' min | ';
+	}
+	str += '<b>Poids : </b>'+tab[15]+' min';
+	if(tab[15]!=tab[16]) {
+		str += ' / '+tab[16]+' min';
+	}
+	return str;
+}
+
+function toolTipInit() {
+	DivInfo = document.createElement('div');
+	DivInfo.id = 'infosVue';
+	DivInfo.className = 'mh_textbox';
+	DivInfo.style =
+		'position: absolute;'
+		+'border: 1px solid #000000;'
+		+'visibility:hidden;'
+		+'display:inline;'
+		+'z-index:99;';
+	document.body.appendChild(DivInfo);
+	document.onmousemove = getXY;
+	document.onclick = changeFreezeStatus;
+}
+
+function getXY(evt) {
+	if(!freezed && DivInfo.style.visibility=='visible') {
+		DivInfo.style.left = evt.pageX+'px';
+		DivInfo.style.top = evt.pageY+10+'px';
+	}
+}
+
+function changeFreezeStatus() {
+	if(DivInfo.style.visibility=='visible') {
+		freezed = !freezed;
+		if(!freezed) { hideInfos(); }
+	}
+}
+
+function showInfos() {
+	if(freezed) { return; } 
+	var currentInfos = this.infos;
+	DivInfo.innerHTML = currentInfos;
+	DivInfo.style.visibility = 'visible';
+}
+
+function hideInfos() {
+	if(!freezed) { DivInfo.style.visibility = 'hidden'; }
+}
+
+function treateEquipement() {
+// Extrait les données du matos et réinjecte les infos déduites
+	if(MZ_getValue('INFOCARAC')=='false') { return; }
+	
+	var faireLigne = false;
+	var caracs = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+	var nodes = document.evaluate(
+		"//td/b[text()='Equipement Utilisé']/../../"
+		+"td[2]/img[contains(@src,bullet)]",
+		document, null, 7, null);
+	if(nodes.snapshotLength>0) {
+		// Si CSS de base
+		for(var i=0 ; i<nodes.snapshotLength ; i++) {
+			var node = nodes.snapshotItem(i);
+			var next = node.nextSibling;
+			var nnext = next.nextSibling;
+			var nom = next.nodeValue.toLowerCase();
+			if(nnext.childNodes.length==1) {
+				nom += nnext.firstChild.nodeValue;
+			}
+			nom = nom.trim();
+			// gestion winpostrophe
+			var c = String.fromCharCode(180);
+			while(nom.indexOf(c)!=-1) {
+				nom = nom.replace(c,"'");
+			}
+			var arr = getCaracs(nom);
+			if(arr.length>0) {
+				faireLigne = true;
+				caracs = addArray(caracs,arr);
+				var span = document.createElement('span');
+				span.appendChild(next);
+				span.appendChild(nnext);
+				span.infos = getLine(arr);
+				span.onmouseover = showInfos;
+				span.onmouseout = hideInfos;
+				insertBefore(node.nextSibling,span);
+			}
+		}
+		
+		if(faireLigne) {
+			var node = document.evaluate("//td/b[text()='Equipement Utilisé']",
+				document, null, 9, null).singleNodeValue;
+			node.infos = getLine(caracs);
+			node.onmouseover = showInfos;
+			node.onmouseout = hideInfos;
+		}
+	}
+	else {
+		// Si CSS avancée
+		nodes = document.evaluate("//dd[@class='equipement']/ul/li",
+			document, null, 7, null);
+		if(nodes.snapshotLength>0) {
+			for(var i=0 ; i<nodes.snapshotLength ; i++) {
+				var node = nodes.snapshotItem(i);
+				var nom = node.firstChild.nodeValue.toLowerCase();
+				if(node.childNodes.length>1) {
+					nom += node.childNodes[1].firstChild.nodeValue;
+				}
+				nom = nom.trim();
+				// gestion winpostrophe
+				var c = String.fromCharCode(180);
+				while(nom.indexOf(c)!=-1) {
+					nom = nom.replace(c,"'");
+				}
+				var arr = getCaracs(nom);
+				if(arr.length!=0) {
+					caracs = addArray(caracs,arr);
+					node.infos = getLine(arr);
+					node.onmouseover = showInfos;
+					node.onmouseout = hideInfos;
+				}
+			}
+			var nodes = document.evaluate("//dt[@class='equipement']",
+				document, null, 7, null);
+			var node = nodes.snapshotItem(0);
+			node.infos = getLine(caracs);
+			node.onmouseover = showInfos;
+			node.onmouseout = hideInfos;
+		}
+	}
+}
+
+function do_pjview() {
+	treateEquipement();
+	toolTipInit();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x option
+
+/* TODO
+ * Passer le HTML injecté aux conventions HTML5
+ */
+
+
+/*-[functions]------------- Fonctions de sauvegarde --------------------------*/
+
+function saveITData() {
+	var IT = document.getElementById('itSelect').value;
+	if(IT=='bricol') {
+		var system = document.getElementById('urlbricol').value;
+		var login = document.getElementById('loginbricol').value;
+		var pass = document.getElementById('passbricol').value;
+		if(system && login && pass) {
+			MZ_setValue(numTroll+'.INFOSIT',
+				'bricol$'+system+'$'+login+'$'+hex_md5(pass) );
+		}
+	}
+	else {
+		MZ_removeValue(numTroll+'.INFOSIT');
+	}
+}
+
+function saveLinks() {
+	var numLinks = document.getElementById('linksBody').childNodes.length;
+	var data=[ [] ];
+	/* Récupération et tri des liens */
+	for(var i=1 ; i<=numLinks ; i++) {
+		MZ_removeValue('URL'+i);
+		MZ_removeValue('URL'+i+'.nom');
+		MZ_removeValue('URL'+i+'.ico');
+		var url = document.getElementById('url'+i).value;
+		var nom = document.getElementById('nom'+i).value;
+		var ico = document.getElementById('ico'+i).value;
+		if(url && (nom || ico) ) {
+			data.push( [url, nom ? nom : '', ico ? ico : ''] );
+		}
+	}
+	/* Sauvegarde */
+	for(var i=1 ; i<data.length ; i++) {
+		MZ_setValue('URL'+i,data[i][0]);
+		MZ_setValue('URL'+i+'.nom',data[i][1]);
+		MZ_setValue('URL'+i+'.ico',data[i][2]);
+	}
+}
+
+function saveAll() {
+	var urlIco = document.getElementById('icoMenuIco').value;
+	if(urlIco) {
+		MZ_setValue(numTroll+'.ICOMENU', urlIco );
+	}
+	else {
+		MZ_removeValue(numTroll+'.ICOMENU', urlIco );
+		document.getElementById('icoMenuIco').value = '';
+	}
+	saveLinks();
+	refreshLinks();
+	
+	MZ_setValue('VUEEXT',document.getElementById('vueext').value);
+	
+	var maxcdm = parseInt(document.getElementById('maxcdm').value);
+	if(maxcdm) {
+		MZ_setValue(numTroll+'.MAXCDM', maxcdm );
+	}
+	else {
+		MZ_removeValue(numTroll+'.MAXCDM');
+		document.getElementById('maxcdm').value = '';
+	}
+
+	MZ_setValue('NOINFOEM',
+		document.getElementById('noInfoEM').checked ? 'true' : 'false');
+	
+	// Pourquoi Tilk stockait-il tout en str ?
+	// -> parce que les booléens c'est foireux (vérifié)
+	MZ_setValue(numTroll+'.USECSS',
+		document.getElementById('usecss').checked ? 'true':'false');
+	MZ_setValue('INFOCARAC',
+		document.getElementById('infocarac').checked ? 'true' : 'false');
+	//MZ_setValue(numTroll+'.SEND_IDT',
+	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
+	// Fonctionnalité désactivée
+
+	MZ_setValue(numTroll+'.AUTOCDM',
+		document.getElementById('autoCdM').checked ? 'true' : 'false');
+	MZ_setValue('VUECARAC',
+		document.getElementById('vueCarac').checked ? 'true' : 'false');
+	MZ_setValue('CONFIRMEDECALAGE',
+		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
+	MZ_setValue(numTroll+".OLDSCHOOL",
+		document.getElementById("oldShoolStyle").checked ? "true" : "false");
+
+	saveITData();
+	
+	var bouton = document.getElementById('saveAll');
+	bouton.value = (bouton.value=='Sauvegardé !') ?	
+		'Re-sauvegardé !' : 'Sauvegardé !';
+}
+
+
+/*-[functions]----------------- EventListeners -------------------------------*/
+
+function onChangeIT() {
+	var IT = document.getElementById('itSelect').value;
+	var itBody = document.getElementById('itBody');
+	itBody.innerHTML = '';
+	
+	if(IT=='bricol') {
+		var tr = appendTr(itBody,'mh_tdpage')
+		var td = appendTd(tr);
+		var str = MZ_getValue(numTroll+'.INFOSIT');
+		if(str) {
+			var arr = str.split('$');
+			var system = arr[1];
+			var login = arr[2];
+		}
+		appendText(td,'Nom du système : ');
+		appendTextbox(td,'text','urlbricol',20,50,system);
+		td = appendTd(tr);
+		appendText(td,'Login du compte : ');
+		appendTextbox(td,'text','loginbricol',20,50,login);
+		td = appendTd(tr);
+		appendText(td,'Mot de passe du compte : ');
+		appendTextbox(td,'password','passbricol',20,50);
+	}
+}
+
+function refreshLinks() {
+	document.getElementById('linksBody').innerHTML = '';
+	var anotherURL = MZ_getValue('URL1');
+	if(!anotherURL) { addLinkField(); }
+	var i=1;
+	while(anotherURL && i<99) {
+		addLinkField(i,anotherURL,
+			MZ_getValue('URL'+i+'.nom'),MZ_getValue('URL'+i+'.ico') );
+		i++;
+		anotherURL = MZ_getValue('URL'+i);
+	}
+}
+
+function addLinkField(i,url,nom,ico) {
+	var linksBody = document.getElementById('linksBody');
+	if(!(i>0)) { i = linksBody.childNodes.length+1; }
+	var tr = appendTr(linksBody);
+	var td = appendTdCenter(tr);
+	appendText(td,'Lien '+i+' : ');
+	appendTextbox(td,'text','url'+i,40,150,url);
+	td = appendTdCenter(tr);
+	appendText(td,'Nom : ');
+	appendTextbox(td,'text','nom'+i,20,150,nom);
+	td = appendTdCenter(tr);
+	appendText(td,'Icône : ');
+	appendTextbox(td,'text','ico'+i,40,150,ico);
+}
+
+function removeLinkField() {
+	var linksBody = document.getElementById('linksBody');
+	var i = linksBody.childNodes.length;
+	MZ_removeValue('URL'+i);
+	MZ_removeValue('URL'+i+'.nom');
+	MZ_removeValue('URL'+i+'.ico');
+	linksBody.removeChild(linksBody.lastChild);
+	if(linksBody.childNodes.length==0) { addLinkField(); }
+}
+
+function resetMainIco() {
+	document.getElementById('icoMenuIco').value=
+		'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+}
+
+
+/*-[functions]-------------- Fonctions d'insertion ---------------------------*/
+
+function insertTitle(next,txt) {
+	var div = document.createElement('div');
+	div.className = 'titre2';
+	appendText(div,txt);
+	insertBefore(next,div);
+}
+
+function insertMainTable(next) {
+	var table = document.createElement('table');
+	table.width = '98%';
+	table.border = 0;
+	table.align = 'center';
+	table.cellPadding = 2;
+	table.cellSpacing = 1;
+	table.className =  'mh_tdborder';
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	insertBefore(next,table);
+	return tbody;
+}
+
+function appendSubTable(node) {
+	var table = document.createElement('table');
+	table.width = '100%';
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	node.appendChild(table);
+	return tbody;
+}
+
+function insertOptionTable(insertPt) {
+	var mainBody = insertMainTable(insertPt);
+	
+	/* Liens dans le Menu */
+	var tr = appendTr(mainBody,'mh_tdtitre');
+	var td = appendTdText(tr,'Hyperliens ajoutés dans le Menu :',true);
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendText(td,'Icône du Menu: ');
+	var url = MZ_getValue(numTroll+'.ICOMENU');
+	if(!url) { 
+		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+	}
+	appendTextbox(td,'text','icoMenuIco',50,200,url);
+	appendButton(td,'Réinitialiser',resetMainIco);
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	var tbody = appendSubTable(td);
+	tbody.id = 'linksBody';
+	refreshLinks();
+	
+	td = appendTdCenter(appendTr(mainBody,'mh_tdpage'));
+	appendButton(td,'Ajouter',addLinkField);
+	appendButton(td,'Supprimer',removeLinkField);
+	
+	/* Options de la Vue : vue externe, nb de CdM, etc */
+	tr = appendTr(mainBody,'mh_tdtitre');
+	appendTdText(tr,'Options de la Vue :',true);
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	tbody = appendSubTable(td);
+	
+	tr = appendTr(tbody);
+	td = appendTdText(tr,'Vue externe : ');
+	var select = document.createElement('select');
+	select.id = 'vueext';
+	td.appendChild(select);
+	var listeVues2D = [
+		'Bricol\' Vue',
+		'Vue du CCM',
+		'Vue Gloumfs 2D',
+		'Vue Gloumfs 3D',
+		'Grouky Vue!'
+	];
+	for(var i=0 ; i<listeVues2D.length ; i++) {
+		appendOption(select,listeVues2D[i],listeVues2D[i]);
+	}
+	if(MZ_getValue('VUEEXT')) {
+		select.value = MZ_getValue('VUEEXT');
+	}
+	
+	td = appendTd(tr);
+	appendCheckBox(td,'noInfoEM',MZ_getValue('NOINFOEM')=='true');
+	appendText(td,' Masquer les informations à propos de l\'écriture magique');
+	
+	tr = appendTr(tbody);
+	td = appendTdText(tr,'Nombre de CdM automatiquement récupérées : ');
+	appendTextbox(td,'text','maxcdm',5,10,MZ_getValue(numTroll+'.MAXCDM'));
+	
+	td = appendTd(tr);
+	appendCheckBox(td,'usecss',MZ_getValue(numTroll+'.USECSS')=='true');
+	appendText(td,' Utiliser la CSS pour les couleurs de la diplomatie');
+	
+	/* Interface Tactique */
+	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
+	appendText(td,'Interface Tactique : ',true);
+	select = document.createElement('select');
+	select.id = 'itSelect';
+	appendOption(select,'none','Aucune');
+	appendOption(select,'bricol','Système Tactique des Bricol\'Trolls');
+	// seule interface supportée !
+	td.appendChild(select);
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	tbody = appendSubTable(td);
+	tbody.id = 'itBody';
+	select.onchange = onChangeIT;
+	var str = MZ_getValue(numTroll+'.INFOSIT');
+	if(str) {
+		select.value = str.slice(0,str.indexOf('$'));
+		onChangeIT();
+	}
+	
+	/* Options diverses */
+	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
+	appendText(td,'Options diverses :',true);
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'infocarac',MZ_getValue('INFOCARAC')!='false');
+	appendText(td,
+		' Afficher les caractéristiques des équipements des autres Trõlls');
+	
+	/*td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'send_idt',MZ_getValue(numTroll+'.SEND_IDT') != 'non')
+	appendText(td,' Envoyer les objets identifiés au système de stats');*/
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'autoCdM',MZ_getValue(numTroll+'.AUTOCDM')=='true');
+	appendText(td,' Envoyer automatiquement les CdM vers la base MountyZilla');
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'vueCarac',MZ_getValue('VUECARAC')=='true');
+	appendText(td,' Afficher la Vue avec les caractéristique dans le Profil');
+	
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'confirmeDecalage',MZ_getValue('CONFIRMEDECALAGE')=='true');
+	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
+	
+	td = appendTd(appendTr(mainBody,"mh_tdpage"));
+	appendCheckBox(td,"oldShoolStyle",MZ_getValue(numTroll+".OLDSCHOOL")=="true");
+	appendText(td," Ouvrir l'ancien profil par défaut");
+	
+	/* Bouton SaveAll */
+	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
+	input = appendButton(td,'Sauvegarder',saveAll);
+	input.id = 'saveAll';
+	}
+
+function insertCreditsTable(insertPt) {
+	var tbody = insertMainTable(insertPt);
+	
+	var td = appendTdText( appendTr(tbody,'mh_tdtitre'),
+		'Depuis son origine, nombreux sont ceux qui ont contribué à faire '
+		+'de MountyZilla ce qu\'il est aujourd\'hui. Merci à eux !' );
+
+	var ul = document.createElement('ul');
+	td.appendChild(ul);
+	appendLI(ul,'Fine fille (6465) pour les popup javascript');
+	appendLI(ul,'Reivax (4234) pour les infos bulles');
+	appendLI(ul,'Noc (2770) pour les moyennes des caracs');
+	appendLI(ul,'Endymion (12820) pour les infos sur les comp/sorts');
+	appendLI(ul,'Ratibus (15916) pour l\'envoi de CdM');
+	appendLI(ul,'TetDure (41931) pour les PVs restants dans les CdM');
+	appendLI(ul,'Les Teubreux pour leur bestiaire !');
+	appendLI(ul,'Les développeurs de vue qui font des efforts pour s\'intégrer '
+		+'à Mountyzilla');
+	appendLI(ul,'Gros Kéké (233) qui permet de tester le script aux limites '
+		+'du raisonnable avec sa vue de barbare');
+	appendLI(ul,'TuttiRikikiMaoussKosTroll (61214) pour le script '
+		+'sur les caracs de l\'équipement');
+	appendLI(ul,'Ashitaka (9485) pour le gros nettoyage de l\'extension, '
+		+'des scripts, et beaucoup de choses à venir');
+	appendLI(ul,'Tous ceux de l\'ancienne génération oubliés par Tilk');
+	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... '
+		+'et tous les participants au projet ZoryaZilla');
+	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
+	appendLI(ul,'Rokü Menton-brûlant (108387) pour m\'avoir incité à passer '
+		+'sur GitHub');
+	appendLI(ul,'Rouletabille (91305) & Marmotte (93138) pour leur support '
+		+'technique récurrent');
+	appendLI(ul,'Hennet (74092) pour le script du nouveau profil');
+	appendLI(ul,'Tous les testeurs de la nouvelle génération '
+		+'oubliés par Dabihul');
+	}
+
+
+/* [functions]                     Obsolètes                                  */
+function deleteEnchantement()
+{
+	try
+	{
+	var idEquipement = this.getAttribute('name');
+	MZ_removeValue(numTroll+".enchantement."+idEquipement+".objet");
+	MZ_removeValue(numTroll+".enchantement."+idEquipement+".enchanteur");
+	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.0");
+	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.1");
+	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.2");
+	var listeEquipement = MZ_getValue(numTroll+".enchantement.liste").split(";");
+	var string = "";
+	for(var i=0;i<listeEquipement.length;i++)
+	{
+		if(listeEquipement[i]!=idEquipement)
+			if(string=="")
+				string = listeEquipement[i];
+			else
+				string += ";"+listeEquipement[i];
+	}
+	if(string=="")
+	{
+		MZ_removeValue(numTroll+".enchantement.liste");
+		var table = this.parentNode.parentNode.parentNode.parentNode;
+		var parent = table.parentNode;
+		for(var i=0;i<parent.childNodes.length;i++)
+		{
+			if(parent.childNodes[i]==table)
+			{
+				parent.removeChild(parent.childNodes[i-1]);
+				parent.removeChild(parent.childNodes[i-1]);
+				parent.removeChild(parent.childNodes[i-1]);
+				break;
+			}
+		}
+	}
+	else
+	{
+		MZ_getValue(numTroll+".enchantement.liste",string);
+		this.parentNode.parentNode.parentNode
+			.removeChild(this.parentNode.parentNode);
+	}
+	}
+	catch(e)
+	{
+		window.alert(e);
+	}
+}
+/* [functions]                     fin Obsolètes                                  */
+
+/*-[functions]---------------- Partie principale -----------------------------*/
+
+function do_option() {
+	start_script(712);
+
+	// Pour cryptage des mdp IT
+	appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
+
+	var insertPoint = document.getElementById('footer1');
+	insertBefore(insertPoint,document.createElement('p'));
+	insertTitle(insertPoint,'Mountyzilla : Options');
+	insertOptionTable(insertPoint);
+	/* insertion enchantements ici
+	if(...)
+	insertEnchantementTable();
+	*/
+	insertBefore(insertPoint,document.createElement('p'));
+	insertTitle(insertPoint,'Mountyzilla : Crédits');
+	insertCreditsTable(insertPoint);
+	insertBefore(insertPoint,document.createElement('p'));
+
+	/* [zone]                     Obsolète ??                                  */
+	if(MZ_getValue(numTroll+".enchantement.liste")
+		&& MZ_getValue(numTroll+".enchantement.liste")!="" )
+	{
+		insertTitle(insertPoint, 'Les Enchantements en cours');
+		table = document.createElement('table');
+		table.setAttribute('width', '98%');
+		table.setAttribute('border', '0');
+		table.setAttribute('align', 'center');
+		table.setAttribute('cellpadding', '2');
+		table.setAttribute('cellspacing', '1');
+		table.setAttribute('class', 'mh_tdborder');
+
+		tbody = document.createElement('tbody');
+		table.appendChild(tbody);
+		
+		tr = appendTr(tbody, 'mh_tdtitre');
+		appendTdText(tr, 'Equipement',1);
+		appendTdText(tr, 'Composants',1);
+		appendTdText(tr, 'Enchanteur',1);
+		appendTdText(tr, 'Action',1);
+		
+		var listeEquipement = MZ_getValue(numTroll+".enchantement.liste").split(";");
+		for(var i=0;i<listeEquipement.length;i++)
+		{
+			try
+			{
+				var idEquipement = listeEquipement[i];
+				var nomEquipement = MZ_getValue(numTroll+".enchantement."
+					+idEquipement+".objet");
+				var infoEnchanteur = MZ_getValue(numTroll+".enchantement."
+					+idEquipement+".enchanteur").split(";");
+				var ul = document.createElement('UL');
+				for(var j=0;j<3;j++)
+				{
+					var infoComposant = MZ_getValue(numTroll+".enchantement."
+						+idEquipement+".composant."+j).split(";");
+					var texte = infoComposant[4].replace("Ril ","Œil ");
+					for(var k=5;k<infoComposant.length;k++)
+					{
+						texte += ";"+infoComposant[k].replace("Ril ","Œil ");
+					}
+					li = appendLI(ul,texte);
+					var string = '<form action="http://troc.mountyhall.com/search.php" method="post" TARGET = "_blank">';
+					string+= '<input type="hidden" name="monster" value="'+infoComposant[2]+'" />';
+					string+= '<input type="hidden" name="part" value="'+infoComposant[0]+'" />';
+					string+= '<input type="hidden" name="qualite" value="'+(getQualite(infoComposant[3])+1)+'" />';
+					string+= '<input type="hidden" name="q" value="min" />';
+					string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Rechercher sur le Troc de l\'Hydre" />';
+					string+= ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;http://www.cyclotrolls.be/wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22'+infoComposant[2]+'%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>';
+					
+					string+= '</form>';
+	//				string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
+	//				string+= '<input type="hidden" name="wiki" value="TroOGle" />';
+	//				string+= '<input type="hidden" name="trooglephr" value="base:monstres tag:nom &quot;'+infoComposant[2]+'&quot;" />';
+	//				string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grâce à Troogle" /></form>';
+					li.innerHTML += string;
+				}
+				tr = appendTr(tbody, 'mh_tdpage');
+				
+				td = appendTdText(tr, nomEquipement);
+				td.setAttribute('valign', 'center');
+				
+				td = document.createElement('td');
+				td.appendChild(ul);
+				tr.appendChild(td);
+				td.setAttribute('valign', 'center');
+				
+				td = appendTdText(tr, "Enchanteur n°"+infoEnchanteur[0]+" ("+infoEnchanteur[1]+"|"+infoEnchanteur[2]+"|"+infoEnchanteur[3]+")");
+				td.setAttribute('valign', 'center');
+				
+				td = document.createElement('td');
+				input = appendButton(td, 'Supprimer l\'enchantement', deleteEnchantement);
+				input.setAttribute('name', idEquipement);
+				tr.appendChild(td);
+				td.setAttribute('valign', 'center');
+			}
+			catch(e)
+			{
+			}
+		}
+		insertBefore(insertPoint, table);
+		insertBefore(insertPoint, document.createElement('p'));
+	}
+	/* [zone]                     fin Obsolète ??                                  */
+
+
+	displayScriptTime();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x equip
+
+/**
+ * 2014-02-08 - v2.0a (from scratch)
+ * 2014-02-18 - v2.0a0
+ * - ajout calcul Carats / UM des minerais + totaux
+ * 2014-03-06 - v2.0a1
+ * - retour Infos EM des Champis
+ * TODO
+ * Ces fonctions sont dev ici en test, à terme elles seront à intégrer dans libs
+ */
+
+function traiteChampis() {
+	try{
+		var tr = document.getElementById('mh_objet_hidden_Champignon');
+		var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		}
+	catch(e){return;}
+	if(trlist.length<=0) return;
+	for(var i=0 ; i<trlist.snapshotLength ; i++) {
+		var node = trlist.snapshotItem(i).childNodes[7];
+		var str = node.textContent.trim();
+		var type = str.slice(0,str.lastIndexOf(' '));
+		var mundi = mundiChampi[type];
+		if(!mundi) continue;
+		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
+			+'Competences/ecritureMagique.png';
+		var img = createAltImage(urlImg,'EM','Mundidey '+mundi);
+		appendText(node,' ');
+		node.appendChild(img);
+		}
+	}
+
+function traiteCompos() {
+	try {
+		var tr = document.getElementById('mh_objet_hidden_Composant');
+		var tbody = document.evaluate("./td/table/tbody",
+			tr, null, 9, null).singleNodeValue;
+		}
+	catch(e) {return;}
+	insererInfosEM(tbody);
+	}
+
+function traiteMinerai() {
+	try{
+		var tr = document.getElementById('mh_objet_hidden_Minerai');
+		var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		}
+	catch(e){return;}
+	if(trlist.length<=0) return;
+	var totaux = {};
+	var str;
+	for(var i=0 ; i<trlist.snapshotLength ; i++) {
+		var node = trlist.snapshotItem(i);
+		var nature = node.childNodes[7].textContent,
+			caracs = node.childNodes[9].textContent;
+		var taille = Number(caracs.match(/\d+/)[0]);
+		var coef = 1;
+		if(caracs.indexOf('Moyen')!=-1) coef = 2;
+		else if(caracs.indexOf('Normale')!=-1) coef = 3;
+		else if(caracs.indexOf('Bonne')!=-1) coef = 4;
+		else if(caracs.indexOf('Exceptionnelle')!=-1) coef = 5;
+		if(nature.indexOf('Mithril')!=-1) {
+			coef = 0.2*coef;
+			str = ' | UM: ';
+			}
+		else {
+			coef = 0.75*coef+1.25;
+			if(nature.indexOf('Taill')!=-1) coef = 1.15*coef;
+			str = ' | Carats: ';
+			}
+		var carats = Math.round(taille*coef)
+		appendText(node.childNodes[9], str+carats );
+		if(!totaux[nature]) {
+			totaux[nature] = [taille,carats];
+			}
+		else {
+			totaux[nature][0] += taille;
+			totaux[nature][1] += carats;
+			}
+		}
+	str = 'Total : ';
+	for(var nature in totaux) {
+		if(str.length>8) str += ', ';
+		if(nature.indexOf('Mithril')!=-1) {
+			str += nature+totaux[nature][1]+' UM';
+			}
+		else {
+			str += nature+totaux[nature][0]+'U/'
+				+totaux[nature][1]+'c';
+			}
+		}
+	/*var node = document.getElementById('mh_plus_Minerai');
+	var titre = document.evaluate("./td[contains(./b/text(),'Minerai')]",
+		node.parentNode.parentNode.parentNode, null, 9, null).singleNodeValue;
+	if(!titre) return;*/
+	// Il faut préalablement injecter du CSS pour ne pas hériter de 'mh_titre3'
+	var td = appendTdText(trlist.snapshotItem(0).parentNode, '('+str+')');
+	td.colSpan = 7;
+	}
+
+function do_equip() {
+	start_script();
+
+	traiteChampis();
+	traiteCompos();
+	traiteMinerai();
+
+	displayScriptTime();
+}
+
+/*******************************************************************************
+*  This file is part of Mountyzilla.                                           *
+*                                                                              *
+*  Mountyzilla is free software; you can redistribute it and/or modify         *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation; either version 2 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  Mountyzilla is distributed in the hope that it will be useful,              *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*  GNU General Public License for more details.                                *
+*                                                                              *
+*  You should have received a copy of the GNU General Public License           *
+*  along with Mountyzilla; if not, write to the Free Software                  *
+*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*******************************************************************************/
+
+// x~x diplo
+
+/*
+TODO:
+ V Étape 1: Gestion comme actuellement, avec 2 couleurs (amis/ennemis)
+ V Étape 2: Gestion couleurs par catégorie (10 couleurs)
+ V Étape 3: Ajout de la diplo perso
+ X Étape 4: Gestion distante (sécurisée par mdp) de cette option
+ V Étape 5: Ajout des fioritures (preview de la couleur...)
+ 
+ Options Globales:
+ Actuelles:
+ 	numTroll.USECSS,
+ 	numTroll.NODIPLO
+ 	NOMYTH
+ Nouvelles:
+ 	TODO numTroll.USECSS
+ 	numTroll.diplo.off (remplace NODIPLO)
+ 	numTroll.diplo.guilde
+ 	numTroll.diplo.perso
+ 
+ Structure de diplo.guilde:
+ isOn: 'true' ou 'false'
+ isDetailOn: 'true' ou 'false'
+ guilde
+ 	> id
+ 	> couleur
+ AllAmis,AllEnnemis: couleur
+ Amis0,...,Ennemis5
+ 	> Troll: idTroll1;...;
+ 	> Guilde: idGuilde1;...;
+ 	> titre
+ 	> couleur
+ 
+ Structure de diplo.perso:
+ isOn: 'true' ou 'false'
+ mythiques: couleur
+ Troll,Guilde,Monstre:
+ 	> id
+ 	> couleur
+ 	> description
+*/
+
+/*-[functions]-------------- Fonctions utilitaires ---------------------------*/
+
+function couleurAleatoire() {
+	var alph = '0123456789ABCDEF'.split('');
+	var clr = '#';
+	for (var i=0; i<6; i++) {
+		clr+=alph[ Math.floor(16*Math.random()) ];
+	}
+	return clr;
+}
+
+function isCouleur(str) {
+	return /^#[0-9A-F]{6}$/i.test(str);
+}
+
+/*-[functions]---------------- Analyse de la page ----------------------------*/
+
+function appendChoixCouleur(node,id) {
+	var span = document.createElement('span');
+	span.id = 'span'+id;
+	if(isDetailOn) {
+		span.style.display = 'none';
+	}
+	var couleur = id=='AllAmis'?'#AAFFAA':'#FFAAAA';
+	if(diploGuilde[id]) {
+		couleur = diploGuilde[id];
+	}
+	appendText(span,' - Couleur HTML: ');
+	var input = appendTextbox(span,'text',id,7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+	node.appendChild(span);
+}
+
+function insertChoixCouleur(node,id) {
+	var span = document.createElement('span');
+	span.id = 'span'+id;
+	// La couleur détaillée passera à une valeur aléatoire
+	// si toggle vers isDetailOn
+	var couleur = couleurAleatoire();
+	if(!isDetailOn) {
+		span.style.display = 'none';
+	} else if(diploGuilde[id]) {
+		couleur = diploGuilde[id].couleur;
+	}
+	appendText(span,' - Couleur HTML: ');
+	var input = appendTextbox(span,'text',id,7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+	insertBefore(node,span);
+}
+
+function setChoixCouleurs() {
+	try {
+		var form = document.getElementsByName('ActionForm')[0];
+		var nodesAE = document.evaluate(
+			"./table/tbody/tr/td[@class='mh_tdtitre']",
+			form, null, 7, null
+		);
+		var nodes = document.evaluate(
+			"./table/tbody/tr/td[not(@class='mh_tdtitre')]",
+			form, null, 7, null
+		);
+	} catch(e) {
+		window.console.error('[Diplomatie] Structure de la page non reconnue');
+		return false;
+	};
+	nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
+	appendChoixCouleur(nodesAE.snapshotItem(0),'AllAmis');
+	appendChoixCouleur(nodesAE.snapshotItem(1),'AllEnnemis');
+	for(var i=0 ; i<5 ; i++) {
+		nodes.snapshotItem(i).id = 'tdAmis'+i;
+		insertChoixCouleur(nodes.snapshotItem(i).childNodes[1],'Amis'+i);
+		nodes.snapshotItem(i+5).id = 'tdEnnemis'+i;
+		insertChoixCouleur(nodes.snapshotItem(i+5).childNodes[1],'Ennemis'+i);
+	}
+	return true;
+}
+
+function fetchDiploGuilde() {
+	try {
+		for(var AE in {Amis:0,Ennemis:0}) {
+			for(var i=0 ; i<5 ; i++) {
+				/* Récup des A/E de rang i */
+				var td = document.getElementById('td'+AE+i);
+				var ligne = td.getElementsByTagName('table')[0].rows;
+				var titre = trim(td.firstChild.textContent);
+				// On laisse la gestion des couleurs à setChoixCouleurs:
+				var couleur = document.getElementById(AE+i).value;
+				diploGuilde[AE+i] = {
+					Troll:'',
+					Guilde:'',
+					titre: titre,
+					couleur: couleur
+				};
+				for(var j=1 ; j<ligne.length ; j++) {
+					var str = trim(ligne[j].cells[0].textContent);
+					var idx = str.lastIndexOf('(');
+					var num = str.slice(idx+1,-1);
+					var type = trim(ligne[j].cells[1].textContent);
+					diploGuilde[AE+i][type] += num+';';
+				}
+			}
+		}
+	} catch(e) {
+		window.console.error('[Diplomatie] Échec de récupération de la diplo\n'+e);
+		return false;
+	}
+	return true;
+}
+
+
+/*-[functions]--------------------- Handlers ---------------------------------*/
+
+function toggleDetails() {
+	isDetailOn = !isDetailOn;
+	for(var AE in {Amis:0,Ennemis:0}) {
+		document.getElementById('spanAll'+AE).style.display =
+			(isDetailOn?'none':'');
+		for(var i=0 ; i<5 ; i++) {
+			document.getElementById('span'+AE+i).style.display =
+				(isDetailOn?'':'none');
+		}
+	}
+}
+
+function toggleMythiques() {
+	isMythiquesOn = !isMythiquesOn;
+	document.getElementById('spanMythiques').style.display =
+		(isMythiquesOn?'':'none');
+}
+
+function previewCouleur() {
+	var value = this.value;
+	if(isCouleur(value)) {
+		this.style.backgroundColor = value;
+		this.title = '';
+	} else {
+		this.style.backgroundColor = '';
+		this.title = 'Entrez une couleur au format #789ABC pour prévisualiser';
+	}
+}
+
+function appendMenuType(node,duType) {
+	var select = document.createElement('select');
+	select.className = 'SelectboxV2';
+	var type = ['Guilde','Troll','Monstre'];
+	for(var i=0 ; i<3 ; i++) {
+		appendOption(select,type[i],type[i]);
+		if(type[i]==duType) { select.selectedIndex=i; }
+	}
+	node.appendChild(select);
+}
+
+function ajouteChamp(type,num,couleur,descr) {
+	var champs = document.getElementById('diploPerso');
+	var nb = champs.rows.length;
+	var tr = champs.insertRow(-1);
+	var td = appendTd(tr);
+	appendMenuType(td,type);
+	td = appendTd(tr);
+	appendText(td,' n°');
+	appendTextbox(td,'text','num'+nb,6,15,num);
+	td = appendTd(tr);
+	appendText(td,' couleur HTML:');
+	var input = appendTextbox(td,'text','couleur'+nb,7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+	td = appendTd(tr);
+	appendText(td,' Description:');
+	appendTextbox(td,'text','descr'+nb,30,150,descr);
+	td = appendTd(tr);
+	var span = document.createElement('span');
+	appendText(span,'[ok!]',true);
+	span.style.visibility = 'hidden';
+	td.appendChild(span);
+	td = appendTd(tr);
+	var bouton = appendButton(td,'Suppr.',retireCeChamp);
+}
+
+function retireCeChamp() {
+	var thisTr = this.parentNode.parentNode;
+	thisTr.parentNode.removeChild(thisTr);
+	var champs = document.getElementById('diploPerso');
+	if(champs.rows.length==0) { ajouteChamp(); }
+}
+
+function valideChamp(champ) {
+	var isValide = /^\d+$/.test(champ.cells[1].childNodes[1].value) &&
+		isCouleur(champ.cells[2].childNodes[1].value);
+	if(isValide) {
+		champ.cells[4].firstChild.style.visibility = 'visible';
+	} else {
+		champ.cells[4].firstChild.style.visibility = 'hidden';
+	}
+	return isValide;
+}
+
+function sauvegarderTout() {
+	/* Diplo de guilde */
+	diploGuilde.isOn =
+		document.getElementById('isGuildeOn').checked?'true':'false';
+	diploGuilde.isDetailOn = (isDetailOn?'true':'false');
+	var numGuilde = Number(document.getElementById('numGuilde').value);
+	var couleur = document.getElementById('couleurGuilde').value;
+	if(numGuilde) {
+		diploGuilde.guilde = {
+			id: numGuilde,
+			couleur: couleur
+		};
+	} else {
+		delete diploGuilde.guilde;
+	}
+	for(var AE in {Amis:0,Ennemis:0}) {
+		diploGuilde['All'+AE] = document.getElementById('All'+AE).value;
+		for(var i=0 ; i<5 ; i++) {
+			if(isDetailOn) {
+				diploGuilde[AE+i].couleur = document.getElementById(AE+i).value;
+			} else {
+				diploGuilde[AE+i].couleur = diploGuilde['All'+AE];
+			}
+		}
+	}
+	MZ_setValue(numTroll+'.diplo.guilde',JSON.stringify(diploGuilde));
+	
+	/* Diplo personnelle (ex-fonction saveChamps) */
+	var champs = document.getElementById('diploPerso');
+	diploPerso = {
+		isOn: document.getElementById('isPersoOn').checked?'true':'false',
+		Guilde: {},
+		Troll: {},
+		Monstre: {}
+	};
+	if(isMythiquesOn &&
+		isCouleur(document.getElementById('couleurMythiques').value)) {
+		diploPerso.mythiques = document.getElementById('couleurMythiques').value;
+	}
+	for(var i=0 ; i<champs.rows.length ; i++) {
+		if(valideChamp(champs.rows[i])) {
+			var type = champs.rows[i].cells[0].firstChild.value;
+			var num = champs.rows[i].cells[1].childNodes[1].value;
+			var couleur = champs.rows[i].cells[2].childNodes[1].value;
+			var descr = champs.rows[i].cells[3].childNodes[1].value;
+			diploPerso[type][num] = {
+				couleur: couleur
+			};
+			if(descr) {
+				diploPerso[type][num].titre = descr;
+			}
+		}
+	}
+	MZ_setValue(numTroll+'.diplo.perso',JSON.stringify(diploPerso));
+
+	avertissement('Données sauvegardées');
+}
+
+
+/*-[functions]------------- Modifications de la page -------------------------*/
+
+function creeTablePrincipale() {
+	var insertPt = document.getElementById('insertPt');
+	
+	/* Titre + bouton de Sauvegarde */
+	var tr = insertTr(insertPt,'mh_tdtitre');
+	var td = appendTdText(tr,'[Mountyzilla] Options de Diplomatie ',true);
+	appendButton(td,'Sauvegarder',sauvegarderTout);
+	
+	/* Options fixes */
+	tr = insertTr(insertPt,'mh_tdpage');
+	td = appendTdText(tr,'Diplomatie de guilde:',true);
+	appendBr(td);
+	appendCheckBox(td,'isGuildeOn',diploGuilde.isOn!='false');
+	appendText(td,'Afficher la diplomatie de guilde dans la Vue');
+	appendBr(td);
+	appendCheckBox(td,'detailOn',isDetailOn,toggleDetails);
+	appendText(td,'Utiliser des couleurs détaillées (10)');
+	
+	/* Diplo personnelle */
+	tr = insertTr(insertPt,'mh_tdpage');
+	td = appendTdText(tr,'Diplomatie personnelle:',true);
+	appendBr(td);
+	// Diplo Mythiques
+	appendCheckBox(td,'isMythiquesOn',isMythiquesOn,toggleMythiques);
+	appendText(td,'Ajouter les monstres Mythiques à la Diplomatie');
+	var span = document.createElement('span');
+	span.id = 'spanMythiques';
+	if(!isMythiquesOn) {
+		span.style.display = 'none';
+	}
+	var couleur = '#FFAAAA';
+	if(diploPerso.mythiques) {
+		couleur = diploPerso.mythiques;
+	}
+	appendText(span,' - couleur HTML:');
+	var input = appendTextbox(span,'text','couleurMythiques',7,7,couleur);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+	td.appendChild(span);
+	appendBr(td);
+	// Diplo éditable
+	appendCheckBox(td,'isPersoOn',diploPerso.isOn!='false');
+	appendText(td,'Afficher la diplomatie personnelle dans la Vue:');
+	appendBr(td);
+	var table = document.createElement('table');
+	table.id = 'diploPerso'
+	td.appendChild(table);
+	for(var type in {Guilde:0,Troll:0,Monstre:0}) {
+		for(var num in diploPerso[type]) {
+			ajouteChamp(
+				type,
+				num,
+				diploPerso[type][num].couleur,
+				diploPerso[type][num].titre
+			);
+		}
+	}
+	if(table.rows.length==0) {
+		ajouteChamp();
+	}
+	appendButton(td,'Ajouter',ajouteChamp)
+	// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
+	appendText(td,' ');
+	appendButton(td,
+		'Exemples de couleur',
+		function() {
+			var fenetre = window.open(
+				'/mountyhall/MH_Play/Options/Play_o_Color.php',
+				'Divers',
+				'width=500,height=550,toolbar=0,location=0,directories=0,'+
+				'status=0,menubar=0,resizable=1,scrollbars=1'
+			);
+			fenetre.focus();
+		}
+	);
+	
+	/* Couleur de Guilde */
+	tr = insertTr(insertPt,'mh_tdtitre');
+	td = appendTdText(tr,'GUILDE',true);
+	appendText(td,' - n°');
+	appendTextbox(td,'text','numGuilde',5,10,
+		diploGuilde.guilde && diploGuilde.guilde.id ?
+			diploGuilde.guilde.id : ''
+	);
+	appendText(td,' - Couleur HTML: ');
+	var input = appendTextbox(td,'text','couleurGuilde',7,7,
+		diploGuilde.guilde && diploGuilde.guilde.couleur ?
+			diploGuilde.guilde.couleur : '#BBBBFF'
+	);
+	input.onkeyup = previewCouleur;
+	input.onchange = previewCouleur;
+	input.onkeyup();
+}
+
+
+/*-[functions]----------------------- Main -----------------------------------*/
+
+var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
+	JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+var isDetailOn = diploGuilde.isDetailOn=='true';
+var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
+	JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+var isMythiquesOn = diploPerso.mythiques!=undefined;
+
+function do_diplo() {
+	if(setChoixCouleurs() && fetchDiploGuilde()) {
+		creeTablePrincipale();
+	}
+}
+
+/*******************************************************************************
+*   This file is part of Mountyzilla.                                          *
+*                                                                              *
+*   Mountyzilla is free software; you can redistribute it and/or modify        *
+*   it under the terms of the GNU General Public License as published by       *
+*   the Free Software Foundation; either version 2 of the License, or          *
+*   (at your option) any later version.                                        *
+*                                                                              *
+*   Mountyzilla is distributed in the hope that it will be useful,             *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
+*   GNU General Public License for more details.                               *
+*                                                                              *
+*   You should have received a copy of the GNU General Public License          *
+*   along with Mountyzilla; if not, write to the Free Software                 *
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
+*******************************************************************************/
+
+// x~x cdmcomp
+
+var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
+//var pageDispatcher = "http://m2m-bugreport.dyndns.org/scripts/dev/cdmdispatcher.php";
+//var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
+var cdm = '';
+
+function getNonNegInts(str) {
+	var nbrs = str.match(/\d+/g);
+	for(var i=0 ; i<nbrs.length ; i++) {
+		nbrs[i] = Number(nbrs[i]);
+	}
+	return nbrs;
+}
+
+function traiteCdM() {
+	try {
+		var msgEffet = document.getElementById('msgEffet');
+	} catch(e) {
+		window.console.log('[traiteCdM] msgEffet non trouvé');
+		return;
+	}
+
+	// Teste si ce message du bot est un message de CdM
+	if(!document.evaluate(
+			"./p/b/text()[contains(.,'fait partie')]",
+			msgEffet, null, 9, null
+		).singleNodeValue) {
+		return;
+	}
+	
+	// Début de récupération de la CdM
+	cdm = document.evaluate(
+		"./p/b/text()[contains(.,'fait partie')]",
+		msgEffet, null, 9, null
+	).singleNodeValue.nodeValue+'\n';
+	
+	var tbody = document.evaluate(
+		"descendant::table/tbody",
+		msgEffet, null, 9, null
+	).singleNodeValue;
+	var nomStat = document.evaluate(
+		"./tr/td[1]/b/text()",
+		tbody, null, 7, null
+	);
+	var valStat = document.evaluate(
+		"./tr/td[2]/descendant::text()",
+		tbody, null, 7, null
+	);
+	var i=0;
+	while(i<nomStat.snapshotLength) {
+		if(nomStat.snapshotItem(i).nodeValue.indexOf('Armure Physique')!=-1) {
+			cdm += 'Armure : ';
+			var armp = getNonNegInts(valStat.snapshotItem(i).nodeValue);
+			var armm = getNonNegInts(valStat.snapshotItem(i+1).nodeValue);
+			if(valStat.snapshotItem(i).nodeValue.indexOf('(inf')!=-1) {
+				armp = [0,armp[0]];
+			}
+			if(valStat.snapshotItem(i+1).nodeValue.indexOf('(inf')!=-1) {
+				armm = [0,armm[0]];
+			}
+			if(valStat.snapshotItem(i).nodeValue.indexOf('(sup')!=-1 ||
+				valStat.snapshotItem(i+1).nodeValue.indexOf('(sup')!=-1) {
+				cdm += 'adj (supérieur à '+(armp[0]+armm[0]);
+			} else {
+				cdm += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
+			}
+			cdm += ')\n';
+			i++;
+		} else {
+			cdm += nomStat.snapshotItem(i).nodeValue+
+				' '+valStat.snapshotItem(i).nodeValue+'\n';
+		}
+		i++;
+	}
+	
+	// Envoi auto ou insertion bouton envoi (suivant option)
+	if(MZ_getValue(numTroll+'.AUTOCDM')=='true') {
+		sendInfoCDM();
+		var p = document.createElement('p');
+		p.style.color = 'green';
+		appendText(p,'CdM envoyée vers la base MountyZilla !');
+		insertBefore(document.getElementsByName('as_Action')[0].parentNode,p);
+	} else {
+		insertButtonCdm('as_Action', sendInfoCDM);
+	}
+
+	// Insertion de l'estimation des PV restants
+	var pv = valStat.snapshotItem(1).nodeValue;
+	if(pv.indexOf("entre")==-1) {
+		return;
+	}
+	pv = getPVsRestants(pv,valStat.snapshotItem(2).nodeValue);
+	if(pv) {
+		var tr = insertTr(nomStat.snapshotItem(3).parentNode.parentNode.parentNode);
+		appendTdText(tr, pv[0], true);
+		appendTdText(tr, pv[1], true);
+	}
+}
+
+function sendInfoCDM() {
+	MZ_setValue('CDMID', 1+parseInt(MZ_getValue('CDMID')) );
+	var buttonCDM = this;
+	var texte = '';
+	FF_XMLHttpRequest({
+		method: 'GET',
+		url: pageDispatcher+'?cdm='+escape(cdm),
+		headers : {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+			'Accept': 'application/atom+xml,application/xml,text/xml'
+		},
+		onload: function(responseDetails) {
+			texte = responseDetails.responseText;
+			buttonCDM.value = texte;
+			buttonCDM.disabled = true;
+		}
+	});
+}
+
+function do_cdmcomp() {
+	start_script(31);
+	traiteCdM();
+	displayScriptTime();
+}
+
+/*********************************************************************************
+*    This file is part of Mountyzilla.                                           *
+*                                                                                *
+*    Mountyzilla is free software; you can redistribute it and/or modify         *
+*    it under the terms of the GNU General Public License as published by        *
+*    the Free Software Foundation; either version 2 of the License, or           *
+*    (at your option) any later version.                                         *
+*                                                                                *
+*    Mountyzilla is distributed in the hope that it will be useful,              *
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
+*    GNU General Public License for more details.                                *
+*                                                                                *
+*    You should have received a copy of the GNU General Public License           *
+*    along with Mountyzilla; if not, write to the Free Software                  *
+*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
+*********************************************************************************/
+
+// x~x cmdbot
+
+/* v0.2 by Dab - 2013-08-20
+ * - patch dégueu pour gérer la décomposition P/M de l'armure
+ */
+
+var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
+//var pageDispatcher = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
+//var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
+//var pageEffetDispatcher = "http://mountypedia.ratibus.net/mz/effetdispatcher.php";
+var buttonCDM;
+
+/*******************************************************************************************
+CDM :
+Vous avez RÉUSSI à utiliser cette compétence au niveau 5 : jet de 34 sur 95 %.
+
+Il ne vous est pas possible d'améliorer cette compétence.
+
+Le Monstre Ciblé fait partie des : Mort-Vivant (Archi-Nécromant [Antique] - N°4571589)
+Niveau :	Inimaginable (entre 49 et 51)
+Points de Vie :	Surtrollesque (entre 450 et 470)
+Blessure (Approximatif) :	0 %	
+Dés d'Attaque :	Impressionnant (entre 30 et 32)
+Dés d'Esquive :	Impressionnant (entre 28 et 30)
+Dés de Dégat :	Très Fort (entre 18 et 20)
+Dés de Régénération :	Excellent (égal à 13)
+Armure Physique :	Moyen (entre 10 et 12)
+Armure Magique :	Faible (inférieur à 6)
+Vue :	Moyen (entre 9 et 11)
+Maitrise Magique :	Inimaginable (supérieur à 6000)
+Résistance Magique :	Inimaginable (supérieur à 6000)
+Nombre d'attaques :	1
+Vitesse de Déplacement :	Normale
+Voir le Caché :	Oui
+Attaque à distance :	Non
+Attaque magique :	Oui
+Vole :	Non
+Sang froid :	Inexistant
+DLA :	Milieu
+Durée Tour :	Remarquable (entre 9 et 11)
+Chargement :	Vide
+Bonus Malus :	Aucun
+
+Vous avez également gagné 1 PX pour la réussite.
+*******************************************************************************************
+BOT :
+Vous avez utilisé CONNAISSANCE DES MONSTRES sur un Capitan Ronfleur [Naissant] (4768960)
+
+Le Monstre ciblé fait partie des : Mort-Vivant
+
+Niveau : Incroyable (entre 36 et 38)
+*******************************************************************************************/
+
+function getNNInt(str) {
+	var nbrs = str.match(/\d+/g);
+	for (var i=0 ; i<nbrs.length ; i++)
+		nbrs[i] = parseInt(nbrs[i]);
+	return nbrs;
+	}
+
+function sendCDM() {
+	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
+								document, null, 9, null).singleNodeValue;
+	cdm = td.innerHTML;
+	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,
+						"$3$4 ($1 - N°$2)<br>");
+	cdm = cdm.replace(/Blessure :[\s]*[0-9]+ % \(approximativement\)/,
+						'Blessure : XX % (approximativement)');
+	// Supprime la décomposition P/M de l'Armure
+	var bgn = cdm.indexOf('Armure Physique');
+	if (bgn!=-1) {
+		var end = cdm.indexOf('Vue')-2;
+		var lines = cdm.substring(bgn,end).split('<br>');
+		var armp = getNNInt(lines[0]);
+		var armm = getNNInt(lines[1]);
+		if (lines[0].indexOf('(inf')!=-1)
+			armp = [0,armp[0]];
+		if (lines[1].indexOf('(inf')!=-1)
+			armm = [0,armm[0]];
+		var insrt = 'Armure : ';
+		if (lines[0].indexOf('(sup')!=-1 || lines[1].indexOf('(sup')!=-1)
+			insrt += 'adj (supérieur à '+(armp[0]+armm[0]);
+		else
+			insrt += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
+		cdm = cdm.replace(cdm.substring(bgn,end),insrt+')<br>');
+		}
+	cdm = cdm.replace(/<br>/g,'\n');
+	
+	FF_XMLHttpRequest({
+				method: 'GET',
+				url: pageDispatcher+'?cdm='+escape(cdm),
+				headers : {
+					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+					'Accept': 'application/atom+xml,application/xml,text/xml'
+					},
+				onload: function(responseDetails) {
+					buttonCDM.value=responseDetails.responseText;
+					buttonCDM.disabled = true;
+					}
+				});
+	}
+
+function traiteCdM() {
+	// Teste si ce message du bot est un message de CdM
+	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
+								document, null, 9, null).singleNodeValue;
+	if (!td) return false;
+		
+	cdm = td.innerHTML;
+		
+	// Insertion de l'estimation des PV restants
+	var des = cdm.indexOf('Dés');
+	var pv = cdm.slice(cdm.indexOf('Points de Vie'),cdm.indexOf('Blessure'));
+	pv = getPVsRestants(pv, cdm.slice(cdm.indexOf('Blessure :'),des) );
+	if(pv)
+		td.innerHTML = cdm.slice(0,des-4)+'<br />'+(pv[0]+pv[1]) + cdm.substring(des-4);
+
+	// Insertion bouton envoi + espace
+	buttonCDM = insertButtonCdm('bClose',sendCDM);
+	}
+
+/*function traitePouvoir() {
+	// Teste si ce message du bot est un message de CdM
+	// le test "capa" évite les pouvoirs type Chonchon (pas de SR)
+	var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacité spéciale')]/..",
+			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if (!td)
+		return false;
+		
+	var infos = td.innerHTML;
+	var id = /monstre n°([0-9]+) /.exec(infos)[1];
+	var nomMonstre = /\(une? ([^)]+)\)/.exec(infos)[1];
+	var nomPouvoir = /spéciale : ([^<]+)/.exec(infos)[1];
+	var date = /alors : ([^<]+)\./.exec(infos)[1];
+	date = new Date(date.replace(/([0-9]+)\/([0-9]+)\//,"$2/$1/"));
+	var effetPouvoir="";
+	var full=false;
+	if(infos.indexOf("REDUIT")!=-1) {
+		effetPouvoir = /effet REDUIT : ([^<]+)/.exec(infos)[1];
+		}
+	else {
+		effetPouvoir = /effet : ([^<]+)/.exec(infos)[1];
+		full=true;
+		}
+	var dureePouvoir = /durée de ([0-9]+)/.exec(infos)[1];
+	// On insère le bouton et un espace
+	//var url = pageEffetDispatcher + "?pouv="+escape(nomPouvoir)+"&monstre="+escape(nomMonstre)+"&id="+escape(id)+"&effet="+escape(effetPouvoir)+"&duree="+escape(dureePouvoir)+"&date="+escape(Math.round(date.getTime()/1000));
+	// ce type d'URL est obsolète (se fait par msgId dorénavant)
+	if(!MZ_getValue('AUTOSENDPOUV'))
+	{
+		var button = insertButtonCdm('bClose',null,"Collecter les infos du pouvoir");
+		button.setAttribute("onClick", "window.open('" + url
+				+ "', 'popupEffet', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
+				+ "this.value='Merci de votre participation'; this.disabled = true;");
+	}
+	else
+	{
+		FF_XMLHttpRequest({
+				method: 'GET',
+				url: url,
+				headers : {
+					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+					'Accept': 'application/atom+xml,application/xml,text/xml'
+				}});
+	}
+}*/
+
+traiteCdM();
+//traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -6204,56 +12404,55 @@ function isPage(url) {
 
 // Détection de la page à traiter
 if(isPage("Messagerie/ViewMessageBot")) {
-	do_cdmbot();
+	do_cdmbot();	// fait
 } else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
-	do_cdmcomp();
+	do_cdmcomp();	// fait
 } else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
-	do_diplo();
+	do_diplo();	// fait
 } else if(isPage("MH_Play/Play_equipement")) {
-	do_equip();
+	do_equip();	// fait
 } else if(isPage("MH_Play/Play_menu")) {
-	do_menu();
+	do_menu();	// fait
 } else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
-	do_option();
+	do_option();	// fait
 } else if(isPage("View/PJView")) {
-	do_pjview();
+	do_pjview();	// fait
 } else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
-	do_profil();
+	do_profil();	// fait
 } else if(isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
-	do_tancompo();
+	do_tancompo();	// fait
 } else if(isPage("MH_Play/Play_vue")) {
-	do_vue();
+	do_vue();	// fait
 } else if(isPage("MH_Play/Play_news")) {
-	do_news();
-} else if(isPage("MH_Play/Actions/Play_a_Move") ||
-	isPage("MH_Lieux/Lieu_Teleport")) {
-	do_move();
+	do_news();	// fait
+} else if(isPage("MH_Play/Actions/Play_a_Move") || 	isPage("MH_Lieux/Lieu_Teleport")) {
+	do_move();	// fait
 } else if(isPage("MH_Missions/Mission_Etape")) {
-	do_mission();
+	do_mission();	// fait
 } else if(isPage("View/MonsterView")) {
-	do_infomonstre();
+	do_infomonstre();	// fait
 } else if(isPage("MH_Play/Actions/Play_a_Attack")) {
-	do_attaque();
+	do_attaque();	// fait
 } else if(isPage("MH_Follower/FO_Ordres")) {
-	do_ordresgowap();
+	do_ordresgowap();	// fait
 } else if(isPage("MH_Follower/FO_Equipement")) {
-	do_equipgowap();
+	do_equipgowap();	// fait
 } else if(isPage("MH_Play/Play_mouche")) {
-	do_mouches();
+	do_mouches();	// fait
 } else if(isPage("MH_Play/Play_BM")) {
-	do_malus();
+	do_malus();	// fait
 } else if(isPage("MH_Play/Play_evenement")) {
-	do_myevent();
+	do_myevent();	// fait
 } else if(isPage("MH_Lieux/Lieu_DemanderEnchantement")) {
-	do_enchant();
+	do_enchant();	//fait
 } else if(isPage("MH_Lieux/Lieu_Enchanteur")) {
-	do_pre_enchant();
+	do_pre_enchant();	// fait
 } else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
-	do_actions();
+	do_actions();	// fait
 } else if(isPage('MH_Missions/Mission_Liste.php') && MY_getValue(numTroll+'.MISSIONS')) {
-	do_mission_liste();
+	do_mission_liste();	// fait
 } else if(isPage('MH_Play/Play_action')) {
-	do_actions();
+	do_actions();	// fait
 } else if(isPage('MH_Play/Play_profil2')) {
-    do_profil2();
+    do_profil2();	// fait
 }
