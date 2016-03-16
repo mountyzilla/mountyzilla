@@ -1455,6 +1455,8 @@ function cnp(n,k)
 	}
 	var result = cnp(n-1,k-1)*n/k; // mouais... k mul+k div
 	c[n][k] = result;
+	// Roule debug
+	//window.console.log('cnp(' + n + ',' + k + ')=' + result);
 	return result;
 }
 
@@ -1486,7 +1488,8 @@ function coef(n,p)
 		return 1;
 	if(p>n*3.5)
 		p = 7*n-p
-	if(coeff[n] != null && coeff[n][p] !=null)
+	// roule désactive cache
+	 if(coeff[n] != null && coeff[n][p] !=null)
 		return coeff[n][p];
 	if(coeff[n] == null)
 		coeff[n] = new Array();
@@ -1497,6 +1500,8 @@ function coef(n,p)
 		x+=(1-2*(k%2)) * cnp(n,k) * cnp(p-6*k-1,n-1);
 	}
 	coeff[n][p] = x;
+	// Roule debug
+	//window.console.log('cnk(' + n + ',' + p + ')=' + x);
 	return x;
 }
 
@@ -1523,6 +1528,8 @@ function chanceEsquiveParfaite(a,d,ba,bd)
 				los += cd * coef(a,as);
 		}
 	}
+	// roule debug
+	//window.console.log('chanceEsquiveParfaite, att=' + a + ', esq=' + d + ', ba=' + ba + ', bd=' + bd + ', win=' + win + ', los=' + los);
 	return Math.round(100*win/(win+los));
 }
 
@@ -1630,20 +1637,21 @@ function analyseTactique(donneesMonstre,nom) {
 	try
 	{
 	var listeAttaques = [];
-	var att = MY_getValue(numTroll+".caracs.attaque");
-	var attbmp = MY_getValue(numTroll+".caracs.attaque.bmp");
-	var attbmm = MY_getValue(numTroll+".caracs.attaque.bmm");
-	var mm = MY_getValue(numTroll+".caracs.mm");
-	var deg = MY_getValue(numTroll+".caracs.degats");
-	var degbmp = MY_getValue(numTroll+".caracs.degats.bmp");
-	var degbmm = MY_getValue(numTroll+".caracs.degats.bmm");
-	var vue = MY_getValue(numTroll+".caracs.vue");
-	var pv = MY_getValue(numTroll+".caracs.pv");
-	var esq = Math.max(MY_getValue(numTroll+".caracs.esquive")-MY_getValue(numTroll+".caracs.esquive.nbattaques"),0);
-	var esqbonus = MY_getValue(numTroll+".caracs.esquive.bm");
-	var arm = MY_getValue(numTroll+".caracs.armure");
-	var armbmp = MY_getValue(numTroll+".caracs.armure.bmp");
-	var armbmm = MY_getValue(numTroll+".caracs.armure.bmm");
+	// Roule 16/03/2016 ajout des ParseInt car je récupérais parfois une chaine non numérique :(
+	var att = parseInt(MY_getValue(numTroll+".caracs.attaque"), 10);
+	var attbmp = parseInt(MY_getValue(numTroll+".caracs.attaque.bmp"), 10);
+	var attbmm = parseInt(MY_getValue(numTroll+".caracs.attaque.bmm"), 10);
+	var mm = parseInt(MY_getValue(numTroll+".caracs.mm"), 10);
+	var deg = parseInt(MY_getValue(numTroll+".caracs.degats"), 10);
+	var degbmp = parseInt(MY_getValue(numTroll+".caracs.degats.bmp"), 10);
+	var degbmm = parseInt(MY_getValue(numTroll+".caracs.degats.bmm"), 10);
+	var vue = parseInt(MY_getValue(numTroll+".caracs.vue"), 10);
+	var pv = parseInt(MY_getValue(numTroll+".caracs.pv"), 10);
+	var esq = parseInt(Math.max(MY_getValue(numTroll+".caracs.esquive"), 10)-parseInt(MY_getValue(numTroll+".caracs.esquive.nbattaques"),0), 10);
+	var esqbonus = parseInt(MY_getValue(numTroll+".caracs.esquive.bm"), 10);
+	var arm = parseInt(MY_getValue(numTroll+".caracs.armure"), 10);
+	var armbmp = parseInt(MY_getValue(numTroll+".caracs.armure.bmp"), 10);
+	var armbmm = parseInt(MY_getValue(numTroll+".caracs.armure.bmm"), 10);
 	var modificateurEsquive = '';
 	var modificateurArmure = '';
 	var modificateurMagie = '';
@@ -1724,6 +1732,9 @@ function analyseTactique(donneesMonstre,nom) {
 	var chanceDEsquiveParfaite = chanceEsquiveParfaite(att,esqM,attbmp+attbmm,0);
 	var chanceDeTouche = chanceTouche(att,esqM,attbmp+attbmm,0);
 	var chanceDeCritique = chanceCritique(att,esqM,attbmp+attbmm,0);
+	// roule debug
+	//window.console.log('Attaque normale troll sur monstre, att=' + att + ', esqM=' + esqM + ', attbmp=' + attbmp + ', attbmm=' + attbmm 
+	//	+ ', chanceDEsquiveParfaite=' + chanceDEsquiveParfaite + ', chanceDeTouche=' + chanceDeTouche + ', chanceDeCritique=' + chanceDeCritique);
 	var degats = (((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-armM,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-armM,1))/100);
 	//str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);	
 	listeAttaques.push(new Array("Attaque normale",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
@@ -1900,7 +1911,7 @@ function checkLesMimis() {
 			"//div[@class='mh_titre3']/b/a[contains(@href,'Mission_')]",
 			document, null, 7, null
 		);
-		var obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
+		var obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 	} catch(e) {
 		window.console.error('[MZ mission_liste] Erreur initialisation:\n'+e);
 		return;
@@ -1917,7 +1928,7 @@ function checkLesMimis() {
 			delete obMissions[numMimi];
 		}
 	}
-	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
+	MY_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
 function do_mission_liste() {
@@ -2135,7 +2146,7 @@ function traiteRM() {
 /*                      Fonction stats IdT par Raistlin                       */
 	
 /*function getIdt() {
-	if(MZ_getValue("SEND_IDT") == "non")
+	if(MY_getValue("SEND_IDT") == "non")
 		return false;
 		
 	var regExpBeginning = /^\s+/;
@@ -2193,7 +2204,7 @@ function newsubmitDLA(evt) {
 }
 
 function changeActionDecalage() {
-	if(MZ_getValue('CONFIRMEDECALAGE')!='true') {
+	if(MY_getValue('CONFIRMEDECALAGE')!='true') {
 		return;
 	}
 	try {
@@ -2320,7 +2331,7 @@ function do_actions() {
 *    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *********************************************************************************/
 
-// x~x pre-echant
+// x~x pre-enchant
 
 /* 2013-08-19 : correction auto syntaxe alert */
 
@@ -2334,10 +2345,10 @@ function changeObject()
 	var texte = combobox.options[combobox.selectedIndex].firstChild.nodeValue;
 	if(!id || id=="")
 	{
-		MZ_removeValue(numTroll+".enchantement.lastEquipement");
+		MY_removeValue(numTroll+".enchantement.lastEquipement");
 		return;
 	}
-	MZ_setValue(numTroll+".enchantement.lastEquipement",id+";"+texte);
+	MY_setValue(numTroll+".enchantement.lastEquipement",id+";"+texte);
 }
 
 function treatePreEnchantement() {
@@ -2346,7 +2357,7 @@ function treatePreEnchantement() {
 	{
 		return false;
 	}
-	MZ_setValue(numTroll+".enchantement.lastEnchanteur",input.getAttribute("value"));
+	MY_setValue(numTroll+".enchantement.lastEnchanteur",input.getAttribute("value"));
 	combobox = document.evaluate("//select[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if(!combobox)
 	{
@@ -2364,7 +2375,7 @@ function treateEnchantement() {
 	}
 	var idEquipement = input.getAttribute("value");
 	var nomEquipement = "Equipement inconnu ("+idEquipement+")";
-	var enchanteur = MZ_getValue(numTroll+".enchantement."+idEquipement+".enchanteur");
+	var enchanteur = MY_getValue(numTroll+".enchantement."+idEquipement+".enchanteur");
 	if(enchanteur && enchanteur != null)
 		return true;
 	input = document.evaluate("//input[@name='ai_IDLI']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -2387,17 +2398,17 @@ function treateEnchantement() {
 		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
 		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
 		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
-		MZ_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
 	}
-	MZ_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MZ_getValue(numTroll+".position.X")+";"+MZ_getValue(numTroll+".position.Y")+";"+MZ_getValue(numTroll+".position.N"));
-	MZ_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
-	var liste = MZ_getValue(numTroll+".enchantement.liste");
+	MY_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MY_getValue(numTroll+".position.X")+";"+MY_getValue(numTroll+".position.Y")+";"+MY_getValue(numTroll+".position.N"));
+	MY_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
+	var liste = MY_getValue(numTroll+".enchantement.liste");
 	if(!liste || liste=="")
 	{
-		MZ_setValue(numTroll+".enchantement.liste",idEquipement);
+		MY_setValue(numTroll+".enchantement.liste",idEquipement);
 	}
 	else
-		MZ_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
+		MY_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
 }
 
 function do_pre_enchant() {
@@ -2430,8 +2441,8 @@ function do_pre_enchant() {
 /* 2013-08-19 : correction auto syntaxe alert */
 
 function treateEnchantement() {
-	var idEnchanteur = MZ_getValue(numTroll+".enchantement.lastEnchanteur");
-	var infoEquipement = MZ_getValue(numTroll+".enchantement.lastEquipement");
+	var idEnchanteur = MY_getValue(numTroll+".enchantement.lastEnchanteur");
+	var infoEquipement = MY_getValue(numTroll+".enchantement.lastEquipement");
 	if(!idEnchanteur || idEnchanteur=="" || !infoEquipement || infoEquipement=="")
 		return;
 	var tab = infoEquipement.split(";");
@@ -2456,25 +2467,25 @@ function treateEnchantement() {
 		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
 		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
 		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
-		MZ_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
 	}
-	MZ_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MZ_getValue(numTroll+".position.X")+";"+MZ_getValue(numTroll+".position.Y")+";"+MZ_getValue(numTroll+".position.N"));
-	MZ_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
-	var liste = MZ_getValue(numTroll+".enchantement.liste");
+	MY_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MY_getValue(numTroll+".position.X")+";"+MY_getValue(numTroll+".position.Y")+";"+MY_getValue(numTroll+".position.N"));
+	MY_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
+	var liste = MY_getValue(numTroll+".enchantement.liste");
 	if(!liste || liste=="")
 	{
-		MZ_setValue(numTroll+".enchantement.liste",idEquipement);
+		MY_setValue(numTroll+".enchantement.liste",idEquipement);
 	}
 	else
-		MZ_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
+		MY_setValue(numTroll+".enchantement.liste",liste+";"+idEquipement);
 }
 
 function do_enchant() {
 	start_script(60);
 
 	treateEnchantement();
-	MZ_removeValue(numTroll+".enchantement.lastEquipement");
-	MZ_removeValue(numTroll+".enchantement.lastEnchanteur");
+	MY_removeValue(numTroll+".enchantement.lastEquipement");
+	MY_removeValue(numTroll+".enchantement.lastEnchanteur");
 	displayScriptTime();
 }
 
@@ -2723,8 +2734,8 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 /* [functions]              Fonctions hide / display                            */
 
 function toggleDetails() {
-	if(MZ_getValue('BMDETAIL')!='false') {
-		MZ_setValue('BMDETAIL','false');
+	if(MY_getValue('BMDETAIL')!='false') {
+		MY_setValue('BMDETAIL','false');
 		var trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
 		for(var i=0 ; i<trlist.length ; i++)
 			trlist[i].style.display = 'none';
@@ -2733,7 +2744,7 @@ function toggleDetails() {
 			trlist[i].style = '';	
 		}
 	else {	
-		MZ_setValue('BMDETAIL','true');
+		MY_setValue('BMDETAIL','true');
 		var trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
 		for(var i=0 ; i<trlist.length ; i++)
 			trlist[i].style.display = 'none';
@@ -2744,15 +2755,15 @@ function toggleDetails() {
 	}
 
 function toggleBMList() {
-	if(MZ_getValue('BMHIDELIST')=='true') {
-		MZ_setValue('BMHIDELIST','false');
+	if(MY_getValue('BMHIDELIST')=='true') {
+		MY_setValue('BMHIDELIST','false');
 		for(var i=0 ; i<listeBM.snapshotLength ; i++)
 			listeBM.snapshotItem(i).style = '';
 		document.getElementsByTagName('thead')[0].style = '';
 		document.getElementById('trhelp').style = '';
 		}
 	else {
-		MZ_setValue('BMHIDELIST','true');
+		MY_setValue('BMHIDELIST','true');
 		for(var i=0 ; i<listeBM.snapshotLength ; i++)
 			listeBM.snapshotItem(i).style.display = 'none';
 		document.getElementsByTagName('thead')[0].style.display = 'none';
@@ -2774,7 +2785,7 @@ function setDisplayBM() {
 								tfoot, null, 9, null).singleNodeValue;
 	tr.id = 'trhelp';
 	
-	if(MZ_getValue('BMHIDELIST')=='true') {
+	if(MY_getValue('BMHIDELIST')=='true') {
 		for(var i=0 ; i<listeBM.snapshotLength ; i++)
 			listeBM.snapshotItem(i).style.display = 'none';
 		document.getElementsByTagName('thead')[0].style.display = 'none';
@@ -2791,8 +2802,8 @@ function traiteMalus() {
 	if(listeBM.snapshotLength==0) return;
 	
 	/* Suppression des BM de fatigue stockés */
-	if(MZ_getValue(numTroll+'.bm.fatigue'))
-		MZ_removeValue(numTroll+'.bm.fatigue');
+	if(MY_getValue(numTroll+'.bm.fatigue'))
+		MY_removeValue(numTroll+'.bm.fatigue');
 	
 	/* Extraction des données */
 	var uniListe = [], listeDurees = {}, listeDecumuls = {};
@@ -2925,7 +2936,7 @@ function traiteMalus() {
 		// Si BMM+BMP=0
 		texteS = texteS ? texteS.substring(3) : 'Aucun effet';
 		var tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanDetail');
-		if(MZ_getValue('BMDETAIL')=='false')
+		if(MY_getValue('BMDETAIL')=='false')
 			tr.style.display = 'none';
 		var td = appendTdText(tr,texteD.substring(3));
 		td.colSpan = 5-nbHidden;
@@ -2934,7 +2945,7 @@ function traiteMalus() {
 		appendTdText(tr,txttour);
 		
 		tr = insertTr(tfoot.childNodes[2],'mh_tdpage BilanSomme');
-		if(MZ_getValue('BMDETAIL')!='false')
+		if(MY_getValue('BMDETAIL')!='false')
 			tr.style.display = 'none';
 		td = appendTdText(tr,texteS);
 		td.colSpan = 5-nbHidden;
@@ -2947,7 +2958,7 @@ function traiteMalus() {
 	
 	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
 	if(strfat)
-		MZ_setValue(numTroll+'.bm.fatigue',strfat);
+		MY_setValue(numTroll+'.bm.fatigue',strfat);
 }
 
 function do_malus() {
@@ -3012,7 +3023,7 @@ function setDisplayMouches() {
 		tfoot.onclick = toggleMouches;
 	}
 	
-	if(MZ_getValue('HIDEMOUCHES')=='true') {
+	if(MY_getValue('HIDEMOUCHES')=='true') {
 		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 			tr_mouches.snapshotItem(i).style.display = 'none';
 		}
@@ -3022,14 +3033,14 @@ function setDisplayMouches() {
 
 function toggleMouches() {
 // Handler pour afficher / masquer les détasil
-	if(MZ_getValue('HIDEMOUCHES')=='true') {
-		MZ_setValue('HIDEMOUCHES','false');
+	if(MY_getValue('HIDEMOUCHES')=='true') {
+		MY_setValue('HIDEMOUCHES','false');
 		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 			tr_mouches.snapshotItem(i).style.display = '';
 		}
 		document.getElementsByTagName('thead')[0].style.display = '';
 	} else {
-		MZ_setValue('HIDEMOUCHES','true');
+		MY_setValue('HIDEMOUCHES','true');
 		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 			tr_mouches.snapshotItem(i).style.display = 'none';
 		}
@@ -3150,7 +3161,7 @@ function do_mouches() {
 
 var popup;
 
-function initPopup() {
+function initPopupEquipgowap() {
 	popup = document.createElement('div');
 	popup.setAttribute('id', 'popup');
 	popup.setAttribute('class', 'mh_textbox');
@@ -3159,7 +3170,7 @@ function initPopup() {
 	document.body.appendChild(popup);
 }
 
-function showPopup(evt) {
+function showPopupEquipgowap(evt) {
 	var texte = this.getAttribute("texteinfo");
 	popup.innerHTML = texte;
 	popup.style.left = evt.pageX + 15 + 'px';
@@ -3177,7 +3188,7 @@ function createPopupImage(url, text)
 	img.setAttribute('src',url);
 	img.setAttribute('align','ABSMIDDLE');
 	img.setAttribute("texteinfo",text);
-	img.addEventListener("mouseover", showPopup,true);
+	img.addEventListener("mouseover", showPopupEquipgowap,true);
 	img.addEventListener("mouseout", hidePopup,true);
 	return img;
 }
@@ -3203,15 +3214,15 @@ function treateGowaps() {
 		var tbody = tbodys.snapshotItem(j);
 		var id_gowap = currentURL.substring(currentURL.indexOf("?ai_IdFollower=")+15)*1;
 		//insertButtonComboDB(tbody, 'gowap', id_gowap,'mh_tdpage_fo');
-		if(MZ_getValue("NOINFOEM") != "true")
+		if(MY_getValue("NOINFOEM") != "true")
 			insertEMInfos(tbody);
-		if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
+		if(MY_getValue(numTroll+".enchantement.liste") && MY_getValue(numTroll+".enchantement.liste")!="" )
 			insertEnchantInfos(tbody);
 	}
 }
 
 function treateChampi() {
-	if(MZ_getValue("NOINFOEM") == "true")
+	if(MY_getValue("NOINFOEM") == "true")
 		return false;
 	var nodes = document.evaluate("//img[@alt = 'Champignon - Spécial']/../a/text()",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -3237,9 +3248,9 @@ function do_equipgowap() {
 
 	treateGowaps();
 	treateChampi();
-	if(MZ_getValue(numTroll+".enchantement.liste") && MZ_getValue(numTroll+".enchantement.liste")!="" )
+	if(MY_getValue(numTroll+".enchantement.liste") && MY_getValue(numTroll+".enchantement.liste")!="" )
 	{
-		initPopup();
+		initPopupEquipgowap();
 		computeEnchantementEquipement(createPopupImage,formateTexte);
 	}
 
@@ -3376,7 +3387,7 @@ function traiteMonstre() {
 	FF_XMLHttpRequest({
 		method: 'GET',
 		url: 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm='
-			+MZ_getValue('CDMID')
+			+MY_getValue('CDMID')
 			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
 		headers : {
 			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
@@ -3392,7 +3403,7 @@ function traiteMonstre() {
 					var idMonstre = infos[0];
 					infos=infos.slice(3);
 					listeCDM[idMonstre]=infos;
-					computeMission();
+					computeMissionInfomonstre();
 				}
 			} catch(e) {
 				window.alert(e);
@@ -3401,7 +3412,7 @@ function traiteMonstre() {
 	});
 }
 
-function initPopup() {
+function initPopupInfomonstre() {
 // Initialise le popup tactique (calculs att/deg)
 	popup = document.createElement('div');
 	popup.id = 'popup';
@@ -3423,7 +3434,12 @@ function showPopupTactique(evt) {
 		var texte = getAnalyseTactique(id,nom);
 		if(texte=='') { return; }
 		popup.innerHTML = texte;
-		popup.style.left = Math.min(evt.pageX-120,window.innerWidth-300)+'px';
+		// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
+		if(isPage("View/MonsterView")) {
+			popup.style.left = Math.min(evt.pageX-120,window.innerWidth-300)+'px';
+		} else {
+			popup.style.left = Math.min(evt.pageX+15,window.innerWidth-400)+'px';
+		}
 		popup.style.top = evt.pageY+15+'px';
 		popup.style.visibility = 'visible';
 	} catch(e) {
@@ -3431,15 +3447,16 @@ function showPopupTactique(evt) {
 	}
 }
 
-function hidePopup() {
-	popup.style.visibility = 'hidden';
-}
+// roule 16/03/2016, existe déjà ailleurs
+// function hidePopup() {
+	// popup.style.visibility = 'hidden';
+// }
 
 function toggleTableau() {
 	tbody.style.display = tbody.style.display=='none' ? '' : 'none';
 }
 
-function computeMission() {
+function computeMissionInfomonstre() {
 // C'est quoi ce titre de fonction ? (O_o)
 	try {
 		var nodeInsert = document.evaluate(
@@ -3469,7 +3486,7 @@ function computeMission() {
 function do_infomonstre() {
 	start_script();
 	try {
-		initPopup();
+		initPopupInfomonstre();
 		traiteMonstre();
 	} catch(e) {
 		window.alert('Erreur infoMonstre:\n'+e);
@@ -3505,9 +3522,9 @@ function do_infomonstre() {
 
 function saveMission(num,obEtape) {
 	var obMissions = {};
-	if(MZ_getValue(numTroll+'.MISSIONS')) {
+	if(MY_getValue(numTroll+'.MISSIONS')) {
 		try {
-			obMissions = JSON.parse(MZ_getValue(numTroll+'.MISSIONS'));
+			obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
 			window.console.error('[MZ Mission] Erreur parsage:\n'+e);
 			return;
@@ -3518,7 +3535,7 @@ function saveMission(num,obEtape) {
 	} else if(obMissions[num]) {
 		delete obMissions[num];
 	}
-	MZ_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
+	MY_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
 function traiteMission() {
@@ -4030,7 +4047,7 @@ function do_news() {
 
 var popup;
 
-function initPopup() {
+function initPopupTabcompo() {
 	popup = document.createElement('div');
 	popup.setAttribute('id', 'popup');
 	popup.setAttribute('class', 'mh_textbox');
@@ -4047,9 +4064,10 @@ function showPopup(evt) {
 	popup.style.visibility = "visible";
 }
 
-function hidePopup() {
-	popup.style.visibility = "hidden";
-}
+// roule 16/03/2016, existe déjà ailleurs
+// function hidePopup() {
+	// popup.style.visibility = 'hidden';
+// }
 
 function createPopupImage(url, text)
 {
@@ -4325,7 +4343,7 @@ function treateEquipEnchant()
 {
 	if(currentURL.indexOf('as_type=Arme')==-1 && currentURL.indexOf('as_type=Armure')==-1)
 		return false;
-	initPopup();
+	initPopupTabcompo();
 	computeEnchantementEquipement(createPopupImage,formateTexte);
 }
 
@@ -4335,11 +4353,11 @@ function do_tancompo() {
 	treateAllComposants();
 	treateComposants();
 	traiteMinerai();
-	if (MZ_getValue('NOINFOEM')!='true') {
+	if (MY_getValue('NOINFOEM')!='true') {
 		treateChampi();
 		treateEM();
 		}
-	if (MZ_getValue(numTroll+'.enchantement.liste') && MZ_getValue(numTroll+'.enchantement.liste')!='') {
+	if (MY_getValue(numTroll+'.enchantement.liste') && MY_getValue(numTroll+'.enchantement.liste')!='') {
 		treateEnchant();
 		treateEquipEnchant();
 		}
@@ -4718,40 +4736,40 @@ function initAll() {
 }
 
 function saveProfil() {
-	//MZ_setValue(numTroll+'.profilON',true); // pour remplacer isProfilActif ?
-	//MZ_setValue('NIV_TROLL',nivTroll);
-	MZ_setValue(numTroll+'.caracs.attaque',att);
-	MZ_setValue(numTroll+'.caracs.attaque.bm',attbm);
-	MZ_setValue(numTroll+'.caracs.attaque.bmp',attbm-attbmm);
-	MZ_setValue(numTroll+'.caracs.attaque.bmm',attbmm);
-	MZ_setValue(numTroll+'.caracs.esquive',esq);
-	MZ_setValue(numTroll+'.caracs.esquive.bm',esqbm);
-	MZ_setValue(numTroll+'.caracs.esquive.nbattaques',nbattaques);
-	MZ_setValue(numTroll+'.caracs.degats',deg);
-	MZ_setValue(numTroll+'.caracs.degats.bm',degbm);
-	MZ_setValue(numTroll+'.caracs.degats.bmp',degbm-degbmm);
-	MZ_setValue(numTroll+'.caracs.degats.bmm',degbmm);
-	MZ_setValue(numTroll+'.caracs.regeneration',reg);
-	MZ_setValue(numTroll+'.caracs.regeneration.bm',regbm);
-	MZ_setValue(numTroll+'.caracs.vue',vue);
-	MZ_setValue(numTroll+'.caracs.vue.bm',vuebm);
-	MZ_setValue(numTroll+'.caracs.pv',pv);
-	MZ_setValue(numTroll+'.caracs.pv.base',pvbase);
-	MZ_setValue(numTroll+'.caracs.pv.max',pvmax);
-	MZ_setValue(numTroll+'.caracs.rm',rmTroll);
-	MZ_setValue(numTroll+'.caracs.rm.bm',rmbm);
-	MZ_setValue(numTroll+'.caracs.mm',mmTroll);
-	MZ_setValue(numTroll+'.caracs.mm.bm',mmbm);
-	MZ_setValue(numTroll+'.caracs.armure',arm);
-	MZ_setValue(numTroll+'.caracs.armure.bm',armbmp+armbmm);
-	MZ_setValue(numTroll+'.caracs.armure.bmp',armbmp);
-	MZ_setValue(numTroll+'.caracs.armure.bmm',armbmm);
-	if(bmDAttM) MZ_setValue(numTroll+'.bonus.DAttM',+bmDAttM);
-	if(bmDDegM) MZ_setValue(numTroll+'.bonus.DDegM',bmDDegM);
-	MZ_setValue(numTroll+'.position.X',posX);
-	MZ_setValue(numTroll+'.position.Y',posY);
-	MZ_setValue(numTroll+'.position.N',posN);
-	MZ_setValue(numTroll+'.race',race);
+	//MY_setValue(numTroll+'.profilON',true); // pour remplacer isProfilActif ?
+	//MY_setValue('NIV_TROLL',nivTroll);
+	MY_setValue(numTroll+'.caracs.attaque',att);
+	MY_setValue(numTroll+'.caracs.attaque.bm',attbm);
+	MY_setValue(numTroll+'.caracs.attaque.bmp',attbm-attbmm);
+	MY_setValue(numTroll+'.caracs.attaque.bmm',attbmm);
+	MY_setValue(numTroll+'.caracs.esquive',esq);
+	MY_setValue(numTroll+'.caracs.esquive.bm',esqbm);
+	MY_setValue(numTroll+'.caracs.esquive.nbattaques',nbattaques);
+	MY_setValue(numTroll+'.caracs.degats',deg);
+	MY_setValue(numTroll+'.caracs.degats.bm',degbm);
+	MY_setValue(numTroll+'.caracs.degats.bmp',degbm-degbmm);
+	MY_setValue(numTroll+'.caracs.degats.bmm',degbmm);
+	MY_setValue(numTroll+'.caracs.regeneration',reg);
+	MY_setValue(numTroll+'.caracs.regeneration.bm',regbm);
+	MY_setValue(numTroll+'.caracs.vue',vue);
+	MY_setValue(numTroll+'.caracs.vue.bm',vuebm);
+	MY_setValue(numTroll+'.caracs.pv',pv);
+	MY_setValue(numTroll+'.caracs.pv.base',pvbase);
+	MY_setValue(numTroll+'.caracs.pv.max',pvmax);
+	MY_setValue(numTroll+'.caracs.rm',rmTroll);
+	MY_setValue(numTroll+'.caracs.rm.bm',rmbm);
+	MY_setValue(numTroll+'.caracs.mm',mmTroll);
+	MY_setValue(numTroll+'.caracs.mm.bm',mmbm);
+	MY_setValue(numTroll+'.caracs.armure',arm);
+	MY_setValue(numTroll+'.caracs.armure.bm',armbmp+armbmm);
+	MY_setValue(numTroll+'.caracs.armure.bmp',armbmp);
+	MY_setValue(numTroll+'.caracs.armure.bmm',armbmm);
+	if(bmDAttM) MY_setValue(numTroll+'.bonus.DAttM',+bmDAttM);
+	if(bmDDegM) MY_setValue(numTroll+'.bonus.DDegM',bmDDegM);
+	MY_setValue(numTroll+'.position.X',posX);
+	MY_setValue(numTroll+'.position.Y',posY);
+	MY_setValue(numTroll+'.position.N',posN);
+	MY_setValue(numTroll+'.race',race);
 	}
 
 
@@ -4875,7 +4893,7 @@ function setLieu() {
 	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
 		'?search=position&orderBy=distance&posx='+
 		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
-	if(MZ_getValue('VUECARAC')=='true') {
+	if(MY_getValue('VUECARAC')=='true') {
 		insertButton(
 			lignesProfil.snapshotItem(2).cells[1].getElementsByTagName("b")[0],
 			'Lieux à proximité',
@@ -5068,7 +5086,7 @@ function saveLastDLA() {
 		+'/'+toInt(inAn.value)+' '+addZero(toInt(inHr.value))
 		+':'+addZero(toInt(inMin.value))+':'+addZero(toInt(inSec.value));
 	lastDLA = new Date( StringToDate(str) );
-	MZ_setValue(numTroll+'.DLA.ancienne',str);
+	MY_setValue(numTroll+'.DLA.ancienne',str);
 	lastDLAZone.innerHTML = '';
 	var b = document.createElement('b');
 	b.addEventListener('click',inputMode,false);
@@ -5133,8 +5151,8 @@ function setAccel() {
 	// Gestion des BM de fatigue
 	if(bmfatigue>0) {
 		// On tente de récupérer les BM de fatigue de la page des BM
-		if(MZ_getValue(numTroll+'.bm.fatigue')) {
-			var BMmemoire = MZ_getValue(numTroll+'.bm.fatigue').split(';');
+		if(MY_getValue(numTroll+'.bm.fatigue')) {
+			var BMmemoire = MY_getValue(numTroll+'.bm.fatigue').split(';');
 			BMmemoire.pop();
 			var tour = 0;
 			for(var i=0 ; i<BMmemoire.length ; i++) {
@@ -5148,7 +5166,7 @@ function setAccel() {
 		if(listeBmFat[0]==bmfatigue) {
 			// Si (bm profil=1er bm stocké), on suppose que les bm stockés sont à jour
 			BMfrais = true;
-			MZ_removeValue(numTroll+".bm.fatigue");
+			MY_removeValue(numTroll+".bm.fatigue");
 		}
 	} else {
 		// S'il n'y a pas de bm de fatigue sur le profil, on est à jour
@@ -5267,7 +5285,7 @@ function setAccel() {
 		// bypass des infos de "menu_FF.js" en cas d'overDLA
 		DLAaccel = new Date( DLAsuiv );
 		lastDLA = new Date( DLA );
-		MZ_setValue(numTroll+'.DLA.ancienne',DateToString(DLA));
+		MY_setValue(numTroll+'.DLA.ancienne',DateToString(DLA));
 		// ***INIT GLOBALE*** pva
 		pva = Math.min(pv+regmoy,pvmax);
 		appendText(
@@ -5279,8 +5297,8 @@ function setAccel() {
 	} else {
 		DLAaccel = new Date( DLA );
 		pva = pv;
-		if(MZ_getValue(numTroll+'.DLA.ancienne')) {
-			lastDLA = new Date(StringToDate(MZ_getValue(numTroll+'.DLA.ancienne')));
+		if(MY_getValue(numTroll+'.DLA.ancienne')) {
+			lastDLA = new Date(StringToDate(MY_getValue(numTroll+'.DLA.ancienne')));
 		} else {
 			lastDLA = false;
 		}
@@ -5466,7 +5484,7 @@ function setTalent(nom,pc,niveau) {
 				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
 	}
 	
-	MZ_setValue(numTroll+'.talent.'+nomEnBase,pc);
+	MY_setValue(numTroll+'.talent.'+nomEnBase,pc);
 }
 
 function creerBulleVide() {
@@ -6079,7 +6097,7 @@ function do_profil() {
 		newStyleLink();
 		setInfoDateCreation();
 		setNextDLA();
-		if(MZ_getValue('VUECARAC')=='true') { vueCarac(); }
+		if(MY_getValue('VUECARAC')=='true') { vueCarac(); }
 		setLieu();
 		setInfosPV();
 		setInfosPxPi();
@@ -6567,7 +6585,7 @@ function hideInfos() {
 
 function treateEquipement() {
 // Extrait les données du matos et réinjecte les infos déduites
-	if(MZ_getValue('INFOCARAC')=='false') { return; }
+	if(MY_getValue('INFOCARAC')=='false') { return; }
 	
 	var faireLigne = false;
 	var caracs = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -6687,12 +6705,12 @@ function saveITData() {
 		var login = document.getElementById('loginbricol').value;
 		var pass = document.getElementById('passbricol').value;
 		if(system && login && pass) {
-			MZ_setValue(numTroll+'.INFOSIT',
+			MY_setValue(numTroll+'.INFOSIT',
 				'bricol$'+system+'$'+login+'$'+hex_md5(pass) );
 		}
 	}
 	else {
-		MZ_removeValue(numTroll+'.INFOSIT');
+		MY_removeValue(numTroll+'.INFOSIT');
 	}
 }
 
@@ -6701,9 +6719,9 @@ function saveLinks() {
 	var data=[ [] ];
 	/* Récupération et tri des liens */
 	for(var i=1 ; i<=numLinks ; i++) {
-		MZ_removeValue('URL'+i);
-		MZ_removeValue('URL'+i+'.nom');
-		MZ_removeValue('URL'+i+'.ico');
+		MY_removeValue('URL'+i);
+		MY_removeValue('URL'+i+'.nom');
+		MY_removeValue('URL'+i+'.ico');
 		var url = document.getElementById('url'+i).value;
 		var nom = document.getElementById('nom'+i).value;
 		var ico = document.getElementById('ico'+i).value;
@@ -6713,55 +6731,55 @@ function saveLinks() {
 	}
 	/* Sauvegarde */
 	for(var i=1 ; i<data.length ; i++) {
-		MZ_setValue('URL'+i,data[i][0]);
-		MZ_setValue('URL'+i+'.nom',data[i][1]);
-		MZ_setValue('URL'+i+'.ico',data[i][2]);
+		MY_setValue('URL'+i,data[i][0]);
+		MY_setValue('URL'+i+'.nom',data[i][1]);
+		MY_setValue('URL'+i+'.ico',data[i][2]);
 	}
 }
 
 function saveAll() {
 	var urlIco = document.getElementById('icoMenuIco').value;
 	if(urlIco) {
-		MZ_setValue(numTroll+'.ICOMENU', urlIco );
+		MY_setValue(numTroll+'.ICOMENU', urlIco );
 	}
 	else {
-		MZ_removeValue(numTroll+'.ICOMENU', urlIco );
+		MY_removeValue(numTroll+'.ICOMENU', urlIco );
 		document.getElementById('icoMenuIco').value = '';
 	}
 	saveLinks();
 	refreshLinks();
 	
-	MZ_setValue('VUEEXT',document.getElementById('vueext').value);
+	MY_setValue('VUEEXT',document.getElementById('vueext').value);
 	
 	var maxcdm = parseInt(document.getElementById('maxcdm').value);
 	if(maxcdm) {
-		MZ_setValue(numTroll+'.MAXCDM', maxcdm );
+		MY_setValue(numTroll+'.MAXCDM', maxcdm );
 	}
 	else {
-		MZ_removeValue(numTroll+'.MAXCDM');
+		MY_removeValue(numTroll+'.MAXCDM');
 		document.getElementById('maxcdm').value = '';
 	}
 
-	MZ_setValue('NOINFOEM',
+	MY_setValue('NOINFOEM',
 		document.getElementById('noInfoEM').checked ? 'true' : 'false');
 	
 	// Pourquoi Tilk stockait-il tout en str ?
 	// -> parce que les booléens c'est foireux (vérifié)
-	MZ_setValue(numTroll+'.USECSS',
+	MY_setValue(numTroll+'.USECSS',
 		document.getElementById('usecss').checked ? 'true':'false');
-	MZ_setValue('INFOCARAC',
+	MY_setValue('INFOCARAC',
 		document.getElementById('infocarac').checked ? 'true' : 'false');
-	//MZ_setValue(numTroll+'.SEND_IDT',
+	//MY_setValue(numTroll+'.SEND_IDT',
 	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
 	// Fonctionnalité désactivée
 
-	MZ_setValue(numTroll+'.AUTOCDM',
+	MY_setValue(numTroll+'.AUTOCDM',
 		document.getElementById('autoCdM').checked ? 'true' : 'false');
-	MZ_setValue('VUECARAC',
+	MY_setValue('VUECARAC',
 		document.getElementById('vueCarac').checked ? 'true' : 'false');
-	MZ_setValue('CONFIRMEDECALAGE',
+	MY_setValue('CONFIRMEDECALAGE',
 		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
-	MZ_setValue(numTroll+".OLDSCHOOL",
+	MY_setValue(numTroll+".OLDSCHOOL",
 		document.getElementById("oldShoolStyle").checked ? "true" : "false");
 
 	saveITData();
@@ -6782,7 +6800,7 @@ function onChangeIT() {
 	if(IT=='bricol') {
 		var tr = appendTr(itBody,'mh_tdpage')
 		var td = appendTd(tr);
-		var str = MZ_getValue(numTroll+'.INFOSIT');
+		var str = MY_getValue(numTroll+'.INFOSIT');
 		if(str) {
 			var arr = str.split('$');
 			var system = arr[1];
@@ -6801,14 +6819,14 @@ function onChangeIT() {
 
 function refreshLinks() {
 	document.getElementById('linksBody').innerHTML = '';
-	var anotherURL = MZ_getValue('URL1');
+	var anotherURL = MY_getValue('URL1');
 	if(!anotherURL) { addLinkField(); }
 	var i=1;
 	while(anotherURL && i<99) {
 		addLinkField(i,anotherURL,
-			MZ_getValue('URL'+i+'.nom'),MZ_getValue('URL'+i+'.ico') );
+			MY_getValue('URL'+i+'.nom'),MY_getValue('URL'+i+'.ico') );
 		i++;
-		anotherURL = MZ_getValue('URL'+i);
+		anotherURL = MY_getValue('URL'+i);
 	}
 }
 
@@ -6830,16 +6848,16 @@ function addLinkField(i,url,nom,ico) {
 function removeLinkField() {
 	var linksBody = document.getElementById('linksBody');
 	var i = linksBody.childNodes.length;
-	MZ_removeValue('URL'+i);
-	MZ_removeValue('URL'+i+'.nom');
-	MZ_removeValue('URL'+i+'.ico');
+	MY_removeValue('URL'+i);
+	MY_removeValue('URL'+i+'.nom');
+	MY_removeValue('URL'+i+'.ico');
 	linksBody.removeChild(linksBody.lastChild);
 	if(linksBody.childNodes.length==0) { addLinkField(); }
 }
 
 function resetMainIco() {
 	document.getElementById('icoMenuIco').value=
-		'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+		'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
 }
 
 
@@ -6883,9 +6901,9 @@ function insertOptionTable(insertPt) {
 	var td = appendTdText(tr,'Hyperliens ajoutés dans le Menu :',true);
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendText(td,'Icône du Menu: ');
-	var url = MZ_getValue(numTroll+'.ICOMENU');
+	var url = MY_getValue(numTroll+'.ICOMENU');
 	if(!url) { 
-		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/mz_logo_small.png';
+		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
 	}
 	appendTextbox(td,'text','icoMenuIco',50,200,url);
 	appendButton(td,'Réinitialiser',resetMainIco);
@@ -6920,20 +6938,20 @@ function insertOptionTable(insertPt) {
 	for(var i=0 ; i<listeVues2D.length ; i++) {
 		appendOption(select,listeVues2D[i],listeVues2D[i]);
 	}
-	if(MZ_getValue('VUEEXT')) {
-		select.value = MZ_getValue('VUEEXT');
+	if(MY_getValue('VUEEXT')) {
+		select.value = MY_getValue('VUEEXT');
 	}
 	
 	td = appendTd(tr);
-	appendCheckBox(td,'noInfoEM',MZ_getValue('NOINFOEM')=='true');
+	appendCheckBox(td,'noInfoEM',MY_getValue('NOINFOEM')=='true');
 	appendText(td,' Masquer les informations à propos de l\'écriture magique');
 	
 	tr = appendTr(tbody);
 	td = appendTdText(tr,'Nombre de CdM automatiquement récupérées : ');
-	appendTextbox(td,'text','maxcdm',5,10,MZ_getValue(numTroll+'.MAXCDM'));
+	appendTextbox(td,'text','maxcdm',5,10,MY_getValue(numTroll+'.MAXCDM'));
 	
 	td = appendTd(tr);
-	appendCheckBox(td,'usecss',MZ_getValue(numTroll+'.USECSS')=='true');
+	appendCheckBox(td,'usecss',MY_getValue(numTroll+'.USECSS')=='true');
 	appendText(td,' Utiliser la CSS pour les couleurs de la diplomatie');
 	
 	/* Interface Tactique */
@@ -6950,7 +6968,7 @@ function insertOptionTable(insertPt) {
 	tbody = appendSubTable(td);
 	tbody.id = 'itBody';
 	select.onchange = onChangeIT;
-	var str = MZ_getValue(numTroll+'.INFOSIT');
+	var str = MY_getValue(numTroll+'.INFOSIT');
 	if(str) {
 		select.value = str.slice(0,str.indexOf('$'));
 		onChangeIT();
@@ -6960,28 +6978,28 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
 	appendText(td,'Options diverses :',true);
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'infocarac',MZ_getValue('INFOCARAC')!='false');
+	appendCheckBox(td,'infocarac',MY_getValue('INFOCARAC')!='false');
 	appendText(td,
 		' Afficher les caractéristiques des équipements des autres Trõlls');
 	
 	/*td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'send_idt',MZ_getValue(numTroll+'.SEND_IDT') != 'non')
+	appendCheckBox(td,'send_idt',MY_getValue(numTroll+'.SEND_IDT') != 'non')
 	appendText(td,' Envoyer les objets identifiés au système de stats');*/
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'autoCdM',MZ_getValue(numTroll+'.AUTOCDM')=='true');
+	appendCheckBox(td,'autoCdM',MY_getValue(numTroll+'.AUTOCDM')=='true');
 	appendText(td,' Envoyer automatiquement les CdM vers la base MountyZilla');
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'vueCarac',MZ_getValue('VUECARAC')=='true');
+	appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
 	appendText(td,' Afficher la Vue avec les caractéristique dans le Profil');
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'confirmeDecalage',MZ_getValue('CONFIRMEDECALAGE')=='true');
+	appendCheckBox(td,'confirmeDecalage',MY_getValue('CONFIRMEDECALAGE')=='true');
 	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
 	
 	td = appendTd(appendTr(mainBody,"mh_tdpage"));
-	appendCheckBox(td,"oldShoolStyle",MZ_getValue(numTroll+".OLDSCHOOL")=="true");
+	appendCheckBox(td,"oldShoolStyle",MY_getValue(numTroll+".OLDSCHOOL")=="true");
 	appendText(td," Ouvrir l'ancien profil par défaut");
 	
 	/* Bouton SaveAll */
@@ -7034,12 +7052,12 @@ function deleteEnchantement()
 	try
 	{
 	var idEquipement = this.getAttribute('name');
-	MZ_removeValue(numTroll+".enchantement."+idEquipement+".objet");
-	MZ_removeValue(numTroll+".enchantement."+idEquipement+".enchanteur");
-	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.0");
-	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.1");
-	MZ_removeValue(numTroll+".enchantement."+idEquipement+".composant.2");
-	var listeEquipement = MZ_getValue(numTroll+".enchantement.liste").split(";");
+	MY_removeValue(numTroll+".enchantement."+idEquipement+".objet");
+	MY_removeValue(numTroll+".enchantement."+idEquipement+".enchanteur");
+	MY_removeValue(numTroll+".enchantement."+idEquipement+".composant.0");
+	MY_removeValue(numTroll+".enchantement."+idEquipement+".composant.1");
+	MY_removeValue(numTroll+".enchantement."+idEquipement+".composant.2");
+	var listeEquipement = MY_getValue(numTroll+".enchantement.liste").split(";");
 	var string = "";
 	for(var i=0;i<listeEquipement.length;i++)
 	{
@@ -7051,7 +7069,7 @@ function deleteEnchantement()
 	}
 	if(string=="")
 	{
-		MZ_removeValue(numTroll+".enchantement.liste");
+		MY_removeValue(numTroll+".enchantement.liste");
 		var table = this.parentNode.parentNode.parentNode.parentNode;
 		var parent = table.parentNode;
 		for(var i=0;i<parent.childNodes.length;i++)
@@ -7067,7 +7085,7 @@ function deleteEnchantement()
 	}
 	else
 	{
-		MZ_getValue(numTroll+".enchantement.liste",string);
+		MY_getValue(numTroll+".enchantement.liste",string);
 		this.parentNode.parentNode.parentNode
 			.removeChild(this.parentNode.parentNode);
 	}
@@ -7101,8 +7119,8 @@ function do_option() {
 	insertBefore(insertPoint,document.createElement('p'));
 
 	/* [zone]                     Obsolète ??                                  */
-	if(MZ_getValue(numTroll+".enchantement.liste")
-		&& MZ_getValue(numTroll+".enchantement.liste")!="" )
+	if(MY_getValue(numTroll+".enchantement.liste")
+		&& MY_getValue(numTroll+".enchantement.liste")!="" )
 	{
 		insertTitle(insertPoint, 'Les Enchantements en cours');
 		table = document.createElement('table');
@@ -7122,20 +7140,20 @@ function do_option() {
 		appendTdText(tr, 'Enchanteur',1);
 		appendTdText(tr, 'Action',1);
 		
-		var listeEquipement = MZ_getValue(numTroll+".enchantement.liste").split(";");
+		var listeEquipement = MY_getValue(numTroll+".enchantement.liste").split(";");
 		for(var i=0;i<listeEquipement.length;i++)
 		{
 			try
 			{
 				var idEquipement = listeEquipement[i];
-				var nomEquipement = MZ_getValue(numTroll+".enchantement."
+				var nomEquipement = MY_getValue(numTroll+".enchantement."
 					+idEquipement+".objet");
-				var infoEnchanteur = MZ_getValue(numTroll+".enchantement."
+				var infoEnchanteur = MY_getValue(numTroll+".enchantement."
 					+idEquipement+".enchanteur").split(";");
 				var ul = document.createElement('UL');
 				for(var j=0;j<3;j++)
 				{
-					var infoComposant = MZ_getValue(numTroll+".enchantement."
+					var infoComposant = MY_getValue(numTroll+".enchantement."
 						+idEquipement+".composant."+j).split(";");
 					var texte = infoComposant[4].replace("Ril ","Œil ");
 					for(var k=5;k<infoComposant.length;k++)
@@ -7606,7 +7624,7 @@ function sauvegarderTout() {
 			}
 		}
 	}
-	MZ_setValue(numTroll+'.diplo.guilde',JSON.stringify(diploGuilde));
+	MY_setValue(numTroll+'.diplo.guilde',JSON.stringify(diploGuilde));
 	
 	/* Diplo personnelle (ex-fonction saveChamps) */
 	var champs = document.getElementById('diploPerso');
@@ -7634,7 +7652,7 @@ function sauvegarderTout() {
 			}
 		}
 	}
-	MZ_setValue(numTroll+'.diplo.perso',JSON.stringify(diploPerso));
+	MY_setValue(numTroll+'.diplo.perso',JSON.stringify(diploPerso));
 
 	avertissement('Données sauvegardées');
 }
@@ -7740,11 +7758,11 @@ function creeTablePrincipale() {
 
 /*-[functions]----------------------- Main -----------------------------------*/
 
-var diploGuilde = MZ_getValue(numTroll+'.diplo.guilde') ?
-	JSON.parse(MZ_getValue(numTroll+'.diplo.guilde')) : {};
+var diploGuilde = MY_getValue(numTroll+'.diplo.guilde') ?
+	JSON.parse(MY_getValue(numTroll+'.diplo.guilde')) : {};
 var isDetailOn = diploGuilde.isDetailOn=='true';
-var diploPerso = MZ_getValue(numTroll+'.diplo.perso') ?
-	JSON.parse(MZ_getValue(numTroll+'.diplo.perso')) : {};
+var diploPerso = MY_getValue(numTroll+'.diplo.perso') ?
+	JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};
 var isMythiquesOn = diploPerso.mythiques!=undefined;
 
 function do_diplo() {
@@ -7848,7 +7866,7 @@ function traiteCdM() {
 	}
 	
 	// Envoi auto ou insertion bouton envoi (suivant option)
-	if(MZ_getValue(numTroll+'.AUTOCDM')=='true') {
+	if(MY_getValue(numTroll+'.AUTOCDM')=='true') {
 		sendInfoCDM();
 		var p = document.createElement('p');
 		p.style.color = 'green';
@@ -7872,7 +7890,7 @@ function traiteCdM() {
 }
 
 function sendInfoCDM() {
-	MZ_setValue('CDMID', 1+parseInt(MZ_getValue('CDMID')) );
+	MY_setValue('CDMID', 1+parseInt(MY_getValue('CDMID')) );
 	var buttonCDM = this;
 	var texte = '';
 	FF_XMLHttpRequest({
@@ -8062,7 +8080,7 @@ function traiteCdM() {
 	// On insère le bouton et un espace
 	//var url = pageEffetDispatcher + "?pouv="+escape(nomPouvoir)+"&monstre="+escape(nomMonstre)+"&id="+escape(id)+"&effet="+escape(effetPouvoir)+"&duree="+escape(dureePouvoir)+"&date="+escape(Math.round(date.getTime()/1000));
 	// ce type d'URL est obsolète (se fait par msgId dorénavant)
-	if(!MZ_getValue('AUTOSENDPOUV'))
+	if(!MY_getValue('AUTOSENDPOUV'))
 	{
 		var button = insertButtonCdm('bClose',null,"Collecter les infos du pouvoir");
 		button.setAttribute("onClick", "window.open('" + url
@@ -8657,16 +8675,16 @@ function bddLieux(start,stop) {
 
 /*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
 
-function saveCheckBox(chkb, pref) {
+function saveCheckBox(chkbo, pref) {
 	// Enregistre et retourne l'état d'une CheckBox
-	var etat = chkb.checked;
+	var etat = chkbo.checked;
 	MY_setValue(pref, etat ? 'true' : 'false' );
 	return etat;
 	}
 
-function recallCheckBox(chkb, pref) {
+function recallCheckBox(chkbox, pref) {
 	// Restitue l'état d'une CheckBox
-	chkb.checked = (MY_getValue(pref)=='true');
+	chkbox.checked = (MY_getValue(pref)=='true');
 	}
 
 function saveComboBox(cbb, pref) {
@@ -9364,7 +9382,7 @@ function afficherCDM(nom,id) {
 }
 
 /* [functions] Gestion de l'AFFICHAGE des Infos de combat */
-function initPopup() {
+function initPopupVue() {
 	popup = document.createElement('div');
 	popup.id = 'popup';
 	popup.className = 'mh_textbox';
@@ -9378,20 +9396,22 @@ function initPopup() {
 	document.body.appendChild(popup);
 }
 
-function showPopupTactique(evt) {
-	var id = this.id;
-	var nom = this.nom;
-	var texte = getAnalyseTactique(id,nom);
-	if(texte=='') { return; }
-	popup.innerHTML = texte;
-	popup.style.left = Math.min(evt.pageX+15,window.innerWidth-400)+'px';
-	popup.style.top = (evt.pageY+15)+'px';
-	popup.style.visibility = 'visible';
-}
+// roule 16/03/2016 supprimé, existe déjà dans vue
+// function showPopupTactique(evt) {
+	// var id = this.id;
+	// var nom = this.nom;
+	// var texte = getAnalyseTactique(id,nom);
+	// if(texte=='') { return; }
+	// popup.innerHTML = texte;
+	// popup.style.left = Math.min(evt.pageX+15,window.innerWidth-400)+'px';
+	// popup.style.top = (evt.pageY+15)+'px';
+	// popup.style.visibility = 'visible';
+// }
 
-function hidePopup() {
-	popup.style.visibility = 'hidden';
-}
+// roule 16/03/2016, existe déjà ailleurs
+// function hidePopup() {
+	// popup.style.visibility = 'hidden';
+// }
 
 /* [functions] Récupération / Computation des Infos Tactiques */
 // TODO à revoir
@@ -10358,7 +10378,7 @@ function do_vue() {
 			filtreLieux();
 		}
 
-		initPopup();
+		initPopupVue();
 		initPXTroll();
 
 		if(getTalent("Projectile Magique")!=0) {
@@ -12051,7 +12071,7 @@ function do_profil2()
 
 var popup;
 
-function initPopup() {
+function initPopupTancompo() {
 	popup = document.createElement('div');
 	popup.setAttribute('id', 'popup');
 	popup.setAttribute('class', 'mh_textbox');
@@ -12060,17 +12080,19 @@ function initPopup() {
 	document.body.appendChild(popup);
 }
 
-function showPopup(evt) {
-	var texte = this.getAttribute("texteinfo");
-	popup.innerHTML = texte;
-	popup.style.left = evt.pageX + 15 + 'px';
-	popup.style.top = evt.pageY + 'px';
-	popup.style.visibility = "visible";
-}
+// roule 16/03/2016, existe déjà ailleurs
+// function showPopup(evt) {
+	// var texte = this.getAttribute("texteinfo");
+	// popup.innerHTML = texte;
+	// popup.style.left = evt.pageX + 15 + 'px';
+	// popup.style.top = evt.pageY + 'px';
+	// popup.style.visibility = "visible";
+// }
 
-function hidePopup() {
-	popup.style.visibility = "hidden";
-}
+// roule 16/03/2016, existe déjà ailleurs
+// function hidePopup() {
+	// popup.style.visibility = 'hidden';
+// }
 
 function createPopupImage(url, text)
 {
@@ -12346,7 +12368,7 @@ function treateEquipEnchant()
 {
 	if(currentURL.indexOf('as_type=Arme')==-1 && currentURL.indexOf('as_type=Armure')==-1)
 		return false;
-	initPopup();
+	initPopupTancompo();
 	computeEnchantementEquipement(createPopupImage,formateTexte);
 }
 
@@ -12400,59 +12422,59 @@ function isPage(url) {
 /*--------------------------------- Dispatch ---------------------------------*/
 
 //chargerScriptDev("libs");
-//chargerScriptDev("ALWAYS");
+//chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
 
 // Détection de la page à traiter
 if(isPage("Messagerie/ViewMessageBot")) {
-	do_cdmbot();	// fait
+	do_cdmbot();
 } else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
-	do_cdmcomp();	// fait
+	do_cdmcomp();
 } else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
-	do_diplo();	// fait
+	do_diplo();
 } else if(isPage("MH_Play/Play_equipement")) {
-	do_equip();	// fait
+	do_equip();
 } else if(isPage("MH_Play/Play_menu")) {
-	do_menu();	// fait
+	do_menu();
 } else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
-	do_option();	// fait
+	do_option();
 } else if(isPage("View/PJView")) {
-	do_pjview();	// fait
+	do_pjview();
 } else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
-	do_profil();	// fait
+	do_profil();
 } else if(isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
-	do_tancompo();	// fait
+	do_tancompo();
 } else if(isPage("MH_Play/Play_vue")) {
-	do_vue();	// fait
+	do_vue();
 } else if(isPage("MH_Play/Play_news")) {
-	do_news();	// fait
+	do_news();
 } else if(isPage("MH_Play/Actions/Play_a_Move") || 	isPage("MH_Lieux/Lieu_Teleport")) {
-	do_move();	// fait
+	do_move();
 } else if(isPage("MH_Missions/Mission_Etape")) {
-	do_mission();	// fait
+	do_mission();
 } else if(isPage("View/MonsterView")) {
-	do_infomonstre();	// fait
+	do_infomonstre();
 } else if(isPage("MH_Play/Actions/Play_a_Attack")) {
-	do_attaque();	// fait
+	do_attaque();
 } else if(isPage("MH_Follower/FO_Ordres")) {
-	do_ordresgowap();	// fait
+	do_ordresgowap();
 } else if(isPage("MH_Follower/FO_Equipement")) {
-	do_equipgowap();	// fait
+	do_equipgowap();
 } else if(isPage("MH_Play/Play_mouche")) {
-	do_mouches();	// fait
+	do_mouches();
 } else if(isPage("MH_Play/Play_BM")) {
-	do_malus();	// fait
+	do_malus();
 } else if(isPage("MH_Play/Play_evenement")) {
-	do_myevent();	// fait
+	do_myevent();
 } else if(isPage("MH_Lieux/Lieu_DemanderEnchantement")) {
-	do_enchant();	//fait
+	do_enchant();
 } else if(isPage("MH_Lieux/Lieu_Enchanteur")) {
-	do_pre_enchant();	// fait
+	do_pre_enchant();
 } else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
-	do_actions();	// fait
+	do_actions();
 } else if(isPage('MH_Missions/Mission_Liste.php') && MY_getValue(numTroll+'.MISSIONS')) {
-	do_mission_liste();	// fait
+	do_mission_liste();
 } else if(isPage('MH_Play/Play_action')) {
-	do_actions();	// fait
+	do_actions();
 } else if(isPage('MH_Play/Play_profil2')) {
-    do_profil2();	// fait
+    do_profil2();
 }
