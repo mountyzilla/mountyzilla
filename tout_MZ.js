@@ -1045,8 +1045,8 @@ function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 	var deg = MY_getValue(numTroll+'.caracs.degats');
 	var degbmp = MY_getValue(numTroll+'.caracs.degats.bmp');
 	var degbmm = MY_getValue(numTroll+'.caracs.degats.bmm');
-	var vue = MY_getValue(numTroll+'.caracs.vue');
-	var bmvue = MY_getValue(numTroll+'.caracs.vue.bm');
+	var vue = parseInt(MY_getValue(numTroll+'.caracs.vue'));
+	var bmvue = parseInt(MY_getValue(numTroll+'.caracs.vue.bm'));
 	if(att==null || attbmp==null || attbmm==null || mm==null || deg==null
 		|| degbmp==null || degbmm==null || vue==null || bmvue==null)
 		return false;
@@ -8991,11 +8991,15 @@ function initialiseInfos() {
 function toggleTableauInfos(firstRun) {
 	var
 		msg = document.getElementById('msgInfoTab'),
-		corps = document.getElementById('corpsInfoTab');
+		corps = document.getElementById('corpsInfoTab'),
+		infoplie = parseInt(MY_getValue('INFOPLIE'));	// 27/032016 Roule, pb sur récupération booléen, force numérique
+		//window.console.log('toggleTableauInfos(' + firstRun + '), début, INFOPLIE=' + MY_getValue('INFOPLIE') + ', !INFOPLIE=' + !MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// debug Roule
 	if(!firstRun) {
-		MY_setValue('INFOPLIE', !MY_getValue('INFOPLIE') );
+		infoplie = !infoplie;
+		MY_setValue('INFOPLIE', infoplie ? 1 : 0);	// 27/032016 Roule, pb sur récupération booléen, force numérique
+		//window.console.log('toggleTableauInfos(' + firstRun + '), après toggle et set, INFOPLIE=' + MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// Debug Roule
 	}
-	if(MY_getValue('INFOPLIE')) {
+	if(infoplie) {
 		msg.style.display = '';
 		corps.style.display = 'none';
 	} else {
@@ -10135,8 +10139,8 @@ function computeCharge() {
 function computeProjo() {
 	computeActionDistante(0,
 		getPortee(
-			MY_getValue(numTroll+".caracs.vue")+
-			MY_getValue(numTroll+".caracs.vue.bm")
+			parseInt(MY_getValue(numTroll+".caracs.vue"))+
+			parseInt(MY_getValue(numTroll+".caracs.vue.bm"))
 		),
 		{'Monstres':1, 'Trolls':1},
 		'Attaquer',
@@ -10148,8 +10152,8 @@ function computeProjo() {
 function computeTelek() {
 	computeActionDistante(0,
 		Math.floor((
-			MY_getValue(numTroll+".caracs.vue")+
-			MY_getValue(numTroll+".caracs.vue.bm")
+			parseInt(MY_getValue(numTroll+".caracs.vue"))+
+			parseInt(MY_getValue(numTroll+".caracs.vue.bm"))
 		)/2),
 		{'Tresors':1},
 		'Telek',
@@ -10161,8 +10165,8 @@ function computeTelek() {
 function computeLdP() {
 	computeActionDistante(0,
 		2+Math.floor((
-			MY_getValue(numTroll+".caracs.vue")+
-			MY_getValue(numTroll+".caracs.vue.bm")
+			parseInt(MY_getValue(numTroll+".caracs.vue"))+
+			parseInt(MY_getValue(numTroll+".caracs.vue.bm"))
 		)/5),
 		{'Monstres':1, 'Trolls':1},
 		'self',
