@@ -20,14 +20,14 @@
 // ==/UserScript==
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var ie = (window.attachEvent)? true:false;
-	if("function" != typeof MZ_getValue) {
+	if("function" != typeof MY_getValue) {
 		//if(typeof localStorage == "object") { 
 if(typeof window.localStorage == "object") { // correction par Vapulabehemot (82169) le 14/01/2015
-			function MZ_getValue(nom) {
+			function MY_getValue(nom) {
 				//return localStorage.getItem(nom);
 return window.localStorage.getItem(nom); // correction par Vapulabehemot (82169) le 14/01/2015
 			}
-			function MZ_setValue(nom,valeur) {
+			function MY_setValue(nom,valeur) {
 				//localStorage.setItem(nom,valeur);
 window.localStorage.setItem(nom,valeur); // correction par Vapulabehemot (82169) le 14/01/2015
 			}
@@ -35,23 +35,23 @@ window.localStorage.setItem(nom,valeur); // correction par Vapulabehemot (82169)
 if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM_getValue && GM_getValue("favori_gow")) window.localStorage.setItem("favori_gow", GM_getValue("favori_gow")); // correction par Vapulabehemot (82169) le 14/01/2015
 		}
 		else if("function" == typeof GM_getValue) {
-			function MZ_getValue(nom) {
+			function MY_getValue(nom) {
 				return GM_getValue(nom);
 			}
-			function MZ_setValue(nom,valeur) {
+			function MY_setValue(nom,valeur) {
 				GM_setValue(nom,valeur);
 			}
 		}
 		else if("function" == typeof PRO_getValue) {
-			function MZ_getValue(nom) {
+			function MY_getValue(nom) {
 				return PRO_getValue(nom);
 			}
-			function MZ_setValue(nom,valeur) {
+			function MY_setValue(nom,valeur) {
 				PRO_setValue(nom,valeur);
 			}
 		}
 		else {
-			function MZ_getValue(nom) {
+			function MY_getValue(nom) {
 				var dc = document.cookie;
 				var prefix = nom + "=";
 				var begin = dc.indexOf("; " + prefix);
@@ -66,7 +66,7 @@ if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM
 					end = dc.length;
 				return unescape(dc.substring(begin + prefix.length, end));
 			}
-			function MZ_setValue(nom,valeur) {
+			function MY_setValue(nom,valeur) {
 				var expdate = new Date ();
 				expdate.setTime (expdate.getTime() + (24 * 60 * 60 * 1000 * 31));
 				var curCookie = nom + "=" + escape(valeur) + "; expires="+expdate.toGMTString();
@@ -122,11 +122,11 @@ if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM
 			y2 = parseInt(pt[3]);
 			n2 = parseInt(pt[4]);
 			var maintenant = new Date();
-			if(!MZ_getValue("favori_gow")) {
-				MZ_setValue("favori_gow", "vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+x2+"/"+y2+"/"+n2+"/");
+			if(!MY_getValue("favori_gow")) {
+				MY_setValue("favori_gow", "vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+x2+"/"+y2+"/"+n2+"/");
 			}
 			else {
-				var texte = MZ_getValue("favori_gow");
+				var texte = MY_getValue("favori_gow");
 				var param = texte.split("/");
 				var nb_fav = Math.floor(param.length/4);
 				if (param.length > 3) {
@@ -134,7 +134,7 @@ if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM
 						if(parseInt(param[4*i+1]) == x2 && parseInt(param[4*i+2]) == y2 && parseInt(param[4*i+3]) == n2) return;
 					}
 				}
-				MZ_setValue("favori_gow", texte+"vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+x2+"/"+y2+"/"+n2+"/");
+				MY_setValue("favori_gow", texte+"vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+x2+"/"+y2+"/"+n2+"/");
 			}
 			document.getElementById("action_lieu").style.display = "none";
 		}
@@ -397,8 +397,8 @@ addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) 
 
 		////////////////////////////////////////////////////////////
 		function charge_trajet() {
-			if(MZ_getValue("TRAJET_"+num_gow)) {
-				param = MZ_getValue("TRAJET_"+num_gow).split("/");
+			if(MY_getValue("TRAJET_"+num_gow)) {
+				param = MY_getValue("TRAJET_"+num_gow).split("/");
 				if(param[0] == "zoom") {
 					zoom = parseInt(param[1]);
 coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015			 	
@@ -455,11 +455,11 @@ coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 			for(var i in arret) {
 				param += arret[i][0]+","+arret[i][1]+",";
 			}
-			MZ_setValue("TRAJET_"+num_gow,param);
+			MY_setValue("TRAJET_"+num_gow,param);
 		}
 		function charge_opt_position() {
-			if(MZ_getValue("OPT_POSITION_GOWAP")) {
-				param = MZ_getValue("OPT_POSITION_GOWAP").split("/");
+			if(MY_getValue("OPT_POSITION_GOWAP")) {
+				param = MY_getValue("OPT_POSITION_GOWAP").split("/");
 				zoom = parseInt(param[1]);
 coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015			 	
 				t_enreg = (param[3] == "1");
@@ -467,7 +467,7 @@ coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 			}
 		}
 		function sauve_opt_position() {
-			MZ_setValue("OPT_POSITION_GOWAP","zoom/"+zoom+"/t_enreg/"+(t_enreg? 1:0)+"/t_prev/"+(t_prev? 1:0));
+			MY_setValue("OPT_POSITION_GOWAP","zoom/"+zoom+"/t_enreg/"+(t_enreg? 1:0)+"/t_prev/"+(t_prev? 1:0));
 		}
 		////////////////////////////////////////////////////////////
 		function ini_canvas() {
@@ -840,7 +840,7 @@ document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapula
 			if(this.id == "glissiere_fav") {
 				xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
 				zoom_fav = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
-				MZ_setValue("zoom_fav", zoom_fav)
+				MY_setValue("zoom_fav", zoom_fav)
 				trace_glissiere_fav();
 				haut.getElementById("val_zoom_fav").innerHTML = zoom_fav+"%";
 				echelle_fav();
@@ -1940,8 +1940,8 @@ footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemo
 		}
 		function ini_gestion() {
 			haut = (page == "action_ordre")? window.parent.frames[0].document:document;
-			if(MZ_getValue("zoom_fav")) {
-				zoom_fav = parseFloat(MZ_getValue("zoom_fav"))
+			if(MY_getValue("zoom_fav")) {
+				zoom_fav = parseFloat(MY_getValue("zoom_fav"))
 			}
 			if (!haut.getElementById("gestion_fav_gow")) {
 				declare_css();
@@ -2381,11 +2381,11 @@ footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemo
 			for (var i=0; i<nb_fav; i++) {
 				texte += favori[i][0]+"/"+favori[i][1]+"/"+favori[i][2]+"/"+favori[i][3]+"/";
 			}
-			MZ_setValue("favori_gow", texte);
+			MY_setValue("favori_gow", texte);
 		}
 		function charger_fav() {
-			if(!MZ_getValue("favori_gow")) return;
-			var param = MZ_getValue("favori_gow").split("/");
+			if(!MY_getValue("favori_gow")) return;
+			var param = MY_getValue("favori_gow").split("/");
 			nb_fav = Math.floor(param.length/4);
 			if (param.length > 3) {
 				for (var i=0; i<nb_fav; i++) {
