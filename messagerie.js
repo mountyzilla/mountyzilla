@@ -2,10 +2,28 @@
  * Script MZ : Affiche un aperçu lors de l'écriture des MP / Blocs Html
  *             Gère les 'Re :' multiples dans les titres
  * Auteurs : Bandedrubor (93138) / Kassbinette (95429) / disciple (62333) / Accaorrillia (71876)
+ * 		Rouletabille (91305) 27/03/2016, adaptation Fx 45 (détection de la page, localStorage)
  */
 
 /* Lancement du script selon la page chargée */
-if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
+
+// Roule : isPage() n'est plus utilisable
+//if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
+var lien = window.self.location.toString();
+if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
+
+	/* Roule 27/03/2016 remplacement fonction MZ */
+	function MY_getValue(key) {
+		return window.localStorage[key];
+	}
+
+	function MY_removeValue(key) {
+		window.localStorage.removeItem(key);
+	}
+
+	function MY_setValue(key, val) {
+		window.localStorage[key] = val;
+	}
 
 	// Ajout d'un bouton après le bouton "Envoyer"
 	function addButton(caption, clickFunction) {
@@ -19,14 +37,14 @@ if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
 		sendButton.parentNode.appendChild(newButton);
 	};
 
-  function wordwrap(str, width, brk, cut) {
-    brk = brk || '\n';
-    width = width || 75;
-    cut = cut || false;
-    if(!str)  return str;
-    var regex = '.{1,' + width + '}(\\s|$)' + (cut ? '|.{' + width + '}|.+$' : '|\\S+?(\\s|$)');
-    return str.match(RegExp(regex, 'g')).join(brk);
-  }
+	function wordwrap(str, width, brk, cut) {
+		brk = brk || '\n';
+		width = width || 75;
+		cut = cut || false;
+		if(!str)  return str;
+		var regex = '.{1,' + width + '}(\\s|$)' + (cut ? '|.{' + width + '}|.+$' : '|\\S+?(\\s|$)');
+		return str.match(RegExp(regex, 'g')).join(brk);
+	}
 
 	// Affichage de l'aperçu
 	function display() {
@@ -36,20 +54,20 @@ if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
 
 	// Sauvegarde du MP
 	function save() {
-		if(titleInput.value != '') MZ_setValue('lastMPTitle', titleInput.value);
-		if(messageArea.value != '') MZ_setValue('lastMP', messageArea.value);
+		if(titleInput.value != '') MY_setValue('lastMPTitle', titleInput.value);
+		if(messageArea.value != '') MY_setValue('lastMP', messageArea.value);
 	};
 
 	// Restauration du MP sauvegardé
 	function restore() {
-		if(MZ_getValue('lastMPTitle')) titleInput.value = MZ_getValue('lastMPTitle');
-		if(MZ_getValue('lastMP')) messageArea.value = MZ_getValue('lastMP');
+		if(MY_getValue('lastMPTitle')) titleInput.value = MY_getValue('lastMPTitle');
+		if(MY_getValue('lastMP')) messageArea.value = MY_getValue('lastMP');
 		display();
 	};
 
 	// Restauration du MP sauvegardé
 	function reply() {
-		if(MZ_getValue('lastReply')) messageArea.value = MZ_getValue('lastReply');
+		if(MY_getValue('lastReply')) messageArea.value = MY_getValue('lastReply');
 		display();
 	};
 
@@ -87,26 +105,26 @@ if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
 		var replace = startTag + sel + endTag;
 
 		// Here we are replacing the selected text with this one
-        	messageArea.value = messageArea.value.substring(0, start)
-		                  + replace
-		                  + messageArea.value.substring(end, len);
+		messageArea.value = messageArea.value.substring(0, start)
+			+ replace
+			+ messageArea.value.substring(end, len);
 	}
 
 	// Titre du MP - replace many "Re:" or "Re(n):" in message reply by a single 'Re(n):" where n is the number of replies
 	var titleInput = document.getElementsByName('Titre')[0];
-  if (titleInput && titleInput.value != '') {
-    myarray = titleInput.value.match(/(Re\s+:)/g);
-    var myarray2 = titleInput.value.match(/Re\(\d+\)\s+:/g); // extract the Re(n) to an array like [Re(n),Re(o),Re(p)...]
-    if (myarray2 == null ) {
-      titleInput.value = titleInput.value.replace(/^(Re\s+:\s+)*/,"Re(" + myarray.length + ") : ");
-    } else {
-      var ctr = 0;
-      myarray2 = myarray2.join(); // transform the array to a string  in order to be able to use the match function
-      myarray2 = myarray2.match(/\d+/g); // extract the numbers only in an array
-      for (var i = 0; i < myarray2.length; i++) {ctr = ctr + (myarray2[i] * 1)};  // la multiplication par 1 est pour transformer la string en number
-      titleInput.value = titleInput.value.replace(/^Re(.*)\s+:\s+/,"Re(" + (myarray.length + ctr) + ") : ");
-    }
-  }
+	if (titleInput && titleInput.value != '') {
+		myarray = titleInput.value.match(/(Re\s+:)/g);
+		var myarray2 = titleInput.value.match(/Re\(\d+\)\s+:/g); // extract the Re(n) to an array like [Re(n),Re(o),Re(p)...]
+		if (myarray2 == null ) {
+			titleInput.value = titleInput.value.replace(/^(Re\s+:\s+)*/,"Re(" + myarray.length + ") : ");
+		} else {
+			var ctr = 0;
+			myarray2 = myarray2.join(); // transform the array to a string  in order to be able to use the match function
+			myarray2 = myarray2.match(/\d+/g); // extract the numbers only in an array
+			for (var i = 0; i < myarray2.length; i++) {ctr = ctr + (myarray2[i] * 1)};  // la multiplication par 1 est pour transformer la string en number
+			titleInput.value = titleInput.value.replace(/^Re(.*)\s+:\s+/,"Re(" + (myarray.length + ctr) + ") : ");
+		}
+	}
 
 
 	// Case de texte du MP
@@ -122,8 +140,8 @@ if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
 	var tdPreview = document.createElement('td');
 	tdPreview.setAttribute('colspan', 4);
 	trPreview.appendChild(tdPreview);
-//	document.getElementsByTagName('form')[0].getElementsByTagName('table')[2].getElementsByTagName('tbody')[0].appendChild(trPreview);
-  document.getElementsByName('bsSend')[0].parentNode.parentNode.parentNode.appendChild(trPreview);
+	//document.getElementsByTagName('form')[0].getElementsByTagName('table')[2].getElementsByTagName('tbody')[0].appendChild(trPreview);
+	document.getElementsByName('bsSend')[0].parentNode.parentNode.parentNode.appendChild(trPreview);
 
 	// Enregistrement du message à l'envoi
 	document.getElementsByName('bsSend')[0].addEventListener('click', save, true);
@@ -149,12 +167,13 @@ if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
 	addButton('Quote', addQuote);
 }
 
-else if(isPage("Messagerie/ViewMessage.php?answer=1")) {
+//else if(isPage("Messagerie/ViewMessage.php?answer=1")) {
+else if (lien.indexOf("Messagerie/ViewMessage.php?answer=1") !=-1) {
 	function reply(e) {
 		var reply = document.evaluate("//table/tbody/tr[5]/td", document, null, XPathResult.ANY_TYPE, null).iterateNext().innerHTML;
-    //reply = wordwrap(reply, 73);
+		//reply = wordwrap(reply, 73);
 		reply = '> ' + reply.replace(/<br>/gm, '\n> ');
-		MZ_setValue('lastReply', reply + '\n\n');
+		MY_setValue('lastReply', reply + '\n\n');
 	};
 
 	document.getElementsByName('bAnswer')[0].addEventListener('click', reply, true);
