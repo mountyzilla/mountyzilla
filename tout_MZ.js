@@ -3530,7 +3530,7 @@ function saveMission(num,obEtape) {
 			return;
 		}
 	}
-	window.console.log('saveMission, obEtape=' + obEtape);	// debug roule
+	//window.console.log('saveMission, obEtape=' + obEtape);	// debug roule
 	if(obEtape) {
 		obMissions[num] = obEtape;
 	} else if(obMissions[num]) {
@@ -3558,24 +3558,35 @@ function traiteMission() {
 			saveMission(numMission,false);
 			return;
 		}
-		
+
 		var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
 		var siMundidey = libelle.indexOf('Mundidey')!=-1;
+		// debug Roule'
+		//for (var i =0; i < tdLibelle.childNodes.length; i++) window.console.log('traiteMission, tdLibelle.childNodes[' + i + ']=' + tdLibelle.childNodes[i].textContent);
 		if(libelle.indexOf('niveau égal à')!=-1) {
 			var nbKills = 1, niveau, mod;
 			if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
 				// Étape de kill multiple de niveau donné
 				//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
-				// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-				mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-				mod = mod ? Number(mod[0]) : 'plus';
+				if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
+					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
+					niveau = Number(mod[0]);
+					// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
+					mod = mod.length > 1 ? Number(mod[1]) : 'plus';
+				} else {
+					niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
+					// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
+					mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
+					mod = mod ? Number(mod[0]) : 'plus';
+				}
 			} else {
 				// Étape de kill unique de niveau donné
 				niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
 				mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
 				mod = mod ? Number(mod[0]) : 'plus';
 			}
+			// debug Roule'
+			//window.console.log('traiteMission, save niveau=' + niveau + ', mod=' + mod + ', siMundidey=' + ', libelle=' + libelle);
 			saveMission(numMission,{
 				type: 'Niveau',
 				niveau: niveau,
