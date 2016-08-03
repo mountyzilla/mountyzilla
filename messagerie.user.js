@@ -1,11 +1,23 @@
+// ==UserScript==
+// @name        Messagerie
+// @namespace   MH
+// @description Gestion "re" et previsu messagerie
+// @include     http://games.mountyhall.com/*
+// @include     https://games.mountyhall.com/*
+// @version     1.2
+// @grant       none
+// ==/UserScript==
+
+// v√©rif UTF-8 √©√™
+
 /*
- * Script MZ : Affiche un aperÁu lors de l'Ècriture des MP / Blocs Html
- *             GËre les 'Re :' multiples dans les titres
+ * Script MZ : Affiche un aper√ßu lors de l'√©criture des MP / Blocs Html
+ *             G√®re les 'Re :' multiples dans les titres
  * Auteurs : Bandedrubor (93138) / Kassbinette (95429) / disciple (62333) / Accaorrillia (71876)
- * 		Rouletabille (91305) 27/03/2016, adaptation Fx 45 (dÈtection de la page, localStorage)
+ * 		Rouletabille (91305) 27/03/2016, adaptation Fx 45 (d√©tection de la page, localStorage)
  */
 
-/* Lancement du script selon la page chargÈe */
+/* Lancement du script selon la page charg√©e */
 
 // Roule : isPage() n'est plus utilisable
 //if (isPage("Messagerie/MH_Messagerie.php?cat=3")) {
@@ -25,7 +37,7 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 		window.localStorage[key] = val;
 	}
 
-	// Ajout d'un bouton aprËs le bouton "Envoyer"
+	// Ajout d'un bouton apr√®s le bouton "Envoyer"
 	function addButton(caption, clickFunction) {
 		var sendButton = document.getElementsByName('bsSend')[0];
 		var newButton = document.createElement('input');
@@ -46,7 +58,7 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 		return str.match(RegExp(regex, 'g')).join(brk);
 	}
 
-	// Affichage de l'aperÁu
+	// Affichage de l'aper√ßu
 	function display() {
 		//tdPreview.innerHTML = messageArea.value.replace(/\r?\n/g, '<br>');
     tdPreview.innerHTML = "<div style='white-space: pre-line;'>" + wordwrap(messageArea.value) + "</div>";
@@ -58,33 +70,33 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 		if(messageArea.value != '') MY_setValue('lastMP', messageArea.value);
 	};
 
-	// Restauration du MP sauvegardÈ
+	// Restauration du MP sauvegard√©
 	function restore() {
 		if(MY_getValue('lastMPTitle')) titleInput.value = MY_getValue('lastMPTitle');
 		if(MY_getValue('lastMP')) messageArea.value = MY_getValue('lastMP');
 		display();
 	};
 
-	// Restauration du MP sauvegardÈ
+	// Restauration du MP sauvegard√©
 	function reply() {
 		if(MY_getValue('lastReply')) messageArea.value = MY_getValue('lastReply');
 		display();
 	};
 
-	//-- Trılld˚ctÈ˚r --
+	//-- Tr√µlld√ªct√©√ªr --
 	function trollducteur() {
 		messageArea.value = messageArea.value
-			.replace(/∞*y∞*/g, '∞y∞')
-			.replace(/a/g, '‡')
-			.replace(/e/g, 'È')
-			.replace(/i/g, 'Ô')
-			.replace(/o/g, 'ı')
-			.replace(/u/g, '˚')
-			.replace(/A/g, '¿')
-			.replace(/E/g, '…')
-			.replace(/I/g, 'œ')
-			.replace(/O/g, '’')
-			.replace(/U/g, '€');
+			.replace(/¬∞*y¬∞*/g, '¬∞y¬∞')
+			.replace(/a/g, '√†')
+			.replace(/e/g, '√©')
+			.replace(/i/g, '√Ø')
+			.replace(/o/g, '√µ')
+			.replace(/u/g, '√ª')
+			.replace(/A/g, '√Ä')
+			.replace(/E/g, '√â')
+			.replace(/I/g, '√è')
+			.replace(/O/g, '√ï')
+			.replace(/U/g, '√õ');
 		display();
 	};
 
@@ -130,11 +142,11 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 	// Case de texte du MP
 	var messageArea = document.getElementsByName('Message')[0];
 
-	// AperÁu ‡ la frappe
+	// Aper√ßu √† la frappe
 	messageArea.addEventListener('change', display, true);
 	messageArea.addEventListener('keyup', display, true);
 
-	// Ajout de la ligne d'affichage de l'aperÁu
+	// Ajout de la ligne d'affichage de l'aper√ßu
 	var trPreview = document.createElement('tr');
 	trPreview.setAttribute('class', 'mh_tdpage');
 	var tdPreview = document.createElement('td');
@@ -143,11 +155,11 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 	//document.getElementsByTagName('form')[0].getElementsByTagName('table')[2].getElementsByTagName('tbody')[0].appendChild(trPreview);
 	document.getElementsByName('bsSend')[0].parentNode.parentNode.parentNode.appendChild(trPreview);
 
-	// Enregistrement du message ‡ l'envoi
+	// Enregistrement du message √† l'envoi
 	document.getElementsByName('bsSend')[0].addEventListener('click', save, true);
 
-	// Ajout du bouton d'aperÁu
-	addButton('AperÁu', display);
+	// Ajout du bouton d'aper√ßu
+	addButton('Aper√ßu', display);
 
 	// Ajout du bouton de sauvegarde
 	addButton('Sauvegarder', save);
@@ -156,10 +168,10 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 	addButton('Rappeler le dernier message', restore);
 
 	// Ajout du bouton de citation
-	addButton('Citer en rÈponse', reply);
+	addButton('Citer en r√©ponse', reply);
 
 	// Ajout du bouton du trollducteur
-	addButton('Trılld˚ctÈ˚r', trollducteur);
+	addButton('Tr√µlld√ªct√©√ªr', trollducteur);
 
 	addButton('B', addBold);
 	addButton('I', addItalic);

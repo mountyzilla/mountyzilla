@@ -1,3 +1,15 @@
+// ==UserScript==
+// @name        Tout_MZ
+// @namespace   MH
+// @description Client MountyZilla
+// @include     http://games.mountyhall.com/*
+// @include     https://games.mountyhall.com/*
+// @version     1.2
+// @grant       none
+// ==/UserScript==
+
+// vÃ©rif UTF-8 Ã©Ãª
+
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
 *                                                                              *
@@ -20,8 +32,8 @@
 
 /* TODO
  * - revoir la gestion des CdM --> nott armure magique
- * - revoir tout ce qui est lié à la vue (estimateurs dég nott)
- * - vérfier la gestion des enchants
+ * - revoir tout ce qui est liÃ© Ã  la vue (estimateurs dÃ©g nott)
+ * - vÃ©rfier la gestion des enchants
  */
 
 var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -42,12 +54,12 @@ function MY_setValue(key, val) {
 	window.localStorage[key] = val;
 }
 
-/*---------------- mise à jour de variables globales utiles ------------------*/
-// utilisé pour accès bdd (un peu partout) :
+/*---------------- mise Ã  jour de variables globales utiles ------------------*/
+// utilisÃ© pour accÃ¨s bdd (un peu partout) :
 var numTroll = MY_getValue('NUM_TROLL');
-// utilisé dans vue pour PX :
+// utilisÃ© dans vue pour PX :
 var nivTroll = MY_getValue('NIV_TROLL');
-// utilisés dans actions et vue (calculs SR) :
+// utilisÃ©s dans actions et vue (calculs SR) :
 var mmTroll = MY_getValue(numTroll+'.caracs.mm');
 var rmTroll = MY_getValue(numTroll+'.caracs.rm');
 
@@ -56,13 +68,13 @@ if(MY_getValue(numTroll+'.TAGSURL')) {
 	MY_removeValue(numTroll+'.TAGSURL');
 }
 
-/*-[functions]------------ Fonctions durée de script -------------------------*/
+/*-[functions]------------ Fonctions durÃ©e de script -------------------------*/
 var date_debut = null;
 
 function start_script(nbJours_exp) {
 	if(date_debut) return;
 	date_debut = new Date();
-	// Créé la variable expdate si demandé
+	// CrÃ©Ã© la variable expdate si demandÃ©
 	if(nbJours_exp) {
 		expdate = new Date();
 		expdate.setTime(expdate.getTime()+nbJours_exp*864e5);
@@ -74,12 +86,12 @@ function displayScriptTime() {
 	if(!footerNode) return;
 	try{
 	var node = document.evaluate(
-		".//text()[contains(.,'Page générée en')]/../br",
+		".//text()[contains(.,'Page gÃ©nÃ©rÃ©e en')]/../br",
 		footerNode,null,9,null).singleNodeValue;
 	}
 	catch(e){return;}
 	insertText(node,
-		' - [Script exécuté en '
+		' - [Script exÃ©cutÃ© en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
 	}
 
@@ -115,7 +127,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 			}
 		}
 		else if(MY_XHR_Ob.onload) {
-			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
+			/* DEBUG: Ajouter Ã  request les pptÃ©s de MY_XHR_Ob Ã  transmettre */
 			MY_XHR_Ob.onload(request);
 		}
 	};
@@ -128,10 +140,10 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 function avertissement(txt,duree) {
 	if(!duree) { duree = 5000; }
 	var div = document.createElement('div');
-	// On numérote les avertissements pour destruction sélective
+	// On numÃ©rote les avertissements pour destruction sÃ©lective
 	var num = document.getElementsByName('avertissement').length;
 	div.num = num;
-	// Numéro enregistré dans le DOM pour récupération sur getElementsByName()
+	// NumÃ©ro enregistrÃ© dans le DOM pour rÃ©cupÃ©ration sur getElementsByName()
 	div.setAttribute('name','avertissement');
 	div.className = 'mh_textbox';
 	div.style =
@@ -144,7 +156,7 @@ function avertissement(txt,duree) {
 	div.innerHTML = txt;
 	div.onclick=function(){ tueAvertissement(this.num) };
 	document.body.appendChild(div);
-	// Destruction automatique de l'avertissement après 3 sec :
+	// Destruction automatique de l'avertissement aprÃ¨s 3 sec :
 	window.setTimeout(function(){ tueAvertissement(num) },duree);
 }
 
@@ -246,7 +258,7 @@ function insertBr(next) {
 	}
 
 function appendLI(ul,text) {
-	// uniquement utilisé dans les options (crédits)
+	// uniquement utilisÃ© dans les options (crÃ©dits)
 	var li = document.createElement('li');
 	appendText(li,text);
 	ul.appendChild(li);
@@ -434,21 +446,21 @@ String.prototype.trim = function() {
     }
 
 function epure(texte) {
-	return texte.replace(/[àâä]/g,'a').replace(/Â/g,'A')
-		.replace(/[ç]/g,'c')
-		.replace(/[éêèë]/g,'e')
-		.replace(/[ïî]/g,'i')
-		.replace(/[ôöõ]/g,'o')
-		.replace(/[ùûü]/g,'u');
+	return texte.replace(/[Ã Ã¢Ã¤]/g,'a').replace(/Ã‚/g,'A')
+		.replace(/[Ã§]/g,'c')
+		.replace(/[Ã©ÃªÃ¨Ã«]/g,'e')
+		.replace(/[Ã¯Ã®]/g,'i')
+		.replace(/[Ã´Ã¶Ãµ]/g,'o')
+		.replace(/[Ã¹Ã»Ã¼]/g,'u');
 	}
 
 String.prototype.epure = function () {
-	return this.replace(/[àâä]/g,'a').replace(/Â/g,'A')
-		.replace(/[ç]/g,'c')
-		.replace(/[éêèë]/g,'e')
-		.replace(/[ïî]/g,'i')
-		.replace(/[ôöõ]/g,'o')
-		.replace(/[ùûü]/g,'u');
+	return this.replace(/[Ã Ã¢Ã¤]/g,'a').replace(/Ã‚/g,'A')
+		.replace(/[Ã§]/g,'c')
+		.replace(/[Ã©ÃªÃ¨Ã«]/g,'e')
+		.replace(/[Ã¯Ã®]/g,'i')
+		.replace(/[Ã´Ã¶Ãµ]/g,'o')
+		.replace(/[Ã¹Ã»Ã¼]/g,'u');
 	}
 
 function bbcode(texte) {
@@ -480,7 +492,7 @@ function StringToDate(str) {
 	}
 
 
-/*-[functions]----------- Calculs expérience / niveau ------------------------*/
+/*-[functions]----------- Calculs expÃ©rience / niveau ------------------------*/
 
 function getPXKill(niv) {
 	return Math.max(0,10+3*niv-2*nivTroll);
@@ -521,22 +533,22 @@ function analysePXTroll(niv) {
 /*-[functions]------------- Gestion Compos / Champis -------------------------*/
 // Refonte totale du code de Zorya
 
-// Elements à implémenter en dur dans MZ2.0
+// Elements Ã  implÃ©menter en dur dans MZ2.0
 var numQualite = {
-	'Très Mauvaise':1,
+	'TrÃ¨s Mauvaise':1,
 	'Mauvaise':2,
 	'Moyenne':3,
 	'Bonne':4,
-	'Très Bonne':5
+	'TrÃ¨s Bonne':5
 	};
 
 var qualiteNum = [
 	'_dummy_',
-	'Très Mauvaise',
+	'TrÃ¨s Mauvaise',
 	'Mauvaise',
 	'Moyenne',
 	'Bonne',
-	'Très Bonne'
+	'TrÃ¨s Bonne'
 	];
 
 var nival = {
@@ -712,10 +724,10 @@ var nival = {
 var tabEM = {
 	//Monstre: [Compo exact, Sort, Position, Localisation]
 	// AA
-	'Basilisk':["Œil d'un ","Analyse Anatomique",3,"Tête"],
+	'Basilisk':["Å’il d'un ","Analyse Anatomique",3,"TÃªte"],
 	// AE
-	'Ankheg':["Carapace d'un","Armure Ethérée",3,"Spécial"],
-	'Rocketeux':["Tripes d'un","Armure Ethérée",4,"Corps"],
+	'Ankheg':["Carapace d'un","Armure EthÃ©rÃ©e",3,"SpÃ©cial"],
+	'Rocketeux':["Tripes d'un","Armure EthÃ©rÃ©e",4,"Corps"],
 	// AdA
 	'Loup-Garou':["Bras d'un","Augmentation de l'Attaque",3,"Membre"],
 	'Titan':["Griffe d'un","Augmentation de l'Attaque",4,"Membre"],
@@ -723,97 +735,97 @@ var tabEM = {
 	'Erinyes':["Plume d'une","Augmentation de l'Esquive",3,"Membre"],
 	'Palefroi Infernal':["Sabot d'un","Augmentation de l'Esquive",4,"Membre"],
 	// AdD
-	'Manticore':["Patte d'une","Augmentation des Dégâts",3,"Membre"],
-	'Trancheur':["Griffe d'un","Augmentation des Dégâts",4,"Membre"],
+	'Manticore':["Patte d'une","Augmentation des DÃ©gÃ¢ts",3,"Membre"],
+	'Trancheur':["Griffe d'un","Augmentation des DÃ©gÃ¢ts",4,"Membre"],
 	// BAM
 	'Banshee':["Peau d'une","Bulle Anti-Magie",3,"Corps"],
 	// BuM
 	'Essaim Sanguinaire':["Pattes d'un","Bulle Magique",3,"Membre"],
 	'Sagouin':["Patte d'un","Bulle Magique",4,"Membre"],
-	'Effrit':["Cervelle d'un","Bulle Magique",5,"Tête"],
+	'Effrit':["Cervelle d'un","Bulle Magique",5,"TÃªte"],
 	// Explo
-	'Diablotin':["Cœur d'un","Explosion",3,"Corps"],
-	'Chimère':["Sang d'une","Explosion",4,"Corps"],
-	'Barghest':["Bave d'un","Explosion",5,"Spécial"],
+	'Diablotin':["CÅ“ur d'un","Explosion",3,"Corps"],
+	'ChimÃ¨re':["Sang d'une","Explosion",4,"Corps"],
+	'Barghest':["Bave d'un","Explosion",5,"SpÃ©cial"],
 	// FP
-	'Nécrophage':["Tête d'un","Faiblesse Passagère",3,"Tête"],
-	'Vampire':["Canine d'un","Faiblesse Passagère",4,"Spécial"],
+	'NÃ©crophage':["TÃªte d'un","Faiblesse PassagÃ¨re",3,"TÃªte"],
+	'Vampire':["Canine d'un","Faiblesse PassagÃ¨re",4,"SpÃ©cial"],
 	// FA
-	'Gorgone':["Chevelure d'une","Flash Aveuglant",3,"Tête"],
-	'Géant des Gouffres':["Cervelle d'un","Flash Aveuglant",4,"Tête"],
+	'Gorgone':["Chevelure d'une","Flash Aveuglant",3,"TÃªte"],
+	'GÃ©ant des Gouffres':["Cervelle d'un","Flash Aveuglant",4,"TÃªte"],
 	// Glue
-	'Limace Géante':["Mucus d'une","Glue",3,"Spécial"],
-	'Grylle':["Gueule d'un","Glue",4,"Tête"],
+	'Limace GÃ©ante':["Mucus d'une","Glue",3,"SpÃ©cial"],
+	'Grylle':["Gueule d'un","Glue",4,"TÃªte"],
 	// GdS
 	'Abishaii Noir':["Serre d'un","Griffe du Sorcier",3,"Membre"],
-	'Vouivre':["Venin d'une","Griffe du Sorcier",4,"Spécial"],
-	'Araignée Géante':["Mandibule d'une","Griffe du Sorcier",5,"Spécial"],
+	'Vouivre':["Venin d'une","Griffe du Sorcier",4,"SpÃ©cial"],
+	'AraignÃ©e GÃ©ante':["Mandibule d'une","Griffe du Sorcier",5,"SpÃ©cial"],
 	// Invi
-	"Nuage d'Insectes":["Chitine d'un","Invisibilité",3,"Spécial"],
-	'Yuan-ti':["Cervelle d'un","Invisibilité",4,"Tête"],
-	'Gritche':["Epine d'un","Invisibilité",5,"Spécial"],
-	// Lévitation
+	"Nuage d'Insectes":["Chitine d'un","InvisibilitÃ©",3,"SpÃ©cial"],
+	'Yuan-ti':["Cervelle d'un","InvisibilitÃ©",4,"TÃªte"],
+	'Gritche':["Epine d'un","InvisibilitÃ©",5,"SpÃ©cial"],
+	// LÃ©vitation
 	// ???
-	// PréM :
-	'Ashashin':["Œil d'un ","Précision Magique",3,"Tête"],
-	'Crasc':["Œil Rougeoyant d'un ","Précision Magique",4,"Tête"],
+	// PrÃ©M :
+	'Ashashin':["Å’il d'un ","PrÃ©cision Magique",3,"TÃªte"],
+	'Crasc':["Å’il Rougeoyant d'un ","PrÃ©cision Magique",4,"TÃªte"],
 	// Proj
-	'Yéti':["Jambe d'un","Projection",3,"Membre"],
-	'Djinn':["Tête d'un","Projection",4,"Tête"],
+	'YÃ©ti':["Jambe d'un","Projection",3,"Membre"],
+	'Djinn':["TÃªte d'un","Projection",4,"TÃªte"],
 	// PuM :
-	'Incube':["Épaule musclée d'un","Puissance Magique",3,"Membre"],
+	'Incube':["Ã‰paule musclÃ©e d'un","Puissance Magique",3,"Membre"],
 	'Capitan':["Tripes Puantes d'un","Puissance Magique",4,"Corps"],
 	// Sacro
-	'Sorcière':["Verrue d'une","Sacrifice",3,"Spécial"],
-	// Télék
-	'Plante Carnivore':["Racine d'une","Télékinésie",3,"Spécial"],
-	'Tertre Errant':["Cervelle d'un","Télékinésie",4,"Tête"],
+	'SorciÃ¨re':["Verrue d'une","Sacrifice",3,"SpÃ©cial"],
+	// TÃ©lÃ©k
+	'Plante Carnivore':["Racine d'une","TÃ©lÃ©kinÃ©sie",3,"SpÃ©cial"],
+	'Tertre Errant':["Cervelle d'un","TÃ©lÃ©kinÃ©sie",4,"TÃªte"],
 	// TP
-	'Boggart':["Main d'un","Téléportation",3,"Membre"],
-	'Succube':["Téton Aguicheur d'une","Téléportation",4,"Corps"],
-	'Nécrochore':["Os d'un","Téléportation",5,"Corps"],
+	'Boggart':["Main d'un","TÃ©lÃ©portation",3,"Membre"],
+	'Succube':["TÃ©ton Aguicheur d'une","TÃ©lÃ©portation",4,"Corps"],
+	'NÃ©crochore':["Os d'un","TÃ©lÃ©portation",5,"Corps"],
 	// VA
-	'Abishaii Vert':["Œil d'un","Vision Accrue",3,"Tête"],
+	'Abishaii Vert':["Å’il d'un","Vision Accrue",3,"TÃªte"],
 	// VL
-	'Fungus Géant':["Spore d'un","Vision Lointaine",3,"Spécial"],
+	'Fungus GÃ©ant':["Spore d'un","Vision Lointaine",3,"SpÃ©cial"],
 	'Abishaii Rouge':["Aile d'un","Vision Lointaine",4,"Membre"],
 	// VlC
-	'Zombie':["Cervelle Putréfiée d'un","Voir le Caché",3,"Tête"],
-	'Shai':["Tripes d'un","Voir le Caché",4,"Corps"],
-	'Phoenix':["Œil d'un","Voir le Caché",5,"Tête"],
+	'Zombie':["Cervelle PutrÃ©fiÃ©e d'un","Voir le CachÃ©",3,"TÃªte"],
+	'Shai':["Tripes d'un","Voir le CachÃ©",4,"Corps"],
+	'Phoenix':["Å’il d'un","Voir le CachÃ©",5,"TÃªte"],
 	// VT
-	'Naga':["Ecaille d'un","Vue Troublée",3,"Corps"],
-	'Marilith':["Ecaille d'une","Vue Troublée",4,"Membre"],
+	'Naga':["Ecaille d'un","Vue TroublÃ©e",3,"Corps"],
+	'Marilith':["Ecaille d'une","Vue TroublÃ©e",4,"Membre"],
 	// Variables
 	'Rat':["d'un"],
-	'Rat Géant':["d'un"],
+	'Rat GÃ©ant':["d'un"],
 	'Dindon':["d'un"],
 	'Goblin':["d'un"],
 	'Limace':["d'une"],
-	'Limace Géante':["d'une"],
+	'Limace GÃ©ante':["d'une"],
 	'Ver':["d'un"],
 	'Ver Carnivore':["d'un"],
-	'Ver Carnivore Géant':["d'un"],
+	'Ver Carnivore GÃ©ant':["d'un"],
 	'Fungus':["d'un"],
 	'Vouivre':["d'une"],
 	'Gnu':["d'un"],
-	'Scarabée':["d'un"]
+	'ScarabÃ©e':["d'un"]
 	};
 
 var mundiChampi = {
-	'Préscientus Reguis':'du Phoenix',
-	'Amanite Trolloïde':'de la Mouche',
+	'PrÃ©scientus Reguis':'du Phoenix',
+	'Amanite TrolloÃ¯de':'de la Mouche',
 	'Girolle Sanglante':'du Dindon',
-	'Horreur Des Prés':'du Gobelin',
-	'Bolet Péteur':'du Démon',
+	'Horreur Des PrÃ©s':'du Gobelin',
+	'Bolet PÃ©teur':'du DÃ©mon',
 	'Pied Jaune':'de la Limace',
 	'Agaric Sous-Terrain':'du Rat',
 	'Suinte Cadavre':"de l'Hydre",
-	'Cèpe Lumineux':'du Ver',
+	'CÃ¨pe Lumineux':'du Ver',
 	'Fungus Rampant':'du Fungus',
 	'Nez Noir':'de la Vouivre',
 	'Pleurote Pleureuse':'du Gnu',
-	'Phytomassus Xilénique':'du Scarabée'
+	'Phytomassus XilÃ©nique':'du ScarabÃ©e'
 	};
 
 function addInfoMM(node,mob,niv,qualite,effetQ) {
@@ -833,7 +845,7 @@ function addInfoMM(node,mob,niv,qualite,effetQ) {
 		default:
 			str = 'Compo de ';
 		}
-	var title = str+mob+' : -'+niv+'\nQualité '+qualite+' : -'+effetQ;
+	var title = str+mob+' : -'+niv+'\nQualitÃ© '+qualite+' : -'+effetQ;
 	var span = createImageSpan(urlImg,'MM:',title,text);
 	node.appendChild(span);
 	}
@@ -849,7 +861,7 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 		if(pc<-20) return;
 		if(pc>=0) bold = true;
 		texte = aff(pc)+'%';
-		title = texte+" pour l'écriture de "+tabEM[mob][1];
+		title = texte+" pour l'Ã©criture de "+tabEM[mob][1];
 		}
 	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
 		+'Competences/ecritureMagique.png';
@@ -858,7 +870,7 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 	}
 
 function insererInfosEM(tbody) {
-	// lancé par equip, equipgowap
+	// lancÃ© par equip, equipgowap
 	var trCompos = document.evaluate(
 		"./tr[not(starts-with(td[2]/img/@alt,'Pas'))]",
 		tbody,null,7,null);
@@ -894,8 +906,8 @@ function compoMobEM(mob) {
 	if(!tabEM[mob]) return '';
 	if(tabEM[mob].length==1)
 		return 'Divers composants '+tabEM[mob][0]+' '+mob+' (Composant Variable)';
-	return tabEM[mob][0]+' '+mob+" (Qualité "+qualiteNum[tabEM[mob][2]]
-			+") pour l'écriture de "+tabEM[mob][1];
+	return tabEM[mob][0]+' '+mob+" (QualitÃ© "+qualiteNum[tabEM[mob][2]]
+			+") pour l'Ã©criture de "+tabEM[mob][1];
 	}
 
 // DEBUG ex-fonction compoEM
@@ -907,17 +919,17 @@ function titreCompoEM(mob,compo,localisation,qualite) {
 	if(compo.indexOf(tabEM[mob][0])==-1) pc -= 20;
 	if(localisation.indexOf(tabEM[mob][3])==-1) pc -= 5;
 	
-	if(pc>=-20) return pc+"% pour l'écriture de "+tabEM[mob][2];
+	if(pc>=-20) return pc+"% pour l'Ã©criture de "+tabEM[mob][2];
 	return '';
 	}
 
-// DEBUG - rétrocompatibilité
+// DEBUG - rÃ©trocompatibilitÃ©
 function compoEM(mob) {
-	// appelé dans libs, vue
+	// appelÃ© dans libs, vue
 	return compoMobEM(mob);
 	}
 function composantEM(mob,compo,localisation,qualite) {
-	// appelé dans libs, tancompo
+	// appelÃ© dans libs, tancompo
 	return titreCompoEM(mob,compo,localisation,qualite);
 	}
 //
@@ -926,7 +938,7 @@ function composantEM(mob,compo,localisation,qualite) {
 /*-[functions]-------------- Stockage des Talents ----------------------------*/
 
 arrayTalents = {
-	/* Compétences */
+	/* CompÃ©tences */
 	'Acceleration du Metabolisme':'AM',
 	'Attaque Precise':'AP',
 	'Balayage':'Balayage',
@@ -973,11 +985,11 @@ arrayTalents = {
 	"S'interposer":'SInterposer',
 	'Tailler':'Tailler',
 	//'Vol':'Vol',
-	/* Sortilèges */
+	/* SortilÃ¨ges */
 	'Analyse Anatomique':'AA',
 	'Armure Etheree':'AE',
-	'Augmentation de l´Attaque':'AdA',
-	'Augmentation de l´Esquive':'AdE',
+	'Augmentation de lÂ´Attaque':'AdA',
+	'Augmentation de lÂ´Esquive':'AdE',
 	'Augmentation des Degats':'AdD',
 	'Bulle Anti-Magie':'BAM',
 	'Bulle Magique':'BuM',
@@ -1007,7 +1019,7 @@ arrayTalents = {
 	//'':''
 	}
 
-// DEBUG - Pour rétrocompatibilité 
+// DEBUG - Pour rÃ©trocompatibilitÃ© 
 function getSortComp(nom,niveau) {
 	return getTalent(nom,niveau);
 	}
@@ -1037,7 +1049,7 @@ function removeAllTalents() {
 		}
 	}
 
-function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
+function isProfilActif() { // DEBUG: RÃ©flÃ©chir Ã  l'utilitÃ© de cette fonction
 	var att = MY_getValue(numTroll+'.caracs.attaque');
 	var attbmp = MY_getValue(numTroll+'.caracs.attaque.bmp');
 	var attbmm = MY_getValue(numTroll+'.caracs.attaque.bmm');
@@ -1094,13 +1106,13 @@ function insertButtonCdm(nextName,onClick,texte) {
 	}
 
 var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
-	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
-	'Capacité spéciale','Résistance Magique','Autres'];
+	'Attaque','Esquive','DÃ©gÃ¢ts','RÃ©gÃ©nÃ©ration','Armure','Vue',
+	'CapacitÃ© spÃ©ciale','RÃ©sistance Magique','Autres'];
 
 function createImageTactique(url,id,nom) {
 	var img = document.createElement('img');
 	img.src = url;
-	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÈTE
+	img.align = 'ABSMIDDLE'; // DEBUG: OBSOLÃˆTE
 	img.id = id;
 	img.nom = nom;
 	img.onmouseover = showPopupTactique;
@@ -1121,7 +1133,7 @@ try {
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
 	var td = appendTdText(tr,
-		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
+		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (NÂ° '+id+')' : ''),
 		true
 	);
 	td.colSpan = 2;
@@ -1155,7 +1167,7 @@ try {
 		if(donneesMonstre[16] && donneesMonstre[16].length>0) {
 			td.appendChild(document.createTextNode(" "));
 			if(donneesMonstre[16] == "De zone")
-				td.appendChild(createImage(urlImg+"zone.gif","Portée : Zone"));
+				td.appendChild(createImage(urlImg+"zone.gif","PortÃ©e : Zone"));
 			else if(donneesMonstre[16] == "Automatique")
 				td.appendChild(createImage(urlImg+"automatique.gif","Toucher automatique"));
 			else if(donneesMonstre[16] == "Au toucher")
@@ -1166,7 +1178,7 @@ try {
 	{
 		td = createCase(listeTitres[11],tbody);
 		td.innerHTML = bbcode(donneesMonstre[9]);
-		// seuil de résistance du monstre
+		// seuil de rÃ©sistance du monstre
 		var lb = td.getElementsByTagName('b');
 		if(lb.length == 1) {
 			var mrm = lb[0].firstChild.nodeValue * 1;
@@ -1178,22 +1190,22 @@ try {
 	
 	if(donneesMonstre[12]>0 || donneesMonstre[13]>=0 || donneesMonstre[14]>0 || donneesMonstre[15].length>0
 		|| (donneesMonstre[17] && donneesMonstre[17].length>0)
-		|| infosCompo.length>0 || nom.indexOf("Gowap Apprivoisé")==-1)
+		|| infosCompo.length>0 || nom.indexOf("Gowap ApprivoisÃ©")==-1)
 	{
 		
 		td = createCase(listeTitres[12],tbody);
 		if(donneesMonstre[12]==1)
 		{
-			td.appendChild(createImage(urlImg+"oeil.gif","Voit le caché"));
+			td.appendChild(createImage(urlImg+"oeil.gif","Voit le cachÃ©"));
 		}
 		
 		if(donneesMonstre[13]==1)
 		{
-			td.appendChild(createImage(urlImg+"distance.gif","Attaque à distance"));
+			td.appendChild(createImage(urlImg+"distance.gif","Attaque Ã  distance"));
 		}
 		else if(donneesMonstre[13]==0)
 		{
-			td.appendChild(createImage(urlImg+"cac.gif","Corps à corps"));
+			td.appendChild(createImage(urlImg+"cac.gif","Corps Ã  corps"));
 		}
 		
 		if(donneesMonstre[14]==1)
@@ -1212,27 +1224,27 @@ try {
 		
 		if(donneesMonstre[15]=="Lente")
 		{
-			td.appendChild(createImage(urlImg+"lent.gif","Lent à se déplacer"));
+			td.appendChild(createImage(urlImg+"lent.gif","Lent Ã  se dÃ©placer"));
 		}
 		else if(donneesMonstre[15]=="Normale")
 		{
-			td.appendChild(createImage(urlImg+"normal.gif","Vitesse normale de déplacement"));
+			td.appendChild(createImage(urlImg+"normal.gif","Vitesse normale de dÃ©placement"));
 		}
 		else if(donneesMonstre[15]=="Rapide")
 		{
-			td.appendChild(createImage(urlImg+"rapide.gif","Déplacement rapide"));
+			td.appendChild(createImage(urlImg+"rapide.gif","DÃ©placement rapide"));
 		}
 		
 		if(donneesMonstre[17] && donneesMonstre[17].length>0 && donneesMonstre[17]!="Vide")
 		{
-			td.appendChild(createImage(urlImg+"charge2.gif","Possède de l'équipement ("+donneesMonstre[17]+")"));
+			td.appendChild(createImage(urlImg+"charge2.gif","PossÃ¨de de l'Ã©quipement ("+donneesMonstre[17]+")"));
 		}
 		if(infosCompo.length>0)
 		{
 			td.appendChild(createImage(urlImg+"Competences/ecritureMagique.png",infosCompo));
 		}
 		
-		if(profilActif && nom.indexOf("Gowap Apprivoisé")==-1 && nom.indexOf("Gowap Sauvage")==-1)
+		if(profilActif && nom.indexOf("Gowap ApprivoisÃ©")==-1 && nom.indexOf("Gowap Sauvage")==-1)
 		{
 			td.appendChild(createImageTactique(urlImg+"calc.png",id,nom));
 		}
@@ -1276,21 +1288,21 @@ function computeCompoEnchantement()
 			var infoComposant = MY_getValue(numTroll+'.enchantement.'+idEquipement+'.composant.'+j).split(';');
 			listeMonstreEnchantement[infoComposant[2]] = 1;
 			var array = new Array();
-			array[0]=infoComposant[0].replace("Ril","Œil");
+			array[0]=infoComposant[0].replace("Ril","Å’il");
 			array[1]=infoComposant[1];
 			array[2]=infoComposant[2];
 			array[3]=getQualite(infoComposant[3]);
-			var texte = infoComposant[4].replace("Ril","Œil");
+			var texte = infoComposant[4].replace("Ril","Å’il");
 			for(var k=5;k<infoComposant.length;k++)
 			{
-				texte += ";"+infoComposant[k].replace("Ril","Œil");
+				texte += ";"+infoComposant[k].replace("Ril","Å’il");
 			}
 			texteGlobal+=texte+'\n';
-			texte += " pour l'enchantement d'un(e) "+nomEquipement+" chez l'enchanteur n°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
+			texte += " pour l'enchantement d'un(e) "+nomEquipement+" chez l'enchanteur nÂ°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
 			array[4]=texte;
 			listeInfoEnchantement.push(array);
 		}
-		texteGlobal += "chez l'enchanteur n°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
+		texteGlobal += "chez l'enchanteur nÂ°"+infoEnchanteur[0]+' ('+infoEnchanteur[1]+'|'+infoEnchanteur[2]+'|'+infoEnchanteur[3]+')';
 		listeEquipementEnchantement[idEquipement] = texteGlobal;
 	}
 	
@@ -1302,7 +1314,7 @@ function isEnchant(nom) {
 		monstre = listeInfoEnchantement[j][2].toLowerCase();
 		if((nom+' ').toLowerCase().indexOf(monstre+' ')>=0){		
 			monstreEnchant=monstre;
-			break; // ça permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
+			break; // Ã§a permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
 		}
 	}
 	return trim(monstreEnchant);
@@ -1353,7 +1365,7 @@ function insertEnchantInfos(tbody) {
 	{
 		if(!listeMonstreEnchantement)
 			computeCompoEnchantement();
-		var nodes = document.evaluate("descendant::img[@alt = 'Composant - Spécial']",
+		var nodes = document.evaluate("descendant::img[@alt = 'Composant - SpÃ©cial']",
 				tbody,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
 		if(nodes.snapshotLength == 0)
 			return false;
@@ -1364,8 +1376,8 @@ function insertEnchantInfos(tbody) {
 			var nomCompo = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" d'un"));
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf(' ')+1,nomCompoTotal.length);
-			var nomMonstre = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" de Qualité"));
-			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(' ['));
+			var nomMonstre = nomCompoTotal.substring(0,nomCompoTotal.indexOf(" de QualitÃ©"));
+			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de QualitÃ©")+11,nomCompoTotal.indexOf(' ['));
 			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf('[')+1,nomCompoTotal.indexOf(']'));
 			if(isEnchant(nomMonstre).length>0)
 			{
@@ -1460,7 +1472,7 @@ function cnp(n,k)
 	return result;
 }
 
-// by Dab, à comparer
+// by Dab, Ã  comparer
 function binom(n,p) {
 	if(p<0 || p>n) return 0;
 	
@@ -1488,7 +1500,7 @@ function coef(n,p)
 		return 1;
 	if(p>n*3.5)
 		p = 7*n-p
-	// roule désactive cache
+	// roule dÃ©sactive cache
 	 if(coeff[n] != null && coeff[n][p] !=null)
 		return coeff[n][p];
 	if(coeff[n] == null)
@@ -1606,7 +1618,7 @@ function getAnalyseTactique(id,nom)
 	var array = analyseTactique(donneesMonstre,nom);
 	if(array==null)
 		return "";
-	var str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
+	var str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>TouchÃ©</td><td>Critique</td><td>DÃ©gÃ¢ts</td></tr>";
 	for(i=0;i<array.length;i++)
 	{
 		if(array[i][1]==100 && i>0)
@@ -1637,7 +1649,7 @@ function analyseTactique(donneesMonstre,nom) {
 	try
 	{
 	var listeAttaques = [];
-	// Roule 16/03/2016 ajout des ParseInt car je récupérais parfois une chaine non numérique :(
+	// Roule 16/03/2016 ajout des ParseInt car je rÃ©cupÃ©rais parfois une chaine non numÃ©rique :(
 	var att = parseInt(MY_getValue(numTroll+".caracs.attaque"), 10);
 	var attbmp = parseInt(MY_getValue(numTroll+".caracs.attaque.bmp"), 10);
 	var attbmm = parseInt(MY_getValue(numTroll+".caracs.attaque.bmm"), 10);
@@ -1663,7 +1675,7 @@ function analyseTactique(donneesMonstre,nom) {
 		return null;
 	
 	var td = document.createElement('td')
-	td.innerHTML = bbcode(donneesMonstre[4]); // sans déconner ? C'est quoi cette histoire ?
+	td.innerHTML = bbcode(donneesMonstre[4]); // sans dÃ©conner ? C'est quoi cette histoire ?
 	var esqM = 0;
 	try
 	{
@@ -1736,7 +1748,7 @@ function analyseTactique(donneesMonstre,nom) {
 	//window.console.log('Attaque normale troll sur monstre, att=' + att + ', esqM=' + esqM + ', attbmp=' + attbmp + ', attbmm=' + attbmm 
 	//	+ ', chanceDEsquiveParfaite=' + chanceDEsquiveParfaite + ', chanceDeTouche=' + chanceDeTouche + ', chanceDeCritique=' + chanceDeCritique);
 	var degats = (((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-armM,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-armM,1))/100);
-	//str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);	
+	//str += "Attaque normale : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);	
 	listeAttaques.push(new Array("Attaque normale",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	if(getSortComp("Vampirisme")>0)
 	{
@@ -1745,18 +1757,18 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(chanceTouche(Math.floor(deg*2/3),esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(Math.floor(deg*2/3),esqM,attbmm,0)*pour/100);
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm,1)))/100;
-		//str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nVampirisme : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Vampirisme",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
-	if(getSortComp("Botte Secrète")>0)
+	if(getSortComp("Botte SecrÃ¨te")>0)
 	{
-		var pour = getSortComp("Botte Secrète");
+		var pour = getSortComp("Botte SecrÃ¨te");
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
 		degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(deg/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM/2),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM/2),1)))/100;
-		//str += "\nBotte Secrète : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-		listeAttaques.push(new Array("Botte Secrète",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
+		//str += "\nBotte SecrÃ¨te : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
+		listeAttaques.push(new Array("Botte SecrÃ¨te",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
 	if(getSortComp("Rafale Psychique")>0)
 	{
@@ -1765,7 +1777,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(100*pour/100);
 		chanceDeCritique = Math.round(0*pour/100);
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm,1)))/100;
-		//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nRafale Psychique : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Rafale Psychique",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,'',pasDeSR?modificateurMagie:''));
 	}
 	if(getSortComp("Explosion")>0)
@@ -1775,7 +1787,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(100*pour/100);
 		chanceDeCritique = Math.round(0*pour/100);
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(1+deg/2+pv/20)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(1+deg/2+pv/20)*1.5)*2+degbmm,1)))/100;
-		//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nRafale Psychique : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Explosion",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,'',pasDeSR?modificateurMagie:''));
 	}
 	if(getSortComp("Projectile Magique")>0)
@@ -1785,18 +1797,18 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(chanceTouche(vue,esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(vue,esqM,attbmm,0)*pour/100);
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm,1)))/100;
-		//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nProjectile Magique : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Projectile Magique",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
-	if(getSortComp("Frénésie")>0)
+	if(getSortComp("FrÃ©nÃ©sie")>0)
 	{
-		var pour = getSortComp("Frénésie");
+		var pour = getSortComp("FrÃ©nÃ©sie");
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm+attbmp,0)*pour/100);
 		degats = Math.round(((chanceDeTouche-chanceDeCritique)*2*Math.max((deg*2+degbmp+degbmm-armM),1)+chanceDeCritique*2*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM,1)))/100;
-		//str += "\nFrénésie : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-		listeAttaques.push(new Array("Frénésie",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
+		//str += "\nFrÃ©nÃ©sie : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
+		listeAttaques.push(new Array("FrÃ©nÃ©sie",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
 	if(getSortComp("Charger")>0)
 	{
@@ -1805,7 +1817,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm+attbmp,0)*pour/100);
 		var degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max((deg*2+degbmp+degbmm-armM),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM,1)))/100;
-		//str += "\nCharge : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nCharge : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Charger",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
 	if(getSortComp("Griffe du Sorcier")>0)
@@ -1815,10 +1827,10 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm,0)*pour/100);
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(deg/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(deg/2)*1.5)*2+degbmm,1)))/100;
-		//str += "\nGriffe du Sorcier : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		//str += "\nGriffe du Sorcier : TouchÃ© "+chanceDeTouche+"% Critique "+chanceDeCritique+"% DÃ©gÃ¢ts "+(degats);
 		listeAttaques.push(new Array("Griffe du Sorcier",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
-	if(getSortComp("Attaque Précise",1)>0)
+	if(getSortComp("Attaque PrÃ©cise",1)>0)
 	{
 		var niveau = 5;
 		var oldPour = 0;
@@ -1828,7 +1840,7 @@ function analyseTactique(donneesMonstre,nom) {
 		degats = 0;
 		while(niveau>0)
 		{
-			var pour = getSortComp("Attaque Précise",niveau);
+			var pour = getSortComp("Attaque PrÃ©cise",niveau);
 			if(pour>oldPour)
 			{
 				var chanceDEsquiveParfaiteNiveau = chanceEsquiveParfaite(Math.min(att+3*niveau,Math.floor(att*1.5)),esqM,attbmm+attbmp,0)*(pour-oldPour)/100;
@@ -1842,8 +1854,8 @@ function analyseTactique(donneesMonstre,nom) {
 			}
 			niveau--;
 		}
-		//str += "\nAttaque Précise : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
-		listeAttaques.push(new Array("Attaque Précise",chanceDEsquiveParfaite,Math.round(chanceDeTouche*100)/100,Math.round(chanceDeCritique*100)/100,Math.round(degats*100)/100,modificateurEsquive,modificateurArmure));
+		//str += "\nAttaque PrÃ©cise : TouchÃ© "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% DÃ©gÃ¢ts "+Math.round(degats*100)/100;
+		listeAttaques.push(new Array("Attaque PrÃ©cise",chanceDEsquiveParfaite,Math.round(chanceDeTouche*100)/100,Math.round(chanceDeCritique*100)/100,Math.round(degats*100)/100,modificateurEsquive,modificateurArmure));
 	}
 	if(getSortComp("Coup de Butoir",1)>0)
 	{
@@ -1869,11 +1881,11 @@ function analyseTactique(donneesMonstre,nom) {
 			}
 			niveau--;
 		}
-		//str += "\nCoup de Butoir : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
+		//str += "\nCoup de Butoir : TouchÃ© "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% DÃ©gÃ¢ts "+Math.round(degats*100)/100;
 		listeAttaques.push(new Array("Coup de Butoir",chanceDEsquiveParfaite,Math.round(chanceDeTouche*100)/100,Math.round(chanceDeCritique*100)/100,Math.round(degats*100)/100,modificateurEsquive,modificateurArmure));
 	}
 	listeAttaques.sort(function(a,b){var diff = parseInt(100*b[4])-parseInt(100*a[4]);if(diff==0) return parseInt(b[1])-parseInt(a[1]); return diff;});
-	if(nom.toLowerCase().indexOf("mégacéphale")==-1)
+	if(nom.toLowerCase().indexOf("mÃ©gacÃ©phale")==-1)
 	{
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(attM,esq,0,esqbonus));
 		chanceDeTouche = Math.round(chanceTouche(attM,esq,0,esqbonus));
@@ -1893,14 +1905,14 @@ function analyseTactique(donneesMonstre,nom) {
 	catch(e) { window.alert(e);}
 	}
 
-// x~~x	marque pour s'y retrouver sous l'éditeur
+// x~~x	marque pour s'y retrouver sous l'Ã©diteur
 
 /*
  * This file is part of MountyZilla (http://mountyzilla.tilk.info/),
  * published under GNU License v2.
  *
  * Patch :
- * gestion des missions terminées
+ * gestion des missions terminÃ©es
  */
  
  // x~x mission_liste
@@ -1970,15 +1982,15 @@ function getLevel() {
 	if(divList.length <= 2)
 		return;
 	
-	// On essaie de voir si cette action était une attaque
+	// On essaie de voir si cette action Ã©tait une attaque
 	var pList = document.getElementsByTagName('p');
 	var nomM = '';
-	// Modification pour Frénésie by TetDure
+	// Modification pour FrÃ©nÃ©sie by TetDure
 	var numAtt = 0;
 	for (var i = 0; i < pList.length; i++) {
 		if(pList[i].firstChild) {
 			nomM = pList[i].firstChild.nodeValue;
-			if(nomM && nomM.indexOf('Vous avez attaqué un') == 0)
+			if(nomM && nomM.indexOf('Vous avez attaquÃ© un') == 0)
 				numAtt++;
 			}
 		}
@@ -1991,7 +2003,7 @@ function getLevel() {
 	if(divList[2].firstChild.nodeValue.indexOf('Attaque Normale') == -1 && numAtt != 2)
 		comPX++;
 
-	// Extraction des infos du monstre attaqué
+	// Extraction des infos du monstre attaquÃ©
 	var idM;
 	var male;
 	if(nomM.slice(20, 21) == 'e') {
@@ -2012,12 +2024,12 @@ function getLevel() {
 	var niveau = '';
 	for (var i = 0; i < bList.length; i++) {
 		var b = bList[i];
-		if(b.childNodes[0].nodeValue != "TUÉ")
+		if(b.childNodes[0].nodeValue != "TUÃ‰")
 			continue;
 		var nbPX = "";
 		for (i++; i < bList.length; i++) {
-			// Si plusieurs monstres ont été tués (par ex. explo), on ne peut pas déduire leurs niveaux
-			if(bList[i].childNodes[0].nodeValue == "TUÉ")
+			// Si plusieurs monstres ont Ã©tÃ© tuÃ©s (par ex. explo), on ne peut pas dÃ©duire leurs niveaux
+			if(bList[i].childNodes[0].nodeValue == "TUÃ‰")
 				return;
 			if(bList[i].childNodes[0].nodeValue.indexOf("PX") != -1) {
 				nbPX = bList[i].childNodes[0].nodeValue;
@@ -2026,19 +2038,19 @@ function getLevel() {
 		}
 		if(nbPX == '')
 			return;
-		// Si on arrive ici c'est qu'on a trouvé un (et un seul) monstre tué et les PX gagnés
+		// Si on arrive ici c'est qu'on a trouvÃ© un (et un seul) monstre tuÃ© et les PX gagnÃ©s
 		nbPX = parseInt(nbPX.slice(0, nbPX.indexOf("P") - 1));
 		if(!nbPX)
 			nbPX = 0;
-		chaine = (male ? "Il" : "Elle") + " était de niveau ";
+		chaine = (male ? "Il" : "Elle") + " Ã©tait de niveau ";
 		niveau = (nbPX * 1 + 2 * nivTroll - 10 - comPX) / 3;
 		if(comPX > nbPX) {
-			chaine += "inférieur ou égal à " + Math.floor(niveau) + ".";
+			chaine += "infÃ©rieur ou Ã©gal Ã  " + Math.floor(niveau) + ".";
 			niveau = "";
 		} else if(Math.floor(niveau) == niveau) {
 			chaine += niveau + ".";
 		} else {
-			chaine = "Mountyzilla n'est pas arrivé à calculer le niveau du monstre.";
+			chaine = "Mountyzilla n'est pas arrivÃ© Ã  calculer le niveau du monstre.";
 			niveau = "";
 		}
 		insertBr(b.nextSibling.nextSibling.nextSibling);
@@ -2073,7 +2085,7 @@ function insertInfoMagie(node, intitule, magie) {
 
 function getMM(sr) {
 	if(rmTroll<=0) {
-		return 'Inconnue (quelle idée d\'avoir une RM valant'+rmTroll+' !)';
+		return 'Inconnue (quelle idÃ©e d\'avoir une RM valant'+rmTroll+' !)';
 	}
 	sr = Number(sr.match(/\d+/)[0]);
 	if(sr==10) {
@@ -2090,7 +2102,7 @@ function getMM(sr) {
 
 function traiteMM() {
 	var node = document.evaluate(
-		"//b[contains(preceding::text()[1], 'Seuil de Résistance')]/text()[1]",
+		"//b[contains(preceding::text()[1], 'Seuil de RÃ©sistance')]/text()[1]",
 		document, null, 9, null).singleNodeValue;
 	
 	if(node) {
@@ -2098,7 +2110,7 @@ function traiteMM() {
 		node = node.parentNode.nextSibling.nextSibling.nextSibling;
 	} else {
 		var node = document.evaluate(
-			"//p/text()[contains(., 'Seuil de Résistance')]",
+			"//p/text()[contains(., 'Seuil de RÃ©sistance')]",
 			document, null, 9, null).singleNodeValue;
 		if(!node) {
 			return;
@@ -2111,7 +2123,7 @@ function traiteMM() {
 
 function getRM(sr) {
 	if(mmTroll<=0) {
-		return 'Inconnue (quelle idée d\'avoir une MM valant'+mmTroll+' !)';
+		return 'Inconnue (quelle idÃ©e d\'avoir une MM valant'+mmTroll+' !)';
 	}
 	sr = Number(sr.match(/\d+/)[0]);
 	if(sr==10) {
@@ -2128,7 +2140,7 @@ function getRM(sr) {
 
 function traiteRM() {
 	var nodes = document.evaluate(
-		"//b[contains(preceding::text()[1],'Seuil de Résistance')]/text()[1]",
+		"//b[contains(preceding::text()[1],'Seuil de RÃ©sistance')]/text()[1]",
 		document, null, 7, null);
 	if(nodes.snapshotLength==0) {
 		return;
@@ -2153,13 +2165,13 @@ function traiteRM() {
 	var regExpEnd       = /\s+$/;
 
 	var nomIdt = document.evaluate(
-			"//tr/td[contains(p/text(),'identification a donné le résultat suivant : ')]/b/text()",
+			"//tr/td[contains(p/text(),'identification a donnÃ© le rÃ©sultat suivant : ')]/b/text()",
 			document, null, XPathResult.STRING_TYPE, null).stringValue;
 	if(!nomIdt)
 		return false;
 
 	var caracIdt;
-	if(nomIdt.indexOf("Malédiction !") != -1) {
+	if(nomIdt.indexOf("MalÃ©diction !") != -1) {
 		caracIdt = "";
 		nomIdt = "Mission maudite";
 	} else {
@@ -2180,18 +2192,18 @@ function traiteRM() {
 }*/
 
 
-/*-[functions]------------------- Décalage DLA -------------------------------*/
+/*-[functions]------------------- DÃ©calage DLA -------------------------------*/
 
 function confirmeDecalage() {
-	// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
+	// On vÃ©rifie que MH n'excluera pas dÃ©jÃ  la demande (validNumeric)
 	var nbMinutes = document.getElementById('ai_NbMinutes').value;
 	if(!nbMinutes || isNaN(nbMinutes) || nbMinutes<1) { return false; }
 	
 	var newDLA = new Date( oldDLA );
 	newDLA.setMinutes( newDLA.getMinutes()+Number(nbMinutes) );
 	return window.confirm(
-		'Votre DLA sera décalée au : '+newDLA.toLocaleString()
-		+'\nConfirmez-vous ce décalage ?'
+		'Votre DLA sera dÃ©calÃ©e au : '+newDLA.toLocaleString()
+		+'\nConfirmez-vous ce dÃ©calage ?'
 	);
 }
 
@@ -2208,7 +2220,7 @@ function changeActionDecalage() {
 		return;
 	}
 	try {
-		// On récupère le contenu du script JS MH de calcul du décalage
+		// On rÃ©cupÃ¨re le contenu du script JS MH de calcul du dÃ©calage
 		var scriptTxt = document.evaluate(
 			".//script[ not(@src) ]",
 			document, null, 9, null
@@ -2219,16 +2231,16 @@ function changeActionDecalage() {
 		var nbs = scriptTxt.match(/\d+/g);
 		oldDLA = new Date( nbs[0],nbs[1],nbs[2],nbs[3],nbs[4],nbs[5] );
 	} catch(e) {
-		avertissement('Erreur de parsage : confirmation de décalage impossible');
-		window.console.error('[changeActionDecalage] DLA non trouvée',e);
+		avertissement('Erreur de parsage : confirmation de dÃ©calage impossible');
+		window.console.error('[changeActionDecalage] DLA non trouvÃ©e',e);
 		return;
 	}
 	var form = document.getElementsByName('ActionForm')[0];
 	if(form) {
 		form.addEventListener('submit', newsubmitDLA, true);
 	} else {
-		avertissement('Erreur de parsage : confirmation de décalage impossible');
-		window.console.error('[changeActionDecalage] ActionForm non trouvé');
+		avertissement('Erreur de parsage : confirmation de dÃ©calage impossible');
+		window.console.error('[changeActionDecalage] ActionForm non trouvÃ©');
 	}
 }
 
@@ -2269,18 +2281,18 @@ function dispatch() {
 		changeActionDecalage();
 	} else if(isPage('MH_Play/Actions')) {
 		if(document.evaluate(
-			"//form/descendant::p/text()[contains(., 'Zone Piégée')]",
+			"//form/descendant::p/text()[contains(., 'Zone PiÃ©gÃ©e')]",
 			document, null, 2, null
 		).stringValue) {
 			traiteMM();
 		} else if(document.evaluate(
-			"//tr/td/descendant::p/text()[contains(., 'identification a donné')]",
+			"//tr/td/descendant::p/text()[contains(., 'identification a donnÃ©')]",
 			document, null, 2, null
 		).stringValue) {
 			//getIdt();
 			traiteRM();
 		} /*else {
-			// Est censé se lancer sur quoi *précisément* ?
+			// Est censÃ© se lancer sur quoi *prÃ©cisÃ©ment* ?
 			traiteRM();
 			getLevel();
 		}*/
@@ -2295,11 +2307,11 @@ function dispatch() {
 			messageTitle.indexOf('sur') != -1) {
 			getLevel();
 			traiteRM();
-		} else if(messageTitle.indexOf('Résultat du pouvoir') != -1 ||
-			messageTitle.indexOf('Défenseur') != -1) {
+		} else if(messageTitle.indexOf('RÃ©sultat du pouvoir') != -1 ||
+			messageTitle.indexOf('DÃ©fenseur') != -1) {
 			traiteMM();
-		} else if(messageTitle.indexOf('Identification des trésors') != -1 ||
-			// à replacer avec Attaque après révision getLvl :
+		} else if(messageTitle.indexOf('Identification des trÃ©sors') != -1 ||
+			// Ã  replacer avec Attaque aprÃ¨s rÃ©vision getLvl :
 			messageTitle.indexOf('Explosion') != -1 ||
 			messageTitle.indexOf('Insulte') != -1) {
 			traiteRM();
@@ -2395,10 +2407,10 @@ function treateEnchantement() {
 		texte = texte.replace(" d'une "," d'un ");
 		var compo = texte.substring(0,texte.indexOf(" d'un "));
 		var monstre = texte.substring(texte.indexOf(" d'un ")+6,texte.indexOf(" d'au minimum"));
-		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
+		var qualite = texte.substring(texte.indexOf("QualitÃ© ")+8,texte.indexOf(" ["));
 		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
 		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
-		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ GÃ©ante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
 	}
 	MY_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MY_getValue(numTroll+".position.X")+";"+MY_getValue(numTroll+".position.Y")+";"+MY_getValue(numTroll+".position.N"));
 	MY_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
@@ -2463,11 +2475,11 @@ function treateEnchantement() {
 		texte = texte.replace(" d'une "," d'un ");
 		var compo = texte.substring(0,texte.indexOf(" d'un "));
 		var monstre = texte.substring(texte.indexOf(" d'un ")+6,texte.indexOf(" d'au minimum"));
-		monstre = monstre.replace(/ Géante?/,"");
-		var qualite = texte.substring(texte.indexOf("Qualité ")+8,texte.indexOf(" ["));
+		monstre = monstre.replace(/ GÃ©ante?/,"");
+		var qualite = texte.substring(texte.indexOf("QualitÃ© ")+8,texte.indexOf(" ["));
 		var localisation = texte.substring(texte.indexOf("[")+1,texte.indexOf("]"));
 		//window.alert(compo+" ["+localisation+"] "+monstre+" "+qualite);
-		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ Géante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
+		MY_setValue(numTroll+".enchantement."+idEquipement+".composant."+i,compo+";"+localisation+";"+monstre.replace(/ GÃ©ante?/,"")+";"+qualite+";"+trim(nodes.snapshotItem(i).nodeValue));
 	}
 	MY_setValue(numTroll+".enchantement."+idEquipement+".enchanteur",idEnchanteur+";"+MY_getValue(numTroll+".position.X")+";"+MY_getValue(numTroll+".position.Y")+";"+MY_getValue(numTroll+".position.N"));
 	MY_setValue(numTroll+".enchantement."+idEquipement+".objet",nomEquipement);
@@ -2509,7 +2521,7 @@ function do_enchant() {
 
 // x~x myevent
 
-// Script désactivé en attendant la màj vers le nouveau système de missions.
+// Script dÃ©sactivÃ© en attendant la mÃ j vers le nouveau systÃ¨me de missions.
 function do_myevent() {
 }
 
@@ -2536,7 +2548,7 @@ function do_myevent() {
 /* v1.4 - 2014-01-06
  * - Gestion des sorts double composante
  * v1.4.1 - 2014-01-22
- * - Correction décumul
+ * - Correction dÃ©cumul
  * TODO
  * - Identifier la position de "PV" dans l'ordre MH
  */
@@ -2673,7 +2685,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			default:
 				return -1;
 			}
-	case "Dés d'attaque":
+	case "DÃ©s d'attaque":
 		switch( b ) {
 			case 'ATT':
 			case 'ESQ':
@@ -2690,7 +2702,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			default:
 				return -1;
 			}
-	case 'Dés de dégâts':
+	case 'DÃ©s de dÃ©gÃ¢ts':
 		switch( b ) {
 			case 'ATT':
 			case 'ESQ':
@@ -2703,7 +2715,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'MM':
 			case 'Concentration':
 			case 'Fatigue':
-			case "Dés d'attaque":
+			case "DÃ©s d'attaque":
 				return 1;
 			default:
 				return -1;
@@ -2721,8 +2733,8 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'MM':
 			case 'Concentration':
 			case 'Fatigue':
-			case "Dés d'attaque":
-			case 'Dés de dégâts':
+			case "DÃ©s d'attaque":
+			case 'DÃ©s de dÃ©gÃ¢ts':
 				return 1;
 			default:
 				return -1;
@@ -2781,7 +2793,7 @@ function setDisplayBM() {
 		}
 	
 	var tfoot = document.getElementsByTagName('tfoot')[0];
-	var tr = document.evaluate("./tr/td/text()[contains(.,'décumul')]/../..",
+	var tr = document.evaluate("./tr/td/text()[contains(.,'dÃ©cumul')]/../..",
 								tfoot, null, 9, null).singleNodeValue;
 	tr.id = 'trhelp';
 	
@@ -2801,11 +2813,11 @@ function traiteMalus() {
 	listeBM = document.evaluate('./tbody/tr', mainTab, null, 7, null);
 	if(listeBM.snapshotLength==0) return;
 	
-	/* Suppression des BM de fatigue stockés */
+	/* Suppression des BM de fatigue stockÃ©s */
 	if(MY_getValue(numTroll+'.bm.fatigue'))
 		MY_removeValue(numTroll+'.bm.fatigue');
 	
-	/* Extraction des données */
+	/* Extraction des donnÃ©es */
 	var uniListe = [], listeDurees = {}, listeDecumuls = {};
 	var nb = 0;
 	while(nb<listeBM.snapshotLength) {
@@ -2814,29 +2826,29 @@ function traiteMalus() {
 		var phymag = tr.childNodes[9].textContent;
 		var duree = Number(tr.childNodes[11].textContent.match(/\d+/)[0]);
 		var type = tr.childNodes[3].textContent, nom;
-		// si c'est un type à décumul
+		// si c'est un type Ã  dÃ©cumul
 		switch(type) {
 			case 'Potion':
 			case 'Parchemin':
-			case 'Sortilège':
-			case 'Capacité Spéciale':
+			case 'SortilÃ¨ge':
+			case 'CapacitÃ© SpÃ©ciale':
 				nom = tr.childNodes[1].textContent+phymag;
 				break;
 			default:
 				nom = 'pasdedecumul';
 			}
-		if(nom.indexOf('Amnésie')!=-1) // !! Amnésie = Capa, mais pas décumulée
+		if(nom.indexOf('AmnÃ©sie')!=-1) // !! AmnÃ©sie = Capa, mais pas dÃ©cumulÃ©e
 			nom = 'pasdedecumul';
 		
 		uniListe[nb] = {
 			'duree':duree,
-			'nom':nom, // permet de gérer le non décumul des sorts à double composante
+			'nom':nom, // permet de gÃ©rer le non dÃ©cumul des sorts Ã  double composante
 			'caracs':{}
 			}
 		for(var i=0 ; i<effetsT.length ; i++) {
 			if(effetsT[i].indexOf(':')==-1) continue;
 			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
-			// nom = 'pasdedecumul' si pas de décumul
+			// nom = 'pasdedecumul' si pas de dÃ©cumul
 			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
 			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
@@ -2846,13 +2858,13 @@ function traiteMalus() {
 			}
 		}
 	
-	/* Gestion des décumuls et cumuls des durées */
+	/* Gestion des dÃ©cumuls et cumuls des durÃ©es */
 	var toursGeres = [];
 	for(var d in listeDurees) toursGeres.push(d);
 	toursGeres.sort( function (a,b){return b-a;} );
 	// pour sauvegarder les bm de fatigue
 	var strfat = '';
-	// Pour affichage & adpatation à footable.js (statique)
+	// Pour affichage & adpatation Ã  footable.js (statique)
 	var thead = document.getElementsByTagName('thead')[0];
 	var nbHidden = document.evaluate("./tr/th[@style='display: none;']",
 									thead, null, 7, null).snapshotLength;
@@ -2862,7 +2874,7 @@ function traiteMalus() {
 		var tour = toursGeres[i];
 		var effetsCeTour = {}; decumulsCeTour = {};
 		for(var nb=1 ; nb<uniListe.length ; nb++) {
-			if(uniListe[nb]['duree']<toursGeres[i]) // si durée pvr < durée analysée, on passe
+			if(uniListe[nb]['duree']<toursGeres[i]) // si durÃ©e pvr < durÃ©e analysÃ©e, on passe
 				continue;
 			var nom = uniListe[nb]['nom'];
 			if(nom!='pasdedecumul') {
@@ -2892,7 +2904,7 @@ function traiteMalus() {
 				}
 			}
 		
-		/* Création du bilan du tour */
+		/* CrÃ©ation du bilan du tour */
 		var texteD = '', texteS = '';
 		var caracGerees = [];
 		for(var k in effetsCeTour) caracGerees.push(k);
@@ -2931,7 +2943,7 @@ function traiteMalus() {
 			}
 		
 		/* Affichage */
-		// Si rien à afficher on passe
+		// Si rien Ã  afficher on passe
 		if(!texteD) continue;
 		// Si BMM+BMP=0
 		texteS = texteS ? texteS.substring(3) : 'Aucun effet';
@@ -3010,7 +3022,7 @@ function initialiseMouches() {
 }
 
 function setDisplayMouches() {
-// Initialise l'affichage / l'effacement du détail des mouches
+// Initialise l'affichage / l'effacement du dÃ©tail des mouches
 	var titre = document.getElementById('titre2');
 	if(titre) {
 		titre.style.cursor = 'pointer';
@@ -3032,7 +3044,7 @@ function setDisplayMouches() {
 }
 
 function toggleMouches() {
-// Handler pour afficher / masquer les détasil
+// Handler pour afficher / masquer les dÃ©tasil
 	if(MY_getValue('HIDEMOUCHES')=='true') {
 		MY_setValue('HIDEMOUCHES','false');
 		for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
@@ -3049,18 +3061,18 @@ function toggleMouches() {
 }
 
 function traiteMouches() {
-// Traitement complet: présence et effets des mouches
+// Traitement complet: prÃ©sence et effets des mouches
 	var listeTypes = {}, effetsActifs = {};
 	
 	for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 		var tr = tr_mouches.snapshotItem(i);
 	
-		// La mouche est-elle présente?
+		// La mouche est-elle prÃ©sente?
 		var etat = document.evaluate(
 			'./img',
 			tr.cells[6], null, 9, null
 		).singleNodeValue.alt;
-		if(etat!='La Mouche est là') { continue; }
+		if(etat!='La Mouche est lÃ ') { continue; }
 		// Extraction du type de mouche
 		var type = trim(tr.cells[3].textContent);
 		if(!listeTypes[type]) {
@@ -3071,8 +3083,8 @@ function traiteMouches() {
 		
 		// La mouche a-t-elle un effet?
 		var effet = trim(tr.cells[2].textContent);
-		if(etat!='La Mouche est là' || !effet) { continue; }
-		// Si oui, extraction des effets (multiples pour pogées)
+		if(etat!='La Mouche est lÃ ' || !effet) { continue; }
+		// Si oui, extraction des effets (multiples pour pogÃ©es)
 		var caracs = effet.split(' | ');
 		for(var j=0 ; j<caracs.length ; j++) {
 			var carac = caracs[j].substring(0,caracs[j].indexOf(':')-1);
@@ -3085,7 +3097,7 @@ function traiteMouches() {
 		}
 	}
 	
-	// Extraction Effet total et affichage des différences à la normale
+	// Extraction Effet total et affichage des diffÃ©rences Ã  la normale
 	var tfoot = document.getElementsByTagName('tfoot')[0];
 	if(!tfoot) { return; }
 	var nodeTotal = document.evaluate(
@@ -3112,7 +3124,7 @@ function traiteMouches() {
 	span.innerHTML = texte;
 	nodeTotal.parentNode.replaceChild(span,nodeTotal);
 	
-	// Affichage des différences du nombre de mouches de chaque type
+	// Affichage des diffÃ©rences du nombre de mouches de chaque type
 	var mouchesParType = document.evaluate(
 		"./tr/td/ul/li/text()",
 		tfoot, null, 7, null
@@ -3122,12 +3134,12 @@ function traiteMouches() {
 		var mots = node.nodeValue.split(' ');
 		var type = mots.pop();
 		if(!listeTypes[type]) {
-			node.nodeValue += ' (0 présente)';
+			node.nodeValue += ' (0 prÃ©sente)';
 		} else if(mots[0]!=listeTypes[type]) {
 			if(listeTypes[type]==1) {
-				node.nodeValue += ' (1 présente)';
+				node.nodeValue += ' (1 prÃ©sente)';
 			} else {
-				node.nodeValue += ' ('+listeTypes[type]+' présentes)';
+				node.nodeValue += ' ('+listeTypes[type]+' prÃ©sentes)';
 			}
 		}
 	}
@@ -3199,16 +3211,16 @@ function formateTexte(texte)
 	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
 	texte = texte.replace(/<br\/>([^<]*) d'un/g,"<br/><b>$1</b> d'un");
 	texte = texte.replace(/(d'une? )([^<]*) d'au/g,"$1<b>$2</b> d'au");
-	texte = texte.replace(/(Qualité )([^<]*) \[/g,"$1<b>$2</b> [");
+	texte = texte.replace(/(QualitÃ© )([^<]*) \[/g,"$1<b>$2</b> [");
 	texte = texte.replace(/\[([^<]*)\]/g,"[<b>$1</b>]");
 	return texte;
 }
 
 
 function treateGowaps() {
-	//On récupère les gowaps possédants des composants
+	//On rÃ©cupÃ¨re les gowaps possÃ©dants des composants
 	var tbodys = document.evaluate(
-			"//tr[@class='mh_tdpage_fo']/descendant::img[@alt = 'Composant - Spécial']/../../..",
+			"//tr[@class='mh_tdpage_fo']/descendant::img[@alt = 'Composant - SpÃ©cial']/../../..",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	for (var j = 0; j < tbodys.snapshotLength; j++) {
 		var tbody = tbodys.snapshotItem(j);
@@ -3224,7 +3236,7 @@ function treateGowaps() {
 function treateChampi() {
 	if(MY_getValue("NOINFOEM") == "true")
 		return false;
-	var nodes = document.evaluate("//img[@alt = 'Champignon - Spécial']/../a/text()",
+	var nodes = document.evaluate("//img[@alt = 'Champignon - SpÃ©cial']/../a/text()",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
@@ -3333,7 +3345,7 @@ function do_ordresgowap() {
 
 // x~x attaque
 
-// Script désactivé en attendant la màj vers le nouveau système de missions.
+// Script dÃ©sactivÃ© en attendant la mÃ j vers le nouveau systÃ¨me de missions.
 
 function do_attaque() {
 }
@@ -3359,8 +3371,8 @@ function do_attaque() {
 // x~x infomonstre
 
 // DEBUG
-// Utilisation obligatoire de listeCDM à cause de getAnalyseTactique()
-// À corriger, évidemment.
+// Utilisation obligatoire de listeCDM Ã  cause de getAnalyseTactique()
+// Ã€ corriger, Ã©videmment.
 var listeCDM = {};
 var nomMonstre='';
 var idMonstre=-1;
@@ -3434,7 +3446,7 @@ function showPopupTactique(evt) {
 		var texte = getAnalyseTactique(id,nom);
 		if(texte=='') { return; }
 		popup.innerHTML = texte;
-		// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
+		// roule 16/03/2016 dÃ©clage horizontal diffÃ©rent suivant la page qu'on traite
 		if(isPage("View/MonsterView")) {
 			popup.style.left = Math.min(evt.pageX-120,window.innerWidth-300)+'px';
 		} else {
@@ -3447,7 +3459,7 @@ function showPopupTactique(evt) {
 	}
 }
 
-// roule 16/03/2016, existe déjà ailleurs
+// roule 16/03/2016, existe dÃ©jÃ  ailleurs
 // function hidePopup() {
 	// popup.style.visibility = 'hidden';
 // }
@@ -3515,9 +3527,9 @@ function do_infomonstre() {
 // x~x mission
 
 /* TODO
- * MZ2.0 : gérer le nettoyage des missions terminées via script principal
+ * MZ2.0 : gÃ©rer le nettoyage des missions terminÃ©es via script principal
  *
- * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
+ * Note: nbKills n'est pas gÃ©rÃ© pour l'instant (voir avec Actions?)
  */
 
 function saveMission(num,obEtape) {
@@ -3548,13 +3560,13 @@ function traiteMission() {
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 			missionForm, null, 9, null).singleNodeValue;
 	} catch(e) {
-		window.console.error('[MZ Mission] Erreur récupération mission:\n'+e);
+		window.console.error('[MZ Mission] Erreur rÃ©cupÃ©ration mission:\n'+e);
 		return;
 	}
 	if(!numMission) { return; }
 	try {
 		if(!tdLibelle) {
-			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
+			// S'il n'y a plus d'Ã©tape en cours (=mission finie), on supprime
 			saveMission(numMission,false);
 			return;
 		}
@@ -3563,10 +3575,10 @@ function traiteMission() {
 		var siMundidey = libelle.indexOf('Mundidey')!=-1;
 		// debug Roule'
 		//for (var i =0; i < tdLibelle.childNodes.length; i++) window.console.log('traiteMission, tdLibelle.childNodes[' + i + ']=' + tdLibelle.childNodes[i].textContent);
-		if(libelle.indexOf('niveau égal à')!=-1) {
+		if(libelle.indexOf('niveau Ã©gal Ã ')!=-1) {
 			var nbKills = 1, niveau, mod;
-			if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
-				// Étape de kill multiple de niveau donné
+			if(tdLibelle.firstChild.nodeValue.indexOf('niveau Ã©gal Ã ')==-1) {
+				// Ã‰tape de kill multiple de niveau donnÃ©
 				//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 				if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
 					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
@@ -3580,7 +3592,7 @@ function traiteMission() {
 					mod = mod ? Number(mod[0]) : 'plus';
 				}
 			} else {
-				// Étape de kill unique de niveau donné
+				// Ã‰tape de kill unique de niveau donnÃ©
 				niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
 				mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
 				mod = mod ? Number(mod[0]) : 'plus';
@@ -3597,11 +3609,11 @@ function traiteMission() {
 		} else if(libelle.indexOf('de la race')!=-1) {
 			var nbKills = 1, race;
 			if(tdLibelle.firstChild.nodeValue.indexOf('de la race')==-1) {
-				// Étape de kill multiple de race donnée
+				// Ã‰tape de kill multiple de race donnÃ©e
 				//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 				race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
 			} else {
-				// Étape de kill unique de race donnée
+				// Ã‰tape de kill unique de race donnÃ©e
 				race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
 			saveMission(numMission,{
@@ -3613,11 +3625,11 @@ function traiteMission() {
 		} else if(libelle.indexOf('de la famille')!=-1) {
 			var nbKills = 1, famille;
 			if(tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
-				// Étape de kill multiple de famille donnée
+				// Ã‰tape de kill multiple de famille donnÃ©e
 				//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 				famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
 			} else {
-				// Étape de kill unique de famille donnée
+				// Ã‰tape de kill unique de famille donnÃ©e
 				famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
 			saveMission(numMission,{
@@ -3626,7 +3638,7 @@ function traiteMission() {
 				mundidey: siMundidey,
 				libelle: libelle
 			});
-		} else if(libelle.indexOf('capacité spéciale')!=-1) {
+		} else if(libelle.indexOf('capacitÃ© spÃ©ciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 			saveMission(numMission,{
 				type: 'Pouvoir',
@@ -3637,7 +3649,7 @@ function traiteMission() {
 			saveMission(numMission,false);
 		}
 	} catch(e) {
-		window.console.error('[MZ Mission] Erreur récupération étape mission:\n'+e);
+		window.console.error('[MZ Mission] Erreur rÃ©cupÃ©ration Ã©tape mission:\n'+e);
 		return;
 	}
 }
@@ -3670,7 +3682,7 @@ function do_mission() {
 
 // x~x move
 
-/*-[variables+function]- Données sur les trous de météorites -----------------*/
+/*-[variables+function]- DonnÃ©es sur les trous de mÃ©tÃ©orites -----------------*/
 
 var petitsTrous = {
 	'-52;57': true,
@@ -3746,9 +3758,9 @@ function validateDestination() {
 		}
 		if(isTrou(x,y,n)) {
 			return window.confirm(
-				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
-				+'Vous allez tomber dans un trou de météorite.\n'
-				+'Êtes vous sûr de vouloir effectuer ce déplacement ?'
+				'La voix de  mini TilK (nÂ°36216) rÃ©sonne dans votre tÃªte :\n'
+				+'Vous allez tomber dans un trou de mÃ©tÃ©orite.\n'
+				+'ÃŠtes vous sÃ»r de vouloir effectuer ce dÃ©placement ?'
 			);
 		}
 	}
@@ -3801,18 +3813,18 @@ function validateTPDestination() {
 		}
 		if(nbtrous>0 && nbtrous<72) {
 			return window.confirm(
-				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
+				'La voix de  mini TilK (nÂ°36216) rÃ©sonne dans votre tÃªte :\n'
 				+'Vous avez '+Math.floor((100*nbtrous)/144)
-				+'% de risque de tomber dans un trou de météorite.\n'
-				+'Êtes-vous sûr de vouloir prendre ce portail ?'
+				+'% de risque de tomber dans un trou de mÃ©tÃ©orite.\n'
+				+'ÃŠtes-vous sÃ»r de vouloir prendre ce portail ?'
 			);
 		}
 		else if(nbtrous>=72) {
 			return window.confirm(
-				'La voix de  mini TilK (n°36216) tonne dans votre tête :\n'
+				'La voix de  mini TilK (nÂ°36216) tonne dans votre tÃªte :\n'
 				+'Malheureux, vous avez '+Math.floor((100*nbtrous)/144)
-				+'% de risque de tomber dans un trou de météorite !\n'
-				+'Êtes-vous bien certain de vouloir prendre ce portail ?'
+				+'% de risque de tomber dans un trou de mÃ©tÃ©orite !\n'
+				+'ÃŠtes-vous bien certain de vouloir prendre ce portail ?'
 			);
 		}
 		return true;
@@ -3859,11 +3871,11 @@ function do_move() {
 
 // x~x news
 
-// Url de récup des jubilaires:
+// Url de rÃ©cup des jubilaires:
 const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
 // Flux RSS des news MZ:
 const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
-// Nombre de news à afficher & nb max de caractères par news:
+// Nombre de news Ã  afficher & nb max de caractÃ¨res par news:
 const nbItems = 5;
 const maxCarDescription = 300;
 
@@ -3875,7 +3887,7 @@ String.prototype.epureDescription = function() {
 	}
 
 function appendTitledTable(node,titre,description) {
-	// Crée les tables contenant les infos (avec titre)
+	// CrÃ©e les tables contenant les infos (avec titre)
 	var table = document.createElement('table');
 	table.border = 0;
 	table.className = 'mh_tdborder';
@@ -3935,7 +3947,7 @@ function afficherJubilaires(listeTrolls) {
 		}
 	var p = document.createElement('p');
 	var tbody = appendTitledTable(p,
-		"Les Trõlls qui fêtent leur anniversaire aujourd'hui:",
+		"Les TrÃµlls qui fÃªtent leur anniversaire aujourd'hui:",
 		'Envoyez leur un message ou un cadeau !'
 		);
 	tr = appendTr(tbody,'mh_tdpage');
@@ -4024,7 +4036,7 @@ function afficherNouvelles(xml_data) {
 			td.innerHTML = details.epureDescription().slice(0,maxCarDescription);
 			// DEBUG
 			// pourquoi il ajoute une ligne vide sous les listes ??
-			// même avec trim(), il vire le textNode mais pas l'espace !
+			// mÃªme avec trim(), il vire le textNode mais pas l'espace !
 			}
 		}
 	insertBefore(footer,p);
@@ -4081,7 +4093,7 @@ function showPopup(evt) {
 	popup.style.visibility = "visible";
 }
 
-// roule 16/03/2016, existe déjà ailleurs
+// roule 16/03/2016, existe dÃ©jÃ  ailleurs
 // function hidePopup() {
 	// popup.style.visibility = 'hidden';
 // }
@@ -4103,13 +4115,13 @@ function formateTexte(texte)
 	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
 	texte = texte.replace(/<br\/>([^<]*) d'un/g,"<br/><b>$1</b> d'un");
 	texte = texte.replace(/(d'une? )([^<]*) d'au/g,"$1<b>$2</b> d'au");
-	texte = texte.replace(/(Qualité )([^<]*) \[/g,"$1<b>$2</b> [");
+	texte = texte.replace(/(QualitÃ© )([^<]*) \[/g,"$1<b>$2</b> [");
 	texte = texte.replace(/\[([^<]*)\]/g,"[<b>$1</b>]");
 	return texte;
 }
 
 function arrondi(x) {
-	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
+	return Math.ceil(x-0.5); // arrondi Ã  l'entier le plus proche, valeurs inf
 	}
 
 function traiteMinerai() {
@@ -4147,12 +4159,12 @@ function traiteMinerai() {
 
 function treateComposants() {
 	if (currentURL.indexOf("as_type=Compo")==-1) return;
-	//On récupère les composants
+	//On rÃ©cupÃ¨re les composants
 	var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
 			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
 			+ "and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) "
-			+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			+ "and td[1]/img/@alt = 'IdentifiÃ©']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0) {
 //		window.alert('treateComposants DOWN');
 		return;
@@ -4195,8 +4207,8 @@ function treateComposants() {
 function treateAllComposants() {
 	if(currentURL.indexOf("as_type=Compo")==-1) return;
 	
-	//On récupère les composants
-	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])",
+	//On rÃ©cupÃ¨re les composants
+	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catÃ©gorie')])",
 							document, null, 0, null ).numberValue;
 	var c = (categ == 0 ? 3 : 4);
 	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
@@ -4205,8 +4217,8 @@ function treateAllComposants() {
 			+ "td["+c+"]/text()[1] = '\240-\240' "
 			+ "or contains(td["+c+"]/text()[2],'Tous les trolls') "
 			+ "or contains(td["+c+"]/text()[1],'Tous les trolls') "
-			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
-		+ "and td[1]/img/@alt = 'Identifié']",
+			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='nÂ°') ) "
+		+ "and td[1]/img/@alt = 'IdentifiÃ©']",
 		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0) {
 //		window.alert('treateAllComposants DOWN');
@@ -4238,7 +4250,7 @@ function treateAllComposants() {
 		else
 			texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
 				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
-				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas défini\n";
+				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas dÃ©fini\n";
 	}
 
 	var c = document.evaluate("//div[@class = 'titre2']/text()",
@@ -4247,7 +4259,7 @@ function treateAllComposants() {
 	id_taniere = id_taniere.substring(id_taniere.indexOf('(') + 1, id_taniere.indexOf(')'));
 
 	var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
-			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"),"Vendre tous les composants non réservés sur le Troc de l\'Hydre");
+			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"),"Vendre tous les composants non rÃ©servÃ©s sur le Troc de l\'Hydre");
 	if (form)
 	{
 		if(document.getElementsByTagName('form').length>0)
@@ -4277,7 +4289,7 @@ function treateEM()
 		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
 		var nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length-1)) ;
 		var locqual = desc[3].textContent ;
-		var qualite = trim(locqual.substring(locqual.indexOf("Qualité:")+9)) ;
+		var qualite = trim(locqual.substring(locqual.indexOf("QualitÃ©:")+9)) ;
 		var localisation = trim(locqual.substring(0,locqual.indexOf("|")-1)) ;
 		if(isEM(nomMonstre).length>0)
 		{
@@ -4303,7 +4315,7 @@ function treateEM()
 function treateChampi() {
 	if (currentURL.indexOf('as_type=Champi')==-1)
 		return false;
-	var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
+	var nodes = document.evaluate("//img[@alt = 'IdentifiÃ©']/../a/text()[1]",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
@@ -4327,7 +4339,7 @@ function treateEnchant()
 		var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
 			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			+ "and td[1]/img/@alt = 'IdentifiÃ©']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
 		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
@@ -4338,7 +4350,7 @@ function treateEnchant()
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
 			var nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
 			nomCompoTotal = link.childNodes[1].childNodes[0].nodeValue;
-			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
+			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de QualitÃ©")+11,nomCompoTotal.indexOf(" ["));
 			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
 			if(isEnchant(nomMonstre).length>0)
 			{
@@ -4405,7 +4417,7 @@ function do_tancompo() {
 /*---------------------------- Variables globales ----------------------------*/
 
 var	
-	// Structure générale des données
+	// Structure gÃ©nÃ©rale des donnÃ©es
 	lignesProfil, lignesPV,
 	tr_comps, tr_sorts,
 	
@@ -4415,14 +4427,14 @@ var
 	// Infobulles talents
 	hauteur = 50, bulleStyle = null,
 	
-	// Caractéristiques (ordre de la page)
+	// CaractÃ©ristiques (ordre de la page)
 		// pour setAccel()
 	race,
-		// utilisée pour les moyennes MM/jour, kill/jour, etc
+		// utilisÃ©e pour les moyennes MM/jour, kill/jour, etc
 	NBjours,
 		// calcul des DLA suivantes
 	DLA, DLAsuiv, HeureServeur,
-		// détails durée du tour (calcul pvdispo) :
+		// dÃ©tails durÃ©e du tour (calcul pvdispo) :
 	dtb, pdm, bmt,
 		//posale
 	posX, posY, posN,
@@ -4438,14 +4450,14 @@ var
 	rm, rmbm, mm, mmbm,
 	
 	// Modificateurs
-	// DEBUG: revoir le fonctionnement de "nbattaques" (obsolète) :
+	// DEBUG: revoir le fonctionnement de "nbattaques" (obsolÃ¨te) :
 	//  |-> gestion (x3) : malusDAtt, malusDEsq, malusDArm
-	//  |-> réinit. sur menu
+	//  |-> rÃ©init. sur menu
 	nbattaques, bmDDegM, bmDAttM,
 	
-	// Variables spéciales Kastars
+	// Variables spÃ©ciales Kastars
 	pva, minParPV, overDLA,
-		// id pour édition manuelle de lastDLA :
+		// id pour Ã©dition manuelle de lastDLA :
 	inJour, inMois, inAn, inHr, inMin, inSec,
 		// id pour auto-refresh lastDLA :
 	lastDLAZone, maxAMZone, cumulZone,
@@ -4455,8 +4467,8 @@ var
 /*-[functions]----------------- Fonctions utiles -----------------------------*/
 
 function resiste(Ddeg,bm) {
-	// version naive mais compréhensible ^^
-	// DEBUG: à revoir
+	// version naive mais comprÃ©hensible ^^
+	// DEBUG: Ã  revoir
 	if(!bm) {
 		return 2*Math.floor(Ddeg/2);
 	}
@@ -4466,7 +4478,7 @@ function resiste(Ddeg,bm) {
 function getPortee(param) {
 	param = Math.max(0,Number(param));
 	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
-	// ça devrait être floor, +10.25, -2.5
+	// Ã§a devrait Ãªtre floor, +10.25, -2.5
 }
 
 function retourAZero(fatig) {
@@ -4509,7 +4521,7 @@ function dureeHM(dmin) {
 }
 
 
-/*-[functions]------- Extraction / Sauvegarde des données --------------------*/
+/*-[functions]------- Extraction / Sauvegarde des donnÃ©es --------------------*/
 
 function initAll() {
 	var tablePrincipale, lignesCaracs, Nbrs={},
@@ -4522,8 +4534,8 @@ function initAll() {
 	).singleNodeValue;
 	
 	// ***INIT GLOBALE*** lignesProfil
-	// On utilise un snapshot pour continuer à accéder aux lignes dans l'ordre
-	// original même si on en ajoute (e.g. fatigue des Kastars)
+	// On utilise un snapshot pour continuer Ã  accÃ©der aux lignes dans l'ordre
+	// original mÃªme si on en ajoute (e.g. fatigue des Kastars)
 	lignesProfil = document.evaluate(
 		"./tbody/tr",
 		tablePrincipale, null, 7, null
@@ -4532,12 +4544,12 @@ function initAll() {
 	// EXTRACTION DES DONNEES BRUTES
 	lignes = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
 		childNodes;
-	// dtb = Durée Tour de Base, bmt = BM Temps, pdm = Poids Du Matos
+	// dtb = DurÃ©e Tour de Base, bmt = BM Temps, pdm = Poids Du Matos
 	for(var i=lignes.length-1 ; i>=0 ; --i) {
 		if(lignes[i].nodeType!=3) { continue; }
 		str = trim(lignes[i].nodeValue);
 		switch(str.slice(0,5)) {
-			case "Durée": Nbrs["dtb"] = str; continue;
+			case "DurÃ©e": Nbrs["dtb"] = str; continue;
 			case "Bonus": Nbrs["bmt"] = str; continue;
 			case "Poids": Nbrs["pdm"] = str; continue;
 		}
@@ -4576,7 +4588,7 @@ function initAll() {
 		getElementsByTagName("table")[0].rows;
 	for(var i=lignesCaracs.length-1 ; i>=0 ; --i) {
 		str = trim(lignesCaracs[i].cells[0].textContent).slice(0,3).toLowerCase().
-			replace(/é/,'e');
+			replace(/Ã©/,'e');
 		Nbrs[str] = lignesCaracs[i].textContent;
 	}
 	
@@ -4585,8 +4597,8 @@ function initAll() {
 		if(lignes[i].nodeType!=3) { continue; }
 		str = trim(lignes[i].nodeValue);
 		switch(str.slice(0,3)) {
-			case "Rés": Nbrs["rm"] = str; continue;
-			case "Maî": Nbrs["mm"] = str; continue;
+			case "RÃ©s": Nbrs["rm"] = str; continue;
+			case "MaÃ®": Nbrs["mm"] = str; continue;
 		}
 	}
 	
@@ -4630,8 +4642,8 @@ function initAll() {
 	regmoy = 2*reg+regbm;
 	appendTdText(lignesCaracs[0],"(moyenne : "+regmoy+")");
 	regmoy = Math.max(0,regmoy);
-	// Temps récupéré par reg (propale R')
-	str = "Temps moyen récupéré par régénération : "+
+	// Temps rÃ©cupÃ©rÃ© par reg (propale R')
+	str = "Temps moyen rÃ©cupÃ©rÃ© par rÃ©gÃ©nÃ©ration : "+
 		Math.floor(250*regmoy/pvmax)+
 		" min";
 	var sec = Math.floor(15000*regmoy/pvmax)%60;
@@ -4666,7 +4678,7 @@ function initAll() {
 	
 	arm = Nbrs["arm"][0];
 	if(Nbrs["arm"].length>4) {
-		// s'il y a des D d'armure non activés
+		// s'il y a des D d'armure non activÃ©s
 		armbmp = Nbrs["arm"][4];
 		armbmm = Nbrs["arm"][5];
 	} else {
@@ -4680,21 +4692,21 @@ function initAll() {
 	str = lignesProfil.snapshotItem(0).cells[1].innerHTML.split("<br>")[1];
 	race = trim(str.slice(str.indexOf(":")+2));
 	
-	// PuM/PréM
+	// PuM/PrÃ©M
 	paragraphes = lignesProfil.snapshotItem(6).cells[1].getElementsByTagName("p");
 	if(paragraphes.length>2) {
 		lignes = paragraphes[1].childNodes;
 		for(var i=lignes.length-1 ; i>=0 ; --i) {
 			if(lignes[i].nodeType!=3) { continue; }
 			str = lignes[i].nodeValue;
-			if(str.indexOf("Dés d'attaque")!=-1) {
+			if(str.indexOf("DÃ©s d'attaque")!=-1) {
 				bmDAttM = getNumbers(str)[0];
-			} else if(str.indexOf("Dés de dégâts")!=-1) {
+			} else if(str.indexOf("DÃ©s de dÃ©gÃ¢ts")!=-1) {
 				bmDDegM = getNumbers(str)[0];
 			}
 		}
 	}
-	//window.console.debug("PuM/PréM",bmDAttM,bmDDegM);
+	//window.console.debug("PuM/PrÃ©M",bmDAttM,bmDDegM);
 	
 	// setDLA()
 	str = lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[0].
@@ -4826,7 +4838,7 @@ function setInfoDateCreation() {
 	
 	txt = (NBjours!=1) ?
 		"("+NBjours+" jours dans le hall)" :
-		"(Bienvenue à toi pour ton premier jour dans le hall)" ;
+		"(Bienvenue Ã  toi pour ton premier jour dans le hall)" ;
 	appendText(lignesProfil.snapshotItem(0).cells[1], txt, false);
 }
 
@@ -4842,7 +4854,7 @@ function setNextDLA() {
 	str = parDLAsuiv.getElementsByTagName("i")[0].textContent;
 	DLAsuiv = new Date( StringToDate(str) );
 	
-	// Affichage des tours manqués
+	// Affichage des tours manquÃ©s
 	nbrs = getNumbers(
 		lignesProfil.snapshotItem(1).cells[1].getElementsByTagName("p")[2].
 		getElementsByTagName("b")[0].textContent
@@ -4874,7 +4886,7 @@ function setNextDLA() {
 		title += (title?"\n":"")+
 			"DLA +"+i+": "+
 			DateToString( new Date(DLAsuivMS) )+
-			" ("+nextPv+"PV, durée: "+dureeHM(nextTour)+")";
+			" ("+nextPv+"PV, durÃ©e: "+dureeHM(nextTour)+")";
 		DLAsuivMS += nextTour*6e4;
 	}
 	parDLAsuiv.title = title;
@@ -4884,7 +4896,7 @@ function vueCarac() {
 	var tableCaracs, nodeVue, parentNodeVue,
 		tr, td;
 	
-	// On insère la Vue dans les caracs
+	// On insÃ¨re la Vue dans les caracs
 	tableCaracs = lignesProfil.snapshotItem(5).cells[1].
 		getElementsByTagName("table")[0];
 	tr = tableCaracs.insertRow(0);
@@ -4913,14 +4925,14 @@ function setLieu() {
 	if(MY_getValue('VUECARAC')=='true') {
 		insertButton(
 			lignesProfil.snapshotItem(2).cells[1].getElementsByTagName("b")[0],
-			'Lieux à proximité',
+			'Lieux Ã  proximitÃ©',
 			function(){ window.open(urlBricol,'_blank') }
 		);
 	} else {
 		appendBr(lignesProfil.snapshotItem(2).cells[0]);
 		appendButton(
 			lignesProfil.snapshotItem(2).cells[0],
-			'Lieux à proximité',
+			'Lieux Ã  proximitÃ©',
 			function(){ window.open(urlBricol,'_blank') }
 		);
 	}
@@ -4929,7 +4941,7 @@ function setLieu() {
 function setInfosPxPi() {
 	if(nivTroll==60) return;
 	
-	/* Extraction des données */
+	/* Extraction des donnÃ©es */
 	var TDexp = lignesProfil.snapshotItem(3).cells[1];
 	var node = TDexp.firstChild;
 	var str = node.nodeValue;
@@ -4943,7 +4955,7 @@ function setInfosPxPi() {
 	
 	/* Modification ligne "Niveau" */
 	str = str.substring(0,str.length-1)+' | Niveau '+(nivTroll+1)+' : '
-		+pi_nextLvl+' PI => '+nb_ent+' entraînement';
+		+pi_nextLvl+' PI => '+nb_ent+' entraÃ®nement';
 	if(nb_ent>1) str += 's';
 	str += ')';
 	var span = document.createElement('span');
@@ -4956,11 +4968,11 @@ function setInfosPxPi() {
 	node = document.createElement('i');
 	if(px<px_ent)
 		appendText(node,
-			'Il vous manque '+(px_ent-px)+' PX pour vous entraîner.'
+			'Il vous manque '+(px_ent-px)+' PX pour vous entraÃ®ner.'
 			);
 	else
 		appendText(node,
-			'Entraînement possible. Il vous restera '+(px-px_ent)+' PX.'
+			'EntraÃ®nement possible. Il vous restera '+(px-px_ent)+' PX.'
 			);
 	insertBefore(TDexp.childNodes[4],node);
 	}
@@ -4974,7 +4986,7 @@ function setInfosPV() { // pour AM et Sacro
 	if(lifebar) { lifebar.title = txt; }
 	if(pv<=0) { return; }
 	
-	// Différence PV p/r à équilibre de temps (propale R')
+	// DiffÃ©rence PV p/r Ã  Ã©quilibre de temps (propale R')
 	// Note : pvmin pour 0 malus = pvmax + ceiling(pvmax/250*(bmt+pdm))
 	// ***INIT GLOBALE*** pvdispo
 	pvdispo = pv-pvmax-Math.ceil((bmt+pdm)*pvmax/250);
@@ -4994,7 +5006,7 @@ function setInfosPV() { // pour AM et Sacro
 			+(-pvdispo)
 			+" PV pour ne plus avoir de malus de temps.";
 	} else {
-		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
+		txt = "Vous Ãªtes Ã  l'Ã©quilibre en temps (+/- 30sec).";
 	}
 	appendText(span,txt);
 	td.appendChild(span);
@@ -5019,7 +5031,7 @@ function setStabilite() {
 	var node = lignesProfil.snapshotItem(5).getElementsByTagName("p")[0];
 	appendBr(node);
 	appendText(node,
-		'- Stabilité..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
+		'- StabilitÃ©..........: '+Math.floor(2*(esq+reg)/3)+' D6 '+aff(esqbm)
 		+' (moyenne : '+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+')'
 	);
 }
@@ -5027,7 +5039,7 @@ function setStabilite() {
 function setRatioKillDeath() {
 	try{
 		var node = document.evaluate(
-			"./td[2]/p[contains(./text(),'Adversaires tués')]",
+			"./td[2]/p[contains(./text(),'Adversaires tuÃ©s')]",
 			lignesProfil.snapshotItem(6),null,9,null).singleNodeValue;
 		var killnode = node.firstChild;
 		var deathnode = node.childNodes[2];
@@ -5048,7 +5060,7 @@ function setRatioKillDeath() {
 		node.replaceChild(span,deathnode);
 		appendBr(node);
 		appendText(node,
-			'Rapport meurtres/décès : '+Math.floor((kill/death)*1000)/1000
+			'Rapport meurtres/dÃ©cÃ¨s : '+Math.floor((kill/death)*1000)/1000
 			);
 		}
 	}
@@ -5074,10 +5086,10 @@ function setTotauxMagie() {
 	}
 
 
-/*-[functions]----------- Fonctions spéciales Kastars ------------------------*/
+/*-[functions]----------- Fonctions spÃ©ciales Kastars ------------------------*/
 
 function minParPVsac(fat,bm) {
-// Calcule le nombre de min gagnées / PV sacrifiés pour une AM réalisée sous
+// Calcule le nombre de min gagnÃ©es / PV sacrifiÃ©s pour une AM rÃ©alisÃ©e sous
 // fatigue = 'fat', sans et avec un bm de fatigue = 'bm'
 	var out = [];
 	out[0] = (fat>4) ?
@@ -5113,7 +5125,7 @@ function saveLastDLA() {
 	}
 
 function inputMode() {
-	// édition manuelle lastDLA
+	// Ã©dition manuelle lastDLA
 	var date;
 	if(lastDLA)
 		date = new Date( lastDLA );
@@ -5141,7 +5153,7 @@ function setAccel() {
 		fat=fatigue, listeBmFat=[], minppv,
 		tr, td, insertPt;
 
-	// Création d'une nouvelle ligne du profil spéciale AM
+	// CrÃ©ation d'une nouvelle ligne du profil spÃ©ciale AM
 	tr = document.createElement('tr');
 	tr.className = 'mh_tdpage';
 	td = document.createElement('td');
@@ -5151,7 +5163,7 @@ function setAccel() {
 	tr.appendChild(td);
 	insertPt = document.createElement('td');
 	tr.appendChild(insertPt);
-	// si pas PDA, augmenter la hauteur de la bannière de pub
+	// si pas PDA, augmenter la hauteur de la banniÃ¨re de pub
 	if(lignesProfil.snapshotItem(0).cells.length>2) {
 		lignesProfil.snapshotItem(0).cells[2].rowSpan = 12;
 	}
@@ -5167,7 +5179,7 @@ function setAccel() {
 
 	// Gestion des BM de fatigue
 	if(bmfatigue>0) {
-		// On tente de récupérer les BM de fatigue de la page des BM
+		// On tente de rÃ©cupÃ©rer les BM de fatigue de la page des BM
 		if(MY_getValue(numTroll+'.bm.fatigue')) {
 			var BMmemoire = MY_getValue(numTroll+'.bm.fatigue').split(';');
 			BMmemoire.pop();
@@ -5181,16 +5193,16 @@ function setAccel() {
 			}
 		}
 		if(listeBmFat[0]==bmfatigue) {
-			// Si (bm profil=1er bm stocké), on suppose que les bm stockés sont à jour
+			// Si (bm profil=1er bm stockÃ©), on suppose que les bm stockÃ©s sont Ã  jour
 			BMfrais = true;
 			MY_removeValue(numTroll+".bm.fatigue");
 		}
 	} else {
-		// S'il n'y a pas de bm de fatigue sur le profil, on est à jour
+		// S'il n'y a pas de bm de fatigue sur le profil, on est Ã  jour
 		BMfrais = true;
 	}
 	if(!BMfrais && bmfatigue>0) {
-		// si les BM n'ont pas été rafraîchis, on conjecture le pire:
+		// si les BM n'ont pas Ã©tÃ© rafraÃ®chis, on conjecture le pire:
 		if(bmfatigue==15) {
 			listeBmFat = [15,15,15];
 		} else {
@@ -5198,7 +5210,7 @@ function setAccel() {
 		}
 	}
 	if(overDLA) {
-		// Si on est en over-DLA, on décale les bm d'un tour
+		// Si on est en over-DLA, on dÃ©cale les bm d'un tour
 		listeBmFat.shift();
 	}
 	
@@ -5238,7 +5250,7 @@ function setAccel() {
 			if(col==0) {
 				if(overDLA) {
 					var i = document.createElement('i');
-					appendText(i,'À activer');
+					appendText(i,'Ã€ activer');
 					ligneTour.appendChild(i);
 				} else {
 					appendTdText(ligneTour,'En cours');
@@ -5275,11 +5287,11 @@ function setAccel() {
 		appendTdText(ligneMin,'30\'');
 		
 		if(!BMfrais && bmfatigue) {
-			// si les BM n'ont pas été rafraîchis, on signale:
+			// si les BM n'ont pas Ã©tÃ© rafraÃ®chis, on signale:
 			appendText(
 				insertPt,
 				'/!\\ Visitez la page des Bonus/Malus '+
-				'pour mettre à jour votre fatigue. /!\\',
+				'pour mettre Ã  jour votre fatigue. /!\\',
 				true
 			);
 			appendBr(insertPt);
@@ -5288,12 +5300,12 @@ function setAccel() {
 	}
 	
 	if(pv<=0) {
-		appendText(insertPt,'Aucun calcul possible : vous êtes mort voyons !');
+		appendText(insertPt,'Aucun calcul possible : vous Ãªtes mort voyons !');
 		return;
 	}
 	
 	if(fatigue>30) {
-		appendText(insertPt,'Vous êtes trop fatigué pour accélérer.');
+		appendText(insertPt,'Vous Ãªtes trop fatiguÃ© pour accÃ©lÃ©rer.');
 		return;
 	}
 	
@@ -5307,7 +5319,7 @@ function setAccel() {
 		pva = Math.min(pv+regmoy,pvmax);
 		appendText(
 			insertPt,
-			'/!\\ Votre DLA est dépassée, calculs basés sur des estimations. /!\\',
+			'/!\\ Votre DLA est dÃ©passÃ©e, calculs basÃ©s sur des estimations. /!\\',
 			true
 		);
 		appendBr(insertPt);
@@ -5320,7 +5332,7 @@ function setAccel() {
 			lastDLA = false;
 		}
 	}
-	appendText(insertPt,'Dernière DLA enregistrée : ');	
+	appendText(insertPt,'DerniÃ¨re DLA enregistrÃ©e : ');	
 	lastDLAZone = document.createElement('span');
 	lastDLAZone.style.cursor = 'pointer';
 	var b = document.createElement('b');
@@ -5335,7 +5347,7 @@ function setAccel() {
 	appendBr(insertPt);
 	
 	// Setup maxAMZone et cumulZone
-	appendText(insertPt,'Accélération maximale possible : ');
+	appendText(insertPt,'AccÃ©lÃ©ration maximale possible : ');
 	maxAMZone = document.createElement('b');
 	insertPt.appendChild(maxAMZone);
 	appendBr(insertPt);
@@ -5348,7 +5360,7 @@ function setAccel() {
 function refreshAccel() {
 	var pvs, pvsmax;
 	
-	// Accélération pour cumul instantané
+	// AccÃ©lÃ©ration pour cumul instantanÃ©
 	//window.console.debug('refreshAccel',pva,DLAaccel,lastDLA,minParPV);
 	if(lastDLA) {
 		pvsmax = Math.min(
@@ -5365,9 +5377,9 @@ function refreshAccel() {
 	pvs = Math.ceil( Math.ceil((DLAaccel-HeureServeur)/6e4) / minParPV );
 	cumulZone.innerHTML = '';
 	if(pvs<=pvsmax) {
-		appendText(cumulZone,'Vous devez accélérer d\'au moins ');
+		appendText(cumulZone,'Vous devez accÃ©lÃ©rer d\'au moins ');
 		appendText(cumulZone,pvs+' PV', true);
-		appendText(cumulZone,' pour activer immédiatement un nouveau tour.');
+		appendText(cumulZone,' pour activer immÃ©diatement un nouveau tour.');
 		if(pvs!=1) {
 			var gainSec = Math.floor((DLAaccel-HeureServeur)/1e3)
 				-(pvs-1)*60*minParPV;
@@ -5382,15 +5394,15 @@ function refreshAccel() {
 		var avantDLA = new Date( DLAaccel-HeureServeur-pvsmax*minParPV*6e4 );
 		appendText(
 			cumulZone,
-			'Après votre accélération maximale, il vous faudra encore attendre '+
+			'AprÃ¨s votre accÃ©lÃ©ration maximale, il vous faudra encore attendre '+
 			dureeHM(avantDLA/6e4)+
-			' avant de réactiver.'
+			' avant de rÃ©activer.'
 		);
 	}
 }
 
 
-/*-[functions]-------- Fonctions gérant les infos-bulles ---------------------*/
+/*-[functions]-------- Fonctions gÃ©rant les infos-bulles ---------------------*/
 
 function traitementTalents() {
 	try {
@@ -5403,7 +5415,7 @@ function traitementTalents() {
 			null, 7, null
 		);
 	} catch(e) {
-		avertissement('[traitementTalents] Données non trouvées')
+		avertissement('[traitementTalents] DonnÃ©es non trouvÃ©es')
 		window.console.error(e);
 		return false;
 	}
@@ -5425,7 +5437,7 @@ function injecteInfosBulles(liste,fonction) {
 			liste[i].cells[7].textContent
 		);
 		/*if(nom.indexOf('Piege')!=-1 || nom.indexOf('Golemo')!=-1) {
-			// pour piège et golemo, on extrait les sous-comps pour stockage
+			// pour piÃ¨ge et golemo, on extrait les sous-comps pour stockage
 			// est-ce bien utile ?...
 			var lstNoms = trim(
 				epure(liste[i].cells[1].lastChild.nodeValue)
@@ -5447,7 +5459,7 @@ function injecteInfosBulles(liste,fonction) {
 		setTalent(nom,nbrs[1],nbrs[0]);
 		totalpc += nbrs[1];
 
-		// stockage des niveaux inférieurs du talent si présents
+		// stockage des niveaux infÃ©rieurs du talent si prÃ©sents
 		for(var j=2 ; j<nbrs.length ; j+=2) {
 			//window.console.debug("setTalent(",nom,nbrs[j+1],nbrs[j],")");
 			setTalent(nom,nbrs[j+1],nbrs[j]);
@@ -5570,14 +5582,14 @@ function setBulle(evt) {
 	}
 
 
-/*-[functions] Textes des infos-bulles pour les compétences et sortilèges ----*/
+/*-[functions] Textes des infos-bulles pour les compÃ©tences et sortilÃ¨ges ----*/
 
 function competences(comp,niveau) {
 	var texte = '';
 	if(comp.indexOf('Acceleration du Metabolisme')!=-1 && minParPV!=null) {
 		texte = '<b>1</b> PV = <b>'+minParPV+'</b> minute';
 		if(minParPV>1) texte += 's';
-		if(overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
+		if(overDLA) texte += '<br/><i>(Votre DLA est dÃ©passÃ©e.)</i>';
 		}
 	else if(comp.indexOf('Attaque Precise')!=-1) {
 		var pc, lastmax=0, espatt=0;
@@ -5594,18 +5606,18 @@ function competences(comp,niveau) {
 			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += '<i>Attaque moyenne (si réussite) : <b>'+
+			texte += '<i>Attaque moyenne (si rÃ©ussite) : <b>'+
 				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
 		}
-		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+		texte += 'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff(degbm)
 			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
 	}
 	else if(comp.indexOf('Balayage')!=-1)
-		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbm)
+		texte = 'DÃ©stabilisation : <b>'+att+'</b> D6 '+aff(attbm)
 			+' => <b>'+(Math.round(3.5*att)+attbm)+'</b><br/>'
-			+'Effet : <b>Met à terre l\'adversaire</b>';
+			+'Effet : <b>Met Ã  terre l\'adversaire</b>';
 	else if(comp.indexOf('Bidouille')!=-1)
-		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
+		texte = 'Bidouiller un trÃ©sor permet de complÃ©ter le nom d\'un objet '
 			+'de votre inventaire avec le texte de votre choix.';
 	else if(comp.indexOf('Baroufle')!=-1)
 		texte = 'Vous voulez encourager vos compagnons de chasse ? '
@@ -5615,7 +5627,7 @@ function competences(comp,niveau) {
 			+Math.floor(2*att/3)+'</b> D6 '+aff(Math.floor(attbm/2))
 			+' => <b>'
 			+Math.round(3.5*Math.floor(2*att/3)+Math.floor(attbm/2))
-			+'</b><br/>Dégâts : <b>'
+			+'</b><br/>DÃ©gÃ¢ts : <b>'
 			+Math.floor(att/2)+'</b> D3 '+aff(Math.floor(degbm/2))
 			+' => <b>'
 			+(2*Math.floor(att/2)+Math.floor(degbm/2))
@@ -5623,8 +5635,8 @@ function competences(comp,niveau) {
 			+'</b>';
 	else if(comp.indexOf('Camouflage')!=-1) {
 		var camou = getTalent('Camouflage');
-		texte = 'Pour conserver son camouflage, il faut réussir un jet sous:<br/>'
-			+'<i>Déplacement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
+		texte = 'Pour conserver son camouflage, il faut rÃ©ussir un jet sous:<br/>'
+			+'<i>DÃ©placement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
 			+'<i>Attaque :</i> <b>perte automatique</b>.<br/>'
 			+'<i>Projectile Magique :</i> <b>'+Math.floor(0.25*camou)+'%</b>';
 		}
@@ -5639,16 +5651,16 @@ function competences(comp,niveau) {
 		else {
 			texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
 				+' => <b>'+attmoy+'</b><br/>'
-				+'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+				+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff(degbm)
 				+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>'
-				+'<br/>Portée : <b>'+portee+'</b> case';
+				+'<br/>PortÃ©e : <b>'+portee+'</b> case';
 			if(portee>1) texte += 's';
 			}
 		}
 	else if(comp.indexOf('Connaissance des Monstres')!=-1) {
-		texte = 'Portée horizontale : <b>'+vuetotale+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+vuetotale+'</b> case';
 		if(vuetotale>1) texte += 's';
-		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		texte += '<br/>PortÃ©e verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
 		if(vuetotale>2) texte += 's';
 		}
 	else if(comp.indexOf('Piege')!=-1) {
@@ -5656,8 +5668,8 @@ function competences(comp,niveau) {
 			texte = 'Et si vous colliez vos adversaires au sol ?';
 		if(comp.indexOf('Feu')!=-1) {
 			if(texte)
-				texte += ' À moins que vous ne préfériez les envoyer en l\'air !<br/>';
-			texte += 'Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
+				texte += ' Ã€ moins que vous ne prÃ©fÃ©riez les envoyer en l\'air !<br/>';
+			texte += 'DÃ©gats du piÃ¨ge Ã  feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
 				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b>';
 			}
 		}
@@ -5665,7 +5677,7 @@ function competences(comp,niveau) {
 		texte = 'Attaque : <b>'
 			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor(attbm/2))
 			+' => <b>'+Math.round(3.5*Math.floor(att/2)+Math.floor(attbm/2))
-			+'</b><br/>Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+			+'</b><br/>DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff(degbm)
 			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
 	else if(comp.indexOf('Coup de Butoir')!=-1) {
 		var pc, lastmax=0, espdeg=0;
@@ -5676,7 +5688,7 @@ function competences(comp,niveau) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+degbm;
-			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+			texte += '<br/>DÃ©gÃ¢ts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
 				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff(degbm)+
 				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
 			espdeg += (pc-lastmax)*jetdeg;
@@ -5684,76 +5696,76 @@ function competences(comp,niveau) {
 			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
+			texte += '<br/><i>DÃ©gÃ¢ts moyens (si rÃ©ussite) : <b>'+
 				Math.floor(10*espdeg/lastmax)/10+'/'+
 				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
 		}
 	}
 	else if(comp.indexOf('Course')!=-1)
-		texte = 'Déplacement gratuit : <b>'
+		texte = 'DÃ©placement gratuit : <b>'
 			+Math.floor(getTalent('Course')/2)
 			+' %</b> de chance';
 	else if(comp.indexOf('Deplacement Eclair')!=-1)
-		texte = 'Permet d\'économiser <b>1</b> PA '
-			+'par rapport au déplacement classique';
+		texte = 'Permet d\'Ã©conomiser <b>1</b> PA '
+			+'par rapport au dÃ©placement classique';
 	else if(comp.indexOf('Dressage')!=-1)
 		texte = 'Le dressage permet d\'apprivoiser un gowap redevenu sauvage '
 			+'ou un gnu sauvage.';
 	else if(comp.indexOf('Ecriture Magique')!=-1)
-		texte = 'Réaliser la copie d\'un sortilège après en avoir découvert '
-			+'la formule nécessite de réunir les composants de cette formule, '
-			+'d\'obtenir un parchemin vierge sur lequel écrire, et de récupérer '
-			+'un champignon adéquat pour confectionner l\'encre.';
+		texte = 'RÃ©aliser la copie d\'un sortilÃ¨ge aprÃ¨s en avoir dÃ©couvert '
+			+'la formule nÃ©cessite de rÃ©unir les composants de cette formule, '
+			+'d\'obtenir un parchemin vierge sur lequel Ã©crire, et de rÃ©cupÃ©rer '
+			+'un champignon adÃ©quat pour confectionner l\'encre.';
 	else if(comp.indexOf('Frenesie')!=-1) {
 		texte = 'Attaque : <b>'+att+'</b> D6 '+aff(attbm)
 			+' => <b>'+attmoy+'</b><br/>'
-			+'Dégâts : <b>'+deg+'</b> D3 '+aff(degbm)
+			+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff(degbm)
 			+' => <b>'+degmoy+'/'+(degmoy+2*Math.floor(deg/2))+'</b>';
 		}
 	else if(comp.indexOf('Golem')!=-1)
-		texte = 'Animez votre golem en assemblant divers matériaux '
-			+'autour d\'un cerveau minéral.'
+		texte = 'Animez votre golem en assemblant divers matÃ©riaux '
+			+'autour d\'un cerveau minÃ©ral.'
 	else if(comp.indexOf('Grattage')!=-1) {
 		texte = 'Permet de confectionner un Parchemin Vierge '
-			+'à partir de composants et de Gigots de Gob\'.';
+			+'Ã  partir de composants et de Gigots de Gob\'.';
 		}
 	else if(comp.indexOf('Hurlement Effrayant')!=-1)
 		texte = 'Fait fuir un monstre si tout se passe bien.'
 			+'<br/>Lui donne de gros bonus sinon...';
 	else if(comp.indexOf('Identification des Champignons')!=-1) {
-		texte = 'Portée horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
 		if(vuetotale>2) texte += 's';
-		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
+		texte += '<br/>PortÃ©e verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
 		if(vuetotale>4) texte += 's';
 		}
 	else if(comp.indexOf('Insultes')!=-1)
-		texte = 'Portée horizontale : <b>'+Math.min(vuetotale,1)+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(vuetotale,1)+'</b> case';
 	else if(comp.indexOf('interposer')!=-1)
-		texte = 'Jet de réflexe : <b>'
+		texte = 'Jet de rÃ©flexe : <b>'
 			+Math.floor(2*(esq+reg)/3)+'</b> D6 '+aff(esqbm)
 			+' => <b>'+Math.round(3.5*Math.floor(2*(esq+reg)/3)+esqbm)+'</b>';
 	else if(comp.indexOf('Lancer de Potions') != -1)
-		texte = 'Portée : <b>'+(2+Math.floor(vuetotale/5))+'</b> cases';
+		texte = 'PortÃ©e : <b>'+(2+Math.floor(vuetotale/5))+'</b> cases';
 	else if(comp.indexOf('Marquage')!=-1)
-		texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut '
-			+'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut '
-			+'se trouver dans la même caverne que le monstre pour le marquer.';
+		texte = 'Marquage permet de rajouter un sobriquet Ã  un monstre. Il faut '
+			+'bien choisir le nom Ã  ajouter car celui-ci sera dÃ©finitif. Il faut '
+			+'se trouver dans la mÃªme caverne que le monstre pour le marquer.';
 	else if(comp.indexOf('Melange Magique')!=-1)
-		texte = 'Cette Compétence permet de combiner deux Potions pour '
-			+'en réaliser une nouvelle dont l\'effet est la somme '
+		texte = 'Cette CompÃ©tence permet de combiner deux Potions pour '
+			+'en rÃ©aliser une nouvelle dont l\'effet est la somme '
 			+'des effets des potions initiales.';
 	else if(comp.indexOf('Miner')!=-1)
-		texte = 'Portée horizontale (officieuse) : <b>'
+		texte = 'PortÃ©e horizontale (officieuse) : <b>'
 			+2*vuetotale+'</b> cases<br/>'
-			+'Portée verticale (officieuse) : <b>'
+			+'PortÃ©e verticale (officieuse) : <b>'
 			+2*Math.ceil(vuetotale/2)+'</b> cases';
 	else if(comp.indexOf('Necromancie')!=-1)
-		texte = 'La Nécromancie permet à partir des composants d\'un monstre '
+		texte = 'La NÃ©cromancie permet Ã  partir des composants d\'un monstre '
 			+'de faire "revivre" ce monstre.';
 	else if(comp.indexOf('Painthure de Guerre')!=-1)
-		texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier '
-			+'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite '
-			+'pour s\'inspirer, et laissez parler votre créativité.'
+		texte = 'Grimez vos potrÃµlls et rÃ©veillez l\'esprit guerrier '
+			+'qui sommeille en eux ! Un peu d\'encre, une TÃªte RÃ©duite '
+			+'pour s\'inspirer, et laissez parler votre crÃ©ativitÃ©.'
 	else if(comp.indexOf('Parer')!=-1)
 		texte = 'Jet de parade : <b>'
 			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor(attbm)/2)
@@ -5765,33 +5777,33 @@ function competences(comp,niveau) {
 			+(Math.round(3.5*(Math.floor(att/2)+esq)+Math.floor(attbm/2))+esqbm)
 			+'</b></i>';
 	else if(comp.indexOf('Pistage')!=-1)
-		texte = 'Portée horizontale : <b>'
+		texte = 'PortÃ©e horizontale : <b>'
 			+2*vuetotale+'</b> cases<br/>'
-			+'Portée verticale : <b>'
+			+'PortÃ©e verticale : <b>'
 			+2*Math.ceil(vuetotale/2)+'</b> cases';
 	else if(comp.indexOf('Planter un Champignon')!=-1)
-		texte = 'Planter un Champignon est une compétence qui vous permet de '
-			+'créer des colonies d\'une variété donnée de champignon à partir de '
-			+'quelques exemplaires préalablement enterrés.';
+		texte = 'Planter un Champignon est une compÃ©tence qui vous permet de '
+			+'crÃ©er des colonies d\'une variÃ©tÃ© donnÃ©e de champignon Ã  partir de '
+			+'quelques exemplaires prÃ©alablement enterrÃ©s.';
 	else if(comp.indexOf('Regeneration Accrue')!=-1)
-		texte = 'Régénération : <b>'+Math.floor(pvmax/15)+'</b> D3'
+		texte = 'RÃ©gÃ©nÃ©ration : <b>'+Math.floor(pvmax/15)+'</b> D3'
 			+' => <b>+'+2*Math.floor(pvmax/15)+'</b> PV';
 	else if(comp.indexOf('Reparation')!=-1)
 		texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, '
-			+'et réparez vous-même votre matériel !';
+			+'et rÃ©parez vous-mÃªme votre matÃ©riel !';
 	else if(comp.indexOf('Retraite')!=-1)
 		texte = 'Vous jugez la situation avec sagesse et estimez qu\'il serait '
-			+'préférable de préparer un repli stratégique pour déconcerter '
-			+'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! '
-			+'Quelle intelligence démoniaque.';
+			+'prÃ©fÃ©rable de prÃ©parer un repli stratÃ©gique pour dÃ©concerter '
+			+'l\'ennemi et lui foutre une bonne branlÃ©e ... plus tard. MOUAHAHA ! '
+			+'Quelle intelligence dÃ©moniaque.';
 	else if(comp.indexOf('Rotobaffe')!=-1) {
 		var Datt = att, vattbm = attbm;
 		var Ddeg = deg, vdegbm = degbm;
 		for(var i=1 ; i<niveau+2 ; i++) {
-			texte += '<b>Attaque n°'+i+' :</b><br/>'
+			texte += '<b>Attaque nÂ°'+i+' :</b><br/>'
 				+'Attaque : <b>'+Datt+'</b> D6 '+aff(attbm)
 				+' => <b>'+(Math.round(3.5*Datt)+attbm)+'</b><br/>'
-				+'Dégâts : <b>'+Ddeg+'</b> D3 '+aff(degbm)
+				+'DÃ©gÃ¢ts : <b>'+Ddeg+'</b> D3 '+aff(degbm)
 				+' => <b>'+(2*Ddeg+degbm)+'</b>';
 			Datt = Math.floor(0.75*Datt); vattbm = Math.floor(0.75*vattbm);
 			Ddeg = Math.floor(0.75*Ddeg); vdegbm = Math.floor(0.75*vdegbm);
@@ -5799,16 +5811,16 @@ function competences(comp,niveau) {
 			}
 		}
 	else if(comp.indexOf('Shamaner')!=-1)
-		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
-			+'des monstres en utilisant des champignons (de 1 à 3).';
+		texte = 'Permet de contrecarrer certains effets des pouvoirs spÃ©ciaux '
+			+'des monstres en utilisant des champignons (de 1 Ã  3).';
 	else if(comp.indexOf('Tailler')!=-1)
 		texte = 'Permet d\'augmenter sensiblement la valeur marchande de certains '
-			+'minerais. Mais cette opération délicate n\'est pas sans risques...';
+			+'minerais. Mais cette opÃ©ration dÃ©licate n\'est pas sans risques...';
 	return texte;
 	}
 
 function decumul_buff(nom,str,buff) {
-	// Décumul des sorts de buff
+	// DÃ©cumul des sorts de buff
 	var ret = '1<sup>ere</sup>'+nom+' : <b>'+str+' +'+buff+'</b>';
 	var dec = buff, total = buff, i=1;
 	while(i<6) {
@@ -5825,17 +5837,17 @@ function decumul_buff(nom,str,buff) {
 
 
 function sortileges(sort,mainCall,pcA,pcD) {
-	// Si mainCall==false, affichage réduit des infos (pour PuM/PréM)
+	// Si mainCall==false, affichage rÃ©duit des infos (pour PuM/PrÃ©M)
 	var texte = '';
 	if(mainCall) {
 		var pcA = (bmDAttM) ? bmDAttM : false;
 		var pcD = (bmDDegM) ? bmDDegM : false;
 	}
 	if(sort.indexOf('Analyse Anatomique')!=-1) {
-		texte = 'Portée horizontale : <b>'
+		texte = 'PortÃ©e horizontale : <b>'
 			+Math.floor(vuetotale/2)+'</b> case';
 		if(vuetotale>3) { texte += 's'; }
-		texte += '<br/>Portée verticale : <b>'
+		texte += '<br/>PortÃ©e verticale : <b>'
 			+Math.floor((vuetotale+1)/4)+'</b> case';
 		if(vuetotale>7) { texte += 's'; } 
 	}
@@ -5846,7 +5858,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Augmentation')!=-1 && sort.indexOf('Esquive')!=-1)
 		texte = decumul_buff('AdE','Esquive',1+Math.floor((esq-3)/2));
 	else if(sort.indexOf('Augmentation des Degats')!=-1)
-		texte = decumul_buff('AdD','Dégâts physiques',1+Math.floor((deg-3)/2));
+		texte = decumul_buff('AdD','DÃ©gÃ¢ts physiques',1+Math.floor((deg-3)/2));
 	else if(sort.indexOf('Bulle Anti-Magie')!=-1) {
 		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
 	}
@@ -5854,26 +5866,26 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = 'RM : <b>-'+rm+'</b><br/>MM : <b>+'+mm+'</b>';
 	}
 	else if(sort.indexOf('Explosion')!=-1)
-		texte = 'Dégâts : <b>'
+		texte = 'DÃ©gÃ¢ts : <b>'
 			+Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )+'</b> D3 '
 			+' => <b>'+2*Math.floor( 1+(deg+Math.floor(pvmax/10))/2 )
 			+' ('+resiste( 1+(deg+Math.floor(pvmax/10))/2 )+')</b>';
 	else if(sort.indexOf('Faiblesse Passagere')!=-1) {
 		if(pv<=0)
-			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
-		texte = 'Portée horizontale : <b>'
+			return '<i>Dans votre Ã©tat, vous n\'affaiblirez personne...</i>';
+		texte = 'PortÃ©e horizontale : <b>'
 			+Math.min(1,vuetotale)+'</b> case<br/>'
-			+'Dégâts physiques : <b>-'
+			+'DÃ©gÃ¢ts physiques : <b>-'
 			+Math.ceil( (Math.floor(pv/10)+deg-5)/4 )
 			+' (-'+Math.ceil( (Math.floor(pv/10)+deg-5)/8 )+')</b><br/>'
-			+'Dégâts magiques : <b>-'
+			+'DÃ©gÃ¢ts magiques : <b>-'
 			+Math.floor( (Math.floor(pv/10)+deg-4)/4 )
 			+' (-'+Math.floor( (Math.floor(pv/10)+deg-2)/8 )+')</b>';
 		}
 	else if(sort.indexOf('Flash Aveuglant')!=-1)	
 		texte = 'Vue, Attaque, Esquive : <b>-'+(1+Math.floor(vue/5))+'</b>';
 	else if(sort.indexOf('Glue')!=-1) {
-		texte = 'Portée : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
+		texte = 'PortÃ©e : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
 		if(vuetotale>2) texte += 's';
 		}
 	else if(sort.indexOf('Griffe du Sorcier')!=-1) {
@@ -5886,7 +5898,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			}
 		texte += aff(attbmm)
 			+' => <b>'+(Math.round(3.5*(att+modD))+attbmm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+Math.floor(deg/2)+'</b> D3 ';
 		if(pcD) {
 			modD = parseInt(Math.floor(deg/2)*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -5915,21 +5927,21 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte += '<hr>'+addVenin('virulent',effet,1+Math.floor(vue/10));
 		}
 	else if(sort.indexOf('Hypnotisme')!=-1)
-		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
-			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
+		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> DÃ©s'
+			+' (<b>-'+Math.floor(esq/3)+'</b> DÃ©s)';
 	else if(sort.indexOf('Identification des tresors')!=-1)
-		texte = 'Permet de connaitre les caractéristiques et effets précis '
-			+'d\'un trésor.';
+		texte = 'Permet de connaitre les caractÃ©ristiques et effets prÃ©cis '
+			+'d\'un trÃ©sor.';
 	else if(sort.indexOf('Invisibilite')!=-1)
-		texte = 'Un troll invisible est indétectable même quand on se trouve '
-			+'sur sa zone. Toute action physique ou sortilège d\'attaque '
-			+'fait disparaître l\'invisibilité.';
+		texte = 'Un troll invisible est indÃ©tectable mÃªme quand on se trouve '
+			+'sur sa zone. Toute action physique ou sortilÃ¨ge d\'attaque '
+			+'fait disparaÃ®tre l\'invisibilitÃ©.';
 	else if(sort.indexOf('Levitation')!=-1)
-		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
-			+'Comme les pièges ou les trous par exemple...';
+		texte = 'Prendre un peu de hauteur permet parfois d\'Ã©viter les ennuis. '
+			+'Comme les piÃ¨ges ou les trous par exemple...';
 	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
 		var eps = 1, pc = 20;
-		var str = 'PréM';
+		var str = 'PrÃ©M';
 		var newSort;
 		var sortAtt = [
 			'Projectile Magique',
@@ -5966,7 +5978,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			}
 		texte += aff(attbmm)
 			+' => <b>'+(Math.round(3.5*(vue+modD))+attbmm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+Math.floor(vue/2)+'</b> D3 ';
 		if(pcD) {
 			modD = parseInt(Math.floor(vue/2)*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -5979,18 +5991,18 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			+' ('+resiste(Math.floor(vue/2)+modD,degbmm)
 			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbmm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Portée : <b>'+portee+'</b> case';
+		texte += '<br/>PortÃ©e : <b>'+portee+'</b> case';
 		if(portee>1) texte += 's';
 		}
 	else if(sort.indexOf('Projection')!=-1) {
-		texte = 'Si le jet de résistance de la victime est raté:<br/>'
-			+'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
-			+'Si le jet de résistance de la victime est réussi:<br/>'
+		texte = 'Si le jet de rÃ©sistance de la victime est ratÃ©:<br/>'
+			+'la victime est <b>dÃ©placÃ©e</b> et perd <b>1D6</b> d\'Esquive<hr>'
+			+'Si le jet de rÃ©sistance de la victime est rÃ©ussi:<br/>'
 			+'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
 		}
 	else if(sort.indexOf('Rafale Psychique')!=-1) {
 		var modD = 0;
-		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
+		texte = 'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 ';
 		if(pcD) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -5998,18 +6010,18 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte += aff(degbmm)
 			+' => <b>'+(2*(deg+modD)+degbmm)+' ('+resiste(deg+modD,degbmm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Malus : régénération <b>-'+deg+'</b>';
+		texte += '<br/>Malus : rÃ©gÃ©nÃ©ration <b>-'+deg+'</b>';
 		}
 	else if(sort.indexOf('Sacrifice')!=-1) {
 		if(pv<=0)
-			return '<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>';
+			return '<i>Qui voulez-vous donc soigner ? Vous Ãªtes mort !</i>';
 		
 		function perteSacro(sac) {
 			return ' (-'+(sac+2*Math.floor(sac/5)+2)+' PV)';
 			}
 		
 		var sac = Math.floor((pv-1)/2);
-		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Soin maximal : <b>'+sac+'</b> PV'+perteSacro(sac);
 		/* Sacros max et optimal sans malus (propale R') */
 		sac = Math.floor(pvdispo/1.4)-1;
@@ -6031,7 +6043,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			}
 		texte += aff(attbmm)
 			+' => <b>'+Math.round(3.5*(att+modD)+attbmm)+'</b><br/>'
-			+'Dégâts : <b>'+reg+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+reg+'</b> D3 ';
 		if(pcD) {
 			modD = parseInt(reg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -6042,15 +6054,15 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			+' => <b>'+(2*(reg+modD)+degbmm)+'/'+(2*(Math.floor(1.5*reg)+modD)+degbmm)
 			+' ('+resiste(reg+modD,degbmm)+'/'+resiste(1.5*reg+modD,degbmm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Nécrose : attaque magique <b>-'+reg+'</b>';
+		texte += '<br/>NÃ©crose : attaque magique <b>-'+reg+'</b>';
 		}
 	else if(sort.indexOf('Telekinesie')!=-1) {
-		texte = 'Portée horizontale  :';
+		texte = 'PortÃ©e horizontale  :';
 		var vt = Math.floor(vuetotale/2)+2;
-		var strList = ['d\'une Plum\' ou Très Léger','Léger',
-					'Moyen','Lourd','Très Lourd ou d\'une Ton\''];
+		var strList = ['d\'une Plum\' ou TrÃ¨s LÃ©ger','LÃ©ger',
+					'Moyen','Lourd','TrÃ¨s Lourd ou d\'une Ton\''];
 		for(var i=0 ; i<5 ; i++) {
-			texte += '<br/><i>Trésor '+strList[i]+' : </i><b>'+vt+'</b> case';
+			texte += '<br/><i>TrÃ©sor '+strList[i]+' : </i><b>'+vt+'</b> case';
 			if(vt>1) texte += 's';
 			vt=Math.max(0,vt-1);
 			}
@@ -6059,8 +6071,8 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		var portee = getPortee(mmTroll/5);
 		var pmh = (20+vue+portee);
 		var pmv = 3+Math.floor(portee/3);
-		texte = 'Portée horizontale : <b>'+pmh+'</b> cases<br/>'
-			+'Portée verticale : <b>'+pmv+'</b> cases<hr>'
+		texte = 'PortÃ©e horizontale : <b>'+pmh+'</b> cases<br/>'
+			+'PortÃ©e verticale : <b>'+pmv+'</b> cases<hr>'
 			+'X compris entre '+(posX-pmh)+' et '+(posX+pmh)+'<br/>'
 			+'Y compris entre '+(posY-pmh)+' et '+(posY+pmh)+'<br/>'
 			+'N compris entre '+(posN-pmv)+' et '+Math.min(-1,posN+pmv)+'<br/>';
@@ -6074,7 +6086,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			}
 		texte += aff(attbmm)
 			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbmm)+'</b><br/>'
-			+'Dégâts : <b>'+deg+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 ';
 		if(pcD) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -6088,15 +6100,15 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Vision Accrue')!=-1)
 		texte = decumul_buff('VA','Vue',Math.floor(vue/2));
 	else if(sort.indexOf('Vision lointaine')!=-1)
-		texte = 'En ciblant une zone située n\'importe où dans le '
-			+'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
+		texte = 'En ciblant une zone situÃ©e n\'importe oÃ¹ dans le '
+			+'Monde Souterrain, votre TrÃµll peut voir comme s\'il s\'y trouvait.';
 	else if(sort.indexOf('Voir le Cache')!=-1)
-		texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
+		texte = '<b>Sur soi :</b><br/>PortÃ©e horizontale : <b>'
 			+Math.min(5,getPortee(vue))+'</b> cases<hr>'
-			+'<b>À distance :</b><br/>Portée horizontale : <b>'
+			+'<b>Ã€ distance :</b><br/>PortÃ©e horizontale : <b>'
 			+getPortee(vuetotale)+'</b> cases';
 	else if(sort.indexOf('Vue Troublee')!=-1)
-		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Vue : <b>-'+Math.floor(vue/3)+'</b>';
 	return texte;
 	}
@@ -6125,13 +6137,13 @@ function do_profil() {
 		if(traitementTalents()) {
 			setAnatrolliseur();
 		}
-		// Cette fonction modifie lourdement le DOM, à placer en dernier :
+		// Cette fonction modifie lourdement le DOM, Ã  placer en dernier :
 		if(race=='Kastar') { setAccel(); }
 		saveProfil();
 		displayScriptTime();
 	} catch(e) {
 		avertissement("[MZ] Une erreur s'est produite.");
-		window.console.error("[MZ] Erreur générale Profil",e);
+		window.console.error("[MZ] Erreur gÃ©nÃ©rale Profil",e);
 	}
 }
 
@@ -6156,12 +6168,12 @@ function do_profil() {
 // x~x pjview
 
 /* TODO
- * - MZ2.0 : Implémenter les BDD en dur dans le module interne
+ * - MZ2.0 : ImplÃ©menter les BDD en dur dans le module interne
  */
 
 // Bulle d'infos
 var DivInfo;
-// Booléen stockant l'état de freezing de la bulle
+// BoolÃ©en stockant l'Ã©tat de freezing de la bulle
 var freezed = false;
 
 // liste du matos
@@ -6183,27 +6195,27 @@ var mh_caracs = {
 		['armure',0,0,0,0,-6,12,0,0,0,60,150,0,0,0,0.00,120.00,120.00],
 	'armure de plates':
 		['armure',0,0,0,0,-5,10,0,0,0,50,100,0,0,0,0.00,100.00,100.00],
-	'baton lesté':
+	'baton lestÃ©':
 		['arme',2,0,-1,0,0,0,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
-	'bâtons de parade':
+	'bÃ¢tons de parade':
 		['arme',-4,0,0,0,2,2,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
 	'bottes':
 		['bottes',0,0,0,0,2,0,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
-	'bouclier à pointes':
+	'bouclier Ã  pointes':
 		['bouclier',1,0,1,0,-1,4,0,0,0,0,0,0,0,0,0.00,35.00,35.00],
-	'boulet et chaîne':
+	'boulet et chaÃ®ne':
 		['arme',-3,0,5,0,0,0,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
 	'cagoule':
 		['casque',0,0,0,0,1,0,0,-1,0,0,0,5,10,0,0.00,2.50,2.50],
-	'casque à cornes':
+	'casque Ã  cornes':
 		['casque',0,0,1,0,-1,3,0,-1,0,5,10,0,0,0,0.00,10.00,10.00],
-	'casque à pointes':
+	'casque Ã  pointes':
 		['casque',1,0,1,0,0,3,0,-1,0,0,0,0,0,0,0.00,12.50,12.50],
 	'casque en cuir':
 		['casque',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,5.00,5.00],
-	'casque en métal':
+	'casque en mÃ©tal':
 		['casque',0,0,0,0,0,2,0,-1,0,5,10,0,0,0,0.00,10.00,10.00],
-	'chaîne cloutée':
+	'chaÃ®ne cloutÃ©e':
 		['arme',-2,0,4,0,1,0,0,0,0,0,0,0,0,0,0.00,35.00,35.00],
 	'chapeau pointu':
 		['casque',0,0,0,0,0,1,0,0,0,0,0,5,10,0,0.00,5.00,5.00],
@@ -6211,7 +6223,7 @@ var mh_caracs = {
 		['talisman',0,0,1,0,0,0,0,0,0,0,0,0,0,0,5.00,1.00,1.00],
 	'collier de pierre':
 		['talisman',0,0,0,0,0,0,0,0,0,5,10,5,10,0,0.00,2.50,2.50],
-	'collier à pointes':
+	'collier Ã  pointes':
 		['talisman',0,0,1,0,-1,1,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
 	'cotte de mailles':
 		['armure',0,0,0,0,-3,7,0,0,0,30,60,0,0,0,0.00,70.00,70.00],
@@ -6229,15 +6241,15 @@ var mh_caracs = {
 		['armure',0,0,0,0,-1,3,0,0,0,20,40,0,0,0,0.00,18.00,18.00],
 	"cuirasse d'ossements":
 		['armure',0,0,0,0,-3,5,0,0,0,15,30,15,30,0,0.00,67.50,67.50],
-	"cuirasse d'écailles":
+	"cuirasse d'Ã©cailles":
 		['armure',0,0,0,0,-3,6,0,0,0,30,70,0,0,0,0.00,60.00,60.00],
 	'culotte en cuir':
 		['armure',0,0,0,0,1,0,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
 	'dague':
 		['arme',0,0,1,0,0,0,0,0,0,0,0,0,0,0,0.00,5.00,5.00],
-	'epée courte':
+	'epÃ©e courte':
 		['arme',0,0,2,0,0,0,0,0,0,0,0,0,0,0,0.00,10.00,10.00],
-	'epée longue':
+	'epÃ©e longue':
 		['arme',-2,0,4,0,0,0,0,0,0,0,0,0,0,0,0.00,20.00,20.00],
 	'espadon':
 		['arme',-6,0,8,0,0,0,0,0,0,0,0,0,0,0,0.00,40.00,40.00],
@@ -6249,11 +6261,11 @@ var mh_caracs = {
 		['arme',-2,0,1,0,1,2,0,0,0,0,0,0,0,0,0.00,7.50,7.50],
 	'gorgeron en cuir':
 		['talisman',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
-	'gorgeron en métal':
+	'gorgeron en mÃ©tal':
 		['talisman',0,0,0,0,0,2,0,0,-1,0,0,0,0,0,0.00,5.00,5.00],
 	'gourdin':
 		['arme',-1,0,2,0,0,0,0,0,0,0,0,0,0,0,0.00,12.50,12.50],
-	'gourdin clouté':
+	'gourdin cloutÃ©':
 		['arme',-1,0,3,0,0,0,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
 	'grimoire':
 		['bouclier',-2,2,-1,1,0,0,0,0,0,0,0,5,10,0,10.00,25.00,25.00],
@@ -6269,25 +6281,25 @@ var mh_caracs = {
 		['arme',-4,0,6,0,0,0,0,0,0,0,0,0,0,0,0.00,25.00,25.00],
 	'hache de guerre en pierre':
 		['arme',-10,0,14,0,0,0,0,0,0,5,10,0,0,0,0.00,75.00,75.00],
-	"hache à deux mains d'obsidienne":
+	"hache Ã  deux mains d'obsidienne":
 		['arme',-8,0,16,0,0,0,0,0,-4,-90,-50,-30,-15,0,0.00,75.00,75.00],
 	'hallebarde':
 		['arme',-10,0,12,0,0,0,0,0,0,0,0,0,0,0,0.00,60.00,60.00],
-	"haubert d'écailles":
+	"haubert d'Ã©cailles":
 		['armure',0,0,0,0,-4,8,0,0,0,40,80,0,0,0,0.00,80.00,80.00],
 	'haubert de mailles':
 		['armure',0,0,0,0,-4,9,0,0,0,40,90,0,0,0,0.00,90.00,90.00],
 	'heaume':
 		['casque',-1,0,0,0,0,4,0,-2,0,10,20,0,0,0,0.00,20.00,20.00],
-	'jambières en cuir':
+	'jambiÃ¨res en cuir':
 		['bottes',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,10.00,10.00],
-	'jambières en fourrure':
+	'jambiÃ¨res en fourrure':
 		['bottes',0,0,0,0,0,1,0,0,0,5,10,0,0,0,0.00,2.50,2.50],
-	'jambières en maille':
+	'jambiÃ¨res en maille':
 		['bottes',0,0,0,0,-1,3,0,0,0,5,10,0,0,0,0.00,20.00,20.00],
-	'jambières en métal':
+	'jambiÃ¨res en mÃ©tal':
 		['bottes',0,0,0,0,-2,4,0,0,0,5,10,0,0,0,0.00,25.00,25.00],
-	'jambières en os':
+	'jambiÃ¨res en os':
 		['bottes',0,0,0,0,-1,2,0,0,0,5,10,0,0,0,0.00,10.00,10.00],
 	"lame d'obsidienne":
 		['arme',2,0,6,0,0,0,0,0,-3,-60,-30,-20,-10,0,0.00,20.00,20.00],
@@ -6309,11 +6321,11 @@ var mh_caracs = {
 		['armure',0,0,0,0,-1,2,1,0,0,10,20,10,20,0,0.00,20.00,20.00],
 	'rondache en bois':
 		['bouclier',0,0,0,0,1,1,0,0,0,0,0,0,0,0,0.00,15.00,15.00],
-	'rondache en métal':
+	'rondache en mÃ©tal':
 		['bouclier',0,0,0,0,1,2,0,0,0,0,0,0,0,0,0.00,30.00,30.00],
 	'sandales':
 		['bottes',0,0,0,0,1,0,0,0,0,0,0,0,0,0,0.00,2.50,2.50],
-	'souliers dorés':
+	'souliers dorÃ©s':
 		['bottes',0,0,0,0,-1,1,1,0,0,0,0,0,0,0,0.00,10.00,10.00],
 	"talisman d'obsidienne":
 		['talisman',1,0,2,0,0,0,0,0,-4,20,40,20,40,0,0.00,2.50,2.50],
@@ -6327,7 +6339,7 @@ var mh_caracs = {
 		['talisman',0,0,0,0,0,0,0,0,-2,20,40,20,40,0,0.00,2.50,2.50],
 	'tunique':
 		['armure',0,0,0,0,1,0,0,0,0,5,10,5,10,0,0.00,2.50,2.50],
-	"tunique d'écailles":
+	"tunique d'Ã©cailles":
 		['armure',0,0,0,0,-1,3,0,0,0,15,30,0,0,0,0.00,30.00,30.00],
 	'turban':
 		['casque',0,0,0,0,0,0,0,0,0,10,20,0,0,0,0.00,2.50,2.50]
@@ -6340,7 +6352,7 @@ var mh_caracs = {
 var mh_templates = {
 	'de Feu':
 		[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	'de Résistance':
+	'de RÃ©sistance':
 		[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
 	"de l'Aigle":
 		[0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
@@ -6348,7 +6360,7 @@ var mh_templates = {
 		[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
 	'des Cyclopes':
 		[0,1,0,1,0,0,0,-1,0,0,0,0,0,0,0,0,0],
-	'des Enragés':
+	'des EnragÃ©s':
 		[0,1,0,1,-1,0,0,0,0,0,0,0,0,0,0,0,0],
 	'des Tortues':
 		[0,0,0,0,0,0,2,0,0,0,0,0,0,0,30,0,0],
@@ -6378,7 +6390,7 @@ var mh_templates = {
 		[0,0,0,-1,2,0,0,0,0,0,0,0,0,0,0,0,0],
 	"de l'Ours":
 		[0,0,0,2,0,0,0,0,0,0,0,0,0,5,30,0,0],
-	'des Béhémoths':
+	'des BÃ©hÃ©moths':
 		[0,0,0,0,0,0,3,0,0,0,0,0,0,0,30,0,0],
 	'des Mages':
 		[0,0,0,0,0,0,0,0,0,5,5,5,5,0,0,0,0],
@@ -6386,21 +6398,21 @@ var mh_templates = {
 		[0,0,0,0,-1,0,2,0,0,0,0,0,0,0,0,0,0],
 	'du Sable':
 		[0,0,0,0,3,0,-1,-1,0,0,0,0,0,0,0,0,0],
-	'acéré':
+	'acÃ©rÃ©':
 		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	'acérée':
+	'acÃ©rÃ©e':
 		[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	'équilibré':
+	'Ã©quilibrÃ©':
 		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	'équilibrée':
+	'Ã©quilibrÃ©e':
 		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	'léger':
+	'lÃ©ger':
 		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
-	'légère':
+	'lÃ©gÃ¨re':
 		[0,0,0,0,1,-1,0,0,0,0,0,0,0,0,0,0,0],
-	'renforcé':
+	'renforcÃ©':
 		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-	'renforcée':
+	'renforcÃ©e':
 		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
 	'robuste':
 		[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]
@@ -6421,7 +6433,7 @@ function addArray(arr1,arr2) {
 }
 
 function getTemplates(nomItem) {
-// Déstructure le nom de l'item en array [nom, template1, ...]
+// DÃ©structure le nom de l'item en array [nom, template1, ...]
 	var tempFound = true;
 	var str = nomItem.trim();
 	var arr = [];
@@ -6461,13 +6473,13 @@ function addMithril(arrayCaracs,typeItem) {
 
 function addRenfort(arrayCaracs,template) {
 // Ajoute l'effet des pseudo-templates sur les caracs
-// S'applique APRÈS le mithril
+// S'applique APRÃˆS le mithril
 // WARNING - Cette formule n'a rien d'officiel, gare !
 	var coef = 0;
-	if(/^lég[e,è]re?$/.test(template)) {
+	if(/^lÃ©g[e,Ã¨]re?$/.test(template)) {
 		coef = -1;
 	}
-	else if(/^renforcée?$/.test(template)
+	else if(/^renforcÃ©e?$/.test(template)
 		|| template==='robuste') {
 		coef = 1;
 	}
@@ -6480,7 +6492,7 @@ function addRenfort(arrayCaracs,template) {
 }
 
 function getCaracs(item) {
-// Calcule les caractéristiques de l'item
+// Calcule les caractÃ©ristiques de l'item
 	var templates = getTemplates(item);
 	if(!mh_caracs[templates[0]]) {
 		// Si l'item est inconnu
@@ -6494,10 +6506,10 @@ function getCaracs(item) {
 		caracs = addMithril(caracs,typeItem);
 		templates.pop();
 	}
-	if(/^acérée?$/.test(templates[0])
-		|| /^équilibrée?$/.test(templates[0])
-		|| /^lég[e,è]re?$/.test(templates[0])
-		|| /^renforcée?$/.test(templates[0])
+	if(/^acÃ©rÃ©e?$/.test(templates[0])
+		|| /^Ã©quilibrÃ©e?$/.test(templates[0])
+		|| /^lÃ©g[e,Ã¨]re?$/.test(templates[0])
+		|| /^renforcÃ©e?$/.test(templates[0])
 		|| templates[0]=='robuste') {
 		caracs = addRenfort(caracs,templates[0]);
 		templates.shift();
@@ -6509,7 +6521,7 @@ function getCaracs(item) {
 }
 
 function getLine(tab) {
-// Préparation de la ligne à afficher lors d'un mouseover
+// PrÃ©paration de la ligne Ã  afficher lors d'un mouseover
 	var str = '';
 	if(tab[0]!=0 || tab[1]!=0) {
 		str += '<b>Att : </b>'+aff(tab[0]);
@@ -6601,13 +6613,13 @@ function hideInfos() {
 }
 
 function treateEquipement() {
-// Extrait les données du matos et réinjecte les infos déduites
+// Extrait les donnÃ©es du matos et rÃ©injecte les infos dÃ©duites
 	if(MY_getValue('INFOCARAC')=='false') { return; }
 	
 	var faireLigne = false;
 	var caracs = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 	var nodes = document.evaluate(
-		"//td/b[text()='Equipement Utilisé']/../../"
+		"//td/b[text()='Equipement UtilisÃ©']/../../"
 		+"td[2]/img[contains(@src,bullet)]",
 		document, null, 7, null);
 	if(nodes.snapshotLength>0) {
@@ -6641,7 +6653,7 @@ function treateEquipement() {
 		}
 		
 		if(faireLigne) {
-			var node = document.evaluate("//td/b[text()='Equipement Utilisé']",
+			var node = document.evaluate("//td/b[text()='Equipement UtilisÃ©']",
 				document, null, 9, null).singleNodeValue;
 			node.infos = getLine(caracs);
 			node.onmouseover = showInfos;
@@ -6649,7 +6661,7 @@ function treateEquipement() {
 		}
 	}
 	else {
-		// Si CSS avancée
+		// Si CSS avancÃ©e
 		nodes = document.evaluate("//dd[@class='equipement']/ul/li",
 			document, null, 7, null);
 		if(nodes.snapshotLength>0) {
@@ -6709,7 +6721,7 @@ function do_pjview() {
 // x~x option
 
 /* TODO
- * Passer le HTML injecté aux conventions HTML5
+ * Passer le HTML injectÃ© aux conventions HTML5
  */
 
 
@@ -6734,7 +6746,7 @@ function saveITData() {
 function saveLinks() {
 	var numLinks = document.getElementById('linksBody').childNodes.length;
 	var data=[ [] ];
-	/* Récupération et tri des liens */
+	/* RÃ©cupÃ©ration et tri des liens */
 	for(var i=1 ; i<=numLinks ; i++) {
 		MY_removeValue('URL'+i);
 		MY_removeValue('URL'+i+'.nom');
@@ -6781,14 +6793,14 @@ function saveAll() {
 		document.getElementById('noInfoEM').checked ? 'true' : 'false');
 	
 	// Pourquoi Tilk stockait-il tout en str ?
-	// -> parce que les booléens c'est foireux (vérifié)
+	// -> parce que les boolÃ©ens c'est foireux (vÃ©rifiÃ©)
 	MY_setValue(numTroll+'.USECSS',
 		document.getElementById('usecss').checked ? 'true':'false');
 	MY_setValue('INFOCARAC',
 		document.getElementById('infocarac').checked ? 'true' : 'false');
 	//MY_setValue(numTroll+'.SEND_IDT',
 	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
-	// Fonctionnalité désactivée
+	// FonctionnalitÃ© dÃ©sactivÃ©e
 
 	MY_setValue(numTroll+'.AUTOCDM',
 		document.getElementById('autoCdM').checked ? 'true' : 'false');
@@ -6802,8 +6814,8 @@ function saveAll() {
 	saveITData();
 	
 	var bouton = document.getElementById('saveAll');
-	bouton.value = (bouton.value=='Sauvegardé !') ?	
-		'Re-sauvegardé !' : 'Sauvegardé !';
+	bouton.value = (bouton.value=='SauvegardÃ© !') ?	
+		'Re-sauvegardÃ© !' : 'SauvegardÃ© !';
 }
 
 
@@ -6823,7 +6835,7 @@ function onChangeIT() {
 			var system = arr[1];
 			var login = arr[2];
 		}
-		appendText(td,'Nom du système : ');
+		appendText(td,'Nom du systÃ¨me : ');
 		appendTextbox(td,'text','urlbricol',20,50,system);
 		td = appendTd(tr);
 		appendText(td,'Login du compte : ');
@@ -6858,7 +6870,7 @@ function addLinkField(i,url,nom,ico) {
 	appendText(td,'Nom : ');
 	appendTextbox(td,'text','nom'+i,20,150,nom);
 	td = appendTdCenter(tr);
-	appendText(td,'Icône : ');
+	appendText(td,'IcÃ´ne : ');
 	appendTextbox(td,'text','ico'+i,40,150,ico);
 }
 
@@ -6915,15 +6927,15 @@ function insertOptionTable(insertPt) {
 	
 	/* Liens dans le Menu */
 	var tr = appendTr(mainBody,'mh_tdtitre');
-	var td = appendTdText(tr,'Hyperliens ajoutés dans le Menu :',true);
+	var td = appendTdText(tr,'Hyperliens ajoutÃ©s dans le Menu :',true);
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendText(td,'Icône du Menu: ');
+	appendText(td,'IcÃ´ne du Menu: ');
 	var url = MY_getValue(numTroll+'.ICOMENU');
 	if(!url) { 
 		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
 	}
 	appendTextbox(td,'text','icoMenuIco',50,200,url);
-	appendButton(td,'Réinitialiser',resetMainIco);
+	appendButton(td,'RÃ©initialiser',resetMainIco);
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	var tbody = appendSubTable(td);
@@ -6961,10 +6973,10 @@ function insertOptionTable(insertPt) {
 	
 	td = appendTd(tr);
 	appendCheckBox(td,'noInfoEM',MY_getValue('NOINFOEM')=='true');
-	appendText(td,' Masquer les informations à propos de l\'écriture magique');
+	appendText(td,' Masquer les informations Ã  propos de l\'Ã©criture magique');
 	
 	tr = appendTr(tbody);
-	td = appendTdText(tr,'Nombre de CdM automatiquement récupérées : ');
+	td = appendTdText(tr,'Nombre de CdM automatiquement rÃ©cupÃ©rÃ©es : ');
 	appendTextbox(td,'text','maxcdm',5,10,MY_getValue(numTroll+'.MAXCDM'));
 	
 	td = appendTd(tr);
@@ -6977,8 +6989,8 @@ function insertOptionTable(insertPt) {
 	select = document.createElement('select');
 	select.id = 'itSelect';
 	appendOption(select,'none','Aucune');
-	appendOption(select,'bricol','Système Tactique des Bricol\'Trolls');
-	// seule interface supportée !
+	appendOption(select,'bricol','SystÃ¨me Tactique des Bricol\'Trolls');
+	// seule interface supportÃ©e !
 	td.appendChild(select);
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
@@ -6997,11 +7009,11 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'infocarac',MY_getValue('INFOCARAC')!='false');
 	appendText(td,
-		' Afficher les caractéristiques des équipements des autres Trõlls');
+		' Afficher les caractÃ©ristiques des Ã©quipements des autres TrÃµlls');
 	
 	/*td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'send_idt',MY_getValue(numTroll+'.SEND_IDT') != 'non')
-	appendText(td,' Envoyer les objets identifiés au système de stats');*/
+	appendText(td,' Envoyer les objets identifiÃ©s au systÃ¨me de stats');*/
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'autoCdM',MY_getValue(numTroll+'.AUTOCDM')=='true');
@@ -7009,15 +7021,15 @@ function insertOptionTable(insertPt) {
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
-	appendText(td,' Afficher la Vue avec les caractéristique dans le Profil');
+	appendText(td,' Afficher la Vue avec les caractÃ©ristique dans le Profil');
 	
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'confirmeDecalage',MY_getValue('CONFIRMEDECALAGE')=='true');
-	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
+	appendText(td,' Demander confirmation lors d\'un dÃ©calage de DLA');
 	
 	td = appendTd(appendTr(mainBody,"mh_tdpage"));
 	appendCheckBox(td,"oldShoolStyle",MY_getValue(numTroll+".OLDSCHOOL")=="true");
-	appendText(td," Ouvrir l'ancien profil par défaut");
+	appendText(td," Ouvrir l'ancien profil par dÃ©faut");
 	
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
@@ -7029,8 +7041,8 @@ function insertCreditsTable(insertPt) {
 	var tbody = insertMainTable(insertPt);
 	
 	var td = appendTdText( appendTr(tbody,'mh_tdtitre'),
-		'Depuis son origine, nombreux sont ceux qui ont contribué à faire '
-		+'de MountyZilla ce qu\'il est aujourd\'hui. Merci à eux !' );
+		'Depuis son origine, nombreux sont ceux qui ont contribuÃ© Ã  faire '
+		+'de MountyZilla ce qu\'il est aujourd\'hui. Merci Ã  eux !' );
 
 	var ul = document.createElement('ul');
 	td.appendChild(ul);
@@ -7041,29 +7053,29 @@ function insertCreditsTable(insertPt) {
 	appendLI(ul,'Ratibus (15916) pour l\'envoi de CdM');
 	appendLI(ul,'TetDure (41931) pour les PVs restants dans les CdM');
 	appendLI(ul,'Les Teubreux pour leur bestiaire !');
-	appendLI(ul,'Les développeurs de vue qui font des efforts pour s\'intégrer '
-		+'à Mountyzilla');
-	appendLI(ul,'Gros Kéké (233) qui permet de tester le script aux limites '
+	appendLI(ul,'Les dÃ©veloppeurs de vue qui font des efforts pour s\'intÃ©grer '
+		+'Ã  Mountyzilla');
+	appendLI(ul,'Gros KÃ©kÃ© (233) qui permet de tester le script aux limites '
 		+'du raisonnable avec sa vue de barbare');
 	appendLI(ul,'TuttiRikikiMaoussKosTroll (61214) pour le script '
-		+'sur les caracs de l\'équipement');
+		+'sur les caracs de l\'Ã©quipement');
 	appendLI(ul,'Ashitaka (9485) pour le gros nettoyage de l\'extension, '
-		+'des scripts, et beaucoup de choses à venir');
-	appendLI(ul,'Tous ceux de l\'ancienne génération oubliés par Tilk');
+		+'des scripts, et beaucoup de choses Ã  venir');
+	appendLI(ul,'Tous ceux de l\'ancienne gÃ©nÃ©ration oubliÃ©s par Tilk');
 	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... '
 		+'et tous les participants au projet ZoryaZilla');
-	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
-	appendLI(ul,'Rokü Menton-brûlant (108387) pour m\'avoir incité à passer '
+	appendLI(ul,'Yoyor (87818) pour diverses amÃ©liorations de code');
+	appendLI(ul,'RokÃ¼ Menton-brÃ»lant (108387) pour m\'avoir incitÃ© Ã  passer '
 		+'sur GitHub');
 	appendLI(ul,'Rouletabille (91305) & Marmotte (93138) pour leur support '
-		+'technique récurrent');
+		+'technique rÃ©current');
 	appendLI(ul,'Hennet (74092) pour le script du nouveau profil');
-	appendLI(ul,'Tous les testeurs de la nouvelle génération '
-		+'oubliés par Dabihul');
+	appendLI(ul,'Tous les testeurs de la nouvelle gÃ©nÃ©ration '
+		+'oubliÃ©s par Dabihul');
 	}
 
 
-/* [functions]                     Obsolètes                                  */
+/* [functions]                     ObsolÃ¨tes                                  */
 function deleteEnchantement()
 {
 	try
@@ -7112,7 +7124,7 @@ function deleteEnchantement()
 		window.alert(e);
 	}
 }
-/* [functions]                     fin Obsolètes                                  */
+/* [functions]                     fin ObsolÃ¨tes                                  */
 
 /*-[functions]---------------- Partie principale -----------------------------*/
 
@@ -7131,11 +7143,11 @@ function do_option() {
 	insertEnchantementTable();
 	*/
 	insertBefore(insertPoint,document.createElement('p'));
-	insertTitle(insertPoint,'Mountyzilla : Crédits');
+	insertTitle(insertPoint,'Mountyzilla : CrÃ©dits');
 	insertCreditsTable(insertPoint);
 	insertBefore(insertPoint,document.createElement('p'));
 
-	/* [zone]                     Obsolète ??                                  */
+	/* [zone]                     ObsolÃ¨te ??                                  */
 	if(MY_getValue(numTroll+".enchantement.liste")
 		&& MY_getValue(numTroll+".enchantement.liste")!="" )
 	{
@@ -7172,10 +7184,10 @@ function do_option() {
 				{
 					var infoComposant = MY_getValue(numTroll+".enchantement."
 						+idEquipement+".composant."+j).split(";");
-					var texte = infoComposant[4].replace("Ril ","Œil ");
+					var texte = infoComposant[4].replace("Ril ","Å’il ");
 					for(var k=5;k<infoComposant.length;k++)
 					{
-						texte += ";"+infoComposant[k].replace("Ril ","Œil ");
+						texte += ";"+infoComposant[k].replace("Ril ","Å’il ");
 					}
 					li = appendLI(ul,texte);
 					var string = '<form action="http://troc.mountyhall.com/search.php" method="post" TARGET = "_blank">';
@@ -7184,13 +7196,13 @@ function do_option() {
 					string+= '<input type="hidden" name="qualite" value="'+(getQualite(infoComposant[3])+1)+'" />';
 					string+= '<input type="hidden" name="q" value="min" />';
 					string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Rechercher sur le Troc de l\'Hydre" />';
-					string+= ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;http://www.cyclotrolls.be/wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22'+infoComposant[2]+'%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>';
+					string+= ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;http://www.cyclotrolls.be/wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22'+infoComposant[2]+'%22&quot;)" value="Localiser le monstre grÃ¢ce Ã  Troogle" /></form>';
 					
 					string+= '</form>';
 	//				string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
 	//				string+= '<input type="hidden" name="wiki" value="TroOGle" />';
 	//				string+= '<input type="hidden" name="trooglephr" value="base:monstres tag:nom &quot;'+infoComposant[2]+'&quot;" />';
-	//				string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grâce à Troogle" /></form>';
+	//				string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grÃ¢ce Ã  Troogle" /></form>';
 					li.innerHTML += string;
 				}
 				tr = appendTr(tbody, 'mh_tdpage');
@@ -7203,7 +7215,7 @@ function do_option() {
 				tr.appendChild(td);
 				td.setAttribute('valign', 'center');
 				
-				td = appendTdText(tr, "Enchanteur n°"+infoEnchanteur[0]+" ("+infoEnchanteur[1]+"|"+infoEnchanteur[2]+"|"+infoEnchanteur[3]+")");
+				td = appendTdText(tr, "Enchanteur nÂ°"+infoEnchanteur[0]+" ("+infoEnchanteur[1]+"|"+infoEnchanteur[2]+"|"+infoEnchanteur[3]+")");
 				td.setAttribute('valign', 'center');
 				
 				td = document.createElement('td');
@@ -7219,7 +7231,7 @@ function do_option() {
 		insertBefore(insertPoint, table);
 		insertBefore(insertPoint, document.createElement('p'));
 	}
-	/* [zone]                     fin Obsolète ??                                  */
+	/* [zone]                     fin ObsolÃ¨te ??                                  */
 
 
 	displayScriptTime();
@@ -7252,7 +7264,7 @@ function do_option() {
  * 2014-03-06 - v2.0a1
  * - retour Infos EM des Champis
  * TODO
- * Ces fonctions sont dev ici en test, à terme elles seront à intégrer dans libs
+ * Ces fonctions sont dev ici en test, Ã  terme elles seront Ã  intÃ©grer dans libs
  */
 
 function traiteChampis() {
@@ -7339,7 +7351,7 @@ function traiteMinerai() {
 	var titre = document.evaluate("./td[contains(./b/text(),'Minerai')]",
 		node.parentNode.parentNode.parentNode, null, 9, null).singleNodeValue;
 	if(!titre) return;*/
-	// Il faut préalablement injecter du CSS pour ne pas hériter de 'mh_titre3'
+	// Il faut prÃ©alablement injecter du CSS pour ne pas hÃ©riter de 'mh_titre3'
 	var td = appendTdText(trlist.snapshotItem(0).parentNode, '('+str+')');
 	td.colSpan = 7;
 	}
@@ -7376,11 +7388,11 @@ function do_equip() {
 
 /*
 TODO:
- V Étape 1: Gestion comme actuellement, avec 2 couleurs (amis/ennemis)
- V Étape 2: Gestion couleurs par catégorie (10 couleurs)
- V Étape 3: Ajout de la diplo perso
- X Étape 4: Gestion distante (sécurisée par mdp) de cette option
- V Étape 5: Ajout des fioritures (preview de la couleur...)
+ V Ã‰tape 1: Gestion comme actuellement, avec 2 couleurs (amis/ennemis)
+ V Ã‰tape 2: Gestion couleurs par catÃ©gorie (10 couleurs)
+ V Ã‰tape 3: Ajout de la diplo perso
+ X Ã‰tape 4: Gestion distante (sÃ©curisÃ©e par mdp) de cette option
+ V Ã‰tape 5: Ajout des fioritures (preview de la couleur...)
  
  Options Globales:
  Actuelles:
@@ -7453,7 +7465,7 @@ function appendChoixCouleur(node,id) {
 function insertChoixCouleur(node,id) {
 	var span = document.createElement('span');
 	span.id = 'span'+id;
-	// La couleur détaillée passera à une valeur aléatoire
+	// La couleur dÃ©taillÃ©e passera Ã  une valeur alÃ©atoire
 	// si toggle vers isDetailOn
 	var couleur = couleurAleatoire();
 	if(!isDetailOn) {
@@ -7500,11 +7512,11 @@ function fetchDiploGuilde() {
 	try {
 		for(var AE in {Amis:0,Ennemis:0}) {
 			for(var i=0 ; i<5 ; i++) {
-				/* Récup des A/E de rang i */
+				/* RÃ©cup des A/E de rang i */
 				var td = document.getElementById('td'+AE+i);
 				var ligne = td.getElementsByTagName('table')[0].rows;
 				var titre = trim(td.firstChild.textContent);
-				// On laisse la gestion des couleurs à setChoixCouleurs:
+				// On laisse la gestion des couleurs Ã  setChoixCouleurs:
 				var couleur = document.getElementById(AE+i).value;
 				diploGuilde[AE+i] = {
 					Troll:'',
@@ -7522,7 +7534,7 @@ function fetchDiploGuilde() {
 			}
 		}
 	} catch(e) {
-		window.console.error('[Diplomatie] Échec de récupération de la diplo\n'+e);
+		window.console.error('[Diplomatie] Ã‰chec de rÃ©cupÃ©ration de la diplo\n'+e);
 		return false;
 	}
 	return true;
@@ -7556,7 +7568,7 @@ function previewCouleur() {
 		this.title = '';
 	} else {
 		this.style.backgroundColor = '';
-		this.title = 'Entrez une couleur au format #789ABC pour prévisualiser';
+		this.title = 'Entrez une couleur au format #789ABC pour prÃ©visualiser';
 	}
 }
 
@@ -7578,7 +7590,7 @@ function ajouteChamp(type,num,couleur,descr) {
 	var td = appendTd(tr);
 	appendMenuType(td,type);
 	td = appendTd(tr);
-	appendText(td,' n°');
+	appendText(td,' nÂ°');
 	appendTextbox(td,'text','num'+nb,6,15,num);
 	td = appendTd(tr);
 	appendText(td,' couleur HTML:');
@@ -7671,7 +7683,7 @@ function sauvegarderTout() {
 	}
 	MY_setValue(numTroll+'.diplo.perso',JSON.stringify(diploPerso));
 
-	avertissement('Données sauvegardées');
+	avertissement('DonnÃ©es sauvegardÃ©es');
 }
 
 
@@ -7693,7 +7705,7 @@ function creeTablePrincipale() {
 	appendText(td,'Afficher la diplomatie de guilde dans la Vue');
 	appendBr(td);
 	appendCheckBox(td,'detailOn',isDetailOn,toggleDetails);
-	appendText(td,'Utiliser des couleurs détaillées (10)');
+	appendText(td,'Utiliser des couleurs dÃ©taillÃ©es (10)');
 	
 	/* Diplo personnelle */
 	tr = insertTr(insertPt,'mh_tdpage');
@@ -7701,7 +7713,7 @@ function creeTablePrincipale() {
 	appendBr(td);
 	// Diplo Mythiques
 	appendCheckBox(td,'isMythiquesOn',isMythiquesOn,toggleMythiques);
-	appendText(td,'Ajouter les monstres Mythiques à la Diplomatie');
+	appendText(td,'Ajouter les monstres Mythiques Ã  la Diplomatie');
 	var span = document.createElement('span');
 	span.id = 'spanMythiques';
 	if(!isMythiquesOn) {
@@ -7718,7 +7730,7 @@ function creeTablePrincipale() {
 	input.onkeyup();
 	td.appendChild(span);
 	appendBr(td);
-	// Diplo éditable
+	// Diplo Ã©ditable
 	appendCheckBox(td,'isPersoOn',diploPerso.isOn!='false');
 	appendText(td,'Afficher la diplomatie personnelle dans la Vue:');
 	appendBr(td);
@@ -7739,7 +7751,7 @@ function creeTablePrincipale() {
 		ajouteChamp();
 	}
 	appendButton(td,'Ajouter',ajouteChamp)
-	// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
+	// PrÃ©visualisation couleurs (merci Ã  Vys d'avoir implÃ©mentÃ© Ã§a xD)
 	appendText(td,' ');
 	appendButton(td,
 		'Exemples de couleur',
@@ -7757,7 +7769,7 @@ function creeTablePrincipale() {
 	/* Couleur de Guilde */
 	tr = insertTr(insertPt,'mh_tdtitre');
 	td = appendTdText(tr,'GUILDE',true);
-	appendText(td,' - n°');
+	appendText(td,' - nÂ°');
 	appendTextbox(td,'text','numGuilde',5,10,
 		diploGuilde.guilde && diploGuilde.guilde.id ?
 			diploGuilde.guilde.id : ''
@@ -7825,7 +7837,7 @@ function traiteCdM() {
 	try {
 		var msgEffet = document.getElementById('msgEffet');
 	} catch(e) {
-		window.console.log('[traiteCdM] msgEffet non trouvé');
+		window.console.log('[traiteCdM] msgEffet non trouvÃ©');
 		return;
 	}
 
@@ -7837,7 +7849,7 @@ function traiteCdM() {
 		return;
 	}
 	
-	// Début de récupération de la CdM
+	// DÃ©but de rÃ©cupÃ©ration de la CdM
 	cdm = document.evaluate(
 		"./p/b/text()[contains(.,'fait partie')]",
 		msgEffet, null, 9, null
@@ -7869,7 +7881,7 @@ function traiteCdM() {
 			}
 			if(valStat.snapshotItem(i).nodeValue.indexOf('(sup')!=-1 ||
 				valStat.snapshotItem(i+1).nodeValue.indexOf('(sup')!=-1) {
-				cdm += 'adj (supérieur à '+(armp[0]+armm[0]);
+				cdm += 'adj (supÃ©rieur Ã  '+(armp[0]+armm[0]);
 			} else {
 				cdm += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
 			}
@@ -7887,7 +7899,7 @@ function traiteCdM() {
 		sendInfoCDM();
 		var p = document.createElement('p');
 		p.style.color = 'green';
-		appendText(p,'CdM envoyée vers la base MountyZilla !');
+		appendText(p,'CdM envoyÃ©e vers la base MountyZilla !');
 		insertBefore(document.getElementsByName('as_Action')[0].parentNode,p);
 	} else {
 		insertButtonCdm('as_Action', sendInfoCDM);
@@ -7952,7 +7964,7 @@ function do_cdmcomp() {
 // x~x cmdbot
 
 /* v0.2 by Dab - 2013-08-20
- * - patch dégueu pour gérer la décomposition P/M de l'armure
+ * - patch dÃ©gueu pour gÃ©rer la dÃ©composition P/M de l'armure
  */
 
 var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
@@ -7963,41 +7975,41 @@ var buttonCDM;
 
 /*******************************************************************************************
 CDM :
-Vous avez RÉUSSI à utiliser cette compétence au niveau 5 : jet de 34 sur 95 %.
+Vous avez RÃ‰USSI Ã  utiliser cette compÃ©tence au niveau 5 : jet de 34 sur 95 %.
 
-Il ne vous est pas possible d'améliorer cette compétence.
+Il ne vous est pas possible d'amÃ©liorer cette compÃ©tence.
 
-Le Monstre Ciblé fait partie des : Mort-Vivant (Archi-Nécromant [Antique] - N°4571589)
+Le Monstre CiblÃ© fait partie des : Mort-Vivant (Archi-NÃ©cromant [Antique] - NÂ°4571589)
 Niveau :	Inimaginable (entre 49 et 51)
 Points de Vie :	Surtrollesque (entre 450 et 470)
 Blessure (Approximatif) :	0 %	
-Dés d'Attaque :	Impressionnant (entre 30 et 32)
-Dés d'Esquive :	Impressionnant (entre 28 et 30)
-Dés de Dégat :	Très Fort (entre 18 et 20)
-Dés de Régénération :	Excellent (égal à 13)
+DÃ©s d'Attaque :	Impressionnant (entre 30 et 32)
+DÃ©s d'Esquive :	Impressionnant (entre 28 et 30)
+DÃ©s de DÃ©gat :	TrÃ¨s Fort (entre 18 et 20)
+DÃ©s de RÃ©gÃ©nÃ©ration :	Excellent (Ã©gal Ã  13)
 Armure Physique :	Moyen (entre 10 et 12)
-Armure Magique :	Faible (inférieur à 6)
+Armure Magique :	Faible (infÃ©rieur Ã  6)
 Vue :	Moyen (entre 9 et 11)
-Maitrise Magique :	Inimaginable (supérieur à 6000)
-Résistance Magique :	Inimaginable (supérieur à 6000)
+Maitrise Magique :	Inimaginable (supÃ©rieur Ã  6000)
+RÃ©sistance Magique :	Inimaginable (supÃ©rieur Ã  6000)
 Nombre d'attaques :	1
-Vitesse de Déplacement :	Normale
-Voir le Caché :	Oui
-Attaque à distance :	Non
+Vitesse de DÃ©placement :	Normale
+Voir le CachÃ© :	Oui
+Attaque Ã  distance :	Non
 Attaque magique :	Oui
 Vole :	Non
 Sang froid :	Inexistant
 DLA :	Milieu
-Durée Tour :	Remarquable (entre 9 et 11)
+DurÃ©e Tour :	Remarquable (entre 9 et 11)
 Chargement :	Vide
 Bonus Malus :	Aucun
 
-Vous avez également gagné 1 PX pour la réussite.
+Vous avez Ã©galement gagnÃ© 1 PX pour la rÃ©ussite.
 *******************************************************************************************
 BOT :
-Vous avez utilisé CONNAISSANCE DES MONSTRES sur un Capitan Ronfleur [Naissant] (4768960)
+Vous avez utilisÃ© CONNAISSANCE DES MONSTRES sur un Capitan Ronfleur [Naissant] (4768960)
 
-Le Monstre ciblé fait partie des : Mort-Vivant
+Le Monstre ciblÃ© fait partie des : Mort-Vivant
 
 Niveau : Incroyable (entre 36 et 38)
 *******************************************************************************************/
@@ -8014,10 +8026,10 @@ function sendCDM() {
 								document, null, 9, null).singleNodeValue;
 	cdm = td.innerHTML;
 	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,
-						"$3$4 ($1 - N°$2)<br>");
+						"$3$4 ($1 - NÂ°$2)<br>");
 	cdm = cdm.replace(/Blessure :[\s]*[0-9]+ % \(approximativement\)/,
 						'Blessure : XX % (approximativement)');
-	// Supprime la décomposition P/M de l'Armure
+	// Supprime la dÃ©composition P/M de l'Armure
 	var bgn = cdm.indexOf('Armure Physique');
 	if (bgn!=-1) {
 		var end = cdm.indexOf('Vue')-2;
@@ -8030,7 +8042,7 @@ function sendCDM() {
 			armm = [0,armm[0]];
 		var insrt = 'Armure : ';
 		if (lines[0].indexOf('(sup')!=-1 || lines[1].indexOf('(sup')!=-1)
-			insrt += 'adj (supérieur à '+(armp[0]+armm[0]);
+			insrt += 'adj (supÃ©rieur Ã  '+(armp[0]+armm[0]);
 		else
 			insrt += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
 		cdm = cdm.replace(cdm.substring(bgn,end),insrt+')<br>');
@@ -8060,7 +8072,7 @@ function traiteCdM() {
 	cdm = td.innerHTML;
 		
 	// Insertion de l'estimation des PV restants
-	var des = cdm.indexOf('Dés');
+	var des = cdm.indexOf('DÃ©s');
 	var pv = cdm.slice(cdm.indexOf('Points de Vie'),cdm.indexOf('Blessure'));
 	pv = getPVsRestants(pv, cdm.slice(cdm.indexOf('Blessure :'),des) );
 	if(pv)
@@ -8072,16 +8084,16 @@ function traiteCdM() {
 
 /*function traitePouvoir() {
 	// Teste si ce message du bot est un message de CdM
-	// le test "capa" évite les pouvoirs type Chonchon (pas de SR)
-	var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacité spéciale')]/..",
+	// le test "capa" Ã©vite les pouvoirs type Chonchon (pas de SR)
+	var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacitÃ© spÃ©ciale')]/..",
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if (!td)
 		return false;
 		
 	var infos = td.innerHTML;
-	var id = /monstre n°([0-9]+) /.exec(infos)[1];
+	var id = /monstre nÂ°([0-9]+) /.exec(infos)[1];
 	var nomMonstre = /\(une? ([^)]+)\)/.exec(infos)[1];
-	var nomPouvoir = /spéciale : ([^<]+)/.exec(infos)[1];
+	var nomPouvoir = /spÃ©ciale : ([^<]+)/.exec(infos)[1];
 	var date = /alors : ([^<]+)\./.exec(infos)[1];
 	date = new Date(date.replace(/([0-9]+)\/([0-9]+)\//,"$2/$1/"));
 	var effetPouvoir="";
@@ -8093,10 +8105,10 @@ function traiteCdM() {
 		effetPouvoir = /effet : ([^<]+)/.exec(infos)[1];
 		full=true;
 		}
-	var dureePouvoir = /durée de ([0-9]+)/.exec(infos)[1];
-	// On insère le bouton et un espace
+	var dureePouvoir = /durÃ©e de ([0-9]+)/.exec(infos)[1];
+	// On insÃ¨re le bouton et un espace
 	//var url = pageEffetDispatcher + "?pouv="+escape(nomPouvoir)+"&monstre="+escape(nomMonstre)+"&id="+escape(id)+"&effet="+escape(effetPouvoir)+"&duree="+escape(dureePouvoir)+"&date="+escape(Math.round(date.getTime()/1000));
-	// ce type d'URL est obsolète (se fait par msgId dorénavant)
+	// ce type d'URL est obsolÃ¨te (se fait par msgId dorÃ©navant)
 	if(!MY_getValue('AUTOSENDPOUV'))
 	{
 		var button = insertButtonCdm('bClose',null,"Collecter les infos du pouvoir");
@@ -8117,7 +8129,7 @@ function traiteCdM() {
 }*/
 
 traiteCdM();
-//traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
+//traitePouvoir(); mÃ©thode d'envoi obsolÃ¨te et gestion inconnue niveau DB
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -8138,7 +8150,7 @@ traiteCdM();
 *******************************************************************************/
 
 // x~x menu
-// n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
+// n'est lancÃ© que sur refresh du volet de menu (activation ou [Refresh])
 
 var menuRac, mainIco;
 
@@ -8164,7 +8176,7 @@ function updateData() {
 		);
 		if(DLA>DLAstockee) {
 			MY_setValue(numTroll+'.DLA.ancienne',DateToString(DLAstockee));
-			// Pose un pb en cas de décalage de DLA
+			// Pose un pb en cas de dÃ©calage de DLA
 		}
 	}
 	MY_setValue(numTroll+'.DLA.encours',DateToString(DLA));
@@ -8179,7 +8191,7 @@ function initRaccourcis() {
 	var anotherURL = MY_getValue('URL1');
 	if(!anotherURL) { return; }
 	
-	/* Création de l'icône faisant apparaître le menu */
+	/* CrÃ©ation de l'icÃ´ne faisant apparaÃ®tre le menu */
 	mainIco = document.createElement('img');
 	var urlIco = MY_getValue(numTroll+'.ICOMENU');
 	if(!urlIco) {
@@ -8192,7 +8204,7 @@ function initRaccourcis() {
 	mainIco.onmouseover = afficheMenu;
 	document.body.appendChild(mainIco);
 	
-	/* Création du menu des Raccourcis */
+	/* CrÃ©ation du menu des Raccourcis */
 	menuRac = document.createElement('div');
 	menuRac.className = 'mh_textbox';
 	menuRac.style =
@@ -8236,7 +8248,7 @@ function cacheMenu(e) {
 	var ptX = e.clientX;
 	var ptY = e.clientY;
 	// On recalcule en live les BoundingBox pour mainIco et menuRac
-	// Moins optimal, mais évite des erreurs (d'originie inconnue)
+	// Moins optimal, mais Ã©vite des erreurs (d'originie inconnue)
 	var menuRect = menuRac.getBoundingClientRect();
 	var icoRect = mainIco.getBoundingClientRect();
 	if((ptX>icoRect.width || ptY>icoRect.height) &&
@@ -8251,7 +8263,7 @@ function oldSchoolProfile() {
 		lienProfil.href = "Play_profil.php";
 	} catch(e) {
 		avertissement();
-		window.console.log("[MZ menu] Lien vers le profil non trouvé",e);
+		window.console.log("[MZ menu] Lien vers le profil non trouvÃ©",e);
 	}
 }
 
@@ -8285,21 +8297,21 @@ function do_menu() {
 
 /* TODO
  * /!\ bug latent sur diminution bonusPV (perte Telaite / template Ours),
- * prévoir fix ("delete infos")
+ * prÃ©voir fix ("delete infos")
  */
 
 /*--------------------------- Variables Globales -----------------------------*/
 
-// Infos remplies par des scripts extérieurs
+// Infos remplies par des scripts extÃ©rieurs
 var listeCDM = [], listeLevels = [];
 
 // Position actuelle
 var currentPosition=[0,0,0];
 
-// Portées de la vue : [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
+// PortÃ©es de la vue : [vueHpure, vueVpure, vueHlimitÃ©e, vueVlimitÃ©e]
 var porteeVue=[0,0,0,0];
 
-// Fenêtres déplaçables
+// FenÃªtres dÃ©plaÃ§ables
 var winCurr = null;
 var offsetX, offsetY;
 document.onmousemove = drag;
@@ -8309,19 +8321,19 @@ var Diplo = {
 	Guilde: {},
 	Troll: {},
 	Monstre: {}
-	// .mythiques: uniquement si option activée
+	// .mythiques: uniquement si option activÃ©e
 };
-var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
+var isDiploRaw = true; // = si la Diplo n'a pas encore Ã©tÃ© analysÃ©e
 
 // Infos tactiques
 var popup;
 
-// Gère l'affichage en cascade des popups de CdM
+// GÃ¨re l'affichage en cascade des popups de CdM
 var nbCDM = 0;
 
-var isCDMsRetrieved = false; // = si les CdM ont déjà été DL
+var isCDMsRetrieved = false; // = si les CdM ont dÃ©jÃ  Ã©tÃ© DL
 
-// Utilisé pour supprimer les monstres "engagés"
+// UtilisÃ© pour supprimer les monstres "engagÃ©s"
 var listeEngages = {};
 var isEngagesComputed = false;
 var cursorOnLink = false; // DEBUG: wtf ?
@@ -8335,7 +8347,7 @@ var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
 	comboBoxNiveauMin, comboBoxNiveauMax;
 
-/* Acquisition & Stockage des données de DB */
+/* Acquisition & Stockage des donnÃ©es de DB */
 const typesAFetcher = {
 	'monstres':1,
 	'trolls':1,
@@ -8352,7 +8364,7 @@ function fetchData(type) {
 	try {
 		var node = document.getElementById('mh_vue_hidden_'+type);
 		// this = MZ.global = sandBox de travail de MZ
-		// On définit donc des variables MZ-globales
+		// On dÃ©finit donc des variables MZ-globales
 		this['tr_'+type] = node.getElementsByTagName('tr');
 		this['nb'+type[0].toUpperCase()+type.slice(1)] = this['tr_'+type].length-1;
 	} catch(e) {
@@ -8382,7 +8394,7 @@ function getPortee(param) {
 }
 
 function savePosition() {
-	// Stocke la position (à jour) de la vue pour les autres scripts
+	// Stocke la position (Ã  jour) de la vue pour les autres scripts
 	// DEBUG: Lesquels et pourquoi?
 	var pos = getPosition();
 	MY_setValue(numTroll+'.position.X',pos[0]);
@@ -8391,7 +8403,7 @@ function savePosition() {
 }
 
 
-/*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
+/*-[functions]--- Fonctions de rÃ©cupÃ©ration de donnÃ©es (DOM) -----------------*/
 /* INFOS :
  * les champs-titres (table>tbody>tr>td>table>tbody>tr>td>a)
  * sont identifiables via leur Name
@@ -8399,14 +8411,14 @@ function savePosition() {
  * (mh_vue_hidden_XXX, XXX=trolls, champignons, etc)
  */
 
-/* [functions] Récup données Utilisateur */
+/* [functions] RÃ©cup donnÃ©es Utilisateur */
 function getPosition() {
-	// Pour rétrocompatibilité
+	// Pour rÃ©trocompatibilitÃ©
 	return currentPosition;
 }
 
 function getPorteVue() {
-	// Pour rétrocompatibilité
+	// Pour rÃ©trocompatibilitÃ©
 	return porteeVue;
 }
 
@@ -8417,7 +8429,7 @@ function getVue() {
 	}
 
 // Roule 11/03/2016 
-/* [functions] Récup données monstres, trolls, etc. */
+/* [functions] RÃ©cup donnÃ©es monstres, trolls, etc. */
 function getXxxDistance(xxx, i) {
 	return parseInt(this['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
 }
@@ -8432,7 +8444,7 @@ function getXxxPosition(xxx, i) {
 }
 
 
-/* [functions] Récup données monstres */
+/* [functions] RÃ©cup donnÃ©es monstres */
 function getMonstreDistance(i) {
 	return parseInt(tr_monstres[i].cells[0].textContent);
 }
@@ -8519,7 +8531,7 @@ function bddMonstres(start,stop) {
 	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES\n' : '';
 }
 
-/* [functions] Récup données Trolls */
+/* [functions] RÃ©cup donnÃ©es Trolls */
 function getTrollDistance(i) {
 	return parseInt(tr_trolls[i].cells[0].textContent);
 }
@@ -8535,7 +8547,7 @@ function getTrollNomNode(i) {
 }
 
 function getTrollNivNode(i) {
-	// Pas de test sur isEnvoiOn, n'est appelé qu'au pageload
+	// Pas de test sur isEnvoiOn, n'est appelÃ© qu'au pageload
 	return tr_trolls[i].cells[4];
 }
 
@@ -8571,7 +8583,7 @@ function bddTrolls() {
 	return txt+'#FIN TROLLS';
 }
 
-/* [functions] Récup données Trésors */
+/* [functions] RÃ©cup donnÃ©es TrÃ©sors */
 function getTresorDistance(i) {
 	return tr_tresors[i].cells[0].firstChild.nodeValue;
 }
@@ -8581,7 +8593,7 @@ function getTresorID(i) {
 }
 
 function getTresorNom(i) {
-	// Utilisation de textContent pour régler le "bug de Pollux"
+	// Utilisation de textContent pour rÃ©gler le "bug de Pollux"
 	return trim(tr_tresors[i].cells[3].textContent);
 }
 
@@ -8596,7 +8608,7 @@ function getTresorPosition(i) {
 }
 
 function bddTresors(dmin,start,stop) {
-// On retire les trésors proches (dmin) pour Troogle à cause de leur description
+// On retire les trÃ©sors proches (dmin) pour Troogle Ã  cause de leur description
 	if(!dmin) { var dmin = 0; }
 	if(!start) { var start = 1; }
 	if(!stop) { var stop = nbTresors; }
@@ -8612,8 +8624,8 @@ function bddTresors(dmin,start,stop) {
 	return txt ? '#DEBUT TRESORS\n'+txt+'#FIN TRESORS\n' : '';
 }
 
-/* [functions] Récup données Champignons */
-// DEBUG: Pas de colonne "Référence" sur serveur de test
+/* [functions] RÃ©cup donnÃ©es Champignons */
+// DEBUG: Pas de colonne "RÃ©fÃ©rence" sur serveur de test
 function getChampignonNom(i) {
 	return trim(tr_champignons[i].cells[2].textContent);
 }
@@ -8631,14 +8643,14 @@ function getChampignonPosition(i) {
 function bddChampignons() {
 	var txt='';
 	for(var i=1 ; i<=nbChampignons ; i++) {
-		txt += ';'+ // Les champis n'ont pas de Référence
+		txt += ';'+ // Les champis n'ont pas de RÃ©fÃ©rence
 			getChampignonNom(i)+';'+
 			positionToString(getChampignonPosition(i))+'\n';
 	}
 	return txt ? '#DEBUT CHAMPIGNONS\n'+txt+'#FIN CHAMPIGNONS\n' : '';
 }
 
-/* [functions] Récup données Lieux */
+/* [functions] RÃ©cup donnÃ©es Lieux */
 function getLieuDistance(i) {
 	return parseInt(tr_lieux[i].cells[0].textContent);
 }
@@ -8648,7 +8660,7 @@ function getLieuID(i) {
 }
 
 function getLieuNom(i) {
-	// Conversion ASCII pour éviter les bugs des Vues externes
+	// Conversion ASCII pour Ã©viter les bugs des Vues externes
 	return trim(tr_lieux[i].cells[3].textContent);
 }
 
@@ -8690,36 +8702,36 @@ function bddLieux(start,stop) {
 }
 
 
-/*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
+/*-[functions]--------- Gestion PrÃ©fÃ©rences Utilisateur ----------------------*/
 
 function saveCheckBox(chkbo, pref) {
-	// Enregistre et retourne l'état d'une CheckBox
+	// Enregistre et retourne l'Ã©tat d'une CheckBox
 	var etat = chkbo.checked;
 	MY_setValue(pref, etat ? 'true' : 'false' );
 	return etat;
 	}
 
 function recallCheckBox(chkbox, pref) {
-	// Restitue l'état d'une CheckBox
+	// Restitue l'Ã©tat d'une CheckBox
 	chkbox.checked = (MY_getValue(pref)=='true');
 	}
 
 function saveComboBox(cbb, pref) {
-	// Enregistre et retourne l'état d'une ComboBox
+	// Enregistre et retourne l'Ã©tat d'une ComboBox
 	var etat = cbb.selectedIndex;
 	MY_setValue(pref, etat);
 	return etat;
 	}
 
 function recallComboBox(cbb, pref) {
-	// Restitue l'état d'une ComboBox
+	// Restitue l'Ã©tat d'une ComboBox
 	var nb = MY_getValue(pref);
 	if(nb) cbb.value = nb;
 	return nb;
 	}
 
 function synchroniseFiltres() {
-	// Récupération de toutes les options de la vue
+	// RÃ©cupÃ©ration de toutes les options de la vue
 	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
 	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
 	if(numBool) {
@@ -8830,7 +8842,7 @@ function refresh2DViewButton() {
 }
 
 function set2DViewSystem() {
-// Initialise le système de vue 2D
+// Initialise le systÃ¨me de vue 2D
 	// Recherche du point d'insertion
 	try {
 		var center = document.evaluate(
@@ -8838,19 +8850,19 @@ function set2DViewSystem() {
 			document, null, 9, null
 		).singleNodeValue;
 	} catch(e) {
-		avertissement("Erreur d'initialisation du système de vue 2D");
+		avertissement("Erreur d'initialisation du systÃ¨me de vue 2D");
 		window.console.error("[MZ] set2DViewSystem",e);
 		return;
 	}
 	
-	// Récupération de la dernière vue utilisée
+	// RÃ©cupÃ©ration de la derniÃ¨re vue utilisÃ©e
 	var vueext = MY_getValue('VUEEXT');
 	if(!vueext || !vue2Ddata[vueext]) {
-		// sinon, la vue Bricol'Trolls est employée par défaut
+		// sinon, la vue Bricol'Trolls est employÃ©e par dÃ©faut
 		vueext = 'Bricol\' Vue';
 	}
 	
-	// Création du sélecteur de vue externe
+	// CrÃ©ation du sÃ©lecteur de vue externe
 	selectVue2D = document.createElement('select');
 	selectVue2D.id = 'selectVue2D';
 	selectVue2D.className = 'SelectboxV2';
@@ -8860,17 +8872,17 @@ function set2DViewSystem() {
 	selectVue2D.value = vueext;
 	selectVue2D.onchange = refresh2DViewButton;
 	
-	// Création du formulaire d'envoi (vide, le submit est géré via handler)
+	// CrÃ©ation du formulaire d'envoi (vide, le submit est gÃ©rÃ© via handler)
 	var form = document.createElement('form');
 	form.id = 'viewForm';
 	
-	// Insertion du système de vue
+	// Insertion du systÃ¨me de vue
 	var table = document.createElement('table');
 	var tr = appendTr(table);
 	var td = appendTd(tr);
 	td.appendChild(selectVue2D);
 	td = appendTd(tr);
-	td.style.fontSize = '0px'; // gère le bug de l'extra character
+	td.style.fontSize = '0px'; // gÃ¨re le bug de l'extra character
 	td.appendChild(form);
 	center.insertBefore(table,center.firstChild);
 	insertBr(center.childNodes[1]);
@@ -8881,7 +8893,7 @@ function set2DViewSystem() {
 
 /* [functions] Tableau d'Infos */
 function initialiseInfos() {
-	// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
+	// DEBUG: prÃ©voir dÃ©sactivation complÃ¨te du script si infoTab non trouvÃ©
 	var
 		infoTab = document.getElementsByName('LimitViewForm')[0].
 			getElementsByTagName('table')[0],
@@ -8891,7 +8903,7 @@ function initialiseInfos() {
 		td = appendTdText(tr,'INFORMATIONS',true),
 		span = document.createElement('span');
 	
-	// Récupération de la position du joueur
+	// RÃ©cupÃ©ration de la position du joueur
 	try {
 		var strPos = document.evaluate(
 				".//li/b/text()[contains(.,'X = ')]",
@@ -8902,10 +8914,10 @@ function initialiseInfos() {
 		debugMZ("retrievePosition(): "+currentPosition);
 	} catch(e) {
 		// Si on ne trouve pas le "X ="
-		window.console.error("[MZ Vue] Position joueur non trouvée",e);
+		window.console.error("[MZ Vue] Position joueur non trouvÃ©e",e);
 	}
 	
-	// Récupération des portées (max et limitée) de la vue
+	// RÃ©cupÃ©ration des portÃ©es (max et limitÃ©e) de la vue
 	try {
 		var	
 			nodes = document.evaluate(
@@ -8920,7 +8932,7 @@ function initialiseInfos() {
 		// ***INIT GLOBALE*** porteeVue
 		porteeVue = array;
 	} catch(e) {
-		window.console.error("[MZ Vue] Portées Vue non trouvées",e);
+		window.console.error("[MZ Vue] PortÃ©es Vue non trouvÃ©es",e);
 	}
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
@@ -8957,7 +8969,7 @@ function initialiseInfos() {
 	td.className = 'mh_tdtitre';
 	td.width = 100;
 	td = appendTdCenter(tr,2);
-	// DEBUG : à quoi servent les ids si on utilise des var globales ?
+	// DEBUG : Ã  quoi servent les ids si on utilise des var globales ?
 	checkBoxGG = appendCheckBoxSpan(
 		td,'delgg',filtreTresors," Les GG'"
 	).firstChild;
@@ -8974,7 +8986,7 @@ function initialiseInfos() {
 		td,'delgowap',filtreMonstres,' Les Gowaps'
 	).firstChild;
 	checkBoxEngages = appendCheckBoxSpan(
-		td,'delengage',filtreMonstres,' Les Engagés'
+		td,'delengage',filtreMonstres,' Les EngagÃ©s'
 	).firstChild;
 	checkBoxLevels = appendCheckBoxSpan(
 		td,'delniveau',toggleLevelColumn,' Les Niveaux'
@@ -8994,7 +9006,7 @@ function initialiseInfos() {
 		).firstChild;
 	}
 	checkBoxTresorsNonLibres = appendCheckBoxSpan(
-		td,'deltres',filtreTresors,' Les Trésors non libres'
+		td,'deltres',filtreTresors,' Les TrÃ©sors non libres'
 	).firstChild;
 	checkBoxTactique = appendCheckBoxSpan(
 		td,'deltactique',updateTactique,' Les Infos tactiques'
@@ -9009,12 +9021,12 @@ function toggleTableauInfos(firstRun) {
 	var
 		msg = document.getElementById('msgInfoTab'),
 		corps = document.getElementById('corpsInfoTab'),
-		infoplie = parseInt(MY_getValue('INFOPLIE'));	// 27/032016 Roule, pb sur récupération booléen, force numérique
-		//window.console.log('toggleTableauInfos(' + firstRun + '), début, INFOPLIE=' + MY_getValue('INFOPLIE') + ', !INFOPLIE=' + !MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// debug Roule
+		infoplie = parseInt(MY_getValue('INFOPLIE'));	// 27/032016 Roule, pb sur rÃ©cupÃ©ration boolÃ©en, force numÃ©rique
+		//window.console.log('toggleTableauInfos(' + firstRun + '), dÃ©but, INFOPLIE=' + MY_getValue('INFOPLIE') + ', !INFOPLIE=' + !MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// debug Roule
 	if(!firstRun) {
 		infoplie = !infoplie;
-		MY_setValue('INFOPLIE', infoplie ? 1 : 0);	// 27/032016 Roule, pb sur récupération booléen, force numérique
-		//window.console.log('toggleTableauInfos(' + firstRun + '), après toggle et set, INFOPLIE=' + MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// Debug Roule
+		MY_setValue('INFOPLIE', infoplie ? 1 : 0);	// 27/032016 Roule, pb sur rÃ©cupÃ©ration boolÃ©en, force numÃ©rique
+		//window.console.log('toggleTableauInfos(' + firstRun + '), aprÃ¨s toggle et set, INFOPLIE=' + MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// Debug Roule
 	}
 	if(infoplie) {
 		msg.style.display = '';
@@ -9031,11 +9043,11 @@ function prepareFiltrage(ref,width) {
 	try {
 		var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
 	} catch(e) {
-		window.console.warn('[prepareFiltrage] Référence filtrage '+ref+' non trouvée\n'+e);
+		window.console.warn('[prepareFiltrage] RÃ©fÃ©rence filtrage '+ref+' non trouvÃ©e\n'+e);
 		return false;
 	}
 	if(width) { tdTitre.width = width; }
-	// Ajout du tr de Filtrage (masqué)
+	// Ajout du tr de Filtrage (masquÃ©)
 	var tbody = tdTitre.parentNode.parentNode;
 	var tr = appendTr(tbody,'mh_tdpage');
 	tr.style.display = 'none';
@@ -9054,7 +9066,7 @@ function prepareFiltrage(ref,width) {
 }
 
 function debutFiltrage(ref) {
-	// = Handler de début de filtrage (filtre 'ref')
+	// = Handler de dÃ©but de filtrage (filtre 'ref')
 	document.getElementById('trFiltre'+ref).style.display = '';
 	var btn = document.getElementById('btnFiltre'+ref);
 	btn.value = 'Annuler Filtre';
@@ -9065,14 +9077,14 @@ function debutFiltrage(ref) {
 
 function finFiltrage(ref) {
 // = Handler de fin de filtrage (filtre 'ref')
-	/* On réassigne le bouton 'Filtrer' */
+	/* On rÃ©assigne le bouton 'Filtrer' */
 	document.getElementById('trFiltre'+ref).style.display = 'none';
 	var btn = document.getElementById('btnFiltre'+ref);
 	btn.value = 'Filtrer';
 	btn.onclick = function() {
 		debutFiltrage(ref);
 	};
-	/* Réinitialisation filtres */
+	/* RÃ©initialisation filtres */
 	document.getElementById('str'+ref).value = '';
 	switch(ref) {
 		case 'Monstres':
@@ -9146,17 +9158,17 @@ function ajoutDesFiltres() {
 		appendText(td,'Niveau Max: ');
 		comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
 	}
-	/* Trõlls */
+	/* TrÃµlls */
 	td = prepareFiltrage('Trolls',50);
 	if(td) {
-		ajoutFiltreStr(td,'Nom du trõll:','strTrolls',filtreTrolls);
+		ajoutFiltreStr(td,'Nom du trÃµll:','strTrolls',filtreTrolls);
 		appendText(td,'\u00a0\u00a0\u00a0');
 		ajoutFiltreStr(td,'Nom de guilde:','strGuildes',filtreTrolls);
 	}
-	/* Trésors */
+	/* TrÃ©sors */
 	td = prepareFiltrage('Tresors',55);
 	if(td) {
-		ajoutFiltreStr(td,'Nom du trésor:','strTresors',filtreTresors);
+		ajoutFiltreStr(td,'Nom du trÃ©sor:','strTresors',filtreTresors);
 	}
 	/* Lieux */
 	td = prepareFiltrage('Lieux',40);
@@ -9166,13 +9178,13 @@ function ajoutDesFiltres() {
 }
 
 /* [functions] Bouton d'envoi vers Troogle */
-// WARNING - Nécessite que le Filtre Monstres ait été mis en place
+// WARNING - NÃ©cessite que le Filtre Monstres ait Ã©tÃ© mis en place
 function envoiVersTroogle() {
 // = 1er Handler bouton Troogle
 	try {
 		var bouton = document.getElementById('bouton_Troogle');
 	} catch(e) {
-		window.console.log('Bouton d\'envoi non trouvé.');
+		window.console.log('Bouton d\'envoi non trouvÃ©.');
 		return;
 	}
 	bouton.onclick = lireInfosTroogle;
@@ -9206,9 +9218,9 @@ function envoiVersTroogle() {
 			onload:	function(responseDetails) {
 				try {
 					var resp = responseDetails.responseText;
-					responses[this.lot] = 'Envoi des éléments '+this.debutLot+
-						' à '+Math.min(maxDonnees,this.finLot)+' :\n'+resp;
-					if(resp.indexOf('succès')==-1) {
+					responses[this.lot] = 'Envoi des Ã©lÃ©ments '+this.debutLot+
+						' Ã  '+Math.min(maxDonnees,this.finLot)+' :\n'+resp;
+					if(resp.indexOf('succÃ¨s')==-1) {
 						erreur = true;
 					}
 				} catch(e) {
@@ -9226,7 +9238,7 @@ function envoiVersTroogle() {
 				}
 				bouton.info = txt;
 				if(fini) {
-					bouton.value = erreur ? 'Erreur' : 'Envoi réussi';
+					bouton.value = erreur ? 'Erreur' : 'Envoi rÃ©ussi';
 				}
 			}
 		});
@@ -9238,7 +9250,7 @@ function lireInfosTroogle() {
 	try {
 		var infos = document.getElementById('bouton_Troogle').info;
 	} catch(e) {
-		avertissement('[lireInfosTroogle] Bouton Troogle non trouvé');
+		avertissement('[lireInfosTroogle] Bouton Troogle non trouvÃ©');
 		window.console.error('[lireInfosTroogle]\n'+e);
 		return;
 	}
@@ -9253,7 +9265,7 @@ function putBoutonTroogle() {
 	bouton.type = 'button';
 	bouton.id = 'bouton_Troogle';
 	bouton.className = 'mh_form_submit';
-	bouton.value = 'Envoyer les données vers Troogle';
+	bouton.value = 'Envoyer les donnÃ©es vers Troogle';
 	bouton.onmouseover = function(){
 		this.style.cursor='pointer';
 	};
@@ -9266,7 +9278,7 @@ function putBoutonTroogle() {
 
 /* [functions] Affichage de la colonne des niveaux */
 function insertLevelColumn() {
-// Déclenché si bascule vers affichage des niveaux des mobs
+// DÃ©clenchÃ© si bascule vers affichage des niveaux des mobs
 	//window.console.log('nbMonstres=' + nbMonstres + ', tr_monstres.length=' + tr_monstres.length);	// debug Roule
 	var td = insertTdText(getMonstreLevelNode(0),'Niveau',true);
 	td.width = 25;
@@ -9292,7 +9304,7 @@ function insertLevelColumn() {
 		};
 		td.style = 'font-weight:bold;text-align:center;';
 		if(isCDMsRetrieved) {
-			// Rappel des niveaux si mémorisés
+			// Rappel des niveaux si mÃ©morisÃ©s
 			td.innerHTML = listeLevels[i];
 		}
 	}
@@ -9306,7 +9318,7 @@ function toggleLevelColumn() {
 	} else if(getMonstreLevelNode(0).textContent=='Niveau') {
 		for(var i=0 ; i<=nbMonstres ; i++) {
 			if(isCDMsRetrieved) {
-				// Mémorisation des niveaux pour rappel éventuel
+				// MÃ©morisation des niveaux pour rappel Ã©ventuel
 				listeLevels[i] = getMonstreLevelNode(i).innerHTML;
 			}
 			// Suppression du td Niveau
@@ -9325,7 +9337,7 @@ function basculeCDM(nom,id) {
 			cacherPopupCDM('popupCDM'+id);
 		}
 	}
-	// DEBUG: prévoir un "else" ou désactiver l'effet onmouseover si pas de CdM
+	// DEBUG: prÃ©voir un "else" ou dÃ©sactiver l'effet onmouseover si pas de CdM
 }
 
 function cacherPopupCDM(titre) {
@@ -9333,7 +9345,7 @@ function cacherPopupCDM(titre) {
 	popup.parentNode.removeChild(popup);
 }
 
-/* DEBUG: Section à mettre à jour */
+/* DEBUG: Section Ã  mettre Ã  jour */
 var selectionFunction;
 
 function startDrag(evt) {
@@ -9363,9 +9375,9 @@ function drag(evt) {
 /* FIN DEBUG */
 
 function afficherCDM(nom,id) {
-// Crée la table de CdM du mob n° id
+// CrÃ©e la table de CdM du mob nÂ° id
 	var donneesMonstre = listeCDM[id];
-	/* Début création table */
+	/* DÃ©but crÃ©ation table */
 	var table = createCDMTable(id,nom,donneesMonstre); // voir Libs
 	table.id = 'popupCDM'+id;
 	table.style =
@@ -9398,7 +9410,7 @@ function afficherCDM(nom,id) {
 	td.colSpan = 2;
 	td.style = 'text-align:center;';
 	nbCDM++;
-	/* Fin création table & Affichage */
+	/* Fin crÃ©ation table & Affichage */
 	document.body.appendChild(table);
 }
 
@@ -9417,7 +9429,7 @@ function initPopupVue() {
 	document.body.appendChild(popup);
 }
 
-// roule 16/03/2016 supprimé, existe déjà dans vue
+// roule 16/03/2016 supprimÃ©, existe dÃ©jÃ  dans vue
 // function showPopupTactique(evt) {
 	// var id = this.id;
 	// var nom = this.nom;
@@ -9429,13 +9441,13 @@ function initPopupVue() {
 	// popup.style.visibility = 'visible';
 // }
 
-// roule 16/03/2016, existe déjà ailleurs
+// roule 16/03/2016, existe dÃ©jÃ  ailleurs
 // function hidePopup() {
 	// popup.style.visibility = 'hidden';
 // }
 
-/* [functions] Récupération / Computation des Infos Tactiques */
-// TODO à revoir
+/* [functions] RÃ©cupÃ©ration / Computation des Infos Tactiques */
+// TODO Ã  revoir
 function retireMarquage(nom) {
 	var i = nom.indexOf(']');
 	switch(i) {
@@ -9448,15 +9460,15 @@ function retireMarquage(nom) {
 }
 
 function retrieveCDMs() {
-// Récupère les CdM disponibles dans la BDD
-// Lancé uniquement sur toggleLevelColumn
+// RÃ©cupÃ¨re les CdM disponibles dans la BDD
+// LancÃ© uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) { return; }
 	
 	var str = '';
-	var begin = 1; // num de début de lot si plusieurs lots de CdM (501+ CdM)
+	var begin = 1; // num de dÃ©but de lot si plusieurs lots de CdM (501+ CdM)
 	var cdmMax = MY_getValue(numTroll+'.MAXCDM');
 	cdmMax = Math.min(nbMonstres, cdmMax ? cdmMax : 500);
-	if(MY_getValue('CDMID')==null) MY_setValue('CDMID',1); // à quoi sert CDMID ??
+	if(MY_getValue('CDMID')==null) MY_setValue('CDMID',1); // Ã  quoi sert CDMID ??
 	
 	for(var i=1 ; i<=cdmMax ; i++) {
 		var nomMonstre = retireMarquage(getMonstreNom(i));
@@ -9464,7 +9476,7 @@ function retrieveCDMs() {
 			nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
 		}
 		// *** WARNING : PROXY RATIBUS ***
-		// *** NE PAS CHANGER la fonction obsolète 'escape' ***
+		// *** NE PAS CHANGER la fonction obsolÃ¨te 'escape' ***
 		str += 'nom[]='+escape(nomMonstre)+'$'+(
 			getMonstreDistance(i)<=5 ? getMonstreID(i) : -getMonstreID(i)
 		)+'&';
@@ -9592,7 +9604,7 @@ function computeVLC(begin,end) {
 	computeTactique(begin,end);
 	if(!begin) begin=1;
 	if(!end) end=nbMonstres;
-	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
+	var cache = getSortComp("InvisibilitÃ©")>0 || getSortComp("Camouflage")>0;
 	if(!cache)
 		return false;
 	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
@@ -9606,7 +9618,7 @@ function computeVLC(begin,end) {
 			{
 				var td = getMonstreNomNode(i);
 				td.appendChild(document.createTextNode(" "));
-				td.appendChild(createImage(urlImg, "Voit le caché"));
+				td.appendChild(createImage(urlImg, "Voit le cachÃ©"));
 			}
 		}
 	}
@@ -9660,24 +9672,24 @@ function updateTactique() {
 }
 
 function filtreMonstres() {
-// = Handler universel pour les fonctions liées aux monstres
+// = Handler universel pour les fonctions liÃ©es aux monstres
 	var urlImg = MZimg+'Competences/ecritureMagique.png',
 		urlEnchantImg = MZimg+'images/enchant.png';
 	
-	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
+	/* VÃ©rification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MY_getValue(numTroll+'.USECSS')=='true';
 	var noGowaps = saveCheckBox(checkBoxGowaps,'NOGOWAP'),
 		noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE'),
 		nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE'),
 		nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
-	// old/new : détermine s'il faut ou non nettoyer les tr
+	// old/new : dÃ©termine s'il faut ou non nettoyer les tr
 	var oldNOEM = true, noEM = true;
 	if(MY_getValue('NOINFOEM')!='true') {
 		noEM = saveCheckBox(checkBoxEM, 'NOEM');
 	}
 	// Filtrage par nom
 	var strMonstre = document.getElementById('strMonstres').value.toLowerCase();
-	// Génère la liste des mobs engagés (si filtrés)
+	// GÃ©nÃ¨re la liste des mobs engagÃ©s (si filtrÃ©s)
 	if(noEngages && !isEngagesComputed) {
 		for(var i=nbTrolls ; i>0 ; i--) {
 			var pos = getTrollPosition(i);
@@ -9689,21 +9701,21 @@ function filtreMonstres() {
 	}
 	
 	/*** FILTRAGE ***/
-	/* À computer :
+	/* Ã€ computer :
 	 * - EM (nom suffit)
 	 * - Enchant (nom suffit)
-	 * - Mission (nécessite CdM)
- 	 * - mob VlC (nécessite CdM)
+	 * - Mission (nÃ©cessite CdM)
+ 	 * - mob VlC (nÃ©cessite CdM)
 	 * Sans computation :
-	 * - Gowap ? engagé ?
+	 * - Gowap ? engagÃ© ?
 	 */
 	for(var i=nbMonstres ; i>0 ; i--) {
 		var pos = getMonstrePosition(i);
 		var nom = getMonstreNom(i).toLowerCase();
 		if(noEM!=oldNOEM) {
 			if(noEM) {
-				// Si noEM passe de false à true, on nettoie les td "Nom"
-				// DEBUG: Sauf que ce serait carrément mieux avec des id...
+				// Si noEM passe de false Ã  true, on nettoie les td "Nom"
+				// DEBUG: Sauf que ce serait carrÃ©ment mieux avec des id...
 				var tr = getMonstreNomNode(i);
 				while(tr.childNodes.length>1) {
 					tr.removeChild(tr.childNodes[1]);
@@ -9731,7 +9743,7 @@ function filtreMonstres() {
 		
 		tr_monstres[i].style.display = (
 			noGowaps &&
-			nom.indexOf('gowap apprivoisé')!=-1 &&
+			nom.indexOf('gowap apprivoisÃ©')!=-1 &&
 			getMonstreDistance(i)>1
 		) || (
 			noEngages &&
@@ -9767,7 +9779,7 @@ function filtreMonstres() {
 }
 
 
-/*-[functions]---------------- Fonctions Trõlls ------------------------------*/
+/*-[functions]---------------- Fonctions TrÃµlls ------------------------------*/
 
 function filtreTrolls() {
 	var noIntangibles = saveCheckBox(checkBoxIntangibles,'NOINT');
@@ -9824,7 +9836,7 @@ function hidePXTroll() {
 /* [functions] Envoi PX / MP */
 function putBoutonPXMP() {
 // Bouton d'initialisation du mode Envoi
-// WARNING - Nécessite que le Filtre Trõll ait été mis en place
+// WARNING - NÃ©cessite que le Filtre TrÃµll ait Ã©tÃ© mis en place
 	var td = document.getElementById('tdInsertTrolls');
 	if(!td) { return; }
 	td.width = 100;
@@ -9881,7 +9893,7 @@ function annuleEnvoi() {
 	while(tdEnvoi.firstChild) {
 		tdEnvoi.removeChild(tdEnvoi.firstChild);
 	}
-	/* Retour à l'effet de base du bouton Envoi */
+	/* Retour Ã  l'effet de base du bouton Envoi */
 	btnEnvoi.onclick = prepareEnvoi;
 	tdEnvoi.appendChild(btnEnvoi);
 	/* Suppression CheckBoxes */
@@ -9908,7 +9920,7 @@ function effectueEnvoi() {
 	}
 }
 
-/*-[functions]---------------- Fonctions Trésors -----------------------------*/
+/*-[functions]---------------- Fonctions TrÃ©sors -----------------------------*/
 
 function filtreTresors() {
 // += Handler checkboxes : gg, compos, bidouilles, non libres
@@ -9964,7 +9976,7 @@ function filtreLieux() {
 			getLieuNom(i).toLowerCase().indexOf(strLieu)==-1
 		) || (
 			noTrou &&
-			getLieuNom(i).toLowerCase().indexOf("trou de météorite")!=-1 &&
+			getLieuNom(i).toLowerCase().indexOf("trou de mÃ©tÃ©orite")!=-1 &&
 			getLieuDistance(i)>1
 		) ? 'none' : '';
 	}
@@ -9982,8 +9994,8 @@ function refreshDiplo() {
 }
 
 function computeDiplo() {
-// On extrait les données de couleur et on les stocke par id
-// Ordre de préséance :
+// On extrait les donnÃ©es de couleur et on les stocke par id
+// Ordre de prÃ©sÃ©ance :
 //  source Guilde < source Perso
 //  guilde cible < troll cible
 	
@@ -10036,7 +10048,7 @@ function computeDiplo() {
 function appliqueDiplo() {
 	var aAppliquer = Diplo;
 	if(checkBoxDiplo.checked) {
-		// Pour retour à l'affichage basique sur désactivation de la diplo
+		// Pour retour Ã  l'affichage basique sur dÃ©sactivation de la diplo
 		aAppliquer = {
 			Guilde: {},
 			Troll: {},
@@ -10045,7 +10057,7 @@ function appliqueDiplo() {
 	}
 	
 	/* On applique "aAppliquer" */
-	// Diplo Trõlls
+	// Diplo TrÃµlls
 	for(var i=nbTrolls ; i>0 ; i--) {
 		var idG = getTrollGuildeID(i);
 		var idT = getTrollID(i);
@@ -10099,7 +10111,7 @@ function appliqueDiplo() {
 }
 
 
-/*-[functions]---------------- Actions à distance ----------------------------*/
+/*-[functions]---------------- Actions Ã  distance ----------------------------*/
 
 function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 	var monN = parseInt(getPosition()[2]);
@@ -10149,7 +10161,7 @@ function computeCharge() {
 		{'Monstres':1, 'Trolls':1},
 		'Attaquer',
 		MHicons+'E_Metal09.png',
-		'Cible à portée de Charge'
+		'Cible Ã  portÃ©e de Charge'
 	);
 }
 
@@ -10162,7 +10174,7 @@ function computeProjo() {
 		{'Monstres':1, 'Trolls':1},
 		'Attaquer',
 		MHicons+'S_Fire05.png',
-		'Cible à portée de Projo'
+		'Cible Ã  portÃ©e de Projo'
 	);
 }
 
@@ -10175,7 +10187,7 @@ function computeTelek() {
 		{'Tresors':1},
 		'Telek',
 		MHicons+'S_Magic04.png',
-		'Trésor à portée de Télékinésie'
+		'TrÃ©sor Ã  portÃ©e de TÃ©lÃ©kinÃ©sie'
 	);
 }
 
@@ -10188,12 +10200,12 @@ function computeLdP() {
 		{'Monstres':1, 'Trolls':1},
 		'self',
 		MHicons+'P_Red01.png',
-		'Cible à portée de Lancer de Potions'
+		'Cible Ã  portÃ©e de Lancer de Potions'
 	);
 }
 
 
-/*-[functions]--------------- Systèmes Tactiques -----------------------------*/
+/*-[functions]--------------- SystÃ¨mes Tactiques -----------------------------*/
 
 function putScriptExterne() {
 	var infoit = MY_getValue(numTroll+'.INFOSIT');
@@ -10224,7 +10236,7 @@ function erreurIT( chaine , it ) {
 /* Le script de Ratibus renvoie :
  + infosTrolls = new Array();
  + infosTrolls[numdutroll] =
- new Array(PV,PVbase,date màj: "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
+ new Array(PV,PVbase,date mÃ j: "le JJ/MM/AAAA Ã  hh:mm:ss",date pDLA,PA dispos);
  + etc ...
  + putInfosTrolls();
  * 
@@ -10249,7 +10261,7 @@ function corrigeBricolTrolls() {
 	}
 
 function putInfosTrolls() {
-	// teste la présence de trõlls de l'IT
+	// teste la prÃ©sence de trÃµlls de l'IT
 	var i=nbTrolls;
 	while( i>0 && !infosTrolls[getTrollID(i)] ) i--;
 	if(i==0) return;
@@ -10305,7 +10317,7 @@ function putInfosTrolls() {
 	}
 
 
-/* Mode Tétalanvert! ---------------------------------------------------------*/
+/* Mode TÃ©talanvert! ---------------------------------------------------------*/
 
 function calculeDistance(maPos,posArr) {
 	return Math.max(
@@ -10343,7 +10355,7 @@ function do_vue() {
 	}
 
 	// roule' 11/03/2016
-	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
+	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la mÃªme chose
 	// je fais une recopie :(
 	tr_monstres = this['tr_monstres'];
 	tr_trolls = this['tr_trolls'];
@@ -10363,7 +10375,7 @@ function do_vue() {
 		initialiseInfos();
 		savePosition();
 
-		// Fonctionnalité "Têtalenvert" cachée, en test :
+		// FonctionnalitÃ© "TÃªtalenvert" cachÃ©e, en test :
 		if(MY_getValue(numTroll+'.VERLAN')=='true') {
 			inversionCoord();
 		}
@@ -10408,7 +10420,7 @@ function do_vue() {
 		if(getTalent("Charger")!=0) {
 			computeCharge();
 		}
-		if(getTalent("Télékinésie")!=0) {
+		if(getTalent("TÃ©lÃ©kinÃ©sie")!=0) {
 			computeTelek();
 		}
 		if(getTalent("Lancer de Potions")!=0) {
@@ -10420,7 +10432,7 @@ function do_vue() {
 		displayScriptTime();
 	} catch(e) {
 		avertissement("[MZ] Une erreur s'est produite.");
-		window.console.error("[MZ] Erreur générale Vue",e);
+		window.console.error("[MZ] Erreur gÃ©nÃ©rale Vue",e);
 	}
 }
 
@@ -10528,8 +10540,8 @@ function getUniqueFloatValueBySelector(selector){
 
 
 function resiste(Ddeg,bm) {
-	// version naive mais compréhensible ^^
-	// DEBUG: à revoir
+	// version naive mais comprÃ©hensible ^^
+	// DEBUG: Ã  revoir
 	if(!bm) {
 		return 2*Math.floor(Ddeg/2);
 	}
@@ -10539,7 +10551,7 @@ function resiste(Ddeg,bm) {
 function getPortee(param) {
 	param = Math.max(0,Number(param));
 	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
-	// ça devrait être floor, +10.25, -2.5
+	// Ã§a devrait Ãªtre floor, +10.25, -2.5
 }
 
 function retourAZero(fatig) {
@@ -10682,7 +10694,7 @@ function extractionDonnees() {
 	attmoy = 3.5*att + attbp + attbm;
     var bmDAttTotalTour = atttourD + Math.floor(((att+atttourD)*(atttourP+atttourM)/100));
 	attmoytour = 3.5*(att+bmDAttTotalTour) + attbp + attbm;
-	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; BM Dé att/tour:("+atttourD+"D;"+atttourP+"%;"+atttourM+"%)"+bmDAttTotalTour+" ;AttMoyTour:"+attmoytour);
+	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; BM DÃ© att/tour:("+atttourD+"D;"+atttourP+"%;"+atttourM+"%)"+bmDAttTotalTour+" ;AttMoyTour:"+attmoytour);
 	    // Esquive
 	esq = getUniqueIntValueBySelector('#carac #esq');
 	esqbp = getUniqueIntValueBySelector('#carac #esq_p');
@@ -10875,7 +10887,7 @@ function setInfosCaracteristiques() {
     tdRegTotal.innerHTML = "<i>"+regmoy+"</i>";
 	    // Temps recupere par reg (propale R')
 	var regmoyTemp = Math.max(0, regmoy);
-	var regTitle = "Temps moyen récupéré par régénération: " + Math.floor(250 * regmoyTemp / pvtotal) + " min";
+	var regTitle = "Temps moyen rÃ©cupÃ©rÃ© par rÃ©gÃ©nÃ©ration: " + Math.floor(250 * regmoyTemp / pvtotal) + " min";
 	var sec = Math.floor(15000 * regmoyTemp / pvtotal) % 60;
 	if (sec != 0) {
 		regTitle += " " + sec + " sec";
@@ -10914,7 +10926,7 @@ function setLienAnatrolliseur(){
 function setInfoDescription() {
 	var txtDateCrea = (NBjours!=1) ?
 		" ("+NBjours+" jours dans le hall)" :
-		" (Bienvenue à toi pour ton premier jour dans le hall)" ;
+		" (Bienvenue Ã  toi pour ton premier jour dans le hall)" ;
 	appendText(document.querySelector("#descr td#crea"), txtDateCrea, false);
 }
 
@@ -10928,7 +10940,7 @@ function setInfosEtatLieux() {
     aElt.setAttribute("href",urlBricol);
     aElt.setAttribute("target","_blank");
     aElt.className="AllLinks";
-    aElt.innerHTML="Lieux à proximité";
+    aElt.innerHTML="Lieux Ã  proximitÃ©";
     tdPosition.appendChild(aElt);
 }
 
@@ -10959,7 +10971,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 			+(-pvdispo)
 			+" PV pour ne plus avoir de malus de temps.";
 	} else {
-		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
+		txt = "Vous Ãªtes Ã  l'Ã©quilibre en temps (+/- 30sec).";
 	}
 	appendText(span,txt);
 	document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
@@ -10971,7 +10983,7 @@ function setInfosExp() {
 
     // Calcul niveau monstre/troll min pour gain PX
     var nivCibleMin = Math.ceil((2 * nivTroll - 10) / 3);
-    tdNiv.parentElement.title = "Vos cibles doivent être au minim de niveau " + nivCibleMin + " pour qu'elles vous rapportent des PX";
+    tdNiv.parentElement.title = "Vos cibles doivent Ãªtre au minim de niveau " + nivCibleMin + " pour qu'elles vous rapportent des PX";
 
     // Calcul PX restant
     var pxRestant = (pxdistribuables + pxperso) - 2 * nivTroll;
@@ -10996,8 +11008,8 @@ function setInfosExp() {
     tdMort.setAttribute("colspan", 1);
     appendTdText(tdMort.parentElement, (Math.round(10 * NBjours / nbmorts) / 10) + ' jours/mort', false);
 
-    tdKill.parentElement.title = 'Rapport meurtres/décès: ' + Math.floor((nbmeurtres / nbmorts) * 100) / 100;
-    tdMort.parentElement.title = 'Rapport décès/meurtres: ' + Math.floor((nbmorts / nbmeurtres) * 100) / 100;
+    tdKill.parentElement.title = 'Rapport meurtres/dÃ©cÃ¨s: ' + Math.floor((nbmeurtres / nbmorts) * 100) / 100;
+    tdMort.parentElement.title = 'Rapport dÃ©cÃ¨s/meurtres: ' + Math.floor((nbmorts / nbmeurtres) * 100) / 100;
 }
 
 
@@ -11198,7 +11210,7 @@ function setAccel() {
 			appendText(
 				insertPt,
 				'/!\\ Visitez la page des Bonus/Malus '+
-				'pour mettre à jour votre fatigue. /!\\',
+				'pour mettre Ã  jour votre fatigue. /!\\',
 				true
 			);
 			appendBr(insertPt);
@@ -11207,12 +11219,12 @@ function setAccel() {
 	}
 	
 	if(pvcourant<=0) {
-		appendText(insertPt,'Aucun calcul possible : vous êtes mort voyons !');
+		appendText(insertPt,'Aucun calcul possible : vous Ãªtes mort voyons !');
 		return;
 	}
 	
 	if(fatigue>30) {
-		appendText(insertPt,'Vous êtes trop fatigué pour accélérer.');
+		appendText(insertPt,'Vous Ãªtes trop fatiguÃ© pour accÃ©lÃ©rer.');
 		return;
 	}
 	
@@ -11226,7 +11238,7 @@ function setAccel() {
 		pvActuelKastar = Math.min(pvcourant+regmoy,pvtotal);
 		appendText(
 			insertPt,
-			'/!\\ Votre DLA est dépassée, calculs basés sur des estimations. /!\\',
+			'/!\\ Votre DLA est dÃ©passÃ©e, calculs basÃ©s sur des estimations. /!\\',
 			true
 		);
 		appendBr(insertPt);
@@ -11239,7 +11251,7 @@ function setAccel() {
 			lastDLA = false;
 		}
 	}
-	appendText(insertPt,'Dernière DLA enregistrée : ');
+	appendText(insertPt,'DerniÃ¨re DLA enregistrÃ©e : ');
 	lastDLAZone = document.createElement('span');
 	lastDLAZone.style.cursor = 'pointer';
 	var b = document.createElement('b');
@@ -11254,7 +11266,7 @@ function setAccel() {
 	appendBr(insertPt);
 	
 	// Setup maxAMZone et cumulZone
-	appendText(insertPt,'Accélération maximale possible : ');
+	appendText(insertPt,'AccÃ©lÃ©ration maximale possible : ');
 	maxAMZone = document.createElement('b');
 	insertPt.appendChild(maxAMZone);
 	appendBr(insertPt);
@@ -11284,9 +11296,9 @@ function refreshAccel() {
 	pvs = Math.ceil( Math.ceil((DLAaccel-HeureServeur)/6e4) / minParPV );
 	cumulZone.innerHTML = '';
 	if(pvs<=pvsmax) {
-		appendText(cumulZone,'Vous devez accélérer d\'au moins ');
+		appendText(cumulZone,'Vous devez accÃ©lÃ©rer d\'au moins ');
 		appendText(cumulZone,pvs+' PV', true);
-		appendText(cumulZone,' pour activer immédiatement un nouveau tour.');
+		appendText(cumulZone,' pour activer immÃ©diatement un nouveau tour.');
 		if(pvs!=1) {
 			var gainSec = Math.floor((DLAaccel-HeureServeur)/1e3)
 				-(pvs-1)*60*minParPV;
@@ -11301,9 +11313,9 @@ function refreshAccel() {
 		var avantDLA = new Date( DLAaccel-HeureServeur-pvsmax*minParPV*6e4 );
 		appendText(
 			cumulZone,
-			'Après votre accélération maximale, il vous faudra encore attendre '+
+			'AprÃ¨s votre accÃ©lÃ©ration maximale, il vous faudra encore attendre '+
 			dureeHM(avantDLA/6e4)+
-			' avant de réactiver.'
+			' avant de rÃ©activer.'
 		);
 	}
 }
@@ -11335,7 +11347,7 @@ function injecteInfosBulles(liste,fonction) {
 		if(fonction=="competences"){
 			// un TD en plus pour des information complementaire liees a la comp
 			indiceTDniveaux++;
-			// chercher les sous-compétence (type de golem, type de piège) s'il y a
+			// chercher les sous-compÃ©tence (type de golem, type de piÃ¨ge) s'il y a
 			sousCompetences = trTalent.cells[indiceTDSousCompetence].textContent.split(',');
 			for (var j=0; j < sousCompetences.length; j++) {
 				sousCompetences[j] = sousCompetences[j].epure().trim();
@@ -11487,7 +11499,7 @@ function competences(comp,niveau) {
 	if(comp.indexOf('Acceleration du Metabolisme')!=-1 && minParPV!=null) {
 		texte = '<b>1</b> PV = <b>'+minParPV+'</b> minute';
 		if(minParPV>1) texte += 's';
-		if(overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
+		if(overDLA) texte += '<br/><i>(Votre DLA est dÃ©passÃ©e.)</i>';
 	}
 	else if(comp.indexOf('Attaque Precise')!=-1) {
 		var pc, lastmax=0, espatt=0;
@@ -11505,18 +11517,18 @@ function competences(comp,niveau) {
 			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += '<i>Attaque moyenne (si réussite) : <b>'+
+			texte += '<i>Attaque moyenne (si rÃ©ussite) : <b>'+
 				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
 		}
-		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)+
+		texte += 'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)+
 			' => <b>'+degmoy+'/'+degmoycrit+'</b>';
 	}
 	else if(comp.indexOf('Balayage')!=-1)
-		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbp+attbm)
+		texte = 'DÃ©stabilisation : <b>'+att+'</b> D6 '+aff(attbp+attbm)
 			+' => <b>'+attmoy+'</b><br/>'
-			+'Effet : <b>Met à terre l\'adversaire</b>';
+			+'Effet : <b>Met Ã  terre l\'adversaire</b>';
 	else if(comp.indexOf('Bidouille')!=-1)
-		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
+		texte = 'Bidouiller un trÃ©sor permet de complÃ©ter le nom d\'un objet '
 			+'de votre inventaire avec le texte de votre choix.';
 	else if(comp.indexOf('Baroufle')!=-1){
 		texte = 'Vous voulez encourager vos compagnons de chasse ? '
@@ -11537,7 +11549,7 @@ function competences(comp,niveau) {
             '<tr class="mh_tdpage"><td>Sssrileur</td><td>seuil 6, rend visible</td></tr>' +
             '<tr class="mh_tdpage"><td>Tagadagada</td><td>augmente le nombre de tours (1 tour par tranche de 2)</td></tr>' +
             '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
-            '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
+            '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portÃ©e horizontale (1 case par tranche de 4)</td></tr>' +
         '</tbody></table>';
     }
     else if(comp.indexOf('Botte Secrete')!=-1){
@@ -11545,7 +11557,7 @@ function competences(comp,niveau) {
 			+Math.floor(2*att/3)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2))
 			+' => <b>'
 			+Math.round(3.5*Math.floor(2*att/3)+Math.floor((attbp+attbm)/2))
-			+'</b><br/>Dégâts : <b>'
+			+'</b><br/>DÃ©gÃ¢ts : <b>'
 			+Math.floor(att/2)+'</b> D3 '+aff(Math.floor((degbp+degbm)/2))
 			+' => <b>'
 			+(2*Math.floor(att/2)+Math.floor((degbp+degbm)/2))
@@ -11554,8 +11566,8 @@ function competences(comp,niveau) {
 	}
 	else if(comp.indexOf('Camouflage')!=-1) {
 		var camou = getTalent('Camouflage');
-		texte = 'Pour conserver son camouflage, il faut réussir un jet sous:<br/>'
-			+'<i>Déplacement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
+		texte = 'Pour conserver son camouflage, il faut rÃ©ussir un jet sous:<br/>'
+			+'<i>DÃ©placement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
 			+'<i>Attaque :</i> <b>perte automatique</b>.<br/>'
 			+'<i>Projectile Magique :</i> <b>'+Math.floor(0.25*camou)+'%</b>';
 	}
@@ -11570,16 +11582,16 @@ function competences(comp,niveau) {
 		else {
 			texte = 'Attaque : <b>'+att+'</b> D6 '+aff((attbp+attbm))
 				+' => <b>'+attmoy+'</b><br/>'
-				+'Dégâts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
+				+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
 				+' => <b>'+degmoy+'/'+degmoycrit+'</b>'
-				+'<br/>Portée : <b>'+portee+'</b> case';
+				+'<br/>PortÃ©e : <b>'+portee+'</b> case';
 			if(portee>1) texte += 's';
 		}
 	}
 	else if(comp.indexOf('Connaissance des Monstres')!=-1) {
-		texte = 'Portée horizontale : <b>'+vuetotale+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+vuetotale+'</b> case';
 		if(vuetotale>1) texte += 's';
-		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		texte += '<br/>PortÃ©e verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
 		if(vuetotale>2) texte += 's';
 	}
 	else if(comp.indexOf('Piege')!=-1) {
@@ -11587,9 +11599,9 @@ function competences(comp,niveau) {
 			texte = 'Et si vous colliez vos adversaires au sol ?';
 		if(comp.indexOf('Feu')!=-1) {
 			if(texte){
-				texte += ' À moins que vous ne préfériez les envoyer en l\'air !<br/>';
+				texte += ' Ã€ moins que vous ne prÃ©fÃ©riez les envoyer en l\'air !<br/>';
 			}
-			texte += 'Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
+			texte += 'DÃ©gats du piÃ¨ge Ã  feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
 				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b>';
 		}
 	}
@@ -11597,7 +11609,7 @@ function competences(comp,niveau) {
 		texte = 'Attaque : <b>'
 			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2))
 			+' => <b>'+Math.round(3.5*Math.floor(att/2)+Math.floor((attbp+attbm)/2))
-			+'</b><br/>Dégâts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
+			+'</b><br/>DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
 			+' => <b>'+degmoy+'/'+degmoycrit+'</b>';
 	}
 	else if(comp.indexOf('Coup de Butoir')!=-1) {
@@ -11609,7 +11621,7 @@ function competences(comp,niveau) {
 			pc = getTalent(comp,i);
 			if(lastmax!=0 && pc<=lastmax) continue;
 			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+(degbp+degbm);
-			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
+			texte += '<br/>DÃ©gÃ¢ts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
 				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff((degbp+degbm))+
 				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
 			espdeg += (pc-lastmax)*jetdeg;
@@ -11617,76 +11629,76 @@ function competences(comp,niveau) {
 			if(i<niveau) notMaxedOut = true;
 		}
 		if(notMaxedOut) {
-			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
+			texte += '<br/><i>DÃ©gÃ¢ts moyens (si rÃ©ussite) : <b>'+
 				Math.floor(10*espdeg/lastmax)/10+'/'+
 				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
 		}
 	}
 	else if(comp.indexOf('Course')!=-1)
-		texte = 'Déplacement gratuit : <b>'
+		texte = 'DÃ©placement gratuit : <b>'
 			+Math.floor(getTalent('Course')/2)
 			+' %</b> de chance';
 	else if(comp.indexOf('Deplacement Eclair')!=-1)
-		texte = 'Permet d\'économiser <b>1</b> PA '
-			+'par rapport au déplacement classique';
+		texte = 'Permet d\'Ã©conomiser <b>1</b> PA '
+			+'par rapport au dÃ©placement classique';
 	else if(comp.indexOf('Dressage')!=-1)
 		texte = 'Le dressage permet d\'apprivoiser un gowap redevenu sauvage '
 			+'ou un gnu sauvage.';
 	else if(comp.indexOf('Ecriture Magique')!=-1)
-		texte = 'Réaliser la copie d\'un sortilège après en avoir découvert '
-			+'la formule nécessite de réunir les composants de cette formule, '
-			+'d\'obtenir un parchemin vierge sur lequel écrire, et de récupérer '
-			+'un champignon adéquat pour confectionner l\'encre.';
+		texte = 'RÃ©aliser la copie d\'un sortilÃ¨ge aprÃ¨s en avoir dÃ©couvert '
+			+'la formule nÃ©cessite de rÃ©unir les composants de cette formule, '
+			+'d\'obtenir un parchemin vierge sur lequel Ã©crire, et de rÃ©cupÃ©rer '
+			+'un champignon adÃ©quat pour confectionner l\'encre.';
 	else if(comp.indexOf('Frenesie')!=-1) {
 		texte = 'Attaque : <b>'+att+'</b> D6 '+aff((attbp+attbm))
 			+' => <b>'+attmoy+'</b><br/>'
-			+'Dégâts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
+			+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
 			+' => <b>'+degmoy+'/'+degmoycrit+'</b>';
 	}
 	else if(comp.indexOf('Golem')!=-1)
-		texte = 'Animez votre golem en assemblant divers matériaux '
-			+'autour d\'un cerveau minéral.'
+		texte = 'Animez votre golem en assemblant divers matÃ©riaux '
+			+'autour d\'un cerveau minÃ©ral.'
 	else if(comp.indexOf('Grattage')!=-1) {
 		texte = 'Permet de confectionner un Parchemin Vierge '
-			+'à partir de composants et de Gigots de Gob\'.';
+			+'Ã  partir de composants et de Gigots de Gob\'.';
 	}
 	else if(comp.indexOf('Hurlement Effrayant')!=-1)
 		texte = 'Fait fuir un monstre si tout se passe bien.'
 			+'<br/>Lui donne de gros bonus sinon...';
 	else if(comp.indexOf('Identification des Champignons')!=-1) {
-		texte = 'Portée horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
 		if(vuetotale>2) texte += 's';
-		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
+		texte += '<br/>PortÃ©e verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
 		if(vuetotale>4) texte += 's';
 	}
 	else if(comp.indexOf('Insultes')!=-1)
-		texte = 'Portée horizontale : <b>'+Math.min(vuetotale,1)+'</b> case';
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(vuetotale,1)+'</b> case';
 	else if(comp.indexOf('interposer')!=-1)
-		texte = 'Jet de réflexe : <b>'
+		texte = 'Jet de rÃ©flexe : <b>'
 			+Math.floor(2*(esq+reg)/3)+'</b> D6 '+aff((esqbp+esqbm))
 			+' => <b>'+Math.round(3.5*Math.floor(2*(esq+reg)/3)+(esqbp+esqbm))+'</b>';
 	else if(comp.indexOf('Lancer de Potions') != -1)
-		texte = 'Portée : <b>'+(2+Math.floor(vuetotale/5))+'</b> cases';
+		texte = 'PortÃ©e : <b>'+(2+Math.floor(vuetotale/5))+'</b> cases';
 	else if(comp.indexOf('Marquage')!=-1)
-		texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut '
-			+'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut '
-			+'se trouver dans la même caverne que le monstre pour le marquer.';
+		texte = 'Marquage permet de rajouter un sobriquet Ã  un monstre. Il faut '
+			+'bien choisir le nom Ã  ajouter car celui-ci sera dÃ©finitif. Il faut '
+			+'se trouver dans la mÃªme caverne que le monstre pour le marquer.';
 	else if(comp.indexOf('Melange Magique')!=-1)
-		texte = 'Cette Compétence permet de combiner deux Potions pour '
-			+'en réaliser une nouvelle dont l\'effet est la somme '
+		texte = 'Cette CompÃ©tence permet de combiner deux Potions pour '
+			+'en rÃ©aliser une nouvelle dont l\'effet est la somme '
 			+'des effets des potions initiales.';
 	else if(comp.indexOf('Miner')!=-1)
-		texte = 'Portée horizontale (officieuse) : <b>'
+		texte = 'PortÃ©e horizontale (officieuse) : <b>'
 			+2*vuetotale+'</b> cases<br/>'
-			+'Portée verticale (officieuse) : <b>'
+			+'PortÃ©e verticale (officieuse) : <b>'
 			+2*Math.ceil(vuetotale/2)+'</b> cases';
 	else if(comp.indexOf('Necromancie')!=-1)
-		texte = 'La Nécromancie permet à partir des composants d\'un monstre '
+		texte = 'La NÃ©cromancie permet Ã  partir des composants d\'un monstre '
 			+'de faire "revivre" ce monstre.';
 	else if(comp.indexOf('Painthure de Guerre')!=-1)
-		texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier '
-			+'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite '
-			+'pour s\'inspirer, et laissez parler votre créativité.'
+		texte = 'Grimez vos potrÃµlls et rÃ©veillez l\'esprit guerrier '
+			+'qui sommeille en eux ! Un peu d\'encre, une TÃªte RÃ©duite '
+			+'pour s\'inspirer, et laissez parler votre crÃ©ativitÃ©.'
 	else if(comp.indexOf('Parer')!=-1)
 		texte = 'Jet de parade : <b>'
 			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor((attbp+attbm))/2)
@@ -11698,33 +11710,33 @@ function competences(comp,niveau) {
 			+(Math.round(3.5*(Math.floor(att/2)+esq)+Math.floor((attbp+attbm)/2))+(esqbp+esqbm))
 			+'</b></i>';
 	else if(comp.indexOf('Pistage')!=-1)
-		texte = 'Portée horizontale : <b>'
+		texte = 'PortÃ©e horizontale : <b>'
 			+2*vuetotale+'</b> cases<br/>'
-			+'Portée verticale : <b>'
+			+'PortÃ©e verticale : <b>'
 			+2*Math.ceil(vuetotale/2)+'</b> cases';
 	else if(comp.indexOf('Planter un Champignon')!=-1)
-		texte = 'Planter un Champignon est une compétence qui vous permet de '
-			+'créer des colonies d\'une variété donnée de champignon à partir de '
-			+'quelques exemplaires préalablement enterrés.';
+		texte = 'Planter un Champignon est une compÃ©tence qui vous permet de '
+			+'crÃ©er des colonies d\'une variÃ©tÃ© donnÃ©e de champignon Ã  partir de '
+			+'quelques exemplaires prÃ©alablement enterrÃ©s.';
 	else if(comp.indexOf('Regeneration Accrue')!=-1)
-		texte = 'Régénération : <b>'+Math.floor(pvtotal/15)+'</b> D3'
+		texte = 'RÃ©gÃ©nÃ©ration : <b>'+Math.floor(pvtotal/15)+'</b> D3'
 			+' => <b>+'+2*Math.floor(pvtotal/15)+'</b> PV';
 	else if(comp.indexOf('Reparation')!=-1)
 		texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, '
-			+'et réparez vous-même votre matériel !';
+			+'et rÃ©parez vous-mÃªme votre matÃ©riel !';
 	else if(comp.indexOf('Retraite')!=-1)
 		texte = 'Vous jugez la situation avec sagesse et estimez qu\'il serait '
-			+'préférable de préparer un repli stratégique pour déconcerter '
-			+'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! '
-			+'Quelle intelligence démoniaque.';
+			+'prÃ©fÃ©rable de prÃ©parer un repli stratÃ©gique pour dÃ©concerter '
+			+'l\'ennemi et lui foutre une bonne branlÃ©e ... plus tard. MOUAHAHA ! '
+			+'Quelle intelligence dÃ©moniaque.';
 	else if(comp.indexOf('Rotobaffe')!=-1) {
 		var Datt = att, vattbm = attbp+attbm;
 		var Ddeg = deg, vdegbm = degbp+degbm;
 		for(var i=1 ; i<niveau+2 ; i++) {
-			texte += '<b>Attaque n°'+i+' :</b><br/>'
+			texte += '<b>Attaque nÂ°'+i+' :</b><br/>'
 				+'Attaque : <b>'+Datt+'</b> D6 '+aff(vattbm)
 				+' => <b>'+(Math.round(3.5*Datt)+vattbm)+'</b><br/>'
-				+'Dégâts : <b>'+Ddeg+'</b> D3 '+aff(vdegbm)
+				+'DÃ©gÃ¢ts : <b>'+Ddeg+'</b> D3 '+aff(vdegbm)
 				+' => <b>'+(2*Ddeg+vdegbm)+'</b>';
 			Datt = Math.floor(0.75*Datt); vattbm = Math.floor(0.75*vattbm);
 			Ddeg = Math.floor(0.75*Ddeg); vdegbm = Math.floor(0.75*vdegbm);
@@ -11732,11 +11744,11 @@ function competences(comp,niveau) {
 		}
 	}
 	else if(comp.indexOf('Shamaner')!=-1)
-		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
-			+'des monstres en utilisant des champignons (de 1 à 3).';
+		texte = 'Permet de contrecarrer certains effets des pouvoirs spÃ©ciaux '
+			+'des monstres en utilisant des champignons (de 1 Ã  3).';
 	else if(comp.indexOf('Tailler')!=-1){
 		texte = 'Permet d\'augmenter sensiblement la valeur marchande de certains '
-			+'minerais. Mais cette opération délicate n\'est pas sans risques...';
+			+'minerais. Mais cette opÃ©ration dÃ©licate n\'est pas sans risques...';
 	}
 	return texte;
 	}
@@ -11759,7 +11771,7 @@ function decumul_buff(nom,str,buff) {
 
 
 function sortileges(sort,mainCall,pcA,pcD) {
-	// Si mainCall==false, affichage réduit des infos des sorts d'attaque pour PuM/PréM
+	// Si mainCall==false, affichage rÃ©duit des infos des sorts d'attaque pour PuM/PrÃ©M
 	var texte = '';
 	if (mainCall) {
         /* pourcentages Des bonus/malus du a PuM/PreM : Att et Deg*/
@@ -11767,10 +11779,10 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		pcD = (degtourP+degtourM);
 	}
 	if (sort.indexOf('Analyse Anatomique') != -1) {
-		texte = 'Portée horizontale : <b>'
+		texte = 'PortÃ©e horizontale : <b>'
 			+ Math.floor(vuetotale / 2) + '</b> case';
 		if (vuetotale > 3){ texte += 's'; }
-		texte += '<br/>Portée verticale : <b>'
+		texte += '<br/>PortÃ©e verticale : <b>'
 			+ Math.floor((vuetotale+1)/4)+'</b> case';
 		if (vuetotale > 7){ texte += 's'; }
 	}
@@ -11784,7 +11796,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = decumul_buff('AdE', 'Esquive', 1+Math.floor((esq-3)/2));
 	}
 	else if (sort.indexOf('Augmentation des Degats') != -1){
-		texte = decumul_buff('AdD', 'Dégâts physiques', 1 + Math.floor((deg-3)/2));
+		texte = decumul_buff('AdD', 'DÃ©gÃ¢ts physiques', 1 + Math.floor((deg-3)/2));
 	}
 	else if(sort.indexOf('Bulle Anti-Magie')!=-1){
 		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
@@ -11793,20 +11805,20 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = 'RM : <b>-'+rm+'</b><br/>MM : <b>+'+mm+'</b>';
 	}
 	else if(sort.indexOf('Explosion')!=-1){
-		texte = 'Dégâts : <b>'
+		texte = 'DÃ©gÃ¢ts : <b>'
 			+Math.floor( 1+(deg+Math.floor(pvtotal/10))/2 )+'</b> D3 '
 			+' => <b>'+2*Math.floor(1+(deg+Math.floor(pvtotal/10))/2)
 			+' ('+resiste(1+(deg+Math.floor(pvtotal/10))/2 )+')</b>';
 	}
 	else if(sort.indexOf('Faiblesse Passagere')!=-1){
 		if(pvcourant<=0)
-			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
-		texte = 'Portée horizontale : <b>'
+			return '<i>Dans votre Ã©tat, vous n\'affaiblirez personne...</i>';
+		texte = 'PortÃ©e horizontale : <b>'
 			+Math.min(1,vuetotale)+'</b> case<br/>'
-			+'Dégâts physiques : <b>-'
+			+'DÃ©gÃ¢ts physiques : <b>-'
 			+Math.ceil( (Math.floor(pvcourant/10)+deg-5)/4 )
 			+' (-'+Math.ceil( (Math.floor(pvcourant/10)+deg-5)/8 )+')</b><br/>'
-			+'Dégâts magiques : <b>-'
+			+'DÃ©gÃ¢ts magiques : <b>-'
 			+Math.floor( (Math.floor(pvcourant/10)+deg-4)/4 )
 			+' (-'+Math.floor( (Math.floor(pvcourant/10)+deg-2)/8 )+')</b>';
 	}
@@ -11814,7 +11826,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte = 'Vue, Attaque, Esquive : <b>-'+(1+Math.floor(vue/5))+'</b>';
 	}
 	else if(sort.indexOf('Glue')!=-1) {
-		texte = 'Portée : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
+		texte = 'PortÃ©e : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
 		if(vuetotale>2) texte += 's';
 	}
 	else if(sort.indexOf('Griffe du Sorcier')!=-1){
@@ -11827,7 +11839,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		}
 		texte += aff(attbm)
 			+' => <b>'+(Math.round(3.5*(att+modD))+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+Math.floor(deg/2)+'</b> D3 ';
 		if(pcD!=0) {
 			modD = parseInt(Math.floor(deg/2)*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -11855,22 +11867,22 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte += '<hr>'+addVenin('virulent',effet,1+Math.floor(vue/10));
 	}
 	else if(sort.indexOf('Hypnotisme')!=-1)
-		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
-			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
+		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> DÃ©s'
+			+' (<b>-'+Math.floor(esq/3)+'</b> DÃ©s)';
 	else if(sort.indexOf('Identification des tresors')!=-1)
-		texte = 'Permet de connaitre les caractéristiques et effets précis '
-			+'d\'un trésor.';
+		texte = 'Permet de connaitre les caractÃ©ristiques et effets prÃ©cis '
+			+'d\'un trÃ©sor.';
 	else if(sort.indexOf('Invisibilite')!=-1)
-		texte = 'Un troll invisible est indétectable même quand on se trouve '
-			+'sur sa zone. Toute action physique ou sortilège d\'attaque '
-			+'fait disparaître l\'invisibilité.';
+		texte = 'Un troll invisible est indÃ©tectable mÃªme quand on se trouve '
+			+'sur sa zone. Toute action physique ou sortilÃ¨ge d\'attaque '
+			+'fait disparaÃ®tre l\'invisibilitÃ©.';
 	else if(sort.indexOf('Levitation')!=-1)
-		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
-			+'Comme les pièges ou les trous par exemple...';
+		texte = 'Prendre un peu de hauteur permet parfois d\'Ã©viter les ennuis. '
+			+'Comme les piÃ¨ges ou les trous par exemple...';
 	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
 		var eps = 1,
             pc = 20;
-		var str = 'PréM';
+		var str = 'PrÃ©M';
 		var newSort;
 		var sortAtt = [
 			'Projectile Magique',
@@ -11907,7 +11919,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		}
 		texte += aff(attbm)
 			+' => <b>'+(Math.round(3.5*(vue+modD))+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+Math.floor(vue/2)+'</b> D3 ';
 		if(pcD!=0) {
 			modD = parseInt(Math.floor(vue/2)+pcD);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -11919,18 +11931,18 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			+' ('+resiste(Math.floor(vue/2)+modD,degbm)
 			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Portée : <b>'+portee+'</b> case';
+		texte += '<br/>PortÃ©e : <b>'+portee+'</b> case';
 		if(portee>1) texte += 's';
 	}
 	else if(sort.indexOf('Projection')!=-1) {
-		texte = 'Si le jet de résistance de la victime est raté:<br/>'
-			+'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
-			+'Si le jet de résistance de la victime est réussi:<br/>'
+		texte = 'Si le jet de rÃ©sistance de la victime est ratÃ©:<br/>'
+			+'la victime est <b>dÃ©placÃ©e</b> et perd <b>1D6</b> d\'Esquive<hr>'
+			+'Si le jet de rÃ©sistance de la victime est rÃ©ussi:<br/>'
 			+'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
 	}
 	else if(sort.indexOf('Rafale Psychique')!=-1) {
 		var modD = 0;
-		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
+		texte = 'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 ';
 		if(pcD!=0) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -11938,18 +11950,18 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte += aff(degbm)
 			+' => <b>'+(2*(deg+modD)+degbm)+' ('+resiste(deg+modD,degbm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Malus : régénération <b>-'+deg+'</b>';
+		texte += '<br/>Malus : rÃ©gÃ©nÃ©ration <b>-'+deg+'</b>';
 	}
 	else if(sort.indexOf('Sacrifice')!=-1) {
 		if(pvcourant<=0)
-			return '<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>';
+			return '<i>Qui voulez-vous donc soigner ? Vous Ãªtes mort !</i>';
 
 		function perteSacro(sac) {
 			return ' (-'+(sac+2*(1+Math.floor(sac/5)))+' PV)';
 		}
 
 		var sac = Math.floor((pvcourant-1)/2);
-		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Soin maximal : <b>'+sac+'</b> PV'+perteSacro(sac);
 		/* Sacros max et optimal sans malus (propale R') */
         var pvdispoSansMalusTemps = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
@@ -11957,7 +11969,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		if(sac>0)
 			texte += '<hr>Soin maximum limitant les risques de malus de temps : <b>' +sac+'</b> PV'+perteSacro(sac);
         else
-            texte += '<hr>Vous ne pouvez pas compenser de blessures dues à un sacrifice';
+            texte += '<hr>Vous ne pouvez pas compenser de blessures dues Ã  un sacrifice';
 		/*if(sac>3) {
 			sac = 5*Math.floor((sac+1)/5)-1;
 			texte += '<br/>Soin optimal sans malus de temps : <b>'
@@ -11973,7 +11985,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(att+modD)+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+reg+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+reg+'</b> D3 ';
 		if(pcD!=0) {
 			modD = parseInt(reg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -11983,15 +11995,15 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			+' => <b>'+(2*(reg+modD)+degbm)+'/'+(2*(Math.floor(1.5*reg)+modD)+degbm)
 			+' ('+resiste(reg+modD,degbm)+'/'+resiste(1.5*reg+modD,degbm)+')</b>';
 		if(!mainCall) return texte;
-		texte += '<br/>Nécrose : attaque magique <b>-'+reg+'</b>';
+		texte += '<br/>NÃ©crose : attaque magique <b>-'+reg+'</b>';
 	}
 	else if(sort.indexOf('Telekinesie')!=-1) {
-		texte = 'Portée horizontale  :';
+		texte = 'PortÃ©e horizontale  :';
 		var vt = Math.floor(vuetotale/2)+2;
-		var strList = ['d\'une Plum\' ou Très Léger','Léger',
-					'Moyen','Lourd','Très Lourd ou d\'une Ton\''];
+		var strList = ['d\'une Plum\' ou TrÃ¨s LÃ©ger','LÃ©ger',
+					'Moyen','Lourd','TrÃ¨s Lourd ou d\'une Ton\''];
 		for(var i=0 ; i<5 ; i++) {
-			texte += '<br/><i>Trésor '+strList[i]+' : </i><b>'+vt+'</b> case';
+			texte += '<br/><i>TrÃ©sor '+strList[i]+' : </i><b>'+vt+'</b> case';
 			if(vt>1) texte += 's';
 			vt=Math.max(0,vt-1);
 		}
@@ -12000,8 +12012,8 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		var portee = getPortee(mmTroll/5);
 		var pmh = (20+vue+portee);
 		var pmv = 3+Math.floor(portee/3);
-		texte = 'Portée horizontale : <b>'+pmh+'</b> cases<br/>'
-			+'Portée verticale : <b>'+pmv+'</b> cases<hr>'
+		texte = 'PortÃ©e horizontale : <b>'+pmh+'</b> cases<br/>'
+			+'PortÃ©e verticale : <b>'+pmv+'</b> cases<hr>'
 			+'X compris entre '+(posX-pmh)+' et '+(posX+pmh)+'<br/>'
 			+'Y compris entre '+(posY-pmh)+' et '+(posY+pmh)+'<br/>'
 			+'N compris entre '+(posN-pmv)+' et '+Math.min(-1,posN+pmv)+'<br/>';
@@ -12015,7 +12027,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		}
 		texte += aff(attbm)
 			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+deg+'</b> D3 ';
+			+'DÃ©gÃ¢ts : <b>'+deg+'</b> D3 ';
 		if(pcD!=0) {
 			modD = parseInt(deg*pcD/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
@@ -12028,15 +12040,15 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Vision Accrue')!=-1)
 		texte = decumul_buff('VA','Vue',Math.floor(vue/2));
 	else if(sort.indexOf('Vision lointaine')!=-1)
-		texte = 'En ciblant une zone située n\'importe où dans le '
-			+'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
+		texte = 'En ciblant une zone situÃ©e n\'importe oÃ¹ dans le '
+			+'Monde Souterrain, votre TrÃµll peut voir comme s\'il s\'y trouvait.';
 	else if(sort.indexOf('Voir le Cache')!=-1)
-		texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
+		texte = '<b>Sur soi :</b><br/>PortÃ©e horizontale : <b>'
 			+Math.min(5,getPortee(vue))+'</b> cases<hr>'
-			+'<b>A distance :</b><br/>Portée horizontale : <b>'
+			+'<b>A distance :</b><br/>PortÃ©e horizontale : <b>'
 			+getPortee(vuetotale)+'</b> cases';
 	else if(sort.indexOf('Vue Troublee')!=-1)
-		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
+		texte = 'PortÃ©e horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Vue : <b>-'+Math.floor(vue/3)+'</b>';
 	return texte;
 }
@@ -12060,13 +12072,13 @@ function do_profil2()
 		traitementTalents();
 		setLienAnatrolliseur();
 
-		// Cette fonction modifie lourdement le DOM, à placer en dernier :
+		// Cette fonction modifie lourdement le DOM, Ã  placer en dernier :
 		if(race=='Kastar'){ setAccel(); }
 		saveProfil();
 		displayScriptTime();
 	} catch(e) {
 		avertissement("[MZ] Une erreur s'est produite.");
-		window.console.error("[MZ] Erreur générale Profil",e);
+		window.console.error("[MZ] Erreur gÃ©nÃ©rale Profil",e);
 	}
 }
 
@@ -12101,7 +12113,7 @@ function initPopupTancompo() {
 	document.body.appendChild(popup);
 }
 
-// roule 16/03/2016, existe déjà ailleurs
+// roule 16/03/2016, existe dÃ©jÃ  ailleurs
 // function showPopup(evt) {
 	// var texte = this.getAttribute("texteinfo");
 	// popup.innerHTML = texte;
@@ -12110,7 +12122,7 @@ function initPopupTancompo() {
 	// popup.style.visibility = "visible";
 // }
 
-// roule 16/03/2016, existe déjà ailleurs
+// roule 16/03/2016, existe dÃ©jÃ  ailleurs
 // function hidePopup() {
 	// popup.style.visibility = 'hidden';
 // }
@@ -12132,13 +12144,13 @@ function formateTexte(texte)
 	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
 	texte = texte.replace(/<br\/>([^<]*) d'un/g,"<br/><b>$1</b> d'un");
 	texte = texte.replace(/(d'une? )([^<]*) d'au/g,"$1<b>$2</b> d'au");
-	texte = texte.replace(/(Qualité )([^<]*) \[/g,"$1<b>$2</b> [");
+	texte = texte.replace(/(QualitÃ© )([^<]*) \[/g,"$1<b>$2</b> [");
 	texte = texte.replace(/\[([^<]*)\]/g,"[<b>$1</b>]");
 	return texte;
 }
 
 function arrondi(x) {
-	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
+	return Math.ceil(x-0.5); // arrondi Ã  l'entier le plus proche, valeurs inf
 	}
 
 function traiteMinerai() {
@@ -12176,12 +12188,12 @@ function traiteMinerai() {
 
 function treateComposants() {
 	if (currentURL.indexOf("as_type=Compo")==-1) return;
-	//On récupère les composants
+	//On rÃ©cupÃ¨re les composants
 	var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
 			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
 			+ "and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) "
-			+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			+ "and td[1]/img/@alt = 'IdentifiÃ©']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0) {
 //		window.alert('treateComposants DOWN');
 		return;
@@ -12224,8 +12236,8 @@ function treateComposants() {
 function treateAllComposants() {
 	if(currentURL.indexOf("as_type=Compo")==-1) return;
 	
-	//On récupère les composants
-	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catégorie')])",
+	//On rÃ©cupÃ¨re les composants
+	var categ = document.evaluate( "count(//table/descendant::text()[contains(.,'Sans catÃ©gorie')])",
 							document, null, 0, null ).numberValue;
 	var c = (categ == 0 ? 3 : 4);
 	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
@@ -12234,8 +12246,8 @@ function treateAllComposants() {
 			+ "td["+c+"]/text()[1] = '\240-\240' "
 			+ "or contains(td["+c+"]/text()[2],'Tous les trolls') "
 			+ "or contains(td["+c+"]/text()[1],'Tous les trolls') "
-			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
-		+ "and td[1]/img/@alt = 'Identifié']",
+			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='nÂ°') ) "
+		+ "and td[1]/img/@alt = 'IdentifiÃ©']",
 		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0) {
 //		window.alert('treateAllComposants DOWN');
@@ -12267,7 +12279,7 @@ function treateAllComposants() {
 		else
 			texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
 				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
-				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas défini\n";
+				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas dÃ©fini\n";
 	}
 
 	var c = document.evaluate("//div[@class = 'titre2']/text()",
@@ -12276,7 +12288,7 @@ function treateAllComposants() {
 	id_taniere = id_taniere.substring(id_taniere.indexOf('(') + 1, id_taniere.indexOf(')'));
 
 	var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
-			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"),"Vendre tous les composants non réservés sur le Troc de l\'Hydre");
+			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"),"Vendre tous les composants non rÃ©servÃ©s sur le Troc de l\'Hydre");
 	if (form)
 	{
 		if(document.getElementsByTagName('form').length>0)
@@ -12306,7 +12318,7 @@ function treateEM()
 		nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
 		var nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length-1)) ;
 		var locqual = desc[3].textContent ;
-		var qualite = trim(locqual.substring(locqual.indexOf("Qualité:")+9)) ;
+		var qualite = trim(locqual.substring(locqual.indexOf("QualitÃ©:")+9)) ;
 		var localisation = trim(locqual.substring(0,locqual.indexOf("|")-1)) ;
 		if(isEM(nomMonstre).length>0)
 		{
@@ -12332,7 +12344,7 @@ function treateEM()
 function treateChampi() {
 	if (currentURL.indexOf('as_type=Champi')==-1)
 		return false;
-	var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
+	var nodes = document.evaluate("//img[@alt = 'IdentifiÃ©']/../a/text()[1]",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
 		return false;
@@ -12356,7 +12368,7 @@ function treateEnchant()
 		var nodes = document.evaluate(
 			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
 			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			+ "and td[1]/img/@alt = 'IdentifiÃ©']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
 		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
@@ -12367,7 +12379,7 @@ function treateEnchant()
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"),nomCompoTotal.length);
 			var nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ")+1,nomCompoTotal.length);
 			nomCompoTotal = link.childNodes[1].childNodes[0].nodeValue;
-			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité")+11,nomCompoTotal.indexOf(" ["));
+			var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de QualitÃ©")+11,nomCompoTotal.indexOf(" ["));
 			var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[")+1,nomCompoTotal.indexOf("]"));
 			if(isEnchant(nomMonstre).length>0)
 			{
@@ -12445,7 +12457,7 @@ function isPage(url) {
 //chargerScriptDev("libs");
 //chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
 
-// Détection de la page à traiter
+// DÃ©tection de la page Ã  traiter
 if(isPage("Messagerie/ViewMessageBot")) {
 	do_cdmbot();
 } else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
@@ -12492,7 +12504,7 @@ if(isPage("Messagerie/ViewMessageBot")) {
 	do_pre_enchant();
 } else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
 	do_actions();
-} else if(isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
+} else if(isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilitÃ© et Ã§a bloque... && MY_getValue(numTroll+'.MISSIONS')) {
 	do_mission_liste();
 } else if(isPage('MH_Play/Play_action')) {
 	do_actions();

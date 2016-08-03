@@ -13,11 +13,27 @@
 // @include http://serv01.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
 // @include http://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
 // @include http://serv01.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Play/Play_vue.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
+// @include https://games.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Play_vue*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
 // @description Trajet des gowap, version canvas 2.1.1.2 du 12 janvier 2012 par Feldspath
 // @grant GM_getValue
 // @grant GM_setValue
 // @injectframes 1
 // ==/UserScript==
+
+
+
+
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var ie = (window.attachEvent)? true:false;
 	if("function" != typeof MY_getValue) {
