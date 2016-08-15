@@ -483,13 +483,15 @@ function afficheInfoCarte(idCarte)
 
 function getRepartitionFromCase(tx, ty, tn, listeSolutions)
 {
-	var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
+	// Roule 15/08/2016 plus que dubitatif sur ce calcul de Size, je modifie l'algorithme
+	//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
 	var repartition = new Array();
-	for(var i=0;i<size;i++)
-		repartition.push(0);
+	//for(var i=0;i<size;i++)
+	//	repartition.push(0);
 	for(var i=0;i<listeSolutions.length;i++)
 	{
 		var nbGood = comparePos(listeSolutions[i][0],listeSolutions[i][1],listeSolutions[i][2],tx,ty,tn);
+		for (var j = repartition.length; j <= nbGood; j++) repartition.push(0);	// Roule 15/08/2016 compléter le tableau selon le besoin
 		repartition[nbGood]++;
 	}
 	repartition.sort(sortNumber);
@@ -507,13 +509,16 @@ function getMeanPositionNumber(repartition,nbSolutions)
 }
 
 // Roule 08/08/2016 passage numTroll en paramètre
-// Roule 15/05/2016 passage position courante en paramètre (tableau des 2 valeurs)
+// Roule 15/08/2016 passage position courante en paramètre (tableau des 3 valeurs)
 function newRecherche(listeSolutions, currentPos)
 {
 	if(listeSolutions.length<=1)
 		return null;
-	var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
+	// Roule 15/08/2016 plus que dubitatif sur ce calcul de Size, j'utilise repartition.length
+	//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
 	var repartition = getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
+	var size = repartition.length;
+	//window.console.log('newRecherche, repartition=' + JSON.stringify(repartition));
 	
 	var table = document.createElement('table');
 	table.setAttribute('class', 'mh_tdborder');
