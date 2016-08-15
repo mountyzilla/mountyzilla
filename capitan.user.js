@@ -30,7 +30,7 @@
 
 /* Roule 08 à 10/08/2016
 	recopie ici de appendButton() version MZ
-	Ajout liste des essai et possibilité d'en supprimer
+	Ajout liste des essais et possibilité d'en supprimer
 	Ajout lien vers Psyko Chasseurs
 	Adaptation aux IDs dans la page de résultat d'une recherche de cachette (et plus besoin de stocker le numéro de carte)
 */
@@ -507,16 +507,13 @@ function getMeanPositionNumber(repartition,nbSolutions)
 }
 
 // Roule 08/08/2016 passage numTroll en paramètre
-function newRecherche(listeSolutions, numTroll)
+// Roule 15/05/2016 passage position courante en paramètre (tableau des 2 valeurs)
+function newRecherche(listeSolutions, currentPos)
 {
-	// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
-	var tx = parseInt(window.localStorage[numTroll+".position.X"]);
-	var ty = parseInt(window.localStorage[numTroll+".position.Y"]);
-	var tn = parseInt(window.localStorage[numTroll+".position.N"]);
 	if(listeSolutions.length<=1)
 		return null;
 	var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
-	var repartition = getRepartitionFromCase(tx, ty, tn, listeSolutions);
+	var repartition = getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
 	
 	var table = document.createElement('table');
 	table.setAttribute('class', 'mh_tdborder');
@@ -532,7 +529,7 @@ function newRecherche(listeSolutions, numTroll)
 		if(repartition[i]!=0)
 			nbNotZero++;
 	}
-	var string = "Il y a une utilité de faire une recherche en X = "+tx+" Y = "+ty+" N = "+tn;
+	var string = "Il y a une utilité de faire une recherche en X = "+currentPos[0]+" Y = "+currentPos[1]+" N = "+currentPos[2];
 	if(nbNotZero<=1)
 	{
 		//
@@ -545,13 +542,13 @@ function newRecherche(listeSolutions, numTroll)
 				{
 					if(dx==0 && dy==0 && dn==0)
 						continue;
-					var tmprepartition = getRepartitionFromCase(tx+dx, ty+dy, tn+dn, listeSolutions);
+					var tmprepartition = getRepartitionFromCase(currentPos[0]+dx, currentPos[1]+dy, currentPos[2]+dn, listeSolutions);
 					var tmpmeanscore = getMeanPositionNumber(tmprepartition,listeSolutions.length);
 					if(((dn==0 || !isNotN) && minsolution>=tmpmeanscore) || (dn!=0 && isNotN && tmpmeanscore<=2*minsolution/3))
 					{
 						minsolution = tmpmeanscore;
 						repartition = tmprepartition;
-						newpos = "X = "+(tx+dx)+" Y = "+(ty+dy)+" N = "+(tn+dn);
+						newpos = "X = "+(currentPos[0]+dx)+" Y = "+(currentPos[1]+dy)+" N = "+(currentPos[2]+dn);
 						isNotN = (dn==0);
 					}
 				}
@@ -559,7 +556,7 @@ function newRecherche(listeSolutions, numTroll)
 		{
 			var thead = document.createElement('thead');
 			var tr = appendTr(thead, 'mh_tdtitre');
-			var td = appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en X = "+tx+" Y = "+ty+" N = "+tn, true);
+			var td = appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en X = "+currentPos[0]+" Y = "+currentPos[1]+" N = "+currentPos[2], true);
 			td.setAttribute('align', 'center');
 			table.appendChild(thead);
 			return table;
@@ -656,8 +653,15 @@ function analyseObject()
 	p.appendChild(table);
 	document.body.appendChild(p);
 	
+	// position courante du Troll
+	// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
+	var curPos = [];
+	curPos[0] = parseInt(window.localStorage[numTroll+".position.X"]);
+	curPos[1] = parseInt(window.localStorage[numTroll+".position.Y"]);
+	curPos[2] = parseInt(window.localStorage[numTroll+".position.N"]);
+
 	// bloc utilité de faire une recherche sur la position courante
-	table = newRecherche(listeSolutions, numTroll);
+	table = newRecherche(listeSolutions, curPos);
 	if(table!=null)
 	{
 		var p = document.createElement('p');
@@ -675,7 +679,7 @@ function analyseObject()
 		p.appendChild(table);
 		document.body.appendChild(p);
 		// Roule 08/08/2016 bloc préparant les infos pour l'outil Mamoune (Psyko-Chasseurs)
-		table = blocMamoune(idCarte);
+		table = blocMamoune(idCarte, curPos);
 		if(table!=null)
 		{
 			p = document.createElement('p');
@@ -687,7 +691,7 @@ function analyseObject()
 }
 
 // Roule 08/08/2016
-function blocMamoune(idCarte) {
+function blocMamoune(idCarte, currentPos) {
 	var table = document.createElement('table');
 	table.setAttribute('class', 'mh_tdborder');
 	table.setAttribute('border', '0');
@@ -708,9 +712,12 @@ function blocMamoune(idCarte) {
 	
 	// http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=1&y=2&n=3&t=4+5+6+7%0D%0A10+11+12+5&enter=Go#
 	var tabtxt = new Array();
+	var currentPosAlreadyDone = false;
 	for (var i = 0; i < essais.length; i++) {
 		tabtxt.push(essais[i].join('+'));
+		if (essais[i][0] == currentPos[0] && essais[i][1] == currentPos[1] && essais[i][2] == currentPos[2]) currentPosAlreadyDone = true;
 	}
+	if (!currentPosAlreadyDone) tabtxt.push(currentPos.join('+') + '+%3F');	// spécial pour demander à Mamoune ce qu'elle pense d'un essai à la position courante
 	var tr2 = appendTr(tbody, 'mh_tdpage');
 	var td2 = appendTd(tr2);
 	var originalPos = GM_getValue("capitan."+idCarte+".position").split(";");
