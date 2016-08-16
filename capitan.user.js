@@ -9,7 +9,7 @@
 // @include https://games.mountyhall.com/mountyhall/View/TresorHistory*
 // @include https://games.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @name Capitan
-// @version 8.1-GM
+// @version 8.1.1-GM
 // ==/UserScript==
 
 /****************************************************************
@@ -28,11 +28,15 @@
 *       Le nombre de cachettes possibles et leur position       *
 ****************************************************************/
 
-/* Roule 08 à 10/08/2016
+/*
+Roule 08 à 10/08/2016
 	recopie ici de appendButton() version MZ
 	Ajout liste des essais et possibilité d'en supprimer
 	Ajout lien vers Psyko Chasseurs
 	Adaptation aux IDs dans la page de résultat d'une recherche de cachette (et plus besoin de stocker le numéro de carte)
+Roule 15/08/2016 V8.1.1
+	Ajout demande d'avis sur la position courante sur le site Psyko-Chasseurs
+	Quelques corrections de calcul (on avait du NaN)
 */
 
 function appendButton(paren,value,onClick) {
