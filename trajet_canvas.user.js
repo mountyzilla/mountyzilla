@@ -1,30 +1,12 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name Trajet des gowap MkII
 // @namespace http://feldspath.free.fr/
-// @include http://games.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
-// @include http://games.mountyhall.com/mountyhall/MH_Play/Play_vue.php*
-// @include http://games.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
-// @include http://games.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
-// @include http://games.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
-// @include http://games.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Play/Play_vue*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Play/Play_vue.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
-// @include https://games.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Play_e_follo.php*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Play_vue*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Ordres.php*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_NewOrder.php*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Follower/FO_Profil.php*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Lieux/Lieu_Description.php*
+// @include */mountyhall/MH_Play/Play_e_follo.php*
+// @include */mountyhall/MH_Play/Play_vue.php*
+// @include */mountyhall/MH_Follower/FO_Ordres.php*
+// @include */mountyhall/MH_Follower/FO_NewOrder.php*
+// @include */mountyhall/MH_Follower/FO_Profil.php*
+// @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @description Trajet des gowap, version canvas 2.1.1.2 du 12 janvier 2012 par Feldspath
 // @grant GM_getValue
 // @grant GM_setValue

@@ -8,6 +8,16 @@
 // @include http://games.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @include https://games.mountyhall.com/mountyhall/View/TresorHistory*
 // @include https://games.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include http://serv01.mountyhall.com/mountyhall/View/TresorHistory*
+// @include http://serv01.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include https://serv01.mountyhall.com/mountyhall/View/TresorHistory*
+// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include https://mh.mh.raistlin.fr/mountyhall/View/TresorHistory*
+// @include https://mh.mh.raistlin.fr/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include http://mh.fr.nf/mountyhall/View/TresorHistory*
+// @include http://mh.fr.nf/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include https://mh.fr.nf/mountyhall/View/TresorHistory*
+// @include https://mh.fr.nf/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @name Capitan
 // @version 8.1.2
 // ==/UserScript==
@@ -37,8 +47,8 @@ Roule 08 à 10/08/2016
 Roule 15/08/2016 V8.1.1
 	Ajout demande d'avis sur la position courante sur le site Psyko-Chasseurs
 	Quelques corrections de calcul (on avait du NaN)
-Roule 24/08/2016
-	Ajout outil de récupération des recherches pré Greasemonkey
+Roule 24 à 26/08/2016 V8.1.2
+	Ajout outils de récupération des recherches pré Greasemonkey
 */
 
 function appendButton(paren,value,onClick) {
@@ -698,7 +708,16 @@ function analyseObject()
 			document.body.appendChild(p);
 		}
 	}
-	
+
+	// Roule 25/08/2016 récupération des anciennes recherches (préférences)
+	table = PrepareRecupFromPreferences();
+	if(table!=null)
+	{
+		p = document.createElement('p');
+		p.appendChild(table);
+		document.body.appendChild(p);
+	}
+
 	// Roule 24/08/2016 récupération des anciennes recherches (localStorage)
 	table = PrepareRecupFromLocalStorage(idCarte);
 	if(table!=null)
@@ -779,10 +798,10 @@ function prevRecherche(idCarte)
 	var td = appendTdText(tr, "Vous avez mémorisé " + essais.length + " essai" + (essais.length > 1 ? "s" : ""), true);
 	td.setAttribute('align', 'center');
 	table.appendChild(thead);
-	
+
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
-	
+
 	for (var i = 0; i < essais.length; i++) {
 		var td2 = createCase("X = "+essais[i][0]+", Y = "+essais[i][1]+", N = "+essais[i][2]+" => "+essais[i][3],tbody,400);
 		var td3 = appendTd(td2.parentNode);
@@ -793,7 +812,7 @@ function prevRecherche(idCarte)
 		td3.setAttribute('width', 200);
 		td3.setAttribute('align', 'center');
 	}
-	
+
 	td.addEventListener("click", toggleTableau, true);
 	td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
 	td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
@@ -864,9 +883,9 @@ function PrepareRecupFromLocalStorage(idCarte) {
 	
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead, 'mh_tdtitre');
-	var td = appendTdText(tr, "Récupération des anciens essais", true);
+	var td = appendTdText(tr, "Récupération des anciens essais V1.1", true);
 	td.setAttribute('align', 'center');
-	td.title = "C'est ici pour tenter de récupérer les essais faits avec l'ancienne version du script";
+	td.title = "C'est ici pour tenter de récupérer les essais faits avec le version 1.1 du script";
 	table.appendChild(thead);
 	
 	var tbody = document.createElement('tbody');
@@ -890,10 +909,13 @@ function recupFromLocalStorage() {
 	tbody.setAttribute('style', !tbody.getAttribute('style') || tbody.getAttribute('style') == '' ? 'display:none;' : '');
 	// entrée d'un jeu de test
 	// window.localStorage.setItem('91305.capitan.8600686.essai.1', '1;2;3;4');
-	// window.localStorage.setItem('91305.capitan.8600686.essai.2', '1;2;4;4');
-	// window.localStorage.setItem('91305.capitan.8600686.essai.3', '1;2;5;4');
-	// window.localStorage.setItem('91306.capitan.8600686.essai.1', '1;2;6;4');
-	// return;
+	// window.localStorage.removeItem('91305.capitan.8600686.essai.2');
+	// window.localStorage.removeItem('91305.capitan.8600686.essai.3');
+	// window.localStorage.removeItem('91306.capitan.8600686.essai.1');
+	// window.localStorage.setItem('91305.capitan.8600686.essai.2', '1;2;-4;4');
+	// window.localStorage.setItem('91305.capitan.8600686.essai.3', '1;-2;5;4');
+	// window.localStorage.setItem('91306.capitan.8600686.essai.1', '-1;2;6;4');
+	 // return;
 
 	try {
 		var nLocalStorage = window.localStorage.length;
@@ -910,20 +932,13 @@ function recupFromLocalStorage() {
 			var v = window.localStorage.getItem(k);
 			//var nTroll = parseInt(m[1]);	// pas utile
 			//var nEssai = parseInt(m[3]);	// pas utile non plus
-			var v2;
-			// tester si cet essai est déjà connu sous Greasemonkey
-			var bAlready = false;
-			for (var iGM = 0; v2 = GM_getValue("capitan."+idCarte+".essai."+iGM); iGM++) {
-				if (v2 != v) continue;
-				bAlready = true;
-				break;
-			}
+			var bAlready = testAlready(idCarte, v);
 			if (bAlready) {	// déjà connu : on compte et on ignore
 				nAlready++;
 				continue;
 			}
 			// extraire x, y, n, nb
-			m = v.match(/(\d*);(\d*);(\d*);(\d*)/i);
+			m = v.match(/([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
 			if (!m) {
 				var td2 = createCase('Erreur à la récupération des coordonnées ' + v,tbody,400);
 				continue;
@@ -942,7 +957,7 @@ function recupFromLocalStorage() {
 			td2.style.fontWeight="bold";
 		}
 		if (nAlready > 0) {
-			var td2 = createCase(nAlready + ' recherche(s) avaient déjà été récupérées',tbody,400);
+			var td2 = createCase(nAlready + ' recherche(s) avaient déjà été récupérée(s)',tbody,400);
 			td2.style.fontStyle="italic";
 		}
 		if (nRecup == 0 && nAlready == 0) {
@@ -957,7 +972,103 @@ function recupFromLocalStorage() {
 	tbody.RecupVisible = true;
 }
 
+function testAlready(idCarte, v) {
+	var v2;
+	// tester si cet essai est déjà connu sous Greasemonkey
+	var bAlready = false;
+	for (var iGM = 0; v2 = GM_getValue("capitan."+idCarte+".essai."+iGM); iGM++) {
+		if (v2 != v) continue;
+		return true;
+		break;
+	}
+	return false;
+}
 
+// Roule 25/08/2016 récupération des anciennes recherches (préférences)
+function PrepareRecupFromPreferences() {
+	var table = document.createElement('table');
+	table.setAttribute('class', 'mh_tdborder');
+	table.setAttribute('border', '0');
+	table.setAttribute('cellspacing', '1');
+	table.setAttribute('cellpadding', '4');
+	table.setAttribute('style', 'width: 400px;');
+	table.setAttribute('align', 'center');
+	
+	var thead = document.createElement('thead');
+	var tr = appendTr(thead, 'mh_tdtitre');
+	var td = appendTdText(tr, "Récupération des anciens essais V1.0", true);
+	td.setAttribute('align', 'center');
+	td.title = "C'est ici pour entrer manuellement les essais faits avec la version 1.0 du script";
+	table.appendChild(thead);
+
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+
+	var td2 = createCase("Ouvrez un nouvel onglet sous Firefox",tbody);
+	td2.style.textAlign = "left";
+
+	var nbsp = String.fromCharCode(160);
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("(«" + nbsp + "+" + nbsp + "» à droite des onglets)"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("Tapez dans la barre d'adresse «" + nbsp + "about:config" + nbsp + "» et validez"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("C'est promis, vous ferez attention" + nbsp + "!"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("Filtrez ensuite par «" + nbsp + "capitan" + nbsp +"» (zone «" + nbsp + "Rechercher" + nbsp + "» en haut)"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("Ensuite, ligne par ligne,"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("copiez la ligne (bouton de droite de la souris - copier),"));
+	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("Collez ci-dessous et Ajouter"));
+	td2.appendChild(document.createElement('br'));
+	var inp = addInput(td2, "t", 100);
+	inp.style.width = "350px";
+	td2.appendChild(document.createElement('br'));
+	var button=appendButton(td2, "Ajouter", addV1);
+
+	td.addEventListener("click", toggleTableau, true);
+	td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
+	td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
+	td.setAttribute('colspan', 2);
+	tbody.setAttribute('style', 'display:none;');
+	
+	return table;
+}
+
+function addV1(eButton) {
+	// pour test mountyhall.91306.capitan.8600686.essai.1;-1;2;6;4
+	try
+	{
+		var td=this.parentNode;
+		var eInput = td.getElementsByTagName("input")[0];
+		var val = eInput.value;
+		//window.console.log('val=' + val);
+		var m = val.match(/capitan\.(\d*)\.essai\.(\d*);([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
+		if (!m) {
+			alert("Désolé, impossible de retrouver le numéro de carte, les coordonnées et le nombre de chiffres bien placés");
+			return;
+		}
+		var bAlready = testAlready(m[1], m[3] + ';' + m[4] + ';' + m[5] + ';' + m[6]);
+		if (bAlready) {
+			alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
+				+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+				+ "\navait DÉJÀ été entré");
+			eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
+			return;
+		}
+		addOneRecherche(parseInt(m[1]), m[3], m[4], m[5], m[6]);
+		alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
+			+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+			+ "\na bien été enregistré\nIl faudra rafraichir cette page (F5) quand vous aurez terminé");
+		eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
+	}
+	catch(e)
+	{
+		window.alert(e);
+	}
+}
 
 function addRecherche()
 {
@@ -1011,6 +1122,7 @@ function addInput(parent, nom, size)
 	input.setAttribute('maxlength',size==null?4:size);
 	input.setAttribute('size',size==null?4:size);
 	parent.appendChild(input);
+	return input;
 }
 
 function infoRecherche()

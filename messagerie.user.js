@@ -1,9 +1,14 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Messagerie
 // @namespace   MH
 // @description Gestion "re" et previsu messagerie
 // @include     http://games.mountyhall.com/*
 // @include     https://games.mountyhall.com/*
+// @include     http://serv01.mountyhall.com/*
+// @include     https://serv01.mountyhall.com/*
+// @include     https://mh.mh.raistlin.fr/*
+// @include     http://mh.fr.nf/*
+// @include     https://mh.fr.nf/*
 // @version     1.2
 // @grant       none
 // ==/UserScript==

@@ -1,10 +1,15 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
 // @include     http://games.mountyhall.com/*
 // @include     https://games.mountyhall.com/*
-// @version     1.2
+// @include     http://serv01.mountyhall.com/*
+// @include     https://serv01.mountyhall.com/*
+// @include     https://mh.mh.raistlin.fr/*
+// @include     http://mh.fr.nf/*
+// @include     https://mh.fr.nf/*
+// @version     1.2.1
 // @grant       none
 // ==/UserScript==
 
@@ -28,6 +33,40 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
+// V1.1 : regroupement en un gros paquet sale
+// V1.2 : toujours un gros paquet sale, passage sous Greasemonkey
+// V1.2.1 :
+//		include des URLs MH alternatives
+//		regroupement des URLs externes en tête de fichier pour pouvoir contempler l'horreur de la diversité de la chose
+//		Ajout d'un message d'alerte en cas de HTTPS sans avoir débloqué le contenu mixte
+
+// URLs externes images (pas de souci CORS)
+const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
+const URL_MZimg11 = 'http://mountyzilla.tilk.info/scripts_1.1/images/'
+const URL_MZscriptCarte = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
+
+// URLs externes redirection (pas de souci CORS)
+const URL_pageNiv = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
+const URL_MZmountyhall = 'http://trolls.ratibus.net/mountyhall/';
+const URL_AnatrolDispas = 'http://mountyhall.dispas.net/dynamic/';
+const URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
+const URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
+const URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
+const URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
+const URL_ratibus_lien = 'http://trolls.ratibus.net/';
+const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';
+const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
+const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
+
+// URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage chez raistlin)
+var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
+// ceux-ci rendent bien les 2 entêtes CORS
+const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
+const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
+const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
+// cette URL ne rend pas le 2e entête CORS (peut-être pas grave car il s'agit de l'envoi des CdM, on ignore la réponse)
+const URL_pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
+
 // x~x Libs
 
 /* TODO
@@ -36,7 +75,13 @@
  * - vérfier la gestion des enchants
  */
 
-var MZimg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
+// Roule 04/09/2016 switch extern URLs to https if available
+var isHTTPS = false;
+if ( window.location.protocol.indexOf('https') === 0) {
+	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
+	isHTTPS = true;
+}
+ 
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
@@ -94,13 +139,6 @@ function displayScriptTime() {
 		' - [Script exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
 	}
-
-
-/*-[functions]-------------- Insertion de scripts ----------------------------*/
-
-function isPage(url) {
-	return window.location.href.indexOf(MHURL+url)==0;
-}
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
 
@@ -830,7 +868,7 @@ var mundiChampi = {
 
 function addInfoMM(node,mob,niv,qualite,effetQ) {
 	appendText(node,' ');
-	var urlImg = 'http://mountyzilla.tilk.info/scripts_1.1/images/'
+	var urlImg = URL_MZimg11
 		+'Competences/melangeMagique.png';
 	var text = ' [-'+(niv+effetQ)+' %]';
 	var str = '';
@@ -863,7 +901,7 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 		texte = aff(pc)+'%';
 		title = texte+" pour l'écriture de "+tabEM[mob][1];
 		}
-	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
+	var urlImg = URL_MZimg09
 		+'Competences/ecritureMagique.png';
 	var span = createImageSpan(urlImg,'EM:',title,' ['+texte+']',bold);
 	node.appendChild(span);
@@ -1122,7 +1160,7 @@ function createImageTactique(url,id,nom) {
 
 function createCDMTable(id,nom,donneesMonstre) {
 try {
-	var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
+	var urlImg = URL_MZimg09;
 	var table = document.createElement('table');
 	var profilActif = isProfilActif();
 	table.className = 'mh_tdborder';
@@ -1369,7 +1407,7 @@ function insertEnchantInfos(tbody) {
 				tbody,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
 		if(nodes.snapshotLength == 0)
 			return false;
-		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png';
+		var urlImg = URL_MZimg09 + 'enchant.png';
 		for(var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i).nextSibling.nextSibling;
 			var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g,' ');
@@ -1413,7 +1451,7 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 				document,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
 		if(nodes.snapshotLength == 0)
 			return false;
-		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png';
+		var urlImg = URL_MZimg09 + 'enchant.png';
 		for(var i = 0; i < nodes.snapshotLength; i++) 
 		{
 			var link = nodes.snapshotItem(i);
@@ -1971,8 +2009,6 @@ function do_mission_liste() {
  * getLvl pour Explo, Rotobaffe et cie
  */
 
-var pageNivURL = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
-//var idtURL = "http://mh.byethost5.com/idt_serveur.php";
 
 
 /*                                Page de combat                                */
@@ -2059,7 +2095,7 @@ function getLevel() {
 
 	if(niveau != '') {
 		var button = insertButtonCdm('as_Action');
-		button.setAttribute("onClick","window.open('" + pageNivURL + "?id=" + (idM * 1) + "&monstre="
+		button.setAttribute("onClick","window.open('" + URL_pageNiv + "?id=" + (idM * 1) + "&monstre="
 				+ escape(nomM) + "&niveau=" + escape(niveau)
 				+ "', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
 				+ "this.value = 'Merci de votre participation'; this.disabled = true;");
@@ -3287,9 +3323,8 @@ function setCarteGogo() {
 								pars[0], null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
 	}
 	catch(e) {return;}
-	var serv_scpt = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
-	var serv_img_trou = "http://mountyzilla.tilk.info/scripts_0.8/images/carte_trou.png";
-	var serv_img_cible = "http://mountyzilla.tilk.info/scripts_0.8/images/rep.png";
+	var serv_img_trou = URL_MZimg09 + "carte_trou.png";
+	var serv_img_cible = URL_MZimg09 + "rep.png";
 
 	var expreg = /X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
 	var lignes = pars[0].getElementsByTagName('tr');
@@ -3308,7 +3343,7 @@ function setCarteGogo() {
 	var base = [-229,-5];
 	if (nbpt>0) {
 		base = [-684,-5];
-		nvdiv += "<img src='"+serv_scpt+"?trajet="+trajet+"' style='position:relative;top:-455px;left:0px;z-index:500;border-width:0px' usemap='#coord_trou'/>";
+		nvdiv += "<img src='"+URL_MZscriptCarte+"?trajet="+trajet+"' style='position:relative;top:-455px;left:0px;z-index:500;border-width:0px' usemap='#coord_trou'/>";
 	}
 	nvdiv += "<img src='"+serv_img_cible+"' style='position:relative;top:"+(base[0]-2*pos[1])+"px;left:"+(base[1]+2*pos[0])+"px;z-index:100;'/>";
 
@@ -3398,7 +3433,7 @@ function traiteMonstre() {
 	idMonstre = texte.match(/\d+/)[0];
 	FF_XMLHttpRequest({
 		method: 'GET',
-		url: 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php?begin=-1&idcdm='
+		url: URL_MZinfoMonstre + '?begin=-1&idcdm='
 			+MY_getValue('CDMID')
 			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
 		headers : {
@@ -3871,10 +3906,6 @@ function do_move() {
 
 // x~x news
 
-// Url de récup des jubilaires:
-const annivURL = 'http://mountyzilla.tilk.info/scripts/anniv.php';
-// Flux RSS des news MZ:
-const rssURL = 'http://mountyzilla.tilk.info/news/rss.php';
 // Nombre de news à afficher & nb max de caractères par news:
 const nbItems = 5;
 const maxCarDescription = 300;
@@ -3917,7 +3948,7 @@ function traiterJubilaires() {
 	try {
 		FF_XMLHttpRequest({
 			method: 'GET',
-			url: annivURL,
+			url: URL_anniv,
 			headers: {
 				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
 				'Accept': 'application/xml,text/xml',
@@ -3932,9 +3963,30 @@ function traiterJubilaires() {
 			});
 		}
 	catch(e) {
-		window.alert('Erreur Jubilaires:\n'+e)
-		};
-	}
+		if (isHTTPS) {
+			try {
+				var rappels = document.evaluate(
+					"//p[contains(a/text(),'messagerie')]",
+					document, null, 9, null).singleNodeValue;
+				}
+			catch(e) {
+				window.alert('Vous êtes en HTTPS. Pour bénéficier de MoutyZilla, vous devriez débloquer le contenu mixte');
+				return;
+				}
+			var p = document.createElement('div');
+			p.innerHTML = 'Vous êtes en <span style="color:blue">HTTPS</span>.<br/>'
+				+ 'Pour bénéficier de MountyZilla, vous devriez autoriser le contenu mixte.<br />'
+				+ 'Voir <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">sur cette page</a>';
+			p.style.textAlign = 'center';
+			p.style.border = 'solid 5px red';
+			p.style.width = 'auto';
+			p.style.fontSize = 'xx-large';
+			insertBefore(rappels,p);
+		} else {
+			window.alert('Erreur Jubilaires:\n'+e)
+		}
+	};
+}
 
 function afficherJubilaires(listeTrolls) {
 	try {
@@ -3982,7 +4034,7 @@ function traiterNouvelles() {
 	try {
 		FF_XMLHttpRequest({
 			method: 'GET',
-			url: rssURL,
+			url: URL_rss,
 			headers: {
 				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
 				'Accept': 'application/xml,text/xml',
@@ -3996,9 +4048,13 @@ function traiterNouvelles() {
 			});
 		}
 	catch(e) {
-		window.alert('Erreur News:\n'+e)
-		};
+		if (isHTTPS) {
+			// ignore
+		} else {
+			window.alert('Erreur News:\n'+e)
+		}
 	}
+}
 
 function afficherNouvelles(xml_data) {
 	var footer = document.getElementById('footer1');
@@ -4276,7 +4332,7 @@ function treateEM()
 {
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png";
+	var urlImg = URL_MZimg09 + "Competences/ecritureMagique.png";
 	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
 			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
@@ -4342,7 +4398,7 @@ function treateEnchant()
 			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
+		var urlImg = URL_MZimg09 + "enchant.png";
 		for (var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i);
 			var nomCompoTotal = link.firstChild.nodeValue;
@@ -4749,7 +4805,7 @@ function initAll() {
 	if(race==="Skrim")    { amelio_att--; }
 	if(race==="Tomawak")  { amelio_vue--; }
 	
-	urlAnatrolliseur = "http://mountyhall.dispas.net/dynamic/"
+	urlAnatrolliseur = URL_AnatrolDispas
 		+"outils_anatrolliseur.php?anatrolliseur=v8"
 		+"|r="+race.toLowerCase()
 		+"|dla="+amelio_dtb(dtb)
@@ -4919,7 +4975,7 @@ function vueCarac() {
 }
 
 function setLieu() {
-	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
+	var urlBricol = URL_MZmountyhall + 'lieux.php'+
 		'?search=position&orderBy=distance&posx='+
 		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
 	if(MY_getValue('VUECARAC')=='true') {
@@ -6886,7 +6942,7 @@ function removeLinkField() {
 
 function resetMainIco() {
 	document.getElementById('icoMenuIco').value=
-		'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
+		URL_MZimg09 + 'MY_logo_small.png';
 }
 
 
@@ -6932,7 +6988,7 @@ function insertOptionTable(insertPt) {
 	appendText(td,'Icône du Menu: ');
 	var url = MY_getValue(numTroll+'.ICOMENU');
 	if(!url) { 
-		url = 'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
+		url = URL_MZimg09 + 'MY_logo_small.png';
 	}
 	appendTextbox(td,'text','icoMenuIco',50,200,url);
 	appendButton(td,'Réinitialiser',resetMainIco);
@@ -7132,7 +7188,7 @@ function do_option() {
 	start_script(712);
 
 	// Pour cryptage des mdp IT
-	appendNewScript('http://mountyzilla.tilk.info/scripts/md5.js');
+	appendNewScript(URL_tilk_js + 'md5.js');
 
 	var insertPoint = document.getElementById('footer1');
 	insertBefore(insertPoint,document.createElement('p'));
@@ -7190,14 +7246,14 @@ function do_option() {
 						texte += ";"+infoComposant[k].replace("Ril ","Œil ");
 					}
 					li = appendLI(ul,texte);
-					var string = '<form action="http://troc.mountyhall.com/search.php" method="post" TARGET = "_blank">';
+					var string = '<form action="' + URL_troc_mh + '" method="post" TARGET = "_blank">';
 					string+= '<input type="hidden" name="monster" value="'+infoComposant[2]+'" />';
 					string+= '<input type="hidden" name="part" value="'+infoComposant[0]+'" />';
 					string+= '<input type="hidden" name="qualite" value="'+(getQualite(infoComposant[3])+1)+'" />';
 					string+= '<input type="hidden" name="q" value="min" />';
 					string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Rechercher sur le Troc de l\'Hydre" />';
-					string+= ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;http://www.cyclotrolls.be/wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22'+infoComposant[2]+'%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>';
-					
+					string+= ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;' + URL_cyclotrolls + 'wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22'+infoComposant[2]+'%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>';
+
 					string+= '</form>';
 	//				string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
 	//				string+= '<input type="hidden" name="wiki" value="TroOGle" />';
@@ -7280,7 +7336,7 @@ function traiteChampis() {
 		var type = str.slice(0,str.lastIndexOf(' '));
 		var mundi = mundiChampi[type];
 		if(!mundi) continue;
-		var urlImg = 'http://mountyzilla.tilk.info/scripts_0.9/images/'
+		var urlImg = URL_MZimg09
 			+'Competences/ecritureMagique.png';
 		var img = createAltImage(urlImg,'EM','Mundidey '+mundi);
 		appendText(node,' ');
@@ -7820,9 +7876,6 @@ function do_diplo() {
 
 // x~x cdmcomp
 
-var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
-//var pageDispatcher = "http://m2m-bugreport.dyndns.org/scripts/dev/cdmdispatcher.php";
-//var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
 var cdm = '';
 
 function getNonNegInts(str) {
@@ -7924,7 +7977,7 @@ function sendInfoCDM() {
 	var texte = '';
 	FF_XMLHttpRequest({
 		method: 'GET',
-		url: pageDispatcher+'?cdm='+escape(cdm),
+		url: URL_pageDispatcher+'?cdm='+escape(cdm),
 		headers : {
 			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 			'Accept': 'application/atom+xml,application/xml,text/xml'
@@ -7967,10 +8020,6 @@ function do_cdmcomp() {
  * - patch dégueu pour gérer la décomposition P/M de l'armure
  */
 
-var pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
-//var pageDispatcher = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
-//var pageCdmRecord = "http://nocmh.free.fr/scripts/cdmCollecteur.php";
-//var pageEffetDispatcher = "http://mountypedia.ratibus.net/mz/effetdispatcher.php";
 var buttonCDM;
 
 /*******************************************************************************************
@@ -8051,7 +8100,7 @@ function sendCDM() {
 	
 	FF_XMLHttpRequest({
 				method: 'GET',
-				url: pageDispatcher+'?cdm='+escape(cdm),
+				url: URL_pageDispatcher+'?cdm='+escape(cdm),
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml'
@@ -8196,7 +8245,7 @@ function initRaccourcis() {
 	var urlIco = MY_getValue(numTroll+'.ICOMENU');
 	if(!urlIco) {
 		urlIco =
-			'http://mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small.png';
+			URL_MZimg09 + 'MY_logo_small.png';
 	}
 	mainIco.src = urlIco;
 	mainIco.alt = 'MZ';
@@ -8759,7 +8808,7 @@ function synchroniseFiltres() {
 /* [functions] Menu Vue 2D */
 var vue2Ddata = {
 	'Bricol\' Vue': {
-		url: 'http://trolls.ratibus.net/mountyhall/vue_form.php',
+		url: URL_MZmountyhall + 'vue_form.php',
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {
@@ -8768,7 +8817,7 @@ var vue2Ddata = {
 		}
 	},
 	'Vue du CCM': {
-		url: 'http://clancentremonde.free.fr/Vue2/RecupVue.php',
+		url: URL_vue_CCM,
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {
@@ -8776,19 +8825,19 @@ var vue2Ddata = {
 		}
 	},
 	'Vue Gloumfs 2D': {
-		url: 'http://gloumf.free.fr/vue2d.php',
+		url: URL_vue_Gloumfs2D,
 		paramid: 'vue_mountyzilla',
 		func: getVueScript,
 		extra_params: {}
 	},
 	'Vue Gloumfs 3D': {
-		url: 'http://gloumf.free.fr/vue3d.php',
+		url: URL_vue_Gloumfs3D,
 		paramid: 'vue_mountyzilla',
 		func: getVueScript,
 		extra_params: {}
 	},
 	'Grouky Vue!': {
-		url: 'http://mh.ythogtha.org/grouky.py/grouky',
+		url: URL_vue_Grouky,
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {
@@ -9206,7 +9255,7 @@ function envoiVersTroogle() {
 			bddLieux(debutLot,finLot);
 		FF_XMLHttpRequest({
 			method: 'POST',
-			url: 'http://troogle-beta.aacg.be/view_submission',
+			url: URL_trooglebeta,
 			//url: 'http://weblocal/POST_RESULT/index.php',
 			headers : {
 				'Content-type': 'application/x-www-form-urlencoded'
@@ -9482,11 +9531,10 @@ function retrieveCDMs() {
 		)+'&';
 		
 		if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
-			var url = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
 			
 			FF_XMLHttpRequest({
 				method: 'POST',
-				url: url,
+				url: URL_MZinfoMonstre,
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml',
@@ -9519,7 +9567,7 @@ function retrieveCDMs() {
 						computeMission(begin2,end2);
 					} catch(e) {
 						window.console.error(
-							'[retrieveCDMs]\n'+e+'\n'+url+'\n'+texte
+							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstre+'\n'+texte
 						);
 					}
 				}
@@ -9539,7 +9587,7 @@ function computeMission(begin,end) {
 	var str = MY_getValue(numTroll+'.MISSIONS');
 	if(!str) { return; }
 	
-	var urlImg = MZimg+'mission.png';
+	var urlImg = URL_MZimg09+'mission.png';
 	var obMissions = JSON.parse(str);
 	
 	for(var i=end ; i>=begin ; i--) {
@@ -9607,7 +9655,7 @@ function computeVLC(begin,end) {
 	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
 	if(!cache)
 		return false;
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/oeil.png";
+	var urlImg = URL_MZimg09 + "oeil.png";
 	for(var i = end; i >= begin;i--)
 	{
 		var id = getMonstreID(i);
@@ -9640,7 +9688,7 @@ function computeTactique(begin, end) {
 				var td = getMonstreNomNode(j);
 				appendText(td,' ');
 				td.appendChild(
-					createImageTactique(MZimg+'calc2.png', id, nom)
+					createImageTactique(URL_MZimg09+'calc2.png', id, nom)
 				);
 			}
 		}
@@ -9659,7 +9707,7 @@ function updateTactique() {
 	if(noTactique) {
 		for(var i=nbMonstres ; i>0 ; i--) {
 			var tr = getMonstreNomNode(i);
-			var img = document.evaluate("img[@src='"+MZimg+"calc2.png']",
+			var img = document.evaluate("img[@src='"+URL_MZimg09+"calc2.png']",
 				tr, null, 9, null).singleNodeValue;
 			if(img) {
 				img.parentNode.removeChild(img.previousSibling);
@@ -9673,8 +9721,8 @@ function updateTactique() {
 
 function filtreMonstres() {
 // = Handler universel pour les fonctions liées aux monstres
-	var urlImg = MZimg+'Competences/ecritureMagique.png',
-		urlEnchantImg = MZimg+'images/enchant.png';
+	var urlImg = URL_MZimg09+'Competences/ecritureMagique.png',
+		urlEnchantImg = URL_MZimg09+'images/enchant.png';
 	
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MY_getValue(numTroll+'.USECSS')=='true';
@@ -10215,7 +10263,7 @@ function putScriptExterne() {
 	if(nomit=='bricol') {
 		var data = infoit.split('$');
 		try {
-			appendNewScript('http://trolls.ratibus.net/'+data[1]
+			appendNewScript(URL_ratibus_lien+data[1]
 				+'/mz.php?login='+data[2]
 				+'&password='+data[3]
 				);
@@ -10300,7 +10348,7 @@ function putInfosTrolls() {
 			/* lien vers l'IT */
 			var lien = document.createElement('a');
 			var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-			lien.href = 'http://trolls.ratibus.net/'+nomit+'/index.php';
+			lien.href = URL_ratibus_lien+nomit+'/index.php';
 			lien.target = '_blank';
 			lien.appendChild(tab);
 			insertTdElement(tr_trolls[i].childNodes[6],lien);
@@ -10793,7 +10841,7 @@ function extractionDonnees() {
 	if(race==="Skrim")   {amelio_att--; }
 	if(race==="Tomawak") {amelio_vue--; }
 
-	urlAnatrolliseur = "http://mountyhall.dispas.net/dynamic/"
+	urlAnatrolliseur = URL_AnatrolDispas
 	+"outils_anatrolliseur.php?anatrolliseur=v8"
 	+"|r="+race.toLowerCase()
 	+"|dla="+amelio_dtb(dtb)
@@ -10931,7 +10979,7 @@ function setInfoDescription() {
 }
 
 function setInfosEtatLieux() {
-	var urlBricol = 'http://trolls.ratibus.net/mountyhall/lieux.php'+
+	var urlBricol = URL_MZmountyhall + 'lieux.php'+
 		'?search=position&orderBy=distance&posx='+
 		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
 	var tdPosition = document.querySelector("#pos td span#x").parentElement;
@@ -12305,7 +12353,7 @@ function treateEM()
 {
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
-	var urlImg = "http://mountyzilla.tilk.info/scripts_0.8/images/Competences/ecritureMagique.png";
+	var urlImg = URL_MZimg09 + 'Competences/ecritureMagique.png';
 	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
 			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
@@ -12371,7 +12419,7 @@ function treateEnchant()
 			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = "http://mountyzilla.tilk.info/scripts_0.9/images/enchant.png";
+		var urlImg = URL_MZimg09 + "enchant.png";
 		for (var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i);
 			var nomCompoTotal = link.firstChild.nodeValue;
