@@ -39,6 +39,7 @@
 //		include des URLs MH alternatives
 //		regroupement des URLs externes en tête de fichier pour pouvoir contempler l'horreur de la diversité de la chose
 //		Ajout d'un message d'alerte en cas de HTTPS sans avoir débloqué le contenu mixte
+// V1.2.2 : correction bug sur les 2 URL raistlin qui avaient été confondues
 
 // URLs externes images (pas de souci CORS)
 const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -59,7 +60,11 @@ const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 
 // URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage chez raistlin)
-var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
+var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers mountypedia.free.fr
+var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
+// pour passer en mode IP, commenter les 2 lignes précédentes et décommenter les 2 suivantes
+//var URL_MZinfoMonstre = 'http://192.99.225.92/mz/monstres_0.9_FF.php';
+//var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
 // ceux-ci rendent bien les 2 entêtes CORS
 const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
 const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
@@ -79,6 +84,7 @@ const URL_pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php"
 var isHTTPS = false;
 if ( window.location.protocol.indexOf('https') === 0) {
 	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
+	URL_MZinfoMonstrePost = URL_MZinfoMonstrePost.replace(/http:\/\//, 'https://');
 	isHTTPS = true;
 }
  
@@ -9534,7 +9540,7 @@ function retrieveCDMs() {
 			
 			FF_XMLHttpRequest({
 				method: 'POST',
-				url: URL_MZinfoMonstre,
+				url: URL_MZinfoMonstrePost,
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml',
@@ -9567,7 +9573,7 @@ function retrieveCDMs() {
 						computeMission(begin2,end2);
 					} catch(e) {
 						window.console.error(
-							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstre+'\n'+texte
+							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstrePost+'\n'+texte
 						);
 					}
 				}
