@@ -7,30 +7,36 @@
 // @include */mountyhall/MH_Follower/FO_NewOrder.php*
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
-// @description Trajet des gowap, version canvas 2.1.1.2 du 12 janvier 2012 par Feldspath
+// @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
+// @version 2.2
+// @description Trajet des gowap, version 2.2 du 10/10/2016 par Rouletabille
 // @grant GM_getValue
 // @grant GM_setValue
 // @injectframes 1
 // ==/UserScript==
 
+// V 2.2 10/10/2016 Roule'
+//	correction profondeur du trou en 55 70 (60 au lieu de 70)
+//	correction intersection des trajets des suivants avec les trous (donnait un danger quand le trajet frôlait le trou)
 
-
+// À faire
+//	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
 
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var ie = (window.attachEvent)? true:false;
 	if("function" != typeof MY_getValue) {
 		//if(typeof localStorage == "object") { 
-if(typeof window.localStorage == "object") { // correction par Vapulabehemot (82169) le 14/01/2015
+		if(typeof window.localStorage == "object") { // correction par Vapulabehemot (82169) le 14/01/2015
 			function MY_getValue(nom) {
 				//return localStorage.getItem(nom);
-return window.localStorage.getItem(nom); // correction par Vapulabehemot (82169) le 14/01/2015
+				return window.localStorage.getItem(nom); // correction par Vapulabehemot (82169) le 14/01/2015
 			}
 			function MY_setValue(nom,valeur) {
 				//localStorage.setItem(nom,valeur);
-window.localStorage.setItem(nom,valeur); // correction par Vapulabehemot (82169) le 14/01/2015
+				window.localStorage.setItem(nom,valeur); // correction par Vapulabehemot (82169) le 14/01/2015
 			}
 			//if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM_getValue && GM_getValue("favori_gow")) window.localStorage.setItem("favori_gow", GM_getValue("favori_gow"));
-if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM_getValue && GM_getValue("favori_gow")) window.localStorage.setItem("favori_gow", GM_getValue("favori_gow")); // correction par Vapulabehemot (82169) le 14/01/2015
+			if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM_getValue && GM_getValue("favori_gow")) window.localStorage.setItem("favori_gow", GM_getValue("favori_gow")); // correction par Vapulabehemot (82169) le 14/01/2015
 		}
 		else if("function" == typeof GM_getValue) {
 			function MY_getValue(nom) {
@@ -139,7 +145,7 @@ if(window.localStorage.getItem("favori_gow") === null && "function" == typeof GM
 		if(!document.getElementById("action_lieu")) {
 			var tableau_tete = new Array();
 			//var tableau = document.getElementsByTagName("p")[0].childNodes;
-var tableau = document.getElementById("mhPlay").childNodes; // correction par Vapulabehemot (82169) le 10/07/2015
+			var tableau = document.getElementById("mhPlay").childNodes; // correction par Vapulabehemot (82169) le 10/07/2015
 			var nb1 = tableau.length, nb2=0, nb3=1;
 			for(var i=0; i<nb1; i++) {
 				if(tableau[i].nodeName == "TABLE") {
@@ -158,20 +164,20 @@ var tableau = document.getElementById("mhPlay").childNodes; // correction par Va
 			}
 			function prepare_click(num) {
 				if(!tableau_tete[num]) return;
-if ( !tableau_tete[num].getElementsByTagName("tbody")[1] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
+				if ( !tableau_tete[num].getElementsByTagName("tbody")[1] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
 				var tableau = tableau_tete[num].getElementsByTagName("tbody")[1].getElementsByTagName("tr");
 				var nb = tableau.length;
 				//if(nb > 1) {
-if(nb > 0) { // correction par Vapulabehemot (82169) le 10/07/2015
+				if(nb > 0) { // correction par Vapulabehemot (82169) le 10/07/2015
 				//debut = (tableau[i].firstChild.getElementsByTagName("input").length > 0)? 0:1; // suppression par Vapulabehemot (82169) le 30/08/2013 (la variable "i" n'existe pas)
 					//for (var i = 1; i < nb; i++) {
-for (var i = 0; i < nb; i++) { // correction par Vapulabehemot (82169) le 10/07/2015
+					for (var i = 0; i < nb; i++) { // correction par Vapulabehemot (82169) le 10/07/2015
 						//addEvent(tableau[i].childNodes[debut], "click", function(event) { affiche_action(this, event); }, true);
-addEvent(tableau[i].childNodes[0], "click", function(event) { affiche_action(this, event); }, true); // correction par Vapulabehemot (82169) le 30/08/2013
+						addEvent(tableau[i].childNodes[0], "click", function(event) { affiche_action(this, event); }, true); // correction par Vapulabehemot (82169) le 30/08/2013
 						//tableau[i].childNodes[debut].style.cursor = "pointer";
-tableau[i].childNodes[0].style.cursor = "pointer"; // correction par Vapulabehemot (82169) le 30/08/2013
+						tableau[i].childNodes[0].style.cursor = "pointer"; // correction par Vapulabehemot (82169) le 30/08/2013
 						//tableau[i].childNodes[debut].id = num+"_"+i+"_";
-tableau[i].childNodes[0].id = num+"_"+i+"_"; // correction par Vapulabehemot (82169) le 30/08/2013
+						tableau[i].childNodes[0].id = num+"_"+i+"_"; // correction par Vapulabehemot (82169) le 30/08/2013
 
 					}
 				}
@@ -319,10 +325,10 @@ tableau[i].childNodes[0].id = num+"_"+i+"_"; // correction par Vapulabehemot (82
 			dessin.height = 12;
 			addEvent(dessin, "mousedown", ini_glisse, true);
 			addEvent(dessin, "mousemove", sur_curseur, true);
-if (ref != 'fav') { // ajout par Vapulabehemot (82169) le 10/07/2015
-addEvent(dessin, "mouseup", drop, true); // ajout par Vapulabehemot (82169) le 10/07/2015
-addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) le 10/07/2015
-} // ajout par Vapulabehemot (82169) le 10/07/2015
+			if (ref != 'fav') { // ajout par Vapulabehemot (82169) le 10/07/2015
+				addEvent(dessin, "mouseup", drop, true); // ajout par Vapulabehemot (82169) le 10/07/2015
+				addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) le 10/07/2015
+			} // ajout par Vapulabehemot (82169) le 10/07/2015
 			addEvent(dessin, "mouseout", function() { haut.getElementById("bulle_zoom").style.visibility="hidden" }, true);
 			addEvent(dessin, "mouseover", function() { haut.getElementById("bulle_zoom").style.visibility="visible" }, true);
 			div_gliss.appendChild(dessin);
@@ -399,7 +405,7 @@ addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) 
 				param = MY_getValue("TRAJET_"+num_gow).split("/");
 				if(param[0] == "zoom") {
 					zoom = parseInt(param[1]);
-coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015			 	
+					coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 					typ_gow = parseInt(param[3]);
 					if (typ_gow == 2) typ_gow = 3;
 					dla = parseInt(param[5]);
@@ -459,7 +465,7 @@ coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 			if(MY_getValue("OPT_POSITION_GOWAP")) {
 				param = MY_getValue("OPT_POSITION_GOWAP").split("/");
 				zoom = parseInt(param[1]);
-coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015			 	
+				coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 				t_enreg = (param[3] == "1");
 				t_prev = (param[5] == "1");
 			}
@@ -806,9 +812,9 @@ coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 		}
 		function trace_glissiere() {
 			dessine_glissiere("gow", Math.min(99,Math.max(0,Math.round(zoom/2.0)-25)));
-if ( page == 'trajet' || page == 'lieu_tp' ) { // ajout par Vapulabehemot (82169) le 10/07/2015
-document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapulabehemot (82169) le 10/07/2015
-} // ajout par Vapulabehemot (82169) le 10/07/2015						
+			if ( page == 'trajet' || page == 'lieu_tp' ) { // ajout par Vapulabehemot (82169) le 10/07/2015
+				document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapulabehemot (82169) le 10/07/2015
+			} // ajout par Vapulabehemot (82169) le 10/07/2015
 		}
 		function trace_glissiere_fav() {
 			dessine_glissiere("fav", Math.min(99,Math.max(0,Math.round(zoom_fav/2.0)-25)));
@@ -863,7 +869,7 @@ document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapula
 				val = Math.min(250,Math.max(50,(xpage+23.0)*2.0))+"%";
 			}
 			else if(this.id == "glissiere_fav") {
-this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
+				this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
 				val = Math.min(250,Math.max(50,(xpage+23.0)*2.0))+"%";
 			}
 			var bulle_zoom = haut.getElementById("bulle_zoom")
@@ -1630,6 +1636,7 @@ this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
 		}
 		function calc_inter(x0,y0,px,py,tmax) {
 			var res = false, a = 0, b = 0, c = 0, delta = 0, t0 = 0, t1 = 0;
+			//window.console.log('verif collision gowap-trou [x0=' + x0 + ',y0=' + y0 + ', px=' + px + ', py=' + py + ', tmax=' + tmax + ']');
 
 			for(var k in position_trous) {
 				a = parseFloat(px*px+py*py);
@@ -1640,8 +1647,12 @@ this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
 					t0 = Math.ceil(-b/a-Math.sqrt(delta)/a);
 					t1 = Math.floor(-b/a+Math.sqrt(delta)/a);
 					if(t0 <= tmax && t1 >= 0) {
-						res = true;
+						// Roule' 10/10/2016 J'ai déplacé le flag res=true à l'intérieur de la boucle for ci-dessous car il y avait de fausses détections
+						//res = true;
+						//window.console.log('***** collision gowap-trou [x0=' + x0 + ',y0=' + y0 + ', px=' + px + ', py=' + py + ', tmax=' + tmax + ']');
 						for(var l=Math.max(0,t0); l<=Math.min(tmax,t1); l++) {
+							//window.console.log('***** collision gowap-trou en ' + (x0+l*px) + ', ' + (y0+l*py));
+							res = true;
 							chute.push([x0+l*px, y0+l*py]);
 						}
 					}
@@ -1659,15 +1670,15 @@ this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
 		function ini_trajet() {
 			var ind_a = -1;
 			//var pos = document.getElementsByTagName('p')[0].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
-var pos = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015
+			var pos = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015
 			//var noeud = document.getElementsByTagName('p')[2];
-var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
+			var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
 
 			depart = [parseInt(pos[1]),parseInt(pos[2]),parseInt(pos[3])];
 			expreg = /(.*) .*X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
 			expreg2 = /Suivre\u00a0(.+) \(\d+\) \u00e0 une distance de (\d+) case/;
 			//lignes = document.getElementsByTagName('p')[0].getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-lignes = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // correction par Vapulabehemot (82169) le 10/07/2015
+			lignes = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // correction par Vapulabehemot (82169) le 10/07/2015
 
 			if(cadrable) {
 				var dessin = dessine_copie();
@@ -1682,7 +1693,7 @@ lignes = document.getElementById('mhPlay').getElementsByTagName('table')[1].getE
 			etapes_ini = new Array(); arret = new Array(); nb_ini = 0;
 			for(var i=0;i<lignes.length;i++) {
 				//if(lignes[i].className == "mh_tdpage_fo") {
-if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().indexOf('Aucun Ordre') == -1) { // correction par Vapulabehemot (82169) le 14/01/2015
+				if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().indexOf('Aucun Ordre') == -1) { // correction par Vapulabehemot (82169) le 14/01/2015
 					ordre = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue;
 					point = ordre.match(expreg);
 					if(point) {
@@ -1691,7 +1702,7 @@ if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().index
 					}
 					else if(ordre.match(/Arr\u00eat/)) {
 						//arret.push([-1, nb_ini]); ind_a = nb_ini;
-if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
+						if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
 					}
 					else {
 						point = ordre.match(expreg2);
@@ -1766,11 +1777,11 @@ if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par V
 				trace_position([suivants[i][2], suivants[i][3]]);
 				aleatoire = 50+Math.round(155.0*i/nbs);
 				//if(t_prev && suivants[i][6]) {
-if(t_prev && suivants[i][6] && suivants[i][6] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
+				if(t_prev && suivants[i][6] && suivants[i][6] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
 					trace_trajet("rgba(0,"+aleatoire+",0,0.6)", "trou", [suivants[i][2], suivants[i][3]], suivants[i][6], false);
 				}
 				//if(t_enreg && suivants[i][5]) {
-if(t_enreg && suivants[i][5] && suivants[i][5] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
+				if(t_enreg && suivants[i][5] && suivants[i][5] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
 					trace_reel(aleatoire, "trou", [suivants[i][2], suivants[i][3]], suivants[i][5], suivants[i][7], false);
 				}
 			}
@@ -1820,7 +1831,7 @@ if(t_enreg && suivants[i][5] && suivants[i][5] != '') { // correction par Vapula
 				if(ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) continue;
 				var cas = ligne[i].getElementsByTagName("td")[0];
 				//if (cas.className == "mh_tdtitre") {
-if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
+				if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
 					num_gow = cas.getElementsByTagName('a')[0].href.split("=")[1];
 					nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
 					point = cas.innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
@@ -1850,8 +1861,8 @@ if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) l
 
 				//parp = document.getElementsByTagName('p');
 				//parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild);
-var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
-footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
+				var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+				footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
 
 				introspection();
 				trace_trou();
@@ -1878,8 +1889,8 @@ footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemo
 
 			//parp = document.getElementsByTagName('p');
 			//parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild)
-var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
-footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
+			var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+			footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
 
 			trace_glissiere();
 			echelle_teleport();
@@ -2406,7 +2417,28 @@ footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemo
 		}
 		////////////////////////////////////////////////////////////
 		var coeff=2, decalv=30, decalh=30
-		var position_trous = [[-70.5, -7.5, 2, 1.5, -69], [-66.5, -37.5, 2, 1.5, -69], [-63.5, 8.5, 2, 1.5, -69], [-59.5, -32.5, 2, 1.5, -69], [-52, 57, 0.25, 0.8, -59], [-50.5, -22.5, 2, 1.5, -69], [-35.5, -51.5, 2, 1.5, -69], [-34.5, 14.5, 2, 1.5, -69], [-34.5, 64.5, 2, 1.5, -69], [-11.5, 72.5, 2, 1.5, -69], [5.5, -49.5, 2, 1.5, -69], [5.5, 31.5, 2, 1.5, -69], [10.5, 63.5, 2, 1.5, -69], [12, -15, 0.25, 0.8, -59], [21.5, 35.5, 2, 1.5, -69], [30, -52, 0.25, 0.8, -59], [46.5, 51.5, 2, 1.5, -69], [48, -39, 0.25, 0.8, -59], [55, 70, 0.25, 0.8, -69], [56.5, 23.5, 75, 8.7, -99], [64, 70, 0.25, 0.8, -59], [74.5, 31.5, 2, 1.5, -69]];
+		var position_trous = [[-70.5, -7.5, 2, 1.5, -69]
+			, [-66.5, -37.5, 2, 1.5, -69]
+			, [-63.5, 8.5, 2, 1.5, -69]
+			, [-59.5, -32.5, 2, 1.5, -69]
+			, [-52, 57, 0.25, 0.8, -59]
+			, [-50.5, -22.5, 2, 1.5, -69]
+			, [-35.5, -51.5, 2, 1.5, -69]
+			, [-34.5, 14.5, 2, 1.5, -69]
+			, [-34.5, 64.5, 2, 1.5, -69]
+			, [-11.5, 72.5, 2, 1.5, -69]
+			, [5.5, -49.5, 2, 1.5, -69]
+			, [5.5, 31.5, 2, 1.5, -69]
+			, [10.5, 63.5, 2, 1.5, -69]
+			, [12, -15, 0.25, 0.8, -59]
+			, [21.5, 35.5, 2, 1.5, -69]
+			, [30, -52, 0.25, 0.8, -59]
+			, [46.5, 51.5, 2, 1.5, -69]
+			, [48, -39, 0.25, 0.8, -59]
+			, [55, 70, 0.25, 0.8, -59]	// correction Roule 10/10/2016 -59 au lieu de -69
+			, [56.5, 23.5, 75, 8.7, -99]
+			, [64, 70, 0.25, 0.8, -59]
+			, [74.5, 31.5, 2, 1.5, -69]];
 		var etapes = new Array(), etapes_ini = new Array(), etapes_tt = new Array(), depart = new Array(), chute = new Array(); var arret = new Array(), favori = new Array();
 		var nb_ini = 0, nb_ajout = 0, nb_fav = 0, nb_tt = 0;
 		var bulle = null, haut = null, bas = null,  soi = null, nv_pt = null, suivre = null;
@@ -2431,7 +2463,7 @@ footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemo
 			var noeud_courant = 0;
 			var aj_noeud = false, choix_ini = false;
 			//num_gow = location.href.split("=")[1];
-num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
+			num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
 			haut = document;
 			ini_trajet();
 		}
@@ -2457,7 +2489,7 @@ num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehem
 			}
 			if (cadre_dla) {
 				//num_gow = location.href.split("=")[1];
-num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
+				num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
 				charge_trajet();
 				duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
 				dla = parseInt(duree[0])*60+parseInt(duree[1]);
