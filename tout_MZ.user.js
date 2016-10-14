@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.3.1
+// @version     1.2.4
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -40,6 +40,8 @@
 //		nettoyage doublon sur getPortee
 //		adaptation portee TP basée sur les PI
 //		repository sur greasyfork.org (pour être en https et avoir la mise à jour automatique active par défaut)
+// V1.2.4 14/10/2016
+//		utilisation du relai raistlin pour l'envoi des CdM
 
 // URLs externes images (pas de souci CORS)
 const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -62,15 +64,15 @@ const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 // URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage chez raistlin)
 var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers mountypedia.free.fr
 var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
-// pour passer en mode IP, commenter les 2 lignes précédentes et décommenter les 2 suivantes
+var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
+// pour passer en mode IP, commenter les 3 lignes précédentes et décommenter les 3 suivantes
 //var URL_MZinfoMonstre = 'http://192.99.225.92/mz/monstres_0.9_FF.php';
 //var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
+//var URL_pageDispatcher = 'http://192.99.225.92/mz/cdmdispatcher.php';
 // ceux-ci rendent bien les 2 entêtes CORS
 const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
 const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
 const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
-// cette URL ne rend pas le 2e entête CORS (peut-être pas grave car il s'agit de l'envoi des CdM, on ignore la réponse)
-const URL_pageDispatcher = "http://mountypedia.ratibus.net/mz/cdmdispatcher.php";
 
 // x~x Libs
 
@@ -85,6 +87,7 @@ var isHTTPS = false;
 if ( window.location.protocol.indexOf('https') === 0) {
 	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
 	URL_MZinfoMonstrePost = URL_MZinfoMonstrePost.replace(/http:\/\//, 'https://');
+	URL_pageDispatcher = URL_pageDispatcher.replace(/http:\/\//, 'https://');
 	isHTTPS = true;
 }
  
