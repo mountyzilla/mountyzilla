@@ -4,22 +4,11 @@
 // @grant GM_getValue
 // @grant GM_setValue
 // @grant GM_deleteValue
-// @include http://games.mountyhall.com/mountyhall/View/TresorHistory*
-// @include http://games.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include https://games.mountyhall.com/mountyhall/View/TresorHistory*
-// @include https://games.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include http://serv01.mountyhall.com/mountyhall/View/TresorHistory*
-// @include http://serv01.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include https://serv01.mountyhall.com/mountyhall/View/TresorHistory*
-// @include https://serv01.mountyhall.com/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include https://mh.mh.raistlin.fr/mountyhall/View/TresorHistory*
-// @include https://mh.mh.raistlin.fr/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include http://mh.fr.nf/mountyhall/View/TresorHistory*
-// @include http://mh.fr.nf/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @include https://mh.fr.nf/mountyhall/View/TresorHistory*
-// @include https://mh.fr.nf/mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include */mountyhall/View/TresorHistory*
+// @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // @name Capitan
-// @version 8.1.2
+// @version 8.1.3
 // ==/UserScript==
 
 /****************************************************************
@@ -49,6 +38,9 @@ Roule 15/08/2016 V8.1.1
 	Quelques corrections de calcul (on avait du NaN)
 Roule 24 à 26/08/2016 V8.1.2
 	Ajout outils de récupération des recherches pré Greasemonkey
+Roule 14/10/2016 V8.1.3
+	simplification de l'entête GM (include)
+	passage à greasyfork
 */
 
 function appendButton(paren,value,onClick) {
