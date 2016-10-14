@@ -6,7 +6,7 @@
 // @grant GM_deleteValue
 // @include */mountyhall/View/TresorHistory*
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
+// @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
 // @version 8.1.3
 // ==/UserScript==

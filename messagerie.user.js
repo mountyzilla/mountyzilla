@@ -2,15 +2,10 @@
 // @name        Messagerie
 // @namespace   MH
 // @description Gestion "re" et previsu messagerie
-// @include     http://games.mountyhall.com/*
-// @include     https://games.mountyhall.com/*
-// @include     http://serv01.mountyhall.com/*
-// @include     https://serv01.mountyhall.com/*
-// @include     https://mh.mh.raistlin.fr/*
-// @include     http://mh.fr.nf/*
-// @include     https://mh.fr.nf/*
-// @version     1.2
+// @include     */mountyhall/*
+// @version     1.2.1
 // @grant       none
+// @downloadURL https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js
 // ==/UserScript==
 
 // vérif UTF-8 éê
@@ -19,7 +14,8 @@
  * Script MZ : Affiche un aperçu lors de l'écriture des MP / Blocs Html
  *             Gère les 'Re :' multiples dans les titres
  * Auteurs : Bandedrubor (93138) / Kassbinette (95429) / disciple (62333) / Accaorrillia (71876)
- * 		Rouletabille (91305) 27/03/2016, adaptation Fx 45 (détection de la page, localStorage)
+ * V1.2 Rouletabille (91305) 27/03/2016, adaptation Fx 45 (détection de la page, localStorage)
+ * V1.2.1 Rouletabille 	simplification de l'entête GM (include) + passage à greasyfork
  */
 
 /* Lancement du script selon la page chargée */
