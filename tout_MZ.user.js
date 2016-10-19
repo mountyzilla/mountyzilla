@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.5
+// @version     1.2.6
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -45,6 +45,9 @@
 // V1.2.5 17/10/2016
 //		correction doublon do_cdm qui bloquait l'envoi des CdMs lors de la compétence
 //		remise en route de la gestion des options avec intégration md5 dans ce script
+// V1.2.6 19/10/2016
+//		affichage d'un message en cas de certificat raistlin non accepté pour la vue sous https
+//		stockage idguilde et nomguilde
 
 // URLs externes images (pas de souci CORS)
 const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -7843,7 +7846,12 @@ function retrieveCDMs() {
 					try {
 						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 						if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
-							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin + '" target="raistlin">Mountyzilla - https<br />Vous devez accepter le certificat de Raistlin<br />cliquez ici<br />puis « Avancé » ... « Ajouter une exception » ... « Confirmer l\'exception de sécurité »<br />(<i>Ignorez ensuite le message sur le firewall</i>)');
+							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin +
+								'" target="raistlin">Mountyzilla - https<br />'+
+								'Tu dois accepter le certificat de Raistlin<br />'+
+								'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
+								' « Confirmer l\'exception de sécurité »<br />'+
+								'(<i>Ignore ensuite le message au sujet du firewall</i>)');
 							return;
 						}
 						var texte = responseDetails.responseText;
@@ -8819,6 +8827,7 @@ var
 	// Caracteristiques
 		// Infos troll
 	race, niv, idtroll, datecrea,
+	idguilde, nomguilde,
 		// Etats du troll
 	fatigue, bmfatigue,
 
@@ -8956,6 +8965,10 @@ function extractionDonnees() {
 	strDateCrea = strDateCrea.slice(strDateCrea.indexOf("(") + 1, strDateCrea.indexOf(")"));
 	datecrea = new Date(StringToDate(strDateCrea));
 	debugMZ("Date creation : " + datecrea);
+		// Guilde
+	idguilde = getUniqueIntValueBySelector('#descr #idguilde');
+	nomguilde = getUniqueStringValueBySelector('#descr #nomguilde');
+	debugMZ("Guilde: " + idguilde + ' ' + nomguilde);
 
 // *******************
 // Cadre "Experience"
@@ -9203,6 +9216,8 @@ function saveProfil() {
 	MY_setValue(idtroll+'.position.N',posN);
 	MY_setValue(idtroll+'.race',race);
 	MY_setValue(idtroll+'.niveau',niv);
+	MY_setValue(idtroll+'.idguilde',idguilde);
+	MY_setValue(idtroll+'.nomguilde',nomguilde);
 }
 
 
