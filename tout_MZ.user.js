@@ -63,6 +63,7 @@ const URL_ratibus_lien = 'http://trolls.ratibus.net/';
 //const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';	// un de moins \o/
 const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
+const URL_CertifRaistlin = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
 
 // URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage chez raistlin)
 var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers mountypedia.free.fr
@@ -183,6 +184,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 		request.setRequestHeader(head,MY_XHR_Ob.headers[head]);
 	}
 	request.onreadystatechange = function() {
+		//window.console.log('XMLHttp readystatechange readyState=' + request.readyState + ', error=' + request.error + ', status=' + request.status);
 		if(request.readyState!=4) { return; }
 		if(request.error) {
 			if(MY_XHR_Ob.onerror) {
@@ -7778,6 +7780,32 @@ function retireMarquage(nom) {
 	}
 }
 
+function showPopupError(sHTML) {
+	var divpopup = document.createElement('div');
+	divpopup.id = 'divpopup';
+	divpopup.style =
+		'position: fixed;'+
+		'border: 3px solid #000000;'+
+		'top: 300px;left: 10px;'+
+		'background-color: red;'+
+		'color: white;'+
+		'font-size: xx-large;'+
+		'z-index: 200;';
+	divpopup.innerHTML = sHTML;
+	var divcroix = document.createElement('div');
+	divcroix.style =
+		'position: absolute;'+
+		'top: 0;right: 0;'+
+		'color: inherit;'+
+		'font-size: inherit;'+
+		'cursor: pointer;'+
+		'z-index: 201;';
+	divcroix.innerHTML = "X";
+	divcroix.onclick = function () {document.getElementById('divpopup').style.display = 'none';};
+	document.body.appendChild(divpopup);
+	divpopup.appendChild(divcroix);
+}
+
 function retrieveCDMs() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
@@ -7813,6 +7841,11 @@ function retrieveCDMs() {
 				data: 'begin='+begin+'&idcdm='+MY_getValue('CDMID')+'&'+str,
 				onload: function(responseDetails) {
 					try {
+						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+						if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
+							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin + '" target="raistlin">Mountyzilla - https<br />Vous devez accepter le certificat de Raistlin<br />cliquez ici<br />puis « Avancé » ... « Ajouter une exception » ... « Confirmer l\'exception de sécurité »<br />(<i>Ignorez ensuite le message sur le firewall</i>)');
+							return;
+						}
 						var texte = responseDetails.responseText;
 						var lines = texte.split('\n');
 						if(lines.length==0) { return; }
