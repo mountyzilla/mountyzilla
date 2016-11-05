@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.2
+// @version 2.3
 // @description Trajet des gowap, version 2.2 du 10/10/2016 par Rouletabille
 // @grant GM_getValue
 // @grant GM_setValue
@@ -18,6 +18,8 @@
 // V 2.2 10/10/2016 Roule'
 //	correction profondeur du trou en 55 70 (60 au lieu de 70)
 //	correction intersection des trajets des suivants avec les trous (donnait un danger quand le trajet frôlait le trou)
+// V 2.3 05/11/2016 Roule'
+//	protection contre les golem (l'affichage des ordres donnait une erreur MZ)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1670,7 +1672,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function ini_trajet() {
 			var ind_a = -1;
 			//var pos = document.getElementsByTagName('p')[0].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
-			var pos = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015
+			// Roule 05/11/2016 protection contre le golems qui provoquent une erreur
+			var texteTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('td')[0].innerHTML;
+			if (texteTitre.match(/Golem/i)) return;
+			var pos = texteTitre.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015
 			//var noeud = document.getElementsByTagName('p')[2];
 			var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
 
