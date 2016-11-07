@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.6
+// @version     1.2.7
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -48,6 +48,8 @@
 // V1.2.6 19/10/2016
 //		affichage d'un message en cas de certificat raistlin non accepté pour la vue sous https
 //		stockage idguilde et nomguilde
+// V1.2.7 07/11/2016
+//		remise en route de l'interface avec l'IT bricol'Troll
 
 // URLs externes images (pas de souci CORS)
 const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
@@ -62,13 +64,16 @@ const URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
 const URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 const URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 const URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
-const URL_ratibus_lien = 'http://trolls.ratibus.net/';
-//const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';	// un de moins \o/
+const URL_ratibus_lien = 'http://trolls.ratibus.net/';	// le script mz_JSON rend bien les entêtes CORS
+//const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';	// un de moins \o/ source intégré dans tout_MZ
 const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 const URL_CertifRaistlin = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
 
-// URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage chez raistlin)
+// URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage en proxy chez raistlin)
+// var URL_MZinfoMonstre = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// infra sur serveur raistlin en préparation
+// var URL_MZinfoMonstrePost = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
+// var URL_pageDispatcher = "http://mz.mh.raistlin.fr/mz/cdmdispatcher.php";
 var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers mountypedia.free.fr
 var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
 var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
@@ -76,6 +81,7 @@ var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// e
 //var URL_MZinfoMonstre = 'http://192.99.225.92/mz/monstres_0.9_FF.php';
 //var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
 //var URL_pageDispatcher = 'http://192.99.225.92/mz/cdmdispatcher.php';
+
 // ceux-ci rendent bien les 2 entêtes CORS
 const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
 const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
@@ -5465,7 +5471,7 @@ function do_option() {
 	start_script(712);
 
 	// Pour cryptage des mdp IT
-	//appendNewScript(URL_tilk_js + 'md5.js');
+	//appendNewScript(URL_tilk_js + 'md5.js'); // source intégré dans tout_MZ
 
 	var insertPoint = document.getElementById('footer1');
 	insertBefore(insertPoint,document.createElement('p'));
@@ -8569,16 +8575,31 @@ function computeLdP() {
 function putScriptExterne() {
 	var infoit = MY_getValue(numTroll+'.INFOSIT');
 	if(!infoit || infoit=='') return;
-	
+
 	var nomit = infoit.slice(0,infoit.indexOf('$'));
 	if(nomit=='bricol') {
 		var data = infoit.split('$');
 		try {
-			appendNewScript(URL_ratibus_lien+data[1]
-				+'/mz.php?login='+data[2]
-				+'&password='+data[3]
-				);
-			}
+			// Roule' 07/11/2016. Travail avec Rattibus, remplacement du script par l'envoi de JSON
+			// appendNewScript(URL_ratibus_lien+data[1]
+				// +'/mz.php?login='+data[2]
+				// +'&password='+data[3]
+				// );
+			FF_XMLHttpRequest({
+				method: 'GET',
+				url: URL_ratibus_lien+data[1]
+					+'/mz_json.php?login='+data[2]
+					+'&password='+data[3],
+				onload: function(responseDetails) {
+					try {
+						var ratibusData = JSON.parse(responseDetails.responseText);
+						putInfosTrolls(ratibusData.data.trolls);
+					} catch(e) {
+						window.alert(e);
+					}
+				}
+			});
+		}
 		catch(e) { window.alert(erreurIT(e,it)); }
 		}
 	}
@@ -8589,10 +8610,12 @@ function erreurIT( chaine , it ) {
 			"Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"
 			+chaine
 			);
-	MY_removeValue(numTroll+'.INFOSIT');
+	// 07/11/2016 Roule j'ai enlevé ce reste car il fait perdre les infos à chaque fois qu'il y a une erreur
+	// si le besoin s'en fait sentir, on mettre la possibilité pour l'utilisateur de nettoyer avec un confirm() au lieu d'un alert()
+	//MY_removeValue(numTroll+'.INFOSIT');
 	}
 
-/* Le script de Ratibus renvoie :
+/* Le script mz.php de Ratibus renvoie :
  + infosTrolls = new Array();
  + infosTrolls[numdutroll] =
  new Array(PV,PVbase,date màj: "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
@@ -8600,9 +8623,25 @@ function erreurIT( chaine , it ) {
  + putInfosTrolls();
  * 
  * Il est donc impossible d'afficher les invis d'une IT Bricol'Trolls.
+ * Roule 07/11/2016, on utilise mz_json qui envoie
+ {
+    "data": {
+        "trolls": {
+            "59424": {
+                "id": 59424,
+                "pv": xx,
+                "pv_max": xx,
+                "updated_at": "2016-10-31 07:28:40",
+                "dla": "2016-10-05 07:28:04",
+                "pa": 0
+            },
+        }
+    }
+}
  */
 
-function corrigeBricolTrolls() {
+ // Roule 07/11/2016 ATTENTION, il faudrait modifier ici (remplacer [0] par .pa, etc.)
+function corrigeBricolTrolls(infosTrolls) {
 	for(var i in infosTrolls) {
 		var pv = infosTrolls[i][0];
 		var pvmax = infosTrolls[i][1];
@@ -8619,7 +8658,7 @@ function corrigeBricolTrolls() {
 		}
 	}
 
-function putInfosTrolls() {
+function putInfosTrolls(infosTrolls) {
 	// teste la présence de trõlls de l'IT
 	var i=nbTrolls;
 	while( i>0 && !infosTrolls[getTrollID(i)] ) i--;
@@ -8631,16 +8670,17 @@ function putInfosTrolls() {
 	td.width = 40;
 	td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
 	td.width = 105;
-	
-	corrigeBricolTrolls();
+
+	// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
+	//corrigeBricolTrolls(infosTrolls);
 	
 	for(i=nbTrolls ; i>0 ; i--) {
 		var infos = infosTrolls[getTrollID(i)];
 		if(infos) {
 			/* PAs dispos */
 			var span = document.createElement('span');
-			span.title = infos[3];
-			appendText(span, infos[4]+' PA' );
+			span.title = 'DLA : ' + infos.dla;	//infos[3];
+			appendText(span, infos.pa +' PA' );	//infos[4]+' PA' );
 			insertTdElement(tr_trolls[i].childNodes[6], span);
 			/* cadre barre PV */
 			var tab = document.createElement('div');
@@ -8649,12 +8689,12 @@ function putInfosTrolls() {
 			tab.style.width = 100;
 			tab.style.border = 1;
 			tab.height = 10;
-			tab.title = infos[0]+'/'+infos[1]+' '+ infos[2];
+			tab.title = infos.pv+'/'+infos.pv_max+' le '+ infos.updated_at.replace(' ', ' à ');	//infos[0]+'/'+infos[1]+' '+ infos[2];
 			/* barre PV */
 			var img = document.createElement('img');
 			img.src = '../Images/Interface/milieu.gif';
 			img.height = 10;
-			img.width = Math.floor( (100*infos[0])/infos[1] );
+			img.width = Math.floor( (100*infos.pv)/infos.pv_max );	//infos[0])/infos[1] );
 			tab.appendChild(img);
 			/* lien vers l'IT */
 			var lien = document.createElement('a');
