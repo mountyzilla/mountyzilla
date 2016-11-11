@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.7
+// @version     1.2.8
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -50,10 +50,22 @@
 //		stockage idguilde et nomguilde
 // V1.2.7 07/11/2016
 //		remise en route de l'interface avec l'IT bricol'Troll
+// V1.2.8 10/11/2016
+//		gestion des messages d'erreur de l'interface avec l'IT bricol'Troll
+//		déplacement des images sur l'infra raistlin + meilleure gestion HTTPS
 
-// URLs externes images (pas de souci CORS)
-const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';
-const URL_MZimg11 = 'http://mountyzilla.tilk.info/scripts_1.1/images/'
+
+/**********************************************************
+**** Début de zone à déplacer dans une bibli commune ******
+**********************************************************/
+
+// URLs externes images (déplacées sur infra raistlin 09/11/2016, pas besoin deCORS, HTTPS OK)
+//const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';	// en cours de migration vers infra raistlin
+//const URL_MZimg11 = 'http://mountyzilla.tilk.info/scripts_1.1/images/'
+const URL_MZimg = 'http://mz.mh.raistlin.fr/mz/img/';
+var URL_MZimg09 = URL_MZimg;	// à fusioner
+var URL_MZimg11 = URL_MZimg;
+// URLs externes images (pas de souci CORS mais pas de HTTPS)
 const URL_MZscriptCarte = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
 
 // URLs externes redirection (pas de souci CORS)
@@ -64,17 +76,19 @@ const URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
 const URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 const URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 const URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
-const URL_ratibus_lien = 'http://trolls.ratibus.net/';	// le script mz_JSON rend bien les entêtes CORS
 //const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';	// un de moins \o/ source intégré dans tout_MZ
 const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
-const URL_CertifRaistlin = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
+
+// URLs de test HTTPS
+const URL_CertifRaistlin1 = 'https://mz.mh.raistlin.fr/mz/img/1.gif';
+const URL_CertifRaistlin2 = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
 
 // URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage en proxy chez raistlin)
 // var URL_MZinfoMonstre = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// infra sur serveur raistlin en préparation
 // var URL_MZinfoMonstrePost = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
 // var URL_pageDispatcher = "http://mz.mh.raistlin.fr/mz/cdmdispatcher.php";
-var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers mountypedia.free.fr
+var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers http://mountypedia.free.fr/mz/monstres_0.9_FF.php
 var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
 var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
 // pour passer en mode IP, commenter les 3 lignes précédentes et décommenter les 3 suivantes
@@ -82,7 +96,8 @@ var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// e
 //var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
 //var URL_pageDispatcher = 'http://192.99.225.92/mz/cdmdispatcher.php';
 
-// ceux-ci rendent bien les 2 entêtes CORS
+// ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
+const URL_ratibus_lien = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
 const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
 const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
 const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
@@ -101,6 +116,9 @@ if ( window.location.protocol.indexOf('https') === 0) {
 	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
 	URL_MZinfoMonstrePost = URL_MZinfoMonstrePost.replace(/http:\/\//, 'https://');
 	URL_pageDispatcher = URL_pageDispatcher.replace(/http:\/\//, 'https://');
+	// Roule 09/11/2016 images OK en https sur infra Raistlin
+	URL_MZimg09 = URL_MZimg09.replace(/http:\/\//, 'https://');
+	URL_MZimg11 = URL_MZimg11.replace(/http:\/\//, 'https://');
 	isHTTPS = true;
 }
  
@@ -130,11 +148,6 @@ var nivTroll = MY_getValue('NIV_TROLL');
 var mmTroll = MY_getValue(numTroll+'.caracs.mm');
 var rmTroll = MY_getValue(numTroll+'.caracs.rm');
 
-/* DEBUG: NETTOYAGE TAGS */
-if(MY_getValue(numTroll+'.TAGSURL')) {
-	MY_removeValue(numTroll+'.TAGSURL');
-}
-
 /*-[functions]------------ Fonctions durée de script -------------------------*/
 var date_debut = null;
 
@@ -161,19 +174,6 @@ function displayScriptTime() {
 		' - [Script exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
 	}
-
-/*---------- regroupement des getPortee() ------------------------------------*/
-// issu des script profil et profil2
-function getPortee__Profil(param) {
-	param = Math.max(0,Number(param));
-	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
-	// ça devrait être floor, +10.25, -2.5
-}
-
-// issu du script vue
-function getPortee__Vue(param) {
-	return Math.ceil((Math.sqrt(19 + 8 * (param + 3)) - 7) / 2);
-}
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
 
@@ -212,7 +212,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
 
 function avertissement(txt,duree) {
-	if(!duree) { duree = 5000; }
+	if(!duree) duree = 15000;
 	var div = document.createElement('div');
 	// On numérote les avertissements pour destruction sélective
 	var num = document.getElementsByName('avertissement').length;
@@ -220,17 +220,30 @@ function avertissement(txt,duree) {
 	// Numéro enregistré dans le DOM pour récupération sur getElementsByName()
 	div.setAttribute('name','avertissement');
 	div.className = 'mh_textbox';
-	div.style =
-		'position:fixed;'+
-		'top:'+(10+15*num)+'px;'+
-		'left:'+(10+5*num)+'px;'+
-		'border:1px solid #000000;'+
-		'z-index:'+(2+num)+';'+
-		'cursor:crosshair;';
+	div.style.position = 'fixed';
+	div.style.top = (10+15*num)+'px';
+	div.style.left = (10+5*num)+'px';
+	div.style.border = '5px solid red';
+	div.style.zIndex = 2+num;
+	div.style.cursor = 'pointer';
+	div.style.fontSize = 'large';
 	div.innerHTML = txt;
 	div.onclick=function(){ tueAvertissement(this.num) };
+
+	// un croix en haut à droite pour signifier à l'utilisateur qu'il peut cliquer pour fermer ce popup
+	var divcroix = document.createElement('div');
+	divcroix.style.position = 'absolute';
+	divcroix.style.top = 0;
+	divcroix.style.right = 0;
+	divcroix.style.color = 'black';
+	divcroix.style.fontSize = 'inherit';
+	divcroix.style.cursor = 'pointer'
+	divcroix.style.zIndex = 2+num;
+	divcroix.innerHTML = "X";
+	div.appendChild(divcroix);
+
 	document.body.appendChild(div);
-	// Destruction automatique de l'avertissement après 3 sec :
+	// Destruction automatique de l'avertissement après "un certain temps"
 	window.setTimeout(function(){ tueAvertissement(num) },duree);
 }
 
@@ -564,6 +577,28 @@ function DateToString(date) {
 function StringToDate(str) {
 	return str.replace(/([0-9]+)\/([0-9]+)/,"$2/$1");
 	}
+
+/**********************************************************
+**** Fin de zone à déplacer dans une bibli commune ********
+**********************************************************/
+
+/* DEBUG: NETTOYAGE TAGS */
+if(MY_getValue(numTroll+'.TAGSURL')) {
+	MY_removeValue(numTroll+'.TAGSURL');
+}
+
+/*---------- regroupement des getPortee() ------------------------------------*/
+// issu des script profil et profil2
+function getPortee__Profil(param) {
+	param = Math.max(0,Number(param));
+	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
+	// ça devrait être floor, +10.25, -2.5
+}
+
+// issu du script vue
+function getPortee__Vue(param) {
+	return Math.ceil((Math.sqrt(19 + 8 * (param + 3)) - 7) / 2);
+}
 
 
 /*-[functions]----------- Calculs expérience / niveau ------------------------*/
@@ -3977,6 +4012,86 @@ function appendTitledTable(node,titre,description) {
 	return tbody;
 	}
 
+function testCertif(paramURL, callbackOnError) {
+	try {
+		FF_XMLHttpRequest({
+			method: 'GET',
+			url: paramURL,
+			onload: function(responseDetails) {
+				//window.console.log('testCertif(' + paramURL + '), callback, status=' + responseDetails.status);
+				if (responseDetails.status == 0) callbackOnError();	// FAIL si status == 0
+			}
+		});
+	} catch(e) {
+		window.console.log('testCertif(' + paramURL + '), exception=' + e);
+		callbackOnError();
+	}
+}
+
+function createOrGetGrandCadre() {
+	var grandCadre = document.getElementById('grandCadre');
+	if (grandCadre) return grandCadre;
+	try {
+		var rappels = document.evaluate(
+			"//p[contains(a/text(),'messagerie')]",
+			document, null, 9, null).singleNodeValue;
+		}
+	catch(e) {
+		window.alert('Tu es en HTTPS. Pour bénéficier de MoutyZilla, tu devrais débloquer le contenu mixte');
+		grandCadre = document.createElement('div');
+		return grandCadre;
+		}
+	grandCadre = document.createElement('div');
+	grandCadre.id = 'grandCadre';
+	var sousCadre = document.createElement('div');
+	sousCadre.innerHTML = 'Tu es en <span style="color:blue">HTTPS</span>.';
+	sousCadre.style.textAlign = 'center';
+	sousCadre.style.fontSize = 'xx-large';
+	grandCadre.appendChild(sousCadre);
+
+	grandCadre.style.border = 'solid 5px red';
+	grandCadre.style.width = 'auto';
+	insertBefore(rappels,grandCadre);
+	return grandCadre;
+}
+
+function showHttpsErrorCadre1() {
+	var grandCadre = createOrGetGrandCadre();
+	var sousCadre = document.createElement('div');
+	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat1 de Raistlain.</b>'
+		+ '<br />Cela empêchera de voir les belles petites icônes un peu partout'
+		+ '<br /><a style="color:blue;font-size: inherits;" href="'
+		+ URL_CertifRaistlin1
+		+ '" target="raistlin">clique ici</a>'
+		+ '<br />puis « Avancé » ... « Ajouter une exception » ...'
+		+ ' « Confirmer l\'exception de sécurité »'
+		+ '<br /><i>Il suffit de faire ceci une seule fois jusqu\'à ce que Raistlin change son certificat</i>';
+	sousCadre.style.width = 'auto';
+	sousCadre.style.fontSize = 'large';
+	sousCadre.style.border = 'solid 1px black';
+	sousCadre.style.backgroundColor = 'red';
+	grandCadre.appendChild(sousCadre);
+}
+
+function showHttpsErrorCadre2() {
+	var grandCadre = createOrGetGrandCadre();
+	var sousCadre = document.createElement('div');
+	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat2 de Raistlain.</b>'
+		+ '<br />Cela empêchera le fonctionnement de Mountyzilla<br />'
+		+ '<a style="color:blue;font-size: inherits;" href="'
+		+ URL_CertifRaistlin2
+		+ '" target="raistlin">clique ici</a>'
+		+ '<br />puis « Avancé » ... « Ajouter une exception » ...'
+		+ ' « Confirmer l\'exception de sécurité »'
+		+ '<br />(<i>Ignore ensuite le message au sujet du firewall</i>)'
+		+ '<br /><i>Il suffit de faire ceci une seule fois jusqu\'à ce que Raistlin change son certificat</i>';
+	sousCadre.style.width = 'auto';
+	sousCadre.style.fontSize = 'large';
+	sousCadre.style.border = 'solid 1px black';
+	sousCadre.style.backgroundColor = 'red';
+	grandCadre.appendChild(sousCadre);
+}
+
 
 /*-[functions]------------------- Jubilaires ---------------------------------*/
 
@@ -4000,28 +4115,30 @@ function traiterJubilaires() {
 		}
 	catch(e) {
 		if (isHTTPS) {
-			try {
-				var rappels = document.evaluate(
-					"//p[contains(a/text(),'messagerie')]",
-					document, null, 9, null).singleNodeValue;
-				}
-			catch(e) {
-				window.alert('Vous êtes en HTTPS. Pour bénéficier de MoutyZilla, vous devriez débloquer le contenu mixte');
-				return;
-				}
-			var p = document.createElement('div');
-			p.innerHTML = 'Vous êtes en <span style="color:blue">HTTPS</span>.<br/>'
-				+ 'Pour bénéficier de MountyZilla, vous devriez autoriser le contenu mixte.<br />'
-				+ 'Voir <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">sur cette page</a>';
-			p.style.textAlign = 'center';
-			p.style.border = 'solid 5px red';
-			p.style.width = 'auto';
-			p.style.fontSize = 'xx-large';
-			insertBefore(rappels,p);
+			var grandCadre = createOrGetGrandCadre();
+			var sousCadre = document.createElement('div');
+			sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />'
+				+ 'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)'
+				+ '<ul>'
+				+ '<li>Interface Bricol\'Troll</li>'
+				+ '<li>Jubilaire</li>'
+				+ '<li>Nouveautés de Mountyzilla</li>'
+				+ '</ul>'
+				+ 'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />'
+				+ '<i>Il faudra malheureusement le faire à chaque nouvelle connexion</i>';
+			sousCadre.style.width = 'auto';
+			sousCadre.style.fontSize = 'large';
+			sousCadre.style.border = 'solid 1px black';
+			grandCadre.appendChild(sousCadre);
 		} else {
-			window.alert('Erreur Jubilaires:\n'+e)
+			window.alert('Erreur Jubilaires:\n'+e);
 		}
-	};
+	}
+	if (isHTTPS) {
+		// test si les certificats raistlin ont été acceptés
+		testCertif(URL_CertifRaistlin1, showHttpsErrorCadre1);	// l'infra raislin
+		testCertif(URL_CertifRaistlin2, showHttpsErrorCadre2);	// le relai raistlin vers l'infra chez FREE (provisoire)
+	}
 }
 
 function afficherJubilaires(listeTrolls) {
@@ -5225,7 +5342,7 @@ function removeLinkField() {
 
 function resetMainIco() {
 	document.getElementById('icoMenuIco').value=
-		URL_MZimg09 + 'MY_logo_small.png';
+		URL_MZimg09 + 'mz_logo_small.png';
 }
 
 
@@ -5271,7 +5388,7 @@ function insertOptionTable(insertPt) {
 	appendText(td,'Icône du Menu: ');
 	var url = MY_getValue(numTroll+'.ICOMENU');
 	if(!url) { 
-		url = URL_MZimg09 + 'MY_logo_small.png';
+		url = URL_MZimg09 + 'mz_logo_small.png';
 	}
 	appendTextbox(td,'text','icoMenuIco',50,200,url);
 	appendButton(td,'Réinitialiser',resetMainIco);
@@ -6530,7 +6647,7 @@ function initRaccourcis() {
 	var urlIco = MY_getValue(numTroll+'.ICOMENU');
 	if(!urlIco) {
 		urlIco =
-			URL_MZimg09 + 'MY_logo_small.png';
+			URL_MZimg09 + 'mz_logo_small.png';
 	}
 	mainIco.src = urlIco;
 	mainIco.alt = 'MZ';
@@ -7852,7 +7969,7 @@ function retrieveCDMs() {
 					try {
 						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 						if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
-							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin +
+							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin2 +
 								'" target="raistlin">Mountyzilla - https<br />'+
 								'Tu dois accepter le certificat de Raistlin<br />'+
 								'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
@@ -8593,27 +8710,27 @@ function putScriptExterne() {
 				onload: function(responseDetails) {
 					try {
 						var ratibusData = JSON.parse(responseDetails.responseText);
-						putInfosTrolls(ratibusData.data.trolls);
+						if (ratibusData.error) {
+							avertissement('<br />Bricol\'Troll a répondu :<br />' + ratibusData.error);
+						} else {
+							putInfosTrolls(ratibusData.data.trolls);
+						}
 					} catch(e) {
-						window.alert(e);
+						window.console.log('exception retour bricol\'troll ' + e);
+						avertissement('<br />Erreur dans la réponse de Bricol\'Troll<br />' + e + '<br />' + responseDetails.responseText);
 					}
 				}
 			});
-		}
-		catch(e) { window.alert(erreurIT(e,it)); }
+		} catch(e) {
+			if (isHTTPS) {
+				avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
+			} else {
+				window.console.log('exception appel bricol\'troll ' + e);
+				avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<br />' + e);
+			}
 		}
 	}
-
-function erreurIT( chaine , it ) {
-	if(it=='bricol')
-		window.alert(
-			"Erreur lors de la connection avec l'interface des Bricol'Trolls :\n"
-			+chaine
-			);
-	// 07/11/2016 Roule j'ai enlevé ce reste car il fait perdre les infos à chaque fois qu'il y a une erreur
-	// si le besoin s'en fait sentir, on mettre la possibilité pour l'utilisateur de nettoyer avec un confirm() au lieu d'un alert()
-	//MY_removeValue(numTroll+'.INFOSIT');
-	}
+}
 
 /* Le script mz.php de Ratibus renvoie :
  + infosTrolls = new Array();
