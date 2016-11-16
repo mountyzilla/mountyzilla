@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.8
+// @version     1.2.9
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -53,6 +53,8 @@
 // V1.2.8 10/11/2016
 //		gestion des messages d'erreur de l'interface avec l'IT bricol'Troll
 //		déplacement des images sur l'infra raistlin + meilleure gestion HTTPS
+// V1.2.9 16/11/2016
+//		adaptation Firefox 50 (comportement différent sur échec Ajax https)
 
 
 /**********************************************************
@@ -193,7 +195,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 		request.setRequestHeader(head,MY_XHR_Ob.headers[head]);
 	}
 	request.onreadystatechange = function() {
-		//window.console.log('XMLHttp readystatechange readyState=' + request.readyState + ', error=' + request.error + ', status=' + request.status);
+		//window.console.log('XMLHttp readystatechange url=' + MY_XHR_Ob.url + ', readyState=' + request.readyState + ', error=' + request.error + ', status=' + request.status);
 		if(request.readyState!=4) { return; }
 		if(request.error) {
 			if(MY_XHR_Ob.onerror) {
@@ -4092,6 +4094,23 @@ function showHttpsErrorCadre2() {
 	grandCadre.appendChild(sousCadre);
 }
 
+function showHttpsErrorContenuMixte() {
+	var grandCadre = createOrGetGrandCadre();
+	var sousCadre = document.createElement('div');
+	sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />'
+		+ 'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)'
+		+ '<ul>'
+		+ '<li>Interface Bricol\'Troll</li>'
+		+ '<li>Jubilaire</li>'
+		+ '<li>Nouveautés de Mountyzilla</li>'
+		+ '</ul>'
+		+ 'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />'
+		+ '<i>Il faudra malheureusement le faire à chaque nouvelle connexion</i>';
+	sousCadre.style.width = 'auto';
+	sousCadre.style.fontSize = 'large';
+	sousCadre.style.border = 'solid 1px black';
+	grandCadre.appendChild(sousCadre);
+}
 
 /*-[functions]------------------- Jubilaires ---------------------------------*/
 
@@ -4105,6 +4124,10 @@ function traiterJubilaires() {
 				'Accept': 'application/xml,text/xml',
 				},
 			onload: function(responseDetails) {
+				if (responseDetails.status == 0 && isHTTPS) {
+					showHttpsErrorContenuMixte();
+					return;
+				}
 				var listeTrolls = responseDetails.responseText.split('\n');
 				if(!listeTrolls || listeTrolls.length==0) {
 					return;
@@ -4115,21 +4138,7 @@ function traiterJubilaires() {
 		}
 	catch(e) {
 		if (isHTTPS) {
-			var grandCadre = createOrGetGrandCadre();
-			var sousCadre = document.createElement('div');
-			sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />'
-				+ 'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)'
-				+ '<ul>'
-				+ '<li>Interface Bricol\'Troll</li>'
-				+ '<li>Jubilaire</li>'
-				+ '<li>Nouveautés de Mountyzilla</li>'
-				+ '</ul>'
-				+ 'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />'
-				+ '<i>Il faudra malheureusement le faire à chaque nouvelle connexion</i>';
-			sousCadre.style.width = 'auto';
-			sousCadre.style.fontSize = 'large';
-			sousCadre.style.border = 'solid 1px black';
-			grandCadre.appendChild(sousCadre);
+			showHttpsErrorContenuMixte();
 		} else {
 			window.alert('Erreur Jubilaires:\n'+e);
 		}
@@ -8709,6 +8718,19 @@ function putScriptExterne() {
 					+'&password='+data[3],
 				onload: function(responseDetails) {
 					try {
+						if (responseDetails.status == 0) {
+							if (isHTTPS) {
+								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
+							} else {
+								window.console.log('status=0 à l\'appel bricol\'troll ' + e);
+								avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<');
+							}
+							return;
+						}
+						if (responseDetails.status < 200 || responseDetails.status > 299) {
+							avertissement('<br />Erreur HTTP ' + responseDetails.status + ' à l\'appel de l\'interface Bricol\'Troll');
+							return;
+						}
 						var ratibusData = JSON.parse(responseDetails.responseText);
 						if (ratibusData.error) {
 							avertissement('<br />Bricol\'Troll a répondu :<br />' + ratibusData.error);
