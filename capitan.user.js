@@ -7,6 +7,7 @@
 // @include */mountyhall/View/TresorHistory*
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @include */mountyhall/MH_Play/Play_equipement.php*
+// @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
 // @version 8.1.4
 // @namespace https://greasyfork.org/users/70018
