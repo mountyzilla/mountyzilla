@@ -55,7 +55,8 @@
 //		déplacement des images sur l'infra raistlin + meilleure gestion HTTPS
 // V1.2.9 16/11/2016
 //		adaptation Firefox 50 (comportement différent sur échec Ajax https)
-
+// V1.2.10
+//		23/11/2016 correction décumul des bonus/malus
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -2366,7 +2367,7 @@ function prochainMundi() {
 		return;
 	}
 	if(!node) { return; }
-	
+
 	var longueurMois = node.textContent.indexOf('Saison du Hum')==-1?28:14;
 	var jour = longueurMois+1-getNumber(node.textContent);
 	if(node.textContent.indexOf('Mundidey')!=-1) { jour=longueurMois; }
@@ -2680,6 +2681,7 @@ function decumul(bmt,nbr) {
 	}
 
 function triecaracs(a,b) { // version Yoyor, mod by Dab
+	// Roule 23/11/2016 ajout PV
 	switch( a ) {
 	case 'ATT':
 		return -1;
@@ -2724,6 +2726,18 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			default:
 				return -1;
 			}
+	case 'PV':
+		switch( b ) {
+			case 'ATT':
+			case 'ESQ':
+			case 'DEG':
+			case 'REG':
+			case 'Vue':
+			case 'TOUR':
+				return 1;
+			default:
+				return -1;
+			}
 	case 'Armure':
 		switch( b ) {
 			case 'ATT':
@@ -2732,6 +2746,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 				return 1;
 			default:
 				return -1;
@@ -2744,6 +2759,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 				return 1;
 			default:
@@ -2757,6 +2773,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 				return 1;
@@ -2771,6 +2788,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 			case 'MM':
@@ -2786,6 +2804,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 			case 'MM':
@@ -2802,6 +2821,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 			case 'MM':
@@ -2819,6 +2839,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 			case 'MM':
@@ -2837,6 +2858,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 			case 'REG':
 			case 'Vue':
 			case 'TOUR':
+			case 'PV':
 			case 'Armure':
 			case 'RM':
 			case 'MM':
@@ -2854,7 +2876,7 @@ function triecaracs(a,b) { // version Yoyor, mod by Dab
 
 /* [functions]              Fonctions hide / display                            */
 
-function toggleDetails() {
+function toggleDetailsBM() {
 	if(MY_getValue('BMDETAIL')!='false') {
 		MY_setValue('BMDETAIL','false');
 		var trlist = document.getElementsByClassName('mh_tdpage BilanDetail');
@@ -2936,6 +2958,8 @@ function traiteMalus() {
 		var duree = Number(tr.childNodes[11].textContent.match(/\d+/)[0]);
 		var type = tr.childNodes[3].textContent, nom;
 		// si c'est un type à décumul
+		/*
+		// Roule 23/11/2016 tout semble être soumis à décumul (vérifié pour Charme, Drain de vie)
 		switch(type) {
 			case 'Potion':
 			case 'Parchemin':
@@ -2945,7 +2969,9 @@ function traiteMalus() {
 				break;
 			default:
 				nom = 'pasdedecumul';
-			}
+		}
+		*/
+		nom = tr.childNodes[1].textContent+phymag;
 		if(nom.indexOf('Amnésie')!=-1) // !! Amnésie = Capa, mais pas décumulée
 			nom = 'pasdedecumul';
 		
@@ -2953,7 +2979,7 @@ function traiteMalus() {
 			'duree':duree,
 			'nom':nom, // permet de gérer le non décumul des sorts à double composante
 			'caracs':{}
-			}
+		}
 		for(var i=0 ; i<effetsT.length ; i++) {
 			if(effetsT[i].indexOf(':')==-1) continue;
 			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
@@ -2964,8 +2990,8 @@ function traiteMalus() {
 			var bm = Number(effetsT[i].match(/-?\d+/)[0]);
 			uniListe[nb]['caracs'][carac] = bm;
 			listeDurees[duree] = true;
-			}
 		}
+	}	// fin boucle sur les lignes de bonus/malus
 	
 	/* Gestion des décumuls et cumuls des durées */
 	var toursGeres = [];
@@ -3000,18 +3026,20 @@ function traiteMalus() {
 						effetsCeTour[carac][type] += bm;
 					else
 						effetsCeTour[carac][type] += decumul(bm,decumulsCeTour[nom]);
-					}
-				else {
+				} else {
 					if(!effetsCeTour[carac]) effetsCeTour[carac]=0;
+					var thisBm;
 					if(nom=='pasdedecumul' || carac=='Fatigue')
-						effetsCeTour[carac] += bm;
+						thisBm = bm;
 					else if(carac=='TOUR') // les durees se comptent en demi-minutes dans MH
-						effetsCeTour[carac] += decumul(2*bm,decumulsCeTour[nom])/2;
+						thisBm = decumul(2*bm,decumulsCeTour[nom])/2;
 					else 
-						effetsCeTour[carac] += decumul(bm,decumulsCeTour[nom]);
-					}
+						thisBm = decumul(bm,decumulsCeTour[nom]);
+					effetsCeTour[carac] += thisBm;
+					//window.console.log('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac]);
 				}
-			}
+			}	// fin boucle sur les caractéristiques
+		}	// fin boucle sur les bonus/malus
 		
 		/* Création du bilan du tour */
 		var texteD = '', texteS = '';
@@ -3044,12 +3072,12 @@ function traiteMalus() {
 					break;
 				default:
 					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] )+' %' : '';
-				}
+			}
 			if(str) {
 				texteD += str;
 				texteS += str;
-				}
 			}
+		}	// fin boucle sur les caractéristiques
 		
 		/* Affichage */
 		// Si rien à afficher on passe
@@ -3071,11 +3099,11 @@ function traiteMalus() {
 		td = appendTdText(tr,texteS);
 		td.colSpan = 5-nbHidden;
 		appendTdText(tr,txttour);
-		}
+	}	// fin boucle sur les tours générés
 	
 	/* mise en place toggleDetails */
 	tfoot.style.cursor = 'pointer';
-	tfoot.onclick = toggleDetails;
+	tfoot.onclick = toggleDetailsBM;
 	
 	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
 	if(strfat)
@@ -4118,13 +4146,14 @@ function traiterJubilaires() {
 	try {
 		FF_XMLHttpRequest({
 			method: 'GET',
-			url: URL_anniv,
+			url: URL_anniv + '?xx=123',
 			headers: {
 				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
 				'Accept': 'application/xml,text/xml',
 				},
 			onload: function(responseDetails) {
-				if (responseDetails.status == 0 && isHTTPS) {
+				if ((responseDetails.status == 0) && isHTTPS) {
+					window.console.log('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
 					showHttpsErrorContenuMixte();
 					return;
 				}
@@ -4138,6 +4167,7 @@ function traiterJubilaires() {
 		}
 	catch(e) {
 		if (isHTTPS) {
+			window.console.log('exception à l\'appel jubilaires ' + e);
 			showHttpsErrorContenuMixte();
 		} else {
 			window.alert('Erreur Jubilaires:\n'+e);

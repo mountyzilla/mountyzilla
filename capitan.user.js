@@ -6,9 +6,10 @@
 // @grant GM_deleteValue
 // @include */mountyhall/View/TresorHistory*
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
-// @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
+// @include */mountyhall/MH_Play/Play_equipement.php*
 // @name Capitan
-// @version 8.1.3
+// @version 8.1.4
+// @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
 /****************************************************************
@@ -41,6 +42,8 @@ Roule 24 à 26/08/2016 V8.1.2
 Roule 14/10/2016 V8.1.3
 	simplification de l'entête GM (include)
 	passage à greasyfork
+Roule 23/11/2016 V8.1.4
+	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval) 
 */
 
 function appendButton(paren,value,onClick) {
@@ -643,29 +646,43 @@ function getIDCarte()
 
 function analyseObject()
 {
+	var eSpacer = document.getElementById('spacerMZCapitan');
+	if (eSpacer) return;	// déjà affiché
 	var numTroll = getNumTroll();	// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
 	var idCarte = getIDCarte();
+	//window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte);
 	var originalPos = GM_getValue("capitan."+idCarte+".position");
 	if(!originalPos || originalPos == null)
 	{
 		var infoPos = document.evaluate("//td/text()[contains(.,'ai été tué en')]",
 		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		if(!infoPos)
-			return
-		var listePos = infoPos.nodeValue.split("=");
-		if(listePos.length!=4)
+		if(!infoPos) {
+			//window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
 			return;
+		}
+		var listePos = infoPos.nodeValue.split("=");
+		if(listePos.length!=4) {
+			window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver les coord. de la mort du Capitan ' + infoPos.nodeValue);
+			return;
+		}
 		var x = parseInt(listePos[1]);
 		var y = parseInt(listePos[2]);
 		var n = parseInt(listePos[3]);
 		GM_setValue("capitan."+idCarte+".position",x+";"+y+";"+n);
 	}
+	// Roule 23/11/2016 travail dans le body (ancienne version, fenêtre indépendante) ou dans la div modale (nouvelle version en "popup")
+	var parentElt = document.body;
+	var modalElt = document.evaluate("//div[@class = 'modal']",
+		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+	if (modalElt) parentElt = modalElt;
+
 	// bloc liste de solutions
 	var table = afficheInfoCarte(idCarte);
 	var p = document.createElement('p');
+	p.id = 'spacerMZCapitan';
 	p.appendChild(table);
-	document.body.appendChild(p);
-	
+	parentElt.appendChild(p);
+
 	// position courante du Troll
 	// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
 	var curPos = [];
@@ -679,25 +696,25 @@ function analyseObject()
 	{
 		var p = document.createElement('p');
 		p.appendChild(table);
-		document.body.appendChild(p);
+		parentElt.appendChild(p);
 		// bloc ajout de nouvelle recherche
 		createNewRecherche();
 	}
-	
+
 	// Roule 08/08/2016 bloc des recherches mémorisées
 	if(essais)
 	{
 		table = prevRecherche(idCarte);
 		var p = document.createElement('p');
 		p.appendChild(table);
-		document.body.appendChild(p);
+		parentElt.appendChild(p);
 		// Roule 08/08/2016 bloc préparant les infos pour l'outil Mamoune (Psyko-Chasseurs)
 		table = blocMamoune(idCarte, curPos);
 		if(table!=null)
 		{
 			p = document.createElement('p');
 			p.appendChild(table);
-			document.body.appendChild(p);
+			parentElt.appendChild(p);
 		}
 	}
 
@@ -707,7 +724,7 @@ function analyseObject()
 	{
 		p = document.createElement('p');
 		p.appendChild(table);
-		document.body.appendChild(p);
+		parentElt.appendChild(p);
 	}
 
 	// Roule 24/08/2016 récupération des anciennes recherches (localStorage)
@@ -716,7 +733,7 @@ function analyseObject()
 	{
 		p = document.createElement('p');
 		p.appendChild(table);
-		document.body.appendChild(p);
+		parentElt.appendChild(p);
 	}
 }
 
@@ -1149,7 +1166,7 @@ function infoRecherche()
 function getIntegerByID(id, msg) {
 	var e = document.getElementById(id);
 	if (!e || !e.childNodes || !e.childNodes[0] || !e.childNodes[0].nodeValue) {
-		window.alert('Script carte de Capitan : impossible de retrouver le ' + msg);
+		if (msg) window.alert('Script carte de Capitan : impossible de retrouver le ' + msg);
 		return;
 	}
 	return parseInt(e.childNodes[0].nodeValue);
@@ -1164,6 +1181,10 @@ try
 	else if(isPage("MH_Play/Actions/Play_a_TrouverCachette2.php"))
 	{
 		infoRecherche();
+	}
+	else if(isPage("MH_Play/Play_equipement.php"))
+	{
+		window.setInterval(analyseObject, 1000);	// Roule, 23/11/2016, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
 	}
 }
 catch(e)
