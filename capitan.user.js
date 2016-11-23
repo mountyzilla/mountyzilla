@@ -9,7 +9,7 @@
 // @include */mountyhall/MH_Play/Play_equipement.php*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.1.4
+// @version 8.1.4.1
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -699,7 +699,7 @@ function analyseObject()
 		p.appendChild(table);
 		parentElt.appendChild(p);
 		// bloc ajout de nouvelle recherche
-		createNewRecherche();
+		createNewRecherche(parentElt);
 	}
 
 	// Roule 08/08/2016 bloc des recherches mémorisées
@@ -848,7 +848,7 @@ function delRecherche(e) {
 	window.location.replace(window.location);
 }
 
-function createNewRecherche()
+function createNewRecherche(parentElt)
 {
 	p = document.createElement('p');
 	
@@ -878,7 +878,7 @@ function createNewRecherche()
 	var button=appendButton(td, "Ajouter", addRecherche);
 	
 	p.appendChild(table);
-	document.body.appendChild(p);
+	parentElt.appendChild(p);
 }
 
 // Roule 24/08/2016 récupération des anciennes recherches (localStorage)
