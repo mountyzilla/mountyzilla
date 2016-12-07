@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.9
+// @version     1.2.10
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -55,8 +55,9 @@
 //		déplacement des images sur l'infra raistlin + meilleure gestion HTTPS
 // V1.2.9 16/11/2016
 //		adaptation Firefox 50 (comportement différent sur échec Ajax https)
-// V1.2.10
-//		23/11/2016 correction décumul des bonus/malus
+// V1.2.10 07/12/2016
+//		correction décumul des bonus/malus
+//		affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -4146,14 +4147,14 @@ function traiterJubilaires() {
 	try {
 		FF_XMLHttpRequest({
 			method: 'GET',
-			url: URL_anniv + '?xx=123',
+			url: URL_anniv,
 			headers: {
 				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
 				'Accept': 'application/xml,text/xml',
 				},
 			onload: function(responseDetails) {
 				if ((responseDetails.status == 0) && isHTTPS) {
-					window.console.log('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
+					//window.console.log('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
 					showHttpsErrorContenuMixte();
 					return;
 				}
@@ -8827,62 +8828,97 @@ function corrigeBricolTrolls(infosTrolls) {
 		}
 	}
 
+	// insère 2 TD avant nextTD avec les infos venant de l'IT
+function addTdInfosTroll(infos, nextTD) {
+	/* cadre barre PV */
+	var tab = document.createElement('div');
+	tab.width = 100;
+	tab.style.background = '#FFFFFF';
+	tab.style.width = 100;
+	tab.style.border = 1;
+	tab.height = 10;
+	tab.title = infos.pv+'/'+infos.pv_max+' le '+ infos.updated_at.replace(' ', ' à ');	//infos[0]+'/'+infos[1]+' '+ infos[2];
+	/* barre PV */
+	var img = document.createElement('img');
+	img.src = '../Images/Interface/milieu.gif';
+	img.height = 10;
+	img.width = Math.floor( (100*infos.pv)/infos.pv_max );	//infos[0])/infos[1] );
+	tab.appendChild(img);
+	/* lien vers l'IT */
+	var lien = document.createElement('a');
+	var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
+	lien.href = URL_ratibus_lien+nomit+'/index.php';
+	lien.target = '_blank';
+	lien.appendChild(tab);
+	insertTdElement(nextTD,lien);
+	/* PAs dispos */
+	var span = document.createElement('span');
+	span.title = 'DLA : ' + infos.dla;	//infos[3];
+	appendText(span, infos.pa +' PA' );	//infos[4]+' PA' );
+	insertTdElement(nextTD, span);
+}
+
 function putInfosTrolls(infosTrolls) {
 	// teste la présence de trõlls de l'IT
 	var i=nbTrolls;
 	while( i>0 && !infosTrolls[getTrollID(i)] ) i--;
 	if(i==0) return;
 	
-	try
-	{
-	var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
-	td.width = 40;
-	td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
-	td.width = 105;
+	try {
+		var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
+		td.width = 40;
+		td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
+		td.width = 105;
 
-	// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
-	//corrigeBricolTrolls(infosTrolls);
-	
-	for(i=nbTrolls ; i>0 ; i--) {
-		var infos = infosTrolls[getTrollID(i)];
-		if(infos) {
-			/* PAs dispos */
-			var span = document.createElement('span');
-			span.title = 'DLA : ' + infos.dla;	//infos[3];
-			appendText(span, infos.pa +' PA' );	//infos[4]+' PA' );
-			insertTdElement(tr_trolls[i].childNodes[6], span);
-			/* cadre barre PV */
-			var tab = document.createElement('div');
-			tab.width = 100;
-			tab.style.background = '#FFFFFF';
-			tab.style.width = 100;
-			tab.style.border = 1;
-			tab.height = 10;
-			tab.title = infos.pv+'/'+infos.pv_max+' le '+ infos.updated_at.replace(' ', ' à ');	//infos[0]+'/'+infos[1]+' '+ infos[2];
-			/* barre PV */
-			var img = document.createElement('img');
-			img.src = '../Images/Interface/milieu.gif';
-			img.height = 10;
-			img.width = Math.floor( (100*infos.pv)/infos.pv_max );	//infos[0])/infos[1] );
-			tab.appendChild(img);
-			/* lien vers l'IT */
-			var lien = document.createElement('a');
-			var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-			lien.href = URL_ratibus_lien+nomit+'/index.php';
-			lien.target = '_blank';
-			lien.appendChild(tab);
-			insertTdElement(tr_trolls[i].childNodes[6],lien);
-			}
-		else {
-			insertTd(tr_trolls[i].childNodes[6]);
-			insertTd(tr_trolls[i].childNodes[6]);
+		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
+		//corrigeBricolTrolls(infosTrolls);
+		
+		for(i=nbTrolls ; i>0 ; i--) {
+			var infos = infosTrolls[getTrollID(i)];
+			if(infos) {
+				addTdInfosTroll(infos, tr_trolls[i].childNodes[6]);
+				infos.done = true;
+			} else {
+				insertTd(tr_trolls[i].childNodes[6]);
+				insertTd(tr_trolls[i].childNodes[6]);
 			}
 		}
-	}
-	catch(e) {
+		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
+		var IDs = Object.keys(infosTrolls);
+		//window.console.log('nb Troll IT : ' + IDs.length);
+		var tBody = tr_trolls[1].parentNode;
+		for (i = 0; i < IDs.length; i++) {
+			var idTroll = IDs[i];
+			infos = infosTrolls[idTroll];
+			if (infos.done) continue;	// déjà vu
+			if (idTroll == numTroll) continue;	// pas nous-même
+			//window.console.log('Troll surnuméraire ' + JSON.stringify(infos));
+			var tr = appendTr(tBody,'mh_tdpage');
+			var td = appendTd(tr);	// distance
+			td = appendTd(tr);	// actions
+			td = appendTd(tr);	// ID
+			appendText(td, idTroll);
+			td = appendTd(tr);	// Nom
+			if (infos.nom) appendText(td, infos.nom);
+			td = appendTd(tr);	// Niveau
+			if (infos.niveau) appendText(td, infos.niveau);
+			td = appendTd(tr);	// Race
+			if (infos.race) appendText(td, infos.race);
+			// PV et PA ajoutés par addTdInfosTroll
+			td = appendTd(tr);	// Guilde
+			if (infos.guilde) appendText(td, infos.guilde);
+			td = appendTd(tr);	// X
+			if (infos.x) appendText(td, infos.x);
+			td = appendTd(tr);	// Y
+			if (infos.y) appendText(td, infos.y);
+			td = appendTd(tr);	// N
+			if (infos.n) appendText(td, infos.n);
+			addTdInfosTroll(infos, tr.childNodes[6]);
+		}
+	} catch(e) {
 		window.alert('Erreur troll='+i+'\n'+e+'\n'+tr_trolls[i].innerHTML);
-		}
 	}
+}
 
 
 /* Mode Tétalanvert! ---------------------------------------------------------*/
