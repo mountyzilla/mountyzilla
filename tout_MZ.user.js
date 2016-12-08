@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.10
+// @version     1.2.10.1
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -58,6 +58,8 @@
 // V1.2.10 07/12/2016
 //		correction décumul des bonus/malus
 //		affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll
+// V1.2.10.1 08/12/2016
+//		option pour affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll + peaufinage affichage
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -307,6 +309,14 @@ function insertTdElement(next,el) {
 	if(el) td.appendChild(el);
 	return td;
 	}
+
+function appendA(paren,href,cssClass,text) {
+	var a = document.createElement('a');
+	if (href) a.href = href;
+	if (cssClass) a.className = cssClass;
+	if (text) a.appendChild(document.createTextNode(text));
+	paren.appendChild(a);
+}
 
 function appendText(paren,text,bold) {
 	if(bold) {
@@ -5229,9 +5239,22 @@ function saveITData() {
 		var system = document.getElementById('urlbricol').value;
 		var login = document.getElementById('loginbricol').value;
 		var pass = document.getElementById('passbricol').value;
-		if(system && login && pass) {
-			MY_setValue(numTroll+'.INFOSIT',
-				'bricol$'+system+'$'+login+'$'+hex_md5(pass) );
+		var affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
+		if(system && login) {
+			if (pass) {
+				var v = 'bricol$'+system+'$'+login+'$'+hex_md5(pass)+'$'+affhv;
+				MY_setValue(numTroll+'.INFOSIT', v);
+				//window.console.log('v=' + v);
+			} else {
+				// vérif que rien n'a changé
+				var str = MY_getValue(numTroll+'.INFOSIT');
+				if(str) {
+					var arr = str.split('$');
+					if  (system != arr[1] || login != arr[2] || affhv != arr[4]) {
+						alert('Attention, système tactique Bricol\'Trolls sans mot de passe => non modifié');
+					}
+				}
+			}
 		}
 	}
 	else {
@@ -5326,10 +5349,12 @@ function onChangeIT() {
 		var tr = appendTr(itBody,'mh_tdpage')
 		var td = appendTd(tr);
 		var str = MY_getValue(numTroll+'.INFOSIT');
+		//window.console.log('onChangeIT str=' + str);
 		if(str) {
 			var arr = str.split('$');
 			var system = arr[1];
 			var login = arr[2];
+			var affhv = arr[4];
 		}
 		appendText(td,'Nom du système : ');
 		appendTextbox(td,'text','urlbricol',20,50,system);
@@ -5339,6 +5364,10 @@ function onChangeIT() {
 		td = appendTd(tr);
 		appendText(td,'Mot de passe du compte : ');
 		appendTextbox(td,'password','passbricol',20,50);
+		td = appendTd(tr);
+		appendText(td,'Affichage des Trõlls hors vue : ');
+		//window.console.log('onChangeIT affhv=' + affhv + ', bool=' + (affhv>0));
+		appendCheckBox(td,'affhvbricol', (affhv>0));
 	}
 }
 
@@ -8737,7 +8766,7 @@ function putScriptExterne() {
 	if(nomit=='bricol') {
 		var data = infoit.split('$');
 		try {
-			// Roule' 07/11/2016. Travail avec Rattibus, remplacement du script par l'envoi de JSON
+			// Roule' 07/11/2016. Travail avec Ratibus, remplacement du script par l'envoi de JSON
 			// appendNewScript(URL_ratibus_lien+data[1]
 				// +'/mz.php?login='+data[2]
 				// +'&password='+data[3]
@@ -8758,11 +8787,14 @@ function putScriptExterne() {
 							}
 							return;
 						}
-						if (responseDetails.status < 200 || responseDetails.status > 299) {
-							avertissement('<br />Erreur HTTP ' + responseDetails.status + ' à l\'appel de l\'interface Bricol\'Troll');
+						var ratibusData;
+						try {
+							ratibusData = JSON.parse(responseDetails.responseText);
+						} catch(e) {}
+						if (ratibusData === undefined) {
+							avertissement('<br />Erreur à l\'appel de l\'interface Bricol\'Troll. Code HTTP=' + responseDetails.status + '. Pas de JSON');
 							return;
 						}
-						var ratibusData = JSON.parse(responseDetails.responseText);
 						if (ratibusData.error) {
 							avertissement('<br />Bricol\'Troll a répondu :<br />' + ratibusData.error);
 						} else {
@@ -8884,6 +8916,11 @@ function putInfosTrolls(infosTrolls) {
 			}
 		}
 		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
+		var str = MY_getValue(numTroll+'.INFOSIT');
+		if(!str) return;
+		var arr = str.split('$');
+		if (!(arr[4]>0)) return;	// pas si le joueur n'en veut pas
+
 		var IDs = Object.keys(infosTrolls);
 		//window.console.log('nb Troll IT : ' + IDs.length);
 		var tBody = tr_trolls[1].parentNode;
@@ -8895,23 +8932,33 @@ function putInfosTrolls(infosTrolls) {
 			//window.console.log('Troll surnuméraire ' + JSON.stringify(infos));
 			var tr = appendTr(tBody,'mh_tdpage');
 			var td = appendTd(tr);	// distance
+			var pos = getPosition();
+			var d = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
+			appendText(td, d);
 			td = appendTd(tr);	// actions
 			td = appendTd(tr);	// ID
 			appendText(td, idTroll);
 			td = appendTd(tr);	// Nom
-			if (infos.nom) appendText(td, infos.nom);
+			// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
+			appendA(td, 'javascript:EPV(' + idTroll + ')', 'mh_trolls_1', infos.nom);
+			if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
+			if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
 			td = appendTd(tr);	// Niveau
 			if (infos.niveau) appendText(td, infos.niveau);
+			td.align = 'center';
 			td = appendTd(tr);	// Race
 			if (infos.race) appendText(td, infos.race);
 			// PV et PA ajoutés par addTdInfosTroll
 			td = appendTd(tr);	// Guilde
 			if (infos.guilde) appendText(td, infos.guilde);
 			td = appendTd(tr);	// X
+			td.align = 'center';
 			if (infos.x) appendText(td, infos.x);
 			td = appendTd(tr);	// Y
+			td.align = 'center';
 			if (infos.y) appendText(td, infos.y);
 			td = appendTd(tr);	// N
+			td.align = 'center';
 			if (infos.n) appendText(td, infos.n);
 			addTdInfosTroll(infos, tr.childNodes[6]);
 		}
@@ -11315,6 +11362,91 @@ function binl2b64(binarray)
   return str;
 }
 
+///////////////////////////////////////////
+// debug cartes capitan Roule 07/12/2016
+///////////////////////////////////
+// essais : objet
+//	.mode : description
+//	.essais : tableau d'objets essai
+//		.mode : description
+//		.essais : tableau de cartes
+//			.noCarte : id de la carte
+//			.essais : tableau d'essais, [x, y, n, nb]
+function AfficheEssais(essais, sMode) {
+	var eBigDiv = document.getElementById('ListeEssaiCapitan');
+	if (!eBigDiv) {
+		var insertPoint = document.getElementById('footer1');
+		eBigDiv = document.createElement('table');
+		eBigDiv.id = 'ListeEssaiCapitan';
+		insertBefore(insertPoint, document.createElement('p'));
+		insertTitle(insertPoint,'Capitan : Liste des essais');
+		insertBefore(insertPoint, eBigDiv);
+		addTrEssais(eBigDiv, 'mode', 'carte', 'nombre d\'essais', true);
+	}
+	if (!essais) {
+		addTrEssais(eBigDiv, sMode, '', 'pas d\'essai', false);
+		return;
+	}
+	var carte;
+	for (carte in essais) {
+		addTrEssais(eBigDiv, sMode, carte, essais[carte] + ' essai(s)', false);
+	}
+	if (carte === undefined) {
+		addTrEssais(eBigDiv, sMode, '', '0 essai', false);
+	}
+}
+
+function addTrEssais(eTable, sMode, sCarte, sText, bBold) {
+	var tr = appendTr(eTable);
+	var td = appendTd(tr);
+	appendText(td, sMode, bBold);
+	td = appendTd(tr);
+	appendText(td, sCarte, bBold);
+	td = appendTd(tr);
+	appendText(td, sText, bBold);
+}
+
+function getEssaiV1_0() {
+	try {
+		var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+		prefs = prefs.getBranch("mountyzilla.storage.capitan.");
+		var tabK, nK;
+		prefs.getChildList('', nK, tabK);
+		window.console.log('getEssaiV1_0, nb key : ' + nK);
+		//window.console.log('getEssaiV1_0, ' + nK);
+		return;
+		return r;
+	} catch (e) {
+		window.console.log('Erreur getEssaiV1_0() :\n'+e);
+	}
+}
+
+function getEssaiV1_1() {
+	var locSto = window.localStorage;
+	window.console.log('getEssaiV1_1, nb key : ' + locSto.length);
+	var r = [];
+	for (var i = 0; i < locSto.length; i++) {
+		var k = locSto.key(i);
+		//window.console.log('getEssaiV1_1 key ' + k + ' => ' + locSto.getItem(k));
+		var t = k.split(/\./);
+		if (t[0] !== 'capitan') continue;
+		if (t[2] !== 'essai') continue;
+		var carte = 'carte n°' + t[1];
+		if (r[carte]) r[carte]++;
+		else         r[carte] = 1;
+		//window.console.log('getEssaiV1_1 r[' + carte + ']=' + r[carte]);
+	}
+	return r;
+}
+
+function showEssaiCartes() {
+	window.console.log('début showEssai Tout_MZ');
+	var essais = getEssaiV1_0();
+	AfficheEssais(essais, 'V1.0');
+	essais = getEssaiV1_1();
+	AfficheEssais(essais, 'V1.1');
+	window.console.log('fin showEssai Tout_MZ');
+}
 
 /*--------------------------------- Dispatch ---------------------------------*/
 
@@ -11334,6 +11466,7 @@ if(isPage("Messagerie/ViewMessageBot")) {
 	do_menu();
 } else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
 	do_option();
+	//showEssaiCartes();
 } else if(isPage("View/PJView")) {
 	do_pjview();
 } else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
