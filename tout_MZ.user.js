@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.10.2
+// @version     1.2.10.3
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -62,6 +62,8 @@
 //		option pour affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll + peaufinage affichage
 // V1.2.10.2 09/12/2016
 //		positionnement des Trõlls camou/invi à la bonne position par rapport à la distance
+// V1.2.10.3 09/12/2016
+//		Adaptation à une modification du HTML MH (voir set2DViewSystem)
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -7367,6 +7369,11 @@ function set2DViewSystem() {
 			"//h2[@id='titre2']/following-sibling::center",
 			document, null, 9, null
 		).singleNodeValue;
+		// Roule 09/12/2016 J'ai remplacé following-sibling::center par following-sibling::div suite à une modification MH
+		if (!center) center = document.evaluate(
+			"//h2[@id='titre2']/following-sibling::div",
+			document, null, 9, null
+		).singleNodeValue;
 	} catch(e) {
 		avertissement("Erreur d'initialisation du système de vue 2D");
 		window.console.error("[MZ] set2DViewSystem",e);
@@ -7380,33 +7387,38 @@ function set2DViewSystem() {
 		vueext = 'Bricol\' Vue';
 	}
 	
-	// Création du sélecteur de vue externe
-	selectVue2D = document.createElement('select');
-	selectVue2D.id = 'selectVue2D';
-	selectVue2D.className = 'SelectboxV2';
-	for(var view in vue2Ddata) {
-		appendOption(selectVue2D, view, view);
+	try {
+		// Création du sélecteur de vue externe
+		selectVue2D = document.createElement('select');
+		selectVue2D.id = 'selectVue2D';
+		selectVue2D.className = 'SelectboxV2';
+		for(var view in vue2Ddata) {
+			appendOption(selectVue2D, view, view);
+		}
+		selectVue2D.value = vueext;
+		selectVue2D.onchange = refresh2DViewButton;
+		
+		// Création du formulaire d'envoi (vide, le submit est géré via handler)
+		var form = document.createElement('form');
+		form.id = 'viewForm';
+		
+		// Insertion du système de vue
+		var table = document.createElement('table');
+		var tr = appendTr(table);
+		var td = appendTd(tr);
+		td.appendChild(selectVue2D);
+		td = appendTd(tr);
+		td.style.fontSize = '0px'; // gère le bug de l'extra character
+		td.appendChild(form);
+		center.insertBefore(table,center.firstChild);
+		insertBr(center.childNodes[1]);
+		
+		// Appelle le handler pour initialiser le bouton de submit
+		refresh2DViewButton();
+	} catch(e) {
+		avertissement("Erreur de traitement du système de vue 2D");
+		window.console.error("[MZ] set2DViewSystem",e);
 	}
-	selectVue2D.value = vueext;
-	selectVue2D.onchange = refresh2DViewButton;
-	
-	// Création du formulaire d'envoi (vide, le submit est géré via handler)
-	var form = document.createElement('form');
-	form.id = 'viewForm';
-	
-	// Insertion du système de vue
-	var table = document.createElement('table');
-	var tr = appendTr(table);
-	var td = appendTd(tr);
-	td.appendChild(selectVue2D);
-	td = appendTd(tr);
-	td.style.fontSize = '0px'; // gère le bug de l'extra character
-	td.appendChild(form);
-	center.insertBefore(table,center.firstChild);
-	insertBr(center.childNodes[1]);
-	
-	// Appelle le handler pour initialiser le bouton de submit
-	refresh2DViewButton();
 }
 
 /* [functions] Tableau d'Infos */
