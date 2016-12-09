@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.10.1
+// @version     1.2.10.2
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -60,6 +60,8 @@
 //		affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll
 // V1.2.10.1 08/12/2016
 //		option pour affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll + peaufinage affichage
+// V1.2.10.2 09/12/2016
+//		positionnement des Trõlls camou/invi à la bonne position par rapport à la distance
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -8924,17 +8926,31 @@ function putInfosTrolls(infosTrolls) {
 		var IDs = Object.keys(infosTrolls);
 		//window.console.log('nb Troll IT : ' + IDs.length);
 		var tBody = tr_trolls[1].parentNode;
+		var pos = getPosition();
 		for (i = 0; i < IDs.length; i++) {
 			var idTroll = IDs[i];
 			infos = infosTrolls[idTroll];
 			if (infos.done) continue;	// déjà vu
 			if (idTroll == numTroll) continue;	// pas nous-même
 			//window.console.log('Troll surnuméraire ' + JSON.stringify(infos));
-			var tr = appendTr(tBody,'mh_tdpage');
+			var distance = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
+			// trouver où insérer ce Troll
+			var next = undefined;
+			for(var j=0 ; j<tr_trolls.length ; j++) {
+				var thisDist = parseInt(tr_trolls[j].cells[0].textContent);
+				if (thisDist > distance) {
+					next = tr_trolls[j]
+					break;
+				}
+			}
+			var tr;
+			if (next === undefined) {
+				tr = appendTr(tBody,'mh_tdpage');
+			} else {
+				tr = insertTr(next,'mh_tdpage')
+			}
 			var td = appendTd(tr);	// distance
-			var pos = getPosition();
-			var d = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
-			appendText(td, d);
+			appendText(td, distance);
 			td = appendTd(tr);	// actions
 			td = appendTd(tr);	// ID
 			appendText(td, idTroll);
