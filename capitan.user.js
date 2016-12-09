@@ -4,12 +4,13 @@
 // @grant GM_getValue
 // @grant GM_setValue
 // @grant GM_deleteValue
+// @grant GM_listValues
 // @include */mountyhall/View/TresorHistory*
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @include */mountyhall/MH_Play/Play_equipement.php*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.1.4.1
+// @version 8.1.5
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -44,7 +45,9 @@ Roule 14/10/2016 V8.1.3
 	simplification de l'entête GM (include)
 	passage à greasyfork
 Roule 23/11/2016 V8.1.4
-	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval) 
+	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval)
+Roule 09/12/2016 V8.1.5
+	Nouvelle méthode de migration des essais V1.0 par copier/coller de tout pref.js
 */
 
 function appendButton(paren,value,onClick) {
@@ -62,6 +65,17 @@ function appendButton(paren,value,onClick) {
 function isPage(url) {
 	return window.location.href.indexOf(url)!=-1;
 }
+
+function insertTitle(next,txt) {
+	var div = document.createElement('div');
+	div.className = 'titre2';
+	appendText(div,txt);
+	insertBefore(next,div);
+}
+
+function insertBefore(next,el) {
+	next.parentNode.insertBefore(el,next);
+	}
 
 // Roule 08/08/2016 ajout cssClass
 function appendTr(tbody, cssClass) {
@@ -1031,9 +1045,12 @@ function PrepareRecupFromPreferences() {
 	td2.appendChild(document.createElement('br'));
 	td2.appendChild(document.createTextNode("copiez la ligne (bouton de droite de la souris - copier),"));
 	td2.appendChild(document.createElement('br'));
+	td2.appendChild(document.createTextNode("(Vous pouvez aussi copier *tout* le contenu de pref.js trouvé dans le profil Firefox)"));
+	td2.appendChild(document.createElement('br'));
 	td2.appendChild(document.createTextNode("Collez ci-dessous et Ajouter"));
 	td2.appendChild(document.createElement('br'));
 	var inp = addInput(td2, "t", 100);
+	inp.removeAttribute('maxlength');	// permettre de copier tout pref.js
 	inp.style.width = "350px";
 	td2.appendChild(document.createElement('br'));
 	var button=appendButton(td2, "Ajouter", addV1);
@@ -1054,30 +1071,64 @@ function addV1(eButton) {
 		var td=this.parentNode;
 		var eInput = td.getElementsByTagName("input")[0];
 		var val = eInput.value;
-		//window.console.log('val=' + val);
-		var m = val.match(/capitan\.(\d*)\.essai\.(\d*);([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
-		if (!m) {
-			alert("Désolé, impossible de retrouver le numéro de carte, les coordonnées et le nombre de chiffres bien placés");
-			return;
+		var bClear;
+		if (val.match(/user_pref\(/)) {
+			bClear = addV1Pref(val);
+		} else {
+			bClear = addV1Unitaire(val);
 		}
-		var bAlready = testAlready(m[1], m[3] + ';' + m[4] + ';' + m[5] + ';' + m[6]);
-		if (bAlready) {
-			alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
-				+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
-				+ "\navait DÉJÀ été entré");
-			eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
-			return;
-		}
-		addOneRecherche(parseInt(m[1]), m[3], m[4], m[5], m[6]);
-		alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
-			+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
-			+ "\na bien été enregistré\nIl faudra rafraichir cette page (F5) quand vous aurez terminé");
-		eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
+		if (bClear)eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
 	}
 	catch(e)
 	{
 		window.alert(e);
 	}
+}
+
+function addV1Pref(val) {
+	// on a tout le contenu de pref.js dans val
+	tabPref = val.split(/\);/);
+	//window.console.log('nb val=' + tabPref.length);
+	//user_pref("mountyzilla.storage.91305.capitan.8600686.essai.1", "1;2;3;4");
+	var nAlready = 0;
+	var nDone = 0;
+	for (var i = 0; i < tabPref.length; i++) {
+		var m = tabPref[i].match(/user_pref\(\"mountyzilla\.storage\.(\d*)\.capitan\.(\d*)\.essai\.(\d*)\", *\"([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)\"/i);
+		if (!m) continue;
+		//window.console.log('trouvé troll ' + m[1] + ', carte ' + m[2] + ', essai ' + m[3] + ', X = ' + m[4] + ', Y=' + m[5] + ', N=' + m[6] + ' => ' + m[7]);
+		var bAlready = testAlready(m[2], m[4] + ';' + m[5] + ';' + m[6] + ';' + m[7]);
+		if (bAlready) {
+			nAlready++;
+		} else {
+			addOneRecherche(parseInt(m[2]), m[4], m[5], m[6], m[7]);
+			nDone++;
+		}
+	}
+	alert(nAlready + ' essai(s) ont été ignorés car déjà migrés'
+		+ "\n" + nDone + ' essai(s) viennent d\'être migrés'
+		+ "\nIl faut rafraichir cette page (F5 ou afficher à nouveau l'équipement)");
+	return true;
+}
+
+function addV1Unitaire(val) {
+	//window.console.log('val=' + val);
+	var m = val.match(/capitan\.(\d*)\.essai\.(\d*);([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
+	if (!m) {
+		alert("Désolé, impossible de retrouver le numéro de carte, les coordonnées et le nombre de chiffres bien placés");
+		return false;
+	}
+	var bAlready = testAlready(m[1], m[3] + ';' + m[4] + ';' + m[5] + ';' + m[6]);
+	if (bAlready) {
+		alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
+			+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+			+ "\navait DÉJÀ été entré");
+		return true;
+	}
+	addOneRecherche(parseInt(m[1]), m[3], m[4], m[5], m[6]);
+	alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
+		+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+		+ "\na bien été enregistré\nIl faudra rafraichir cette page (F5) quand vous aurez terminé");
+	return true;
 }
 
 function addRecherche()
@@ -1173,6 +1224,78 @@ function getIntegerByID(id, msg) {
 	return parseInt(e.childNodes[0].nodeValue);
 }
 
+///////////////////////////////////
+// debuging
+// essais : objet
+//	.mode : description
+//	.essais : tableau d'objets essai
+//		.mode : description
+//		.essais : tableau de cartes
+//			.noCarte : id de la carte
+//			.essais : tableau d'essais, [x, y, n, nb]
+function AfficheEssais(essais, sMode) {
+	var eBigDiv = document.getElementById('ListeEssaiCapitan');
+	if (!eBigDiv) {
+		var insertPoint = document.getElementById('footer1');
+		eBigDiv = document.createElement('table');
+		eBigDiv.id = 'ListeEssaiCapitan';
+		insertBefore(insertPoint, document.createElement('p'));
+		insertTitle(insertPoint,'Capitan : Liste des essais');
+		insertBefore(insertPoint, eBigDiv);
+		addTrEssais(eBigDiv, 'mode', 'carte', 'nombre d\'essais', true);
+	}
+	if (!essais) {
+		addTrEssais(eBigDiv, sMode, '', 'pas d\'essai', false);
+		return;
+	}
+	var carte;
+	for (carte in essais) {
+		addTrEssais(eBigDiv, sMode, carte, essais[carte] + ' essai(s)', false);
+	}
+	if (carte === undefined) {
+		addTrEssais(eBigDiv, sMode, '', '0 essai', false);
+	}
+}
+
+function addTrEssais(eTable, sMode, sCarte, sText, bBold) {
+	var tr = appendTr(eTable);
+	var td = appendTd(tr);
+	appendText(td, sMode, bBold);
+	td = appendTd(tr);
+	appendText(td, sCarte, bBold);
+	td = appendTd(tr);
+	appendText(td, sText, bBold);
+}
+
+function getEssaiV1_2() {
+	if (!GM_getValue) {
+		window.console.log('getEssaiV1_2, pas de GM_getValue');
+		return;
+	}
+	var tabKey = GM_listValues();
+	window.console.log('getEssaiV1_2, nb key : ' + tabKey.length);
+	var r = [];
+	for (var i = 0; i < tabKey.length; i++) {
+		var k = tabKey[i];
+		//window.console.log('getEssaiV1_2 key ' + k + ' => ' + GM_getValue(k));
+		var t = k.split(/\./);
+		if (t[0] !== 'capitan') continue;
+		if (t[2] !== 'essai') continue;
+		var carte = 'carte n°' + t[1];
+		if (r[carte]) r[carte]++;
+		else         r[carte] = 1;
+		//window.console.log('getEssaiV1_2 r[' + carte + ']=' + r[carte]);
+	}
+	return r;
+}
+
+function showEssai() {
+	window.console.log('début showEssai CapitanList');
+	var essai1_2 = getEssaiV1_2();
+	AfficheEssais(essai1_2, 'V1.2');
+	window.console.log('fin showEssai CapitanList');
+}
+
 try
 {
 	if (isPage("View/TresorHistory.php"))
@@ -1187,6 +1310,11 @@ try
 	{
 		window.setInterval(analyseObject, 1000);	// Roule, 23/11/2016, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
 	}
+	// debuging
+	// else if(isPage("MH_Play/Options/Play_o_Interface"))
+	// {
+	// 	showEssai();
+	// }
 }
 catch(e)
 {
