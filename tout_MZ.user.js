@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.10.3
+// @version     1.2.10.4
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -64,6 +64,8 @@
 //		positionnement des Trõlls camou/invi à la bonne position par rapport à la distance
 // V1.2.10.3 09/12/2016
 //		Adaptation à une modification du HTML MH (voir set2DViewSystem)
+// V1.2.10.4 12/12/2016
+//		Correction bug à la récupération d'une erreur interface Bricoll'Troll
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -8796,7 +8798,7 @@ function putScriptExterne() {
 							if (isHTTPS) {
 								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
 							} else {
-								window.console.log('status=0 à l\'appel bricol\'troll ' + e);
+								window.console.log('status=0 à l\'appel bricol\'troll');
 								avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<');
 							}
 							return;
