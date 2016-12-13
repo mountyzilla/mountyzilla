@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.10.4
+// @version     1.2.11
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -66,6 +66,8 @@
 //		Adaptation à une modification du HTML MH (voir set2DViewSystem)
 // V1.2.10.4 12/12/2016
 //		Correction bug à la récupération d'une erreur interface Bricoll'Troll
+// V1.2.11 13/12/2016
+//		Passage sur BdD Raistlin \o/
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -97,12 +99,12 @@ const URL_CertifRaistlin1 = 'https://mz.mh.raistlin.fr/mz/img/1.gif';
 const URL_CertifRaistlin2 = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
 
 // URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage en proxy chez raistlin)
-// var URL_MZinfoMonstre = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// infra sur serveur raistlin en préparation
-// var URL_MZinfoMonstrePost = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
-// var URL_pageDispatcher = "http://mz.mh.raistlin.fr/mz/cdmdispatcher.php";
-var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers http://mountypedia.free.fr/mz/monstres_0.9_FF.php
-var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
-var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
+var URL_MZinfoMonstre = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// infra sur serveur raistlin en préparation
+var URL_MZinfoMonstrePost = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
+var URL_pageDispatcher = "http://mz.mh.raistlin.fr/mz/cdmdispatcher.php";
+// var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers http://mountypedia.free.fr/mz/monstres_0.9_FF.php
+// var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
+// var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
 // pour passer en mode IP, commenter les 3 lignes précédentes et décommenter les 3 suivantes
 //var URL_MZinfoMonstre = 'http://192.99.225.92/mz/monstres_0.9_FF.php';
 //var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
