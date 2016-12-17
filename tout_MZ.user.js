@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11
+// @version     1.2.11.1
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -68,6 +68,8 @@
 //		Correction bug à la récupération d'une erreur interface Bricoll'Troll
 // V1.2.11 13/12/2016
 //		Passage sur BdD Raistlin \o/
+// V1.2.11.1 13/12/2016
+//		Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -8909,11 +8911,6 @@ function addTdInfosTroll(infos, nextTD) {
 }
 
 function putInfosTrolls(infosTrolls) {
-	// teste la présence de trõlls de l'IT
-	var i=nbTrolls;
-	while( i>0 && !infosTrolls[getTrollID(i)] ) i--;
-	if(i==0) return;
-	
 	try {
 		var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
 		td.width = 40;
@@ -8941,7 +8938,11 @@ function putInfosTrolls(infosTrolls) {
 
 		var IDs = Object.keys(infosTrolls);
 		//window.console.log('nb Troll IT : ' + IDs.length);
-		var tBody = tr_trolls[1].parentNode;
+		var tBody = tr_trolls[0].parentNode;
+		if (tr_trolls[1] === undefined)
+			tBody = tr_trolls[0].parentNode;
+		else
+			tBody = tr_trolls[1].parentNode;
 		var pos = getPosition();
 		for (i = 0; i < IDs.length; i++) {
 			var idTroll = IDs[i];
@@ -8960,10 +8961,10 @@ function putInfosTrolls(infosTrolls) {
 				}
 			}
 			var tr;
-			if (next === undefined) {
-				tr = appendTr(tBody,'mh_tdpage');
-			} else {
+			if (next !== undefined) {
 				tr = insertTr(next,'mh_tdpage')
+			} else {
+				tr = appendTr(tBody,'mh_tdpage');
 			}
 			var td = appendTd(tr);	// distance
 			appendText(td, distance);
