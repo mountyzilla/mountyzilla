@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.1
+// @version     1.2.11.2
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -68,8 +68,10 @@
 //		Correction bug à la récupération d'une erreur interface Bricoll'Troll
 // V1.2.11 13/12/2016
 //		Passage sur BdD Raistlin \o/
-// V1.2.11.1 13/12/2016
+// V1.2.11.1 17/12/2016
 //		Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un
+// V1.2.11.2 18/12/2016
+//		Correction bug interface Bricoll'Troll, n n'était pas affiché pour les Potrolls au soleil
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -8977,22 +8979,22 @@ function putInfosTrolls(infosTrolls) {
 			if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
 			if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
 			td = appendTd(tr);	// Niveau
-			if (infos.niveau) appendText(td, infos.niveau);
+			if (infos.niveau !== undefined) appendText(td, infos.niveau);
 			td.align = 'center';
 			td = appendTd(tr);	// Race
 			if (infos.race) appendText(td, infos.race);
 			// PV et PA ajoutés par addTdInfosTroll
 			td = appendTd(tr);	// Guilde
-			if (infos.guilde) appendText(td, infos.guilde);
+			if (infos.guilde !== undefined) appendText(td, infos.guilde);
 			td = appendTd(tr);	// X
 			td.align = 'center';
-			if (infos.x) appendText(td, infos.x);
+			if (infos.x !== undefined) appendText(td, infos.x);
 			td = appendTd(tr);	// Y
 			td.align = 'center';
-			if (infos.y) appendText(td, infos.y);
+			if (infos.y !== undefined) appendText(td, infos.y);
 			td = appendTd(tr);	// N
 			td.align = 'center';
-			if (infos.n) appendText(td, infos.n);
+			if (infos.n !== undefined) appendText(td, infos.n);
 			addTdInfosTroll(infos, tr.childNodes[6]);
 		}
 	} catch(e) {
