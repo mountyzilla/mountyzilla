@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.3
+// @version     1.2.11.4
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -75,6 +75,8 @@
 // V1.2.11.3 19/12/2016
 //		Correction de la récupération des PI totaux (du coup la portée de TP était NaN)
 //		Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours
+// V1.2.11.4 19/12/2016
+//		Changement des couleurs de la barre de vie Interface Bricol'Troll
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -8938,9 +8940,9 @@ function addTdInfosTroll(infos, nextTD) {
 	} else if (pourcentVie > 66) {
 		div2.style.backgroundColor = '#77EE77';
 	} else if (pourcentVie > 33) {
-		div2.style.backgroundColor = '#F1A165';	// jaune (couleur de MZ, en attente couleur de Bricol'Troll)
+		div2.style.backgroundColor = '#EEEE77';
 	} else {
-		div2.style.backgroundColor = '#F0A3A3';	// rouge (couleur de MZ, en attente couleur de Bricol'Troll)
+		div2.style.backgroundColor = '#EEAA77';
 	}
 	div2.style.width = pourcentVie + '%';
 	div2.style.height = '10px';
