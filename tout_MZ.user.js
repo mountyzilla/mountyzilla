@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.2
+// @version     1.2.11.3
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -72,6 +72,9 @@
 //		Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un
 // V1.2.11.2 18/12/2016
 //		Correction bug interface Bricoll'Troll, n n'était pas affiché pour les Potrolls au soleil
+// V1.2.11.3 19/12/2016
+//		Correction de la récupération des PI totaux (du coup la portée de TP était NaN)
+//		Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -130,7 +133,7 @@ const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
 
 // Roule 04/09/2016 switch extern URLs to https if available
 var isHTTPS = false;
-if ( window.location.protocol.indexOf('https') === 0) {
+if (window.location.protocol.indexOf('https') === 0) {
 	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
 	URL_MZinfoMonstrePost = URL_MZinfoMonstrePost.replace(/http:\/\//, 'https://');
 	URL_pageDispatcher = URL_pageDispatcher.replace(/http:\/\//, 'https://');
@@ -603,6 +606,22 @@ function DateToString(date) {
 function StringToDate(str) {
 	return str.replace(/([0-9]+)\/([0-9]+)/,"$2/$1");
 	}
+
+// fonctionne aussi avec datetime
+function SQLDateToFrench(str) {
+	return str.replace(/([0-9]+)\-([0-9]+)\-([0-9]+)/,"$3/$2/$1");
+}
+
+// ... et ajoute un "à" du plus bel effet
+function SQLDateToFrenchTime(str) {
+	return str.replace(/([0-9]+)\-([0-9]+)\-([0-9]+) /,"$3/$2/$1 à ");
+}
+
+// SQLDate vers objet date Javascript
+function SQLDateToObject(str) {
+	var t = str.split(/[- :]/);
+	return new Date(t[0], t[1]-1, t[2], t[3], t[4], t[5]);
+}
 
 /**********************************************************
 **** Fin de zone à déplacer dans une bibli commune ********
@@ -8886,18 +8905,54 @@ function corrigeBricolTrolls(infosTrolls) {
 function addTdInfosTroll(infos, nextTD) {
 	/* cadre barre PV */
 	var tab = document.createElement('div');
+	/* ancienne méthode par img, à supprimer
 	tab.width = 100;
-	tab.style.background = '#FFFFFF';
 	tab.style.width = 100;
-	tab.style.border = 1;
 	tab.height = 10;
-	tab.title = infos.pv+'/'+infos.pv_max+' le '+ infos.updated_at.replace(' ', ' à ');	//infos[0]+'/'+infos[1]+' '+ infos[2];
+	tab.style.background = '#FFFFFF';
+	tab.style.border = 1;
+	*/
+	tab.title = infos.pv+'/'+infos.pv_max+' le '+ SQLDateToFrenchTime(infos.updated_at);
 	/* barre PV */
+	/* Roule' : sans aucune honte, j'ai copié la méthode de Bricol'Troll
+	<div class="vieContainer"><div style="background-color: #77EE77; width: 90%">&nbsp;</div></div>
+	.vieContainer {
+	background-color: #CCC;
+	width: 50px;
+	height: 6px;
+	border: 1px solid #000;
+	text-align: left;
+	}
+	*/
+	tab.style.width = '100px';
+	tab.style.height = '10px';
+	tab.style.border = '1px solid #000';
+	tab.style.textAlign = 'left';
+	var div2 = document.createElement('div');
+	var pourcentVie = Math.floor( (100*infos.pv)/infos.pv_max );
+	var dateLimite = new Date();
+	dateLimite.setDate(dateLimite.getDate() - 7);
+	if (infos.oUpdatedAt < dateLimite) {
+		div2.style.backgroundColor = '#888888';	// infos de plus de 7 jours => grisé
+		tab.title += "\nLes informations sont trop vieilles pour être fiables";
+	} else if (pourcentVie > 66) {
+		div2.style.backgroundColor = '#77EE77';
+	} else if (pourcentVie > 33) {
+		div2.style.backgroundColor = '#F1A165';	// jaune (couleur de MZ, en attente couleur de Bricol'Troll)
+	} else {
+		div2.style.backgroundColor = '#F0A3A3';	// rouge (couleur de MZ, en attente couleur de Bricol'Troll)
+	}
+	div2.style.width = pourcentVie + '%';
+	div2.style.height = '10px';
+	tab.appendChild(div2);
+	/* ancienne méthode par img, à supprimer
 	var img = document.createElement('img');
 	img.src = '../Images/Interface/milieu.gif';
 	img.height = 10;
-	img.width = Math.floor( (100*infos.pv)/infos.pv_max );	//infos[0])/infos[1] );
+	img.width = Math.floor( (100*infos.pv)/infos.pv_max );
 	tab.appendChild(img);
+	*/
+
 	/* lien vers l'IT */
 	var lien = document.createElement('a');
 	var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
@@ -8907,13 +8962,29 @@ function addTdInfosTroll(infos, nextTD) {
 	insertTdElement(nextTD,lien);
 	/* PAs dispos */
 	var span = document.createElement('span');
-	span.title = 'DLA : ' + infos.dla;	//infos[3];
-	appendText(span, infos.pa +' PA' );	//infos[4]+' PA' );
+	span.title = 'DLA : ' + SQLDateToFrenchTime(infos.dla);
+	appendText(span, infos.pa +' PA' );
+	//window.console.log('dla=' + infos.dla + ', SQLDateToObject(infos.dla)=' + SQLDateToObject(infos.dla) + ', now=' + Date.now());
+	if (infos.pa > 0 || SQLDateToObject(infos.dla) < Date.now()) {
+		// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
+		span.style.backgroundColor = 'B8EEB8';
+	}
 	insertTdElement(nextTD, span);
 }
 
 function putInfosTrolls(infosTrolls) {
 	try {
+		// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
+		// supression des infos trop vieilles (un mois)
+		var IDs = Object.keys(infosTrolls);
+		var dateLimite = new Date();
+		dateLimite.setMonth(dateLimite.getMonth() - 1);
+		for (var i = 0; i < IDs.length; i++) {
+			var idTroll = IDs[i];
+			var infos = infosTrolls[idTroll];
+			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);
+			if (infos.oUpdatedAt < dateLimite) infos.bIgnore = true;
+		}
 		var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
 		td.width = 40;
 		td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
@@ -8921,10 +8992,10 @@ function putInfosTrolls(infosTrolls) {
 
 		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
 		//corrigeBricolTrolls(infosTrolls);
-		
+
 		for(i=nbTrolls ; i>0 ; i--) {
 			var infos = infosTrolls[getTrollID(i)];
-			if(infos) {
+			if(infos && (!infos.bIgnore)) {
 				addTdInfosTroll(infos, tr_trolls[i].childNodes[6]);
 				infos.done = true;
 			} else {
@@ -8938,7 +9009,6 @@ function putInfosTrolls(infosTrolls) {
 		var arr = str.split('$');
 		if (!(arr[4]>0)) return;	// pas si le joueur n'en veut pas
 
-		var IDs = Object.keys(infosTrolls);
 		//window.console.log('nb Troll IT : ' + IDs.length);
 		var tBody = tr_trolls[0].parentNode;
 		if (tr_trolls[1] === undefined)
@@ -8950,6 +9020,7 @@ function putInfosTrolls(infosTrolls) {
 			var idTroll = IDs[i];
 			infos = infosTrolls[idTroll];
 			if (infos.done) continue;	// déjà vu
+			if (infos.bIgnore) continue;	// trop vieux
 			if (idTroll == numTroll) continue;	// pas nous-même
 			//window.console.log('Troll surnuméraire ' + JSON.stringify(infos));
 			var distance = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
@@ -9310,7 +9381,7 @@ function extractionDonnees() {
 	debugMZ("Px Distrib/Perso: "+pxdistribuables+" / "+pxperso);
         // PI
 	piutilisable = getUniqueIntValueBySelector('#exp #pi');
-	pitotal = parseInt(document.querySelector('#exp #pi').parentElement.nextElementSibling.childNodes[2].textContent);
+	pitotal = getUniqueIntValueBySelector('#exp #pitot');
 	debugMZ("PI utilisables/total: "+piutilisable+" / "+pitotal);
         // Meutres/Morts
 	nbmeurtres = getUniqueIntValueBySelector('#exp #kill');
@@ -10697,6 +10768,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	}
 	else if(sort.indexOf('Teleportation')!=-1) {
 		var portee = getPortee__Profil(pitotal/5);	// Roule, 30/09/2016, TP basé sur les PI
+		debugMZ('calcul portée Teleportation, pitotal=' + pitotal + ', portée=' + portee);
 		var pmh = (20+vue+portee);
 		var pmv = 3+Math.floor(portee/3);
 		texte = 'Portée horizontale : <b>'+pmh+'</b> cases<br/>'
