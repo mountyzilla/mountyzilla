@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.4
+// @version     1.2.11.5
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -77,6 +77,8 @@
 //		Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours
 // V1.2.11.4 19/12/2016
 //		Changement des couleurs de la barre de vie Interface Bricol'Troll
+// V1.2.11.5 20/12/2016
+//		Trace sur plantage remonté par Marsak
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -7106,7 +7108,13 @@ function getTrollGuilde(i) {
 
 function getTrollGuildeID(i) {
 	if(tr_trolls[i].childNodes[6].childNodes.length>0) {
-		var href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
+		var href;
+		try {
+			href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
+		} catch(e) {	// debug pb remonté par Marsak 
+			window.console.error('[MZ getTrollGuildeID]\n',e,tr_trolls[i].innerHTML);
+			return -1;
+		}
 		return href.substring(href.indexOf('(')+1,href.indexOf(','));
 	}
 	return -1;
