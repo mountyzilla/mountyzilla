@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.6
+// @version     1.2.11.7
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -77,8 +77,8 @@
 //		Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours
 // V1.2.11.4 19/12/2016
 //		Changement des couleurs de la barre de vie Interface Bricol'Troll
-// V1.2.11.5 & 6 20/12/2016
-//		Trace sur plantage remonté par Marsak
+// V1.2.11.5 à 7 20 & 21/12/2016
+//		Trace et protection sur plantage remonté par Marsak (lié à la diplo dans la vue)
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -7110,9 +7110,10 @@ function getTrollGuildeID(i) {
 	if(tr_trolls[i].childNodes[6].childNodes.length>0) {
 		var href;
 		try {
+			if ((!tr_trolls[i].childNodes[6].firstChild) || (!tr_trolls[i].childNodes[6].firstChild.getAttribute)) return -1;	// Roule 21/12/2016 protection conte le "bug Marsak"
 			href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
 		} catch(e) {	// debug pb remonté par Marsak 
-			window.console.error('[MZ 1.2.11.6 getTrollGuildeID]\n'
+			window.console.error('[MZ getTrollGuildeID]\n'
 				,e
 				,'nb child=' + tr_trolls[i].childNodes[6].childNodes.length
 				,tr_trolls[i].innerHTML.replace(/</g, '‹'));
@@ -8667,6 +8668,7 @@ function appliqueDiplo() {
 		var idG = getTrollGuildeID(i);
 		var idT = getTrollID(i);
 		var tr = tr_trolls[i];
+		//window.console.log('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
 		if(aAppliquer.Troll[idT]) {
 			tr.className = '';
 			var descr = aAppliquer.Troll[idT].titre;
