@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.11.7
+// @version     1.2.12
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -79,57 +79,60 @@
 //		Changement des couleurs de la barre de vie Interface Bricol'Troll
 // V1.2.11.5 à 7 20 & 21/12/2016
 //		Trace et protection sur plantage remonté par Marsak (lié à la diplo dans la vue)
+// V1.2.12 24/12/2016
+//		Nettoyage des URL
+//		Mode dev (Shift+Click sur le mot "Crédits" dans Options/Pack Graphique) qui se branche sur le site de dev
+//		Interface bricoll'Troll en https
+//		Remise en marche des cartes des trajets des gowaps
+
+/**********************************************************
+	À faire / propositions d'évolutions
+
+	breizhou13 20/12/2016
+		envoyer les données à l'IT (Bricol'Trolls) aussi
+			(Roule') Ça me semble diffile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
+		partage de l'identification des tresors au sol. Ca c'etait cool mais ca implique une BDD
+		partage des CDM avec seulement son groupe. Perso je prefere le partage general
+	Roule'
+		Réactiver les jubilaires
+		[Prioritaire] trajets Gowaps sans avoir besoin de URL_MZscriptCarte (voir comment c'est fait dans Trajet_des_gowap_MkII.user.js)
+		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
+**********************************************************/
 
 /**********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
 **********************************************************/
 
-// URLs externes images (déplacées sur infra raistlin 09/11/2016, pas besoin deCORS, HTTPS OK)
-//const URL_MZimg09 = 'http://mountyzilla.tilk.info/scripts_0.9/images/';	// en cours de migration vers infra raistlin
-//const URL_MZimg11 = 'http://mountyzilla.tilk.info/scripts_1.1/images/'
-const URL_MZimg = 'http://mz.mh.raistlin.fr/mz/img/';
-var URL_MZimg09 = URL_MZimg;	// à fusioner
-var URL_MZimg11 = URL_MZimg;
+// URL de base serveur MZ
+var URL_MZ = 'http://mz.mh.raistlin.fr/mz';
+// pour passer en mode IP, commenter la ligne précédente et décommenter la suivante
+//var URL_MZinfoMonstre = 'http://192.99.225.92/mz';
+
 // URLs externes images (pas de souci CORS mais pas de HTTPS)
 const URL_MZscriptCarte = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
 
 // URLs externes redirection (pas de souci CORS)
 const URL_pageNiv = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
-const URL_MZmountyhall = 'http://trolls.ratibus.net/mountyhall/';
 const URL_AnatrolDispas = 'http://mountyhall.dispas.net/dynamic/';
 const URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
 const URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 const URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 const URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
-//const URL_tilk_js = 'http://mountyzilla.tilk.info/scripts/';	// un de moins \o/ source intégré dans tout_MZ
 const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 
 // URLs de test HTTPS
 const URL_CertifRaistlin1 = 'https://mz.mh.raistlin.fr/mz/img/1.gif';
-const URL_CertifRaistlin2 = 'https://cdm.mh.raistlin.fr/mz/niveau_monstre_combat.php';
-
-// URLs externes ajax (nécessite l'entête CORS, solution actuelle : passage en proxy chez raistlin)
-var URL_MZinfoMonstre = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// infra sur serveur raistlin en préparation
-var URL_MZinfoMonstrePost = 'http://mz.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';
-var URL_pageDispatcher = "http://mz.mh.raistlin.fr/mz/cdmdispatcher.php";
-// var URL_MZinfoMonstre = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_FF.php';	// redirigé vers http://mountypedia.free.fr/mz/monstres_0.9_FF.php
-// var URL_MZinfoMonstrePost = 'http://cdm.mh.raistlin.fr/mz/monstres_0.9_post_FF.php';	// redirigé vers mountypedia.free.fr
-// var URL_pageDispatcher = "http://cdm.mh.raistlin.fr/mz/cdmdispatcher.php";		// envoi des CdM, redirigé vers mountypedia.free.fr
-// pour passer en mode IP, commenter les 3 lignes précédentes et décommenter les 3 suivantes
-//var URL_MZinfoMonstre = 'http://192.99.225.92/mz/monstres_0.9_FF.php';
-//var URL_MZinfoMonstrePost = 'http://192.99.225.92/mz/monstres_0.9_post_FF.php';
-//var URL_pageDispatcher = 'http://192.99.225.92/mz/cdmdispatcher.php';
+const URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
 
 // ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
-const URL_ratibus_lien = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
-const URL_anniv = 'http://mountyzilla.tilk.info/scripts/anniv.php'; // Url de récup des jubilaires:
-const URL_rss = 'http://mountyzilla.tilk.info/news/rss.php';	// Flux RSS des news MZ
+var URL_bricol = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
+const URL_bricol_https = 'https://it.mh.raistlin.fr/'	// IT bricol'troll en https via relai Raistlin
 const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
 
 // x~x Libs
 
-/* TODO
+/* ancien TODO
  * - revoir la gestion des CdM --> nott armure magique
  * - revoir tout ce qui est lié à la vue (estimateurs dég nott)
  * - vérfier la gestion des enchants
@@ -138,14 +141,26 @@ const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
 // Roule 04/09/2016 switch extern URLs to https if available
 var isHTTPS = false;
 if (window.location.protocol.indexOf('https') === 0) {
-	URL_MZinfoMonstre = URL_MZinfoMonstre.replace(/http:\/\//, 'https://');
-	URL_MZinfoMonstrePost = URL_MZinfoMonstrePost.replace(/http:\/\//, 'https://');
-	URL_pageDispatcher = URL_pageDispatcher.replace(/http:\/\//, 'https://');
-	// Roule 09/11/2016 images OK en https sur infra Raistlin
-	URL_MZimg09 = URL_MZimg09.replace(/http:\/\//, 'https://');
-	URL_MZimg11 = URL_MZimg11.replace(/http:\/\//, 'https://');
+	URL_MZ = URL_MZ.replace(/http:\/\//, 'https://');
+	URL_bricol = URL_bricol_https;
 	isHTTPS = true;
 }
+
+// Roule 23/12/2016 mode dev
+var isDEV = false;
+if (MY_getValue('MZ_dev')) {
+	URL_MZ = URL_MZ.replace(/$/, 'dev');
+	isDEV = true;
+}
+
+// Images (pas de souci CORS)
+var URL_MZimg = URL_MZ + '/img/';
+// URLs externes ajax (CORS OK)
+var URL_MZinfoMonstre = URL_MZ + '/monstres_0.9_FF.php';
+var URL_pageDispatcher = URL_MZ + '/cdmdispatcher.php';
+
+// liens externes détuits
+var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
  
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
@@ -177,6 +192,7 @@ var rmTroll = MY_getValue(numTroll+'.caracs.rm');
 var date_debut = null;
 
 function start_script(nbJours_exp) {
+	if(MY_DEBUG) window.console.log('[MZ] début sur ' + window.location.pathname);
 	if(date_debut) return;
 	date_debut = new Date();
 	// Créé la variable expdate si demandé
@@ -198,7 +214,8 @@ function displayScriptTime() {
 	insertText(node,
 		' - [Script exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
-	}
+	if(MY_DEBUG) window.console.log('[MZ] fin sur ' + window.location.pathname);
+}
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
 
@@ -552,6 +569,7 @@ function getNumber(str) {
 
 function getNumbers(str) {
 	var nbrs = str.match(/-?\d+/g);
+	if (!nbrs) return [];
 	for(var i=0 ; i<nbrs.length ; i++)
 		nbrs[i] = Number(nbrs[i]);
 	return nbrs;
@@ -634,6 +652,28 @@ function SQLDateToObject(str) {
 /* DEBUG: NETTOYAGE TAGS */
 if(MY_getValue(numTroll+'.TAGSURL')) {
 	MY_removeValue(numTroll+'.TAGSURL');
+}
+
+// Alerte si mode dev
+if (isDEV) {
+	// var div = document.createElement('div');
+	// div.className = 'titre2';
+	// appendText(div,txt);
+	// insertBefore(next,div);
+
+	var divpopup = document.createElement('div');
+	divpopup.id = 'divDEV';
+	divpopup.style =
+		'position: fixed;'+
+		'border: 15px solid red;'+
+		'top: 10px;right: 10px;'+
+		'background-color: white;'+
+		'color: black;'+
+		'font-size: large;'+
+		'padding: 5px'+
+		'z-index: 200;';
+	appendText(divpopup, 'Mode DEV');
+	document.body.appendChild(divpopup);
 }
 
 /*---------- regroupement des getPortee() ------------------------------------*/
@@ -988,7 +1028,7 @@ var mundiChampi = {
 
 function addInfoMM(node,mob,niv,qualite,effetQ) {
 	appendText(node,' ');
-	var urlImg = URL_MZimg11
+	var urlImg = URL_MZimg
 		+'Competences/melangeMagique.png';
 	var text = ' [-'+(niv+effetQ)+' %]';
 	var str = '';
@@ -1021,7 +1061,7 @@ function addInfoEM(node,mob,compo,qualite,localisation) {
 		texte = aff(pc)+'%';
 		title = texte+" pour l'écriture de "+tabEM[mob][1];
 		}
-	var urlImg = URL_MZimg09
+	var urlImg = URL_MZimg
 		+'Competences/ecritureMagique.png';
 	var span = createImageSpan(urlImg,'EM:',title,' ['+texte+']',bold);
 	node.appendChild(span);
@@ -1280,7 +1320,7 @@ function createImageTactique(url,id,nom) {
 
 function createCDMTable(id,nom,donneesMonstre) {
 try {
-	var urlImg = URL_MZimg09;
+	var urlImg = URL_MZimg;
 	var table = document.createElement('table');
 	var profilActif = isProfilActif();
 	table.className = 'mh_tdborder';
@@ -1527,7 +1567,7 @@ function insertEnchantInfos(tbody) {
 				tbody,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
 		if(nodes.snapshotLength == 0)
 			return false;
-		var urlImg = URL_MZimg09 + 'enchant.png';
+		var urlImg = URL_MZimg + 'enchant.png';
 		for(var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i).nextSibling.nextSibling;
 			var nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g,' ');
@@ -1571,7 +1611,7 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 				document,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
 		if(nodes.snapshotLength == 0)
 			return false;
-		var urlImg = URL_MZimg09 + 'enchant.png';
+		var urlImg = URL_MZimg + 'enchant.png';
 		for(var i = 0; i < nodes.snapshotLength; i++) 
 		{
 			var link = nodes.snapshotItem(i);
@@ -3465,27 +3505,30 @@ function do_equipgowap() {
 
 function setCarteGogo() {
 	try {
-	var pars = document.getElementsByTagName('p');
-	var pos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]",
-								pars[0], null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
-	}
-	catch(e) {return;}
-	var serv_img_trou = URL_MZimg09 + "carte_trou.png";
-	var serv_img_cible = URL_MZimg09 + "rep.png";
+		//var pars = document.getElementsByTagName('p');
+		//var pos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]", pars[0], null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
+		var eTitle = document.getElementById('titre2');
+		var pos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
+		var serv_img_trou = URL_MZimg + "carte_trou.png";
+		var serv_img_cible = URL_MZimg + "rep.png";
 
-	var expreg = /X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
-	var lignes = pars[0].getElementsByTagName('tr');
-	var nbpt = 0;
-	var trajet = pos[0]+','+pos[1]+','+pos[2]+',';
-	for(var i=0 ; i<lignes.length ; i++) {
-		if(lignes[i].className == 'mh_tdpage_fo') {
-			point = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue.match(expreg);
-			if(point) {
-				nbpt++;
-				trajet += point[1]+','+point[2]+','+point[3]+',';
+		var expreg = /X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
+		//var lignes = pars[0].getElementsByTagName('tr');
+		var lignes = eTitle.parentNode.getElementsByTagName('tr');
+		var nbpt = 0;
+		var trajet = pos[0]+','+pos[1]+','+pos[2]+',';
+		for(var i=0 ; i<lignes.length ; i++) {
+			if(lignes[i].className == 'mh_tdpage_fo') {
+				if (lignes[i].getElementsByTagName('td')[2] === undefined) return;	// cas des Golems
+				point = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue.match(expreg);
+				if(point) {
+					nbpt++;
+					trajet += point[1]+','+point[2]+','+point[3]+',';
 				}
 			}
 		}
+	}
+	catch(e) {window.console.log('[MZ] setCarteGogo() impossible de trouver les ordres,' + e); return;}
 	var nvdiv = "<div class='mh_tdpage' style='width:510px;height:455px;'><img src='"+serv_img_trou+"' style='position:relative;top:0px;left:0px;z-index:100;border-width:0px' usemap='#coord_trou'/>";
 	var base = [-229,-5];
 	if (nbpt>0) {
@@ -3497,10 +3540,13 @@ function setCarteGogo() {
 	nvdiv += '<map name="coord_trou"><area shape="circle" href="#" coords="260,333,3" title="X=5, Y=-49"  ><area shape="circle" href="#" coords="262,335,3" title="X=6, Y=-50"  ><area shape="circle" href="#" coords="260,335,3" title="X=5, Y=-50"  ><area shape="circle" href="#" coords="262,333,3" title="X=6, Y=-49"  ><area shape="circle" href="#" coords="294,163,3" title="X=22, Y=36"  ><area shape="circle" href="#" coords="292,163,3" title="X=21, Y=36"  ><area shape="circle" href="#" coords="294,165,3" title="X=22, Y=35"  ><area shape="circle" href="#" coords="292,165,3" title="X=21, Y=35"  ><area shape="circle" href="#" coords="124,217,3" title="X=-63, Y=9"  ><area shape="circle" href="#" coords="122,217,3" title="X=-64, Y=9"  ><area shape="circle" href="#" coords="124,219,3" title="X=-63, Y=8"  ><area shape="circle" href="#" coords="122,219,3" title="X=-64, Y=8"  ><area shape="circle" href="#" coords="378,95,3" title="X=64, Y=70"  ><area shape="circle" href="#" coords="146,121,3" title="X=-52, Y=57"  ><area shape="circle" href="#" coords="346,313,3" title="X=48, Y=-39"  ><area shape="circle" href="#" coords="310,339,3" title="X=30, Y=-52"  ><area shape="circle" href="#" coords="274,265,3" title="X=12, Y=-15"  ><area shape="circle" href="#" coords="360,95,3" title="X=55, Y=70"  ><area shape="circle" href="#" coords="224,91,3" title="X=-13, Y=72"  ><area shape="circle" href="#" coords="226,91,3" title="X=-12, Y=72"  ><area shape="circle" href="#" coords="224,89,3" title="X=-13, Y=73"  ><area shape="circle" href="#" coords="226,89,3" title="X=-12, Y=73"  ><area shape="circle" href="#" coords="148,281,3" title="X=-51, Y=-23"  ><area shape="circle" href="#" coords="150,281,3" title="X=-50, Y=-23"  ><area shape="circle" href="#" coords="148,279,3" title="X=-51, Y=-22"  ><area shape="circle" href="#" coords="150,279,3" title="X=-50, Y=-22"  ><area shape="circle" href="#" coords="130,301,3" title="X=-60, Y=-33"  ><area shape="circle" href="#" coords="132,301,3" title="X=-59, Y=-33"  ><area shape="circle" href="#" coords="130,299,3" title="X=-60, Y=-32"  ><area shape="circle" href="#" coords="132,299,3" title="X=-59, Y=-32"  ><area shape="circle" href="#" coords="116,311,3" title="X=-67, Y=-38"  ><area shape="circle" href="#" coords="118,311,3" title="X=-66, Y=-38"  ><area shape="circle" href="#" coords="116,309,3" title="X=-67, Y=-37"  ><area shape="circle" href="#" coords="118,309,3" title="X=-66, Y=-37"  ><area shape="circle" href="#" coords="260,173,3" title="X=5, Y=31"  ><area shape="circle" href="#" coords="262,173,3" title="X=6, Y=31"  ><area shape="circle" href="#" coords="260,171,3" title="X=5, Y=32"  ><area shape="circle" href="#" coords="262,171,3" title="X=6, Y=32"  ><area shape="circle" href="#" coords="178,339,3" title="X=-36, Y=-52"  ><area shape="circle" href="#" coords="180,339,3" title="X=-35, Y=-52"  ><area shape="circle" href="#" coords="178,337,3" title="X=-36, Y=-51"  ><area shape="circle" href="#" coords="180,337,3" title="X=-35, Y=-51"  ><area shape="circle" href="#" coords="182,107,3" title="X=-34, Y=64"  ><area shape="circle" href="#" coords="182,105,3" title="X=-34, Y=65"  ><area shape="circle" href="#" coords="270,109,3" title="X=10, Y=63"  ><area shape="circle" href="#" coords="272,109,3" title="X=11, Y=63"  ><area shape="circle" href="#" coords="270,107,3" title="X=10, Y=64"  ><area shape="circle" href="#" coords="272,107,3" title="X=11, Y=64"  ><area shape="circle" href="#" coords="180,207,3" title="X=-35, Y=14"  ><area shape="circle" href="#" coords="182,207,3" title="X=-34, Y=14"  ><area shape="circle" href="#" coords="180,205,3" title="X=-35, Y=15"  ><area shape="circle" href="#" coords="182,205,3" title="X=-34, Y=15"  ><area shape="circle" href="#" coords="398,173,3" title="X=74, Y=31"  ><area shape="circle" href="#" coords="400,173,3" title="X=75, Y=31"  ><area shape="circle" href="#" coords="398,171,3" title="X=74, Y=32"  ><area shape="circle" href="#" coords="400,171,3" title="X=75, Y=32"  ><area shape="circle" href="#" coords="342,133,3" title="X=46, Y=51"  ><area shape="circle" href="#" coords="344,133,3" title="X=47, Y=51"  ><area shape="circle" href="#" coords="342,131,3" title="X=46, Y=52"  ><area shape="circle" href="#" coords="344,131,3" title="X=47, Y=52"  ><area shape="circle" href="#" coords="180,107,3" title="X=-35, Y=64"  ><area shape="circle" href="#" coords="180,105,3" title="X=-35, Y=65"  ><area shape="circle" href="#" coords="108,251,3" title="X=-71, Y=-8"  ><area shape="circle" href="#" coords="110,251,3" title="X=-70, Y=-8"  ><area shape="circle" href="#" coords="108,249,3" title="X=-71, Y=-7"  ><area shape="circle" href="#" coords="110,249,3" title="X=-70, Y=-7"  ><area shape="circle" href="#" coords="346,191,3" title="X=48, Y=22"  ><area shape="circle" href="#" coords="346,189,3" title="X=48, Y=23"  ><area shape="circle" href="#" coords="346,187,3" title="X=48, Y=24"  ><area shape="circle" href="#" coords="346,185,3" title="X=48, Y=25"  ><area shape="circle" href="#" coords="348,195,3" title="X=49, Y=20"  ><area shape="circle" href="#" coords="348,193,3" title="X=49, Y=21"  ><area shape="circle" href="#" coords="348,191,3" title="X=49, Y=22"  ><area shape="circle" href="#" coords="348,189,3" title="X=49, Y=23"  ><area shape="circle" href="#" coords="348,187,3" title="X=49, Y=24"  ><area shape="circle" href="#" coords="348,185,3" title="X=49, Y=25"  ><area shape="circle" href="#" coords="348,183,3" title="X=49, Y=26"  ><area shape="circle" href="#" coords="348,181,3" title="X=49, Y=27"  ><area shape="circle" href="#" coords="350,199,3" title="X=50, Y=18"  ><area shape="circle" href="#" coords="350,197,3" title="X=50, Y=19"  ><area shape="circle" href="#" coords="350,195,3" title="X=50, Y=20"  ><area shape="circle" href="#" coords="350,193,3" title="X=50, Y=21"  ><area shape="circle" href="#" coords="350,191,3" title="X=50, Y=22"  ><area shape="circle" href="#" coords="350,189,3" title="X=50, Y=23"  ><area shape="circle" href="#" coords="350,187,3" title="X=50, Y=24"  ><area shape="circle" href="#" coords="350,185,3" title="X=50, Y=25"  ><area shape="circle" href="#" coords="350,183,3" title="X=50, Y=26"  ><area shape="circle" href="#" coords="350,181,3" title="X=50, Y=27"  ><area shape="circle" href="#" coords="350,179,3" title="X=50, Y=28"  ><area shape="circle" href="#" coords="350,177,3" title="X=50, Y=29"  ><area shape="circle" href="#" coords="352,201,3" title="X=51, Y=17"  ><area shape="circle" href="#" coords="352,199,3" title="X=51, Y=18"  ><area shape="circle" href="#" coords="352,197,3" title="X=51, Y=19"  ><area shape="circle" href="#" coords="352,195,3" title="X=51, Y=20"  ><area shape="circle" href="#" coords="352,193,3" title="X=51, Y=21"  ><area shape="circle" href="#" coords="352,191,3" title="X=51, Y=22"  ><area shape="circle" href="#" coords="352,189,3" title="X=51, Y=23"  ><area shape="circle" href="#" coords="352,187,3" title="X=51, Y=24"  ><area shape="circle" href="#" coords="352,185,3" title="X=51, Y=25"  ><area shape="circle" href="#" coords="352,183,3" title="X=51, Y=26"  ><area shape="circle" href="#" coords="352,181,3" title="X=51, Y=27"  ><area shape="circle" href="#" coords="352,179,3" title="X=51, Y=28"  ><area shape="circle" href="#" coords="352,177,3" title="X=51, Y=29"  ><area shape="circle" href="#" coords="352,175,3" title="X=51, Y=30"  ><area shape="circle" href="#" coords="354,201,3" title="X=52, Y=17"  ><area shape="circle" href="#" coords="354,199,3" title="X=52, Y=18"  ><area shape="circle" href="#" coords="354,197,3" title="X=52, Y=19"  ><area shape="circle" href="#" coords="354,195,3" title="X=52, Y=20"  ><area shape="circle" href="#" coords="354,193,3" title="X=52, Y=21"  ><area shape="circle" href="#" coords="354,191,3" title="X=52, Y=22"  ><area shape="circle" href="#" coords="354,189,3" title="X=52, Y=23"  ><area shape="circle" href="#" coords="354,187,3" title="X=52, Y=24"  ><area shape="circle" href="#" coords="354,185,3" title="X=52, Y=25"  ><area shape="circle" href="#" coords="354,183,3" title="X=52, Y=26"  ><area shape="circle" href="#" coords="354,181,3" title="X=52, Y=27"  ><area shape="circle" href="#" coords="354,179,3" title="X=52, Y=28"  ><area shape="circle" href="#" coords="354,177,3" title="X=52, Y=29"  ><area shape="circle" href="#" coords="354,175,3" title="X=52, Y=30"  ><area shape="circle" href="#" coords="356,203,3" title="X=53, Y=16"  ><area shape="circle" href="#" coords="356,201,3" title="X=53, Y=17"  ><area shape="circle" href="#" coords="356,199,3" title="X=53, Y=18"  ><area shape="circle" href="#" coords="356,197,3" title="X=53, Y=19"  ><area shape="circle" href="#" coords="356,195,3" title="X=53, Y=20"  ><area shape="circle" href="#" coords="356,193,3" title="X=53, Y=21"  ><area shape="circle" href="#" coords="356,191,3" title="X=53, Y=22"  ><area shape="circle" href="#" coords="356,189,3" title="X=53, Y=23"  ><area shape="circle" href="#" coords="356,187,3" title="X=53, Y=24"  ><area shape="circle" href="#" coords="356,185,3" title="X=53, Y=25"  ><area shape="circle" href="#" coords="356,183,3" title="X=53, Y=26"  ><area shape="circle" href="#" coords="356,181,3" title="X=53, Y=27"  ><area shape="circle" href="#" coords="356,179,3" title="X=53, Y=28"  ><area shape="circle" href="#" coords="356,177,3" title="X=53, Y=29"  ><area shape="circle" href="#" coords="356,175,3" title="X=53, Y=30"  ><area shape="circle" href="#" coords="356,173,3" title="X=53, Y=31"  ><area shape="circle" href="#" coords="358,203,3" title="X=54, Y=16"  ><area shape="circle" href="#" coords="358,201,3" title="X=54, Y=17"  ><area shape="circle" href="#" coords="358,199,3" title="X=54, Y=18"  ><area shape="circle" href="#" coords="358,197,3" title="X=54, Y=19"  ><area shape="circle" href="#" coords="358,195,3" title="X=54, Y=20"  ><area shape="circle" href="#" coords="358,193,3" title="X=54, Y=21"  ><area shape="circle" href="#" coords="358,191,3" title="X=54, Y=22"  ><area shape="circle" href="#" coords="358,189,3" title="X=54, Y=23"  ><area shape="circle" href="#" coords="358,187,3" title="X=54, Y=24"  ><area shape="circle" href="#" coords="358,185,3" title="X=54, Y=25"  ><area shape="circle" href="#" coords="358,183,3" title="X=54, Y=26"  ><area shape="circle" href="#" coords="358,181,3" title="X=54, Y=27"  ><area shape="circle" href="#" coords="358,179,3" title="X=54, Y=28"  ><area shape="circle" href="#" coords="358,177,3" title="X=54, Y=29"  ><area shape="circle" href="#" coords="358,175,3" title="X=54, Y=30"  ><area shape="circle" href="#" coords="358,173,3" title="X=54, Y=31"  ><area shape="circle" href="#" coords="360,205,3" title="X=55, Y=15"  ><area shape="circle" href="#" coords="360,203,3" title="X=55, Y=16"  ><area shape="circle" href="#" coords="360,201,3" title="X=55, Y=17"  ><area shape="circle" href="#" coords="360,199,3" title="X=55, Y=18"  ><area shape="circle" href="#" coords="360,197,3" title="X=55, Y=19"  ><area shape="circle" href="#" coords="360,195,3" title="X=55, Y=20"  ><area shape="circle" href="#" coords="360,193,3" title="X=55, Y=21"  ><area shape="circle" href="#" coords="360,191,3" title="X=55, Y=22"  ><area shape="circle" href="#" coords="360,189,3" title="X=55, Y=23"  ><area shape="circle" href="#" coords="360,187,3" title="X=55, Y=24"  ><area shape="circle" href="#" coords="360,185,3" title="X=55, Y=25"  ><area shape="circle" href="#" coords="360,183,3" title="X=55, Y=26"  ><area shape="circle" href="#" coords="360,181,3" title="X=55, Y=27"  ><area shape="circle" href="#" coords="360,179,3" title="X=55, Y=28"  ><area shape="circle" href="#" coords="360,177,3" title="X=55, Y=29"  ><area shape="circle" href="#" coords="360,175,3" title="X=55, Y=30"  ><area shape="circle" href="#" coords="360,173,3" title="X=55, Y=31"  ><area shape="circle" href="#" coords="360,171,3" title="X=55, Y=32"  ><area shape="circle" href="#" coords="362,205,3" title="X=56, Y=15"  ><area shape="circle" href="#" coords="362,203,3" title="X=56, Y=16"  ><area shape="circle" href="#" coords="362,201,3" title="X=56, Y=17"  ><area shape="circle" href="#" coords="362,199,3" title="X=56, Y=18"  ><area shape="circle" href="#" coords="362,197,3" title="X=56, Y=19"  ><area shape="circle" href="#" coords="362,195,3" title="X=56, Y=20"  ><area shape="circle" href="#" coords="362,193,3" title="X=56, Y=21"  ><area shape="circle" href="#" coords="362,191,3" title="X=56, Y=22"  ><area shape="circle" href="#" coords="362,189,3" title="X=56, Y=23"  ><area shape="circle" href="#" coords="362,187,3" title="X=56, Y=24"  ><area shape="circle" href="#" coords="362,185,3" title="X=56, Y=25"  ><area shape="circle" href="#" coords="362,183,3" title="X=56, Y=26"  ><area shape="circle" href="#" coords="362,181,3" title="X=56, Y=27"  ><area shape="circle" href="#" coords="362,179,3" title="X=56, Y=28"  ><area shape="circle" href="#" coords="362,177,3" title="X=56, Y=29"  ><area shape="circle" href="#" coords="362,175,3" title="X=56, Y=30"  ><area shape="circle" href="#" coords="362,173,3" title="X=56, Y=31"  ><area shape="circle" href="#" coords="362,171,3" title="X=56, Y=32"  ><area shape="circle" href="#" coords="364,205,3" title="X=57, Y=15"  ><area shape="circle" href="#" coords="364,203,3" title="X=57, Y=16"  ><area shape="circle" href="#" coords="364,201,3" title="X=57, Y=17"  ><area shape="circle" href="#" coords="364,199,3" title="X=57, Y=18"  ><area shape="circle" href="#" coords="364,197,3" title="X=57, Y=19"  ><area shape="circle" href="#" coords="364,195,3" title="X=57, Y=20"  ><area shape="circle" href="#" coords="364,193,3" title="X=57, Y=21"  ><area shape="circle" href="#" coords="364,191,3" title="X=57, Y=22"  ><area shape="circle" href="#" coords="364,189,3" title="X=57, Y=23"  ><area shape="circle" href="#" coords="364,187,3" title="X=57, Y=24"  ><area shape="circle" href="#" coords="364,185,3" title="X=57, Y=25"  ><area shape="circle" href="#" coords="364,183,3" title="X=57, Y=26"  ><area shape="circle" href="#" coords="364,181,3" title="X=57, Y=27"  ><area shape="circle" href="#" coords="364,179,3" title="X=57, Y=28"  ><area shape="circle" href="#" coords="364,177,3" title="X=57, Y=29"  ><area shape="circle" href="#" coords="364,175,3" title="X=57, Y=30"  ><area shape="circle" href="#" coords="364,173,3" title="X=57, Y=31"  ><area shape="circle" href="#" coords="364,171,3" title="X=57, Y=32"  ><area shape="circle" href="#" coords="366,205,3" title="X=58, Y=15"  ><area shape="circle" href="#" coords="366,203,3" title="X=58, Y=16"  ><area shape="circle" href="#" coords="366,201,3" title="X=58, Y=17"  ><area shape="circle" href="#" coords="366,199,3" title="X=58, Y=18"  ><area shape="circle" href="#" coords="366,197,3" title="X=58, Y=19"  ><area shape="circle" href="#" coords="366,195,3" title="X=58, Y=20"  ><area shape="circle" href="#" coords="366,193,3" title="X=58, Y=21"  ><area shape="circle" href="#" coords="366,191,3" title="X=58, Y=22"  ><area shape="circle" href="#" coords="366,189,3" title="X=58, Y=23"  ><area shape="circle" href="#" coords="366,187,3" title="X=58, Y=24"  ><area shape="circle" href="#" coords="366,185,3" title="X=58, Y=25"  ><area shape="circle" href="#" coords="366,183,3" title="X=58, Y=26"  ><area shape="circle" href="#" coords="366,181,3" title="X=58, Y=27"  ><area shape="circle" href="#" coords="366,179,3" title="X=58, Y=28"  ><area shape="circle" href="#" coords="366,177,3" title="X=58, Y=29"  ><area shape="circle" href="#" coords="366,175,3" title="X=58, Y=30"  ><area shape="circle" href="#" coords="366,173,3" title="X=58, Y=31"  ><area shape="circle" href="#" coords="366,171,3" title="X=58, Y=32"  ><area shape="circle" href="#" coords="368,203,3" title="X=59, Y=16"  ><area shape="circle" href="#" coords="368,201,3" title="X=59, Y=17"  ><area shape="circle" href="#" coords="368,199,3" title="X=59, Y=18"  ><area shape="circle" href="#" coords="368,197,3" title="X=59, Y=19"  ><area shape="circle" href="#" coords="368,195,3" title="X=59, Y=20"  ><area shape="circle" href="#" coords="368,193,3" title="X=59, Y=21"  ><area shape="circle" href="#" coords="368,191,3" title="X=59, Y=22"  ><area shape="circle" href="#" coords="368,189,3" title="X=59, Y=23"  ><area shape="circle" href="#" coords="368,187,3" title="X=59, Y=24"  ><area shape="circle" href="#" coords="368,185,3" title="X=59, Y=25"  ><area shape="circle" href="#" coords="368,183,3" title="X=59, Y=26"  ><area shape="circle" href="#" coords="368,181,3" title="X=59, Y=27"  ><area shape="circle" href="#" coords="368,179,3" title="X=59, Y=28"  ><area shape="circle" href="#" coords="368,177,3" title="X=59, Y=29"  ><area shape="circle" href="#" coords="368,175,3" title="X=59, Y=30"  ><area shape="circle" href="#" coords="368,173,3" title="X=59, Y=31"  ><area shape="circle" href="#" coords="370,203,3" title="X=60, Y=16"  ><area shape="circle" href="#" coords="370,201,3" title="X=60, Y=17"  ><area shape="circle" href="#" coords="370,199,3" title="X=60, Y=18"  ><area shape="circle" href="#" coords="370,197,3" title="X=60, Y=19"  ><area shape="circle" href="#" coords="370,195,3" title="X=60, Y=20"  ><area shape="circle" href="#" coords="370,193,3" title="X=60, Y=21"  ><area shape="circle" href="#" coords="370,191,3" title="X=60, Y=22"  ><area shape="circle" href="#" coords="370,189,3" title="X=60, Y=23"  ><area shape="circle" href="#" coords="370,187,3" title="X=60, Y=24"  ><area shape="circle" href="#" coords="370,185,3" title="X=60, Y=25"  ><area shape="circle" href="#" coords="370,183,3" title="X=60, Y=26"  ><area shape="circle" href="#" coords="370,181,3" title="X=60, Y=27"  ><area shape="circle" href="#" coords="370,179,3" title="X=60, Y=28"  ><area shape="circle" href="#" coords="370,177,3" title="X=60, Y=29"  ><area shape="circle" href="#" coords="370,175,3" title="X=60, Y=30"  ><area shape="circle" href="#" coords="370,173,3" title="X=60, Y=31"  ><area shape="circle" href="#" coords="372,201,3" title="X=61, Y=17"  ><area shape="circle" href="#" coords="372,199,3" title="X=61, Y=18"  ><area shape="circle" href="#" coords="372,197,3" title="X=61, Y=19"  ><area shape="circle" href="#" coords="372,195,3" title="X=61, Y=20"  ><area shape="circle" href="#" coords="372,193,3" title="X=61, Y=21"  ><area shape="circle" href="#" coords="372,191,3" title="X=61, Y=22"  ><area shape="circle" href="#" coords="372,189,3" title="X=61, Y=23"  ><area shape="circle" href="#" coords="372,187,3" title="X=61, Y=24"  ><area shape="circle" href="#" coords="372,185,3" title="X=61, Y=25"  ><area shape="circle" href="#" coords="372,183,3" title="X=61, Y=26"  ><area shape="circle" href="#" coords="372,181,3" title="X=61, Y=27"  ><area shape="circle" href="#" coords="372,179,3" title="X=61, Y=28"  ><area shape="circle" href="#" coords="372,177,3" title="X=61, Y=29"  ><area shape="circle" href="#" coords="372,175,3" title="X=61, Y=30"  ><area shape="circle" href="#" coords="374,201,3" title="X=62, Y=17"  ><area shape="circle" href="#" coords="374,199,3" title="X=62, Y=18"  ><area shape="circle" href="#" coords="374,197,3" title="X=62, Y=19"  ><area shape="circle" href="#" coords="374,195,3" title="X=62, Y=20"  ><area shape="circle" href="#" coords="374,193,3" title="X=62, Y=21"  ><area shape="circle" href="#" coords="374,191,3" title="X=62, Y=22"  ><area shape="circle" href="#" coords="374,189,3" title="X=62, Y=23"  ><area shape="circle" href="#" coords="374,187,3" title="X=62, Y=24"  ><area shape="circle" href="#" coords="374,185,3" title="X=62, Y=25"  ><area shape="circle" href="#" coords="374,183,3" title="X=62, Y=26"  ><area shape="circle" href="#" coords="374,181,3" title="X=62, Y=27"  ><area shape="circle" href="#" coords="374,179,3" title="X=62, Y=28"  ><area shape="circle" href="#" coords="374,177,3" title="X=62, Y=29"  ><area shape="circle" href="#" coords="374,175,3" title="X=62, Y=30"  ><area shape="circle" href="#" coords="376,199,3" title="X=63, Y=18"  ><area shape="circle" href="#" coords="376,197,3" title="X=63, Y=19"  ><area shape="circle" href="#" coords="376,195,3" title="X=63, Y=20"  ><area shape="circle" href="#" coords="376,193,3" title="X=63, Y=21"  ><area shape="circle" href="#" coords="376,191,3" title="X=63, Y=22"  ><area shape="circle" href="#" coords="376,189,3" title="X=63, Y=23"  ><area shape="circle" href="#" coords="376,187,3" title="X=63, Y=24"  ><area shape="circle" href="#" coords="376,185,3" title="X=63, Y=25"  ><area shape="circle" href="#" coords="376,183,3" title="X=63, Y=26"  ><area shape="circle" href="#" coords="376,181,3" title="X=63, Y=27"  ><area shape="circle" href="#" coords="376,179,3" title="X=63, Y=28"  ><area shape="circle" href="#" coords="376,177,3" title="X=63, Y=29"  ><area shape="circle" href="#" coords="378,195,3" title="X=64, Y=20"  ><area shape="circle" href="#" coords="378,193,3" title="X=64, Y=21"  ><area shape="circle" href="#" coords="378,191,3" title="X=64, Y=22"  ><area shape="circle" href="#" coords="378,189,3" title="X=64, Y=23"  ><area shape="circle" href="#" coords="378,187,3" title="X=64, Y=24"  ><area shape="circle" href="#" coords="378,185,3" title="X=64, Y=25"  ><area shape="circle" href="#" coords="378,183,3" title="X=64, Y=26"  ><area shape="circle" href="#" coords="378,181,3" title="X=64, Y=27"  ><area shape="circle" href="#" coords="380,191,3" title="X=65, Y=22"  ><area shape="circle" href="#" coords="380,189,3" title="X=65, Y=23"  ><area shape="circle" href="#" coords="380,187,3" title="X=65, Y=24"  ><area shape="circle" href="#" coords="380,185,3" title="X=65, Y=25"  ></map>';
 
 	var nvspan = document.createElement('div');
-		nvspan.align = 'center';
-		nvspan.valign = 'top';
-		nvspan.innerHTML += nvdiv;
-	pars[1].insertBefore(nvspan,pars[1].firstChild);
+	nvspan.align = 'center';
+	nvspan.id = 'mz_mapdiv';
+	nvspan.valign = 'top';
+	nvspan.innerHTML += nvdiv;
+	//pars[1].insertBefore(nvspan,pars[1].firstChild);
+	var footer = document.getElementById('footer1');
+	footer.parentNode.insertBefore(nvspan,footer);
 }
 
 function do_ordresgowap() {
@@ -4134,8 +4180,8 @@ function createOrGetGrandCadre() {
 function showHttpsErrorCadre1() {
 	var grandCadre = createOrGetGrandCadre();
 	var sousCadre = document.createElement('div');
-	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat1 de Raistlain.</b>'
-		+ '<br />Cela empêchera de voir les belles petites icônes un peu partout'
+	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat1 de Raistlin.</b>'
+		+ '<br />Cela empêchera Moutyzilla de fonctionner'
 		+ '<br /><a style="color:blue;font-size: inherits;" href="'
 		+ URL_CertifRaistlin1
 		+ '" target="raistlin">clique ici</a>'
@@ -4152,14 +4198,14 @@ function showHttpsErrorCadre1() {
 function showHttpsErrorCadre2() {
 	var grandCadre = createOrGetGrandCadre();
 	var sousCadre = document.createElement('div');
-	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat2 de Raistlain.</b>'
-		+ '<br />Cela empêchera le fonctionnement de Mountyzilla<br />'
+	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat2 de Raistlin.</b>'
+		+ '<br />Cela empêchera le fonctionnement de l\'affichage des Potrõlls dans la vue<br />'
 		+ '<a style="color:blue;font-size: inherits;" href="'
 		+ URL_CertifRaistlin2
 		+ '" target="raistlin">clique ici</a>'
 		+ '<br />puis « Avancé » ... « Ajouter une exception » ...'
 		+ ' « Confirmer l\'exception de sécurité »'
-		+ '<br />(<i>Ignore ensuite le message au sujet du firewall</i>)'
+		+ '<br />(Ignorer ensuite le message sur l\'erreur de mot de passe)'
 		+ '<br /><i>Il suffit de faire ceci une seule fois jusqu\'à ce que Raistlin change son certificat</i>';
 	sousCadre.style.width = 'auto';
 	sousCadre.style.fontSize = 'large';
@@ -4175,7 +4221,6 @@ function showHttpsErrorContenuMixte() {
 		+ 'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)'
 		+ '<ul>'
 		+ '<li>Interface Bricol\'Troll</li>'
-		+ '<li>Jubilaire</li>'
 		+ '<li>Nouveautés de Mountyzilla</li>'
 		+ '</ul>'
 		+ 'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />'
@@ -4189,6 +4234,10 @@ function showHttpsErrorContenuMixte() {
 /*-[functions]------------------- Jubilaires ---------------------------------*/
 
 function traiterJubilaires() {
+	// à faire
+}
+
+function traiterJubilaires_a_supprimer() {	// ancienne méthode
 	try {
 		FF_XMLHttpRequest({
 			method: 'GET',
@@ -4218,11 +4267,6 @@ function traiterJubilaires() {
 		} else {
 			window.alert('Erreur Jubilaires:\n'+e);
 		}
-	}
-	if (isHTTPS) {
-		// test si les certificats raistlin ont été acceptés
-		testCertif(URL_CertifRaistlin1, showHttpsErrorCadre1);	// l'infra raislin
-		testCertif(URL_CertifRaistlin2, showHttpsErrorCadre2);	// le relai raistlin vers l'infra chez FREE (provisoire)
 	}
 }
 
@@ -4269,72 +4313,31 @@ function afficherJubilaires(listeTrolls) {
 /*-[functions]--------------------- News MZ ----------------------------------*/
 
 function traiterNouvelles() {
-	try {
-		FF_XMLHttpRequest({
-			method: 'GET',
-			url: URL_rss,
-			headers: {
-				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
-				'Accept': 'application/xml,text/xml',
-				},
-			onload: function(responseDetails) {
-				responseDetails.responseXML = new DOMParser().parseFromString(
-						responseDetails.responseText,
-						'text/xml');
-				afficherNouvelles(responseDetails.responseXML);
-				}
-			});
-		}
-	catch(e) {
-		if (isHTTPS) {
-			// ignore
-		} else {
-			window.alert('Erreur News:\n'+e)
-		}
-	}
+	var news = new Array;
+	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
+	news.push(['24/12/2016', 'Retour de la carte montrant les déplacements des Gowaps']);
+	news.push(['24/12/2016', 'Le lien avec Bricol\'Troll est maintenant disponible en https']);
+	afficherNouvelles(news);
 }
 
-function afficherNouvelles(xml_data) {
+function afficherNouvelles(items) {
 	var footer = document.getElementById('footer1');
 	if(!footer) {
-		return;
-		}
-	try {
-		var titre = xml_data.evaluate('//channel/title/text()',
-			xml_data, null, 9, null).singleNodeValue.nodeValue;
-		var description = xml_data.evaluate('//channel/description/text()',
-			xml_data, null, 9, null).singleNodeValue.nodeValue;
-		var items = xml_data.evaluate('//channel/item',
-			xml_data, null, 7, null);
-		}
-	catch(e) {
-		return;
-		}
-	if(!titre || !description || items.snapshotLength==0) {
+		window.console.log('[MZ] afficherNouvelles, impossible de retrouver le footer par getElementById(\'footer1\')');
 		return;
 		}
 	var p = document.createElement('p');
-	var tbody = appendTitledTable(p,titre,description);
-	for(var i=0 ; i<Math.min(items.snapshotLength,nbItems) ; i++) {
-		var item = items.snapshotItem(i);
-		var sousTitre = xml_data.evaluate('title/text()',
-			item, null, 9, null).singleNodeValue.nodeValue;
-		var details = xml_data.evaluate('description/text()',
-			item, null, 9, null).singleNodeValue.nodeValue;
-		if(sousTitre && details) {
-			var tr = appendTr(tbody,'mh_tdpage');
-			var td = appendTdCenter(tr);
-			td.style.verticalAlign = 'middle'; // semble sans effet
-			appendText(td,sousTitre,true);
-			td = appendTd(tr);
-			td.innerHTML = details.epureDescription().slice(0,maxCarDescription);
-			// DEBUG
-			// pourquoi il ajoute une ligne vide sous les listes ??
-			// même avec trim(), il vire le textNode mais pas l'espace !
-			}
-		}
-	insertBefore(footer,p);
+	var tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
+	for(var i=0 ; i<items.length ; i++) {
+		var tr = appendTr(tbody,'mh_tdpage');
+		var td = appendTdCenter(tr);
+		td.style.verticalAlign = 'top'; // semble sans effet
+		appendText(td,items[i][0],true);
+		td = appendTd(tr);
+		td.innerHTML = items[i][1];
 	}
+	insertBefore(footer,p);
+}
 
 
 /*---------------------------------- Main ------------------------------------*/
@@ -4344,6 +4347,15 @@ function do_news() {
 
 	traiterJubilaires();
 	traiterNouvelles();
+
+	if (isHTTPS) {
+		// test si les certificats raistlin ont été acceptés
+		testCertif(URL_CertifRaistlin1, showHttpsErrorCadre1);	// l'infra raislin
+		var infoit = MY_getValue(numTroll+'.INFOSIT');
+		if(infoit && infoit!=='') {	// seulement pour les joueurs utilisant l'interface avec Bricol'Troll
+			testCertif(URL_CertifRaistlin2, showHttpsErrorCadre2);	// le relai raistlin vers Bricol'Troll
+		}
+	}
 
 	displayScriptTime();
 }
@@ -4570,7 +4582,7 @@ function treateEM()
 {
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
-	var urlImg = URL_MZimg09 + "Competences/ecritureMagique.png";
+	var urlImg = URL_MZimg + "Competences/ecritureMagique.png";
 	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
 			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
@@ -4636,7 +4648,7 @@ function treateEnchant()
 			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = URL_MZimg09 + "enchant.png";
+		var urlImg = URL_MZimg + "enchant.png";
 		for (var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i);
 			var nomCompoTotal = link.firstChild.nodeValue;
@@ -5446,7 +5458,7 @@ function removeLinkField() {
 
 function resetMainIco() {
 	document.getElementById('icoMenuIco').value=
-		URL_MZimg09 + 'mz_logo_small.png';
+		URL_MZimg + 'mz_logo_small.png';
 }
 
 
@@ -5457,6 +5469,7 @@ function insertTitle(next,txt) {
 	div.className = 'titre2';
 	appendText(div,txt);
 	insertBefore(next,div);
+	return div;
 }
 
 function insertMainTable(next) {
@@ -5492,7 +5505,7 @@ function insertOptionTable(insertPt) {
 	appendText(td,'Icône du Menu: ');
 	var url = MY_getValue(numTroll+'.ICOMENU');
 	if(!url) { 
-		url = URL_MZimg09 + 'mz_logo_small.png';
+		url = URL_MZimg + 'mz_logo_small.png';
 	}
 	appendTextbox(td,'text','icoMenuIco',50,200,url);
 	appendButton(td,'Réinitialiser',resetMainIco);
@@ -5606,6 +5619,7 @@ function insertCreditsTable(insertPt) {
 
 	var ul = document.createElement('ul');
 	td.appendChild(ul);
+	appendLI(ul,'Tilk (36216), puis Dabihul (79738) pour avoir créé puis maintenu à bout de bras MZ pendant des années');
 	appendLI(ul,'Fine fille (6465) pour les popup javascript');
 	appendLI(ul,'Reivax (4234) pour les infos bulles');
 	appendLI(ul,'Noc (2770) pour les moyennes des caracs');
@@ -5613,25 +5627,17 @@ function insertCreditsTable(insertPt) {
 	appendLI(ul,'Ratibus (15916) pour l\'envoi de CdM');
 	appendLI(ul,'TetDure (41931) pour les PVs restants dans les CdM');
 	appendLI(ul,'Les Teubreux pour leur bestiaire !');
-	appendLI(ul,'Les développeurs de vue qui font des efforts pour s\'intégrer '
-		+'à Mountyzilla');
-	appendLI(ul,'Gros Kéké (233) qui permet de tester le script aux limites '
-		+'du raisonnable avec sa vue de barbare');
-	appendLI(ul,'TuttiRikikiMaoussKosTroll (61214) pour le script '
-		+'sur les caracs de l\'équipement');
-	appendLI(ul,'Ashitaka (9485) pour le gros nettoyage de l\'extension, '
-		+'des scripts, et beaucoup de choses à venir');
+	appendLI(ul,'Les développeurs de vue qui font des efforts pour s\'intégrer à Mountyzilla');
+	appendLI(ul,'Gros Kéké (233) qui permet de tester le script aux limites du raisonnable avec sa vue de barbare');
+	appendLI(ul,'Ashitaka (9485) pour le gros nettoyage de l\'extension, des scripts, et beaucoup de choses à venir');
 	appendLI(ul,'Tous ceux de l\'ancienne génération oubliés par Tilk');
-	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233)... '
-		+'et tous les participants au projet ZoryaZilla');
+	appendLI(ul,'Zorya (28468), Vapulabehemot (82169), Breizhou13 (50233) et tous les participants au projet ZoryaZilla');
 	appendLI(ul,'Yoyor (87818) pour diverses améliorations de code');
-	appendLI(ul,'Rokü Menton-brûlant (108387) pour m\'avoir incité à passer '
-		+'sur GitHub');
-	appendLI(ul,'Rouletabille (91305) & Marmotte (93138) pour leur support '
-		+'technique récurrent');
+	appendLI(ul,'Rokü Menton-brûlant (108387) pour avoir incité à passer sur GitHub');
+	appendLI(ul,'Marmotte (93138) pour son support technique récurrent');
 	appendLI(ul,'Hennet (74092) pour le script du nouveau profil');
-	appendLI(ul,'Tous les testeurs de la nouvelle génération '
-		+'oubliés par Dabihul');
+	appendLI(ul,'Raistlin (61214, 109327) pour le script sur les caracs de l\'équipement et maintenant pour l\'hébergement');
+	appendLI(ul,'Tous les testeurs de la nouvelle génération oubliés par Dabihul puis Rouletabille');
 	}
 
 
@@ -5703,7 +5709,20 @@ function do_option() {
 	insertEnchantementTable();
 	*/
 	insertBefore(insertPoint,document.createElement('p'));
-	insertTitle(insertPoint,'Mountyzilla : Crédits');
+	var ti = insertTitle(insertPoint,'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
+	ti.onclick = function (e) {
+		var evt = e || window.event;
+		if (evt.shiftKey) {
+			var oldDev = MY_getValue('MZ_dev');
+			if (oldDev) {
+				MY_removeValue('MZ_dev');
+			} else {
+				alert('passage en mode DEV, shift-click sur le mot "Crédits" pour revenir en mode normal');
+				MY_setValue('MZ_dev', 1);
+			}
+			document.location.href = document.location.href;
+		}
+	}
 	insertCreditsTable(insertPoint);
 	insertBefore(insertPoint,document.createElement('p'));
 
@@ -5840,7 +5859,7 @@ function traiteChampis() {
 		var type = str.slice(0,str.lastIndexOf(' '));
 		var mundi = mundiChampi[type];
 		if(!mundi) continue;
-		var urlImg = URL_MZimg09
+		var urlImg = URL_MZimg
 			+'Competences/ecritureMagique.png';
 		var img = createAltImage(urlImg,'EM','Mundidey '+mundi);
 		appendText(node,' ');
@@ -6751,7 +6770,7 @@ function initRaccourcis() {
 	var urlIco = MY_getValue(numTroll+'.ICOMENU');
 	if(!urlIco) {
 		urlIco =
-			URL_MZimg09 + 'mz_logo_small.png';
+			URL_MZimg + 'mz_logo_small.png';
 	}
 	mainIco.src = urlIco;
 	mainIco.alt = 'MZ';
@@ -7320,7 +7339,7 @@ function synchroniseFiltres() {
 /* [functions] Menu Vue 2D */
 var vue2Ddata = {
 	'Bricol\' Vue': {
-		url: URL_MZmountyhall + 'vue_form.php',
+		url: URL_bricol_mountyhall + 'vue_form.php',
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {
@@ -7374,6 +7393,7 @@ function getVueScript() {
 			'#DEBUT ORIGINE\n'+
 			getPorteVue()[2]+';'+positionToString(getPosition())+
 			'\n#FIN ORIGINE\n';
+			window.console.log('[MZd] fin getVueScript');
 		return txt;
 	} catch(e) {
 		avertissement("[getVueScript] Erreur d'export vers Vue externe");
@@ -7396,6 +7416,7 @@ function refresh2DViewButton() {
 	}
 	appendSubmit(form, 'Voir',
 		function() {
+			window.console.log('[MZd] click voir vue externe');
 			document.getElementsByName(vue2Ddata[vueext].paramid)[0].value =
 				vue2Ddata[vueext].func();
 		}
@@ -7433,6 +7454,7 @@ function set2DViewSystem() {
 		selectVue2D = document.createElement('select');
 		selectVue2D.id = 'selectVue2D';
 		selectVue2D.className = 'SelectboxV2';
+		window.console.log('[MZd] préparation ' + Object.keys(vue2Ddata).length + ' types de vue');
 		for(var view in vue2Ddata) {
 			appendOption(selectVue2D, view, view);
 		}
@@ -7456,6 +7478,7 @@ function set2DViewSystem() {
 		
 		// Appelle le handler pour initialiser le bouton de submit
 		refresh2DViewButton();
+		window.console.log('[MZd] fin prépartation des vues externes');
 	} catch(e) {
 		avertissement("Erreur de traitement du système de vue 2D");
 		window.console.error("[MZ] set2DViewSystem",e);
@@ -8082,7 +8105,7 @@ function retrieveCDMs() {
 			
 			FF_XMLHttpRequest({
 				method: 'POST',
-				url: URL_MZinfoMonstrePost,
+				url: URL_MZinfoMonstre,
 				headers : {
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 					'Accept': 'application/atom+xml,application/xml,text/xml',
@@ -8093,12 +8116,11 @@ function retrieveCDMs() {
 					try {
 						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 						if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
-							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin2 +
+							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin1 +
 								'" target="raistlin">Mountyzilla - https<br />'+
 								'Tu dois accepter le certificat de Raistlin<br />'+
 								'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
-								' « Confirmer l\'exception de sécurité »<br />'+
-								'(<i>Ignore ensuite le message au sujet du firewall</i>)');
+								' « Confirmer l\'exception de sécurité »</a>');
 							return;
 						}
 						var texte = responseDetails.responseText;
@@ -8125,7 +8147,7 @@ function retrieveCDMs() {
 						computeMission(begin2,end2);
 					} catch(e) {
 						window.console.error(
-							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstrePost+'\n'+texte
+							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstre+'\n'+texte
 						);
 					}
 				}
@@ -8145,7 +8167,7 @@ function computeMission(begin,end) {
 	var str = MY_getValue(numTroll+'.MISSIONS');
 	if(!str) { return; }
 	
-	var urlImg = URL_MZimg09+'mission.png';
+	var urlImg = URL_MZimg+'mission.png';
 	var obMissions = JSON.parse(str);
 	
 	for(var i=end ; i>=begin ; i--) {
@@ -8213,7 +8235,7 @@ function computeVLC(begin,end) {
 	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
 	if(!cache)
 		return false;
-	var urlImg = URL_MZimg09 + "oeil.png";
+	var urlImg = URL_MZimg + "oeil.png";
 	for(var i = end; i >= begin;i--)
 	{
 		var id = getMonstreID(i);
@@ -8246,7 +8268,7 @@ function computeTactique(begin, end) {
 				var td = getMonstreNomNode(j);
 				appendText(td,' ');
 				td.appendChild(
-					createImageTactique(URL_MZimg09+'calc2.png', id, nom)
+					createImageTactique(URL_MZimg+'calc2.png', id, nom)
 				);
 			}
 		}
@@ -8265,7 +8287,7 @@ function updateTactique() {
 	if(noTactique) {
 		for(var i=nbMonstres ; i>0 ; i--) {
 			var tr = getMonstreNomNode(i);
-			var img = document.evaluate("img[@src='"+URL_MZimg09+"calc2.png']",
+			var img = document.evaluate("img[@src='"+URL_MZimg+"calc2.png']",
 				tr, null, 9, null).singleNodeValue;
 			if(img) {
 				img.parentNode.removeChild(img.previousSibling);
@@ -8279,8 +8301,8 @@ function updateTactique() {
 
 function filtreMonstres() {
 // = Handler universel pour les fonctions liées aux monstres
-	var urlImg = URL_MZimg09+'Competences/ecritureMagique.png',
-		urlEnchantImg = URL_MZimg09+'images/enchant.png';
+	var urlImg = URL_MZimg+'Competences/ecritureMagique.png',
+		urlEnchantImg = URL_MZimg+'images/enchant.png';
 	
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MY_getValue(numTroll+'.USECSS')=='true';
@@ -8823,20 +8845,20 @@ function putScriptExterne() {
 		var data = infoit.split('$');
 		try {
 			// Roule' 07/11/2016. Travail avec Ratibus, remplacement du script par l'envoi de JSON
-			// appendNewScript(URL_ratibus_lien+data[1]
+			// appendNewScript(URL_bricol+data[1]
 				// +'/mz.php?login='+data[2]
 				// +'&password='+data[3]
 				// );
 			FF_XMLHttpRequest({
 				method: 'GET',
-				url: URL_ratibus_lien+data[1]
+				url: URL_bricol+data[1]
 					+'/mz_json.php?login='+data[2]
 					+'&password='+data[3],
 				onload: function(responseDetails) {
 					try {
 						if (responseDetails.status == 0) {
 							if (isHTTPS) {
-								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
+								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut accepter le certificat2 de Raistlin (voir page d\'accueil)');
 							} else {
 								window.console.log('status=0 à l\'appel bricol\'troll');
 								avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<');
@@ -8971,7 +8993,7 @@ function addTdInfosTroll(infos, nextTD) {
 	/* lien vers l'IT */
 	var lien = document.createElement('a');
 	var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-	lien.href = URL_ratibus_lien+nomit+'/index.php';
+	lien.href = URL_bricol+nomit+'/index.php';
 	lien.target = '_blank';
 	lien.appendChild(tab);
 	insertTdElement(nextTD,lien);
@@ -9360,6 +9382,17 @@ function dureeHM(dmin) {
 	return (ret) ? ret : "-";
 }
 
+// extraction d'une durée 
+// l'élément pointé par le sélecteur contient "9 h 33 m" ou "-2 h -30 m"
+// c'est protégé (rend 0 si l'élément est absent)
+// Roule' 24/12/2016
+function extractionDuree(selecteur) {
+	var s = getUniqueStringValueBySelector(selecteur);
+	if (!s) return 0;
+	var tabN = getNumbers(s);
+	if (tabN.length < 2) return 0;
+	return tabN[0] * 60 + tabN[1];
+}
 
 /*-[functions]------- Extraction / Sauvegarde des donnees --------------------*/
 
@@ -9415,24 +9448,29 @@ function extractionDonnees() {
 	DLAsuiv = new Date(StringToDate(Nbrs["dlasuiv"]));
 	debugMZ("DLAsuiv: " + DLAsuiv);
 	    // Duree normale de mon Tour
-	Nbrs["dtb"] = getNumbers(getUniqueStringValueBySelector("#dla #tour"));
-	dtb = Nbrs["dtb"][0] * 60 + Nbrs["dtb"][1];
+	//Nbrs["dtb"] = getNumbers(getUniqueStringValueBySelector("#dla #tour"));
+	//dtb = Nbrs["dtb"][0] * 60 + Nbrs["dtb"][1];
+	dtb = extractionDuree("#dla #tour");
 	debugMZ("Duree normale de mon Tour : " + dtb);
 	    // Bonus/Malus sur la duree
-	Nbrs["bmt"] = getNumbers(getUniqueStringValueBySelector("#dla #bm"));
-	bmt = Nbrs["bmt"][0] * 60 + Nbrs["bmt"][1];
+	//Nbrs["bmt"] = getNumbers(getUniqueStringValueBySelector("#dla #bm"));
+	//bmt = Nbrs["bmt"][0] * 60 + Nbrs["bmt"][1];
+	bmt = extractionDuree("#dla #bm");	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
 	debugMZ("Bonus/Malus sur la duree : " + bmt);
 	    // Augmentation due aux blessures
-	Nbrs["adb"] = getNumbers(getUniqueStringValueBySelector("#dla #blessure"));
-	adb = Nbrs["adb"][0] * 60 + Nbrs["adb"][1];
+	//Nbrs["adb"] = getNumbers(getUniqueStringValueBySelector("#dla #blessure"));
+	//adb = Nbrs["adb"][0] * 60 + Nbrs["adb"][1];
+	adb = extractionDuree("#dla #blessure");
 	debugMZ("Augmentation due aux blessures : " + adb);
 	    // Poids de l'equipement
-	Nbrs["pdm"] = getNumbers(getUniqueStringValueBySelector("#dla #poids"));
-	pdm = Nbrs["pdm"][0] * 60 + Nbrs["pdm"][1];
+	//Nbrs["pdm"] = getNumbers(getUniqueStringValueBySelector("#dla #poids"));
+	//pdm = Nbrs["pdm"][0] * 60 + Nbrs["pdm"][1];
+	pdm = extractionDuree("#dla #poids");
 	debugMZ("Poids de l'equipement : " + pdm);
 	    // Duree de mon prochain Tour
-	Nbrs["dpt"] = getNumbers(getUniqueStringValueBySelector("#dla #duree>b"));
-	dpt = Nbrs["dpt"][0] * 60 + Nbrs["dpt"][1];
+	//Nbrs["dpt"] = getNumbers(getUniqueStringValueBySelector("#dla #duree>b"));
+	//dpt = Nbrs["dpt"][0] * 60 + Nbrs["dpt"][1];
+	dpt = extractionDuree("#dla #duree>b");
 	debugMZ('Duree de mon prochain Tour : ' + dpt);
 
 // ****************
@@ -9704,7 +9742,7 @@ function setInfoDescription() {
 }
 
 function setInfosEtatLieux() {
-	var urlBricol = URL_MZmountyhall + 'lieux.php'+
+	var urlBricol = URL_bricol_mountyhall + 'lieux.php'+
 		'?search=position&orderBy=distance&posx='+
 		posX+'&posy='+posY+'&posn='+posN+'&typeLieu=3';
 	var tdPosition = document.querySelector("#pos td span#x").parentElement;
@@ -11079,7 +11117,7 @@ function treateEM()
 {
 	if(currentURL.indexOf("as_type=Compo")==-1)
 		return false;
-	var urlImg = URL_MZimg09 + 'Competences/ecritureMagique.png';
+	var urlImg = URL_MZimg + 'Competences/ecritureMagique.png';
 	var nodes = document.evaluate("//tr[@class='mh_tdpage']"
 			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	if (nodes.snapshotLength == 0)
@@ -11145,7 +11183,7 @@ function treateEnchant()
 			+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0)
 			return false;
-		var urlImg = URL_MZimg09 + "enchant.png";
+		var urlImg = URL_MZimg + "enchant.png";
 		for (var i = 0; i < nodes.snapshotLength; i++) {
 			var link = nodes.snapshotItem(i);
 			var nomCompoTotal = link.firstChild.nodeValue;
@@ -11537,7 +11575,7 @@ function getEssaiV1_0() {
 		window.console.log('getEssaiV1_0, nb key : ' + nK);
 		//window.console.log('getEssaiV1_0, ' + nK);
 		return;
-		return r;
+		//return r;
 	} catch (e) {
 		window.console.log('Erreur getEssaiV1_0() :\n'+e);
 	}
