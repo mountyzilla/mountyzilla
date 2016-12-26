@@ -84,6 +84,9 @@
 //		Mode dev (Shift+Click sur le mot "Crédits" dans Options/Pack Graphique) qui se branche sur le site de dev
 //		Interface bricoll'Troll en https
 //		Remise en marche des cartes des trajets des gowaps
+// V1.2.12.1 25/12/2016
+//		Correction mode IP
+//		Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -104,9 +107,9 @@
 **********************************************************/
 
 // URL de base serveur MZ
-var URL_MZ = 'http://mz.mh.raistlin.fr/mz';
+var URL_MZ = 'https://mz.mh.raistlin.fr/mz';
 // pour passer en mode IP, commenter la ligne précédente et décommenter la suivante
-//var URL_MZinfoMonstre = 'http://192.99.225.92/mz';
+//var URL_MZ = 'http://192.99.225.92/mz';
 
 // URLs externes images (pas de souci CORS mais pas de HTTPS)
 const URL_MZscriptCarte = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
@@ -122,13 +125,13 @@ const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 
 // URLs de test HTTPS
-const URL_CertifRaistlin1 = 'https://mz.mh.raistlin.fr/mz/img/1.gif';
+var URL_CertifRaistlin1 = URL_MZ.replace(/http:\/\//, 'https://') + '/img/1.gif';	// s'adapte si mode IP
 const URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
 
 // ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
 var URL_bricol = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
 const URL_bricol_https = 'https://it.mh.raistlin.fr/'	// IT bricol'troll en https via relai Raistlin
-const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';
+//const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';	// obsolette et pas utilisé
 
 // x~x Libs
 
@@ -645,6 +648,140 @@ function SQLDateToObject(str) {
 	return new Date(t[0], t[1]-1, t[2], t[3], t[4], t[5]);
 }
 
+// mise en commun du dessin des cartes (récupéré de Trajet_des_gowaps de feldspath et Vapulabehemot)
+function declare_css_carte_hall() {
+	if(haut.getElementById("css_gow")) return;
+	css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, div.mh_tdpage { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; }\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
+
+	var node = document.createElement("style");
+	node.type = "text/css";
+	node.id = "css_gow";
+	node.appendChild(document.createTextNode(css));
+	document.getElementsByTagName("head")[0].appendChild(node);
+}
+
+function ini_canvas_carte_hall() {
+	var trajet = document.createElement("div");
+	trajet.id = "carte_trajet";
+
+	var dessin = creer_canvas("trou");
+	dessin.className = "mh_tdpage";
+	trajet.appendChild(dessin);
+	trajet.appendChild(creer_canvas("trajet"));
+	trajet.appendChild(creer_canvas("danger"));
+
+	var dessin = creer_canvas("surligne");
+	addEvent(dessin, "click", action_trajet, true);
+	addEvent(dessin, "mousedown", start_v, true);
+	addEvent(dessin, "mousemove", afficher_position, true);
+	addEvent(dessin, "mouseout", function() { cacher_bulle(true) }, true);
+	addEvent(dessin, "mouseover",  function() { cacher_bulle(false) }, true);
+	trajet.appendChild(dessin);
+
+	trajet.appendChild(creer_glissiere("gow", zoom));
+
+	var parp = document.getElementsByTagName('p');
+	parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild);
+}
+
+/**********************
+* glissière en mode objet
+* Une glissière est un curseur permettant, par exemple de changer le zoome des cartes
+* L'objet lui-même est assigné à la propriété "obj" de la div de la glissière
+*
+* Usage:
+*	gliss = new glissiere_MZ(ref, labelHTML, target);
+*		le premier parametre est utilisé pour diversifier les IDs HTML
+*		le deuxième paramètre est le label qui apparaît davant la glissière (peut contenir des balises HTML)
+*		le proisième paramètre peut être de 3 types
+*			- élément HTML : l'élément HTML à zoomer
+*			- string : l'ID de l'élément à zoomer (qui doit exister au moment de la création de la glissière
+*			- function : callback quand le curseur bouge
+*	autres méthodes
+*		gliss.getElt();			// rend la div de la glissière (par exemple pour la positionner)
+*		gliss.setDynamic(true);	// par défaut, le fonctionnement n'est pas dynamique (la callback est appellé au click)
+*								// dans le mode dynamique, la callback est appelée sur mouseMove
+**********************/
+
+function glissiere_MZ(ref, labelHTML, paramTarget) {
+	var div_gliss = document.createElement("div");
+	div_gliss.id = "glissiere_MZ_"+ref;
+	var div_label = document.createElement("div");
+	div_label.innerHTML = labelHTML;
+	div_gliss.appendChild(div_label);
+	div_gliss.className = "choix_zoom";
+	var dessin = creer_canvas("glissiere_"+ref);
+	dessin.width = 104;
+	dessin.height = 12;
+	addEvent(dessin
+		, "mousedown"
+		, function (evt) {
+			var xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
+			var zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
+			MY_setValue("zoom_" + ref, zoom)
+			trace_glissiere(ref);
+			if (curs_dynamique) {
+				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
+				coeff = zoom/50.0;
+				if(page == "trajet") {
+					echelle_trajet();
+					trace_trajet_prev();
+					sauve_trajet();
+				}
+				else if(page == "suivants") {
+					echelle_position();
+					sauve_opt_position();
+				}
+				else {
+					echelle_teleport();
+				}
+				glissable = true;
+				this.style.cursor = "e-resize";
+			} else {
+				trace_glissiere_fav();
+				haut.getElementById("val_zoom_fav").innerHTML = zoom_fav+"%";
+				echelle_fav();
+			}
+		}
+		, true);
+	addEvent(dessin, "mousemove", sur_curseur, true);
+	if (curs_dynamique) { // ajout par Vapulabehemot (82169) le 10/07/2015
+		addEvent(dessin, "mouseup", drop, true); // ajout par Vapulabehemot (82169) le 10/07/2015
+		addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) le 10/07/2015
+	} // ajout par Vapulabehemot (82169) le 10/07/2015
+	addEvent(dessin, "mouseout", function() { haut.getElementById("bulle_zoom").style.visibility="hidden" }, true);
+	addEvent(dessin, "mouseover", function() { haut.getElementById("bulle_zoom").style.visibility="visible" }, true);
+	div_gliss.appendChild(dessin);
+	div_gliss.appendChild(enligne("val_zoom_"+ref));
+	div_gliss.lastChild.innerHTML = val+"%";
+
+	creer_bulle_zoom();
+}
+
+function trace_glissiere_carte_hall() {
+	dessine_glissiere("gow", Math.min(99,Math.max(0,Math.round(zoom/2.0)-25)));
+	if ( page == 'trajet' || page == 'lieu_tp' ) { // ajout par Vapulabehemot (82169) le 10/07/2015
+		document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapulabehemot (82169) le 10/07/2015
+	} // ajout par Vapulabehemot (82169) le 10/07/2015
+}
+
+function dessine_glissiere(ref, val) {
+	var dessin = haut.getElementById("glissiere_"+ref);
+	if (!dessin.getContext) return;
+	var ctx = dessin.getContext('2d');
+	ctx.clearRect(0, 0,104, 12);
+	ctx.fillStyle = "rgb(0,0,0)";
+	ctx.fillRect(0,0,2,12);
+	ctx.fillRect(102,0,2,12);
+	ctx.fillRect(0,5,104,2);
+
+	ctx.fillStyle = "rgb(80,80,80)";
+	ctx.fillRect(val,0,5,12);
+	ctx.fillStyle = "rgb(200,200,200)";
+	ctx.fillRect(val+1,1,3,10);
+}
+
+
 /**********************************************************
 **** Fin de zone à déplacer dans une bibli commune ********
 **********************************************************/
@@ -656,11 +793,6 @@ if(MY_getValue(numTroll+'.TAGSURL')) {
 
 // Alerte si mode dev
 if (isDEV) {
-	// var div = document.createElement('div');
-	// div.className = 'titre2';
-	// appendText(div,txt);
-	// insertBefore(next,div);
-
 	var divpopup = document.createElement('div');
 	divpopup.id = 'divDEV';
 	divpopup.style =
@@ -3543,7 +3675,7 @@ function setCarteGogo() {
 	nvspan.align = 'center';
 	nvspan.id = 'mz_mapdiv';
 	nvspan.valign = 'top';
-	nvspan.innerHTML += nvdiv;
+	nvspan.innerHTML = nvdiv;
 	//pars[1].insertBefore(nvspan,pars[1].firstChild);
 	var footer = document.getElementById('footer1');
 	footer.parentNode.insertBefore(nvspan,footer);
@@ -8977,7 +9109,7 @@ function addTdInfosTroll(infos, nextTD) {
 	} else if (pourcentVie > 33) {
 		div2.style.backgroundColor = '#EEEE77';
 	} else {
-		div2.style.backgroundColor = '#EEAA77';
+		div2.style.backgroundColor = '#FF0000';
 	}
 	div2.style.width = pourcentVie + '%';
 	div2.style.height = '10px';
