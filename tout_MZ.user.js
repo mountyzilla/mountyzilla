@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.12
+// @version     1.2.12.1
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -84,7 +84,7 @@
 //		Mode dev (Shift+Click sur le mot "Crédits" dans Options/Pack Graphique) qui se branche sur le site de dev
 //		Interface bricoll'Troll en https
 //		Remise en marche des cartes des trajets des gowaps
-// V1.2.12.1 25/12/2016
+// V1.2.12.1 27/12/2016
 //		Correction mode IP
 //		Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)
 
@@ -665,6 +665,8 @@ function ini_canvas_carte_hall() {
 	trajet.id = "carte_trajet";
 
 	var dessin = creer_canvas("trou");
+	var dessin = document.createElement("canvas");
+	dessin.id = ref;
 	dessin.className = "mh_tdpage";
 	trajet.appendChild(dessin);
 	trajet.appendChild(creer_canvas("trajet"));
@@ -686,62 +688,75 @@ function ini_canvas_carte_hall() {
 
 /**********************
 * glissière en mode objet
-* Une glissière est un curseur permettant, par exemple de changer le zoome des cartes
+* Une glissière est un curseur permettant, par exemple de changer le zoom des cartes
 * L'objet lui-même est assigné à la propriété "obj" de la div de la glissière
 *
 * Usage:
-*	gliss = new glissiere_MZ(ref, labelHTML, target);
-*		le premier parametre est utilisé pour diversifier les IDs HTML
-*		le deuxième paramètre est le label qui apparaît davant la glissière (peut contenir des balises HTML)
-*		le proisième paramètre peut être de 3 types
+*	gliss = new glissiere_MZ(ref, labelHTML, target, bDynamic);
+*		ref : utilisé pour diversifier les IDs HTML
+*		labelHTML : le label qui apparaît davant la glissière (peut contenir des balises HTML)
+*		target : peut être de 3 types
 *			- élément HTML : l'élément HTML à zoomer
 *			- string : l'ID de l'élément à zoomer (qui doit exister au moment de la création de la glissière
 *			- function : callback quand le curseur bouge
+*		bDynamic : par défaut, le fonctionnement n'est pas dynamique (la callback est appellé au click)
+*					dans le mode dynamique, la callback est appelée sur mouseMove
 *	autres méthodes
 *		gliss.getElt();			// rend la div de la glissière (par exemple pour la positionner)
-*		gliss.setDynamic(true);	// par défaut, le fonctionnement n'est pas dynamique (la callback est appellé au click)
-*								// dans le mode dynamique, la callback est appelée sur mouseMove
 **********************/
 
-function glissiere_MZ(ref, labelHTML, paramTarget) {
-	var div_gliss = document.createElement("div");
-	div_gliss.id = "glissiere_MZ_"+ref;
-	var div_label = document.createElement("div");
+function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic) {
+	var div_gliss = document.createElement("div");	// la DIV mère
+	div_gliss.id = "MZ_gliss_"+ref;
+	var div_label = document.createElement("div");	// le label
 	div_label.innerHTML = labelHTML;
 	div_gliss.appendChild(div_label);
 	div_gliss.className = "choix_zoom";
-	var dessin = creer_canvas("glissiere_"+ref);
+	var dessin = document.createElement("canvas");	// le dessin lui-même
+	dessin.id = "MZ_gliss_dessin_"+ref;
 	dessin.width = 104;
 	dessin.height = 12;
+	var pourcent = document.createElement("span");	// le pourcentage
+	pourcent.id = "MZ_gliss_pourcent_"+ref;
+	pourcent.appendChild(document.createTextNode(''));
+
+	var dessine = function(val) {
+		var ctx = dessin.getContext('2d');
+		ctx.clearRect(0, 0,104, 12);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillRect(0,0,2,12);
+		ctx.fillRect(102,0,2,12);
+		ctx.fillRect(0,5,104,2);
+
+		ctx.fillStyle = "rgb(80,80,80)";
+		ctx.fillRect(val,0,5,12);
+		ctx.fillStyle = "rgb(200,200,200)";
+		ctx.fillRect(val+1,1,3,10);
+		pourcent.appendChild(document.createTextNode(val+'%'));
+	}
+
+	var doCallback = function (val) {
+		var elt;
+		if (typeof paramTarget === 'object') {
+			elt = patramTarget;
+		} else if (typeof paramTarget === 'string') {
+			elt = document.getElementById(paramTarget);
+		} else if (typeof paramTarget === 'function') {
+			paramTarget(val);
+			return;
+		}
+		// à faire : zoom de l'elt
+	}
+
 	addEvent(dessin
 		, "mousedown"
 		, function (evt) {
 			var xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
-			var zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
-			MY_setValue("zoom_" + ref, zoom)
-			trace_glissiere(ref);
-			if (curs_dynamique) {
-				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
-				coeff = zoom/50.0;
-				if(page == "trajet") {
-					echelle_trajet();
-					trace_trajet_prev();
-					sauve_trajet();
-				}
-				else if(page == "suivants") {
-					echelle_position();
-					sauve_opt_position();
-				}
-				else {
-					echelle_teleport();
-				}
-				glissable = true;
-				this.style.cursor = "e-resize";
-			} else {
-				trace_glissiere_fav();
-				haut.getElementById("val_zoom_fav").innerHTML = zoom_fav+"%";
-				echelle_fav();
-			}
+			var val = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
+			MY_setValue("MZ_glissiere_" + ref, val)
+			dessine(val);	// redessiner la glissière avec le curseur où il faut
+			
+			doCallback(val);
 		}
 		, true);
 	addEvent(dessin, "mousemove", sur_curseur, true);
@@ -765,21 +780,6 @@ function trace_glissiere_carte_hall() {
 	} // ajout par Vapulabehemot (82169) le 10/07/2015
 }
 
-function dessine_glissiere(ref, val) {
-	var dessin = haut.getElementById("glissiere_"+ref);
-	if (!dessin.getContext) return;
-	var ctx = dessin.getContext('2d');
-	ctx.clearRect(0, 0,104, 12);
-	ctx.fillStyle = "rgb(0,0,0)";
-	ctx.fillRect(0,0,2,12);
-	ctx.fillRect(102,0,2,12);
-	ctx.fillRect(0,5,104,2);
-
-	ctx.fillStyle = "rgb(80,80,80)";
-	ctx.fillRect(val,0,5,12);
-	ctx.fillStyle = "rgb(200,200,200)";
-	ctx.fillRect(val+1,1,3,10);
-}
 
 
 /**********************************************************
