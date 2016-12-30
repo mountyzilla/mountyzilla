@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.12.1
+// @version     1.2.12.2
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -87,6 +87,8 @@
 // V1.2.12.1 27/12/2016
 //		Correction mode IP
 //		Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)
+// V1.2.12.2 30/12/2016
+//		retour en mode normal (http si jeu en http)
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -107,7 +109,7 @@
 **********************************************************/
 
 // URL de base serveur MZ
-var URL_MZ = 'https://mz.mh.raistlin.fr/mz';
+var URL_MZ = 'http://mz.mh.raistlin.fr/mz';
 // pour passer en mode IP, commenter la ligne précédente et décommenter la suivante
 //var URL_MZ = 'http://192.99.225.92/mz';
 
@@ -195,7 +197,7 @@ var rmTroll = MY_getValue(numTroll+'.caracs.rm');
 var date_debut = null;
 
 function start_script(nbJours_exp) {
-	if(MY_DEBUG) window.console.log('[MZ] début sur ' + window.location.pathname);
+	if(MY_DEBUG) window.console.log('[MZ ' + GM_info.script.version + '] début sur ' + window.location.pathname);
 	if(date_debut) return;
 	date_debut = new Date();
 	// Créé la variable expdate si demandé
@@ -217,7 +219,7 @@ function displayScriptTime() {
 	insertText(node,
 		' - [Script exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
-	if(MY_DEBUG) window.console.log('[MZ] fin sur ' + window.location.pathname);
+	if(MY_DEBUG) window.console.log('[MZ ' + GM_info.script.version + '] fin sur ' + window.location.pathname);
 }
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
@@ -648,6 +650,23 @@ function SQLDateToObject(str) {
 	return new Date(t[0], t[1]-1, t[2], t[3], t[4], t[5]);
 }
 
+var mz_ie = (window.attachEvent)? true:false;
+if ("function" !== typeof addEvent) {
+	if (mz_ie) {
+		function addEvent(obj, typ, fn, sens) {
+			obj["e"+typ+fn] = fn; obj[typ+fn] = function() {
+				obj["e"+typ+fn]( window.event );
+			}
+			obj.attachEvent("on"+typ, obj[typ+fn] );
+		}
+	}
+	else  {
+		function addEvent(obj, typ, fn, sens) {
+			obj.addEventListener(typ, fn, sens);
+		}
+	}
+}
+
 // mise en commun du dessin des cartes (récupéré de Trajet_des_gowaps de feldspath et Vapulabehemot)
 function declare_css_carte_hall() {
 	if(haut.getElementById("css_gow")) return;
@@ -687,9 +706,9 @@ function ini_canvas_carte_hall() {
 }
 
 /**********************
-* glissière en mode objet
+* glissière en mode objet 
+* Roule 29/12/2016 à partir du code des trajets gowap doCallback_glissiere et Vapulabehemot
 * Une glissière est un curseur permettant, par exemple de changer le zoom des cartes
-* L'objet lui-même est assigné à la propriété "obj" de la div de la glissière
 *
 * Usage:
 *	gliss = new glissiere_MZ(ref, labelHTML, target, bDynamic);
@@ -701,85 +720,137 @@ function ini_canvas_carte_hall() {
 *			- function : callback quand le curseur bouge
 *		bDynamic : par défaut, le fonctionnement n'est pas dynamique (la callback est appellé au click)
 *					dans le mode dynamique, la callback est appelée sur mouseMove
+*		valDef : valeur par défaut si l'outil n'a jamais été utilisé
+*		valMin, valMax : les valeurs entre lesquelles le curseur varie
 *	autres méthodes
 *		gliss.getElt();			// rend la div de la glissière (par exemple pour la positionner)
 **********************/
 
-function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic) {
-	var div_gliss = document.createElement("div");	// la DIV mère
-	div_gliss.id = "MZ_gliss_"+ref;
-	var div_label = document.createElement("div");	// le label
-	div_label.innerHTML = labelHTML;
-	div_gliss.appendChild(div_label);
-	div_gliss.className = "choix_zoom";
-	var dessin = document.createElement("canvas");	// le dessin lui-même
-	dessin.id = "MZ_gliss_dessin_"+ref;
-	dessin.width = 104;
-	dessin.height = 12;
-	var pourcent = document.createElement("span");	// le pourcentage
-	pourcent.id = "MZ_gliss_pourcent_"+ref;
-	pourcent.appendChild(document.createTextNode(''));
+function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic, valDef, valMin, valMax) {
+	try {
+		var mouseDown = false;
+		var div_gliss = document.createElement("div");	// la DIV mère
+		div_gliss.id = "MZ_gliss_"+ref;
+		var div_label = document.createElement("div");	// le label
+		div_label.innerHTML = labelHTML;
+		div_gliss.appendChild(div_label);
+		div_gliss.className = "choix_zoom";
+		var dessin = document.createElement("canvas");	// le dessin lui-même
+		dessin.id = "MZ_gliss_dessin_"+ref;
+		dessin.width = 104;
+		dessin.height = 12;
+		div_gliss.appendChild(dessin);
+		var pourcent = document.createElement("span");	// le pourcentage
+		pourcent.id = "MZ_gliss_pourcent_"+ref;
+		var pourcent_text = document.createTextNode('');
+		pourcent.appendChild(pourcent_text);
+		div_gliss.appendChild(pourcent);
 
-	var dessine = function(val) {
-		var ctx = dessin.getContext('2d');
-		ctx.clearRect(0, 0,104, 12);
-		ctx.fillStyle = "rgb(0,0,0)";
-		ctx.fillRect(0,0,2,12);
-		ctx.fillRect(102,0,2,12);
-		ctx.fillRect(0,5,104,2);
+		var bulle_pourcent = document.createElement("div");	// la bulle
+		bulle_pourcent.id = "MZ_gliss_bulle_"+ref;
+		bulle_pourcent.style.display = 'block';
+		bulle_pourcent.style.visibility = 'hidden';
+		bulle_pourcent.style.position =  'absolute';
+		bulle_pourcent.style.zIndex = 3500;
+		bulle_pourcent.style.border = '1px solid  #a1927f';
+		var bulle_pourcent_text = document.createTextNode('');
+		bulle_pourcent.appendChild(bulle_pourcent_text);
+		document.body.appendChild(bulle_pourcent);
 
-		ctx.fillStyle = "rgb(80,80,80)";
-		ctx.fillRect(val,0,5,12);
-		ctx.fillStyle = "rgb(200,200,200)";
-		ctx.fillRect(val+1,1,3,10);
-		pourcent.appendChild(document.createTextNode(val+'%'));
-	}
+		this.getElt = function() {return div_gliss;};
 
-	var doCallback = function (val) {
-		var elt;
-		if (typeof paramTarget === 'object') {
-			elt = patramTarget;
-		} else if (typeof paramTarget === 'string') {
-			elt = document.getElementById(paramTarget);
-		} else if (typeof paramTarget === 'function') {
-			paramTarget(val);
-			return;
-		}
-		// à faire : zoom de l'elt
-	}
+		////////////////////////////////////
+		// dessine et redessine le curseur
+		////////////////////////////////////
+		var dessine_glissiere = function(val) {
+			pos_0_100 = ((val - valMin) * 100) / (valMax - valMin);
+			var ctx = dessin.getContext('2d');
+			ctx.clearRect(0, 0,104, 12);
+			ctx.fillStyle = "rgb(0,0,0)";
+			ctx.fillRect(0,0,2,12);
+			ctx.fillRect(102,0,2,12);
+			ctx.fillRect(0,5,104,2);
 
-	addEvent(dessin
-		, "mousedown"
-		, function (evt) {
-			var xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
-			var val = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
-			MY_setValue("MZ_glissiere_" + ref, val)
-			dessine(val);	// redessiner la glissière avec le curseur où il faut
-			
-			doCallback(val);
-		}
-		, true);
-	addEvent(dessin, "mousemove", sur_curseur, true);
-	if (curs_dynamique) { // ajout par Vapulabehemot (82169) le 10/07/2015
-		addEvent(dessin, "mouseup", drop, true); // ajout par Vapulabehemot (82169) le 10/07/2015
-		addEvent(dessin, "mousemove", glisse, true); // ajout par Vapulabehemot (82169) le 10/07/2015
-	} // ajout par Vapulabehemot (82169) le 10/07/2015
-	addEvent(dessin, "mouseout", function() { haut.getElementById("bulle_zoom").style.visibility="hidden" }, true);
-	addEvent(dessin, "mouseover", function() { haut.getElementById("bulle_zoom").style.visibility="visible" }, true);
-	div_gliss.appendChild(dessin);
-	div_gliss.appendChild(enligne("val_zoom_"+ref));
-	div_gliss.lastChild.innerHTML = val+"%";
+			ctx.fillStyle = "rgb(80,80,80)";
+			ctx.fillRect(pos_0_100,0,5,12);
+			ctx.fillStyle = "rgb(200,200,200)";
+			ctx.fillRect(pos_0_100+1,1,3,10);
+			pourcent_text.nodeValue = val+'%';
+		};
 
-	creer_bulle_zoom();
+		////////////////////////////////////
+		// action qur mousedown et mousemove
+		//		stocker la nouvelle valeur
+		//		redessiner
+		//		afficher la nouvelle valeur
+		//		action selon ce qui a été demandé
+		////////////////////////////////////
+		var doCallback_glissiere = function (evt) {
+			try {
+				if (evt.type === 'mousedown') mouseDown = true;
+				if (evt.offsetX) {
+					var xsouris = evt.offsetX;
+					var xpos = evt.clientX;
+					var ypos = evt.clientY + document.body.scrollTop;
+				}
+				else {
+					var xsouris = evt.layerX;
+					var xpos = evt.pageX;
+					var ypos = evt.pageY;
+				}
+				var val = Math.min(valMax,Math.max(valMin,((xsouris-1) * (valMax - valMin) / 100)+valMin));
+				//		afficher la nouvelle valeur dans la bulle
+				bulle_pourcent_text.nodeValue = val + '%';
+				bulle_pourcent.style.top = (ypos+3)+'px';
+				bulle_pourcent.style.left = (xpos+16)+'px';
+				if (evt.buttons === undefined) {
+					// mode utilisant les evt mouseup/down (mauvaise méthode, utilisé si on ne peut pas faire autrement)
+					if (!mouseDown) return;	// simple survol, on ne fait rien de plus
+				} else {
+					if (!(evt.buttons & 1)) return;	// simple survol, on ne fait rien de plus
+				}
+				//		stocker la nouvelle valeur
+				MY_setValue("MZ_glissiere_" + ref, val);
+				//		redessiner la glissière avec le curseur où il faut
+				dessine_glissiere(val);
+				//		action selon ce qui a été demandé
+				//for(var key in evt) window.console.log('evt key ' + key + ' => ' + evt[key]);
+				if ((!bDynamic) && (evt.type !== 'mousedown')) return;
+				if (typeof paramTarget === 'object') {
+					var elt = paramTarget;
+				} else if (typeof paramTarget === 'string') {
+					var elt = document.getElementById(paramTarget);
+				} else if (typeof paramTarget === 'function') {
+					paramTarget(val);
+					return;
+				}
+				// à faire : zoom de l'elt
+			} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '] glissiere_MZ.doCallback erreur ' + e)}
+		};
+
+		////////////////////////////////////
+		// event mousedown et mousemove : redessiner et callback
+		////////////////////////////////////
+		addEvent(dessin, "mousedown", doCallback_glissiere, true);
+		addEvent(dessin, "mousemove", doCallback_glissiere, true);
+		////////////////////////////////////
+		// event mouseup : mémoriser mouseup (utile seulement si le navigateur ne supporte pas evt.buttons
+		////////////////////////////////////
+		addEvent(dessin, "mouseup", function() {mouseDown = false;}, true);
+		////////////////////////////////////
+		// event mouseout & mouseover : afficher/cacher la bulle
+		////////////////////////////////////
+		addEvent(dessin, "mouseout", function() {bulle_pourcent.style.visibility="hidden";}, true);
+		addEvent(dessin, "mouseover", function() {bulle_pourcent.style.visibility="visible";}, true);
+
+		////////////////////////////////////
+		// dessiner la première fois
+		////////////////////////////////////
+		var val_init = MY_getValue("MZ_glissiere_" + ref);
+		if (val_init === undefined) val_init = valDef;
+		dessine_glissiere(val_init);
+	} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '], erreur glissiere_MZ ' + e)}
 }
-
-function trace_glissiere_carte_hall() {
-	dessine_glissiere("gow", Math.min(99,Math.max(0,Math.round(zoom/2.0)-25)));
-	if ( page == 'trajet' || page == 'lieu_tp' ) { // ajout par Vapulabehemot (82169) le 10/07/2015
-		document.getElementById('choix_zoom_gow').style.top = '4px'; // ajout par Vapulabehemot (82169) le 10/07/2015
-	} // ajout par Vapulabehemot (82169) le 10/07/2015
-}
-
 
 
 /**********************************************************
@@ -804,7 +875,8 @@ if (isDEV) {
 		'font-size: large;'+
 		'padding: 5px'+
 		'z-index: 200;';
-	appendText(divpopup, 'Mode DEV');
+	appendText(divpopup, '[MZ] Mode DEV');
+	divpopup.title = 'Pour revenir en mode normal, \nshift-click sur le mot "Crédits" dans Options/Pack Graphique';
 	document.body.appendChild(divpopup);
 }
 
@@ -3660,7 +3732,7 @@ function setCarteGogo() {
 			}
 		}
 	}
-	catch(e) {window.console.log('[MZ] setCarteGogo() impossible de trouver les ordres,' + e); return;}
+	catch(e) {window.console.log('[MZ ' + GM_info.script.version + '] setCarteGogo() impossible de trouver les ordres,' + e); return;}
 	var nvdiv = "<div class='mh_tdpage' style='width:510px;height:455px;'><img src='"+serv_img_trou+"' style='position:relative;top:0px;left:0px;z-index:100;border-width:0px' usemap='#coord_trou'/>";
 	var base = [-229,-5];
 	if (nbpt>0) {
@@ -3681,8 +3753,19 @@ function setCarteGogo() {
 	footer.parentNode.insertBefore(nvspan,footer);
 }
 
+function testeGlissiere() {
+	try {
+		var gliss = new glissiere_MZ('test', 'Test glissière', 'xxx', false, 100, 50, 250);
+		var footer = document.getElementById('footer1');
+		footer.parentNode.insertBefore(gliss.getElt(), footer);
+	} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '] erreur testeGlissiere ' + e)};
+}
+
 function do_ordresgowap() {
 	setCarteGogo();		// Via script des trouillots
+	if (isDEV) {
+		testeGlissiere();
+	}
 }
 
 /*********************************************************************************
@@ -4455,7 +4538,7 @@ function traiterNouvelles() {
 function afficherNouvelles(items) {
 	var footer = document.getElementById('footer1');
 	if(!footer) {
-		window.console.log('[MZ] afficherNouvelles, impossible de retrouver le footer par getElementById(\'footer1\')');
+		window.console.log('[MZ ' + GM_info.script.version + '] afficherNouvelles, impossible de retrouver le footer par getElementById(\'footer1\')');
 		return;
 		}
 	var p = document.createElement('p');
@@ -5834,7 +5917,8 @@ function do_option() {
 
 	var insertPoint = document.getElementById('footer1');
 	insertBefore(insertPoint,document.createElement('p'));
-	insertTitle(insertPoint,'Mountyzilla : Options');
+	var ti = insertTitle(insertPoint,'Mountyzilla : Options');
+	ti.title = 'Version ' + GM_info.script.version;
 	insertOptionTable(insertPoint);
 	/* insertion enchantements ici
 	if(...)
@@ -7525,7 +7609,7 @@ function getVueScript() {
 			'#DEBUT ORIGINE\n'+
 			getPorteVue()[2]+';'+positionToString(getPosition())+
 			'\n#FIN ORIGINE\n';
-			window.console.log('[MZd] fin getVueScript');
+			window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
 		return txt;
 	} catch(e) {
 		avertissement("[getVueScript] Erreur d'export vers Vue externe");
@@ -7548,7 +7632,7 @@ function refresh2DViewButton() {
 	}
 	appendSubmit(form, 'Voir',
 		function() {
-			window.console.log('[MZd] click voir vue externe');
+			window.console.log('[MZd ' + GM_info.script.version + '] click voir vue externe');
 			document.getElementsByName(vue2Ddata[vueext].paramid)[0].value =
 				vue2Ddata[vueext].func();
 		}
@@ -7570,7 +7654,7 @@ function set2DViewSystem() {
 		).singleNodeValue;
 	} catch(e) {
 		avertissement("Erreur d'initialisation du système de vue 2D");
-		window.console.error("[MZ] set2DViewSystem",e);
+		window.console.error("[MZ " + GM_info.script.version + "] set2DViewSystem",e);
 		return;
 	}
 	
@@ -7586,7 +7670,7 @@ function set2DViewSystem() {
 		selectVue2D = document.createElement('select');
 		selectVue2D.id = 'selectVue2D';
 		selectVue2D.className = 'SelectboxV2';
-		window.console.log('[MZd] préparation ' + Object.keys(vue2Ddata).length + ' types de vue');
+		window.console.log('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue');
 		for(var view in vue2Ddata) {
 			appendOption(selectVue2D, view, view);
 		}
@@ -7610,10 +7694,10 @@ function set2DViewSystem() {
 		
 		// Appelle le handler pour initialiser le bouton de submit
 		refresh2DViewButton();
-		window.console.log('[MZd] fin prépartation des vues externes');
+		window.console.log('[MZd ' + GM_info.script.version + '] fin préparation des vues externes');
 	} catch(e) {
 		avertissement("Erreur de traitement du système de vue 2D");
-		window.console.error("[MZ] set2DViewSystem",e);
+		window.console.error("[MZ " + GM_info.script.version + "] set2DViewSystem",e);
 	}
 }
 
@@ -9357,8 +9441,8 @@ function do_vue() {
 		
 		displayScriptTime();
 	} catch(e) {
-		avertissement("[MZ] Une erreur s'est produite.");
-		window.console.error("[MZ] Erreur générale Vue",e);
+		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
+		window.console.error("[MZ " + GM_info.script.version + "] Erreur générale Vue",e);
 	}
 }
 
@@ -9705,7 +9789,7 @@ function extractionDonnees() {
 		HeureServeur = new Date(StringToDate(heureServeurSTR));
 	} catch (e) {
 		window.console.warn(
-			"[MZ] Heure Serveur introuvable, utilisation de l'heure actuelle", e
+			"[MZ " + GM_info.script.version + "] Heure Serveur introuvable, utilisation de l'heure actuelle", e
 		);
 		HeureServeur = new Date();
 	}
@@ -11021,8 +11105,8 @@ function do_profil2()
 		saveProfil();
 		displayScriptTime();
 	} catch(e) {
-		avertissement("[MZ] Une erreur s'est produite.");
-		window.console.error("[MZ] Erreur générale Profil",e);
+		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
+		window.console.error("[MZ " + GM_info.script.version + "] Erreur générale Profil",e);
 	}
 }
 
