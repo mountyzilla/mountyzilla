@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.12.2
+// @version     1.2.13
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -89,6 +89,9 @@
 //		Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)
 // V1.2.12.2 30/12/2016
 //		retour en mode normal (http si jeu en http)
+// V1.2.13 01/01/2017
+//		homogénéisation des messages d'erreur
+//		Ajout du lien Troogle sur les étapes de mission monstre
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -102,6 +105,7 @@
 		Réactiver les jubilaires
 		[Prioritaire] trajets Gowaps sans avoir besoin de URL_MZscriptCarte (voir comment c'est fait dans Trajet_des_gowap_MkII.user.js)
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
+		Lien vers Troogle sur l'étape de mission active
 **********************************************************/
 
 /**********************************************************
@@ -125,6 +129,7 @@ const URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 const URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
 const URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 const URL_cyclotrolls = 'http://www.cyclotrolls.be/';
+const URL_troogle = 'http://troogle.iktomi.eu/entities/';
 
 // URLs de test HTTPS
 var URL_CertifRaistlin1 = URL_MZ.replace(/http:\/\//, 'https://') + '/img/1.gif';	// s'adapte si mode IP
@@ -133,7 +138,6 @@ const URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
 // ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
 var URL_bricol = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
 const URL_bricol_https = 'https://it.mh.raistlin.fr/'	// IT bricol'troll en https via relai Raistlin
-//const URL_trooglebeta = 'http://troogle-beta.aacg.be/view_submission';	// obsolette et pas utilisé
 
 // x~x Libs
 
@@ -220,6 +224,21 @@ function displayScriptTime() {
 		' - [Script exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
 	if(MY_DEBUG) window.console.log('[MZ ' + GM_info.script.version + '] fin sur ' + window.location.pathname);
+}
+
+function traceStack(e, sModule) {
+	var version  = '';
+	if (GM_info && GM_info.script && GM_info.script.version)
+		version = ' ' + GM_info.script.version;
+	sRet = '[MZ' + version + ']'
+	if (sModule) sRet += ' {' + sModule + '}';
+	if (e.message) sRet += ' ' + e.message;
+	if (e.stack) {
+		var sStack = e.stack;
+		// enlever les infos confidentielles
+		sRet += "\n" + sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
+	}
+	return sRet;
 }
 
 /*-[functions]---------- DEBUG: Communication serveurs -----------------------*/
@@ -825,7 +844,7 @@ function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic, valDef, valMin, val
 					return;
 				}
 				// à faire : zoom de l'elt
-			} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '] glissiere_MZ.doCallback erreur ' + e)}
+			} catch (e) {window.console.log(traceStack(e, 'glissiere_MZ.doCallback'))}
 		};
 
 		////////////////////////////////////
@@ -849,7 +868,7 @@ function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic, valDef, valMin, val
 		var val_init = MY_getValue("MZ_glissiere_" + ref);
 		if (val_init === undefined) val_init = valDef;
 		dessine_glissiere(val_init);
-	} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '], erreur glissiere_MZ ' + e)}
+	} catch (e) {window.console.log(traceStack(e, 'glissiere_MZ'))}
 }
 
 
@@ -2319,7 +2338,7 @@ function analyseTactique(donneesMonstre,nom) {
  
  // x~x mission_liste
 
-function checkLesMimis() {
+function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 	try {
 		var titresMimis = document.evaluate(
 			"//div[@class='mh_titre3']/b/a[contains(@href,'Mission_')]",
@@ -2327,7 +2346,7 @@ function checkLesMimis() {
 		);
 		var obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 	} catch(e) {
-		window.console.error('[MZ mission_liste] Erreur initialisation:\n'+e);
+		window.console.error(traceStack(e, 'mission_liste initialisation'));
 		return;
 	}
 	
@@ -2632,7 +2651,7 @@ function changeActionDecalage() {
 		oldDLA = new Date( nbs[0],nbs[1],nbs[2],nbs[3],nbs[4],nbs[5] );
 	} catch(e) {
 		avertissement('Erreur de parsage : confirmation de décalage impossible');
-		window.console.error('[changeActionDecalage] DLA non trouvée',e);
+		window.console.error(traceStack(e, 'changeActionDecalage DLA non trouvée'));
 		return;
 	}
 	var form = document.getElementsByName('ActionForm')[0];
@@ -2653,7 +2672,7 @@ function prochainMundi() {
 			document, null, 9, null
 		).singleNodeValue;
 	} catch(e) {
-		window.console.error('[prochainMundi] Date introuvable',e);
+		window.console.error(traceStack(e, 'prochainMundi Date introuvable'));
 		return;
 	}
 	if(!node) { return; }
@@ -3439,7 +3458,7 @@ function initialiseMouches() {
 		tr_mouches = document.evaluate('./tbody/tr', mainTab, null, 7, null);
 	} catch(e) {
 		avertissement('Erreur MZ:<br />Consulter la console.');
-		window.console.error('Erreur MZ mouches:\n'+e);
+		window.console.error(traceStack(e, 'mouches'));
 		return;
 	}
 	if(mainTab===void(0) || tr_mouches.snapshotLength==0) { return; }
@@ -3732,7 +3751,7 @@ function setCarteGogo() {
 			}
 		}
 	}
-	catch(e) {window.console.log('[MZ ' + GM_info.script.version + '] setCarteGogo() impossible de trouver les ordres,' + e); return;}
+	catch(e) {window.console.log(traceStack(e, 'setCarteGogo() impossible de trouver les ordres')); return;}
 	var nvdiv = "<div class='mh_tdpage' style='width:510px;height:455px;'><img src='"+serv_img_trou+"' style='position:relative;top:0px;left:0px;z-index:100;border-width:0px' usemap='#coord_trou'/>";
 	var base = [-229,-5];
 	if (nbpt>0) {
@@ -3758,7 +3777,7 @@ function testeGlissiere() {
 		var gliss = new glissiere_MZ('test', 'Test glissière', 'xxx', false, 100, 50, 250);
 		var footer = document.getElementById('footer1');
 		footer.parentNode.insertBefore(gliss.getElt(), footer);
-	} catch (e) {window.console.log('[MZ ' + GM_info.script.version + '] erreur testeGlissiere ' + e)};
+	} catch (e) {window.console.log(traceStack(e, 'testeGlissiere'))};
 }
 
 function do_ordresgowap() {
@@ -3830,7 +3849,7 @@ function traiteMonstre() {
 		).singleNodeValue;
 		var texte = nodeTitre.firstChild.nodeValue;
 	} catch(e) {
-		window.console.log(e);
+		window.console.log(traceStack(e, 'traiteMonstre'));
 		return;
 	}
 	
@@ -3919,7 +3938,7 @@ function computeMissionInfomonstre() {
 			document, null, 9, null
 		).singleNodeValue;
 	} catch(e) {
-		window.console.log(e);
+		window.console.log(traceStack(e, 'computeMissionInfomonstre'));
 		return;
 	}
 	var table = createCDMTable(idMonstre,nomMonstre,listeCDM[idMonstre]);
@@ -3971,6 +3990,7 @@ function do_infomonstre() {
 
 /* TODO
  * MZ2.0 : gérer le nettoyage des missions terminées via script principal
+ *		Roule 01/01/2017 : c'est fait dans do_mission_liste
  *
  * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
  */
@@ -3981,7 +4001,7 @@ function saveMission(num,obEtape) {
 		try {
 			obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
-			window.console.error('[MZ Mission] Erreur parsage:\n'+e);
+			window.console.error(traceStack(e, 'Mission parsage'));
 			return;
 		}
 	}
@@ -3994,6 +4014,23 @@ function saveMission(num,obEtape) {
 	MY_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
 }
 
+function addtroogle(tdLibelle, sRestrict) {
+	var img = document.createElement('img');
+	img.setAttribute('src', URL_MZimg + 'troogle.ico');
+	var a = document.createElement('a');
+	var url = URL_troogle + '?utf8' + encodeURIComponent('✓');	// hé oui, ce source est unicode
+	url += '&entity_search[search]=' + encodeURIComponent(sRestrict);
+	url += '&entity_search[position_x]=' + MY_getValue(numTroll+".position.X");
+	url += '&entity_search[position_y]=' + MY_getValue(numTroll+".position.Y");
+	url += '&entity_search[position_z]=' + MY_getValue(numTroll+".position.N");
+	a.href = url;
+	a.title = 'Chercher sur Troogle';
+	a.target = 'troogle';
+	a.appendChild(img);
+	tdLibelle.appendChild(a);
+	tdLibelle.parentNode.style.verticalAlign = 'bottom';
+}
+
 function traiteMission() {
 	try {
 		var titreMission = document.getElementsByClassName('titre2')[0];
@@ -4003,7 +4040,7 @@ function traiteMission() {
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 			missionForm, null, 9, null).singleNodeValue;
 	} catch(e) {
-		window.console.error('[MZ Mission] Erreur récupération mission:\n'+e);
+		window.console.error(traceStack(e, 'récupération mission'));
 		return;
 	}
 	if(!numMission) { return; }
@@ -4049,6 +4086,10 @@ function traiteMission() {
 				mundidey: siMundidey,
 				libelle: libelle
 			});
+			if (mod == 'plus')
+				addtroogle(tdLibelle, '@monstre level:' + niveau + '..' + (niveau+99));
+			else
+				addtroogle(tdLibelle, '@monstre level:' + (niveau-mod) + '..' + (niveau+mod));
 		} else if(libelle.indexOf('de la race')!=-1) {
 			var nbKills = 1, race;
 			if(tdLibelle.firstChild.nodeValue.indexOf('de la race')==-1) {
@@ -4065,6 +4106,7 @@ function traiteMission() {
 				mundidey: siMundidey,
 				libelle: libelle
 			});
+			addtroogle(tdLibelle, '@monstre:' + race.replace(/\"/g,''));
 		} else if(libelle.indexOf('de la famille')!=-1) {
 			var nbKills = 1, famille;
 			if(tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
@@ -4081,6 +4123,7 @@ function traiteMission() {
 				mundidey: siMundidey,
 				libelle: libelle
 			});
+			addtroogle(tdLibelle, '@monstre ' + famille);
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 			saveMission(numMission,{
@@ -4092,7 +4135,7 @@ function traiteMission() {
 			saveMission(numMission,false);
 		}
 	} catch(e) {
-		window.console.error('[MZ Mission] Erreur récupération étape mission:\n'+e);
+		window.console.error(traceStack(e, 'récupération étape mission'));
 		return;
 	}
 }
@@ -4360,7 +4403,7 @@ function testCertif(paramURL, callbackOnError) {
 			}
 		});
 	} catch(e) {
-		window.console.log('testCertif(' + paramURL + '), exception=' + e);
+		window.console.log('[MZ] erreur testCertif(' + paramURL + ')' + traceStack(e, 'testCertif'));
 		callbackOnError();
 	}
 }
@@ -4477,7 +4520,7 @@ function traiterJubilaires_a_supprimer() {	// ancienne méthode
 		}
 	catch(e) {
 		if (isHTTPS) {
-			window.console.log('exception à l\'appel jubilaires ' + e);
+			window.console.log(traceStack(e, 'appel jubilaires'));
 			showHttpsErrorContenuMixte();
 		} else {
 			window.alert('Erreur Jubilaires:\n'+e);
@@ -4532,6 +4575,7 @@ function traiterNouvelles() {
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 	news.push(['24/12/2016', 'Retour de la carte montrant les déplacements des Gowaps']);
 	news.push(['24/12/2016', 'Le lien avec Bricol\'Troll est maintenant disponible en https']);
+	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
 	afficherNouvelles(news);
 }
 
@@ -6288,7 +6332,7 @@ function setChoixCouleurs() {
 			form, null, 7, null
 		);
 	} catch(e) {
-		window.console.error('[Diplomatie] Structure de la page non reconnue');
+		window.console.error(traceStack(e, 'Diplomatie Structure de la page non reconnue'));
 		return false;
 	};
 	nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
@@ -6329,7 +6373,7 @@ function fetchDiploGuilde() {
 			}
 		}
 	} catch(e) {
-		window.console.error('[Diplomatie] Échec de récupération de la diplo\n'+e);
+		window.console.error(traceStack(e, 'Diplomatie récupération de la diplo'));
 		return false;
 	}
 	return true;
@@ -7053,7 +7097,7 @@ function oldSchoolProfile() {
 		lienProfil.href = "Play_profil.php";
 	} catch(e) {
 		avertissement();
-		window.console.log("[MZ menu] Lien vers le profil non trouvé",e);
+		window.console.log(traceStack(e, 'menu Lien vers le profil non trouvé'));
 	}
 }
 
@@ -7262,7 +7306,7 @@ function getMonstreNomNode(i) {
 		return td;
 	} catch(e) {
 		avertissement('[getMonstreNomNode] Impossible de trouver le monstre '+i);
-		window.console.error(e);
+		window.console.error(traceStack(e, 'getMonstreNomNode Impossible de trouver le monstre'+i));
 	}
 }
 
@@ -7279,7 +7323,7 @@ function getMonstreNomByTR(tr) {
 		return nom;
 	} catch(e) {
 		avertissement('[getMonstreNom] Impossible de trouver le monstre '+i);
-		window.console.error(e);
+		window.console.error(traceStack(e, 'getMonstreNom Impossible de trouver le monstre '+i));
 	}
 }
 
@@ -7348,8 +7392,7 @@ function getTrollGuildeID(i) {
 			if ((!tr_trolls[i].childNodes[6].firstChild) || (!tr_trolls[i].childNodes[6].firstChild.getAttribute)) return -1;	// Roule 21/12/2016 protection conte le "bug Marsak"
 			href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
 		} catch(e) {	// debug pb remonté par Marsak 
-			window.console.error('[MZ getTrollGuildeID]\n'
-				,e
+			window.console.error(traceStack(e, 'getTrollGuildeID')
 				,'nb child=' + tr_trolls[i].childNodes[6].childNodes.length
 				,tr_trolls[i].innerHTML.replace(/</g, '‹'));
 			return -1;
@@ -7613,7 +7656,7 @@ function getVueScript() {
 		return txt;
 	} catch(e) {
 		avertissement("[getVueScript] Erreur d'export vers Vue externe");
-		window.console.error('[MZ getVueScript]\n',e)
+		window.console.error(traceStack(e, 'getVueScript'))
 	}
 }
 
@@ -7654,7 +7697,7 @@ function set2DViewSystem() {
 		).singleNodeValue;
 	} catch(e) {
 		avertissement("Erreur d'initialisation du système de vue 2D");
-		window.console.error("[MZ " + GM_info.script.version + "] set2DViewSystem",e);
+		window.console.error(traceStack(e, 'set2DViewSystem'));
 		return;
 	}
 	
@@ -7697,7 +7740,7 @@ function set2DViewSystem() {
 		window.console.log('[MZd ' + GM_info.script.version + '] fin préparation des vues externes');
 	} catch(e) {
 		avertissement("Erreur de traitement du système de vue 2D");
-		window.console.error("[MZ " + GM_info.script.version + "] set2DViewSystem",e);
+		window.console.error(traceStack(e, 'set2DViewSystem'));
 	}
 }
 
@@ -7724,7 +7767,7 @@ function initialiseInfos() {
 		debugMZ("retrievePosition(): "+currentPosition);
 	} catch(e) {
 		// Si on ne trouve pas le "X ="
-		window.console.error("[MZ Vue] Position joueur non trouvée",e);
+		window.console.error(traceStack(e, 'Vue Position joueur non trouvée'));
 	}
 	
 	// Récupération des portées (max et limitée) de la vue
@@ -7742,7 +7785,7 @@ function initialiseInfos() {
 		// ***INIT GLOBALE*** porteeVue
 		porteeVue = array;
 	} catch(e) {
-		window.console.error("[MZ Vue] Portées Vue non trouvées",e);
+		window.console.error(traceStack(e, 'Vue Portées Vue non trouvée'));
 	}
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
@@ -7986,103 +8029,6 @@ function ajoutDesFiltres() {
 		ajoutFiltreStr(td,'Nom du lieu:','strLieux',filtreLieux);
 	}
 }
-
-/* [functions] Bouton d'envoi vers Troogle */
-// WARNING - Nécessite que le Filtre Monstres ait été mis en place
-function envoiVersTroogle() {
-// = 1er Handler bouton Troogle
-	try {
-		var bouton = document.getElementById('bouton_Troogle');
-	} catch(e) {
-		window.console.log('Bouton d\'envoi non trouvé.');
-		return;
-	}
-	bouton.onclick = lireInfosTroogle;
-	bouton.value = 'Envoi en cours';
-	var responses = {}, erreur = false;
-	var maxDonnees = Math.max(
-		nbMonstres,
-		nbTresors,
-		nbLieux
-	);
-	var parLot = 100;
-	var lotStop = Math.ceil(maxDonnees/parLot);
-	for(var i=0 ; i<lotStop ; i++) {
-		var debutLot = parLot*i+1;
-		var finLot = parLot*(i+1);
-		var data = //'#'+numTroll+
-			bddMonstres(debutLot,finLot)+'\n'+
-			bddTresors(1,debutLot,finLot)+'\n'+
-			bddLieux(debutLot,finLot);
-		FF_XMLHttpRequest({
-			method: 'POST',
-			url: URL_trooglebeta,
-			//url: 'http://weblocal/POST_RESULT/index.php',
-			headers : {
-				'Content-type': 'application/x-www-form-urlencoded'
-			},
-			data: 'view='+encodeURIComponent(data), //+'&from='+debutLot,
-			lot: i,
-			debutLot: debutLot,
-			finLot: finLot,
-			onload:	function(responseDetails) {
-				try {
-					var resp = responseDetails.responseText;
-					responses[this.lot] = 'Envoi des éléments '+this.debutLot+
-						' à '+Math.min(maxDonnees,this.finLot)+' :\n'+resp;
-					if(resp.indexOf('succès')==-1) {
-						erreur = true;
-					}
-				} catch(e) {
-					console.error(e);
-					return;
-				}
-				var txt = '';
-				var fini = true;
-				for(var j=0 ; j<lotStop ; j++) {
-					if(responses[j]) {
-						txt += txt ? '\n'+responses[j] : responses[j];
-					} else {
-						fini = false;
-					}
-				}
-				bouton.info = txt;
-				if(fini) {
-					bouton.value = erreur ? 'Erreur' : 'Envoi réussi';
-				}
-			}
-		});
-	}
-}
-
-function lireInfosTroogle() {
-// = 2e Handler bouton Troogle
-	try {
-		var infos = document.getElementById('bouton_Troogle').info;
-	} catch(e) {
-		avertissement('[lireInfosTroogle] Bouton Troogle non trouvé');
-		window.console.error('[lireInfosTroogle]\n'+e);
-		return;
-	}
-	window.alert(infos);
-}
-
-function putBoutonTroogle() {
-	var td = document.getElementById('tdInsertMonstres');
-	td = insertTd(td.nextSibling);
-	td.style.fontSize = '0px';
-	var bouton = document.createElement('input');
-	bouton.type = 'button';
-	bouton.id = 'bouton_Troogle';
-	bouton.className = 'mh_form_submit';
-	bouton.value = 'Envoyer les données vers Troogle';
-	bouton.onmouseover = function(){
-		this.style.cursor='pointer';
-	};
-	bouton.onclick = envoiVersTroogle;
-	td.appendChild(bouton);
-}
-
 
 /*-[functions]--------------- Fonctions Monstres -----------------------------*/
 
@@ -8362,9 +8308,7 @@ function retrieveCDMs() {
 						}
 						computeMission(begin2,end2);
 					} catch(e) {
-						window.console.error(
-							'[retrieveCDMs]\n'+e+'\n'+URL_MZinfoMonstre+'\n'+texte
-						);
+						window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
 					}
 				}
 			});
@@ -9095,7 +9039,7 @@ function putScriptExterne() {
 							putInfosTrolls(ratibusData.data.trolls);
 						}
 					} catch(e) {
-						window.console.log('exception retour bricol\'troll ' + e);
+						window.console.log(traceStack(e, 'retour bricol\'troll'));
 						avertissement('<br />Erreur dans la réponse de Bricol\'Troll<br />' + e + '<br />' + responseDetails.responseText);
 					}
 				}
@@ -9104,7 +9048,7 @@ function putScriptExterne() {
 			if (isHTTPS) {
 				avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
 			} else {
-				window.console.log('exception appel bricol\'troll ' + e);
+				window.console.log(traceStack(e, 'appel bricol\'troll'));
 				avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<br />' + e);
 			}
 		}
@@ -9442,7 +9386,7 @@ function do_vue() {
 		displayScriptTime();
 	} catch(e) {
 		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
-		window.console.error("[MZ " + GM_info.script.version + "] Erreur générale Vue",e);
+		window.console.error(traceStack(e, 'vue'));
 	}
 }
 
@@ -11106,7 +11050,7 @@ function do_profil2()
 		displayScriptTime();
 	} catch(e) {
 		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
-		window.console.error("[MZ " + GM_info.script.version + "] Erreur générale Profil",e);
+		window.console.error(traceStack(e, 'profil2'));
 	}
 }
 
@@ -11793,7 +11737,7 @@ function getEssaiV1_0() {
 		return;
 		//return r;
 	} catch (e) {
-		window.console.log('Erreur getEssaiV1_0() :\n'+e);
+		window.console.log(traceStack(e, 'getEssaiV1_0'));
 	}
 }
 
@@ -11829,58 +11773,67 @@ function showEssaiCartes() {
 //chargerScriptDev("libs");
 //chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
 
-// Détection de la page à traiter
-if(isPage("Messagerie/ViewMessageBot")) {
-	do_cdmbot();
-} else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
-	do_cdmcomp();
-} else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
-	do_diplo();
-} else if(isPage("MH_Play/Play_equipement")) {
-	do_equip();
-} else if(isPage("MH_Play/Play_menu")) {
-	do_menu();
-} else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
-	do_option();
-	//showEssaiCartes();
-} else if(isPage("View/PJView")) {
-	do_pjview();
-} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
-	do_profil();
-} else if(isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
-	do_tancompo();
-} else if(isPage("MH_Play/Play_vue")) {
-	do_vue();
-} else if(isPage("MH_Play/Play_news")) {
-	do_news();
-} else if(isPage("MH_Play/Actions/Play_a_Move") || 	isPage("MH_Lieux/Lieu_Teleport")) {
-	do_move();
-} else if(isPage("MH_Missions/Mission_Etape")) {
-	do_mission();
-} else if(isPage("View/MonsterView")) {
-	do_infomonstre();
-} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
-	do_attaque();
-} else if(isPage("MH_Follower/FO_Ordres")) {
-	do_ordresgowap();
-} else if(isPage("MH_Follower/FO_Equipement")) {
-	do_equipgowap();
-} else if(isPage("MH_Play/Play_mouche")) {
-	do_mouches();
-} else if(isPage("MH_Play/Play_BM")) {
-	do_malus();
-} else if(isPage("MH_Play/Play_evenement")) {
-	do_myevent();
-} else if(isPage("MH_Lieux/Lieu_DemanderEnchantement")) {
-	do_enchant();
-} else if(isPage("MH_Lieux/Lieu_Enchanteur")) {
-	do_pre_enchant();
-} else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
-	do_actions();
-} else if(isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
-	do_mission_liste();
-} else if(isPage('MH_Play/Play_action')) {
-	do_actions();
-} else if(isPage('MH_Play/Play_profil2')) {
-    do_profil2();
+try {
+	// Détection de la page à traiter
+	if(isPage("Messagerie/ViewMessageBot")) {
+		do_cdmbot();
+	} else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
+		do_cdmcomp();
+	} else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
+		do_diplo();
+	} else if(isPage("MH_Play/Play_equipement")) {
+		do_equip();
+	} else if(isPage("MH_Play/Play_menu")) {
+		do_menu();
+	} else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
+		do_option();
+		//showEssaiCartes();
+	} else if(isPage("View/PJView")) {
+		do_pjview();
+	} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
+		do_profil();
+	} else if(isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
+		do_tancompo();
+	} else if(isPage("MH_Play/Play_vue")) {
+		do_vue();
+	} else if(isPage("MH_Play/Play_news")) {
+		do_news();
+	} else if(isPage("MH_Play/Actions/Play_a_Move") || 	isPage("MH_Lieux/Lieu_Teleport")) {
+		do_move();
+	} else if(isPage("MH_Missions/Mission_Etape")) {
+		do_mission();
+	} else if(isPage("View/MonsterView")) {
+		do_infomonstre();
+	} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
+		do_attaque();
+	} else if(isPage("MH_Follower/FO_Ordres")) {
+		do_ordresgowap();
+	} else if(isPage("MH_Follower/FO_Equipement")) {
+		do_equipgowap();
+	} else if(isPage("MH_Play/Play_mouche")) {
+		do_mouches();
+	} else if(isPage("MH_Play/Play_BM")) {
+		do_malus();
+	} else if(isPage("MH_Play/Play_evenement")) {
+		do_myevent();
+	} else if(isPage("MH_Lieux/Lieu_DemanderEnchantement")) {
+		do_enchant();
+	} else if(isPage("MH_Lieux/Lieu_Enchanteur")) {
+		do_pre_enchant();
+	} else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
+		do_actions();
+	} else if(isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
+		do_mission_liste();
+	} else if(isPage('MH_Play/Play_action')) {
+		do_actions();
+	} else if(isPage('MH_Play/Play_profil2')) {
+		do_profil2();
+	}
+} catch(e) {
+	if (e.stack) {
+		var sStack = e.stack;
+		// enlever les infos confidentielles
+		sStack =  sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
+	} else {var sStack = '';}
+	window.console.log(traceStack(e, 'catch général page ' + window.location.pathname));
 }
