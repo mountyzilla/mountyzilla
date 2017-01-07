@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.3
+// @version     1.2.13.4
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -99,6 +99,8 @@
 //		Correction missions, recherche troogle (familles et types de monstres)
 // V1.2.13.3 07/01/2017
 //		Correction erreur sur un commentaire qui bloquait la compilation javascript
+// V1.2.13.4 07/01/2017
+//		Plus de traces en mode debug pour l'analyse des étapes de mission
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -4054,10 +4056,11 @@ function traiteMission() {
 		window.console.error(traceStack(e, 'récupération mission'));
 		return;
 	}
-	if(!numMission) { return; }
+	if (!numMission) { debugMZ('traiteMission pas de numMission, titreMission=' . titreMission.outerHTML.replace(/</g, '‹')); return; }
 	try {
 		if(!tdLibelle) {
 			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
+			debugMZ('traiteMission, la mission semble terminée');
 			saveMission(numMission,false);
 			return;
 		}
@@ -4065,7 +4068,10 @@ function traiteMission() {
 		var libelle = trim(tdLibelle.textContent.replace(/\n/g,''));
 		var siMundidey = libelle.indexOf('Mundidey')!=-1;
 		// debug Roule'
-		//for (var i =0; i < tdLibelle.childNodes.length; i++) window.console.log('traiteMission, tdLibelle.childNodes[' + i + ']=' + tdLibelle.childNodes[i].textContent);
+		if (MY_DEBUG) {
+			for (var i =0; i < tdLibelle.childNodes.length; i++)
+				window.console.log('traiteMission, tdLibelle.childNodes[' + i + ']=' + tdLibelle.childNodes[i].textContent);
+		}
 		if(libelle.indexOf('niveau égal à')!=-1) {
 			var nbKills = 1, niveau, mod;
 			if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
@@ -4089,7 +4095,9 @@ function traiteMission() {
 				mod = mod ? Number(mod[0]) : 'plus';
 			}
 			// debug Roule'
-			//window.console.log('traiteMission, save niveau=' + niveau + ', mod=' + mod + ', siMundidey=' + ', libelle=' + libelle);
+			if (MY_DEBUG) {
+				window.console.log('traiteMission, save niveau=' + niveau + ', mod=' + mod + ', siMundidey=' + siMundidey + ', libelle=' + libelle);
+			}
 			saveMission(numMission,{
 				type: 'Niveau',
 				niveau: niveau,
@@ -4140,12 +4148,14 @@ function traiteMission() {
 			addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/gu, 'e').replace(/ï/gu, 'i'));
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
+			debugMZ('traiteMission étape capacité spéciale');
 			saveMission(numMission,{
 				type: 'Pouvoir',
 				pouvoir: pouvoir,
 				libelle: libelle
 			});
 		} else {
+			debugMZ('traiteMission étape pas pour troogle');
 			saveMission(numMission,false);
 		}
 	} catch(e) {
@@ -7106,7 +7116,6 @@ function cacheMenu(e) {
 
 // ajout de l'icône, branchée sur un refresh
 function initUpdateCoordGauche() {
-	
 	var div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	//window.console.log('initUpdateCoordGauche ' + div.innerHTML);
 	var img = document.createElement('img');
