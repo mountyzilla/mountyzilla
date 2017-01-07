@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.2
+// @version     1.2.13.3
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -97,6 +97,8 @@
 //		Ajout du "refresh" du cadre de gauche
 // V1.2.13.2 07/01/2017
 //		Correction missions, recherche troogle (familles et types de monstres)
+// V1.2.13.3 07/01/2017
+//		Correction erreur sur un commentaire qui bloquait la compilation javascript
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -4134,7 +4136,7 @@ function traiteMission() {
 				mundidey: siMundidey,
 				libelle: libelle
 			});
-			Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
+			//Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
 			addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/gu, 'e').replace(/ï/gu, 'i'));
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
@@ -7102,8 +7104,7 @@ function cacheMenu(e) {
 	}
 }
 
-// ajout de l'icône, brachée sur un refresh
-// ajout de l'icône, brachée sur un refresh
+// ajout de l'icône, branchée sur un refresh
 function initUpdateCoordGauche() {
 	
 	var div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
