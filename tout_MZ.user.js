@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.1
+// @version     1.2.13.2
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -95,6 +95,8 @@
 // V1.2.13.1 06/01/2017
 //		Suppression oldSchoolProfile qui n'existe plus
 //		Ajout du "refresh" du cadre de gauche
+// V1.2.13.2 07/01/2017
+//		Correction missions, recherche troogle (familles et types de monstres)
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -4107,13 +4109,14 @@ function traiteMission() {
 				// Étape de kill unique de race donnée
 				race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
+			race = race.replace(/\"/g,'');
 			saveMission(numMission,{
 				type: 'Race',
-				race: race.replace(/\"/g,''),
+				race: race,
 				mundidey: siMundidey,
 				libelle: libelle
 			});
-			addtroogle(tdLibelle, '@monstre:' + race.replace(/\"/g,''));
+			addtroogle(tdLibelle, '@monstre ' + race);
 		} else if(libelle.indexOf('de la famille')!=-1) {
 			var nbKills = 1, famille;
 			if(tdLibelle.firstChild.nodeValue.indexOf('de la famille')==-1) {
@@ -4124,13 +4127,15 @@ function traiteMission() {
 				// Étape de kill unique de famille donnée
 				famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
+			famille = famille.replace(/\"/g,'');
 			saveMission(numMission,{
 				type: 'Famille',
 				famille: famille,
 				mundidey: siMundidey,
 				libelle: libelle
 			});
-			addtroogle(tdLibelle, '@monstre ' + famille);
+			Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
+			addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/gu, 'e').replace(/ï/gu, 'i'));
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 			saveMission(numMission,{
@@ -4583,6 +4588,7 @@ function traiterNouvelles() {
 	news.push(['24/12/2016', 'Retour de la carte montrant les déplacements des Gowaps']);
 	news.push(['24/12/2016', 'Le lien avec Bricol\'Troll est maintenant disponible en https']);
 	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
+	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
 	afficherNouvelles(news);
 }
 
