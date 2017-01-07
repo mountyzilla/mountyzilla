@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.4
+// @version     1.2.13.5
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -101,6 +101,8 @@
 //		Correction erreur sur un commentaire qui bloquait la compilation javascript
 // V1.2.13.4 07/01/2017
 //		Plus de traces en mode debug pour l'analyse des étapes de mission
+// V1.2.13.5 07/01/2017
+//		Correction bug qui se manisfestait sous LINUX
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -115,7 +117,7 @@
 		[Prioritaire] trajets Gowaps sans avoir besoin de URL_MZscriptCarte (voir comment c'est fait dans Trajet_des_gowap_MkII.user.js)
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
-			- voir l'intérête de refaire fonctionner
+			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
 **********************************************************/
 
@@ -4145,7 +4147,7 @@ function traiteMission() {
 				libelle: libelle
 			});
 			//Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
-			addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/gu, 'e').replace(/ï/gu, 'i'));
+			addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/g, 'e').replace(/ï/g, 'i'));
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 			debugMZ('traiteMission étape capacité spéciale');
