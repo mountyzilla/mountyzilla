@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.5
+// @version     1.2.13.6
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -103,6 +103,8 @@
 //		Plus de traces en mode debug pour l'analyse des étapes de mission
 // V1.2.13.5 07/01/2017
 //		Correction bug qui se manisfestait sous LINUX
+// V1.2.13.6 08/01/2017
+//		Réécriture analyse des étapes de mission sur monstre de niveau...
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -4076,25 +4078,50 @@ function traiteMission() {
 		}
 		if(libelle.indexOf('niveau égal à')!=-1) {
 			var nbKills = 1, niveau, mod;
-			if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
-				// Étape de kill multiple de niveau donné
-				//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
-					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-					niveau = Number(mod[0]);
-					// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-					mod = mod.length > 1 ? Number(mod[1]) : 'plus';
+			// exemples :
+			// L'équipe doit tuer 3 petits monstres (d'un niveau égal à 27 + ou - 1)
+			// L'équipe doit tuer 2 gros monstres (chaque monstre devant être d'un niveau égal à 44 au moins)
+			// L'équipe doit tuer un petit monstre (chaque monstre devant être d'un niveau égal à 29 + ou - 1) un Mundidey
+			// L'équipe doit tuer un monstre (ce monstre doit être d'un niveau égal à 44 au moins) un Mundidey
+			if (tdLibelle.childNodes.length == 1) {
+				// Roule' 08/01/52017 il n'y a plus de mise en forme. Un seul childNode
+				var m = libelle.match(/niveau égal à *(\d+) * au moins/);
+				if (m) {
+					niveau = Number(m[1]);
+					mod = 'plus'
 				} else {
-					niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
-					// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-					mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-					mod = mod ? Number(mod[0]) : 'plus';
+					var m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
+					if (m) {
+						niveau = Number(m[1]);
+						mod = Number(m[2]);
+					} else {
+						window.console.log('[MZ ' + GM_info.script.version + '] traiteMission, échec analyse de ' + libelle);
+						return;
+					}
 				}
 			} else {
-				// Étape de kill unique de niveau donné
-				niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
-				mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-				mod = mod ? Number(mod[0]) : 'plus';
+				// ancienne méthode (multi childnode)
+				// à supprimer un jour peut-être
+				if(tdLibelle.firstChild.nodeValue.indexOf('niveau égal à')==-1) {
+					// Étape de kill multiple de niveau donné
+					//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+					if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
+						mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
+						niveau = Number(mod[0]);
+						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
+						mod = mod.length > 1 ? Number(mod[1]) : 'plus';
+					} else {
+						niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
+						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
+						mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
+						mod = mod ? Number(mod[0]) : 'plus';
+					}
+				} else {
+					// Étape de kill unique de niveau donné
+					niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
+					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
+					mod = mod ? Number(mod[0]) : 'plus';
+				}
 			}
 			// debug Roule'
 			if (MY_DEBUG) {
