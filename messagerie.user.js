@@ -3,7 +3,9 @@
 // @namespace   MH
 // @description Gestion "re" et previsu messagerie
 // @include     */mountyhall/*
-// @version     1.2.1
+// @version     1.2.2
+// @exclude     *trolls.ratibus.net*
+// @exclude     *it.mh.raistlin.fr*
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js
 // ==/UserScript==
@@ -16,6 +18,7 @@
  * Auteurs : Bandedrubor (93138) / Kassbinette (95429) / disciple (62333) / Accaorrillia (71876)
  * V1.2 Rouletabille (91305) 27/03/2016, adaptation Fx 45 (détection de la page, localStorage)
  * V1.2.1 Rouletabille 	simplification de l'entête GM (include) + passage à greasyfork
+ * V1.2.2 Rouletabille 	exclusion du site Bricoll'Troll
  */
 
 /* Lancement du script selon la page chargée */

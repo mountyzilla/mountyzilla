@@ -3,7 +3,9 @@
 // @namespace   MH
 // @description Client MountyZilla
 // @include     */mountyhall/*
-// @version     1.2.13.6
+// @exclude     *trolls.ratibus.net*
+// @exclude     *it.mh.raistlin.fr*
+// @version     1.2.13.7
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -105,6 +107,8 @@
 //		Correction bug qui se manisfestait sous LINUX
 // V1.2.13.6 08/01/2017
 //		Réécriture analyse des étapes de mission sur monstre de niveau...
+// V1.2.13.7 10/01/2017
+//		Exclusion Bricoll'troll dans l'entête GM
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -4630,6 +4634,7 @@ function traiterNouvelles() {
 	news.push(['24/12/2016', 'Le lien avec Bricol\'Troll est maintenant disponible en https']);
 	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
 	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
+	news.push(['10/01/2017', '<span style="color:red">Il n\'est plus nécessaire de bloquer les mises à jour de Firefox</span>. MZ devrait fonctionner sur toutes les versions&nbsp;: anciennes, récentes, béta']);
 	afficherNouvelles(news);
 }
 
@@ -4641,6 +4646,15 @@ function afficherNouvelles(items) {
 		}
 	var p = document.createElement('p');
 	var tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
+	var div = document.createElement('div');
+	div.style.position = 'absolute';
+	div.style.right = 0;
+	div.style.top = 0;
+	div.style.paddingRight = '3px';
+	div.style.whiteSpace = 'nowrap';
+	appendText(div, '(version ' + GM_info.script.version + ')');
+	tbody.rows[0].cells[0].style.position = 'relative';
+	tbody.rows[0].cells[0].appendChild(div);
 	for(var i=0 ; i<items.length ; i++) {
 		var tr = appendTr(tbody,'mh_tdpage');
 		var td = appendTdCenter(tr);
@@ -5946,6 +5960,7 @@ function insertCreditsTable(insertPt) {
 	appendLI(ul,'Marmotte (93138) pour son support technique récurrent');
 	appendLI(ul,'Hennet (74092) pour le script du nouveau profil');
 	appendLI(ul,'Raistlin (61214, 109327) pour le script sur les caracs de l\'équipement et maintenant pour l\'hébergement');
+	appendLI(ul,'Markotroll (27637) pour les tests sous LINUX');
 	appendLI(ul,'Tous les testeurs de la nouvelle génération oubliés par Dabihul puis Rouletabille');
 	}
 
