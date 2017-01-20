@@ -5,12 +5,12 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.14.1
+// @version     1.2.14.2
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
 
-// vérif UTF-8 éê
+// vérif UTF-8 ş
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -31,6 +31,8 @@
 *******************************************************************************/
 
 const MZ_changeLog = [
+"V1.2.14.2 20/01/2017",
+"	forcer filtrage après le chargement des niveaux des monstres dans la vue",
 "V1.2.14.1 20/01/2017",
 "	réécriture filtrage des monstres par niveau dans la vue",
 "	Changelog dans la page des news MZ",
@@ -8813,6 +8815,7 @@ function retrieveCDMs() {
 							}
 						}
 						computeMission(begin2,end2);
+						filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 					} catch(e) {
 						window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
 					}
