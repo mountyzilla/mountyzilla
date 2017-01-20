@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.13.7
+// @version     1.2.14
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -109,6 +109,8 @@
 //		Réécriture analyse des étapes de mission sur monstre de niveau...
 // V1.2.13.7 10/01/2017
 //		Exclusion Bricoll'troll dans l'entête GM
+// V1.2.14 20/01/2017
+//		Ajout de l'export des données Trõlligion
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -296,6 +298,58 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 
 
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
+
+// http://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript
+function copyTextToClipboard(text) {
+  var textArea = document.createElement("textarea");
+
+  //
+  // *** This styling is an extra step which is likely not required. ***
+  //
+  // Why is it here? To ensure:
+  // 1. the element is able to have focus and selection.
+  // 2. if element was to flash render it has minimal visual impact.
+  // 3. less flakyness with selection and copying which **might** occur if
+  //    the textarea element is not visible.
+  //
+  // The likelihood is the element won't even render, not even a flash,
+  // so some of these are just precautions. However in IE the element
+  // is visible whilst the popup box asking the user for permission for
+  // the web page to copy to the clipboard.
+  //
+
+  // Place in top-left corner of screen regardless of scroll position.
+  textArea.style.position = 'fixed';
+  textArea.style.top = 0;
+  textArea.style.left = 0;
+
+  // Ensure it has a small width and height. Setting to 1px / 1em
+  // doesn't work as this gives a negative w/h on some browsers.
+  textArea.style.width = '2em';
+  textArea.style.height = '2em';
+
+  // We don't need padding, reducing the size if it does flash render.
+  textArea.style.padding = 0;
+
+  // Clean up any borders.
+  textArea.style.border = 'none';
+  textArea.style.outline = 'none';
+  textArea.style.boxShadow = 'none';
+
+  // Avoid flash of white box if rendered for any reason.
+  textArea.style.background = 'transparent';
+
+  textArea.value = text;
+
+  document.body.appendChild(textArea);
+
+  textArea.select();
+
+  var successful = document.execCommand('copy');
+
+  document.body.removeChild(textArea);
+  return successful;
+}
 
 function avertissement(txt,duree) {
 	if(!duree) duree = 15000;
@@ -551,7 +605,7 @@ function createAltImage(url,alt,title) {
 	var img = document.createElement('img');
 	img.src = url;
 	img.alt = alt;
-	img.title = title;
+	if (title) img.title = title;
 	img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
 	return img;
 	}
@@ -11821,6 +11875,187 @@ function showEssaiCartes() {
 	window.console.log('fin showEssai Tout_MZ');
 }
 
+/*--------------------------------- Création liste trolligion ---------------------------------*/
+function export_trolligion() {
+	var tabDl = document.getElementsByTagName('dl');
+	if ((!tabDl) || !tabDl[0]) {
+		window.console.log('[MZ ' + GM_info.script.version + '] pas de dl');
+		return;
+	}
+	var tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
+		// nom : string
+		// rayonnement : entier
+		// grades : table d'objets (une occurence par grade)
+			// nom : string
+			// trolls : table d'objets (un par Trõll)
+				// id
+				// nom
+				// idguilde
+				// guilde
+				// race
+				// niveau
+				// ferveur
+	var currentDieu;
+	var currentGrade;
+	for (var iChild1 in tabDl[0].children) {
+		var eChild1 = tabDl[0].children[iChild1];
+		if (eChild1.tagName) switch (eChild1.tagName.toLowerCase()) {
+			case 'dd':	// Trõll
+				var oTroll = {};
+				var tabFigcaption = eChild1.getElementsByTagName('figcaption');
+				if ((!tabFigcaption) || !tabFigcaption[0]) {
+					window.console.log('[MZ ' + GM_info.script.version + '] ignore dd sans figcaption ' + eChild1.innerHTML);
+					break;
+				}
+				for (var iChild2 in tabFigcaption[0].childNodes) {	// childNodes pour obtenir les éléments texte aussi
+					var eChild2 = tabFigcaption[0].childNodes[iChild2];
+					if (eChild2.nodeType === undefined) continue;	// properties
+					//window.console.log('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
+					switch (eChild2.nodeType) {
+						case 1:	//ELEMENT_NODE:
+							switch (eChild2.nodeName.toLowerCase()) {
+								case 'a':
+									var m;
+									if (!eChild2.href) {
+										window.console.log('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
+										break;
+									}
+									m = eChild2.href.match(/EnterPJView\((\d+) *,/);
+									if (m) {
+										oTroll.id = parseInt(m[1]);
+										oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
+										break;
+									}
+									m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
+									if (m) {
+										var idGuilde = parseInt(m[1]);
+										if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
+											oTroll.idguilde = parseInt(m[1]);
+											oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
+										}
+										break;
+									}
+									window.console.log('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
+									break;
+								case 'br':	// ignore
+								case 'style':	// ignore
+									break;
+								case 'div':	// barre de vie
+									if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
+										eChild3 = eChild2.children[0];
+										if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
+											var eChild4 = eChild3.children[0];
+											if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
+											break;
+										}
+									}
+									// pas de break pour bénéficier du log ci-dessous
+								default:
+									window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
+									break;
+							}
+							break;
+						case 3:	//TEXT_NODE:
+							var txt = eChild2.nodeValue.trim();
+							if (txt === '') break;
+							var m = txt.match(/(.*) *\((\d+)\)/);
+							if (m) {
+								oTroll.race = m[1].trim();
+								oTroll.niveau = parseInt(m[2]);
+							} else {
+								oTroll.race = txt;
+							}
+							break;
+						default:	// ne devrait pas arriver
+							window.console.log('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
+							break;
+					}
+				}
+				currentGrade.trolls.push(oTroll);
+				break;
+			case 'dt':
+				var tabH3 = eChild1.getElementsByTagName('h3');
+				if (tabH3 && tabH3[0]) {	// changement de dieu
+					currentDieu = {
+						nom: tabH3[0].innerText || tabH3[0].textContent
+						, grades: []};
+					var txt = eChild1.innerText || eChild1.textContent;
+					var m = txt.match(/yon*ement *:* *(\d+)/);
+					if (m) currentDieu.rayonnement = parseInt(m[1]);
+					currentGrade = undefined;
+					tabDieux.push(currentDieu);
+					break;
+				}
+				var tabH4 = eChild1.getElementsByTagName('h4');
+				if (tabH4 && tabH4[0]) {	// changement de grade
+					var grade;
+					var txt = tabH4[0].innerText || tabH4[0].textContent;
+					tabI = tabH4[0].getElementsByTagName('i');
+					if (tabI && tabI[0]) {
+						grade = tabI[0].innerText || tabI[0].textContent;
+						grade = grade.replace(/"/g, '');
+						m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
+						if (m) grade += ' (' + m[1] + ')';
+					} else {
+						grade = txt.replace(/"/g, '');
+					}
+					currentGrade = {nom: grade, trolls: []};
+					currentDieu.grades.push(currentGrade);
+					break;
+				}
+				window.console.log('[MZ ' + GM_info.script.version + '] ignore tag dt ' + eChild1.innerHTML);
+				break;
+			default:
+				window.console.log('[MZ ' + GM_info.script.version + '] ignore tag ' + eChild1.tagName); //+ ' ' + eChild1);
+		}
+	}
+	//window.console.log('[MZ ' + GM_info.script.version + '] nb dieux = ' + tabDieux.length);
+	//window.console.log('[MZ ' + GM_info.script.version + '] ' + JSON.stringify(tabDieux));
+	var txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
+	for (var iDieu in tabDieux) {
+		var oDieu = tabDieux[iDieu];
+		for (var iGrade in oDieu.grades) {
+			var oGrade = oDieu.grades[iGrade];
+			for (var iTroll in oGrade.trolls) {
+				var oTroll = oGrade.trolls[iTroll];
+				var t = [oDieu.nom, oDieu.rayonnement
+					, oGrade.nom
+					, oTroll.id, oTroll.nom
+					, oTroll.idguilde, oTroll.guilde
+					, oTroll.race, oTroll.niveau
+					, oTroll.ferveur];
+				for (var iParam in t) if (t[iParam] === undefined) t[iParam] = '';	// protection
+				txt += t.join("\t") + "\n";
+			}
+		}
+	}
+	//window.console.log('[MZ ' + GM_info.script.version + '] txt =  ' + txt);
+	try {
+		copyTextToClipboard(txt);
+		window.alert("Les données ont été copiées dans le presse-papier\n"
+			+ "Collez dans Calc\n"
+			+ "ou, au pire, dans EXCEL®");
+	} catch(e) {
+		window.alert("Échec à la copie vers le presse-papier\n" + e);
+	}
+}
+
+function do_trolligion() {
+	var divpopup = document.createElement('div');
+	divpopup.id = 'MZ_divCopier';
+	divpopup.style.position = 'fixed';
+	divpopup.style.top = '2px';
+	divpopup.style.left = '2px;';
+	divpopup.style.backgroundColor = 'rgba(255,255,255,0.5)';
+	divpopup.style.cursor = 'pointer';
+	divpopup.style.zIndex = 200;
+	divpopup.title = '[MZ] Cliquer ici pour copier les données';
+	divpopup.onclick = export_trolligion;
+	var img = createAltImage(URL_MZimg + 'copy_32.png', 'Cliquer ici pour copier les données');
+	divpopup.appendChild(img);
+	document.body.appendChild(divpopup);
+}
+
 /*--------------------------------- Dispatch ---------------------------------*/
 
 //chargerScriptDev("libs");
@@ -11881,6 +12116,8 @@ try {
 		do_actions();
 	} else if(isPage('MH_Play/Play_profil2')) {
 		do_profil2();
+	} else if(isPage('View/TrolligionView.php')) {
+		do_trolligion();
 	}
 } catch(e) {
 	window.console.log(traceStack(e, 'catch général page ' + window.location.pathname));
