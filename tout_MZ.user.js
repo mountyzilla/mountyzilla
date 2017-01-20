@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.14
+// @version     1.2.14.1
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -30,87 +30,92 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-// V1.1 : regroupement en un gros paquet sale
-// V1.2 : toujours un gros paquet sale, passage sous Greasemonkey
-// V1.2.1 :
-//		include des URLs MH alternatives
-//		regroupement des URLs externes en tête de fichier pour pouvoir contempler l'horreur de la diversité de la chose
-//		Ajout d'un message d'alerte en cas de HTTPS sans avoir débloqué le contenu mixte
-// V1.2.2 : correction bug sur les 2 URL raistlin qui avaient été confondues
-// V1.2.3 :
-//		suppression ancien profil
-//		nettoyage doublon sur getPortee
-//		adaptation portee TP basée sur les PI
-//		repository sur greasyfork.org (pour être en https et avoir la mise à jour automatique active par défaut)
-// V1.2.4 14/10/2016
-//		utilisation du relai raistlin pour l'envoi des CdM
-// V1.2.5 17/10/2016
-//		correction doublon do_cdm qui bloquait l'envoi des CdMs lors de la compétence
-//		remise en route de la gestion des options avec intégration md5 dans ce script
-// V1.2.6 19/10/2016
-//		affichage d'un message en cas de certificat raistlin non accepté pour la vue sous https
-//		stockage idguilde et nomguilde
-// V1.2.7 07/11/2016
-//		remise en route de l'interface avec l'IT bricol'Troll
-// V1.2.8 10/11/2016
-//		gestion des messages d'erreur de l'interface avec l'IT bricol'Troll
-//		déplacement des images sur l'infra raistlin + meilleure gestion HTTPS
-// V1.2.9 16/11/2016
-//		adaptation Firefox 50 (comportement différent sur échec Ajax https)
-// V1.2.10 07/12/2016
-//		correction décumul des bonus/malus
-//		affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll
-// V1.2.10.1 08/12/2016
-//		option pour affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll + peaufinage affichage
-// V1.2.10.2 09/12/2016
-//		positionnement des Trõlls camou/invi à la bonne position par rapport à la distance
-// V1.2.10.3 09/12/2016
-//		Adaptation à une modification du HTML MH (voir set2DViewSystem)
-// V1.2.10.4 12/12/2016
-//		Correction bug à la récupération d'une erreur interface Bricoll'Troll
-// V1.2.11 13/12/2016
-//		Passage sur BdD Raistlin \o/
-// V1.2.11.1 17/12/2016
-//		Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un
-// V1.2.11.2 18/12/2016
-//		Correction bug interface Bricoll'Troll, n n'était pas affiché pour les Potrolls au soleil
-// V1.2.11.3 19/12/2016
-//		Correction de la récupération des PI totaux (du coup la portée de TP était NaN)
-//		Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours
-// V1.2.11.4 19/12/2016
-//		Changement des couleurs de la barre de vie Interface Bricol'Troll
-// V1.2.11.5 à 7 20 & 21/12/2016
-//		Trace et protection sur plantage remonté par Marsak (lié à la diplo dans la vue)
-// V1.2.12 24/12/2016
-//		Nettoyage des URL
-//		Mode dev (Shift+Click sur le mot "Crédits" dans Options/Pack Graphique) qui se branche sur le site de dev
-//		Interface bricoll'Troll en https
-//		Remise en marche des cartes des trajets des gowaps
-// V1.2.12.1 27/12/2016
-//		Correction mode IP
-//		Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)
-// V1.2.12.2 30/12/2016
-//		retour en mode normal (http si jeu en http)
-// V1.2.13 01/01/2017
-//		homogénéisation des messages d'erreur
-//		Ajout du lien Troogle sur les étapes de mission monstre
-// V1.2.13.1 06/01/2017
-//		Suppression oldSchoolProfile qui n'existe plus
-//		Ajout du "refresh" du cadre de gauche
-// V1.2.13.2 07/01/2017
-//		Correction missions, recherche troogle (familles et types de monstres)
-// V1.2.13.3 07/01/2017
-//		Correction erreur sur un commentaire qui bloquait la compilation javascript
-// V1.2.13.4 07/01/2017
-//		Plus de traces en mode debug pour l'analyse des étapes de mission
-// V1.2.13.5 07/01/2017
-//		Correction bug qui se manisfestait sous LINUX
-// V1.2.13.6 08/01/2017
-//		Réécriture analyse des étapes de mission sur monstre de niveau...
-// V1.2.13.7 10/01/2017
-//		Exclusion Bricoll'troll dans l'entête GM
-// V1.2.14 20/01/2017
-//		Ajout de l'export des données Trõlligion
+const MZ_changeLog = [
+"V1.2.14.1 20/01/2017",
+"	réécriture filtrage des monstres par niveau dans la vue",
+"	Changelog dans la page des news MZ",
+"V1.2.14 20/01/2017",
+"	Ajout de l'export des données Trõlligion",
+"V1.2.13.7 10/01/2017",
+"	Exclusion Bricoll'troll dans l'entête GM",
+"V1.2.13.6 08/01/2017",
+"	Réécriture analyse des étapes de mission sur monstre de niveau...",
+"V1.2.13.5 07/01/2017",
+"	Correction bug qui se manisfestait sous LINUX",
+"V1.2.13.4 07/01/2017",
+"	Plus de traces en mode debug pour l'analyse des étapes de mission",
+"V1.2.13.3 07/01/2017",
+"	Correction erreur sur un commentaire qui bloquait la compilation javascript",
+"V1.2.13.2 07/01/2017",
+"	Correction missions, recherche troogle (familles et types de monstres)",
+"V1.2.13.1 06/01/2017",
+"	Suppression oldSchoolProfile qui n'existe plus",
+"	Ajout du 'refresh' du cadre de gauche",
+"V1.2.13 01/01/2017",
+"	homogénéisation des messages d'erreur",
+"	Ajout du lien Troogle sur les étapes de mission monstre",
+"V1.2.12.2 30/12/2016",
+"	retour en mode normal (http si jeu en http)",
+"V1.2.12.1 27/12/2016",
+"	Correction mode IP",
+"	Version patch pour forcer https sur /mz.mh.raistlin.fr (http en panne)",
+"V1.2.12 24/12/2016",
+"	Nettoyage des URL",
+"	Mode dev (Shift+Click sur le mot 'Crédits' dans Options/Pack Graphique) qui se branche sur le site de dev",
+"	Interface bricoll'Troll en https",
+"	Remise en marche des cartes des trajets des gowaps",
+"V1.2.11.5 à 7 20 & 21/12/2016",
+"	Trace et protection sur plantage remonté par Marsak (lié à la diplo dans la vue)",
+"V1.2.11.4 19/12/2016",
+"	Changement des couleurs de la barre de vie Interface Bricol'Troll",
+"V1.2.11.3 19/12/2016",
+"	Correction de la récupération des PI totaux (du coup la portée de TP était NaN)",
+"	Interface Bricol'Troll : suppression Trõlls pas mis à jour depuis plus d'un mois et grisé ceux depuis plus de 7 jours",
+"V1.2.11.2 18/12/2016",
+"	Correction bug interface Bricoll'Troll, n n'était pas affiché pour les Potrolls au soleil",
+"V1.2.11.1 17/12/2016",
+"	Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un",
+"V1.2.11 13/12/2016",
+"	Passage sur BdD Raistlin \o/",
+"V1.2.10.4 12/12/2016",
+"	Correction bug à la récupération d'une erreur interface Bricoll'Troll",
+"V1.2.10.3 09/12/2016",
+"	Adaptation à une modification du HTML MH (voir set2DViewSystem)",
+"V1.2.10.2 09/12/2016",
+"	positionnement des Trõlls camou/invi à la bonne position par rapport à la distance",
+"V1.2.10.1 08/12/2016",
+"	option pour affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll + peaufinage affichage",
+"V1.2.10 07/12/2016",
+"	correction décumul des bonus/malus",
+"	affichage des Trõlls {invi/camou/hors vue} avec Bricol'Troll",
+"V1.2.9 16/11/2016",
+"	adaptation Firefox 50 (comportement différent sur échec Ajax https)",
+"V1.2.8 10/11/2016",
+"	gestion des messages d'erreur de l'interface avec l'IT bricol'Troll",
+"	déplacement des images sur l'infra raistlin + meilleure gestion HTTPS",
+"V1.2.7 07/11/2016",
+"	remise en route de l'interface avec l'IT bricol'Troll",
+"V1.2.6 19/10/2016",
+"	affichage d'un message en cas de certificat raistlin non accepté pour la vue sous https",
+"	stockage idguilde et nomguilde",
+"V1.2.5 17/10/2016",
+"	correction doublon do_cdm qui bloquait l'envoi des CdMs lors de la compétence",
+"	remise en route de la gestion des options avec intégration md5 dans ce script",
+"V1.2.4 14/10/2016",
+"	utilisation du relai raistlin pour l'envoi des CdM",
+"V1.2.3 :",
+"	suppression ancien profil",
+"	nettoyage doublon sur getPortee",
+"	adaptation portee TP basée sur les PI",
+"	repository sur greasyfork.org (pour être en https et avoir la mise à jour automatique active par défaut)",
+"V1.2.2 : correction bug sur les 2 URL raistlin qui avaient été confondues",
+"V1.2.1 :",
+"	include des URLs MH alternatives",
+"	regroupement des URLs externes en tête de fichier pour pouvoir contempler l'horreur de la diversité de la chose",
+"	Ajout d'un message d'alerte en cas de HTTPS sans avoir débloqué le contenu mixte",
+"V1.2 : toujours un gros paquet sale, passage sous Greasemonkey",
+"V1.1 : regroupement en un gros paquet sale",
+];
 
 /**********************************************************
 	À faire / propositions d'évolutions
@@ -5008,8 +5013,6 @@ function afficherJubilaires(listeTrolls) {
 function traiterNouvelles() {
 	var news = new Array;
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
-	news.push(['24/12/2016', 'Retour de la carte montrant les déplacements des Gowaps']);
-	news.push(['24/12/2016', 'Le lien avec Bricol\'Troll est maintenant disponible en https']);
 	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
 	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
 	news.push(['10/01/2017', '<span style="color:red">Il n\'est plus nécessaire de bloquer les mises à jour de Firefox</span>. MZ devrait fonctionner sur toutes les versions&nbsp;: anciennes, récentes, béta']);
@@ -5041,6 +5044,34 @@ function afficherNouvelles(items) {
 		td = appendTd(tr);
 		td.innerHTML = items[i][1];
 	}
+	insertBefore(footer,p);
+
+	// changelog
+	var p = document.createElement('p');
+	var tbody = appendTitledTable(p, 'Changelog de Mountyzilla');
+	tbody.rows[0].cells[0].style.cursor = 'pointer';
+	tbody.rows[0].cells[0].onclick = function() {
+		try {
+			tbody.rows[0].cells[0].onclick = undefined;
+			tbody.rows[0].cells[0].style.cursor = '';
+			window.console.log("avant split ");
+			//var xx = MZ_changeLog;
+			//window.console.log("xxx ");
+			//var tabTxt = MZ_changeLog.split(/\n/);
+			window.console.log("aprsè split lg=" + MZ_changeLog.length);
+			var tr = appendTr(tbody,'mh_tdpage');
+			var td = appendTd(tr);
+			td.colSpan = 2;
+			var pre = document.createElement('pre');
+			appendText(pre,MZ_changeLog.join("\n"));
+			//appendText(td,"ici\nlà",false);
+			//window.console.log(MZ_ChangeLog);
+			//window.console.log("ici " + tabTxt.length);
+			td.appendChild(pre);
+		} catch (e) {
+			window.console.log('[MZ] affichage changeLog', e);
+		}
+	};
 	insertBefore(footer,p);
 }
 
@@ -7744,10 +7775,32 @@ function getMonstreLevelNode(i) {
 	return tr_monstres[i].cells[3];
 }
 
-function getMonstreLevel(i) {
-	if(!isCDMsRetrieved) return -1;
+// Roule 20/01/2017, à supprimer, remplacé par isMonstreLevelOutLimit
+// function getMonstreLevel(i) {
+	// if(!isCDMsRetrieved) return -1;
+	// var donneesMonstre = listeCDM[getMonstreID(i)];
+	// return donneesMonstre ? parseInt(donneesMonstre[0]) : -1;
+// }
+
+function isMonstreLevelOutLimit(i, limitMin, limitMax) {
+	if(!isCDMsRetrieved) return false;
 	var donneesMonstre = listeCDM[getMonstreID(i)];
-	return donneesMonstre ? parseInt(donneesMonstre[0]) : -1;
+	if (!donneesMonstre) return false;
+	var nivTxt = donneesMonstre[0];
+	// calcul min/max du monstre
+	var monstreMin, monstreMax, iPos;
+	if (nivTxt.substring(0, 2) == '<=') {
+		monstreMin = 0;
+		monstreMax = parseInt(nivTxt.substring(2, 99));
+	} else if ((iPos = nivTxt.indexOf('-')) > 0) {
+		monstreMin = parseInt(nivTxt.substring(0, iPos));
+		monstreMax = parseInt(nivTxt.substring(iPos+1, 99));
+	} else {
+		monstreMin = monstreMax = parseInt(nivTxt);
+	}
+	if (limitMin > 0 && monstreMax < limitMin) return true;
+	if (limitMax > 0 && monstreMin > limitMax) return true;
+	return false;
 }
 
 function getMonstreNomNode(i) {
@@ -8996,14 +9049,16 @@ function filtreMonstres() {
 			strMonstre!='' &&
 			nom.indexOf(strMonstre)==-1
 		) || (
-			nivMin>0 &&
-			getMonstreLevel(i)!=-1 &&
-			getMonstreLevel(i)<nivMin &&
-			getMonstreDistance(i)>1 &&
-			nom.toLowerCase().indexOf("kilamo")==-1  // wtf ?!...
-		) || (
-			nivMax>0 &&
-			getMonstreLevel(i)>nivMax &&
+			// Roule 20/01/2017 zone à supprimer, réécriture min/max
+			// nivMin>0 &&
+			// getMonstreLevel(i)!=-1 &&
+			// getMonstreLevel(i)<nivMin &&
+			// getMonstreDistance(i)>1 &&
+			// nom.toLowerCase().indexOf("kilamo")==-1  // wtf ?!...
+		// ) || (
+			// nivMax>0 &&
+			// getMonstreLevel(i)>nivMax &&
+			isMonstreLevelOutLimit(i, nivMin, nivMax) &&
 			getMonstreDistance(i)>1 &&
 			nom.toLowerCase().indexOf("kilamo")==-1
 		) ? 'none' : '';
