@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.14.3
+// @version     1.2.15
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -31,6 +31,8 @@
 *******************************************************************************/
 
 const MZ_changeLog = [
+"V1.2.15 25/01/2017",
+"	mise en place des nouvelles cartes (suivants, TP)",
 "V1.2.14.3 25/01/2017",
 "	résumé dans l'export des données Trõlligion",
 "V1.2.14.2 20/01/2017",
@@ -80,7 +82,7 @@ const MZ_changeLog = [
 "V1.2.11.1 17/12/2016",
 "	Correction bug interface Bricoll'Troll, les potrolls n'étaient pas affichés s'il n'y en avait pas au moins un",
 "V1.2.11 13/12/2016",
-"	Passage sur BdD Raistlin \o/",
+"	Passage sur BdD Raistlin \\o/",
 "V1.2.10.4 12/12/2016",
 "	Correction bug à la récupération d'une erreur interface Bricoll'Troll",
 "V1.2.10.3 09/12/2016",
@@ -148,6 +150,8 @@ var URL_MZ = 'http://mz.mh.raistlin.fr/mz';
 //var URL_MZ = 'http://192.99.225.92/mz';
 
 // URLs externes images (pas de souci CORS mais pas de HTTPS)
+// à supprimer
+const newCarte = true;
 const URL_MZscriptCarte = "http://mountyzilla.tilk.info/scripts_0.8/carte_trajet2.php";
 
 // URLs externes redirection (pas de souci CORS)
@@ -994,21 +998,26 @@ function pointIntermediaireMonstre2D(locDepart, locArrivee) {
 *	carte = new carte_MZ(ref, tabDepl);
 *		ref : utilisé pour diversifier les IDs HTML
 *		tabDepl : table de tables d'objets contenant x, y et n (positions successives des différents suivants)
-*		          pour l'affichage, le premier objet doit contenir nom et id
+*		          pour l'affichage, le premier objet doit contenir nom et id (et typ pour des cibles particulières)
 *	autres méthodes
 *		carte.getElt();			// rend la div de la carte (par exemple pour la positioner dans la page)
 **********************/
 
 function carte_MZ(ref, tabDepl) {
 	try {
-		var div_carte = document.createElement("div");	// la DIV mère
-		div_carte.id = "MZ_carte_"+ref;
-		div_carte.className = "carte_MZ";
+		var div1_carte = document.createElement("div");	// la DIV mère. Elle prend toute la largeur
+		div1_carte.id = "MZ_carte_"+ref;
+		div1_carte.className = "mh_tdpage";	// le mh_tdpage sert à faire cacher la carte par les scripts trajet_gowap
+		div1_carte.style.backgroundImage = 'none';
+		div1_carte.style.backgroundColor = 'transparent';
+		var div2_carte = document.createElement("div");	// la DIV mère. Elle prend toute la largeur
+		div2_carte.className = "carte_MZ";
+		div2_carte.style.display = 'inline-block';	// pour que la div ait la taille du contenu
 		var dessin = document.createElement("canvas");	// le dessin lui-même
 		dessin.id = "MZ_carte_dessin_"+ref;
-		//dessin.style.backgroundColor = 'rgb(255,255,204)';
 		dessin.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/tableau/tableau1.jpg")';
-		div_carte.appendChild(dessin);
+		div1_carte.appendChild(div2_carte);
+		div2_carte.appendChild(dessin);
 
 		var position_trous_MZ = [[-70.5, -7.5, 2, 1.5, -69]	// x, y, ?, rayon du cercle, profondeur
 			, [-66.5, -37.5, 2, 1.5, -69]
@@ -1116,16 +1125,37 @@ function carte_MZ(ref, tabDepl) {
 				var x0 = coord_x(tabDeplOneSuivant[0].x);
 				var y0 = coord_y(tabDeplOneSuivant[0].y);
 				// La "cible" au départ
-				ctx.beginPath();
-				ctx.lineWidth = 1;
-				ctx.strokeStyle = couleur_cible;
-				ctx.fillStyle = couleur_cible;
-				ctx.arc(x0, y0, coeff * 4, 0, Math.PI*2,  true);
-				ctx.moveTo(x0 + coeff * 4, y0);
-				ctx.lineTo(x0 - coeff * 4, y0);
-				ctx.moveTo(x0, y0 + coeff * 4);
-				ctx.lineTo(x0, y0 - coeff * 4);
-				ctx.stroke();
+				var typeDepart = tabDeplOneSuivant[0].typ;
+				switch (typeDepart) {
+					case 'tp':
+						ctx.beginPath();
+						ctx.lineWidth = 2;
+						ctx.strokeStyle = couleur_cible;
+						ctx.fillStyle = couleur_cible;
+						ctx.moveTo(x0 + coeff * 3, y0 + coeff * 3);
+						ctx.lineTo(x0 + coeff * 3, y0 - coeff * 3);
+						ctx.lineTo(x0 - coeff * 3, y0 - coeff * 3);
+						ctx.lineTo(x0 - coeff * 3, y0 + coeff * 3);
+						ctx.lineTo(x0 + coeff * 3, y0 + coeff * 3);
+						ctx.moveTo(x0 + coeff * 3, y0);
+						ctx.lineTo(x0 - coeff * 3, y0);
+						ctx.moveTo(x0, y0 + coeff * 3);
+						ctx.lineTo(x0, y0 - coeff * 3);
+						ctx.stroke();
+						break;
+					default:
+						ctx.beginPath();
+						ctx.lineWidth = 1;
+						ctx.strokeStyle = couleur_cible;
+						ctx.fillStyle = couleur_cible;
+						ctx.arc(x0, y0, coeff * 4, 0, Math.PI*2,  true);
+						ctx.moveTo(x0 + coeff * 4, y0);
+						ctx.lineTo(x0 - coeff * 4, y0);
+						ctx.moveTo(x0, y0 + coeff * 4);
+						ctx.lineTo(x0, y0 - coeff * 4);
+						ctx.stroke();
+						break;
+				}
 				// les segments
 				var nb_pts = tabDeplOneSuivant.length;
 				var pointPrecedent = tabDeplOneSuivant[0];
@@ -1178,29 +1208,32 @@ function carte_MZ(ref, tabDepl) {
 		eGliss.style.top = (coeff * 2) + 'px';
 		eGliss.style.left = decalh + 'px';
 		dessin.style.position = 'relative';
-		div_carte.style.position = 'relative';
+		div2_carte.style.position = 'relative';
 		eGliss.style.zIndex = 9000;
-		div_carte.appendChild(eGliss);
+		div2_carte.appendChild(eGliss);
 
 		// affichage au survol de la souris
 		var bulle = document.createElement('div');
 		bulle.style.visibility = 'hidden';
 		bulle.style.position = 'absolute';
 		bulle.style.zIndex = 3100;
-		bulle.style.width = '400px';
 		bulle.style.border = 'solid 1px #a1927f';
 		bulle.className = 'mh_tdpage';
 		bulle.style.display = 'block';	// ATTENTION, display doit être après className pour forcer le display
 		var bulleHaut = document.createElement('div');
 		bulleHaut.style.display = 'block';
+		bulleHaut.style.paddingRight = '3px';
 		bulleHaut.className = 'mh_tdtitre';
 		bulleHaut.appendChild(document.createTextNode(' '));	// prépare texte
 		bulle.appendChild(bulleHaut);
 		var bulleBas = document.createElement('div');
 		bulleBas.style.display = 'block';
+		bulleBas.style.whiteSpace = "nowrap";
+		bulleBas.style.paddingRight = '3px';
+
 		//bulleBas.appendChild(document.createTextNode(' '));	// prépare texte
 		bulle.appendChild(bulleBas);
-		div_carte.appendChild(bulle);
+		div2_carte.appendChild(bulle);
 		var affichePosition = function(evt) {
 			if (evt.offsetX) {
 				var xsouris = evt.offsetX;
@@ -1231,7 +1264,7 @@ function carte_MZ(ref, tabDepl) {
 			for (var i in tabDepl) {
 				var ceGowap = tabDepl[i][0];	// position courante du suivant
 				if (Math.abs(xUser - ceGowap.x) < 3 && Math.abs(yUser - ceGowap.y) < 3)
-					tabHTMLbas.push('gowap');
+					tabHTMLbas.push('(' + ceGowap.x + ', ' + ceGowap.y + ', ' + ceGowap.n + ') ' + ceGowap.id + ' ' + ceGowap.nom);
 			}
 			bulleBas.innerHTML = tabHTMLbas.join('<br />');
 			bulle.style.top = (ysouris+8) + 'px';
@@ -1244,7 +1277,7 @@ function carte_MZ(ref, tabDepl) {
 		// dessin initial
 		dessine_carte();
 
-		this.getElt = function() {return div_carte;};
+		this.getElt = function() {return div1_carte;};
 
 	} catch (e) {window.console.log(traceStack(e, 'carte_MZ'))}
 }
@@ -4100,13 +4133,18 @@ function do_equipgowap() {
 // x~x ordresgowap
 
 // version Roule' janvier 2017
-function setCarteUnGogoHTML5() {
+function MZ_setCarteUnGogoHTML5() {
 	// fabriquer la liste des positions successives
 	var listeDepl = [];	// ce sera un tableau d'objets
 	// position courrante
 	var eTitle = document.getElementById('titre2');
+	var tabNomID = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'[')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/(\d+)\.(.*)/);
 	var tabPos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
-	listeDepl.push({x: parseInt(tabPos[0]), y: parseInt(tabPos[1]), n: parseInt(tabPos[2])});	// ParseInt obligatoire, javascript language de m*rd*
+	listeDepl.push({x: parseInt(tabPos[0])	// ParseInt obligatoire, javascript language de m*rd*
+		, y: parseInt(tabPos[1])
+		, n: parseInt(tabPos[2])
+		, nom: tabNomID[2]
+		, id: tabNomID[1]});
 	// déplacements
 	var lignes = eTitle.parentNode.getElementsByTagName('tr');
 	for(var i=0 ; i<lignes.length ; i++) {
@@ -4116,14 +4154,51 @@ function setCarteUnGogoHTML5() {
 			if(point) listeDepl.push({x: parseInt(point[1]), y: parseInt(point[2]), n: parseInt(point[3])});
 		}
 	}
+	MZ_showCarteBottom([listeDepl]);	// L'arg est un tableau de tableaux d'objets
+}
+
+// L'arg est un tableau de tableaux d'objets (trajets des suivants)
+function MZ_showCarteBottom(listeSuiv) {
 	// générer la carte
-	var carte = new carte_MZ('cartegogo', [listeDepl]);	// Le 2e arg est un tableau de tableaux d'objets
+	var carte = new carte_MZ('cartegogo', listeSuiv);
 	// positionner la carte
 	var footer = document.getElementById('footer1');
 	var eCarte = carte.getElt();
 	eCarte.style.textAlign = 'left';
+	eCarte.style.marginTop = '2px';
+	eCarte.style.marginTop = '2px';
 	if (footer) footer.parentNode.insertBefore(eCarte, footer);
 	else document.body.appendChild(eCarte);
+}
+
+function MZ_setCarteTousGogoHTML5() {
+	// partie récupérée de "trajet gowaps" de feldspath et Vapulabehemot
+	var ligne = document.getElementsByTagName("form")[0].getElementsByTagName("tbody")[0].childNodes;
+	var suivants = [];
+	for (var i=0;i<ligne.length;i++) {
+		if(ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) continue;
+		var cas = ligne[i].getElementsByTagName("td")[0];
+		//if (cas.className == "mh_tdtitre") {
+		if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
+			var oGogo = {};
+			oGogo.id = parseInt(cas.getElementsByTagName('a')[0].href.split("=")[1]);
+			oGogo.nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
+			var point = cas.innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
+			oGogo.x = parseInt(point[1]);
+			oGogo.y = parseInt(point[2]);
+			oGogo.n = parseInt(point[3]);
+			suivants.push([oGogo]);	// un suivant ayant un trajet d'une seule étape
+		}
+	}
+	if (suivants.length == 0) return;
+	MZ_showCarteBottom(suivants);	// L'arg est un tableau de tableaux d'objets
+}
+
+function MZ_setCarteTP() {
+	var pos = window.document.getElementsByTagName("body")[0].innerHTML.match(/ en X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)\./);
+	//var sortie = [parseInt(pos[1]), parseInt(pos[2])];
+	var sortie = {x:parseInt(pos[1]), y:parseInt(pos[2]), n:parseInt(pos[2]), id:'', nom:'Sortie TP', typ:'tp'};
+	MZ_showCarteBottom([[sortie]]);	// L'arg est un tableau de tableaux d'objets
 }
 
 /* v0.2 by Dab - 2013-08-31
@@ -4215,13 +4290,23 @@ function MZ_testsUnitairesCalculIntermediaire(x0, y0, x1, y1) {
 }
 
 function do_ordresgowap() {
-	if (isDEV) {
-		setCarteUnGogoHTML5();		// Version Roule janvier 2017
+	if (newCarte) {
+		MZ_setCarteUnGogoHTML5();		// Version Roule janvier 2017
 		//testeGlissiere();
 		//MZ_testsUnitairesCalculIntermediaire();
 	} else {
+		setCarteGogo();		// Via script des trouillots
 	}
-	setCarteGogo();		// Via script des trouillots
+}
+
+function do_listegowap() {
+	if (!newCarte) return;
+	MZ_setCarteTousGogoHTML5();
+}
+
+function do_LieuDescription() {
+	if (!newCarte) return;
+	MZ_setCarteTP();
 }
 
 /*********************************************************************************
@@ -5050,6 +5135,7 @@ function traiterNouvelles() {
 	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
 	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
 	news.push(['10/01/2017', '<span style="color:red">Il n\'est plus nécessaire de bloquer les mises à jour de Firefox</span>. MZ devrait fonctionner sur toutes les versions&nbsp;: anciennes, récentes, béta']);
+	news.push(['25/01/2017', 'Cartes pour l\'ensemble des suivants et pour visualiser l\'arrivée du TP']);
 	afficherNouvelles(news);
 }
 
@@ -5088,19 +5174,11 @@ function afficherNouvelles(items) {
 		try {
 			tbody.rows[0].cells[0].onclick = undefined;
 			tbody.rows[0].cells[0].style.cursor = '';
-			window.console.log("avant split ");
-			//var xx = MZ_changeLog;
-			//window.console.log("xxx ");
-			//var tabTxt = MZ_changeLog.split(/\n/);
-			window.console.log("aprsè split lg=" + MZ_changeLog.length);
 			var tr = appendTr(tbody,'mh_tdpage');
 			var td = appendTd(tr);
 			td.colSpan = 2;
 			var pre = document.createElement('pre');
 			appendText(pre,MZ_changeLog.join("\n"));
-			//appendText(td,"ici\nlà",false);
-			//window.console.log(MZ_ChangeLog);
-			//window.console.log("ici " + tabTxt.length);
 			td.appendChild(pre);
 		} catch (e) {
 			window.console.log('[MZ] affichage changeLog', e);
@@ -12186,6 +12264,10 @@ try {
 		do_infomonstre();
 	} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
 		do_attaque();
+	} else if(isPage("MH_Play/Play_e_follo.php")) {
+		do_listegowap();
+	} else if(isPage("MH_Lieux/Lieu_Description.php")) {
+		do_LieuDescription();
 	} else if(isPage("MH_Follower/FO_Ordres")) {
 		do_ordresgowap();
 	} else if(isPage("MH_Follower/FO_Equipement")) {
