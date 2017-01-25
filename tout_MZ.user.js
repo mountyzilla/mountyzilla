@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.14.2
+// @version     1.2.14.3
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -31,6 +31,8 @@
 *******************************************************************************/
 
 const MZ_changeLog = [
+"V1.2.14.3 25/01/2017",
+"	résumé dans l'export des données Trõlligion",
 "V1.2.14.2 20/01/2017",
 "	forcer filtrage après le chargement des niveaux des monstres dans la vue",
 "V1.2.14.1 20/01/2017",
@@ -992,6 +994,7 @@ function pointIntermediaireMonstre2D(locDepart, locArrivee) {
 *	carte = new carte_MZ(ref, tabDepl);
 *		ref : utilisé pour diversifier les IDs HTML
 *		tabDepl : table de tables d'objets contenant x, y et n (positions successives des différents suivants)
+*		          pour l'affichage, le premier objet doit contenir nom et id
 *	autres méthodes
 *		carte.getElt();			// rend la div de la carte (par exemple pour la positioner dans la page)
 **********************/
@@ -1186,7 +1189,17 @@ function carte_MZ(ref, tabDepl) {
 		bulle.style.zIndex = 3100;
 		bulle.style.width = '400px';
 		bulle.style.border = 'solid 1px #a1927f';
-		appendText(bulle, 'ici');
+		bulle.className = 'mh_tdpage';
+		bulle.style.display = 'block';	// ATTENTION, display doit être après className pour forcer le display
+		var bulleHaut = document.createElement('div');
+		bulleHaut.style.display = 'block';
+		bulleHaut.className = 'mh_tdtitre';
+		bulleHaut.appendChild(document.createTextNode(' '));	// prépare texte
+		bulle.appendChild(bulleHaut);
+		var bulleBas = document.createElement('div');
+		bulleBas.style.display = 'block';
+		//bulleBas.appendChild(document.createTextNode(' '));	// prépare texte
+		bulle.appendChild(bulleBas);
 		div_carte.appendChild(bulle);
 		var affichePosition = function(evt) {
 			if (evt.offsetX) {
@@ -1201,10 +1214,29 @@ function carte_MZ(ref, tabDepl) {
 				var xpos = evt.pageX;
 				var ypos = evt.pageY;
 			}
-			bulle.firstChild.nodeValue = xsouris;
-			bulle.style.top = ysouris + 'px';
-			bulle.style.left = xsouris + 'px';
-		}
+			var xUser = Math.round(((xsouris - decalh) / coeff) - 100);// l'inverse de decalh+coeff*(val+100);
+			var yUser = Math.round(100-((ysouris - decalv) / coeff));// l'inverse de decalv+coeff*(100-val);
+			bulleHaut.firstChild.nodeValue = 'x=' + xUser + ', y=' + yUser;
+			var tabHTMLbas = [];
+			// message pour les trous
+			for (var i in position_trous_MZ) {
+				var ceTrou = position_trous_MZ[i];
+				var dist = (xUser-ceTrou[0])*(xUser-ceTrou[0])+(yUser-ceTrou[1])*(yUser-ceTrou[1])-ceTrou[2];
+				if(dist <= 0) {
+					tabHTMLbas.push("Trous de Météorite : n=-1 -> n="+ceTrou[4]);
+					break;
+				}
+			}
+			// messages pour les suivants
+			for (var i in tabDepl) {
+				var ceGowap = tabDepl[i][0];	// position courante du suivant
+				if (Math.abs(xUser - ceGowap.x) < 3 && Math.abs(yUser - ceGowap.y) < 3)
+					tabHTMLbas.push('gowap');
+			}
+			bulleBas.innerHTML = tabHTMLbas.join('<br />');
+			bulle.style.top = (ysouris+8) + 'px';
+			bulle.style.left = (xsouris+16) + 'px';
+		};
 		addEvent(dessin, "mousemove", affichePosition, true);
 		addEvent(dessin, "mouseout", function() { bulle.style.visibility = 'hidden' }, true);
 		addEvent(dessin, "mouseover",  function() { bulle.style.visibility = 'visible' }, true);
@@ -8693,23 +8725,6 @@ function initPopupVue() {
 	document.body.appendChild(popup);
 }
 
-// roule 16/03/2016 supprimé, existe déjà dans vue
-// function showPopupTactique(evt) {
-	// var id = this.id;
-	// var nom = this.nom;
-	// var texte = getAnalyseTactique(id,nom);
-	// if(texte=='') { return; }
-	// popup.innerHTML = texte;
-	// popup.style.left = Math.min(evt.pageX+15,window.innerWidth-400)+'px';
-	// popup.style.top = (evt.pageY+15)+'px';
-	// popup.style.visibility = 'visible';
-// }
-
-// roule 16/03/2016, existe déjà ailleurs
-// function hidePopup() {
-	// popup.style.visibility = 'hidden';
-// }
-
 /* [functions] Récupération / Computation des Infos Tactiques */
 // TODO à revoir
 function retireMarquage(nom) {
@@ -11935,166 +11950,185 @@ function showEssaiCartes() {
 
 /*--------------------------------- Création liste trolligion ---------------------------------*/
 function export_trolligion() {
-	var tabDl = document.getElementsByTagName('dl');
-	if ((!tabDl) || !tabDl[0]) {
-		window.console.log('[MZ ' + GM_info.script.version + '] pas de dl');
-		return;
-	}
-	var tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
-		// nom : string
-		// rayonnement : entier
-		// grades : table d'objets (une occurence par grade)
+	try {
+		var tabDl = document.getElementsByTagName('dl');
+		if ((!tabDl) || !tabDl[0]) {
+			window.console.log('[MZ ' + GM_info.script.version + '] pas de dl');
+			return;
+		}
+		var tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
 			// nom : string
-			// trolls : table d'objets (un par Trõll)
-				// id
-				// nom
-				// idguilde
-				// guilde
-				// race
-				// niveau
-				// ferveur
-	var currentDieu;
-	var currentGrade;
-	for (var iChild1 in tabDl[0].children) {
-		var eChild1 = tabDl[0].children[iChild1];
-		if (eChild1.tagName) switch (eChild1.tagName.toLowerCase()) {
-			case 'dd':	// Trõll
-				var oTroll = {};
-				var tabFigcaption = eChild1.getElementsByTagName('figcaption');
-				if ((!tabFigcaption) || !tabFigcaption[0]) {
-					window.console.log('[MZ ' + GM_info.script.version + '] ignore dd sans figcaption ' + eChild1.innerHTML);
-					break;
-				}
-				for (var iChild2 in tabFigcaption[0].childNodes) {	// childNodes pour obtenir les éléments texte aussi
-					var eChild2 = tabFigcaption[0].childNodes[iChild2];
-					if (eChild2.nodeType === undefined) continue;	// properties
-					//window.console.log('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
-					switch (eChild2.nodeType) {
-						case 1:	//ELEMENT_NODE:
-							switch (eChild2.nodeName.toLowerCase()) {
-								case 'a':
-									var m;
-									if (!eChild2.href) {
-										window.console.log('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
-										break;
-									}
-									m = eChild2.href.match(/EnterPJView\((\d+) *,/);
-									if (m) {
-										oTroll.id = parseInt(m[1]);
-										oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
-										break;
-									}
-									m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
-									if (m) {
-										var idGuilde = parseInt(m[1]);
-										if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
-											oTroll.idguilde = parseInt(m[1]);
-											oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
-										}
-										break;
-									}
-									window.console.log('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
-									break;
-								case 'br':	// ignore
-								case 'style':	// ignore
-									break;
-								case 'div':	// barre de vie
-									if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
-										eChild3 = eChild2.children[0];
-										if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
-											var eChild4 = eChild3.children[0];
-											if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
+			// rayonnement : entier
+			// grades : table d'objets (une occurence par grade)
+				// nom : string
+				// trolls : table d'objets (un par Trõll)
+					// id
+					// nom
+					// idguilde
+					// guilde
+					// race
+					// niveau
+					// ferveur
+		var currentDieu;
+		var currentGrade;
+		for (var iChild1 in tabDl[0].children) {
+			var eChild1 = tabDl[0].children[iChild1];
+			if (eChild1.tagName) switch (eChild1.tagName.toLowerCase()) {
+				case 'dd':	// Trõll
+					var oTroll = {};
+					var tabFigcaption = eChild1.getElementsByTagName('figcaption');
+					if ((!tabFigcaption) || !tabFigcaption[0]) {
+						window.console.log('[MZ ' + GM_info.script.version + '] ignore dd sans figcaption ' + eChild1.innerHTML);
+						break;
+					}
+					for (var iChild2 in tabFigcaption[0].childNodes) {	// childNodes pour obtenir les éléments texte aussi
+						var eChild2 = tabFigcaption[0].childNodes[iChild2];
+						if (eChild2.nodeType === undefined) continue;	// properties
+						//window.console.log('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
+						switch (eChild2.nodeType) {
+							case 1:	//ELEMENT_NODE:
+								switch (eChild2.nodeName.toLowerCase()) {
+									case 'a':
+										var m;
+										if (!eChild2.href) {
+											window.console.log('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
 											break;
 										}
-									}
-									// pas de break pour bénéficier du log ci-dessous
-								default:
-									window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
-									break;
-							}
-							break;
-						case 3:	//TEXT_NODE:
-							var txt = eChild2.nodeValue.trim();
-							if (txt === '') break;
-							var m = txt.match(/(.*) *\((\d+)\)/);
-							if (m) {
-								oTroll.race = m[1].trim();
-								oTroll.niveau = parseInt(m[2]);
-							} else {
-								oTroll.race = txt;
-							}
-							break;
-						default:	// ne devrait pas arriver
-							window.console.log('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
-							break;
+										m = eChild2.href.match(/EnterPJView\((\d+) *,/);
+										if (m) {
+											oTroll.id = parseInt(m[1]);
+											oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
+											break;
+										}
+										m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
+										if (m) {
+											var idGuilde = parseInt(m[1]);
+											if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
+												oTroll.idguilde = parseInt(m[1]);
+												oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
+											}
+											break;
+										}
+										window.console.log('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
+										break;
+									case 'br':	// ignore
+									case 'style':	// ignore
+										break;
+									case 'div':	// barre de vie
+										if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
+											eChild3 = eChild2.children[0];
+											if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
+												var eChild4 = eChild3.children[0];
+												if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
+												break;
+											}
+										}
+										// pas de break pour bénéficier du log ci-dessous
+									default:
+										window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
+										break;
+								}
+								break;
+							case 3:	//TEXT_NODE:
+								var txt = eChild2.nodeValue.trim();
+								if (txt === '') break;
+								var m = txt.match(/(.*) *\((\d+)\)/);
+								if (m) {
+									oTroll.race = m[1].trim();
+									oTroll.niveau = parseInt(m[2]);
+								} else {
+									oTroll.race = txt;
+								}
+								break;
+							default:	// ne devrait pas arriver
+								window.console.log('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
+								break;
+						}
 					}
-				}
-				currentGrade.trolls.push(oTroll);
-				break;
-			case 'dt':
-				var tabH3 = eChild1.getElementsByTagName('h3');
-				if (tabH3 && tabH3[0]) {	// changement de dieu
-					currentDieu = {
-						nom: tabH3[0].innerText || tabH3[0].textContent
-						, grades: []};
-					var txt = eChild1.innerText || eChild1.textContent;
-					var m = txt.match(/yon*ement *:* *(\d+)/);
-					if (m) currentDieu.rayonnement = parseInt(m[1]);
-					currentGrade = undefined;
-					tabDieux.push(currentDieu);
+					currentGrade.trolls.push(oTroll);
 					break;
-				}
-				var tabH4 = eChild1.getElementsByTagName('h4');
-				if (tabH4 && tabH4[0]) {	// changement de grade
-					var grade;
-					var txt = tabH4[0].innerText || tabH4[0].textContent;
-					tabI = tabH4[0].getElementsByTagName('i');
-					if (tabI && tabI[0]) {
-						grade = tabI[0].innerText || tabI[0].textContent;
-						grade = grade.replace(/"/g, '');
-						m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
-						if (m) grade += ' (' + m[1] + ')';
-					} else {
-						grade = txt.replace(/"/g, '');
+				case 'dt':
+					var tabH3 = eChild1.getElementsByTagName('h3');
+					if (tabH3 && tabH3[0]) {	// changement de dieu
+						currentDieu = {
+							nom: tabH3[0].innerText || tabH3[0].textContent
+							, grades: []};
+						var txt = eChild1.innerText || eChild1.textContent;
+						var m = txt.match(/yon*ement *:* *(\d+)/);
+						if (m) currentDieu.rayonnement = parseInt(m[1]);
+						currentGrade = undefined;
+						tabDieux.push(currentDieu);
+						break;
 					}
-					currentGrade = {nom: grade, trolls: []};
-					currentDieu.grades.push(currentGrade);
+					var tabH4 = eChild1.getElementsByTagName('h4');
+					if (tabH4 && tabH4[0]) {	// changement de grade
+						var grade;
+						var txt = tabH4[0].innerText || tabH4[0].textContent;
+						tabI = tabH4[0].getElementsByTagName('i');
+						if (tabI && tabI[0]) {
+							grade = tabI[0].innerText || tabI[0].textContent;
+							grade = grade.replace(/"/g, '');
+							m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
+							if (m) grade += ' (' + m[1] + ')';
+						} else {
+							grade = txt.replace(/"/g, '');
+						}
+						currentGrade = {nom: grade, trolls: []};
+						currentDieu.grades.push(currentGrade);
+						break;
+					}
+					window.console.log('[MZ ' + GM_info.script.version + '] ignore tag dt ' + eChild1.innerHTML);
 					break;
-				}
-				window.console.log('[MZ ' + GM_info.script.version + '] ignore tag dt ' + eChild1.innerHTML);
-				break;
-			default:
-				window.console.log('[MZ ' + GM_info.script.version + '] ignore tag ' + eChild1.tagName); //+ ' ' + eChild1);
-		}
-	}
-	//window.console.log('[MZ ' + GM_info.script.version + '] nb dieux = ' + tabDieux.length);
-	//window.console.log('[MZ ' + GM_info.script.version + '] ' + JSON.stringify(tabDieux));
-	var txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
-	for (var iDieu in tabDieux) {
-		var oDieu = tabDieux[iDieu];
-		for (var iGrade in oDieu.grades) {
-			var oGrade = oDieu.grades[iGrade];
-			for (var iTroll in oGrade.trolls) {
-				var oTroll = oGrade.trolls[iTroll];
-				var t = [oDieu.nom, oDieu.rayonnement
-					, oGrade.nom
-					, oTroll.id, oTroll.nom
-					, oTroll.idguilde, oTroll.guilde
-					, oTroll.race, oTroll.niveau
-					, oTroll.ferveur];
-				for (var iParam in t) if (t[iParam] === undefined) t[iParam] = '';	// protection
-				txt += t.join("\t") + "\n";
+				default:
+					window.console.log('[MZ ' + GM_info.script.version + '] ignore tag ' + eChild1.tagName); //+ ' ' + eChild1);
 			}
 		}
+
+		//window.console.log('[MZ ' + GM_info.script.version + '] nb dieux = ' + tabDieux.length);
+		//window.console.log('[MZ ' + GM_info.script.version + '] ' + JSON.stringify(tabDieux));
+		var txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
+		var txt2 = "Dieu\tRayonnement\n";	// Roule 25/01/2017 ajout d'un tableau résumé par religion
+		for (var iDieu in tabDieux) {
+			var oDieu = tabDieux[iDieu];
+			for (var iGrade in oDieu.grades) {
+				var oGrade = oDieu.grades[iGrade];
+				for (var iTroll in oGrade.trolls) {
+					var oTroll = oGrade.trolls[iTroll];
+					var t = [oDieu.nom, oDieu.rayonnement
+						, oGrade.nom
+						, oTroll.id, oTroll.nom
+						, oTroll.idguilde, oTroll.guilde
+						, oTroll.race, oTroll.niveau
+						, oTroll.ferveur];
+					for (var iParam in t) {
+						if (t[iParam] === undefined) t[iParam] = '';	// protection
+						t[iParam] = t[iParam].toString().replace(/[\n\r\t]/g, ' ').trim();	// plus de protection
+					}
+					txt += t.join("\t") + "\n";
+				}
+			}
+			var t = [oDieu.nom, oDieu.rayonnement];
+			for (var iParam in t) {
+				if (t[iParam] === undefined) t[iParam] = '';	// protection
+				t[iParam] = t[iParam].toString().replace(/[\n\r\t]/g, ' ').trim();	// plus de protection
+			}
+			txt2 += t.join("\t") + "\n";
+		}
+		txt += "\n" + txt2;
+	} catch (e) {
+		window.alert("Échec à l'extraction\n" + e);
 	}
 	//window.console.log('[MZ ' + GM_info.script.version + '] txt =  ' + txt);
 	try {
-		copyTextToClipboard(txt);
-		window.alert("Les données ont été copiées dans le presse-papier\n"
-			+ "Collez dans Calc\n"
-			+ "ou, au pire, dans EXCEL®");
+		if (copyTextToClipboard(txt)) {
+			window.alert("[MZ] Les données ont été copiées dans le presse-papier\n"
+				+ "Collez dans Calc\n"
+				+ "ou, au pire, dans EXCEL®");
+		} else {
+			window.alert("[MZ] Echec à la copie vers le presse-papier\nVoir la console (F12)");
+		}
 	} catch(e) {
-		window.alert("Échec à la copie vers le presse-papier\n" + e);
+		window.alert("[MZ] Échec à la copie vers le presse-papier\n" + e);
 	}
 }
 
