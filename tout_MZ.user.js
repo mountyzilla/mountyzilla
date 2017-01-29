@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.15
+// @version     1.2.15.1
 // @grant       none
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
@@ -31,6 +31,8 @@
 *******************************************************************************/
 
 const MZ_changeLog = [
+"V1.2.15.1 29/01/2017",
+"	carte sur la page de description du lieu TP",
 "V1.2.15 25/01/2017",
 "	mise en place des nouvelles cartes (suivants, TP)",
 "V1.2.14.3 25/01/2017",
@@ -771,44 +773,6 @@ if ("function" !== typeof addEvent) {
 			obj.addEventListener(typ, fn, sens);
 		}
 	}
-}
-
-// mise en commun du dessin des cartes (récupéré de Trajet_des_gowaps de feldspath et Vapulabehemot)
-function declare_css_carte_hall() {
-	if(haut.getElementById("css_gow")) return;
-	css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, div.mh_tdpage { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; }\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
-
-	var node = document.createElement("style");
-	node.type = "text/css";
-	node.id = "css_gow";
-	node.appendChild(document.createTextNode(css));
-	document.getElementsByTagName("head")[0].appendChild(node);
-}
-
-function ini_canvas_carte_hall() {
-	var trajet = document.createElement("div");
-	trajet.id = "carte_trajet";
-
-	var dessin = creer_canvas("trou");
-	var dessin = document.createElement("canvas");
-	dessin.id = ref;
-	dessin.className = "mh_tdpage";
-	trajet.appendChild(dessin);
-	trajet.appendChild(creer_canvas("trajet"));
-	trajet.appendChild(creer_canvas("danger"));
-
-	var dessin = creer_canvas("surligne");
-	addEvent(dessin, "click", action_trajet, true);
-	addEvent(dessin, "mousedown", start_v, true);
-	addEvent(dessin, "mousemove", afficher_position, true);
-	addEvent(dessin, "mouseout", function() { cacher_bulle(true) }, true);
-	addEvent(dessin, "mouseover",  function() { cacher_bulle(false) }, true);
-	trajet.appendChild(dessin);
-
-	trajet.appendChild(creer_glissiere("gow", zoom));
-
-	var parp = document.getElementsByTagName('p');
-	parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild);
 }
 
 /**********************
@@ -4162,11 +4126,12 @@ function MZ_showCarteBottom(listeSuiv) {
 	// générer la carte
 	var carte = new carte_MZ('cartegogo', listeSuiv);
 	// positionner la carte
-	var footer = document.getElementById('footer1');
 	var eCarte = carte.getElt();
 	eCarte.style.textAlign = 'left';
 	eCarte.style.marginTop = '2px';
-	eCarte.style.marginTop = '2px';
+	var footer = document.getElementById('footer1');
+	// Lieu_Teleport.php n'a pas de footer1 :(
+	if (!footer) footer = document.getElementById('footer2');
 	if (footer) footer.parentNode.insertBefore(eCarte, footer);
 	else document.body.appendChild(eCarte);
 }
@@ -4195,8 +4160,8 @@ function MZ_setCarteTousGogoHTML5() {
 }
 
 function MZ_setCarteTP() {
-	var pos = window.document.getElementsByTagName("body")[0].innerHTML.match(/ en X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)\./);
-	//var sortie = [parseInt(pos[1]), parseInt(pos[2])];
+	// regexp compliquée par le fait que MH met une rupture de ligne dans les coord dans la page Lieu_Description.php
+	var pos = window.document.getElementsByTagName("body")[0].innerHTML.match(/X[\n\r\t ]*=[\n\r\t ]*(-?\d+)[\n\r\t ]*\|[\n\r\t ]*Y[\n\r\t ]*=[\n\r\t ]*(-?\d+) *\|[\n\r\t ]*N[\n\r\t ]*=[\n\r\t ]*(-?\d+)/i);
 	var sortie = {x:parseInt(pos[1]), y:parseInt(pos[2]), n:parseInt(pos[2]), id:'', nom:'Sortie TP', typ:'tp'};
 	MZ_showCarteBottom([[sortie]]);	// L'arg est un tableau de tableaux d'objets
 }
@@ -4304,7 +4269,14 @@ function do_listegowap() {
 	MZ_setCarteTousGogoHTML5();
 }
 
-function do_LieuDescription() {
+function do_lieuDescription() {
+	if (!newCarte) return;
+	if (window.document.getElementsByTagName("body")[0].innerHTML.indexOf("Portail : Portail de T") != -1)
+		MZ_setCarteTP();
+}
+
+function do_lieuTeleport() {
+	changeButtonValidate();
 	if (!newCarte) return;
 	MZ_setCarteTP();
 }
@@ -4901,12 +4873,13 @@ function changeButtonValidate() {
 /*-[functions]---------------- Partie Principale -----------------------------*/
 
 function do_move() {
-	if(isPage('MH_Play/Actions/Play_a_Move.php')) {
+	// Roule', vérification du risque de tomber dans un trou déplacée dans do_lieuTeleport pour le cas des TP
+	//if(isPage('MH_Play/Actions/Play_a_Move.php')) {
 		changeValidation();
-	}
-	else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
-		changeButtonValidate();
-	}
+	//}
+	//else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
+	//	changeButtonValidate();
+	//}
 }
 
 /*******************************************************************************
@@ -12256,7 +12229,7 @@ try {
 		do_vue();
 	} else if(isPage("MH_Play/Play_news")) {
 		do_news();
-	} else if(isPage("MH_Play/Actions/Play_a_Move") || 	isPage("MH_Lieux/Lieu_Teleport")) {
+	} else if(isPage("MH_Play/Actions/Play_a_Move")) {
 		do_move();
 	} else if(isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
@@ -12267,7 +12240,9 @@ try {
 	} else if(isPage("MH_Play/Play_e_follo.php")) {
 		do_listegowap();
 	} else if(isPage("MH_Lieux/Lieu_Description.php")) {
-		do_LieuDescription();
+		do_lieuDescription();
+	} else if(isPage("MH_Lieux/Lieu_Teleport")) {
+		do_lieuTeleport();
 	} else if(isPage("MH_Follower/FO_Ordres")) {
 		do_ordresgowap();
 	} else if(isPage("MH_Follower/FO_Equipement")) {
