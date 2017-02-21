@@ -5,8 +5,10 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.15.1
-// @grant       none
+// @version     1.2.16
+// @grant GM_getValue
+// @grant GM_deleteValue
+// @grant GM_setValue
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
 
@@ -30,7 +32,14 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
+try {
 const MZ_changeLog = [
+"V1.2.16 21/02/2017",
+"	double stockage GM + localStorage version Vapulabehemot en préparation du passage HTTPS",
+"	possibilité de masquer les Gowaps Sauvages dans la vue",
+"	calculs des caractéristiques du siphon des âmes",
+"V1.2.15.2 02/02/2017",
+"	adaptation décumul VlC (page des bonus/malus)",
 "V1.2.15.1 29/01/2017",
 "	carte sur la page de description du lieu TP",
 "V1.2.15 25/01/2017",
@@ -140,6 +149,8 @@ const MZ_changeLog = [
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
 			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
+	100 (post formum 10/02/2017
+		Il y aurait moyen de rajouter la prise en compte du Siphon des ames sur les attaques prisent en compte par la calculette sur la vue ?
 **********************************************************/
 
 /**********************************************************
@@ -193,7 +204,7 @@ if (window.location.protocol.indexOf('https') === 0) {
 
 // Roule 23/12/2016 mode dev
 var isDEV = false;
-if (MY_getValue('MZ_dev')) {
+if (window.localStorage.getItem('MZ_dev')) {
 	URL_MZ = URL_MZ.replace(/$/, 'dev');
 	isDEV = true;
 }
@@ -211,16 +222,40 @@ var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
 
-/* remplacement fonction MZ */
+/* Utilisation de la gestion de l'enregistrement des données de
+GreaseMonkey, avec partage entre scripts via le localStorage, par
+Vapulabehemot (82169) 07/02/2017 */
+// Correction Roule' pour les boolean, le JSON decode pose problème car MZ utilise JSON
+// Nécessite la présence de @grant GM_getValue, @grant GM_deleteValue et @grant GM_setValue
 function MY_getValue(key) {
-	return window.localStorage[key];
+	var v = window.localStorage.getItem(key);
+	if (v === 'true') {
+		v = 1;
+		window.localStorage[key] = 1;
+	} else if (v === 'false') {
+		v = 0;
+		window.localStorage[key] = 0;
+	}
+	vGM = GM_getValue(key);
+	if ((vGM == null)
+		|| (v != null && v != vGM)){
+		GM_setValue(key, v);
+	} else if (v == null && vGM != null) {
+		v = vGM;
+		window.localStorage[key] = vGM;
+	}
+	return v;
 }
-
 function MY_removeValue(key) {
+	GM_deleteValue(key);
 	window.localStorage.removeItem(key);
 }
-
 function MY_setValue(key, val) {
+	if (val === true)
+		val = 1;
+	else if (val === false)
+		val = 0;
+	GM_setValue(key, val);
 	window.localStorage[key] = val;
 }
 
@@ -552,9 +587,14 @@ function appendCheckBoxSpan(paren,id,onClick,text) {
 	var span = document.createElement('span');
 	span.style.whiteSpace = 'nowrap';
 	appendCheckBox(span,id,false,onClick);
-	appendText(span,text);
+	var label = document.createElement('label');
+	appendText(label,text);
+	label.htmlFor = id;
+	label.style.marginLeft = '-5px';
+	span.appendChild(label);
+	span.style.marginRight = '3px';
 	paren.appendChild(span);
-	appendText(paren,'   ');
+	appendText(paren, ' ');
 	return span;
 	}
 
@@ -1804,7 +1844,7 @@ arrayTalents = {
 	'Puissance Magique':'PuM',
 	'Rafale Psychique':'Rafale',
 	'Sacrifice':'Sacro',
-	'Siphon des Ames':'Siphon',
+	'Siphon des ames':'Siphon',
 	'Telekinesie':'Telek',
 	'Teleportation':'TP',
 	'Vampirisme':'Vampi',
@@ -2404,6 +2444,7 @@ function getTexteAnalyse(modificateur,chiffre)
 	return modificateur+chiffre;
 } 
 
+// rend le HTML pour le tableau de la "calculette"
 function getAnalyseTactique(id,nom)
 {
 	var donneesMonstre = listeCDM[id];
@@ -2411,22 +2452,23 @@ function getAnalyseTactique(id,nom)
 	var i;
 	if(donneesMonstre == null)
 		return;
-	var array = analyseTactique(donneesMonstre,nom);
+	var array = analyseTactique(donneesMonstre,nom);	// rend tableau de tableaux avec  NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure
+	//window.console.log('getAnalyseTactique ' + JSON.stringify(array));
 	if(array==null)
 		return "";
 	var str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
 	for(i=0;i<array.length;i++)
 	{
-		if(array[i][1]==100 && i>0)
+		if(array[i][1]==100 && i>0)	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
 		{
 			needAutres=true;
 			break;
 		}
-		if(i==1 && array[i][4]>0)
+		if(i==1 && array[i][4]>0)	// l'attaque normale du Trõll sur le monstre fait des dégâts => gras
 			str+= "<tr class=mh_tdpage><td><b>"+array[i][0]+"</b></td><td><b>"+getTexteAnalyse(array[i][5],array[i][1])+"%</b></td><td><b>"+getTexteAnalyse(array[i][5],array[i][2])+"%</b></td><td><b>"+getTexteAnalyse(array[i][5],array[i][3])+"%</b></td><td><b>"+getTexteAnalyse(array[i][6],array[i][4])+"</b></td></tr>";
-		else if(i==0)
+		else if(i==0)	// attaque du monstre sur le Trõll => italique
 			str+= "<tr class=mh_tdpage><td><i>"+array[i][0]+"</i></td><td><i>"+getTexteAnalyse(array[i][5],array[i][1])+"%</i></td><td><i>"+getTexteAnalyse(array[i][5],array[i][2])+"%</i></td><td><i>"+getTexteAnalyse(array[i][5],array[i][3])+"%<i></td><td><b><i>"+getTexteAnalyse(array[i][6],array[i][4])+"<i></b></td></tr>";
-		else
+		else	// autre, pas de décoration
 			str+= "<tr class=mh_tdpage><td>"+array[i][0]+"</td><td>"+getTexteAnalyse(array[i][5],array[i][1])+"%</td><td>"+getTexteAnalyse(array[i][5],array[i][2])+"%</td><td>"+getTexteAnalyse(array[i][5],array[i][3])+"%</td><td><b>"+getTexteAnalyse(array[i][6],array[i][4])+"</b></td></tr>";
 	}
 	if(needAutres)
@@ -2441,12 +2483,15 @@ function getAnalyseTactique(id,nom)
 	return str+"</table>";
 }
 
+// rend un tableau (un par attaque du Trõll ou du monstre) de tableaux contenant:
+//	NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure
 function analyseTactique(donneesMonstre,nom) {
 	try
 	{
 	var listeAttaques = [];
 	// Roule 16/03/2016 ajout des ParseInt car je récupérais parfois une chaine non numérique :(
 	var att = parseInt(MY_getValue(numTroll+".caracs.attaque"), 10);
+	var reg = parseInt(MY_getValue(numTroll+".caracs.regeneration"), 10);
 	var attbmp = parseInt(MY_getValue(numTroll+".caracs.attaque.bmp"), 10);
 	var attbmm = parseInt(MY_getValue(numTroll+".caracs.attaque.bmm"), 10);
 	var mm = parseInt(MY_getValue(numTroll+".caracs.mm"), 10);
@@ -2555,6 +2600,15 @@ function analyseTactique(donneesMonstre,nom) {
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm,1)))/100;
 		//str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Vampirisme",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
+	}
+	if(getSortComp("Siphon des âmes")>0)
+	{
+		var pour = getSortComp("Siphon des âmes");
+		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att,esqM,attbmm,0)*pour/100);
+		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm,0)*pour/100);
+		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm,0)*pour/100);
+		degats = (((chanceDeTouche-chanceDeCritique)*Math.max(reg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(reg*1.5)*2+degbmm,1))/100);
+		listeAttaques.push(new Array("Siphon des âmes",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
 	if(getSortComp("Botte Secrète")>0)
 	{
@@ -3570,7 +3624,7 @@ function toggleDetailsBM() {
 		for(var i=0 ; i<trlist.length ; i++)
 			trlist[i].style = '';	
 		}
-	else {	
+	else {
 		MY_setValue('BMDETAIL','true');
 		var trlist = document.getElementsByClassName('mh_tdpage BilanSomme');
 		for(var i=0 ; i<trlist.length ; i++)
@@ -3673,6 +3727,7 @@ function traiteMalus() {
 				uniListe[nb]['type'] = phymag;
 			var bm = Number(effetsT[i].match(/-?\d+/)[0]);
 			uniListe[nb]['caracs'][carac] = bm;
+			if (MY_DEBUG) window.console.log('[MZ debug] uniListe[' + nb + '][\'caracs\'][' + carac + '] = ' + bm);
 			listeDurees[duree] = true;
 		}
 	}	// fin boucle sur les lignes de bonus/malus
@@ -3752,6 +3807,7 @@ function traiteMalus() {
 				case 'ESQ':
 				case 'REG':
 				case 'Vue':
+				case 'Voir le Caché':
 					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] ) : '';
 					break;
 				default:
@@ -5158,6 +5214,56 @@ function afficherNouvelles(items) {
 		}
 	};
 	insertBefore(footer,p);
+
+	if (isDEV) {	// Roule 02/02/2017 copie de la conf vers https
+		if (false) {	// essai avorté via sessionStorage (ne fonctionne pas)
+			if (isHTTPS) {
+				window.console.log('[MZ test] sessionStorage.getItem(xxx)=' + window.sessionStorage.getItem('xxx'));
+				window.console.log('[MZ test] window.parent.xxx=' + window.parent.xxx);
+			} else {
+				window.console.log('[MZ test] début switch to https');
+				window.sessionStorage.setItem('xxx', "test session trans https");
+				window.parent.xxx = "autre test";
+				var url = document.location.href;
+				window.console.log('[MZ test] url=' + url);
+				url = url.replace(/http:\/\//i, 'https://')
+				window.console.log('[MZ test] switched url=' + url);
+				document.location.href = url;
+			}
+		}
+		if (false) {	// version par utilisation d'un IFrame en https
+			if (isHTTPS) {
+				//window.console.log('[MZ test] window.xxx=' + window.xxx);
+				//window.console.log('[MZ test] window.name=' + window.name);
+				//window.console.log('[MZ test] window.document.xxx=' + window.document.xxx);
+				//window.console.log('[MZ test] window.parent.xxx=' + window.parent.xxx);
+				var txt = window.name;
+				var tabtxt = txt.split(/µ/);
+				for (var i = 0; i < tabtxt.length; i++) {
+					window.console.log('[MZ test]config https ' + tabtxt[i]);
+				}
+			} else {
+				var txt = '';
+				for ( var i = 0, len = localStorage.length; i < len; ++i ) {
+					var k = localStorage.key(i);
+					//if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
+					txt += k + "£" + localStorage.getItem(k) + "µ";
+				}
+				var iframe = document.createElement('iframe');
+				var url = document.location.href;
+				//window.console.log('[MZ test] url=' + url);
+				url = url.replace(/http:\/\//i, 'https://')
+				//window.console.log('[MZ test] switched url=' + url);
+				//iframe.xxx = "truc en plume";
+				iframe.name = txt;
+				//window.xxx = "machin";
+				iframe.src = url;
+				//iframe.document.xxx = "truc en plume";
+				document.body.appendChild(iframe);
+				iframe.style.display = 'none';
+			}
+		}
+	}
 }
 
 
@@ -6514,13 +6620,21 @@ function deleteEnchantement()
 
 function do_option() {
 	start_script(712);
-
-	// Pour cryptage des mdp IT
-	//appendNewScript(URL_tilk_js + 'md5.js'); // source intégré dans tout_MZ
-
 	var insertPoint = document.getElementById('footer1');
 	insertBefore(insertPoint,document.createElement('p'));
-	var ti = insertTitle(insertPoint,'Mountyzilla : Options');
+	var ti = insertTitle(insertPoint,'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
+	ti.onclick = function (e) {
+		var evt = e || window.event;
+		if (!evt.shiftKey) return;
+		var txt = '';
+		for ( var i = 0, len = localStorage.length; i < len; ++i ) {
+			var k = localStorage.key(i);
+			if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
+			txt += k + "\t" + localStorage.getItem(k) + "\n";
+		}
+		copyTextToClipboard(txt);
+		window.alert('La configuration MZ a été copiée dans le presse-papier (sauf le mot de passe Bricol\'Trõll)');
+	}
 	ti.title = 'Version ' + GM_info.script.version;
 	insertOptionTable(insertPoint);
 	/* insertion enchantements ici
@@ -6531,16 +6645,15 @@ function do_option() {
 	var ti = insertTitle(insertPoint,'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
 	ti.onclick = function (e) {
 		var evt = e || window.event;
-		if (evt.shiftKey) {
-			var oldDev = MY_getValue('MZ_dev');
-			if (oldDev) {
-				MY_removeValue('MZ_dev');
-			} else {
-				alert('passage en mode DEV, shift-click sur le mot "Crédits" pour revenir en mode normal');
-				MY_setValue('MZ_dev', 1);
-			}
-			document.location.href = document.location.href;
+		if (!evt.shiftKey) return;
+		var oldDev = MY_getValue('MZ_dev');
+		if (oldDev) {
+			MY_removeValue('MZ_dev');
+		} else {
+			alert('passage en mode DEV, shift-click sur le mot "Crédits" pour revenir en mode normal');
+			MY_setValue('MZ_dev', 1);
 		}
+		document.location.href = document.location.href;
 	}
 	insertCreditsTable(insertPoint);
 	insertBefore(insertPoint,document.createElement('p'));
@@ -7747,7 +7860,7 @@ var needComputeEnchantement = MY_getValue(numTroll+'.enchantement.liste')
 // Checkboxes de filtrage
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
-	checkBoxTactique, checkBoxLevels, checkBoxGowaps, checkBoxEngages,
+	checkBoxTactique, checkBoxLevels, checkBoxGowapsS, checkBoxGowapsA, checkBoxEngages,
 	comboBoxNiveauMin, comboBoxNiveauMax;
 
 /* Acquisition & Stockage des données de DB */
@@ -8167,7 +8280,8 @@ function synchroniseFiltres() {
 	if(numBool) {
 		debutFiltrage('Monstres');
 	}
-	recallCheckBox(checkBoxGowaps,'NOGOWAP');
+	recallCheckBox(checkBoxGowapsS,'NOGOWAPS');
+	recallCheckBox(checkBoxGowapsA,'NOGOWAPA');
 	recallCheckBox(checkBoxMythiques,'NOMYTH');
 	recallCheckBox(checkBoxEngages,'NOENGAGE');
 	recallCheckBox(checkBoxLevels,'NOLEVEL');
@@ -8426,8 +8540,11 @@ function initialiseInfos() {
 	checkBoxIntangibles = appendCheckBoxSpan(
 		td,'delint',filtreTrolls,' Les Intangibles'
 	).firstChild;
-	checkBoxGowaps = appendCheckBoxSpan(
-		td,'delgowap',filtreMonstres,' Les Gowaps'
+	checkBoxGowapsA = appendCheckBoxSpan(
+		td,'delgowapA',filtreMonstres,' Les Gowaps Apprivoisés'
+	).firstChild;
+	checkBoxGowapsS = appendCheckBoxSpan(
+		td,'delgowapS',filtreMonstres,' Les Gowaps Sauvages'
 	).firstChild;
 	checkBoxEngages = appendCheckBoxSpan(
 		td,'delengage',filtreMonstres,' Les Engagés'
@@ -9041,10 +9158,11 @@ function filtreMonstres() {
 	
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MY_getValue(numTroll+'.USECSS')=='true';
-	var noGowaps = saveCheckBox(checkBoxGowaps,'NOGOWAP'),
-		noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE'),
-		nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE'),
-		nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
+	var noGowapsS = saveCheckBox(checkBoxGowapsS,'NOGOWAPS');
+	var noGowapsA = saveCheckBox(checkBoxGowapsA,'NOGOWAPA');
+	var noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE');
+	var nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
+	var nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
 	// old/new : détermine s'il faut ou non nettoyer les tr
 	var oldNOEM = true, noEM = true;
 	if(MY_getValue('NOINFOEM')!='true') {
@@ -9105,7 +9223,11 @@ function filtreMonstres() {
 		}
 		
 		tr_monstres[i].style.display = (
-			noGowaps &&
+			noGowapsS &&
+			nom.indexOf('gowap sauvage')!=-1 &&
+			getMonstreDistance(i)>1
+		) || (
+			noGowapsA &&
 			nom.indexOf('gowap apprivoisé')!=-1 &&
 			getMonstreDistance(i)>1
 		) || (
@@ -9118,15 +9240,6 @@ function filtreMonstres() {
 			strMonstre!='' &&
 			nom.indexOf(strMonstre)==-1
 		) || (
-			// Roule 20/01/2017 zone à supprimer, réécriture min/max
-			// nivMin>0 &&
-			// getMonstreLevel(i)!=-1 &&
-			// getMonstreLevel(i)<nivMin &&
-			// getMonstreDistance(i)>1 &&
-			// nom.toLowerCase().indexOf("kilamo")==-1  // wtf ?!...
-		// ) || (
-			// nivMax>0 &&
-			// getMonstreLevel(i)>nivMax &&
 			isMonstreLevelOutLimit(i, nivMin, nivMax) &&
 			getMonstreDistance(i)>1 &&
 			nom.toLowerCase().indexOf("kilamo")==-1
@@ -9925,7 +10038,8 @@ function do_vue() {
 		var noGG = saveCheckBox(checkBoxGG, "NOGG");
 		var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
 		var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-		var noGowaps = saveCheckBox(checkBoxGowaps, "NOGOWAP");
+		var noGowapsS = saveCheckBox(checkBoxGowapsS, "NOGOWAPS");
+		var noGowapsA = saveCheckBox(checkBoxGowapsA, "NOGOWAPA");
 		var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
 		var noTresorsEngages =
 			saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
@@ -10966,7 +11080,6 @@ function setTalent(nom,pc,niveau,sousCompetences) {
 			urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ? 
 				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
 	}
-	
 	MY_setValue(numTroll+'.talent.'+nomEnBase,pc);
 }
 
@@ -11999,6 +12112,17 @@ function showEssaiCartes() {
 	window.console.log('fin showEssai Tout_MZ');
 }
 
+function testBoolLocalStorage() {
+	var b = false;
+	MY_setValue('MZ_essai_bool', b);
+	window.console.log('recup true => ' + MY_getValue('MZ_essai_bool'));
+	var x = window.localStorage.getItem('lkjlkjerziurlijzer');
+	window.console.log('recup LocalStorage inconnu => ' + typeof(x));
+	var y = GM_getValue('654654897894654654');
+	window.console.log('recup GM inconnu => ' + typeof(y));
+	window.console.log('égalité ? => ' + (x == y));
+}
+
 /*--------------------------------- Création liste trolligion ---------------------------------*/
 function export_trolligion() {
 	try {
@@ -12203,8 +12327,8 @@ function do_trolligion() {
 
 //chargerScriptDev("libs");
 //chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
+//if (isDEV) testBoolLocalStorage();
 
-try {
 	// Détection de la page à traiter
 	if(isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
