@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.16
+// @version     1.2.16.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,7 @@ const MZ_changeLog = [
 "V1.2.16 21/02/2017",
 "	double stockage GM + localStorage version Vapulabehemot en préparation du passage HTTPS",
 "	possibilité de masquer les Gowaps Sauvages dans la vue",
-"	calculs des caractéristiques du siphon des âmes",
+"	calcul des caractéristiques du siphon des âmes",
 "V1.2.15.2 02/02/2017",
 "	adaptation décumul VlC (page des bonus/malus)",
 "V1.2.15.1 29/01/2017",
@@ -221,6 +221,13 @@ var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
+
+if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
+	window.console.log('*** warning *** GM_getValue n\'est pas défini (c\'est normal en test de compilation)');
+	var GM_getValue = function(key) {};
+	var GM_setValue = function(key, val) {};
+	var GM_deleteValue = function(key) {};
+}
 
 /* Utilisation de la gestion de l'enregistrement des données de
 GreaseMonkey, avec partage entre scripts via le localStorage, par
@@ -7830,7 +7837,6 @@ var porteeVue=[0,0,0,0];
 // Fenêtres déplaçables
 var winCurr = null;
 var offsetX, offsetY;
-document.onmousemove = drag;
 
 // Diplomatie
 var Diplo = {
@@ -8300,6 +8306,24 @@ function synchroniseFiltres() {
 
 /*-[functions]-------- Initialisation: Ajout des Boutons ---------------------*/
 
+function getVueScript() {
+	try {
+		var txt = bddTrolls()+
+			bddMonstres()+
+			bddChampignons()+
+			bddTresors()+
+			bddLieux()+
+			'#DEBUT ORIGINE\n'+
+			getPorteVue()[2]+';'+positionToString(getPosition())+
+			'\n#FIN ORIGINE\n';
+			window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
+		return txt;
+	} catch(e) {
+		avertissement("[getVueScript] Erreur d'export vers Vue externe");
+		window.console.error(traceStack(e, 'getVueScript'))
+	}
+}
+
 /* [functions] Menu Vue 2D */
 var vue2Ddata = {
 	'Bricol\' Vue': {
@@ -8346,24 +8370,6 @@ var vue2Ddata = {
 		extra_params: {}
 	}*/
 };
-
-function getVueScript() {
-	try {
-		var txt = bddTrolls()+
-			bddMonstres()+
-			bddChampignons()+
-			bddTresors()+
-			bddLieux()+
-			'#DEBUT ORIGINE\n'+
-			getPorteVue()[2]+';'+positionToString(getPosition())+
-			'\n#FIN ORIGINE\n';
-			window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
-		return txt;
-	} catch(e) {
-		avertissement("[getVueScript] Erreur d'export vers Vue externe");
-		window.console.error(traceStack(e, 'getVueScript'))
-	}
-}
 
 function refresh2DViewButton() {
 	// = EventListener menu+bouton vue 2D
@@ -8837,6 +8843,7 @@ function drag(evt) {
 	return false;
 }
 /* FIN DEBUG */
+document.onmousemove = drag;
 
 function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
@@ -12393,5 +12400,9 @@ function do_trolligion() {
 		do_trolligion();
 	}
 } catch(e) {
-	window.console.log(traceStack(e, 'catch général page ' + window.location.pathname));
+	try {
+		window.console.log(traceStack(e, 'catch général page ' + window.location.pathname));
+	} catch(e2) {
+		window.console.log('catch général page ' + window.location.pathname + "\n" + e.message);
+	}
 }
