@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.16.1
+// @version     1.2.16.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.16.2 24/02/2017",
+"	corrige bug des cases à cocher qui n'étaient plus mémorisées",
+"V1.2.16.1 21/02/2017",
+"	corrige bug sur Fx 38.8 ESR",
 "V1.2.16 21/02/2017",
 "	double stockage GM + localStorage version Vapulabehemot en préparation du passage HTTPS",
 "	possibilité de masquer les Gowaps Sauvages dans la vue",
@@ -236,13 +240,6 @@ Vapulabehemot (82169) 07/02/2017 */
 // Nécessite la présence de @grant GM_getValue, @grant GM_deleteValue et @grant GM_setValue
 function MY_getValue(key) {
 	var v = window.localStorage.getItem(key);
-	if (v === 'true') {
-		v = 1;
-		window.localStorage[key] = 1;
-	} else if (v === 'false') {
-		v = 0;
-		window.localStorage[key] = 0;
-	}
 	vGM = GM_getValue(key);
 	if ((vGM == null)
 		|| (v != null && v != vGM)){
@@ -258,7 +255,7 @@ function MY_removeValue(key) {
 	window.localStorage.removeItem(key);
 }
 function MY_setValue(key, val) {
-	if (val === true)
+	if (val === true)	// conversion des booléens en 0 ou 1 à cause du localStorage infoutu de gérer les booléens
 		val = 1;
 	else if (val === false)
 		val = 0;
@@ -12120,14 +12117,28 @@ function showEssaiCartes() {
 }
 
 function testBoolLocalStorage() {
+	var b = true;
+	var key = 'MZ_essai_bool';
+	GM_setValue(key, b);
+	window.localStorage[key] = b;
+	var v = GM_getValue(key);
+	window.console.log('recup GM true => ' + v + ', ' + typeof v);
+	var v = window.localStorage.getItem(key);
+	window.console.log('recup localstorage true => ' + v + ', ' + typeof v);	// localStorage nous rend une chaine 'true' :(
+
 	var b = false;
-	MY_setValue('MZ_essai_bool', b);
-	window.console.log('recup true => ' + MY_getValue('MZ_essai_bool'));
+	GM_setValue(key, b);
+	window.localStorage[key] = b;
+	var v = GM_getValue(key);
+	window.console.log('recup GM false => ' + v + ', ' + typeof v);
+	var v = window.localStorage.getItem(key);
+	window.console.log('recup localstorage false => ' + v + ', ' + typeof v);
+
 	var x = window.localStorage.getItem('lkjlkjerziurlijzer');
-	window.console.log('recup LocalStorage inconnu => ' + typeof(x));
+	window.console.log('recup LocalStorage inconnu => ' + typeof(x));	// object null
 	var y = GM_getValue('654654897894654654');
-	window.console.log('recup GM inconnu => ' + typeof(y));
-	window.console.log('égalité ? => ' + (x == y));
+	window.console.log('recup GM inconnu => ' + typeof(y));	// undefined
+	window.console.log('égalité ? => ' + (x == y));	// les deux sont "égaux" avec l'opérateur == (pas avec ===, bien sûr)
 }
 
 /*--------------------------------- Création liste trolligion ---------------------------------*/
