@@ -8,9 +8,10 @@
 // @include */mountyhall/View/TresorHistory*
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @include */mountyhall/MH_Play/Play_equipement.php*
+// @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.1.5
+// @version 8.1.6
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -31,23 +32,25 @@
 ****************************************************************/
 
 /*
+Roule 23/11/2016 V8.1.6
+	Adapatation à l'affichage en popup dans les tanières (méthode toujours très discutable par setInterval)
+Roule 09/12/2016 V8.1.5
+	Nouvelle méthode de migration des essais V1.0 par copier/coller de tout pref.js
+Roule 23/11/2016 V8.1.4
+	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval)
+Roule 14/10/2016 V8.1.3
+	simplification de l'entête GM (include)
+	passage à greasyfork
+Roule 24 à 26/08/2016 V8.1.2
+	Ajout outils de récupération des recherches pré Greasemonkey
+Roule 15/08/2016 V8.1.1
+	Ajout demande d'avis sur la position courante sur le site Psyko-Chasseurs
+	Quelques corrections de calcul (on avait du NaN)
 Roule 08 à 10/08/2016
 	recopie ici de appendButton() version MZ
 	Ajout liste des essais et possibilité d'en supprimer
 	Ajout lien vers Psyko Chasseurs
 	Adaptation aux IDs dans la page de résultat d'une recherche de cachette (et plus besoin de stocker le numéro de carte)
-Roule 15/08/2016 V8.1.1
-	Ajout demande d'avis sur la position courante sur le site Psyko-Chasseurs
-	Quelques corrections de calcul (on avait du NaN)
-Roule 24 à 26/08/2016 V8.1.2
-	Ajout outils de récupération des recherches pré Greasemonkey
-Roule 14/10/2016 V8.1.3
-	simplification de l'entête GM (include)
-	passage à greasyfork
-Roule 23/11/2016 V8.1.4
-	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval)
-Roule 09/12/2016 V8.1.5
-	Nouvelle méthode de migration des essais V1.0 par copier/coller de tout pref.js
 */
 
 function appendButton(paren,value,onClick) {
@@ -665,14 +668,14 @@ function analyseObject()
 	if (eSpacer) return;	// déjà affiché
 	var numTroll = getNumTroll();	// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
 	var idCarte = getIDCarte();
-	//window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte);
+	//debug*/window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte);
 	var originalPos = GM_getValue("capitan."+idCarte+".position");
 	if(!originalPos || originalPos == null)
 	{
 		var infoPos = document.evaluate("//td/text()[contains(.,'ai été tué en')]",
 		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		if(!infoPos) {
-			//window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
+			//debug*/window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
 			return;
 		}
 		var listePos = infoPos.nodeValue.split("=");
@@ -1309,6 +1312,10 @@ try
 	else if(isPage("MH_Play/Play_equipement.php"))
 	{
 		window.setInterval(analyseObject, 1000);	// Roule, 23/11/2016, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
+	}
+	else if(isPage("MH_Taniere/TanierePJ_o_Stock.php"))
+	{
+		window.setInterval(analyseObject, 1000);	// Roule, 08/03/2017, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
 	}
 	// debuging
 	// else if(isPage("MH_Play/Options/Play_o_Interface"))
