@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.16.2
+// @version     1.2.16.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.16.4 08/03/2017",
+"	correction ID de troll en envoi de PX/MP",
+"V1.2.16.3 27/02/2017",
+"	correction bonus/malus FP",
 "V1.2.16.2 24/02/2017",
 "	corrige bug des cases à cocher qui n'étaient plus mémorisées",
 "V1.2.16.1 21/02/2017",
@@ -3729,9 +3733,12 @@ function traiteMalus() {
 			var carac = trim( effetsT[i].substring(0,effetsT[i].indexOf(':')) ) ;
 			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
-			var bm = Number(effetsT[i].match(/-?\d+/)[0]);
+			//var bm = Number(effetsT[i].match(/-?\d+/)[0]);
+			var tmatch = effetsT[i].match(/(-?\d+)(\\(-?\d+))?/);	// un numérique et optionellement un autre numérique précédé d'un antislash
+			if (tmatch[2] == undefined) var bm = Number(tmatch[1]);	// cas DEG : -6
+			else                        var bm = Number(tmatch[3]);	// cas DEG : +0\-5
 			uniListe[nb]['caracs'][carac] = bm;
-			if (MY_DEBUG) window.console.log('[MZ debug] uniListe[' + nb + '][\'caracs\'][' + carac + '] = ' + bm);
+			if (MY_DEBUG) window.console.log('[MZ debug] effetsT[' + i + ']=' + effetsT[i] + ', uniListe[' + nb + '][\'caracs\'][' + carac + '] = ' + bm + ', durée=' + duree + ' tmatch=' + JSON.stringify(tmatch));
 			listeDurees[duree] = true;
 		}
 	}	// fin boucle sur les lignes de bonus/malus
@@ -3740,6 +3747,7 @@ function traiteMalus() {
 	var toursGeres = [];
 	for(var d in listeDurees) toursGeres.push(d);
 	toursGeres.sort( function (a,b){return b-a;} );
+	if (MY_DEBUG) window.console.log('[MZ debug] toursGeres=' + JSON.stringify(toursGeres) + "\nuniListe=" + JSON.stringify(uniListe));
 	// pour sauvegarder les bm de fatigue
 	var strfat = '';
 	// Pour affichage & adpatation à footable.js (statique)
@@ -3765,10 +3773,13 @@ function traiteMalus() {
 					var type = uniListe[nb]['type'];
 					if(!effetsCeTour[carac])
 						effetsCeTour[carac] = {'Physique':0, 'Magie':0};
+					var thisBm;
 					if(nom=='pasdedecumul')
-						effetsCeTour[carac][type] += bm;
+						thisBm = bm;
 					else
-						effetsCeTour[carac][type] += decumul(bm,decumulsCeTour[nom]);
+						thisBm = decumul(bm,decumulsCeTour[nom]);
+					effetsCeTour[carac][type] += thisBm;
+					if (MY_DEBUG) window.console.log('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', type=' + type + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac][type]);
 				} else {
 					if(!effetsCeTour[carac]) effetsCeTour[carac]=0;
 					var thisBm;
@@ -3779,7 +3790,7 @@ function traiteMalus() {
 					else 
 						thisBm = decumul(bm,decumulsCeTour[nom]);
 					effetsCeTour[carac] += thisBm;
-					//window.console.log('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac]);
+					if (MY_DEBUG) window.console.log('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac]);
 				}
 			}	// fin boucle sur les caractéristiques
 		}	// fin boucle sur les bonus/malus
@@ -8073,8 +8084,24 @@ function getTrollDistance(i) {
 	return parseInt(tr_trolls[i].cells[0].textContent);
 }
 
+var MZ_cache_col_TrollID;
 function getTrollID(i) {
-	return parseInt(tr_trolls[i].cells[2].textContent);
+	// Roule 08/03/2017 l'ID de troll peut être colonne 1 ou 2 selon que la case "Menu d'actions contextuelles" est cochée ou pas
+	if (MZ_cache_col_TrollID === undefined) {
+		if (tr_trolls[0].cells[1].textContent.toLowerCase().substring(0, 3) == 'réf') {
+			MZ_cache_col_TrollID = 1;
+		} else if (tr_trolls[0].cells[2].textContent.toLowerCase().substring(0, 3) == 'réf') {
+			MZ_cache_col_TrollID = 2;
+		} else {
+			window.console.log('MZ : impossible de trouver la colonne des ID des Trõlls, ' + tr_trolls[0].cells[1].textContent + ' -- ' + tr_trolls[0].cells[2].textContent);
+			MZ_cache_col_TrollID = 2;
+		}
+	}
+	// Roule 08/03/2017 protection
+	var iTroll = parseInt(tr_trolls[i].cells[MZ_cache_col_TrollID].textContent)
+	if (isNaN(iTroll)) return;
+	if (iTroll == 0) return;
+	return iTroll;
 }
 
 function getTrollNomNode(i) {
@@ -9388,12 +9415,19 @@ function annuleEnvoi() {
 function effectueEnvoi() {
 // = 2e Handler du bouton d'envoi (charge un nouveau frame)
 	var str='';
+	var errID = false;
 	for(var i=nbTrolls ; i>0 ; i--) {
 		var chb = document.getElementById('envoi'+i);
 		if(chb.checked)	{
-			str += (str?',':'')+getTrollID(i);
+			var idTroll = getTrollID(i);
+			if (idTroll == undefined) {
+				errID = true;
+			} else {
+				str += (str ? ',' : '') + idTroll;
+			}
 		}
 	}
+	if (errID) window.alert('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
 	var PXchecked = document.getElementById('radioPX').checked;
 	if(PXchecked) {
 		window.open('./Actions/Play_a_DonPX.php?cat=8&dest='+str,'Contenu');
