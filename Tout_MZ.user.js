@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.16.4
+// @version     1.2.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13,6 +13,9 @@
 // ==/UserScript==
 
 // vérif UTF-8 ş
+
+// tests
+// @include     http://rouletabille.mh.free.fr/CompetenceResultat*
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -34,6 +37,9 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17 19/03/2017",
+"	Refonte de l'envoi des CdM",
+"	Modificatin de l'analyse de la frame de gauche (suite modification MH)",
 "V1.2.16.4 08/03/2017",
 "	correction ID de troll en envoi de PX/MP",
 "V1.2.16.3 27/02/2017",
@@ -212,7 +218,7 @@ if (window.location.protocol.indexOf('https') === 0) {
 
 // Roule 23/12/2016 mode dev
 var isDEV = false;
-if (window.localStorage.getItem('MZ_dev')) {
+if (window.localStorage.getItem('MZ_dev') || window.location.href.indexOf('rouletabille.mh.free.fr') > 0) {
 	URL_MZ = URL_MZ.replace(/$/, 'dev');
 	isDEV = true;
 }
@@ -221,7 +227,7 @@ if (window.localStorage.getItem('MZ_dev')) {
 var URL_MZimg = URL_MZ + '/img/';
 // URLs externes ajax (CORS OK)
 var URL_MZinfoMonstre = URL_MZ + '/monstres_0.9_FF.php';
-var URL_pageDispatcher = URL_MZ + '/cdmdispatcher.php';
+var URL_pageDispatcherV2 = URL_MZ + '/cdmdispatcherV2.php';
 
 // liens externes détuits
 var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
@@ -7346,7 +7352,7 @@ function do_diplo() {
 
 // x~x cdmcomp
 
-var cdm = '';
+//var cdm = '';	// Roule 11/03/2017 une variable globale de moins \o/
 
 function getNonNegInts(str) {
 	var nbrs = str.match(/\d+/g);
@@ -7360,21 +7366,27 @@ function traiteCdMcomp() {
 	try {
 		var msgEffet = document.getElementById('msgEffet');
 	} catch(e) {
-		window.console.log('[traiteCdMcomp] msgEffet non trouvé');
+		window.console.log('[MZ traiteCdMcomp] msgEffet non trouvé');
 		return;
 	}
 
 	// Teste si ce message du bot est un message de CdM
 	if(!document.evaluate(
-			"./p/b/text()[contains(.,'fait partie')]",
+			"./p/text()[contains(.,'fait partie')]",
 			msgEffet, null, 9, null
 		).singleNodeValue) {
+		if (MY_DEBUG) window.console.log('[MZ traiteCdMcomp] ce n\'est pas une CdM');
 		return;
 	}
 	
 	// Début de récupération de la CdM
+	/* 
+		Roule 10/03/2017 j'ai grandement simplifié ☺ ☺ ☺
+		zone à supprimer
+		traitement Armure Physique/Magique reporté en php
+
 	cdm = document.evaluate(
-		"./p/b/text()[contains(.,'fait partie')]",
+		"./p/text()[contains(.,'fait partie')]",
 		msgEffet, null, 9, null
 	).singleNodeValue.nodeValue+'\n';
 	
@@ -7416,7 +7428,77 @@ function traiteCdMcomp() {
 		}
 		i++;
 	}
-	
+	*/
+	//cdm = msgEffet.innerText || msgEffet.textContent;	// récupération du contenu texte d'un élément HTML
+	//if (MY_DEBUG) window.console.log('cmd=' + cdm);
+
+	// envoi au serveur (PHP) d'un objet avec
+	//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
+	//	tstamp:	l'horodatage
+	var tabCdM = new Array();
+	var etimestamp = document.getElementById('hserveur');
+	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
+	for (var eHTML of msgEffet.childNodes) {
+		switch (eHTML.nodeName) {
+			case '#text':
+				var s = eHTML.nodeValue.trim();
+				if (s != '') tabCdM.push(s);
+				break;
+			case 'P':
+				var s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
+				s = s.trim();
+				if (s != '') tabCdM.push(s);
+				break;
+			case 'TABLE':
+				var s = 'table';
+				for (var eTr of eHTML.rows) {
+					var tabTd = new Array();
+					for (var eTd of eTr.cells) {
+						var s = eTd.innerText || eTd.textContent;	// récupération du contenu texte d'un élément HTML
+						s = s.trim();
+						tabTd.push(s);
+					}
+					tabCdM.push(tabTd);
+				}
+				break;
+			default:
+				window.console.log('[MZ ' + GM_info.script.version + '] traiteCdMcomp, type d\'élément non traité : ' + eHTML.nodeName);
+				var s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
+				if (s != '') tabCdM.push(s);
+				break;
+		}
+	}
+	var oData = {};
+	if (tstamp != undefined) oData.tstamp = tstamp.replace(/\]/, '').trim();
+	oData.idTroll = numTroll;
+	oData.tabCdM = tabCdM;
+	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify(oData));
+
+	// envoi d'une CdM issue de compte-rendu de compétence
+	// fonction définie ici pour avoir vue sur la variable tabCdM
+	var sendInfoCDM = function () {
+		MY_setValue('CDMID', 1+parseInt(MY_getValue('CDMID')) );
+		var buttonCDM = this;
+		var texte = '';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: URL_pageDispatcherV2,
+			data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oData)),
+			headers : {
+				/* inutile, à supprimer
+				'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+				'Accept': 'application/atom+xml,application/xml,text/xml',
+				*/
+				'Content-type':'application/x-www-form-urlencoded',
+			},
+			onload: function(responseDetails) {
+				texte = responseDetails.responseText;
+				buttonCDM.value = texte;
+				if (!isDEV) buttonCDM.disabled = true;
+			}
+		});
+	}
+
 	// Envoi auto ou insertion bouton envoi (suivant option)
 	if(MY_getValue(numTroll+'.AUTOCDM')=='true') {
 		sendInfoCDM();
@@ -7429,35 +7511,30 @@ function traiteCdMcomp() {
 	}
 
 	// Insertion de l'estimation des PV restants
+	/*
 	var pv = valStat.snapshotItem(1).nodeValue;
 	if(pv.indexOf("entre")==-1) {
 		return;
 	}
-	pv = getPVsRestants(pv,valStat.snapshotItem(2).nodeValue);
+	*/
+	var trPv = document.evaluate(
+		"//tr[contains(td/b/text(),'Points de Vie')]",
+			msgEffet, null, 9, null).singleNodeValue;
+	tdPv = trPv.cells[1];
+	txtPv = tdPv.innerText || tdPv.textContent;
+	if (MY_DEBUG) window.console.log('txtPv=' + txtPv);
+	pv = getPVsRestants(txtPv,'80%');
+	if (MY_DEBUG) window.console.log('pv=' + pv);
 	if(pv) {
-		var tr = insertTr(nomStat.snapshotItem(3).parentNode.parentNode.parentNode);
+		var trBless = document.evaluate(
+			"//tr[contains(td/b/text(),'Blessure')]",
+				msgEffet, null, 9, null).singleNodeValue;
+		var tr = document.createElement('tr');
+		trBless.parentNode.insertBefore(tr, trBless.nextSibling);
+		appendTr(trBless);
 		appendTdText(tr, pv[0], true);
 		appendTdText(tr, pv[1], true);
 	}
-}
-
-function sendInfoCDM() {
-	MY_setValue('CDMID', 1+parseInt(MY_getValue('CDMID')) );
-	var buttonCDM = this;
-	var texte = '';
-	FF_XMLHttpRequest({
-		method: 'GET',
-		url: URL_pageDispatcher+'?cdm='+escape(cdm),
-		headers : {
-			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-			'Accept': 'application/atom+xml,application/xml,text/xml'
-		},
-		onload: function(responseDetails) {
-			texte = responseDetails.responseText;
-			buttonCDM.value = texte;
-			buttonCDM.disabled = true;
-		}
-	});
 }
 
 function do_cdmcomp() {
@@ -7540,9 +7617,11 @@ function getNNInt(str) {
 	return nbrs;
 	}
 
+	// envoi d'une CdM issue d'un message du BOT
 function sendCDM() {
-	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
+	var td = document.evaluate("//td/text()[contains(.,'CONNAISSANCE DES MONSTRES')]/..",
 								document, null, 9, null).singleNodeValue;
+	/* ancienne version à supprimer
 	cdm = td.innerHTML;
 	cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,
 						"$3$4 ($1 - N°$2)<br>");
@@ -7567,13 +7646,41 @@ function sendCDM() {
 		cdm = cdm.replace(cdm.substring(bgn,end),insrt+')<br>');
 		}
 	cdm = cdm.replace(/<br>/g,'\n');
-	
+	*/
+
+	var tdTxt = td.innerText || td.textContent;	// récupération du contenu texte d'un élément HTML
+	//window.console.log(tdTxt);
+	var oData = {};
+	oData.tabCdM = tdTxt.split(/\n/);
+	// nettoyage entête : enlève le premier élément tant que 
+	//	- suite de *
+	//	- "MOUNTYHALL - La Terre des Trõlls"
+	//	- ligne vide (la première expression régulière matche les lignes vides)
+	while (oData.tabCdM[0].match(/^=*$/) || oData.tabCdM[0].match(/^MOUNTYHALL/i)) oData.tabCdM.shift();
+	// nettoyage entête : enlève tout ce qui suit une ligne composée uniquement d'étoiles suivie de '^Vous avez configuré' + les lignes vides au dessus
+	var iLigneNonVide;
+	for (var i = 0; i < oData.tabCdM.length; i++) {
+		if (oData.tabCdM[i].match(/^\*+$/) && oData.tabCdM[i+1].match(/^Vous avez configuré/i)) {
+			if (iLigneNonVide === undefined)
+				oData.tabCdM.splice(i);
+			else
+				oData.tabCdM.splice(iLigneNonVide+1);
+			break;
+		}
+		if (!oData.tabCdM[i].match(/^$/)) iLigneNonVide = i;
+	}
+	//window.console.log(JSON.stringify(oData));
+
 	FF_XMLHttpRequest({
-				method: 'GET',
-				url: URL_pageDispatcher+'?cdm='+escape(cdm),
+				method: 'POST',
+				url: URL_pageDispatcherV2,
+				data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oData)),
 				headers : {
+					/* inutile, à supprimer
 					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-					'Accept': 'application/atom+xml,application/xml,text/xml'
+					'Accept': 'application/atom+xml,application/xml,text/xml',
+					*/
+					'Content-type':'application/x-www-form-urlencoded',
 					},
 				onload: function(responseDetails) {
 					buttonCDM.value=responseDetails.responseText;
@@ -7679,16 +7786,31 @@ var menuRac, mainIco;
 function updateData() {
 	var inputs = document.getElementsByTagName('input');
 	var divs = document.getElementsByTagName('div');
-	
-	numTroll = inputs[0].value;
-	MY_setValue('NUM_TROLL', numTroll);
-	MY_setValue('NIV_TROLL',inputs[1].value);
-	if(!MY_getValue(numTroll+'.caracs.rm')) {
-		MY_setValue(numTroll+'.caracs.rm',0);
-		// assure l'init des 4 var de libs
+
+	//window.console.log('inputs=' + JSON.stringify(inputs));
+	if (inputs && inputs.length > 0) {
+		// Roule, 14/03/2017, ancienne version, il n'y a plus de <input>
+		numTroll = inputs[0].value;
+		MY_setValue('NUM_TROLL', numTroll);
+		MY_setValue('NIV_TROLL',inputs[1].value);
+		if(!MY_getValue(numTroll+'.caracs.rm')) {
+			MY_setValue(numTroll+'.caracs.rm',0);
+			// assure l'init des 4 var de libs
+		}
+		MY_setValue(numTroll+'.caracs.mm',inputs[2].value);
+	} else {
+		// onclick="EnterPJView(91305,750,550)"
+		var tabA = document.getElementsByTagName('a');
+		if (tabA.length > 0 && tabA[0].onclick !== undefined) {
+			var s = tabA[0].onclick.toString();;
+			//window.console.log('s=' + JSON.stringify(s) + ' ' + typeof(s) + ' ' + s.toString());
+			var m = s.match(/\((\d+) *,/);
+			//window.console.log('m=' + JSON.stringify(m));
+			numTroll = parseInt(m[1]);
+			MY_setValue('NUM_TROLL', numTroll);
+		}
 	}
-	MY_setValue(numTroll+'.caracs.mm',inputs[2].value);
-	
+
 	var DLA = new Date(
 		StringToDate(divs[1].firstChild.nodeValue.slice(5))
 	);
@@ -7702,11 +7824,12 @@ function updateData() {
 		}
 	}
 	MY_setValue(numTroll+'.DLA.encours',DateToString(DLA));
-	
+
 	var listePos = divs[1].childNodes[2].nodeValue.split('=');
 	MY_setValue(numTroll+'.position.X',parseInt(listePos[1]));
 	MY_setValue(numTroll+'.position.Y',parseInt(listePos[2]));
 	MY_setValue(numTroll+'.position.N',parseInt(listePos[3]));
+	if (MY_DEBUG) window.console.log('numTroll=' + numTroll + ',DLA =' + DLA + ', x= ' + parseInt(listePos[1]) + ', y= ' + parseInt(listePos[2]) + ', n= ' + parseInt(listePos[3]));
 }
 
 // ajoute les raccourcis (paramétrables dans Options/Pack Graphique)
@@ -12385,6 +12508,10 @@ function do_trolligion() {
 	if(isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
 	} else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
+		do_cdmcomp();
+	} else if(isPage('CompetenceResultat')) {	// test Roule 10/03/2017
+		do_cdmcomp();
+	} else if(isPage('MH_Play/Actions/Competences/Play_a_CompetenceResult.php')) {	// ajout Roule 10/03/2017 (modif MH ?)
 		do_cdmcomp();
 	} else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
 		do_diplo();
