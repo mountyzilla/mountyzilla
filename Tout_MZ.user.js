@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.1
+// @version     1.2.17.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.2 20/03/2017",
+"	Correction des PV restants",
 "V1.2.17.1 20/03/2017",
 "	Blocage des PV restants en attendant résolution de bug",
 "V1.2.17 19/03/2017",
@@ -7437,6 +7439,8 @@ function traiteCdMcomp() {
 	var tabCdM = new Array();
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
+	var txtBlessure;
+	var txtPv;
 	for (var eHTML of msgEffet.childNodes) {
 		switch (eHTML.nodeName) {
 			case '#text':
@@ -7456,6 +7460,13 @@ function traiteCdMcomp() {
 						var s = eTd.innerText || eTd.textContent;	// récupération du contenu texte d'un élément HTML
 						s = s.trim();
 						tabTd.push(s);
+					}
+					if (tabTd.length >= 2) {
+						if (tabTd[0].match(/Blessure/i)) {
+							txtBlessure = tabTd[1]
+						} else if (tabTd[0].match(/Points* *de *Vie/i)) {
+							txtPv = tabTd[1]
+						}
 					}
 					tabCdM.push(tabTd);
 				}
@@ -7515,24 +7526,28 @@ function traiteCdMcomp() {
 	if(pv.indexOf("entre")==-1) {
 		return;
 	}
-	*/
 	var trPv = document.evaluate(
 		"//tr[contains(td/b/text(),'Points de Vie')]",
 			msgEffet, null, 9, null).singleNodeValue;
 	tdPv = trPv.cells[1];
 	txtPv = tdPv.innerText || tdPv.textContent;
 	if (MY_DEBUG) window.console.log('txtPv=' + txtPv);
-	pv = getPVsRestants(txtPv,'80%');
-	if (MY_DEBUG) window.console.log('pv=' + pv);
 	if(0) { //pv) {	// bloqué en attendant correction
-		var trBless = document.evaluate(
-			"//tr[contains(td/b/text(),'Blessure')]",
-				msgEffet, null, 9, null).singleNodeValue;
-		var tr = document.createElement('tr');
-		trBless.parentNode.insertBefore(tr, trBless.nextSibling);
-		appendTr(trBless);
-		appendTdText(tr, pv[0], true);
-		appendTdText(tr, pv[1], true);
+	*/
+	if (MY_DEBUG) window.console.log('txtBlessure=' + txtBlessure + ', txtPv=' + txtPv);
+	if (txtBlessure !== undefined && txtPv !== undefined) {
+		var pv = getPVsRestants(txtPv,txtBlessure);
+		if (MY_DEBUG) window.console.log('pv=' + pv);
+		if (pv) {	// pv null si le monstre n'est pas blessé
+			var trBless = document.evaluate(
+				"//tr[contains(td/b/text(),'Blessure')]",
+					msgEffet, null, 9, null).singleNodeValue;
+			var tr = document.createElement('tr');
+			trBless.parentNode.insertBefore(tr, trBless.nextSibling);
+			appendTr(trBless);
+			appendTdText(tr, pv[0], true);
+			appendTdText(tr, pv[1], true);
+		}
 	}
 }
 
@@ -12508,7 +12523,7 @@ function do_trolligion() {
 		do_cdmbot();
 	} else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
 		do_cdmcomp();
-	} else if(isPage('CompetenceResultat')) {	// test Roule 10/03/2017
+	} else if(window.location.pathname.indexOf("/mountyhall/CdM.competence")>=0) {	// test Roule 20/03/2017
 		do_cdmcomp();
 	} else if(isPage('MH_Play/Actions/Competences/Play_a_CompetenceResult.php')) {	// ajout Roule 10/03/2017 (modif MH ?)
 		do_cdmcomp();
