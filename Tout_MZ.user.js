@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17
+// @version     1.2.17.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13,9 +13,6 @@
 // ==/UserScript==
 
 // vérif UTF-8 ş
-
-// tests
-// @include     http://rouletabille.mh.free.fr/CompetenceResultat*
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -37,9 +34,11 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.1 20/03/2017",
+"	Blocage des PV restants en attendant résolution de bug",
 "V1.2.17 19/03/2017",
 "	Refonte de l'envoi des CdM",
-"	Modificatin de l'analyse de la frame de gauche (suite modification MH)",
+"	Modification de l'analyse de la frame de gauche (suite modification MH)",
 "V1.2.16.4 08/03/2017",
 "	correction ID de troll en envoi de PX/MP",
 "V1.2.16.3 27/02/2017",
@@ -7525,7 +7524,7 @@ function traiteCdMcomp() {
 	if (MY_DEBUG) window.console.log('txtPv=' + txtPv);
 	pv = getPVsRestants(txtPv,'80%');
 	if (MY_DEBUG) window.console.log('pv=' + pv);
-	if(pv) {
+	if(0) { //pv) {	// bloqué en attendant correction
 		var trBless = document.evaluate(
 			"//tr[contains(td/b/text(),'Blessure')]",
 				msgEffet, null, 9, null).singleNodeValue;
