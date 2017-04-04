@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.2
+// @version     1.2.17.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,9 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.3 04/04/2017",
+"	Messages console en cas de cadre d'erreur",
+"	Trolls de l'IT mais pas dans le vue en orange",
 "V1.2.17.2 20/03/2017",
 "	Correction des PV restants",
 "V1.2.17.1 20/03/2017",
@@ -157,15 +160,21 @@ const MZ_changeLog = [
 			(Roule') Ça me semble diffile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
 		partage de l'identification des tresors au sol. Ca c'etait cool mais ca implique une BDD
 		partage des CDM avec seulement son groupe. Perso je prefere le partage general
+	Akkila le boeuf le 26-03-2017 à 15:56
+		- bouton pour rafraîchir les infos des trolls de son groupe
+		- (ajout de Roule') ne pas afficher 
 	Roule'
 		Réactiver les jubilaires
-		[Prioritaire] trajets Gowaps sans avoir besoin de URL_MZscriptCarte (voir comment c'est fait dans Trajet_des_gowap_MkII.user.js)
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
+		Traces console à l'affichage des cadres d'info MZ
+		(Hera) Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
 			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
-	100 (post formum 10/02/2017
-		Il y aurait moyen de rajouter la prise en compte du Siphon des ames sur les attaques prisent en compte par la calculette sur la vue ?
+		Prévision des DLA de monstre
+		Niveau des monstres à la méthode Roule'
+	Raistlin
+		pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 **********************************************************/
 
 /**********************************************************
@@ -417,6 +426,7 @@ function copyTextToClipboard(text) {
 }
 
 function avertissement(txt,duree) {
+	window.console.log('[MZ] affichage avertissement ' + txt + (duree ? ' pour (' + duree + ' ms)' : ''));
 	if(!duree) duree = 15000;
 	var div = document.createElement('div');
 	// On numérote les avertissements pour destruction sélective
@@ -5046,6 +5056,7 @@ function createOrGetGrandCadre() {
 }
 
 function showHttpsErrorCadre1() {
+	window.console.log('[MZ] showHttpsErrorCadre1');
 	var grandCadre = createOrGetGrandCadre();
 	var sousCadre = document.createElement('div');
 	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat1 de Raistlin.</b>'
@@ -5064,6 +5075,7 @@ function showHttpsErrorCadre1() {
 }
 
 function showHttpsErrorCadre2() {
+	window.console.log('[MZ] showHttpsErrorCadre2');
 	var grandCadre = createOrGetGrandCadre();
 	var sousCadre = document.createElement('div');
 	sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat2 de Raistlin.</b>'
@@ -5083,6 +5095,7 @@ function showHttpsErrorCadre2() {
 }
 
 function showHttpsErrorContenuMixte() {
+	window.console.log('[MZ] showHttpsErrorContenuMixte');
 	var grandCadre = createOrGetGrandCadre();
 	var sousCadre = document.createElement('div');
 	sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />'
@@ -9075,6 +9088,7 @@ function retireMarquage(nom) {
 }
 
 function showPopupError(sHTML) {
+	window.console.log('[MZ] affichage PopupError ' + sHTML);
 	var divpopup = document.createElement('div');
 	divpopup.id = 'divpopup';
 	divpopup.style =
@@ -9882,10 +9896,10 @@ function putScriptExterne() {
 				onload: function(responseDetails) {
 					try {
 						if (responseDetails.status == 0) {
+							window.console.log('status=0 à l\'appel bricol\'troll');
 							if (isHTTPS) {
 								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut accepter le certificat2 de Raistlin (voir page d\'accueil)');
 							} else {
-								window.console.log('status=0 à l\'appel bricol\'troll');
 								avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<');
 							}
 							return;
@@ -10101,6 +10115,7 @@ function putInfosTrolls(infosTrolls) {
 			} else {
 				tr = appendTr(tBody,'mh_tdpage');
 			}
+			tr.style.color = 'orange';
 			var td = appendTd(tr);	// distance
 			appendText(td, distance);
 			td = appendTd(tr);	// actions
