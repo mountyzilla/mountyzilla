@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.3
+// @version     1.2.17.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,9 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.4 08/04/2017",
+"	Affichage triangle camou/invi pour les Trõlls de l'IT vus (sous VlC)",
+"	Adaptation de la diplomacie à une modification de la page MH",
 "V1.2.17.3 04/04/2017",
 "	Messages console en cas de cadre d'erreur",
 "	Trolls de l'IT mais pas dans le vue en orange",
@@ -175,6 +178,7 @@ const MZ_changeLog = [
 		Niveau des monstres à la méthode Roule'
 	Raistlin
 		pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
+		Les cibles de mission ont disparu dans la vue (remonté par Hera)
 **********************************************************/
 
 /**********************************************************
@@ -673,11 +677,12 @@ function appendSubmit(paren,value,onClick) {
 	return input;
 	}
 
-function createImage(url,title) {
+function createImage(url,title,style) {
 	var img = document.createElement('img');
 	img.src = url;
 	img.title = title;
 	img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
+	if (style) img.style = style;
 	return img;
 	}
 
@@ -7029,13 +7034,17 @@ function insertChoixCouleur(node,id) {
 
 function setChoixCouleurs() {
 	try {
-		var form = document.getElementsByName('ActionForm')[0];
+		//var form = document.getElementsByName('ActionForm')[0];
+		var form = document.getElementById('mhPlay');
 		var nodesAE = document.evaluate(
-			"./table/tbody/tr/td[@class='mh_tdtitre']",
+			//"./table/tbody/tr/td[@class='mh_tdtitre']",
+			"./table/tbody/tr/th[@class='mh_tdtitre']",
+			//"./table/tbody/tr[@class='mh_tdtitre']/th",
 			form, null, 7, null
 		);
 		var nodes = document.evaluate(
-			"./table/tbody/tr/td[not(@class='mh_tdtitre')]",
+			//"./table/tbody/tr/td[not(@class='mh_tdtitre')]",
+			"./table/tbody/tr[not(@class='mh_tdtitre')]/td",
 			form, null, 7, null
 		);
 	} catch(e) {
@@ -9978,7 +9987,7 @@ function corrigeBricolTrolls(infosTrolls) {
 	}
 
 	// insère 2 TD avant nextTD avec les infos venant de l'IT
-function addTdInfosTroll(infos, nextTD) {
+function addTdInfosTroll(infos, TR) {
 	/* cadre barre PV */
 	var tab = document.createElement('div');
 	/* ancienne méthode par img, à supprimer
@@ -10029,13 +10038,18 @@ function addTdInfosTroll(infos, nextTD) {
 	tab.appendChild(img);
 	*/
 
+	var tdNom = TR.childNodes[3]
+	if (infos.camoufle)  tdNom.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé","padding-left:2px"));
+	if (infos.invisible) tdNom.appendChild(createImage(URL_MZimg+"warning.gif","Invisible","padding-left:2px"));
+
 	/* lien vers l'IT */
 	var lien = document.createElement('a');
 	var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
 	lien.href = URL_bricol+nomit+'/index.php';
 	lien.target = '_blank';
 	lien.appendChild(tab);
-	insertTdElement(nextTD,lien);
+	var tdGuilde = TR.childNodes[6];
+	insertTdElement(tdGuilde,lien);
 	/* PAs dispos */
 	var span = document.createElement('span');
 	span.title = 'DLA : ' + SQLDateToFrenchTime(infos.dla);
@@ -10045,7 +10059,7 @@ function addTdInfosTroll(infos, nextTD) {
 		// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
 		span.style.backgroundColor = 'B8EEB8';
 	}
-	insertTdElement(nextTD, span);
+	insertTdElement(tdGuilde, span);
 }
 
 function putInfosTrolls(infosTrolls) {
@@ -10072,7 +10086,7 @@ function putInfosTrolls(infosTrolls) {
 		for(i=nbTrolls ; i>0 ; i--) {
 			var infos = infosTrolls[getTrollID(i)];
 			if(infos && (!infos.bIgnore)) {
-				addTdInfosTroll(infos, tr_trolls[i].childNodes[6]);
+				addTdInfosTroll(infos, tr_trolls[i]);
 				infos.done = true;
 			} else {
 				insertTd(tr_trolls[i].childNodes[6]);
@@ -10124,8 +10138,9 @@ function putInfosTrolls(infosTrolls) {
 			td = appendTd(tr);	// Nom
 			// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
 			appendA(td, 'javascript:EPV(' + idTroll + ')', 'mh_trolls_1', infos.nom);
-			if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
-			if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
+			// info camou/invi transféré dans addTdInfosTroll
+			// if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
+			// if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
 			td = appendTd(tr);	// Niveau
 			if (infos.niveau !== undefined) appendText(td, infos.niveau);
 			td.align = 'center';
@@ -10143,7 +10158,7 @@ function putInfosTrolls(infosTrolls) {
 			td = appendTd(tr);	// N
 			td.align = 'center';
 			if (infos.n !== undefined) appendText(td, infos.n);
-			addTdInfosTroll(infos, tr.childNodes[6]);
+			addTdInfosTroll(infos, tr);
 		}
 	} catch(e) {
 		window.alert('Erreur troll='+i+'\n'+e+'\n'+tr_trolls[i].innerHTML);
