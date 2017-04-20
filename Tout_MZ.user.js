@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.4
+// @version     1.2.17.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.5 20/04/2017",
+"	Correction de la récupération du niveau du Trõll pour le calcul des PX",
 "V1.2.17.4 08/04/2017",
 "	Affichage triangle camou/invi pour les Trõlls de l'IT vus (sous VlC)",
 "	Adaptation de la diplomacie à une modification de la page MH",
@@ -179,6 +181,8 @@ const MZ_changeLog = [
 	Raistlin
 		pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		Les cibles de mission ont disparu dans la vue (remonté par Hera)
+	2485 - Grunt
+		Erreur sur les PX rapportés (erreur sur le niveau du Trõll ?)
 **********************************************************/
 
 /**********************************************************
@@ -292,6 +296,8 @@ function MY_setValue(key, val) {
 var numTroll = MY_getValue('NUM_TROLL');
 // utilisé dans vue pour PX :
 var nivTroll = MY_getValue('NIV_TROLL');
+// Roule 20/04/2017 le niveau n'est plus dans la frame de gauche, on récupère dans <numtroll>.niveau
+if (nivTroll == undefined) nivTroll = MY_getValue(numTroll + '.niveau');
 // utilisés dans actions et vue (calculs SR) :
 var mmTroll = MY_getValue(numTroll+'.caracs.mm');
 var rmTroll = MY_getValue(numTroll+'.caracs.rm');
