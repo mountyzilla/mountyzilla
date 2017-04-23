@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.5
+// @version     1.2.17.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.6 23/04/2017",
+"	Correction gestion des missions en cas de réinstallation",
 "V1.2.17.5 20/04/2017",
 "	Correction de la récupération du niveau du Trõll pour le calcul des PX",
 "V1.2.17.4 08/04/2017",
@@ -167,12 +169,10 @@ const MZ_changeLog = [
 		partage des CDM avec seulement son groupe. Perso je prefere le partage general
 	Akkila le boeuf le 26-03-2017 à 15:56
 		- bouton pour rafraîchir les infos des trolls de son groupe
-		- (ajout de Roule') ne pas afficher 
 	Roule'
+		*urgent* corriger la façon dont les cibles de mission sont stockées (JSON très grosse table)
 		Réactiver les jubilaires
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
-		Traces console à l'affichage des cadres d'info MZ
-		(Hera) Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
 			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
@@ -181,8 +181,9 @@ const MZ_changeLog = [
 	Raistlin
 		pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		Les cibles de mission ont disparu dans la vue (remonté par Hera)
-	2485 - Grunt
-		Erreur sur les PX rapportés (erreur sur le niveau du Trõll ?)
+	80117 - Héra
+		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
+		Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
 **********************************************************/
 
 /**********************************************************
@@ -247,7 +248,7 @@ var URL_MZimg = URL_MZ + '/img/';
 var URL_MZinfoMonstre = URL_MZ + '/monstres_0.9_FF.php';
 var URL_pageDispatcherV2 = URL_MZ + '/cdmdispatcherV2.php';
 
-// liens externes détuits
+// liens externes déduits
 var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
  
 var MHicons = '/mountyhall/Images/Icones/';
@@ -4589,15 +4590,17 @@ function do_infomonstre() {
  */
 
 function saveMission(num,obEtape) {
-	var obMissions = {};
+	var obMissions = [];
 	if(MY_getValue(numTroll+'.MISSIONS')) {
 		try {
+			window.console.log('JSON MISSION = ' + MY_getValue(numTroll+'.MISSIONS'));
 			obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
 			window.console.error(traceStack(e, 'Mission parsage'));
 			return;
 		}
 	}
+	if (obMissions == undefined) obMissions = [];	// protection
 	//window.console.log('saveMission, obEtape=' + obEtape);	// debug roule
 	if(obEtape) {
 		obMissions[num] = obEtape;
