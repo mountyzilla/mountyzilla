@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.6
+// @version     1.2.17.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.7 26/04/2017",
+"	Version compatible hors GreaseMonkey",
 "V1.2.17.6 23/04/2017",
 "	Correction gestion des missions en cas de réinstallation",
 "V1.2.17.5 20/04/2017",
@@ -170,6 +172,7 @@ const MZ_changeLog = [
 	Akkila le boeuf le 26-03-2017 à 15:56
 		- bouton pour rafraîchir les infos des trolls de son groupe
 	Roule'
+		Vérifier bonus double AE
 		*urgent* corriger la façon dont les cibles de mission sont stockées (JSON très grosse table)
 		Réactiver les jubilaires
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
@@ -260,6 +263,7 @@ if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
 	var GM_getValue = function(key) {};
 	var GM_setValue = function(key, val) {};
 	var GM_deleteValue = function(key) {};
+	var GM_info = {script: {version: 'sans GM'}}	// GM_info.script.version
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
