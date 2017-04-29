@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.7
+// @version     1.2.17.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.8 29/04/2017",
+"	Correction Bonus/Malus cas +0\+10 (AE)",
+"	Correction portée IdC",
+"	Prise en compte du bonus de portée PM dans le calcul tactique",
 "V1.2.17.7 26/04/2017",
 "	Version compatible hors GreaseMonkey",
 "V1.2.17.6 23/04/2017",
@@ -182,11 +186,13 @@ const MZ_changeLog = [
 		Prévision des DLA de monstre
 		Niveau des monstres à la méthode Roule'
 	Raistlin
-		pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
+		FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		Les cibles de mission ont disparu dans la vue (remonté par Hera)
 	80117 - Héra
 		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
-		Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
+		FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
+	?
+		Tenir compte de la distance pour le PM (calculatrice de combat)
 **********************************************************/
 
 /**********************************************************
@@ -356,7 +362,7 @@ function traceStack(e, sModule) {
 
 function debugMZ(str){
     if(MY_DEBUG){
-        window.console.debug('[MY_DEBUG] '+str);
+        window.console.debug('[MZ_DEBUG] '+str);
         if(typeof str === "object"){
             window.console.debug(str);
         }
@@ -1986,6 +1992,10 @@ var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
 	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
 	'Capacité spéciale','Résistance Magique','Autres'];
 
+/* appelé par
+	createCDMTable (dans le popup DcM)
+	computeTactique (à coté du nom des monstres dans la vue et dans la page de détail des monstres)
+*/
 function createImageTactique(url,id,nom) {
 	var img = document.createElement('img');
 	img.src = url;
@@ -2565,6 +2575,7 @@ function analyseTactique(donneesMonstre,nom) {
 	} 
 	catch(e)
 	{
+		debugMZ('analyseTactique, exeception calcul esqM ' + e.message);
 		esqM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurEsquive = '<';
 		modificateurArmure = '<';
@@ -2579,6 +2590,7 @@ function analyseTactique(donneesMonstre,nom) {
 	} 
 	catch(e)
 	{
+		debugMZ('analyseTactique, exeception calcul attM ' + e.message);
 		attM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurEsquiveM = '>';
 		modificateurArmureM = '>';
@@ -2592,6 +2604,7 @@ function analyseTactique(donneesMonstre,nom) {
 	} 
 	catch(e)
 	{
+		debugMZ('analyseTactique, exeception calcul degM ' + e.message);
 		degM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurArmureM = '>';
 	}
@@ -2604,6 +2617,7 @@ function analyseTactique(donneesMonstre,nom) {
 	} 
 	catch(e)
 	{
+		debugMZ('analyseTactique, exeception calcul armM ' + e.message);
 		armM=Math.ceil(parseInt(td.firstChild.nodeValue));
 		modificateurArmure = '<';
 	}
@@ -2612,6 +2626,7 @@ function analyseTactique(donneesMonstre,nom) {
 	try
 	{
 		td.innerHTML = bbcode(donneesMonstre[9]);
+		//debugMZ('analyseTactique, calcul SR, donnessMonstre=' + donneesMonstre[9] + ', bbcode=' + bbcode(donneesMonstre[9]));
 		var rm = parseInt(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 		var v = (rm / mm);
 		var seuil = (rm < mm ? Math.max(10,Math.floor(v*50)) : Math.min(90,Math.floor(100 - 50/v)));
@@ -2619,6 +2634,7 @@ function analyseTactique(donneesMonstre,nom) {
 	}
 	catch(e) 
 	{
+		debugMZ('analyseTactique, exeception calcul SR ' + e.message);
 		modificateurMagie = '<';
 		pasDeSR = true;
 	}
@@ -2687,8 +2703,22 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(vue,esqM,attbmm,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(vue,esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(vue,esqM,attbmm,0)*pour/100);
+		// distance troll - monstre
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm,1)))/100;
 		//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+		if (donneesMonstre['iTR'] !== undefined) {
+			var dist = getMonstreDistance(donneesMonstre['iTR']+1);
+			var vue_bm = parseInt(MY_getValue(numTroll+".caracs.vue.bm"), 10);
+			var portee = getPortee__Profil(vue+vue_bm);
+			if (dist <= portee) {
+				degats += 2 * (portee-dist);
+			} else {
+				degats += ' (plus bonus de portée)';
+			}
+			debugMZ('analyseTactique, iTR= ' + donneesMonstre['iTR'] + ', dist=' + dist + ', porteePM=' + portee);
+		} else {
+			degats += ' (plus bonus de portée)';
+		}
 		listeAttaques.push(new Array("Projectile Magique",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
 	if(getSortComp("Frénésie")>0)
@@ -3767,7 +3797,7 @@ function traiteMalus() {
 			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
 			//var bm = Number(effetsT[i].match(/-?\d+/)[0]);
-			var tmatch = effetsT[i].match(/(-?\d+)(\\(-?\d+))?/);	// un numérique et optionellement un autre numérique précédé d'un antislash
+			var tmatch = effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et optionellement un autre numérique précédé d'un antislash
 			if (tmatch[2] == undefined) var bm = Number(tmatch[1]);	// cas DEG : -6
 			else                        var bm = Number(tmatch[3]);	// cas DEG : +0\-5
 			uniListe[nb]['caracs'][carac] = bm;
@@ -9192,6 +9222,7 @@ function retrieveCDMs() {
 							index = parseInt(infos[2]);
 							var level = infos[3];
 							infos = infos.slice(3);
+							infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
 							if(begin2==null) { begin2 = index; }
 							end2 = index;
 							listeCDM[idMonstre] = infos;
@@ -9308,6 +9339,15 @@ function computeVLC(begin,end) {
 	}
 }
 
+/* appelé
+par updateTactique
+	par initialiseInfos
+		par do_vue
+par computeVLC
+	par computeMission
+		par filtreMonstres
+		par retrieveCDMs
+*/
 function computeTactique(begin, end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeVLC
 	try {
@@ -11545,9 +11585,9 @@ function competences(comp,niveau) {
 		texte = 'Fait fuir un monstre si tout se passe bien.'
 			+'<br/>Lui donne de gros bonus sinon...';
 	else if(comp.indexOf('Identification des Champignons')!=-1) {
-		texte = 'Portée horizontale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
+		texte = 'Portée horizontale : <b>'+Math.floor(vuetotale/2)+'</b> case';
 		if(vuetotale>2) texte += 's';
-		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/4)+'</b> case';
+		texte += '<br/>Portée verticale : <b>'+Math.floor(vuetotale/4)+'</b> case';
 		if(vuetotale>4) texte += 's';
 	}
 	else if(comp.indexOf('Insultes')!=-1)
@@ -11808,7 +11848,7 @@ function sortileges(sort,mainCall,pcA,pcD) {
 			+' => <b>'+(2*(Math.floor(vue/2)+modD)+degbm)
 			+'/'+(2*(Math.floor(1.5*Math.floor(vue/2))+modD)+degbm)
 			+' ('+resiste(Math.floor(vue/2)+modD,degbm)
-			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbm)+')</b>';
+			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbm)+') (+ 1D3 par bonus de portée)</b>';
 		if(!mainCall) return texte;
 		texte += '<br/>Portée : <b>'+portee+'</b> case';
 		if(portee>1) texte += 's';
