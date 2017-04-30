@@ -37,7 +37,8 @@ function MZ_add_script(url) {
 
 function MZ_switch_scripts() {
 	// faisabilite : charge uniquement Tout_MZ
-	if (window.localStorage.getItem('MZ_dev') {
+	//if (window.localStorage.getItem('MZ_dev')) {
+	if (window.location.pathname.indexOf('dev') >= 0) {
 		MZ_add_script(MZ_URL_Tout_MZ_DEV);
 	} else {
 		MZ_add_script(MZ_URL_Tout_MZ);

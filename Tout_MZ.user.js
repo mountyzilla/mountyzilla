@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.9
+// @version     1.2.17.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.10 30/04/2017",
+"	Protection dans la récupération d'erreur",
 "V1.2.17.9 30/04/2017",
 "	Correction récupération d'erreur IT Bricol'Troll",
 "V1.2.17.8 29/04/2017",
@@ -266,6 +268,8 @@ var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
 
+// IE : utiliser html-xpath (à faire)
+
 if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
 	window.console.log('*** warning *** GM_getValue n\'est pas défini (c\'est normal en test de compilation)');
 	var GM_getValue = function(key) {};
@@ -351,11 +355,19 @@ function traceStack(e, sModule) {
 		version = ' ' + GM_info.script.version;
 	sRet = '[MZ' + version + ']'
 	if (sModule) sRet += ' {' + sModule + '}';
-	if (e.message) sRet += ' ' + e.message;
-	if (e.stack) {
-		var sStack = e.stack;
-		// enlever les infos confidentielles
-		sRet += "\n" + sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
+	try {
+		if (e.message) sRet += ' ' + e.message;
+	} catch (e) {
+		$Ret += ' <exception message>'
+	}
+	try {
+		if (e.stack) {
+			var sStack = e.stack;
+			// enlever les infos confidentielles
+			sRet += "\n" + sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
+		}
+	} catch (e) {
+		$Ret += ' <exception stack>'
 	}
 	return sRet;
 }
@@ -3169,10 +3181,15 @@ function changeActionDecalage() {
 
 function prochainMundi() {
 	try {
-		var node = document.evaluate(
-			"//div[@class='dateAction']/b",
-			document, null, 9, null
-		).singleNodeValue;
+		var node;
+			node = document.evaluate(
+				"//div[@class='dateAction']/b",
+				document, null, 9, null
+			).singleNodeValue;
+		if (document.evaluate) {
+		} else {	// repli en JQuery
+			//node = $(
+		}
 	} catch(e) {
 		window.console.error(traceStack(e, 'prochainMundi Date introuvable'));
 		return;
