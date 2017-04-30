@@ -5,7 +5,7 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.8
+// @version     1.2.17.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.9 30/04/2017",
+"	Correction récupération d'erreur IT Bricol'Troll",
 "V1.2.17.8 29/04/2017",
 "	Correction Bonus/Malus cas +0\+10 (AE)",
 "	Correction portée IdC",
@@ -7506,7 +7508,8 @@ function traiteCdMcomp() {
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
 	var txtBlessure;
 	var txtPv;
-	for (var eHTML of msgEffet.childNodes) {
+	for (var iElt = 0; iElt < msgEffet.childNodes.length; iElt++) { //eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
+		var eHTML = msgEffet.childNodes[iElt];
 		switch (eHTML.nodeName) {
 			case '#text':
 				var s = eHTML.nodeValue.trim();
@@ -7519,9 +7522,11 @@ function traiteCdMcomp() {
 				break;
 			case 'TABLE':
 				var s = 'table';
-				for (var eTr of eHTML.rows) {
+				for (var iTr = 0; iTr < eHTML.rows.length; iTr++) {	// eTr of eHTML.rows) {
+					var eTr = eHTML.rows[iTr];
 					var tabTd = new Array();
-					for (var eTd of eTr.cells) {
+					for (var iTd = 0; iTd < eTr.cells.length; iTd++) {	//eTd of eTr.cells) {
+						var eTd = eTr.cells[iTd];
 						var s = eTd.innerText || eTd.textContent;	// récupération du contenu texte d'un élément HTML
 						s = s.trim();
 						tabTd.push(s);
@@ -10214,7 +10219,8 @@ function putInfosTrolls(infosTrolls) {
 			addTdInfosTroll(infos, tr);
 		}
 	} catch(e) {
-		window.alert('Erreur troll='+i+'\n'+e+'\n'+tr_trolls[i].innerHTML);
+		avertissement('Erreur de traitement des informations Bricol\'Troll, le détail est dans la console (F12)');
+		window.console.error(traceStack(e, 'putInfosTrolls'));
 	}
 }
 

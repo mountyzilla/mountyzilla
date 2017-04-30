@@ -24,6 +24,7 @@
 
 try {
 const MZ_URL_Tout_MZ = 'https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js';
+const MZ_URL_Tout_MZ_DEV = 'https://mz.mh.raistlin.fr/mzdev/js/Tout_MZ.user.js';
 
 function MZ_add_script(url) {
 	var head = window.head;
@@ -36,7 +37,11 @@ function MZ_add_script(url) {
 
 function MZ_switch_scripts() {
 	// faisabilite : charge uniquement Tout_MZ
-	MZ_add_script(MZ_URL_Tout_MZ);
+	if (window.localStorage.getItem('MZ_dev') {
+		MZ_add_script(MZ_URL_Tout_MZ_DEV);
+	} else {
+		MZ_add_script(MZ_URL_Tout_MZ);
+	}
 }
 
 MZ_switch_scripts();
