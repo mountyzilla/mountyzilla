@@ -5,7 +5,9 @@
 // @include     */mountyhall/*
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
-// @version     1.2.17.10
+// @exclude     *mh2.mh.raistlin.fr*
+// @exclude     *mzdev.mh.raistlin.fr*
+// @version     1.2.17.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.11 01/05/2017",
+"	Travail sur le fonctionnement hors Greasemonkey",
 "V1.2.17.10 30/04/2017",
 "	Protection dans la récupération d'erreur",
 "V1.2.17.9 30/04/2017",
@@ -250,7 +254,9 @@ if (window.location.protocol.indexOf('https') === 0) {
 
 // Roule 23/12/2016 mode dev
 var isDEV = false;
-if (window.localStorage.getItem('MZ_dev') || window.location.href.indexOf('rouletabille.mh.free.fr') > 0) {
+if (window.localStorage.getItem('MZ_dev')
+		|| window.location.href.indexOf('rouletabille.mh.free.fr') > 0
+		|| window.location.href.indexOf('mzdev.mh') >= 0) {
 	URL_MZ = URL_MZ.replace(/$/, 'dev');
 	isDEV = true;
 }
@@ -268,10 +274,8 @@ var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
 
-// IE : utiliser html-xpath (à faire)
-
 if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
-	window.console.log('*** warning *** GM_getValue n\'est pas défini (c\'est normal en test de compilation)');
+	window.console.log('Fonctionnement hors Greasemonkey');
 	var GM_getValue = function(key) {};
 	var GM_setValue = function(key, val) {};
 	var GM_deleteValue = function(key) {};

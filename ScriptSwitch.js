@@ -25,23 +25,28 @@
 try {
 const MZ_URL_Tout_MZ = 'https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js';
 const MZ_URL_Tout_MZ_DEV = 'https://mz.mh.raistlin.fr/mzdev/js/Tout_MZ.user.js';
+const MZ_URL_XPATH = 'https://mz.mh.raistlin.fr/mz/js/mz-xpath.js';
+const MZ_URL_XPATH_DEV = 'https://mz.mh.raistlin.fr/mzdev/js/mz-xpath.js';
 
-function MZ_add_script(url) {
+function MZ_add_script(url, defer) {
 	var head = window.head;
 	if (!head) head = document.getElementsByTagName('head')[0];	// IE ancien
 	var script = document.createElement("script");
 	script.src = url;
-	script.defer = true;
+	if (defer) script.defer = true;
 	head.appendChild(script);
 }
 
 function MZ_switch_scripts() {
 	// faisabilite : charge uniquement Tout_MZ
-	//if (window.localStorage.getItem('MZ_dev')) {
-	if (window.location.pathname.indexOf('dev') >= 0) {
-		MZ_add_script(MZ_URL_Tout_MZ_DEV);
+	if (window.location.host.indexOf('dev') >= 0) {
+		if (document.evaluate === undefined)
+			MZ_add_script(MZ_URL_XPATH_DEV, true);
+		MZ_add_script(MZ_URL_Tout_MZ_DEV, true);
 	} else {
-		MZ_add_script(MZ_URL_Tout_MZ);
+		if (document.evaluate === undefined)
+			MZ_add_script(MZ_URL_XPATH, true);
+		MZ_add_script(MZ_URL_Tout_MZ, true);
 	}
 }
 
