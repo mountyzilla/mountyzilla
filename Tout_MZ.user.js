@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.11
+// @version     1.2.17.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.12 16/06/2017",
+"	Correction mauvais compte de PX quand on change de Trõll",
 "V1.2.17.11 01/05/2017",
 "	Travail sur le fonctionnement hors Greasemonkey",
 "V1.2.17.10 30/04/2017",
@@ -308,15 +310,24 @@ function MY_setValue(key, val) {
 		val = 1;
 	else if (val === false)
 		val = 0;
+	try {
 	GM_setValue(key, val);
-	window.localStorage[key] = val;
+	} catch(e) {
+		window.console.log('[MZ ' + GM_info.script.version + '] MY_setValue echec GM_setValue(' + key + ', ' + val + ')');
+	}
+	try {
+		window.localStorage[key] = val;
+	} catch(e) {
+		window.console.log('[MZ ' + GM_info.script.version + '] MY_setValue echec localStorage[' + key + '] = ' + val);
+	}
 }
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
 var numTroll = MY_getValue('NUM_TROLL');
 // utilisé dans vue pour PX :
-var nivTroll = MY_getValue('NIV_TROLL');
+// Roule 16/06/2017 on ne peut pas prendre le dernier niveau vu ! on a peut-être changé de Troll
+var nivTroll; // = MY_getValue('NIV_TROLL');
 // Roule 20/04/2017 le niveau n'est plus dans la frame de gauche, on récupère dans <numtroll>.niveau
 if (nivTroll == undefined) nivTroll = MY_getValue(numTroll + '.niveau');
 // utilisés dans actions et vue (calculs SR) :
@@ -361,8 +372,8 @@ function traceStack(e, sModule) {
 	if (sModule) sRet += ' {' + sModule + '}';
 	try {
 		if (e.message) sRet += ' ' + e.message;
-	} catch (e) {
-		$Ret += ' <exception message>'
+	} catch (e2) {
+		sRet += ' <exception acces message>';//+ e2.message;
 	}
 	try {
 		if (e.stack) {
@@ -370,8 +381,8 @@ function traceStack(e, sModule) {
 			// enlever les infos confidentielles
 			sRet += "\n" + sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
 		}
-	} catch (e) {
-		$Ret += ' <exception stack>'
+	} catch (e2) {
+		sRet += ' <exception acces stack>'; // + e2.message;
 	}
 	return sRet;
 }
@@ -1396,10 +1407,12 @@ function getPortee__Vue(param) {
 /*-[functions]----------- Calculs expérience / niveau ------------------------*/
 
 function getPXKill(niv) {
+	if (nivTroll == undefined) return '? (visitez le profil privé)';
 	return Math.max(0,10+3*niv-2*nivTroll);
 	}
 
 function getPXDeath(niv) {
+	if (nivTroll == undefined) return '? (visitez le profil privé)';
 	return Math.max(0,10+3*nivTroll-2*niv);
 	}
 
@@ -1951,20 +1964,24 @@ function removeAllTalents() {
 	}
 
 function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
-	var att = MY_getValue(numTroll+'.caracs.attaque');
-	var attbmp = MY_getValue(numTroll+'.caracs.attaque.bmp');
-	var attbmm = MY_getValue(numTroll+'.caracs.attaque.bmm');
-	var mm = MY_getValue(numTroll+'.caracs.mm');
-	var deg = MY_getValue(numTroll+'.caracs.degats');
-	var degbmp = MY_getValue(numTroll+'.caracs.degats.bmp');
-	var degbmm = MY_getValue(numTroll+'.caracs.degats.bmm');
-	var vue = parseInt(MY_getValue(numTroll+'.caracs.vue'));
-	var bmvue = parseInt(MY_getValue(numTroll+'.caracs.vue.bm'));
-	if(att==null || attbmp==null || attbmm==null || mm==null || deg==null
-		|| degbmp==null || degbmm==null || vue==null || bmvue==null)
+	try {	// Roule 07/06/2017 protection, ça plante si on est dans une callback de XMLHTTPREQUEST
+		var att = MY_getValue(numTroll+'.caracs.attaque');
+		var attbmp = MY_getValue(numTroll+'.caracs.attaque.bmp');
+		var attbmm = MY_getValue(numTroll+'.caracs.attaque.bmm');
+		var mm = MY_getValue(numTroll+'.caracs.mm');
+		var deg = MY_getValue(numTroll+'.caracs.degats');
+		var degbmp = MY_getValue(numTroll+'.caracs.degats.bmp');
+		var degbmm = MY_getValue(numTroll+'.caracs.degats.bmm');
+		var vue = parseInt(MY_getValue(numTroll+'.caracs.vue'));
+		var bmvue = parseInt(MY_getValue(numTroll+'.caracs.vue.bm'));
+		if(att==null || attbmp==null || attbmm==null || mm==null || deg==null
+			|| degbmp==null || degbmm==null || vue==null || bmvue==null)
+			return false;
+		return true;
+	} catch(e) {
 		return false;
-	return true;
 	}
+}
 
 
 /*-[functions]---------------- Gestion des CDMs ------------------------------*/
@@ -6731,15 +6748,28 @@ function do_option() {
 	var ti = insertTitle(insertPoint,'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
 	ti.onclick = function (e) {
 		var evt = e || window.event;
-		if (!evt.shiftKey) return;
-		var txt = '';
-		for ( var i = 0, len = localStorage.length; i < len; ++i ) {
-			var k = localStorage.key(i);
-			if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
-			txt += k + "\t" + localStorage.getItem(k) + "\n";
+		if (evt.shiftKey) {
+			var txt = '';
+			for ( var i = 0, len = localStorage.length; i < len; ++i ) {
+				var k = localStorage.key(i);
+				if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
+				txt += k + "\t" + localStorage.getItem(k) + "\n";
+			}
+			copyTextToClipboard(txt);
+			window.alert('La configuration MZ a été copiée dans le presse-papier (sauf le mot de passe Bricol\'Trõll)');
+		} else if (evt.ctrlKey) {
+			var tabK= [];
+			var sMatch = numTroll + '.';
+			var lMatch = sMatch.length;
+			for (var i = 0, len = localStorage.length; i < len; ++i ) {
+				var k = localStorage.key(i);
+				if (k.substring(0, lMatch) == sMatch) tabK.push(k);
+			}
+			for (var i = 0; i < tabK.length; ++i ) {
+				MY_removeValue(tabK[i]);
+			}
+			window.alert(tabK.length + ' informations locales du Trõll ' + numTroll + ' ont été effacées-' + sMatch + '-' + lMatch);
 		}
-		copyTextToClipboard(txt);
-		window.alert('La configuration MZ a été copiée dans le presse-papier (sauf le mot de passe Bricol\'Trõll)');
 	}
 	ti.title = 'Version ' + GM_info.script.version;
 	insertOptionTable(insertPoint);
@@ -7896,6 +7926,7 @@ function updateData() {
 	if (inputs && inputs.length > 0) {
 		// Roule, 14/03/2017, ancienne version, il n'y a plus de <input>
 		numTroll = inputs[0].value;
+		window.console.log('[MZd ' + GM_info.script.version + '] init1 numTroll ' + numTroll);
 		MY_setValue('NUM_TROLL', numTroll);
 		MY_setValue('NIV_TROLL',inputs[1].value);
 		if(!MY_getValue(numTroll+'.caracs.rm')) {
@@ -7912,7 +7943,10 @@ function updateData() {
 			var m = s.match(/\((\d+) *,/);
 			//window.console.log('m=' + JSON.stringify(m));
 			numTroll = parseInt(m[1]);
+			window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
 			MY_setValue('NUM_TROLL', numTroll);
+		} else {
+			window.console.log('[MZd ' + GM_info.script.version + '] updateData, impossible de retrouver le numéro de Troll (tabA.length=' + tabA.length + ')');
 		}
 	}
 
@@ -8676,7 +8710,7 @@ function set2DViewSystem() {
 		selectVue2D = document.createElement('select');
 		selectVue2D.id = 'selectVue2D';
 		selectVue2D.className = 'SelectboxV2';
-		window.console.log('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue');
+		window.console.log('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
 		for(var view in vue2Ddata) {
 			appendOption(selectVue2D, view, view);
 		}
@@ -9274,7 +9308,9 @@ function retrieveCDMs() {
 
 function computeMission(begin,end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance
+	//+++window.console.log('computeMission, begin=' + begin + ', end=' + end);	
 	computeVLC(begin,end);
+	//+++window.console.log('computeMission, après computeVLC');	
 	if(!begin) begin=1;
 	if(!end) end=nbMonstres;
 	var str = MY_getValue(numTroll+'.MISSIONS');
@@ -9342,7 +9378,9 @@ function computeMission(begin,end) {
 
 function computeVLC(begin,end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeMission
+	//+++window.console.log('computeVLC, begin=' + begin + ', end=' + end);	
 	computeTactique(begin,end);
+	//+++window.console.log('computeVLC, après computeTactique');	
 	if(!begin) begin=1;
 	if(!end) end=nbMonstres;
 	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
@@ -9379,9 +9417,12 @@ function computeTactique(begin, end) {
 	try {
 		if(!begin) begin = 1;
 		if(!end) end = nbMonstres;
+		//+++window.console.log('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);	
 		var noTactique = saveCheckBox(checkBoxTactique,'NOTACTIQUE');
+		//+++window.console.log('computeTactique, noTactique=' + noTactique);	
 		if(noTactique || !isProfilActif()) return;
-		
+		//+++window.console.log('computeTactique, après isProfilActif');	
+
 		for(var j=end ; j>=begin ; j--) {
 			var id = getMonstreID(j);
 			var nom = getMonstreNom(j);
@@ -9396,7 +9437,7 @@ function computeTactique(begin, end) {
 		}
 	}
 	catch(e) {
-		window.alert('Erreur computeTactique mob num : '+j+' :\n'+e)
+		window.console.error(traceStack(e, 'computeTactique')+'\nmob num : ' + j);
 	}
 	filtreMonstres();
 }
@@ -9404,8 +9445,10 @@ function computeTactique(begin, end) {
 function updateTactique() {
 // = Handler checkBox noTactique
 	var noTactique = saveCheckBox(checkBoxTactique,'NOTACTIQUE');
+	//+++window.console.log('updateTactique, noTactique=' + noTactique);
 	if(!isCDMsRetrieved) return;
-	
+	//+++window.console.log('updateTactique, isCDMsRetrieved=' + isCDMsRetrieved);
+
 	if(noTactique) {
 		for(var i=nbMonstres ; i>0 ; i--) {
 			var tr = getMonstreNomNode(i);
