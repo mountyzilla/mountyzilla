@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.12
+// @version     1.2.17.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.13 12/07/2017",
+"	Adaptation au déplacement des colonnes dans la vue des Trõlls",
 "V1.2.17.12 16/06/2017",
 "	Correction mauvais compte de PX quand on change de Trõll",
 "V1.2.17.11 01/05/2017",
@@ -8342,23 +8344,29 @@ function bddMonstres(start,stop) {
 }
 
 /* [functions] Récup données Trolls */
+
+// Roule 12/07/2017 détecte les colonnes à partir des titres. Mamoune vient de les faire bouger :(
+const COL_TROLL_DIST = 0;	// celui-là, on le garde en dur
+
 function getTrollDistance(i) {
-	return parseInt(tr_trolls[i].cells[0].textContent);
+	return parseInt(tr_trolls[i].cells[COL_TROLL_DIST].textContent);
 }
 
 var MZ_cache_col_TrollID;
+var MZ_cache_col_TrollNOM;
+var MZ_cache_col_TrollGUILDE;
+var MZ_cache_col_TrollNIV;
+
+function MZ_find_col_titre(trs, titre) {
+	var l = titre.length;
+	for (var i=0; i < trs[0].cells.length; i++)
+		if (trs[0].cells[i].textContent.toLowerCase().substr(0, l) == titre) return i;
+	window.console.log('MZ : impossible de trouver la colonne de titre ' + titre + ' dans ' + trs[0].textContent);
+	return 0;
+}
+
 function getTrollID(i) {
-	// Roule 08/03/2017 l'ID de troll peut être colonne 1 ou 2 selon que la case "Menu d'actions contextuelles" est cochée ou pas
-	if (MZ_cache_col_TrollID === undefined) {
-		if (tr_trolls[0].cells[1].textContent.toLowerCase().substring(0, 3) == 'réf') {
-			MZ_cache_col_TrollID = 1;
-		} else if (tr_trolls[0].cells[2].textContent.toLowerCase().substring(0, 3) == 'réf') {
-			MZ_cache_col_TrollID = 2;
-		} else {
-			window.console.log('MZ : impossible de trouver la colonne des ID des Trõlls, ' + tr_trolls[0].cells[1].textContent + ' -- ' + tr_trolls[0].cells[2].textContent);
-			MZ_cache_col_TrollID = 2;
-		}
-	}
+	if (MZ_cache_col_TrollID === undefined) MZ_cache_col_TrollID = MZ_find_col_titre(tr_trolls, 'réf');
 	// Roule 08/03/2017 protection
 	var iTroll = parseInt(tr_trolls[i].cells[MZ_cache_col_TrollID].textContent)
 	if (isNaN(iTroll)) return;
@@ -8367,29 +8375,30 @@ function getTrollID(i) {
 }
 
 function getTrollNomNode(i) {
-	var isEnvoiOn =
-		document.getElementById('btnEnvoi').parentNode.childNodes.length>1;
-	return tr_trolls[i].cells[ isEnvoiOn ? 4 : 3 ];
+	if (MZ_cache_col_TrollNOM === undefined) MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
+	return tr_trolls[i].cells[MZ_cache_col_TrollNOM];
 }
 
 function getTrollNivNode(i) {
-	// Pas de test sur isEnvoiOn, n'est appelé qu'au pageload
-	return tr_trolls[i].cells[4];
+	if (MZ_cache_col_TrollNIV === undefined) MZ_cache_col_TrollNIV = MZ_find_col_titre(tr_trolls, 'niv');
+	return tr_trolls[i].cells[MZ_cache_col_TrollNIV];
 }
 
 function getTrollGuilde(i) {
-	return trim(tr_trolls[i].cells[6].textContent);
+	if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+	return trim(tr_trolls[i].cells[MZ_cache_col_TrollGUILDE].textContent);
 }
 
 function getTrollGuildeID(i) {
-	if(tr_trolls[i].childNodes[6].childNodes.length>0) {
+	if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+	if(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length>0) {
 		var href;
 		try {
-			if ((!tr_trolls[i].childNodes[6].firstChild) || (!tr_trolls[i].childNodes[6].firstChild.getAttribute)) return -1;	// Roule 21/12/2016 protection conte le "bug Marsak"
-			href = tr_trolls[i].childNodes[6].firstChild.getAttribute('href');
+			if ((!tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild) || (!tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute)) return -1;	// Roule 21/12/2016 protection conte le "bug Marsak"
+			href = tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute('href');
 		} catch(e) {	// debug pb remonté par Marsak 
 			window.console.error(traceStack(e, 'getTrollGuildeID')
-				,'nb child=' + tr_trolls[i].childNodes[6].childNodes.length
+				,'nb child=' + tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length
 				,tr_trolls[i].innerHTML.replace(/</g, '‹'));
 			return -1;
 		}
@@ -10119,7 +10128,7 @@ function addTdInfosTroll(infos, TR) {
 	tab.style.background = '#FFFFFF';
 	tab.style.border = 1;
 	*/
-	tab.title = infos.pv+'/'+infos.pv_max+' le '+ SQLDateToFrenchTime(infos.updated_at);
+	tab.title = infos.pv+'/'+infos.pv_max+' PV le '+ SQLDateToFrenchTime(infos.updated_at);
 	/* barre PV */
 	/* Roule' : sans aucune honte, j'ai copié la méthode de Bricol'Troll
 	<div class="vieContainer"><div style="background-color: #77EE77; width: 90%">&nbsp;</div></div>
@@ -10160,7 +10169,8 @@ function addTdInfosTroll(infos, TR) {
 	tab.appendChild(img);
 	*/
 
-	var tdNom = TR.childNodes[3]
+	if (MZ_cache_col_TrollNOM === undefined) MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
+	var tdNom = TR.childNodes[MZ_cache_col_TrollNOM]
 	if (infos.camoufle)  tdNom.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé","padding-left:2px"));
 	if (infos.invisible) tdNom.appendChild(createImage(URL_MZimg+"warning.gif","Invisible","padding-left:2px"));
 
@@ -10170,7 +10180,9 @@ function addTdInfosTroll(infos, TR) {
 	lien.href = URL_bricol+nomit+'/index.php';
 	lien.target = '_blank';
 	lien.appendChild(tab);
-	var tdGuilde = TR.childNodes[6];
+	if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+	//window.console.log('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
+	var tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
 	insertTdElement(tdGuilde,lien);
 	/* PAs dispos */
 	var span = document.createElement('span');
@@ -10197,9 +10209,10 @@ function putInfosTrolls(infosTrolls) {
 			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);
 			if (infos.oUpdatedAt < dateLimite) infos.bIgnore = true;
 		}
-		var td = insertTdText(tr_trolls[0].childNodes[6],'PA',true);
+		if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		var td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PA',true);
 		td.width = 40;
-		td = insertTdText(tr_trolls[0].childNodes[6],'PV',true);
+		td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PV',true);
 		td.width = 105;
 
 		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
@@ -10211,8 +10224,8 @@ function putInfosTrolls(infosTrolls) {
 				addTdInfosTroll(infos, tr_trolls[i]);
 				infos.done = true;
 			} else {
-				insertTd(tr_trolls[i].childNodes[6]);
-				insertTd(tr_trolls[i].childNodes[6]);
+				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 			}
 		}
 		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
@@ -10263,14 +10276,14 @@ function putInfosTrolls(infosTrolls) {
 			// info camou/invi transféré dans addTdInfosTroll
 			// if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
 			// if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
+			td = appendTd(tr);	// Guilde
+			if (infos.guilde !== undefined) appendText(td, infos.guilde);
 			td = appendTd(tr);	// Niveau
 			if (infos.niveau !== undefined) appendText(td, infos.niveau);
 			td.align = 'center';
 			td = appendTd(tr);	// Race
 			if (infos.race) appendText(td, infos.race);
 			// PV et PA ajoutés par addTdInfosTroll
-			td = appendTd(tr);	// Guilde
-			if (infos.guilde !== undefined) appendText(td, infos.guilde);
 			td = appendTd(tr);	// X
 			td.align = 'center';
 			if (infos.x !== undefined) appendText(td, infos.x);
