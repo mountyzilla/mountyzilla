@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.13
+// @version     1.2.17.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.14 14/07/2017",
+"	correction dans la gestion des étapes de mission",
 "V1.2.17.13 12/07/2017",
 "	Adaptation au déplacement des colonnes dans la vue des Trõlls",
 "V1.2.17.12 16/06/2017",
@@ -4664,19 +4666,23 @@ function do_infomonstre() {
  *
  * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
  */
+function isArray(a) {
+	return (!!a) && (a.constructor === Array);
+}
 
 function saveMission(num,obEtape) {
-	var obMissions = [];
+	var obMissions;
 	if(MY_getValue(numTroll+'.MISSIONS')) {
 		try {
-			window.console.log('JSON MISSION = ' + MY_getValue(numTroll+'.MISSIONS'));
+			window.console.log('JSON MISSION before) = ' + MY_getValue(numTroll+'.MISSIONS'));
 			obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
 			window.console.error(traceStack(e, 'Mission parsage'));
 			return;
 		}
 	}
-	if (obMissions == undefined) obMissions = [];	// protection
+	if (isArray(obMissions)) obMissions = new Object();	// corrige certains cas issus d'anciennes versions MZ
+	if (obMissions == undefined) obMissions = new Object();	// protection
 	//window.console.log('saveMission, obEtape=' + obEtape);	// debug roule
 	if(obEtape) {
 		obMissions[num] = obEtape;
@@ -4684,6 +4690,7 @@ function saveMission(num,obEtape) {
 		delete obMissions[num];
 	}
 	MY_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
+	window.console.log('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
 }
 
 function addtroogle(tdLibelle, sRestrict) {
