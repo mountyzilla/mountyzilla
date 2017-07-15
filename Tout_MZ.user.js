@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.14
+// @version     1.2.17.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.15 15/07/2017",
+"	modification du mécanisme de filtrage pour contourner un pb",
 "V1.2.17.14 14/07/2017",
 "	correction dans la gestion des étapes de mission",
 "V1.2.17.13 12/07/2017",
@@ -558,6 +560,13 @@ function insertTd(next) {
 	var td = document.createElement('td');
 	insertBefore(next,td);
 	return td;
+	}
+
+	// handle when eTd is the last (in this case eTd.nextSibling is null, which is fine for insertBefore)
+function insertAfterTd(eTd) {
+	var newTd = document.createElement('td');
+	eTd.parentNode.insertBefore(newTd, eTd.nextSibling);
+	return newTd;
 	}
 
 function appendTdCenter(tr,colspan) {
@@ -4674,7 +4683,7 @@ function saveMission(num,obEtape) {
 	var obMissions;
 	if(MY_getValue(numTroll+'.MISSIONS')) {
 		try {
-			window.console.log('JSON MISSION before) = ' + MY_getValue(numTroll+'.MISSIONS'));
+			//window.console.log('JSON MISSION (before) = ' + MY_getValue(numTroll+'.MISSIONS'));
 			obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
 		} catch(e) {
 			window.console.error(traceStack(e, 'Mission parsage'));
@@ -4690,7 +4699,7 @@ function saveMission(num,obEtape) {
 		delete obMissions[num];
 	}
 	MY_setValue(numTroll+'.MISSIONS',JSON.stringify(obMissions));
-	window.console.log('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
+	//window.console.log('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
 }
 
 function addtroogle(tdLibelle, sRestrict) {
@@ -8924,7 +8933,7 @@ function prepareFiltrage(ref,width) {
 	var td = appendTd(tr);
 	td.colSpan = 5;
 	// Ajout du bouton de gestion de Filtrage
-	var tdBtn = insertTd(tdTitre.nextSibling);
+	var tdBtn = insertAfterTd(tdTitre);
 	tdBtn.id = 'tdInsert'+ref;
 	var btn = appendButton(tdBtn,'Filtrer');
 	btn.id = 'btnFiltre'+ref;
