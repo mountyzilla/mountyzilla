@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.16
+// @version     1.2.17.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.17 16/07/2017",
+"	modification du mécanisme de filtrage pour contourner un pb",
 "V1.2.17.16 16/07/2017",
 "	Ajout de messages de debug sur les retours AJAX",
 "V1.2.17.15 15/07/2017",
@@ -7996,10 +7998,14 @@ function updateData() {
 	}
 	MY_setValue(numTroll+'.DLA.encours',DateToString(DLA));
 
-	var listePos = divs[1].childNodes[2].nodeValue.split('=');
-	MY_setValue(numTroll+'.position.X',parseInt(listePos[1]));
-	MY_setValue(numTroll+'.position.Y',parseInt(listePos[2]));
-	MY_setValue(numTroll+'.position.N',parseInt(listePos[3]));
+	try {
+		var listePos = divs[1].childNodes[2].nodeValue.split('=');
+		MY_setValue(numTroll+'.position.X',parseInt(listePos[1]));
+		MY_setValue(numTroll+'.position.Y',parseInt(listePos[2]));
+		MY_setValue(numTroll+'.position.N',parseInt(listePos[3]));
+	} catch(e) {
+		window.console.log('[MZ] erreur {' + e + '} à la récupération des coord. div[1] contient ' + divs[1].outerHTML.replace(/</g, '‹') + ', div[0] contient ' + divs[0].outerHTML.replace(/</g, '‹'));
+	}
 	if (MY_DEBUG) window.console.log('numTroll=' + numTroll + ',DLA =' + DLA + ', x= ' + parseInt(listePos[1]) + ', y= ' + parseInt(listePos[2]) + ', n= ' + parseInt(listePos[3]));
 }
 
@@ -8007,7 +8013,7 @@ function updateData() {
 function initRaccourcis() {
 	var anotherURL = MY_getValue('URL1');
 	if(!anotherURL) { return; }
-	
+
 	/* Création de l'icône faisant apparaître le menu */
 	mainIco = document.createElement('img');
 	var urlIco = MY_getValue(numTroll+'.ICOMENU');
@@ -9671,7 +9677,7 @@ function putBoutonPXMP() {
 	var td = document.getElementById('tdInsertTrolls');
 	if(!td) { return; }
 	td.width = 100;
-	td = insertTd(td.nextSibling);
+	td = insertAfterTd(td);
 	td.style.verticalAlign = 'top';
 	var bouton = appendButton(td,'Envoyer...',prepareEnvoi);
 	bouton.id = 'btnEnvoi';
