@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.15
+// @version     1.2.17.16
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.16 16/07/2017",
+"	Ajout de messages de debug sur les retours AJAX",
 "V1.2.17.15 15/07/2017",
 "	modification du mécanisme de filtrage pour contourner un pb",
 "V1.2.17.14 14/07/2017",
@@ -419,8 +421,17 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 			}
 		}
 		else if(MY_XHR_Ob.onload) {
+			var version;
+			if (MY_XHR_Ob.trace) {
+				version  = '';
+				if (GM_info && GM_info.script && GM_info.script.version)
+					version = ' ' + GM_info.script.version;
+				window.console.log('[MZ' + version + '] ' + (+new Date()) + ' début traitement retour AJAX ' + MY_XHR_Ob.trace);	// "+new Date" convert date object to timestamp
+			}
 			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
 			MY_XHR_Ob.onload(request);
+			if (MY_XHR_Ob.trace)
+				window.console.log('[MZ' + version + '] ' + (+new Date()) + ' fin traitement retour AJAX ' + MY_XHR_Ob.trace);
 		}
 	};
 	request.send(MY_XHR_Ob.data);
@@ -4548,6 +4559,7 @@ function traiteMonstre() {
 			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 			'Accept': 'application/atom+xml,application/xml,text/xml'
 		},
+		trace: 'info monstre ' + nomMonstre,
 		onload: function(responseDetails) {
 			try {
 				var texte = responseDetails.responseText;
@@ -7640,6 +7652,7 @@ function traiteCdMcomp() {
 				*/
 				'Content-type':'application/x-www-form-urlencoded',
 			},
+			trace: 'envoi CdM',
 			onload: function(responseDetails) {
 				texte = responseDetails.responseText;
 				buttonCDM.value = texte;
@@ -7835,6 +7848,7 @@ function sendCDM() {
 					*/
 					'Content-type':'application/x-www-form-urlencoded',
 					},
+				trace: 'envoi CdM msg du bot',
 				onload: function(responseDetails) {
 					buttonCDM.value=responseDetails.responseText;
 					buttonCDM.disabled = true;
@@ -9284,6 +9298,7 @@ function retrieveCDMs() {
 					'Content-type':'application/x-www-form-urlencoded'
 				},
 				data: 'begin='+begin+'&idcdm='+MY_getValue('CDMID')+'&'+str,
+				trace: 'demande niveaux monstres',
 				onload: function(responseDetails) {
 					try {
 						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
@@ -10049,6 +10064,7 @@ function putScriptExterne() {
 				url: URL_bricol+data[1]
 					+'/mz_json.php?login='+data[2]
 					+'&password='+data[3],
+				trace: 'bricolTroll',
 				onload: function(responseDetails) {
 					try {
 						if (responseDetails.status == 0) {
