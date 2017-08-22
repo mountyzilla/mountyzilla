@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.17
+// @version     1.2.17.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,9 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.17.18 31/07/2017",
+"	Adaptation compétence 'travail de la pierre' (dont anatrolliseur)",
+"	Accélération de l'affichage des niveaux si plus de 500 monstres",
 "V1.2.17.17 16/07/2017",
 "	modification du mécanisme de filtrage pour contourner un pb",
 "V1.2.17.16 16/07/2017",
@@ -66,7 +69,7 @@ const MZ_changeLog = [
 "	Correction de la récupération du niveau du Trõll pour le calcul des PX",
 "V1.2.17.4 08/04/2017",
 "	Affichage triangle camou/invi pour les Trõlls de l'IT vus (sous VlC)",
-"	Adaptation de la diplomacie à une modification de la page MH",
+"	Adaptation de la diplomatie à une modification de la page MH",
 "V1.2.17.3 04/04/2017",
 "	Messages console en cas de cadre d'erreur",
 "	Trolls de l'IT mais pas dans le vue en orange",
@@ -196,8 +199,7 @@ const MZ_changeLog = [
 	Akkila le boeuf le 26-03-2017 à 15:56
 		- bouton pour rafraîchir les infos des trolls de son groupe
 	Roule'
-		Vérifier bonus double AE
-		*urgent* corriger la façon dont les cibles de mission sont stockées (JSON très grosse table)
+		FAIT corriger la façon dont les cibles de mission sont stockées (JSON très grosse table)
 		Réactiver les jubilaires
 		À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
@@ -207,12 +209,15 @@ const MZ_changeLog = [
 		Niveau des monstres à la méthode Roule'
 	Raistlin
 		FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
-		Les cibles de mission ont disparu dans la vue (remonté par Hera)
+		FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
 	80117 - Héra
 		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
 		FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
+		Possibilité de plusieurs systèmes Bricol'troll
 	?
-		Tenir compte de la distance pour le PM (calculatrice de combat)
+		FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
+	Alanae/Gnu
+		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
 **********************************************************/
 
 /**********************************************************
@@ -277,6 +282,7 @@ if (window.localStorage.getItem('MZ_dev')
 var URL_MZimg = URL_MZ + '/img/';
 // URLs externes ajax (CORS OK)
 var URL_MZinfoMonstre = URL_MZ + '/monstres_0.9_FF.php';
+var URL_MZgetCaracMonstre = URL_MZ + '/getCaracMonstre.php';
 var URL_pageDispatcherV2 = URL_MZ + '/cdmdispatcherV2.php';
 
 // liens externes déduits
@@ -369,7 +375,7 @@ function displayScriptTime() {
 	}
 	catch(e){return;}
 	insertText(node,
-		' - [Script exécuté en '
+		' - [Script MZ exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
 	if(MY_DEBUG) window.console.log('[MZ ' + GM_info.script.version + '] fin sur ' + window.location.pathname);
 }
@@ -428,17 +434,36 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 				version  = '';
 				if (GM_info && GM_info.script && GM_info.script.version)
 					version = ' ' + GM_info.script.version;
-				window.console.log('[MZ' + version + '] ' + (+new Date()) + ' début traitement retour AJAX ' + MY_XHR_Ob.trace);	// "+new Date" convert date object to timestamp
+				window.console.log('[MZ' + version + '] ' + MZ_formatDateMS() + ' début traitement retour AJAX ' + MY_XHR_Ob.trace);	// "+new Date" convert date object to timestamp
 			}
 			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
 			MY_XHR_Ob.onload(request);
 			if (MY_XHR_Ob.trace)
-				window.console.log('[MZ' + version + '] ' + (+new Date()) + ' fin traitement retour AJAX ' + MY_XHR_Ob.trace);
+				window.console.log('[MZ' + version + '] ' + MZ_formatDateMS() + ' fin traitement retour AJAX ' + MY_XHR_Ob.trace);
 		}
 	};
 	request.send(MY_XHR_Ob.data);
 }
 
+// rend une chaine affichant date et heure et milliseconds (maintenant si le paramètre est absent)
+function MZ_formatDateMS(d) {
+if (d === undefined) d = new Date();
+	var day = d.getDate();
+	var month = d.getMonth()+1;
+	var year = d.getFullYear();
+	var hours = d.getHours();
+	var minutes = d.getMinutes();
+	var seconds = d.getSeconds();
+	var ms = d.getMilliseconds();
+	if (day     < 10) {day     = "0"+day;}
+	if (month   < 10) {month   = "0"+month;}
+	if (hours   < 10) {hours   = "0"+hours;}
+	if (hours   < 10) {hours   = "0"+hours;}
+	if (minutes < 10) {minutes = "0"+minutes;}
+	if (seconds < 10) {seconds = "0"+seconds;}
+	ms = ('000' + ms).substr(-3, 3);
+	return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds + '.' + ms;
+}
 
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
 
@@ -1912,6 +1937,7 @@ arrayTalents = {
 	'Marquage':'Marquage',
 	'Melange Magique':'Melange',
 	'Miner':'Miner',
+	'Travail de la pierre':'Pierre',
 	'Necromancie':'Necro',
 	'Painthure de Guerre':'PG',
 	'Parer':'Parer',
@@ -9272,6 +9298,77 @@ function showPopupError(sHTML) {
 }
 
 function retrieveCDMs() {
+	if (isDEV) return retrieveCDMsNew();
+	else       return retrieveCDMsOld();
+}
+
+function retrieveCDMsNew() {
+// Récupère les CdM disponibles dans la BDD
+// Lancé uniquement sur toggleLevelColumn
+	if(checkBoxLevels.checked) return;
+	if (nbMonstres < 1) return;
+
+	var tReq = [];
+	for (var i=1 ; i<=nbMonstres ; i++) {
+		tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
+	}
+
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: URL_MZgetCaracMonstre,
+		headers : {
+			'Content-type':'application/x-www-form-urlencoded'
+		},
+		data: 'l=' + tReq.join("\n"),
+		trace: 'demande niveaux monstres V2',
+		onload: function(responseDetails) {
+			try {
+				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+				if (responseDetails.status == 0) return;
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+				var texte = responseDetails.responseText;
+				var lines = texte.split('\n');
+				if(lines.length==0) return;
+				var begin2, end2, index;
+				for(var j=0 ; j<lines.length ; j++) {
+					var infos = lines[j].split("\t");
+					if(infos.length<3) { continue; }
+					var index = infos[0]
+					var idMonstre=infos[1];
+					var level = infos[2];
+					// 3 cas
+					// il y a des infos, infos[] a plus de 3 valeurs
+					// il n'y a pas d'info pour ce monstre, infos[] a 4 valeur, la 4e est "-"
+					// les infos n'ont pas été récupérées (après le 50e monstre), il n'y a que 3 valeurs
+					if (infos.length == 3) {
+						getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
+					} else if (infos.length > 4) {
+						infos = infos.slice(3);
+						infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
+						listeCDM[idMonstre] = infos;
+						getMonstreLevelNode(index).innerHTML = '<b>'+level+'</b>';
+					} else {
+						getMonstreLevelNode(index).innerHTML = level;
+					}
+				}
+				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant computeMission');
+				computeMission(1, nbMonstres);
+				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant filtreMonstres');
+				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
+				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres fin');
+			} catch(e) {
+				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
+			}
+			isCDMsRetrieved=true;
+		},
+	});
+	//str = '';
+	//begin = i+1;
+	//isCDMsRetrieved=true;
+	if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' requête ajax partie pour ' + tReq.length + ' monstres');
+}
+
+function retrieveCDMsOld() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) { return; }
@@ -9292,64 +9389,69 @@ function retrieveCDMs() {
 		str += 'nom[]='+escape(nomMonstre)+'$'+(
 			getMonstreDistance(i)<=5 ? getMonstreID(i) : -getMonstreID(i)
 		)+'&';
-		
-		if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
-			
-			FF_XMLHttpRequest({
-				method: 'POST',
-				url: URL_MZinfoMonstre,
-				headers : {
-					'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-					'Accept': 'application/atom+xml,application/xml,text/xml',
-					'Content-type':'application/x-www-form-urlencoded'
-				},
-				data: 'begin='+begin+'&idcdm='+MY_getValue('CDMID')+'&'+str,
-				trace: 'demande niveaux monstres',
-				onload: function(responseDetails) {
-					try {
-						//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-						if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
-							showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin1 +
-								'" target="raistlin">Mountyzilla - https<br />'+
-								'Tu dois accepter le certificat de Raistlin<br />'+
-								'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
-								' « Confirmer l\'exception de sécurité »</a>');
-							return;
-						}
-						var texte = responseDetails.responseText;
-						var lines = texte.split('\n');
-						if(lines.length==0) { return; }
-						var begin2, end2, index;
-						for(var j=0 ; j<lines.length ; j++) {
-							var infos = lines[j].split(';');
-							if(infos.length<4) { continue; }
-							var idMonstre=infos[0];
-							var isCDM = infos[1];
-							index = parseInt(infos[2]);
-							var level = infos[3];
-							infos = infos.slice(3);
-							infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
-							if(begin2==null) { begin2 = index; }
-							end2 = index;
-							listeCDM[idMonstre] = infos;
-							if(isCDM==1) {
-								getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
-							} else {
-								getMonstreLevelNode(index).innerHTML = level;
-							}
-						}
-						computeMission(begin2,end2);
-						filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
-					} catch(e) {
-						window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
+	}
+
+		// Roule 31/07/2017 suppression du saucissonnage : inutile et complique les choses ensuite
+		//if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: URL_MZinfoMonstre,
+		headers : {
+			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
+			'Accept': 'application/atom+xml,application/xml,text/xml',
+			'Content-type':'application/x-www-form-urlencoded'
+		},
+		data: 'begin='+begin+'&idcdm='+MY_getValue('CDMID')+'&'+str,
+		trace: 'demande niveaux monstres',
+		onload: function(responseDetails) {
+			try {
+				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+				if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
+					showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin1 +
+						'" target="raistlin">Mountyzilla - https<br />'+
+						'Tu dois accepter le certificat de Raistlin<br />'+
+						'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
+						' « Confirmer l\'exception de sécurité »</a>');
+					return;
+				}
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+				var texte = responseDetails.responseText;
+				var lines = texte.split('\n');
+				if(lines.length==0) { return; }
+				var begin2, end2, index;
+				for(var j=0 ; j<lines.length ; j++) {
+					var infos = lines[j].split(';');
+					if(infos.length<4) { continue; }
+					var idMonstre=infos[0];
+					var isCDM = infos[1];
+					index = parseInt(infos[2]);
+					var level = infos[3];
+					infos = infos.slice(3);
+					infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
+					if(begin2==null) { begin2 = index; }
+					end2 = index;
+					listeCDM[idMonstre] = infos;
+					if(isCDM==1) {
+						getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
+					} else {
+						getMonstreLevelNode(index).innerHTML = level;
 					}
 				}
-			});
-			str = '';
-			begin = i+1;
-		}
-	}
-	isCDMsRetrieved=true;
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant computeMission');
+				computeMission(begin2,end2);
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant filtreMonstres');
+				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres fin');
+			} catch(e) {
+				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
+			}
+			isCDMsRetrieved=true;
+		},
+	});
+	//str = '';
+	//begin = i+1;
+	//isCDMsRetrieved=true;
+	//window.console.log('[MZd] ' + (+new Date) + ' requête ajax partie pour ' + cdmMax + ' monstres');
 }
 
 function computeMission(begin,end) {
@@ -10956,13 +11058,13 @@ function setInfosCaracteristiques() {
 
 function setLienAnatrolliseur(){
 	var pTableAmelio = document.querySelector("#carac>div>p");
-    pTableAmelio.innerHTML+=" - ";
-    var aElt = document.createElement("a");
-    aElt.setAttribute("href",urlAnatrolliseur);
-    aElt.setAttribute("target","_blank");
-    aElt.className="AllLinks";
-    aElt.innerHTML="Anatrolliser";
-    pTableAmelio.appendChild(aElt);
+	pTableAmelio.innerHTML+=" - ";
+	var aElt = document.createElement("a");
+	aElt.setAttribute("href",urlAnatrolliseur);
+	aElt.setAttribute("target","_blank");
+	aElt.className="AllLinks";
+	aElt.innerHTML="Anatrolliser";
+	pTableAmelio.appendChild(aElt);
 }
 function setInfoDescription() {
 	var txtDateCrea = (NBjours!=1) ?
@@ -11727,11 +11829,18 @@ function competences(comp,niveau) {
 		texte = 'Cette Compétence permet de combiner deux Potions pour '
 			+'en réaliser une nouvelle dont l\'effet est la somme '
 			+'des effets des potions initiales.';
-	else if(comp.indexOf('Miner')!=-1)
+	else if(comp.indexOf('Miner')!=-1)	// obsolète
 		texte = 'Portée horizontale (officieuse) : <b>'
 			+2*vuetotale+'</b> cases<br/>'
 			+'Portée verticale (officieuse) : <b>'
 			+2*Math.ceil(vuetotale/2)+'</b> cases';
+	else if(comp.indexOf('Travail de la pierre')!=-1)
+		texte = 'Miner :<ul><li>Portée horizontale (officieuse) : <b>'
+			+2*vuetotale+'</b> cases</li>'
+			+'<li>Portée verticale (officieuse) : <b>'
+			+2*Math.ceil(vuetotale/2)+'</b> cases</li></ul>'
+			+'Tailler: <ul><li>Permet d\'augmenter sensiblement la valeur marchande de certains '
+			+'minerais. Mais cette opération délicate n\'est pas sans risques...</li></ul>';
 	else if(comp.indexOf('Necromancie')!=-1)
 		texte = 'La Nécromancie permet à partir des composants d\'un monstre '
 			+'de faire "revivre" ce monstre.';
@@ -11786,7 +11895,7 @@ function competences(comp,niveau) {
 	else if(comp.indexOf('Shamaner')!=-1)
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
 			+'des monstres en utilisant des champignons (de 1 à 3).';
-	else if(comp.indexOf('Tailler')!=-1){
+	else if(comp.indexOf('Tailler')!=-1){	// obsolète
 		texte = 'Permet d\'augmenter sensiblement la valeur marchande de certains '
 			+'minerais. Mais cette opération délicate n\'est pas sans risques...';
 	}
@@ -12544,75 +12653,7 @@ function export_trolligion() {
 			if (eChild1.tagName) switch (eChild1.tagName.toLowerCase()) {
 				case 'dd':	// Trõll
 					var oTroll = {};
-					var tabFigcaption = eChild1.getElementsByTagName('figcaption');
-					if ((!tabFigcaption) || !tabFigcaption[0]) {
-						window.console.log('[MZ ' + GM_info.script.version + '] ignore dd sans figcaption ' + eChild1.innerHTML);
-						break;
-					}
-					for (var iChild2 in tabFigcaption[0].childNodes) {	// childNodes pour obtenir les éléments texte aussi
-						var eChild2 = tabFigcaption[0].childNodes[iChild2];
-						if (eChild2.nodeType === undefined) continue;	// properties
-						//window.console.log('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
-						switch (eChild2.nodeType) {
-							case 1:	//ELEMENT_NODE:
-								switch (eChild2.nodeName.toLowerCase()) {
-									case 'a':
-										var m;
-										if (!eChild2.href) {
-											window.console.log('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
-											break;
-										}
-										m = eChild2.href.match(/EnterPJView\((\d+) *,/);
-										if (m) {
-											oTroll.id = parseInt(m[1]);
-											oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
-											break;
-										}
-										m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
-										if (m) {
-											var idGuilde = parseInt(m[1]);
-											if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
-												oTroll.idguilde = parseInt(m[1]);
-												oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
-											}
-											break;
-										}
-										window.console.log('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
-										break;
-									case 'br':	// ignore
-									case 'style':	// ignore
-										break;
-									case 'div':	// barre de vie
-										if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
-											eChild3 = eChild2.children[0];
-											if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
-												var eChild4 = eChild3.children[0];
-												if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
-												break;
-											}
-										}
-										// pas de break pour bénéficier du log ci-dessous
-									default:
-										window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
-										break;
-								}
-								break;
-							case 3:	//TEXT_NODE:
-								var txt = eChild2.nodeValue.trim();
-								if (txt === '') break;
-								var m = txt.match(/(.*) *\((\d+)\)/);
-								if (m) {
-									oTroll.race = m[1].trim();
-									oTroll.niveau = parseInt(m[2]);
-								} else {
-									oTroll.race = txt;
-								}
-								break;
-							default:	// ne devrait pas arriver
-								window.console.log('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
-								break;
-						}
-					}
+					export_trolligion_analyse(oTroll, eChild1);
 					currentGrade.trolls.push(oTroll);
 					break;
 				case 'dt':
@@ -12697,6 +12738,76 @@ function export_trolligion() {
 		}
 	} catch(e) {
 		window.alert("[MZ] Échec à la copie vers le presse-papier\n" + e);
+	}
+}
+
+function export_trolligion_analyse(oTroll, eChild1) {
+	for (var iChild2 in eChild1.childNodes) {	// childNodes pour obtenir les éléments texte aussi
+		var eChild2 = eChild1.childNodes[iChild2];
+		if (eChild2.nodeType === undefined) continue;	// properties
+		//window.console.log('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
+		switch (eChild2.nodeType) {
+			case 1:	//ELEMENT_NODE:
+				switch (eChild2.nodeName.toLowerCase()) {
+					case 'a':
+						var m;
+						if (!eChild2.href) {
+							window.console.log('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
+							break;
+						}
+						m = eChild2.href.match(/EnterPJView\((\d+) *,/);
+						if (m) {
+							oTroll.id = parseInt(m[1]);
+							oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
+							break;
+						}
+						m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
+						if (m) {
+							var idGuilde = parseInt(m[1]);
+							if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
+								oTroll.idguilde = parseInt(m[1]);
+								oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
+							}
+							break;
+						}
+						window.console.log('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
+						break;
+					case 'br':	// ignore
+					case 'style':	// ignore
+					case 'img':	// ignore
+						break;
+					case 'div':	// barre de vie
+						if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
+							eChild3 = eChild2.children[0];
+							if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
+								var eChild4 = eChild3.children[0];
+								if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
+								break;
+							}
+						}
+						//window.console.log(eChild2.innerHTML);
+						export_trolligion_analyse(oTroll, eChild2);
+						break;
+					default:
+						window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
+						break;
+				}
+				break;
+			case 3:	//TEXT_NODE:
+				var txt = eChild2.nodeValue.trim();
+				if (txt === '') break;
+				var m = txt.match(/(.*) *\((\d+)\)/);
+				if (m) {
+					oTroll.race = m[1].trim();
+					oTroll.niveau = parseInt(m[2]);
+				} else {
+					oTroll.race = txt;
+				}
+				break;
+			default:	// ne devrait pas arriver
+				window.console.log('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
+				break;
+		}
 	}
 }
 
