@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.18
+// @version     1.2.17.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,9 @@
 
 try {
 const MZ_changeLog = [
-"V1.2.17.18 31/07/2017",
+"V1.2.17.19 23/08/2017",
+"	Possibilité de plusieurs IT Bricol'Troll",
+"V1.2.17.18 22/08/2017",
 "	Adaptation compétence 'travail de la pierre' (dont anatrolliseur)",
 "	Accélération de l'affichage des niveaux si plus de 500 monstres",
 "V1.2.17.17 16/07/2017",
@@ -213,11 +215,14 @@ const MZ_changeLog = [
 	80117 - Héra
 		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
 		FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
-		Possibilité de plusieurs systèmes Bricol'troll
+		FAIT Possibilité de plusieurs systèmes Bricol'troll
+		en 1.2.17.18 SyntaxError: expected expression, got end of script[En savoir plus] Tout_MZ.user.js:12731:6
 	?
 		FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
 	Alanae/Gnu
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
+	Kali
+		"TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
 **********************************************************/
 
 /**********************************************************
@@ -676,12 +681,13 @@ function appendLI(ul,text) {
 	return li;
 	}
 
-function appendTextbox(paren,type,nam,size,maxlength,value) {
+function appendTextbox(paren,type,nam,size,maxlength,value, sId) {
 	var input = document.createElement('input');
 	input.className = 'TextboxV2';
 	input.type = type;
 	input.name = nam;
-	input.id = nam;
+	if (sId === undefined) input.id = nam;
+	else                   input.id = sId;
 	input.size = size;
 	input.maxLength = maxlength;
 	if(value) input.value = value;
@@ -6393,26 +6399,36 @@ function do_pjview() {
 function saveITData() {
 	var IT = document.getElementById('itSelect').value;
 	if(IT=='bricol') {
-		var system = document.getElementById('urlbricol').value;
-		var login = document.getElementById('loginbricol').value;
-		var pass = document.getElementById('passbricol').value;
-		var affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
-		if(system && login) {
-			if (pass) {
-				var v = 'bricol$'+system+'$'+login+'$'+hex_md5(pass)+'$'+affhv;
-				MY_setValue(numTroll+'.INFOSIT', v);
-				//window.console.log('v=' + v);
-			} else {
-				// vérif que rien n'a changé
-				var str = MY_getValue(numTroll+'.INFOSIT');
-				if(str) {
-					var arr = str.split('$');
-					if  (system != arr[1] || login != arr[2] || affhv != arr[4]) {
-						alert('Attention, système tactique Bricol\'Trolls sans mot de passe => non modifié');
+		var nBricol = 1;
+		for (var iBricol = 0; ; iBricol++) {
+			var extClef = nBricol == 1 ? '' : nBricol;
+			var eltSystem = document.getElementById('urlbricol'+iBricol);
+			if (eltSystem == undefined) break;
+			var system = eltSystem.value;
+			window.console.log("[MZ] saveITData system=" + system);
+			var login = document.getElementById('loginbricol'+iBricol).value;
+			var pass = document.getElementById('passbricol'+iBricol).value;
+			var affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
+			if(system && login) {
+				if (pass) {
+					var v = 'bricol$'+system+'$'+login+'$'+hex_md5(pass)+'$'+affhv;
+					MY_setValue(numTroll+'.INFOSIT'+extClef, v);
+					//window.console.log('v=' + v);
+				} else {
+					// vérif que rien n'a changé
+					var str = MY_getValue(numTroll+'.INFOSIT'+extClef);
+					if(str) {
+						var arr = str.split('$');
+						if  (system != arr[1] || login != arr[2] || affhv != arr[4]) {
+							alert('Attention, système tactique Bricol\'Trolls ' + system + ' sans mot de passe => non modifié');
+						}
 					}
 				}
+				nBricol++;
 			}
 		}
+		window.console.log("[MZ] saveITData remove " + numTroll+'.INFOSIT'+extClef);
+		MY_removeValue(numTroll+'.INFOSIT'+extClef);
 	}
 	else {
 		MY_removeValue(numTroll+'.INFOSIT');
@@ -6443,50 +6459,57 @@ function saveLinks() {
 }
 
 function saveAll() {
-	var urlIco = document.getElementById('icoMenuIco').value;
-	if(urlIco) {
-		MY_setValue(numTroll+'.ICOMENU', urlIco );
-	}
-	else {
-		MY_removeValue(numTroll+'.ICOMENU', urlIco );
-		document.getElementById('icoMenuIco').value = '';
-	}
-	saveLinks();
-	refreshLinks();
-	
-	MY_setValue('VUEEXT',document.getElementById('vueext').value);
-	
-	var maxcdm = parseInt(document.getElementById('maxcdm').value);
-	if(maxcdm) {
-		MY_setValue(numTroll+'.MAXCDM', maxcdm );
-	}
-	else {
-		MY_removeValue(numTroll+'.MAXCDM');
-		document.getElementById('maxcdm').value = '';
+	try {
+		var urlIco = document.getElementById('icoMenuIco').value;
+		if(urlIco) {
+			MY_setValue(numTroll+'.ICOMENU', urlIco );
+		}
+		else {
+			MY_removeValue(numTroll+'.ICOMENU', urlIco );
+			document.getElementById('icoMenuIco').value = '';
+		}
+		saveLinks();
+		refreshLinks();
+		
+		MY_setValue('VUEEXT',document.getElementById('vueext').value);
+		
+		var maxcdm = parseInt(document.getElementById('maxcdm').value);
+		if(maxcdm) {
+			MY_setValue(numTroll+'.MAXCDM', maxcdm );
+		}
+		else {
+			MY_removeValue(numTroll+'.MAXCDM');
+			document.getElementById('maxcdm').value = '';
+		}
+
+		MY_setValue('NOINFOEM',
+			document.getElementById('noInfoEM').checked ? 'true' : 'false');
+		
+		// Pourquoi Tilk stockait-il tout en str ?
+		// -> parce que les booléens c'est foireux (vérifié)
+		MY_setValue(numTroll+'.USECSS',
+			document.getElementById('usecss').checked ? 'true':'false');
+		MY_setValue('INFOCARAC',
+			document.getElementById('infocarac').checked ? 'true' : 'false');
+		//MY_setValue(numTroll+'.SEND_IDT',
+		//	document.getElementById('send_idt').checked ? 'oui' : 'non');
+		// Fonctionnalité désactivée
+
+		MY_setValue(numTroll+'.AUTOCDM',
+			document.getElementById('autoCdM').checked ? 'true' : 'false');
+		MY_setValue('VUECARAC',
+			document.getElementById('vueCarac').checked ? 'true' : 'false');
+		MY_setValue('CONFIRMEDECALAGE',
+			document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
+
+		saveITData();
+	} catch (e) {
+		var bouton = document.getElementById('saveAll');
+		window.console.log(e);
+		bouton.value = "il y a eu une erreur";
+		return;
 	}
 
-	MY_setValue('NOINFOEM',
-		document.getElementById('noInfoEM').checked ? 'true' : 'false');
-	
-	// Pourquoi Tilk stockait-il tout en str ?
-	// -> parce que les booléens c'est foireux (vérifié)
-	MY_setValue(numTroll+'.USECSS',
-		document.getElementById('usecss').checked ? 'true':'false');
-	MY_setValue('INFOCARAC',
-		document.getElementById('infocarac').checked ? 'true' : 'false');
-	//MY_setValue(numTroll+'.SEND_IDT',
-	//	document.getElementById('send_idt').checked ? 'oui' : 'non');
-	// Fonctionnalité désactivée
-
-	MY_setValue(numTroll+'.AUTOCDM',
-		document.getElementById('autoCdM').checked ? 'true' : 'false');
-	MY_setValue('VUECARAC',
-		document.getElementById('vueCarac').checked ? 'true' : 'false');
-	MY_setValue('CONFIRMEDECALAGE',
-		document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
-
-	saveITData();
-	
 	var bouton = document.getElementById('saveAll');
 	bouton.value = (bouton.value=='Sauvegardé !') ?	
 		'Re-sauvegardé !' : 'Sauvegardé !';
@@ -6495,34 +6518,74 @@ function saveAll() {
 
 /*-[functions]----------------- EventListeners -------------------------------*/
 
+function addBricolIT(sSystem, sLogin, nAffhv, bFirst, bLast) {
+	var itBody = document.getElementById('itBody');
+	var nTr = itBody.rows.length;
+	// enlever tous les "+" des lignes précédentes
+	for (iTr = 0; iTr < nTr; iTr++) {
+		var td = itBody.rows[iTr].cells[0];
+		td.innerHTML = '';
+		td.title = '';
+		td.style.cursor = 'default';
+	}
+	// ajouter une ligne
+	var tr = appendTr(itBody,'mh_tdpage')
+	var td = appendTd(tr);
+	if (bLast) {
+		td.style.whiteSpace = 'nowrap';
+		appendText(td, '+');
+		td.style.cursor = 'pointer';
+		td.title = 'Cliquer ici pour ajouter un autre système Bricol\'Troll';
+		td.onclick = function (e) {
+			addBricolIT(undefined, undefined, undefined, false, true);
+		}
+	}
+	var td = appendTd(tr);
+	td.style.whiteSpace = 'nowrap';
+	appendText(td,'Nom du système : ');
+	appendTextbox(td,'text','urlbricol',20,50,sSystem,'urlbricol' + nTr);
+	td = appendTd(tr);
+	td.style.whiteSpace = 'nowrap';
+	appendText(td,'Login du compte : ');
+	appendTextbox(td,'text','loginbricol',20,50,sLogin,'loginbricol' + nTr);
+	td = appendTd(tr);
+	td.style.whiteSpace = 'nowrap';
+	appendText(td,'Mot de passe du compte : ');
+	appendTextbox(td,'password','passbricol',20,50,undefined,'passbricol' + nTr);
+	td = appendTd(tr);
+	if (bFirst) {
+		td.style.whiteSpace = 'nowrap';
+		appendText(td,'Affichage des Trõlls hors vue : ');
+		appendCheckBox(td,'affhvbricol', (nAffhv>0));
+	}
+}
+
 function onChangeIT() {
 	var IT = document.getElementById('itSelect').value;
 	var itBody = document.getElementById('itBody');
 	itBody.innerHTML = '';
-	
+	var tabStr = new Array();
 	if(IT=='bricol') {
-		var tr = appendTr(itBody,'mh_tdpage')
-		var td = appendTd(tr);
-		var str = MY_getValue(numTroll+'.INFOSIT');
-		//window.console.log('onChangeIT str=' + str);
-		if(str) {
-			var arr = str.split('$');
-			var system = arr[1];
-			var login = arr[2];
-			var affhv = arr[4];
+		for (var iBricol = 1; ; iBricol++) {
+			var str = MY_getValue(numTroll+'.INFOSIT'+(iBricol==1 ? '' : iBricol));
+			//window.console.log('onChangeIT str=' + str);
+			if(str) {
+				tabStr.push(str);
+			} else {
+				break;
+			}
 		}
-		appendText(td,'Nom du système : ');
-		appendTextbox(td,'text','urlbricol',20,50,system);
-		td = appendTd(tr);
-		appendText(td,'Login du compte : ');
-		appendTextbox(td,'text','loginbricol',20,50,login);
-		td = appendTd(tr);
-		appendText(td,'Mot de passe du compte : ');
-		appendTextbox(td,'password','passbricol',20,50);
-		td = appendTd(tr);
-		appendText(td,'Affichage des Trõlls hors vue : ');
-		//window.console.log('onChangeIT affhv=' + affhv + ', bool=' + (affhv>0));
-		appendCheckBox(td,'affhvbricol', (affhv>0));
+		if (tabStr.length == 0) {
+			addBricolIT('', '', 0, true, true)
+		} else {
+			for (var iBricol = 0; iBricol < tabStr.length; iBricol++) {
+				var arr = tabStr[iBricol].split('$');
+				var system = arr[1];
+				var login = arr[2];
+				var affhv = arr[4];
+				addBricolIT(system, login, affhv, iBricol == 0, iBricol == (tabStr.length - 1));
+			}
+		}
 	}
 }
 
@@ -6810,7 +6873,7 @@ function do_option() {
 			var txt = '';
 			for ( var i = 0, len = localStorage.length; i < len; ++i ) {
 				var k = localStorage.key(i);
-				if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
+				if (k.match(/INFOSIT/i)) continue;	// masquer le mdp Bricol'Troll
 				txt += k + "\t" + localStorage.getItem(k) + "\n";
 			}
 			copyTextToClipboard(txt);
@@ -10154,13 +10217,21 @@ function computeLdP() {
 
 /*-[functions]--------------- Systèmes Tactiques -----------------------------*/
 
-function putScriptExterne() {
-	var infoit = MY_getValue(numTroll+'.INFOSIT');
-	if(!infoit || infoit=='') return;
+function putScriptExterne(sInfo) {
+	for (var iBricol = 1; ; iBricol++) {
+		var extClef = iBricol == 1 ? '' : iBricol;
+		var sInfo = MY_getValue(numTroll+'.INFOSIT'+extClef);
+		if (!sInfo) break;
+		putScriptExterneOneIT(sInfo);
+	}
+}
 
-	var nomit = infoit.slice(0,infoit.indexOf('$'));
+function putScriptExterneOneIT(sInfo) {
+	if(!sInfo || sInfo=='') return;
+
+	var nomit = sInfo.slice(0,sInfo.indexOf('$'));
 	if(nomit=='bricol') {
-		var data = infoit.split('$');
+		var data = sInfo.split('$');
 		try {
 			// Roule' 07/11/2016. Travail avec Ratibus, remplacement du script par l'envoi de JSON
 			// appendNewScript(URL_bricol+data[1]
@@ -10193,9 +10264,9 @@ function putScriptExterne() {
 							return;
 						}
 						if (ratibusData.error) {
-							avertissement('<br />Bricol\'Troll a répondu :<br />' + ratibusData.error);
+							avertissement('<br />Bricol\'Troll (' + data[1] + ') a répondu :<br />' + ratibusData.error);
 						} else {
-							putInfosTrolls(ratibusData.data.trolls);
+							putInfosTrolls(ratibusData.data.trolls, data[1]);
 						}
 					} catch(e) {
 						window.console.log(traceStack(e, 'retour bricol\'troll'));
@@ -10214,14 +10285,7 @@ function putScriptExterne() {
 	}
 }
 
-/* Le script mz.php de Ratibus renvoie :
- + infosTrolls = new Array();
- + infosTrolls[numdutroll] =
- new Array(PV,PVbase,date màj: "le JJ/MM/AAAA à hh:mm:ss",date pDLA,PA dispos);
- + etc ...
- + putInfosTrolls();
- * 
- * Il est donc impossible d'afficher les invis d'une IT Bricol'Trolls.
+/* 
  * Roule 07/11/2016, on utilise mz_json qui envoie
  {
     "data": {
@@ -10258,16 +10322,9 @@ function corrigeBricolTrolls(infosTrolls) {
 	}
 
 	// insère 2 TD avant nextTD avec les infos venant de l'IT
-function addTdInfosTroll(infos, TR) {
+function addTdInfosTroll(infos, TR, itName) {
 	/* cadre barre PV */
 	var tab = document.createElement('div');
-	/* ancienne méthode par img, à supprimer
-	tab.width = 100;
-	tab.style.width = 100;
-	tab.height = 10;
-	tab.style.background = '#FFFFFF';
-	tab.style.border = 1;
-	*/
 	tab.title = infos.pv+'/'+infos.pv_max+' PV le '+ SQLDateToFrenchTime(infos.updated_at);
 	/* barre PV */
 	/* Roule' : sans aucune honte, j'ai copié la méthode de Bricol'Troll
@@ -10316,14 +10373,15 @@ function addTdInfosTroll(infos, TR) {
 
 	/* lien vers l'IT */
 	var lien = document.createElement('a');
-	var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-	lien.href = URL_bricol+nomit+'/index.php';
+	//var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
+	lien.href = URL_bricol+itName+'/index.php';
 	lien.target = '_blank';
 	lien.appendChild(tab);
 	if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
 	//window.console.log('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
-	var tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
-	insertTdElement(tdGuilde,lien);
+	//var tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
+	//insertTdElement(tdGuilde,lien);
+	TR.childNodes[MZ_cache_col_TrollGUILDE].appendChild(lien);
 	/* PAs dispos */
 	var span = document.createElement('span');
 	span.title = 'DLA : ' + SQLDateToFrenchTime(infos.dla);
@@ -10333,107 +10391,113 @@ function addTdInfosTroll(infos, TR) {
 		// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
 		span.style.backgroundColor = 'B8EEB8';
 	}
-	insertTdElement(tdGuilde, span);
+	//insertTdElement(tdGuilde, span);
+	TR.childNodes[MZ_cache_col_TrollGUILDE+1].appendChild(span);
 }
 
-function putInfosTrolls(infosTrolls) {
+var MZ_tabTrTrollById;
+function putInfosTrolls(infosTrolls, itName) {
 	try {
-		// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
-		// supression des infos trop vieilles (un mois)
-		var IDs = Object.keys(infosTrolls);
-		var dateLimite = new Date();
-		dateLimite.setMonth(dateLimite.getMonth() - 1);
-		for (var i = 0; i < IDs.length; i++) {
-			var idTroll = IDs[i];
-			var infos = infosTrolls[idTroll];
-			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);
-			if (infos.oUpdatedAt < dateLimite) infos.bIgnore = true;
+		if (MZ_tabTrTrollById === undefined) {
+			MZ_tabTrTrollById = new Array;
+			// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
+			if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+			var td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PA',true);
+			td.width = 40;
+			td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PV',true);
+			td.width = 105;
+			for(i=nbTrolls ; i>0 ; i--) {
+				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
+			}
 		}
-		if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
-		var td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PA',true);
-		td.width = 40;
-		td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE],'PV',true);
-		td.width = 105;
+
 
 		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
 		//corrigeBricolTrolls(infosTrolls);
 
-		for(i=nbTrolls ; i>0 ; i--) {
-			var infos = infosTrolls[getTrollID(i)];
-			if(infos && (!infos.bIgnore)) {
-				addTdInfosTroll(infos, tr_trolls[i]);
-				infos.done = true;
-			} else {
-				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-			}
-		}
+		// supression des infos trop vieilles (un mois)
+		// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
+		var dateLimite = new Date();
+		dateLimite.setMonth(dateLimite.getMonth() - 1);
+
 		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
 		var str = MY_getValue(numTroll+'.INFOSIT');
-		if(!str) return;
-		var arr = str.split('$');
-		if (!(arr[4]>0)) return;	// pas si le joueur n'en veut pas
+		var bAjoutTrollInvi = false;
+		if (str) {
+			var arr = str.split('$');
+			bAjoutTrollInvi = arr[4]>0;
+		}
+
+		
+		var tBody = tr_trolls[0].parentNode;
+		if (tr_trolls[1] !== undefined)
+			tBody = tr_trolls[1].parentNode;
 
 		//window.console.log('nb Troll IT : ' + IDs.length);
-		var tBody = tr_trolls[0].parentNode;
-		if (tr_trolls[1] === undefined)
-			tBody = tr_trolls[0].parentNode;
-		else
-			tBody = tr_trolls[1].parentNode;
 		var pos = getPosition();
-		for (i = 0; i < IDs.length; i++) {
-			var idTroll = IDs[i];
-			infos = infosTrolls[idTroll];
-			if (infos.done) continue;	// déjà vu
-			if (infos.bIgnore) continue;	// trop vieux
+
+		// mise à jour des infos dans le HTML (et ajout de ligne si nécessaire)
+		for (var idTroll in infosTrolls) {
+			var infos = infosTrolls[idTroll];
+			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);	// trop vieux
+			if (infos.oUpdatedAt < dateLimite) continue;	// infos trop vieilles
 			if (idTroll == numTroll) continue;	// pas nous-même
-			//window.console.log('Troll surnuméraire ' + JSON.stringify(infos));
-			var distance = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
-			// trouver où insérer ce Troll
-			var next = undefined;
-			for(var j=0 ; j<tr_trolls.length ; j++) {
-				var thisDist = parseInt(tr_trolls[j].cells[0].textContent);
-				if (thisDist > distance) {
-					next = tr_trolls[j]
-					break;
-				}
-			}
 			var tr;
-			if (next !== undefined) {
-				tr = insertTr(next,'mh_tdpage')
+			if (idTroll in MZ_tabTrTrollById) {
+				//window.console.log('[MZ] putInfosTrolls, le Troll ' + idTroll + ' est déjà dans la table HTML');
+				tr = MZ_tabTrTrollById[idTroll];
 			} else {
-				tr = appendTr(tBody,'mh_tdpage');
+				//window.console.log('[MZ] putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
+				var distance = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
+				// trouver où insérer ce Troll
+				var next = undefined;
+				for(var j=0 ; j<tr_trolls.length ; j++) {
+					var thisDist = parseInt(tr_trolls[j].cells[0].textContent);
+					if (thisDist > distance) {
+						next = tr_trolls[j]
+						break;
+					}
+				}
+				if (next !== undefined) {
+					tr = insertTr(next,'mh_tdpage')
+				} else {
+					tr = appendTr(tBody,'mh_tdpage');
+				}
+				tr.style.color = 'orange';
+				var td = appendTd(tr);	// distance
+				appendText(td, distance);
+				td = appendTd(tr);	// actions
+				td = appendTd(tr);	// ID
+				appendText(td, idTroll);
+				td = appendTd(tr);	// Nom
+				// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
+				appendA(td, 'javascript:EPV(' + idTroll + ')', 'mh_trolls_1', infos.nom);
+				td = appendTd(tr);	// PV
+				td = appendTd(tr);	// PA
+				td = appendTd(tr);	// Guilde
+				if (infos.guilde !== undefined) appendText(td, infos.guilde);
+				td = appendTd(tr);	// Niveau
+				if (infos.niveau !== undefined) appendText(td, infos.niveau);
+				td.align = 'center';
+				td = appendTd(tr);	// Race
+				if (infos.race) appendText(td, infos.race);
+				td = appendTd(tr);	// X
+				td.align = 'center';
+				if (infos.x !== undefined) appendText(td, infos.x);
+				td = appendTd(tr);	// Y
+				td.align = 'center';
+				if (infos.y !== undefined) appendText(td, infos.y);
+				td = appendTd(tr);	// N
+				td.align = 'center';
+				if (infos.n !== undefined) appendText(td, infos.n);
+				MZ_tabTrTrollById[idTroll] = tr;
 			}
-			tr.style.color = 'orange';
-			var td = appendTd(tr);	// distance
-			appendText(td, distance);
-			td = appendTd(tr);	// actions
-			td = appendTd(tr);	// ID
-			appendText(td, idTroll);
-			td = appendTd(tr);	// Nom
-			// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
-			appendA(td, 'javascript:EPV(' + idTroll + ')', 'mh_trolls_1', infos.nom);
-			// info camou/invi transféré dans addTdInfosTroll
-			// if (infos.camoufle)  td.appendChild(createImage(URL_MZimg+"warning.gif","Camouflé"));
-			// if (infos.invisible) td.appendChild(createImage(URL_MZimg+"warning.gif","Invisible"));
-			td = appendTd(tr);	// Guilde
-			if (infos.guilde !== undefined) appendText(td, infos.guilde);
-			td = appendTd(tr);	// Niveau
-			if (infos.niveau !== undefined) appendText(td, infos.niveau);
-			td.align = 'center';
-			td = appendTd(tr);	// Race
-			if (infos.race) appendText(td, infos.race);
-			// PV et PA ajoutés par addTdInfosTroll
-			td = appendTd(tr);	// X
-			td.align = 'center';
-			if (infos.x !== undefined) appendText(td, infos.x);
-			td = appendTd(tr);	// Y
-			td.align = 'center';
-			if (infos.y !== undefined) appendText(td, infos.y);
-			td = appendTd(tr);	// N
-			td.align = 'center';
-			if (infos.n !== undefined) appendText(td, infos.n);
-			addTdInfosTroll(infos, tr);
+			if (!tr.done) {
+				addTdInfosTroll(infos, tr, itName);
+				tr.done = true;
+			}
 		}
 	} catch(e) {
 		avertissement('Erreur de traitement des informations Bricol\'Troll, le détail est dans la console (F12)');

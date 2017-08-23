@@ -53,6 +53,14 @@ Roule 08 à 10/08/2016
 	Adaptation aux IDs dans la page de résultat d'une recherche de cachette (et plus besoin de stocker le numéro de carte)
 */
 
+/* À faire
+	Hera 23/08/2017 
+		ok, donc les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--)
+		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
+		si c'est en x+/y+, y a pas de souci
+		ça n'essaye pas de mettre des n+
+*/
+
 function appendButton(paren,value,onClick) {
 	var input = document.createElement('input');
 	input.type = 'button';
