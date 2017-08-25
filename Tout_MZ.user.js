@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.17.19
+// @version     1.2.18.01
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,9 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.01 /08/2017",
+"	Suppression des messages sur les certificats en https",
+"	Protection contre des erreurs dans le stockage des compos d'enchantement",
 "V1.2.17.19 23/08/2017",
 "	Possibilité de plusieurs IT Bricol'Troll",
 "V1.2.17.18 22/08/2017",
@@ -195,7 +198,7 @@ const MZ_changeLog = [
 
 	breizhou13 20/12/2016
 		envoyer les données à l'IT (Bricol'Trolls) aussi
-			(Roule') Ça me semble diffile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
+			(Roule') Ça me semble difficile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
 		partage de l'identification des tresors au sol. Ca c'etait cool mais ca implique une BDD
 		partage des CDM avec seulement son groupe. Perso je prefere le partage general
 	Akkila le boeuf le 26-03-2017 à 15:56
@@ -222,7 +225,7 @@ const MZ_changeLog = [
 	Alanae/Gnu
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
 	Kali
-		"TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
+		MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
 **********************************************************/
 
 /**********************************************************
@@ -432,14 +435,29 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 			if(MY_XHR_Ob.onerror) {
 				MY_XHR_Ob.onerror(request);
 			}
+			return;
 		}
-		else if(MY_XHR_Ob.onload) {
+		if ((request.status == 0)) {
+			window.console.log('status=0 au retour de ' + MY_XHR_Ob.url + ', réponse=' + request.responseText);
+			if (isDEV) {
+				var grandCadre = createOrGetGrandCadre();
+				var sousCadre = document.createElement('div');
+				sousCadre.innerHTML = 'AJAX status = 0, voir console';
+				sousCadre.style.width = 'auto';
+				sousCadre.style.fontSize = 'large';
+				sousCadre.style.border = 'solid 1px black';
+				grandCadre.appendChild(sousCadre);
+			}
+			//showHttpsErrorContenuMixte();
+			return;
+		}
+		if(MY_XHR_Ob.onload) {
 			var version;
 			if (MY_XHR_Ob.trace) {
 				version  = '';
 				if (GM_info && GM_info.script && GM_info.script.version)
 					version = ' ' + GM_info.script.version;
-				window.console.log('[MZ' + version + '] ' + MZ_formatDateMS() + ' début traitement retour AJAX ' + MY_XHR_Ob.trace);	// "+new Date" convert date object to timestamp
+				window.console.log('[MZ' + version + '] ' + MZ_formatDateMS() + ' début traitement retour AJAX ' + MY_XHR_Ob.trace);
 			}
 			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
 			MY_XHR_Ob.onload(request);
@@ -2265,7 +2283,13 @@ function computeCompoEnchantement()
 		var texteGlobal='';
 		for(var j=0;j<3;j++)
 		{
-			var infoComposant = MY_getValue(numTroll+'.enchantement.'+idEquipement+'.composant.'+j).split(';');
+			var k = numTroll+'.enchantement.'+idEquipement+'.composant.'+j;
+			var v = MY_getValue(k);
+			var infoComposant = MY_getValue().split(';');
+			if (infoComposant.length < 5) {	// protection Roule 25/08/2017
+				window.console.log('[MZ] err infoComposant k=' + k + ', v=' + v);
+				continue;
+			}
 			listeMonstreEnchantement[infoComposant[2]] = 1;
 			var array = new Array();
 			array[0]=infoComposant[0].replace("Ril","Œil");
@@ -5281,8 +5305,8 @@ function traiterJubilaires_a_supprimer() {	// ancienne méthode
 				},
 			onload: function(responseDetails) {
 				if ((responseDetails.status == 0) && isHTTPS) {
-					//window.console.log('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
-					showHttpsErrorContenuMixte();
+					window.console.log('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
+					//showHttpsErrorContenuMixte();
 					return;
 				}
 				var listeTrolls = responseDetails.responseText.split('\n');
@@ -5462,6 +5486,7 @@ function do_news() {
 	traiterJubilaires();
 	traiterNouvelles();
 
+	/* plus besoin, le certificat est "officiel"
 	if (isHTTPS) {
 		// test si les certificats raistlin ont été acceptés
 		testCertif(URL_CertifRaistlin1, showHttpsErrorCadre1);	// l'infra raislin
@@ -5470,6 +5495,7 @@ function do_news() {
 			testCertif(URL_CertifRaistlin2, showHttpsErrorCadre2);	// le relai raistlin vers Bricol'Troll
 		}
 	}
+	*/
 
 	displayScriptTime();
 }
@@ -6950,8 +6976,13 @@ function do_option() {
 				var ul = document.createElement('UL');
 				for(var j=0;j<3;j++)
 				{
-					var infoComposant = MY_getValue(numTroll+".enchantement."
-						+idEquipement+".composant."+j).split(";");
+					var k = numTroll+'.enchantement.'+idEquipement+'.composant.'+j;
+					var v = MY_getValue(k);
+					var infoComposant = MY_getValue().split(';');
+					if (infoComposant.length < 5) {	// protection Roule 25/08/2017
+						window.console.log('[MZ] err infoComposant k=' + k + ', v=' + v);
+						continue;
+					}
 					var texte = infoComposant[4].replace("Ril ","Œil ");
 					for(var k=5;k<infoComposant.length;k++)
 					{
