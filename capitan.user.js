@@ -11,7 +11,7 @@
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.1.6
+// @version 8.1.61
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -32,12 +32,14 @@
 ****************************************************************/
 
 /*
+Roule 25/08/2017 V8.1.61
+	Réactivation de la gestion des signes (+/-)
 Roule 23/11/2016 V8.1.6
-	Adapatation à l'affichage en popup dans les tanières (méthode toujours très discutable par setInterval)
+	Adaptation à l'affichage en popup dans les tanières (méthode toujours très discutable par setInterval)
 Roule 09/12/2016 V8.1.5
 	Nouvelle méthode de migration des essais V1.0 par copier/coller de tout pref.js
 Roule 23/11/2016 V8.1.4
-	Adapatation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval)
+	Adaptation à l'affichage en popup du détail d'un équipement (méthode très discutable par setInterval)
 Roule 14/10/2016 V8.1.3
 	simplification de l'entête GM (include)
 	passage à greasyfork
@@ -55,10 +57,7 @@ Roule 08 à 10/08/2016
 
 /* À faire
 	Hera 23/08/2017 
-		ok, donc les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--)
-		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
-		si c'est en x+/y+, y a pas de souci
-		ça n'essaye pas de mettre des n+
+		FAIT les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--) 		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
 */
 
 function appendButton(paren,value,onClick) {
@@ -440,7 +439,7 @@ function createCase(titre,table,width)
 
 var tbody;
 
-function generateTable(listeSolutions)
+function generateTable(listeSolutions, bSigneOK)
 {
 	var table = document.createElement('table');
 	table.setAttribute('class', 'mh_tdborder');
@@ -449,12 +448,13 @@ function generateTable(listeSolutions)
 	table.setAttribute('cellpadding', '4');
 	table.setAttribute('style', 'width: 400px;');
 	table.setAttribute('align', 'center');
-	
+
+	var plusmoins = bSigneOK ? '' : '±';
 	if(listeSolutions.length==1)
 	{
 		var thead = document.createElement('thead');
 		var tr = appendTr(thead, 'mh_tdtitre');
-		var td = appendTdText(tr, "Position de la cachette : X = "+listeSolutions[0][0]+", Y = "+listeSolutions[0][1]+", N = "+listeSolutions[0][2], true);
+		var td = appendTdText(tr, "Position de la cachette : X = "+plusmoins+listeSolutions[0][0]+", Y = "+plusmoins+listeSolutions[0][1]+", N = "+listeSolutions[0][2], true);
 		td.setAttribute('align', 'center');
 		table.appendChild(thead);
 		return table;
@@ -479,7 +479,7 @@ function generateTable(listeSolutions)
 	table.appendChild(tbody);
 	
 	for (var i = 0; i < listeSolutions.length; i++) {
-		 createCase("X = "+listeSolutions[i][0]+", Y = "+listeSolutions[i][1]+", N = "+listeSolutions[i][2],tbody,400);
+		 createCase("X = "+plusmoins+listeSolutions[i][0]+", Y = "+plusmoins+listeSolutions[i][1]+", N = "+listeSolutions[i][2],tbody,400);
 	}
 	
 	
@@ -514,8 +514,12 @@ function afficheInfoCarte(idCarte)
 	else
 	{
 		listeSolutions = calculeSolution(originalPos[0],originalPos[1],originalPos[2],essais);
+		for (var i = 0; i < listeSolutions; i++) {
+			listeSolutions[i][0] = Math.abs(listeSolutions[i][0]);
+			listeSolutions[i][1] = Math.abs(listeSolutions[i][1]);
+		}
 	}
-	return generateTable(listeSolutions);
+	return generateTable(listeSolutions, signes != undefined);
 }
 
 function getRepartitionFromCase(tx, ty, tn, listeSolutions)
@@ -1216,6 +1220,19 @@ function infoRecherche()
 		i++;
 	}
 	GM_setValue("capitan."+idCarte+".essai."+i,x+";"+y+";"+n+";"+nb);
+
+	if(GM_getValue("capitan."+idCarte+".signe") == null)
+	{
+		var infoXCoin = document.evaluate("//p/b/text()[contains(.,'Tu es dans le bon Xcoin')]",
+		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		if(!infoXCoin)
+			x = -x;
+		var infoYCoin = document.evaluate("//p/b/text()[contains(.,'Tu es dans le bon Ycoin')]",
+		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		if(!infoYCoin)
+			y = -y;
+		GM_setValue("capitan."+idCarte+".signe",signe(x)+";"+signe(y));
+	}
 
 	var table = afficheInfoCarte(idCarte);
 	
