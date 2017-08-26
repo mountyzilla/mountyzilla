@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.01
+// @version     1.2.18.02
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,9 @@
 
 try {
 const MZ_changeLog = [
-"V1.2.18.01 /08/2017",
+"V1.2.18.02 26/08/2017",
+"	correction boulette sur le compos d'enchantement",
+"V1.2.18.01 25/08/2017",
 "	Suppression des messages sur les certificats en https",
 "	Protection contre des erreurs dans le stockage des compos d'enchantement",
 "V1.2.17.19 23/08/2017",
@@ -5371,6 +5373,7 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
+	news.push(['25/08/2017', 'Possibilité d\'afficher les caractéristiques de Trõlls venant de plusieurs IT Bricol\'Troll (utiliser le petit +, à gauche dans la liste)']);
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
 	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
@@ -6978,7 +6981,11 @@ function do_option() {
 				{
 					var k = numTroll+'.enchantement.'+idEquipement+'.composant.'+j;
 					var v = MY_getValue(k);
-					var infoComposant = MY_getValue().split(';');
+					if (v == null) { 	// protection Roule 26/08/2017
+						window.console.log('[MZ] err infoComposant k=' + k + ', v is null');
+						continue;
+					}
+					var infoComposant = v.split(';');
 					if (infoComposant.length < 5) {	// protection Roule 25/08/2017
 						window.console.log('[MZ] err infoComposant k=' + k + ', v=' + v);
 						continue;
