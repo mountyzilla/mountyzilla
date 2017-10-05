@@ -7,17 +7,14 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.03
+// @version     1.2.18.04
+// @grant GM_getValue
+// @grant GM_deleteValue
+// @grant GM_setValue
 // @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
 
 // vérif UTF-8 ş
-
-// 01/09/2017 Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16
-// @grant GM_getValue
-// @grant GM_deleteValue
-// @grant GM_setValue
-
 
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
@@ -39,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.04 04/09/2017",
+"	retour version 1.2.18.02 avec GM 3.17",
 "V1.2.18.03 01/09/2017",
 "	Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16",
 "V1.2.18.02 26/08/2017",
@@ -307,7 +306,7 @@ var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
 
-if (GM_info === undefined) {	// éviter le blocage si pas sous GM
+if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
 	window.console.log('Fonctionnement hors Greasemonkey');
 	var GM_getValue = function(key) {};
 	var GM_setValue = function(key, val) {};
@@ -322,12 +321,10 @@ Vapulabehemot (82169) 07/02/2017 */
 // Nécessite la présence de @grant GM_getValue, @grant GM_deleteValue et @grant GM_setValue
 function MY_getValue(key) {
 	var v = window.localStorage.getItem(key);
-	// 01/09/2017 Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16
-	var vGM = null; //GM_getValue(key);
+	vGM = GM_getValue(key);
 	if ((vGM == null)
 		|| (v != null && v != vGM)){
-		// 01/09/2017 Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16
-		//GM_setValue(key, v);
+		GM_setValue(key, v);
 	} else if (v == null && vGM != null) {
 		v = vGM;
 		window.localStorage[key] = vGM;
@@ -335,8 +332,7 @@ function MY_getValue(key) {
 	return v;
 }
 function MY_removeValue(key) {
-	// 01/09/2017 Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16
-	//GM_deleteValue(key);
+	GM_deleteValue(key);
 	window.localStorage.removeItem(key);
 }
 function MY_setValue(key, val) {
@@ -345,8 +341,7 @@ function MY_setValue(key, val) {
 	else if (val === false)
 		val = 0;
 	try {
-		// 01/09/2017 Désactivation de GM_setValue/getValue à cause d'une lenteur sur GM 3.16
-		//GM_setValue(key, val);
+	GM_setValue(key, val);
 	} catch(e) {
 		window.console.log('[MZ ' + GM_info.script.version + '] MY_setValue echec GM_setValue(' + key + ', ' + val + ')');
 	}
