@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.04
+// @version     1.2.18.06
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.06 28/01/2018",
+"	Protection malus Crasc sans durée",
+"V1.2.18.05 18/11/2017",
+"	Désactivation MZ V2 en mode dev pour les tests d'adaptation violentmonkey",
 "V1.2.18.04 04/09/2017",
 "	retour version 1.2.18.02 avec GM 3.17",
 "V1.2.18.03 01/09/2017",
@@ -308,10 +312,11 @@ var MY_DEBUG = false;
 
 if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
 	window.console.log('Fonctionnement hors Greasemonkey');
-	var GM_getValue = function(key) {};
-	var GM_setValue = function(key, val) {};
-	var GM_deleteValue = function(key) {};
-	var GM_info = {script: {version: 'sans GM'}}	// GM_info.script.version
+	// Roule 18/11/2017 il ne faut pas de "var" dans les ligne précédente. Ça fonctionnait sous Greasemonkey mais plus sous Violentmonkey
+	GM_getValue = function(key) {};
+	GM_setValue = function(key, val) {};
+	GM_deleteValue = function(key) {};
+	GM_info = {script: {version: 'sans GM'}}	// GM_info.script.version
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
@@ -3892,7 +3897,12 @@ function traiteMalus() {
 		tr = listeBM.snapshotItem(nb); nb++;
 		var effetsT = tr.childNodes[5].textContent.split(' | ');
 		var phymag = tr.childNodes[9].textContent;
-		var duree = Number(tr.childNodes[11].textContent.match(/\d+/)[0]);
+		var duree = tr.childNodes[11].textContent.match(/\d+/);
+		if (duree == null) {	// Roule 28/01/2018 protection malus Crasc sans durée
+			duree = 1;
+		} else {
+			duree = Number(duree[0]);
+		}
 		var type = tr.childNodes[3].textContent, nom;
 		// si c'est un type à décumul
 		/*
@@ -9403,8 +9413,10 @@ function showPopupError(sHTML) {
 }
 
 function retrieveCDMs() {
-	if (isDEV) return retrieveCDMsNew();
-	else       return retrieveCDMsOld();
+	// Roule 18/11/2017 mise en sommeil MZ V2, on a besoin de tester en mode dev avec l'ancienne version
+	return retrieveCDMsOld();
+	//if (isDEV) return retrieveCDMsNew();
+	//else       return retrieveCDMsOld();
 }
 
 function retrieveCDMsNew() {
