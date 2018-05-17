@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.06
+// @version     1.2.18.07
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -9315,7 +9315,11 @@ function drag(evt) {
 	return false;
 }
 /* FIN DEBUG */
-document.onmousemove = drag;
+if(!isPage("MH_Play/Play_equipement")) {
+	// Conflit overlib/Tout_MZ:
+	// Double définition du "onmousemove" sur la page d'équipement
+	document.onmousemove = drag;
+}
 
 function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
@@ -11170,7 +11174,7 @@ function setInfosCaracteristiques() {
 
     var tdRefl=document.querySelector("#refl");
     // TODO : prendre en compte bonus/malus D esq du tour ?
-    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + (esqbp);
+    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + esqbp + esqbm;
     tdRefl.innerHTML+=" <i>(moyenne : "+refMoy+")</i>";
 }
 
