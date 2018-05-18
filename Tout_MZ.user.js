@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.06
+// @version     1.2.18.07
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -4477,7 +4477,314 @@ function setCarteGogo() {
 	}
 	nvdiv += "<img src='"+serv_img_cible+"' style='position:relative;top:"+(base[0]-2*pos[1])+"px;left:"+(base[1]+2*pos[0])+"px;z-index:100;'/>";
 
-	nvdiv += '<map name="coord_trou"><area shape="circle" href="#" coords="260,333,3" title="X=5, Y=-49"  ><area shape="circle" href="#" coords="262,335,3" title="X=6, Y=-50"  ><area shape="circle" href="#" coords="260,335,3" title="X=5, Y=-50"  ><area shape="circle" href="#" coords="262,333,3" title="X=6, Y=-49"  ><area shape="circle" href="#" coords="294,163,3" title="X=22, Y=36"  ><area shape="circle" href="#" coords="292,163,3" title="X=21, Y=36"  ><area shape="circle" href="#" coords="294,165,3" title="X=22, Y=35"  ><area shape="circle" href="#" coords="292,165,3" title="X=21, Y=35"  ><area shape="circle" href="#" coords="124,217,3" title="X=-63, Y=9"  ><area shape="circle" href="#" coords="122,217,3" title="X=-64, Y=9"  ><area shape="circle" href="#" coords="124,219,3" title="X=-63, Y=8"  ><area shape="circle" href="#" coords="122,219,3" title="X=-64, Y=8"  ><area shape="circle" href="#" coords="378,95,3" title="X=64, Y=70"  ><area shape="circle" href="#" coords="146,121,3" title="X=-52, Y=57"  ><area shape="circle" href="#" coords="346,313,3" title="X=48, Y=-39"  ><area shape="circle" href="#" coords="310,339,3" title="X=30, Y=-52"  ><area shape="circle" href="#" coords="274,265,3" title="X=12, Y=-15"  ><area shape="circle" href="#" coords="360,95,3" title="X=55, Y=70"  ><area shape="circle" href="#" coords="224,91,3" title="X=-13, Y=72"  ><area shape="circle" href="#" coords="226,91,3" title="X=-12, Y=72"  ><area shape="circle" href="#" coords="224,89,3" title="X=-13, Y=73"  ><area shape="circle" href="#" coords="226,89,3" title="X=-12, Y=73"  ><area shape="circle" href="#" coords="148,281,3" title="X=-51, Y=-23"  ><area shape="circle" href="#" coords="150,281,3" title="X=-50, Y=-23"  ><area shape="circle" href="#" coords="148,279,3" title="X=-51, Y=-22"  ><area shape="circle" href="#" coords="150,279,3" title="X=-50, Y=-22"  ><area shape="circle" href="#" coords="130,301,3" title="X=-60, Y=-33"  ><area shape="circle" href="#" coords="132,301,3" title="X=-59, Y=-33"  ><area shape="circle" href="#" coords="130,299,3" title="X=-60, Y=-32"  ><area shape="circle" href="#" coords="132,299,3" title="X=-59, Y=-32"  ><area shape="circle" href="#" coords="116,311,3" title="X=-67, Y=-38"  ><area shape="circle" href="#" coords="118,311,3" title="X=-66, Y=-38"  ><area shape="circle" href="#" coords="116,309,3" title="X=-67, Y=-37"  ><area shape="circle" href="#" coords="118,309,3" title="X=-66, Y=-37"  ><area shape="circle" href="#" coords="260,173,3" title="X=5, Y=31"  ><area shape="circle" href="#" coords="262,173,3" title="X=6, Y=31"  ><area shape="circle" href="#" coords="260,171,3" title="X=5, Y=32"  ><area shape="circle" href="#" coords="262,171,3" title="X=6, Y=32"  ><area shape="circle" href="#" coords="178,339,3" title="X=-36, Y=-52"  ><area shape="circle" href="#" coords="180,339,3" title="X=-35, Y=-52"  ><area shape="circle" href="#" coords="178,337,3" title="X=-36, Y=-51"  ><area shape="circle" href="#" coords="180,337,3" title="X=-35, Y=-51"  ><area shape="circle" href="#" coords="182,107,3" title="X=-34, Y=64"  ><area shape="circle" href="#" coords="182,105,3" title="X=-34, Y=65"  ><area shape="circle" href="#" coords="270,109,3" title="X=10, Y=63"  ><area shape="circle" href="#" coords="272,109,3" title="X=11, Y=63"  ><area shape="circle" href="#" coords="270,107,3" title="X=10, Y=64"  ><area shape="circle" href="#" coords="272,107,3" title="X=11, Y=64"  ><area shape="circle" href="#" coords="180,207,3" title="X=-35, Y=14"  ><area shape="circle" href="#" coords="182,207,3" title="X=-34, Y=14"  ><area shape="circle" href="#" coords="180,205,3" title="X=-35, Y=15"  ><area shape="circle" href="#" coords="182,205,3" title="X=-34, Y=15"  ><area shape="circle" href="#" coords="398,173,3" title="X=74, Y=31"  ><area shape="circle" href="#" coords="400,173,3" title="X=75, Y=31"  ><area shape="circle" href="#" coords="398,171,3" title="X=74, Y=32"  ><area shape="circle" href="#" coords="400,171,3" title="X=75, Y=32"  ><area shape="circle" href="#" coords="342,133,3" title="X=46, Y=51"  ><area shape="circle" href="#" coords="344,133,3" title="X=47, Y=51"  ><area shape="circle" href="#" coords="342,131,3" title="X=46, Y=52"  ><area shape="circle" href="#" coords="344,131,3" title="X=47, Y=52"  ><area shape="circle" href="#" coords="180,107,3" title="X=-35, Y=64"  ><area shape="circle" href="#" coords="180,105,3" title="X=-35, Y=65"  ><area shape="circle" href="#" coords="108,251,3" title="X=-71, Y=-8"  ><area shape="circle" href="#" coords="110,251,3" title="X=-70, Y=-8"  ><area shape="circle" href="#" coords="108,249,3" title="X=-71, Y=-7"  ><area shape="circle" href="#" coords="110,249,3" title="X=-70, Y=-7"  ><area shape="circle" href="#" coords="346,191,3" title="X=48, Y=22"  ><area shape="circle" href="#" coords="346,189,3" title="X=48, Y=23"  ><area shape="circle" href="#" coords="346,187,3" title="X=48, Y=24"  ><area shape="circle" href="#" coords="346,185,3" title="X=48, Y=25"  ><area shape="circle" href="#" coords="348,195,3" title="X=49, Y=20"  ><area shape="circle" href="#" coords="348,193,3" title="X=49, Y=21"  ><area shape="circle" href="#" coords="348,191,3" title="X=49, Y=22"  ><area shape="circle" href="#" coords="348,189,3" title="X=49, Y=23"  ><area shape="circle" href="#" coords="348,187,3" title="X=49, Y=24"  ><area shape="circle" href="#" coords="348,185,3" title="X=49, Y=25"  ><area shape="circle" href="#" coords="348,183,3" title="X=49, Y=26"  ><area shape="circle" href="#" coords="348,181,3" title="X=49, Y=27"  ><area shape="circle" href="#" coords="350,199,3" title="X=50, Y=18"  ><area shape="circle" href="#" coords="350,197,3" title="X=50, Y=19"  ><area shape="circle" href="#" coords="350,195,3" title="X=50, Y=20"  ><area shape="circle" href="#" coords="350,193,3" title="X=50, Y=21"  ><area shape="circle" href="#" coords="350,191,3" title="X=50, Y=22"  ><area shape="circle" href="#" coords="350,189,3" title="X=50, Y=23"  ><area shape="circle" href="#" coords="350,187,3" title="X=50, Y=24"  ><area shape="circle" href="#" coords="350,185,3" title="X=50, Y=25"  ><area shape="circle" href="#" coords="350,183,3" title="X=50, Y=26"  ><area shape="circle" href="#" coords="350,181,3" title="X=50, Y=27"  ><area shape="circle" href="#" coords="350,179,3" title="X=50, Y=28"  ><area shape="circle" href="#" coords="350,177,3" title="X=50, Y=29"  ><area shape="circle" href="#" coords="352,201,3" title="X=51, Y=17"  ><area shape="circle" href="#" coords="352,199,3" title="X=51, Y=18"  ><area shape="circle" href="#" coords="352,197,3" title="X=51, Y=19"  ><area shape="circle" href="#" coords="352,195,3" title="X=51, Y=20"  ><area shape="circle" href="#" coords="352,193,3" title="X=51, Y=21"  ><area shape="circle" href="#" coords="352,191,3" title="X=51, Y=22"  ><area shape="circle" href="#" coords="352,189,3" title="X=51, Y=23"  ><area shape="circle" href="#" coords="352,187,3" title="X=51, Y=24"  ><area shape="circle" href="#" coords="352,185,3" title="X=51, Y=25"  ><area shape="circle" href="#" coords="352,183,3" title="X=51, Y=26"  ><area shape="circle" href="#" coords="352,181,3" title="X=51, Y=27"  ><area shape="circle" href="#" coords="352,179,3" title="X=51, Y=28"  ><area shape="circle" href="#" coords="352,177,3" title="X=51, Y=29"  ><area shape="circle" href="#" coords="352,175,3" title="X=51, Y=30"  ><area shape="circle" href="#" coords="354,201,3" title="X=52, Y=17"  ><area shape="circle" href="#" coords="354,199,3" title="X=52, Y=18"  ><area shape="circle" href="#" coords="354,197,3" title="X=52, Y=19"  ><area shape="circle" href="#" coords="354,195,3" title="X=52, Y=20"  ><area shape="circle" href="#" coords="354,193,3" title="X=52, Y=21"  ><area shape="circle" href="#" coords="354,191,3" title="X=52, Y=22"  ><area shape="circle" href="#" coords="354,189,3" title="X=52, Y=23"  ><area shape="circle" href="#" coords="354,187,3" title="X=52, Y=24"  ><area shape="circle" href="#" coords="354,185,3" title="X=52, Y=25"  ><area shape="circle" href="#" coords="354,183,3" title="X=52, Y=26"  ><area shape="circle" href="#" coords="354,181,3" title="X=52, Y=27"  ><area shape="circle" href="#" coords="354,179,3" title="X=52, Y=28"  ><area shape="circle" href="#" coords="354,177,3" title="X=52, Y=29"  ><area shape="circle" href="#" coords="354,175,3" title="X=52, Y=30"  ><area shape="circle" href="#" coords="356,203,3" title="X=53, Y=16"  ><area shape="circle" href="#" coords="356,201,3" title="X=53, Y=17"  ><area shape="circle" href="#" coords="356,199,3" title="X=53, Y=18"  ><area shape="circle" href="#" coords="356,197,3" title="X=53, Y=19"  ><area shape="circle" href="#" coords="356,195,3" title="X=53, Y=20"  ><area shape="circle" href="#" coords="356,193,3" title="X=53, Y=21"  ><area shape="circle" href="#" coords="356,191,3" title="X=53, Y=22"  ><area shape="circle" href="#" coords="356,189,3" title="X=53, Y=23"  ><area shape="circle" href="#" coords="356,187,3" title="X=53, Y=24"  ><area shape="circle" href="#" coords="356,185,3" title="X=53, Y=25"  ><area shape="circle" href="#" coords="356,183,3" title="X=53, Y=26"  ><area shape="circle" href="#" coords="356,181,3" title="X=53, Y=27"  ><area shape="circle" href="#" coords="356,179,3" title="X=53, Y=28"  ><area shape="circle" href="#" coords="356,177,3" title="X=53, Y=29"  ><area shape="circle" href="#" coords="356,175,3" title="X=53, Y=30"  ><area shape="circle" href="#" coords="356,173,3" title="X=53, Y=31"  ><area shape="circle" href="#" coords="358,203,3" title="X=54, Y=16"  ><area shape="circle" href="#" coords="358,201,3" title="X=54, Y=17"  ><area shape="circle" href="#" coords="358,199,3" title="X=54, Y=18"  ><area shape="circle" href="#" coords="358,197,3" title="X=54, Y=19"  ><area shape="circle" href="#" coords="358,195,3" title="X=54, Y=20"  ><area shape="circle" href="#" coords="358,193,3" title="X=54, Y=21"  ><area shape="circle" href="#" coords="358,191,3" title="X=54, Y=22"  ><area shape="circle" href="#" coords="358,189,3" title="X=54, Y=23"  ><area shape="circle" href="#" coords="358,187,3" title="X=54, Y=24"  ><area shape="circle" href="#" coords="358,185,3" title="X=54, Y=25"  ><area shape="circle" href="#" coords="358,183,3" title="X=54, Y=26"  ><area shape="circle" href="#" coords="358,181,3" title="X=54, Y=27"  ><area shape="circle" href="#" coords="358,179,3" title="X=54, Y=28"  ><area shape="circle" href="#" coords="358,177,3" title="X=54, Y=29"  ><area shape="circle" href="#" coords="358,175,3" title="X=54, Y=30"  ><area shape="circle" href="#" coords="358,173,3" title="X=54, Y=31"  ><area shape="circle" href="#" coords="360,205,3" title="X=55, Y=15"  ><area shape="circle" href="#" coords="360,203,3" title="X=55, Y=16"  ><area shape="circle" href="#" coords="360,201,3" title="X=55, Y=17"  ><area shape="circle" href="#" coords="360,199,3" title="X=55, Y=18"  ><area shape="circle" href="#" coords="360,197,3" title="X=55, Y=19"  ><area shape="circle" href="#" coords="360,195,3" title="X=55, Y=20"  ><area shape="circle" href="#" coords="360,193,3" title="X=55, Y=21"  ><area shape="circle" href="#" coords="360,191,3" title="X=55, Y=22"  ><area shape="circle" href="#" coords="360,189,3" title="X=55, Y=23"  ><area shape="circle" href="#" coords="360,187,3" title="X=55, Y=24"  ><area shape="circle" href="#" coords="360,185,3" title="X=55, Y=25"  ><area shape="circle" href="#" coords="360,183,3" title="X=55, Y=26"  ><area shape="circle" href="#" coords="360,181,3" title="X=55, Y=27"  ><area shape="circle" href="#" coords="360,179,3" title="X=55, Y=28"  ><area shape="circle" href="#" coords="360,177,3" title="X=55, Y=29"  ><area shape="circle" href="#" coords="360,175,3" title="X=55, Y=30"  ><area shape="circle" href="#" coords="360,173,3" title="X=55, Y=31"  ><area shape="circle" href="#" coords="360,171,3" title="X=55, Y=32"  ><area shape="circle" href="#" coords="362,205,3" title="X=56, Y=15"  ><area shape="circle" href="#" coords="362,203,3" title="X=56, Y=16"  ><area shape="circle" href="#" coords="362,201,3" title="X=56, Y=17"  ><area shape="circle" href="#" coords="362,199,3" title="X=56, Y=18"  ><area shape="circle" href="#" coords="362,197,3" title="X=56, Y=19"  ><area shape="circle" href="#" coords="362,195,3" title="X=56, Y=20"  ><area shape="circle" href="#" coords="362,193,3" title="X=56, Y=21"  ><area shape="circle" href="#" coords="362,191,3" title="X=56, Y=22"  ><area shape="circle" href="#" coords="362,189,3" title="X=56, Y=23"  ><area shape="circle" href="#" coords="362,187,3" title="X=56, Y=24"  ><area shape="circle" href="#" coords="362,185,3" title="X=56, Y=25"  ><area shape="circle" href="#" coords="362,183,3" title="X=56, Y=26"  ><area shape="circle" href="#" coords="362,181,3" title="X=56, Y=27"  ><area shape="circle" href="#" coords="362,179,3" title="X=56, Y=28"  ><area shape="circle" href="#" coords="362,177,3" title="X=56, Y=29"  ><area shape="circle" href="#" coords="362,175,3" title="X=56, Y=30"  ><area shape="circle" href="#" coords="362,173,3" title="X=56, Y=31"  ><area shape="circle" href="#" coords="362,171,3" title="X=56, Y=32"  ><area shape="circle" href="#" coords="364,205,3" title="X=57, Y=15"  ><area shape="circle" href="#" coords="364,203,3" title="X=57, Y=16"  ><area shape="circle" href="#" coords="364,201,3" title="X=57, Y=17"  ><area shape="circle" href="#" coords="364,199,3" title="X=57, Y=18"  ><area shape="circle" href="#" coords="364,197,3" title="X=57, Y=19"  ><area shape="circle" href="#" coords="364,195,3" title="X=57, Y=20"  ><area shape="circle" href="#" coords="364,193,3" title="X=57, Y=21"  ><area shape="circle" href="#" coords="364,191,3" title="X=57, Y=22"  ><area shape="circle" href="#" coords="364,189,3" title="X=57, Y=23"  ><area shape="circle" href="#" coords="364,187,3" title="X=57, Y=24"  ><area shape="circle" href="#" coords="364,185,3" title="X=57, Y=25"  ><area shape="circle" href="#" coords="364,183,3" title="X=57, Y=26"  ><area shape="circle" href="#" coords="364,181,3" title="X=57, Y=27"  ><area shape="circle" href="#" coords="364,179,3" title="X=57, Y=28"  ><area shape="circle" href="#" coords="364,177,3" title="X=57, Y=29"  ><area shape="circle" href="#" coords="364,175,3" title="X=57, Y=30"  ><area shape="circle" href="#" coords="364,173,3" title="X=57, Y=31"  ><area shape="circle" href="#" coords="364,171,3" title="X=57, Y=32"  ><area shape="circle" href="#" coords="366,205,3" title="X=58, Y=15"  ><area shape="circle" href="#" coords="366,203,3" title="X=58, Y=16"  ><area shape="circle" href="#" coords="366,201,3" title="X=58, Y=17"  ><area shape="circle" href="#" coords="366,199,3" title="X=58, Y=18"  ><area shape="circle" href="#" coords="366,197,3" title="X=58, Y=19"  ><area shape="circle" href="#" coords="366,195,3" title="X=58, Y=20"  ><area shape="circle" href="#" coords="366,193,3" title="X=58, Y=21"  ><area shape="circle" href="#" coords="366,191,3" title="X=58, Y=22"  ><area shape="circle" href="#" coords="366,189,3" title="X=58, Y=23"  ><area shape="circle" href="#" coords="366,187,3" title="X=58, Y=24"  ><area shape="circle" href="#" coords="366,185,3" title="X=58, Y=25"  ><area shape="circle" href="#" coords="366,183,3" title="X=58, Y=26"  ><area shape="circle" href="#" coords="366,181,3" title="X=58, Y=27"  ><area shape="circle" href="#" coords="366,179,3" title="X=58, Y=28"  ><area shape="circle" href="#" coords="366,177,3" title="X=58, Y=29"  ><area shape="circle" href="#" coords="366,175,3" title="X=58, Y=30"  ><area shape="circle" href="#" coords="366,173,3" title="X=58, Y=31"  ><area shape="circle" href="#" coords="366,171,3" title="X=58, Y=32"  ><area shape="circle" href="#" coords="368,203,3" title="X=59, Y=16"  ><area shape="circle" href="#" coords="368,201,3" title="X=59, Y=17"  ><area shape="circle" href="#" coords="368,199,3" title="X=59, Y=18"  ><area shape="circle" href="#" coords="368,197,3" title="X=59, Y=19"  ><area shape="circle" href="#" coords="368,195,3" title="X=59, Y=20"  ><area shape="circle" href="#" coords="368,193,3" title="X=59, Y=21"  ><area shape="circle" href="#" coords="368,191,3" title="X=59, Y=22"  ><area shape="circle" href="#" coords="368,189,3" title="X=59, Y=23"  ><area shape="circle" href="#" coords="368,187,3" title="X=59, Y=24"  ><area shape="circle" href="#" coords="368,185,3" title="X=59, Y=25"  ><area shape="circle" href="#" coords="368,183,3" title="X=59, Y=26"  ><area shape="circle" href="#" coords="368,181,3" title="X=59, Y=27"  ><area shape="circle" href="#" coords="368,179,3" title="X=59, Y=28"  ><area shape="circle" href="#" coords="368,177,3" title="X=59, Y=29"  ><area shape="circle" href="#" coords="368,175,3" title="X=59, Y=30"  ><area shape="circle" href="#" coords="368,173,3" title="X=59, Y=31"  ><area shape="circle" href="#" coords="370,203,3" title="X=60, Y=16"  ><area shape="circle" href="#" coords="370,201,3" title="X=60, Y=17"  ><area shape="circle" href="#" coords="370,199,3" title="X=60, Y=18"  ><area shape="circle" href="#" coords="370,197,3" title="X=60, Y=19"  ><area shape="circle" href="#" coords="370,195,3" title="X=60, Y=20"  ><area shape="circle" href="#" coords="370,193,3" title="X=60, Y=21"  ><area shape="circle" href="#" coords="370,191,3" title="X=60, Y=22"  ><area shape="circle" href="#" coords="370,189,3" title="X=60, Y=23"  ><area shape="circle" href="#" coords="370,187,3" title="X=60, Y=24"  ><area shape="circle" href="#" coords="370,185,3" title="X=60, Y=25"  ><area shape="circle" href="#" coords="370,183,3" title="X=60, Y=26"  ><area shape="circle" href="#" coords="370,181,3" title="X=60, Y=27"  ><area shape="circle" href="#" coords="370,179,3" title="X=60, Y=28"  ><area shape="circle" href="#" coords="370,177,3" title="X=60, Y=29"  ><area shape="circle" href="#" coords="370,175,3" title="X=60, Y=30"  ><area shape="circle" href="#" coords="370,173,3" title="X=60, Y=31"  ><area shape="circle" href="#" coords="372,201,3" title="X=61, Y=17"  ><area shape="circle" href="#" coords="372,199,3" title="X=61, Y=18"  ><area shape="circle" href="#" coords="372,197,3" title="X=61, Y=19"  ><area shape="circle" href="#" coords="372,195,3" title="X=61, Y=20"  ><area shape="circle" href="#" coords="372,193,3" title="X=61, Y=21"  ><area shape="circle" href="#" coords="372,191,3" title="X=61, Y=22"  ><area shape="circle" href="#" coords="372,189,3" title="X=61, Y=23"  ><area shape="circle" href="#" coords="372,187,3" title="X=61, Y=24"  ><area shape="circle" href="#" coords="372,185,3" title="X=61, Y=25"  ><area shape="circle" href="#" coords="372,183,3" title="X=61, Y=26"  ><area shape="circle" href="#" coords="372,181,3" title="X=61, Y=27"  ><area shape="circle" href="#" coords="372,179,3" title="X=61, Y=28"  ><area shape="circle" href="#" coords="372,177,3" title="X=61, Y=29"  ><area shape="circle" href="#" coords="372,175,3" title="X=61, Y=30"  ><area shape="circle" href="#" coords="374,201,3" title="X=62, Y=17"  ><area shape="circle" href="#" coords="374,199,3" title="X=62, Y=18"  ><area shape="circle" href="#" coords="374,197,3" title="X=62, Y=19"  ><area shape="circle" href="#" coords="374,195,3" title="X=62, Y=20"  ><area shape="circle" href="#" coords="374,193,3" title="X=62, Y=21"  ><area shape="circle" href="#" coords="374,191,3" title="X=62, Y=22"  ><area shape="circle" href="#" coords="374,189,3" title="X=62, Y=23"  ><area shape="circle" href="#" coords="374,187,3" title="X=62, Y=24"  ><area shape="circle" href="#" coords="374,185,3" title="X=62, Y=25"  ><area shape="circle" href="#" coords="374,183,3" title="X=62, Y=26"  ><area shape="circle" href="#" coords="374,181,3" title="X=62, Y=27"  ><area shape="circle" href="#" coords="374,179,3" title="X=62, Y=28"  ><area shape="circle" href="#" coords="374,177,3" title="X=62, Y=29"  ><area shape="circle" href="#" coords="374,175,3" title="X=62, Y=30"  ><area shape="circle" href="#" coords="376,199,3" title="X=63, Y=18"  ><area shape="circle" href="#" coords="376,197,3" title="X=63, Y=19"  ><area shape="circle" href="#" coords="376,195,3" title="X=63, Y=20"  ><area shape="circle" href="#" coords="376,193,3" title="X=63, Y=21"  ><area shape="circle" href="#" coords="376,191,3" title="X=63, Y=22"  ><area shape="circle" href="#" coords="376,189,3" title="X=63, Y=23"  ><area shape="circle" href="#" coords="376,187,3" title="X=63, Y=24"  ><area shape="circle" href="#" coords="376,185,3" title="X=63, Y=25"  ><area shape="circle" href="#" coords="376,183,3" title="X=63, Y=26"  ><area shape="circle" href="#" coords="376,181,3" title="X=63, Y=27"  ><area shape="circle" href="#" coords="376,179,3" title="X=63, Y=28"  ><area shape="circle" href="#" coords="376,177,3" title="X=63, Y=29"  ><area shape="circle" href="#" coords="378,195,3" title="X=64, Y=20"  ><area shape="circle" href="#" coords="378,193,3" title="X=64, Y=21"  ><area shape="circle" href="#" coords="378,191,3" title="X=64, Y=22"  ><area shape="circle" href="#" coords="378,189,3" title="X=64, Y=23"  ><area shape="circle" href="#" coords="378,187,3" title="X=64, Y=24"  ><area shape="circle" href="#" coords="378,185,3" title="X=64, Y=25"  ><area shape="circle" href="#" coords="378,183,3" title="X=64, Y=26"  ><area shape="circle" href="#" coords="378,181,3" title="X=64, Y=27"  ><area shape="circle" href="#" coords="380,191,3" title="X=65, Y=22"  ><area shape="circle" href="#" coords="380,189,3" title="X=65, Y=23"  ><area shape="circle" href="#" coords="380,187,3" title="X=65, Y=24"  ><area shape="circle" href="#" coords="380,185,3" title="X=65, Y=25"  ></map>';
+	nvdiv += '<map name="coord_trou">'+
+		'<area shape="circle" href="#" coords="260,333,3" title="X=5, Y=-49"  >'+
+		'<area shape="circle" href="#" coords="262,335,3" title="X=6, Y=-50"  >'+
+		'<area shape="circle" href="#" coords="260,335,3" title="X=5, Y=-50"  >'+
+		'<area shape="circle" href="#" coords="262,333,3" title="X=6, Y=-49"  >'+
+		'<area shape="circle" href="#" coords="294,163,3" title="X=22, Y=36"  >'+
+		'<area shape="circle" href="#" coords="292,163,3" title="X=21, Y=36"  >'+
+		'<area shape="circle" href="#" coords="294,165,3" title="X=22, Y=35"  >'+
+		'<area shape="circle" href="#" coords="292,165,3" title="X=21, Y=35"  >'+
+		'<area shape="circle" href="#" coords="124,217,3" title="X=-63, Y=9"  >'+
+		'<area shape="circle" href="#" coords="122,217,3" title="X=-64, Y=9"  >'+
+		'<area shape="circle" href="#" coords="124,219,3" title="X=-63, Y=8"  >'+
+		'<area shape="circle" href="#" coords="122,219,3" title="X=-64, Y=8"  >'+
+		'<area shape="circle" href="#" coords="378,95,3" title="X=64, Y=70"  >'+
+		'<area shape="circle" href="#" coords="146,121,3" title="X=-52, Y=57"  >'+
+		'<area shape="circle" href="#" coords="346,313,3" title="X=48, Y=-39"  >'+
+		'<area shape="circle" href="#" coords="310,339,3" title="X=30, Y=-52"  >'+
+		'<area shape="circle" href="#" coords="274,265,3" title="X=12, Y=-15"  >'+
+		'<area shape="circle" href="#" coords="360,95,3" title="X=55, Y=70"  >'+
+		'<area shape="circle" href="#" coords="224,91,3" title="X=-13, Y=72"  >'+
+		'<area shape="circle" href="#" coords="226,91,3" title="X=-12, Y=72"  >'+
+		'<area shape="circle" href="#" coords="224,89,3" title="X=-13, Y=73"  >'+
+		'<area shape="circle" href="#" coords="226,89,3" title="X=-12, Y=73"  >'+
+		'<area shape="circle" href="#" coords="148,281,3" title="X=-51, Y=-23"  >'+
+		'<area shape="circle" href="#" coords="150,281,3" title="X=-50, Y=-23"  >'+
+		'<area shape="circle" href="#" coords="148,279,3" title="X=-51, Y=-22"  >'+
+		'<area shape="circle" href="#" coords="150,279,3" title="X=-50, Y=-22"  >'+
+		'<area shape="circle" href="#" coords="130,301,3" title="X=-60, Y=-33"  >'+
+		'<area shape="circle" href="#" coords="132,301,3" title="X=-59, Y=-33"  >'+
+		'<area shape="circle" href="#" coords="130,299,3" title="X=-60, Y=-32"  >'+
+		'<area shape="circle" href="#" coords="132,299,3" title="X=-59, Y=-32"  >'+
+		'<area shape="circle" href="#" coords="116,311,3" title="X=-67, Y=-38"  >'+
+		'<area shape="circle" href="#" coords="118,311,3" title="X=-66, Y=-38"  >'+
+		'<area shape="circle" href="#" coords="116,309,3" title="X=-67, Y=-37"  >'+
+		'<area shape="circle" href="#" coords="118,309,3" title="X=-66, Y=-37"  >'+
+		'<area shape="circle" href="#" coords="260,173,3" title="X=5, Y=31"  >'+
+		'<area shape="circle" href="#" coords="262,173,3" title="X=6, Y=31"  >'+
+		'<area shape="circle" href="#" coords="260,171,3" title="X=5, Y=32"  >'+
+		'<area shape="circle" href="#" coords="262,171,3" title="X=6, Y=32"  >'+
+		'<area shape="circle" href="#" coords="178,339,3" title="X=-36, Y=-52"  >'+
+		'<area shape="circle" href="#" coords="180,339,3" title="X=-35, Y=-52"  >'+
+		'<area shape="circle" href="#" coords="178,337,3" title="X=-36, Y=-51"  >'+
+		'<area shape="circle" href="#" coords="180,337,3" title="X=-35, Y=-51"  >'+
+		'<area shape="circle" href="#" coords="182,107,3" title="X=-34, Y=64"  >'+
+		'<area shape="circle" href="#" coords="182,105,3" title="X=-34, Y=65"  >'+
+		'<area shape="circle" href="#" coords="270,109,3" title="X=10, Y=63"  >'+
+		'<area shape="circle" href="#" coords="272,109,3" title="X=11, Y=63"  >'+
+		'<area shape="circle" href="#" coords="270,107,3" title="X=10, Y=64"  >'+
+		'<area shape="circle" href="#" coords="272,107,3" title="X=11, Y=64"  >'+
+		'<area shape="circle" href="#" coords="180,207,3" title="X=-35, Y=14"  >'+
+		'<area shape="circle" href="#" coords="182,207,3" title="X=-34, Y=14"  >'+
+		'<area shape="circle" href="#" coords="180,205,3" title="X=-35, Y=15"  >'+
+		'<area shape="circle" href="#" coords="182,205,3" title="X=-34, Y=15"  >'+
+		'<area shape="circle" href="#" coords="398,173,3" title="X=74, Y=31"  >'+
+		'<area shape="circle" href="#" coords="400,173,3" title="X=75, Y=31"  >'+
+		'<area shape="circle" href="#" coords="398,171,3" title="X=74, Y=32"  >'+
+		'<area shape="circle" href="#" coords="400,171,3" title="X=75, Y=32"  >'+
+		'<area shape="circle" href="#" coords="342,133,3" title="X=46, Y=51"  >'+
+		'<area shape="circle" href="#" coords="344,133,3" title="X=47, Y=51"  >'+
+		'<area shape="circle" href="#" coords="342,131,3" title="X=46, Y=52"  >'+
+		'<area shape="circle" href="#" coords="344,131,3" title="X=47, Y=52"  >'+
+		'<area shape="circle" href="#" coords="180,107,3" title="X=-35, Y=64"  >'+
+		'<area shape="circle" href="#" coords="180,105,3" title="X=-35, Y=65"  >'+
+		'<area shape="circle" href="#" coords="108,251,3" title="X=-71, Y=-8"  >'+
+		'<area shape="circle" href="#" coords="110,251,3" title="X=-70, Y=-8"  >'+
+		'<area shape="circle" href="#" coords="108,249,3" title="X=-71, Y=-7"  >'+
+		'<area shape="circle" href="#" coords="110,249,3" title="X=-70, Y=-7"  >'+
+		'<area shape="circle" href="#" coords="346,191,3" title="X=48, Y=22"  >'+
+		'<area shape="circle" href="#" coords="346,189,3" title="X=48, Y=23"  >'+
+		'<area shape="circle" href="#" coords="346,187,3" title="X=48, Y=24"  >'+
+		'<area shape="circle" href="#" coords="346,185,3" title="X=48, Y=25"  >'+
+		'<area shape="circle" href="#" coords="348,195,3" title="X=49, Y=20"  >'+
+		'<area shape="circle" href="#" coords="348,193,3" title="X=49, Y=21"  >'+
+		'<area shape="circle" href="#" coords="348,191,3" title="X=49, Y=22"  >'+
+		'<area shape="circle" href="#" coords="348,189,3" title="X=49, Y=23"  >'+
+		'<area shape="circle" href="#" coords="348,187,3" title="X=49, Y=24"  >'+
+		'<area shape="circle" href="#" coords="348,185,3" title="X=49, Y=25"  >'+
+		'<area shape="circle" href="#" coords="348,183,3" title="X=49, Y=26"  >'+
+		'<area shape="circle" href="#" coords="348,181,3" title="X=49, Y=27"  >'+
+		'<area shape="circle" href="#" coords="350,199,3" title="X=50, Y=18"  >'+
+		'<area shape="circle" href="#" coords="350,197,3" title="X=50, Y=19"  >'+
+		'<area shape="circle" href="#" coords="350,195,3" title="X=50, Y=20"  >'+
+		'<area shape="circle" href="#" coords="350,193,3" title="X=50, Y=21"  >'+
+		'<area shape="circle" href="#" coords="350,191,3" title="X=50, Y=22"  >'+
+		'<area shape="circle" href="#" coords="350,189,3" title="X=50, Y=23"  >'+
+		'<area shape="circle" href="#" coords="350,187,3" title="X=50, Y=24"  >'+
+		'<area shape="circle" href="#" coords="350,185,3" title="X=50, Y=25"  >'+
+		'<area shape="circle" href="#" coords="350,183,3" title="X=50, Y=26"  >'+
+		'<area shape="circle" href="#" coords="350,181,3" title="X=50, Y=27"  >'+
+		'<area shape="circle" href="#" coords="350,179,3" title="X=50, Y=28"  >'+
+		'<area shape="circle" href="#" coords="350,177,3" title="X=50, Y=29"  >'+
+		'<area shape="circle" href="#" coords="352,201,3" title="X=51, Y=17"  >'+
+		'<area shape="circle" href="#" coords="352,199,3" title="X=51, Y=18"  >'+
+		'<area shape="circle" href="#" coords="352,197,3" title="X=51, Y=19"  >'+
+		'<area shape="circle" href="#" coords="352,195,3" title="X=51, Y=20"  >'+
+		'<area shape="circle" href="#" coords="352,193,3" title="X=51, Y=21"  >'+
+		'<area shape="circle" href="#" coords="352,191,3" title="X=51, Y=22"  >'+
+		'<area shape="circle" href="#" coords="352,189,3" title="X=51, Y=23"  >'+
+		'<area shape="circle" href="#" coords="352,187,3" title="X=51, Y=24"  >'+
+		'<area shape="circle" href="#" coords="352,185,3" title="X=51, Y=25"  >'+
+		'<area shape="circle" href="#" coords="352,183,3" title="X=51, Y=26"  >'+
+		'<area shape="circle" href="#" coords="352,181,3" title="X=51, Y=27"  >'+
+		'<area shape="circle" href="#" coords="352,179,3" title="X=51, Y=28"  >'+
+		'<area shape="circle" href="#" coords="352,177,3" title="X=51, Y=29"  >'+
+		'<area shape="circle" href="#" coords="352,175,3" title="X=51, Y=30"  >'+
+		'<area shape="circle" href="#" coords="354,201,3" title="X=52, Y=17"  >'+
+		'<area shape="circle" href="#" coords="354,199,3" title="X=52, Y=18"  >'+
+		'<area shape="circle" href="#" coords="354,197,3" title="X=52, Y=19"  >'+
+		'<area shape="circle" href="#" coords="354,195,3" title="X=52, Y=20"  >'+
+		'<area shape="circle" href="#" coords="354,193,3" title="X=52, Y=21"  >'+
+		'<area shape="circle" href="#" coords="354,191,3" title="X=52, Y=22"  >'+
+		'<area shape="circle" href="#" coords="354,189,3" title="X=52, Y=23"  >'+
+		'<area shape="circle" href="#" coords="354,187,3" title="X=52, Y=24"  >'+
+		'<area shape="circle" href="#" coords="354,185,3" title="X=52, Y=25"  >'+
+		'<area shape="circle" href="#" coords="354,183,3" title="X=52, Y=26"  >'+
+		'<area shape="circle" href="#" coords="354,181,3" title="X=52, Y=27"  >'+
+		'<area shape="circle" href="#" coords="354,179,3" title="X=52, Y=28"  >'+
+		'<area shape="circle" href="#" coords="354,177,3" title="X=52, Y=29"  >'+
+		'<area shape="circle" href="#" coords="354,175,3" title="X=52, Y=30"  >'+
+		'<area shape="circle" href="#" coords="356,203,3" title="X=53, Y=16"  >'+
+		'<area shape="circle" href="#" coords="356,201,3" title="X=53, Y=17"  >'+
+		'<area shape="circle" href="#" coords="356,199,3" title="X=53, Y=18"  >'+
+		'<area shape="circle" href="#" coords="356,197,3" title="X=53, Y=19"  >'+
+		'<area shape="circle" href="#" coords="356,195,3" title="X=53, Y=20"  >'+
+		'<area shape="circle" href="#" coords="356,193,3" title="X=53, Y=21"  >'+
+		'<area shape="circle" href="#" coords="356,191,3" title="X=53, Y=22"  >'+
+		'<area shape="circle" href="#" coords="356,189,3" title="X=53, Y=23"  >'+
+		'<area shape="circle" href="#" coords="356,187,3" title="X=53, Y=24"  >'+
+		'<area shape="circle" href="#" coords="356,185,3" title="X=53, Y=25"  >'+
+		'<area shape="circle" href="#" coords="356,183,3" title="X=53, Y=26"  >'+
+		'<area shape="circle" href="#" coords="356,181,3" title="X=53, Y=27"  >'+
+		'<area shape="circle" href="#" coords="356,179,3" title="X=53, Y=28"  >'+
+		'<area shape="circle" href="#" coords="356,177,3" title="X=53, Y=29"  >'+
+		'<area shape="circle" href="#" coords="356,175,3" title="X=53, Y=30"  >'+
+		'<area shape="circle" href="#" coords="356,173,3" title="X=53, Y=31"  >'+
+		'<area shape="circle" href="#" coords="358,203,3" title="X=54, Y=16"  >'+
+		'<area shape="circle" href="#" coords="358,201,3" title="X=54, Y=17"  >'+
+		'<area shape="circle" href="#" coords="358,199,3" title="X=54, Y=18"  >'+
+		'<area shape="circle" href="#" coords="358,197,3" title="X=54, Y=19"  >'+
+		'<area shape="circle" href="#" coords="358,195,3" title="X=54, Y=20"  >'+
+		'<area shape="circle" href="#" coords="358,193,3" title="X=54, Y=21"  >'+
+		'<area shape="circle" href="#" coords="358,191,3" title="X=54, Y=22"  >'+
+		'<area shape="circle" href="#" coords="358,189,3" title="X=54, Y=23"  >'+
+		'<area shape="circle" href="#" coords="358,187,3" title="X=54, Y=24"  >'+
+		'<area shape="circle" href="#" coords="358,185,3" title="X=54, Y=25"  >'+
+		'<area shape="circle" href="#" coords="358,183,3" title="X=54, Y=26"  >'+
+		'<area shape="circle" href="#" coords="358,181,3" title="X=54, Y=27"  >'+
+		'<area shape="circle" href="#" coords="358,179,3" title="X=54, Y=28"  >'+
+		'<area shape="circle" href="#" coords="358,177,3" title="X=54, Y=29"  >'+
+		'<area shape="circle" href="#" coords="358,175,3" title="X=54, Y=30"  >'+
+		'<area shape="circle" href="#" coords="358,173,3" title="X=54, Y=31"  >'+
+		'<area shape="circle" href="#" coords="360,205,3" title="X=55, Y=15"  >'+
+		'<area shape="circle" href="#" coords="360,203,3" title="X=55, Y=16"  >'+
+		'<area shape="circle" href="#" coords="360,201,3" title="X=55, Y=17"  >'+
+		'<area shape="circle" href="#" coords="360,199,3" title="X=55, Y=18"  >'+
+		'<area shape="circle" href="#" coords="360,197,3" title="X=55, Y=19"  >'+
+		'<area shape="circle" href="#" coords="360,195,3" title="X=55, Y=20"  >'+
+		'<area shape="circle" href="#" coords="360,193,3" title="X=55, Y=21"  >'+
+		'<area shape="circle" href="#" coords="360,191,3" title="X=55, Y=22"  >'+
+		'<area shape="circle" href="#" coords="360,189,3" title="X=55, Y=23"  >'+
+		'<area shape="circle" href="#" coords="360,187,3" title="X=55, Y=24"  >'+
+		'<area shape="circle" href="#" coords="360,185,3" title="X=55, Y=25"  >'+
+		'<area shape="circle" href="#" coords="360,183,3" title="X=55, Y=26"  >'+
+		'<area shape="circle" href="#" coords="360,181,3" title="X=55, Y=27"  >'+
+		'<area shape="circle" href="#" coords="360,179,3" title="X=55, Y=28"  >'+
+		'<area shape="circle" href="#" coords="360,177,3" title="X=55, Y=29"  >'+
+		'<area shape="circle" href="#" coords="360,175,3" title="X=55, Y=30"  >'+
+		'<area shape="circle" href="#" coords="360,173,3" title="X=55, Y=31"  >'+
+		'<area shape="circle" href="#" coords="360,171,3" title="X=55, Y=32"  >'+
+		'<area shape="circle" href="#" coords="362,205,3" title="X=56, Y=15"  >'+
+		'<area shape="circle" href="#" coords="362,203,3" title="X=56, Y=16"  >'+
+		'<area shape="circle" href="#" coords="362,201,3" title="X=56, Y=17"  >'+
+		'<area shape="circle" href="#" coords="362,199,3" title="X=56, Y=18"  >'+
+		'<area shape="circle" href="#" coords="362,197,3" title="X=56, Y=19"  >'+
+		'<area shape="circle" href="#" coords="362,195,3" title="X=56, Y=20"  >'+
+		'<area shape="circle" href="#" coords="362,193,3" title="X=56, Y=21"  >'+
+		'<area shape="circle" href="#" coords="362,191,3" title="X=56, Y=22"  >'+
+		'<area shape="circle" href="#" coords="362,189,3" title="X=56, Y=23"  >'+
+		'<area shape="circle" href="#" coords="362,187,3" title="X=56, Y=24"  >'+
+		'<area shape="circle" href="#" coords="362,185,3" title="X=56, Y=25"  >'+
+		'<area shape="circle" href="#" coords="362,183,3" title="X=56, Y=26"  >'+
+		'<area shape="circle" href="#" coords="362,181,3" title="X=56, Y=27"  >'+
+		'<area shape="circle" href="#" coords="362,179,3" title="X=56, Y=28"  >'+
+		'<area shape="circle" href="#" coords="362,177,3" title="X=56, Y=29"  >'+
+		'<area shape="circle" href="#" coords="362,175,3" title="X=56, Y=30"  >'+
+		'<area shape="circle" href="#" coords="362,173,3" title="X=56, Y=31"  >'+
+		'<area shape="circle" href="#" coords="362,171,3" title="X=56, Y=32"  >'+
+		'<area shape="circle" href="#" coords="364,205,3" title="X=57, Y=15"  >'+
+		'<area shape="circle" href="#" coords="364,203,3" title="X=57, Y=16"  >'+
+		'<area shape="circle" href="#" coords="364,201,3" title="X=57, Y=17"  >'+
+		'<area shape="circle" href="#" coords="364,199,3" title="X=57, Y=18"  >'+
+		'<area shape="circle" href="#" coords="364,197,3" title="X=57, Y=19"  >'+
+		'<area shape="circle" href="#" coords="364,195,3" title="X=57, Y=20"  >'+
+		'<area shape="circle" href="#" coords="364,193,3" title="X=57, Y=21"  >'+
+		'<area shape="circle" href="#" coords="364,191,3" title="X=57, Y=22"  >'+
+		'<area shape="circle" href="#" coords="364,189,3" title="X=57, Y=23"  >'+
+		'<area shape="circle" href="#" coords="364,187,3" title="X=57, Y=24"  >'+
+		'<area shape="circle" href="#" coords="364,185,3" title="X=57, Y=25"  >'+
+		'<area shape="circle" href="#" coords="364,183,3" title="X=57, Y=26"  >'+
+		'<area shape="circle" href="#" coords="364,181,3" title="X=57, Y=27"  >'+
+		'<area shape="circle" href="#" coords="364,179,3" title="X=57, Y=28"  >'+
+		'<area shape="circle" href="#" coords="364,177,3" title="X=57, Y=29"  >'+
+		'<area shape="circle" href="#" coords="364,175,3" title="X=57, Y=30"  >'+
+		'<area shape="circle" href="#" coords="364,173,3" title="X=57, Y=31"  >'+
+		'<area shape="circle" href="#" coords="364,171,3" title="X=57, Y=32"  >'+
+		'<area shape="circle" href="#" coords="366,205,3" title="X=58, Y=15"  >'+
+		'<area shape="circle" href="#" coords="366,203,3" title="X=58, Y=16"  >'+
+		'<area shape="circle" href="#" coords="366,201,3" title="X=58, Y=17"  >'+
+		'<area shape="circle" href="#" coords="366,199,3" title="X=58, Y=18"  >'+
+		'<area shape="circle" href="#" coords="366,197,3" title="X=58, Y=19"  >'+
+		'<area shape="circle" href="#" coords="366,195,3" title="X=58, Y=20"  >'+
+		'<area shape="circle" href="#" coords="366,193,3" title="X=58, Y=21"  >'+
+		'<area shape="circle" href="#" coords="366,191,3" title="X=58, Y=22"  >'+
+		'<area shape="circle" href="#" coords="366,189,3" title="X=58, Y=23"  >'+
+		'<area shape="circle" href="#" coords="366,187,3" title="X=58, Y=24"  >'+
+		'<area shape="circle" href="#" coords="366,185,3" title="X=58, Y=25"  >'+
+		'<area shape="circle" href="#" coords="366,183,3" title="X=58, Y=26"  >'+
+		'<area shape="circle" href="#" coords="366,181,3" title="X=58, Y=27"  >'+
+		'<area shape="circle" href="#" coords="366,179,3" title="X=58, Y=28"  >'+
+		'<area shape="circle" href="#" coords="366,177,3" title="X=58, Y=29"  >'+
+		'<area shape="circle" href="#" coords="366,175,3" title="X=58, Y=30"  >'+
+		'<area shape="circle" href="#" coords="366,173,3" title="X=58, Y=31"  >'+
+		'<area shape="circle" href="#" coords="366,171,3" title="X=58, Y=32"  >'+
+		'<area shape="circle" href="#" coords="368,203,3" title="X=59, Y=16"  >'+
+		'<area shape="circle" href="#" coords="368,201,3" title="X=59, Y=17"  >'+
+		'<area shape="circle" href="#" coords="368,199,3" title="X=59, Y=18"  >'+
+		'<area shape="circle" href="#" coords="368,197,3" title="X=59, Y=19"  >'+
+		'<area shape="circle" href="#" coords="368,195,3" title="X=59, Y=20"  >'+
+		'<area shape="circle" href="#" coords="368,193,3" title="X=59, Y=21"  >'+
+		'<area shape="circle" href="#" coords="368,191,3" title="X=59, Y=22"  >'+
+		'<area shape="circle" href="#" coords="368,189,3" title="X=59, Y=23"  >'+
+		'<area shape="circle" href="#" coords="368,187,3" title="X=59, Y=24"  >'+
+		'<area shape="circle" href="#" coords="368,185,3" title="X=59, Y=25"  >'+
+		'<area shape="circle" href="#" coords="368,183,3" title="X=59, Y=26"  >'+
+		'<area shape="circle" href="#" coords="368,181,3" title="X=59, Y=27"  >'+
+		'<area shape="circle" href="#" coords="368,179,3" title="X=59, Y=28"  >'+
+		'<area shape="circle" href="#" coords="368,177,3" title="X=59, Y=29"  >'+
+		'<area shape="circle" href="#" coords="368,175,3" title="X=59, Y=30"  >'+
+		'<area shape="circle" href="#" coords="368,173,3" title="X=59, Y=31"  >'+
+		'<area shape="circle" href="#" coords="370,203,3" title="X=60, Y=16"  >'+
+		'<area shape="circle" href="#" coords="370,201,3" title="X=60, Y=17"  >'+
+		'<area shape="circle" href="#" coords="370,199,3" title="X=60, Y=18"  >'+
+		'<area shape="circle" href="#" coords="370,197,3" title="X=60, Y=19"  >'+
+		'<area shape="circle" href="#" coords="370,195,3" title="X=60, Y=20"  >'+
+		'<area shape="circle" href="#" coords="370,193,3" title="X=60, Y=21"  >'+
+		'<area shape="circle" href="#" coords="370,191,3" title="X=60, Y=22"  >'+
+		'<area shape="circle" href="#" coords="370,189,3" title="X=60, Y=23"  >'+
+		'<area shape="circle" href="#" coords="370,187,3" title="X=60, Y=24"  >'+
+		'<area shape="circle" href="#" coords="370,185,3" title="X=60, Y=25"  >'+
+		'<area shape="circle" href="#" coords="370,183,3" title="X=60, Y=26"  >'+
+		'<area shape="circle" href="#" coords="370,181,3" title="X=60, Y=27"  >'+
+		'<area shape="circle" href="#" coords="370,179,3" title="X=60, Y=28"  >'+
+		'<area shape="circle" href="#" coords="370,177,3" title="X=60, Y=29"  >'+
+		'<area shape="circle" href="#" coords="370,175,3" title="X=60, Y=30"  >'+
+		'<area shape="circle" href="#" coords="370,173,3" title="X=60, Y=31"  >'+
+		'<area shape="circle" href="#" coords="372,201,3" title="X=61, Y=17"  >'+
+		'<area shape="circle" href="#" coords="372,199,3" title="X=61, Y=18"  >'+
+		'<area shape="circle" href="#" coords="372,197,3" title="X=61, Y=19"  >'+
+		'<area shape="circle" href="#" coords="372,195,3" title="X=61, Y=20"  >'+
+		'<area shape="circle" href="#" coords="372,193,3" title="X=61, Y=21"  >'+
+		'<area shape="circle" href="#" coords="372,191,3" title="X=61, Y=22"  >'+
+		'<area shape="circle" href="#" coords="372,189,3" title="X=61, Y=23"  >'+
+		'<area shape="circle" href="#" coords="372,187,3" title="X=61, Y=24"  >'+
+		'<area shape="circle" href="#" coords="372,185,3" title="X=61, Y=25"  >'+
+		'<area shape="circle" href="#" coords="372,183,3" title="X=61, Y=26"  >'+
+		'<area shape="circle" href="#" coords="372,181,3" title="X=61, Y=27"  >'+
+		'<area shape="circle" href="#" coords="372,179,3" title="X=61, Y=28"  >'+
+		'<area shape="circle" href="#" coords="372,177,3" title="X=61, Y=29"  >'+
+		'<area shape="circle" href="#" coords="372,175,3" title="X=61, Y=30"  >'+
+		'<area shape="circle" href="#" coords="374,201,3" title="X=62, Y=17"  >'+
+		'<area shape="circle" href="#" coords="374,199,3" title="X=62, Y=18"  >'+
+		'<area shape="circle" href="#" coords="374,197,3" title="X=62, Y=19"  >'+
+		'<area shape="circle" href="#" coords="374,195,3" title="X=62, Y=20"  >'+
+		'<area shape="circle" href="#" coords="374,193,3" title="X=62, Y=21"  >'+
+		'<area shape="circle" href="#" coords="374,191,3" title="X=62, Y=22"  >'+
+		'<area shape="circle" href="#" coords="374,189,3" title="X=62, Y=23"  >'+
+		'<area shape="circle" href="#" coords="374,187,3" title="X=62, Y=24"  >'+
+		'<area shape="circle" href="#" coords="374,185,3" title="X=62, Y=25"  >'+
+		'<area shape="circle" href="#" coords="374,183,3" title="X=62, Y=26"  >'+
+		'<area shape="circle" href="#" coords="374,181,3" title="X=62, Y=27"  >'+
+		'<area shape="circle" href="#" coords="374,179,3" title="X=62, Y=28"  >'+
+		'<area shape="circle" href="#" coords="374,177,3" title="X=62, Y=29"  >'+
+		'<area shape="circle" href="#" coords="374,175,3" title="X=62, Y=30"  >'+
+		'<area shape="circle" href="#" coords="376,199,3" title="X=63, Y=18"  >'+
+		'<area shape="circle" href="#" coords="376,197,3" title="X=63, Y=19"  >'+
+		'<area shape="circle" href="#" coords="376,195,3" title="X=63, Y=20"  >'+
+		'<area shape="circle" href="#" coords="376,193,3" title="X=63, Y=21"  >'+
+		'<area shape="circle" href="#" coords="376,191,3" title="X=63, Y=22"  >'+
+		'<area shape="circle" href="#" coords="376,189,3" title="X=63, Y=23"  >'+
+		'<area shape="circle" href="#" coords="376,187,3" title="X=63, Y=24"  >'+
+		'<area shape="circle" href="#" coords="376,185,3" title="X=63, Y=25"  >'+
+		'<area shape="circle" href="#" coords="376,183,3" title="X=63, Y=26"  >'+
+		'<area shape="circle" href="#" coords="376,181,3" title="X=63, Y=27"  >'+
+		'<area shape="circle" href="#" coords="376,179,3" title="X=63, Y=28"  >'+
+		'<area shape="circle" href="#" coords="376,177,3" title="X=63, Y=29"  >'+
+		'<area shape="circle" href="#" coords="378,195,3" title="X=64, Y=20"  >'+
+		'<area shape="circle" href="#" coords="378,193,3" title="X=64, Y=21"  >'+
+		'<area shape="circle" href="#" coords="378,191,3" title="X=64, Y=22"  >'+
+		'<area shape="circle" href="#" coords="378,189,3" title="X=64, Y=23"  >'+
+		'<area shape="circle" href="#" coords="378,187,3" title="X=64, Y=24"  >'+
+		'<area shape="circle" href="#" coords="378,185,3" title="X=64, Y=25"  >'+
+		'<area shape="circle" href="#" coords="378,183,3" title="X=64, Y=26"  >'+
+		'<area shape="circle" href="#" coords="378,181,3" title="X=64, Y=27"  >'+
+		'<area shape="circle" href="#" coords="380,191,3" title="X=65, Y=22"  >'+
+		'<area shape="circle" href="#" coords="380,189,3" title="X=65, Y=23"  >'+
+		'<area shape="circle" href="#" coords="380,187,3" title="X=65, Y=24"  >'+
+		'<area shape="circle" href="#" coords="380,185,3" title="X=65, Y=25"  >'+
+		'</map>';
 
 	var nvspan = document.createElement('div');
 	nvspan.align = 'center';
@@ -9315,7 +9622,11 @@ function drag(evt) {
 	return false;
 }
 /* FIN DEBUG */
-document.onmousemove = drag;
+if(!isPage("MH_Play/Play_equipement")) {
+	// Conflit overlib/Tout_MZ:
+	// Double définition du "onmousemove" sur la page d'équipement
+	document.onmousemove = drag;
+}
 
 function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
@@ -11170,7 +11481,7 @@ function setInfosCaracteristiques() {
 
     var tdRefl=document.querySelector("#refl");
     // TODO : prendre en compte bonus/malus D esq du tour ?
-    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + (esqbp);
+    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + esqbp + esqbm;
     tdRefl.innerHTML+=" <i>(moyenne : "+refMoy+")</i>";
 }
 
