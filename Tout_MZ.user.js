@@ -9622,7 +9622,11 @@ function drag(evt) {
 	return false;
 }
 /* FIN DEBUG */
-document.onmousemove = drag;
+if(!isPage("MH_Play/Play_equipement")) {
+	// Conflit overlib/Tout_MZ:
+	// Double définition du "onmousemove" sur la page d'équipement
+	document.onmousemove = drag;
+}
 
 function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
