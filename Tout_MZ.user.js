@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.07 18/05/2018",
+"	prise en compte bonus magique d'esquive dans le profil, correction gestion de la souris dans la page d'équipement [Dabihul, welcome back]",
 "V1.2.18.06 28/01/2018",
 "	Protection malus Crasc sans durée",
 "V1.2.18.05 18/11/2017",
