@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.06
+// @version     1.2.18.07
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -11481,7 +11481,7 @@ function setInfosCaracteristiques() {
 
     var tdRefl=document.querySelector("#refl");
     // TODO : prendre en compte bonus/malus D esq du tour ?
-    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + (esqbp);
+    var refMoy = Math.floor(2*(reg+esq)/3)*3.5 + esqbp + esqbm;
     tdRefl.innerHTML+=" <i>(moyenne : "+refMoy+")</i>";
 }
 
