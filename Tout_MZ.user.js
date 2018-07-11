@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.07
+// @version     1.2.18.08
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.08 11/07/2018",
+"	Correction pour fonctionnement hors GM",
 "V1.2.18.07 18/05/2018",
 "	prise en compte bonus magique d'esquive dans le profil, correction gestion de la souris dans la page d'équipement [Dabihul, welcome back]",
 "V1.2.18.06 28/01/2018",
@@ -312,7 +314,14 @@ var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
 var MY_DEBUG = false;
 
-if (GM_getValue === undefined) {	// éviter le blocage si pas sous GM
+var horsGM = false;
+try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
+	horsGM = (GM_getValue === undefined);
+} catch (e2) {
+	horsGM = true;
+	//window.console.log('test GM_getValue, exception=' + e2);
+}
+if (horsGM) {	// éviter le blocage si pas sous GM
 	window.console.log('Fonctionnement hors Greasemonkey');
 	// Roule 18/11/2017 il ne faut pas de "var" dans les ligne précédente. Ça fonctionnait sous Greasemonkey mais plus sous Violentmonkey
 	GM_getValue = function(key) {};
