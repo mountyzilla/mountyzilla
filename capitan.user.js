@@ -11,7 +11,7 @@
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.1.61
+// @version 8.1.62
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -32,6 +32,8 @@
 ****************************************************************/
 
 /*
+Roule 04/08/2018 V8.1.66
+	Utilisation hors GM
 Roule 25/08/2017 V8.1.61
 	Réactivation de la gestion des signes (+/-)
 Roule 23/11/2016 V8.1.6
@@ -59,6 +61,31 @@ Roule 08 à 10/08/2016
 	Hera 23/08/2017 
 		FAIT les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--) 		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
 */
+
+var CAPITAN_horsGM = false;
+try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
+	//window.console.log('CAPITAN : GM_removeValue=' + GM_removeValue);
+	CAPITAN_horsGM = (GM_removeValue === undefined);
+} catch (e2) {
+	CAPITAN_horsGM = true;
+	//window.console.log('test GM_removeValue, exception=' + e2);
+}
+//window.console.log('CAPITAN_horsGM=' + CAPITAN_horsGM);
+if (CAPITAN_horsGM) {	// remplacer GM_xxxValue
+	function CAPITAN_getValue(key) {
+		return window.localStorage[key];
+	}
+	function CAPITAN_removeValue(key) {
+		window.localStorage.removeItem(key);
+	}
+	function CAPITAN_setValue(key, val) {
+		window.localStorage[key] = val;
+	}
+} else {
+	CAPITAN_getValue = GM_getValue;
+	CAPITAN_removeValue = GM_removeValue;
+	CAPITAN_setValue = GM_setValue;
+}
 
 function appendButton(paren,value,onClick) {
 	var input = document.createElement('input');
@@ -496,19 +523,19 @@ var essais;	// Roule 08/08/2016 essais en variable globale (pour générer le bl
 
 function afficheInfoCarte(idCarte)
 {
-	var originalPos = GM_getValue("capitan."+idCarte+".position").split(";");
+	var originalPos = CAPITAN_getValue("capitan."+idCarte+".position").split(";");
 	if(originalPos.length!=3)
 		return;
 	essais = new Array();
 	var i = 0;
-	while(GM_getValue("capitan."+idCarte+".essai."+i) != null)
+	while(CAPITAN_getValue("capitan."+idCarte+".essai."+i) != null)
 	{
-		essais.push(GM_getValue("capitan."+idCarte+".essai."+i).split(";"));
+		essais.push(CAPITAN_getValue("capitan."+idCarte+".essai."+i).split(";"));
 		i++;
 	}
-	if(GM_getValue("capitan."+idCarte+".signe") !=null)
+	if(CAPITAN_getValue("capitan."+idCarte+".signe") !=null)
 	{
-		var signes = GM_getValue("capitan."+idCarte+".signe").split(";");
+		var signes = CAPITAN_getValue("capitan."+idCarte+".signe").split(";");
 		listeSolutions = calculeSolution(Math.abs(originalPos[0])*signe(signes[0]),Math.abs(originalPos[1])*signe(signes[1]),originalPos[2],essais);
 	}
 	else
@@ -681,7 +708,7 @@ function analyseObject()
 	var numTroll = getNumTroll();	// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
 	var idCarte = getIDCarte();
 	//debug*/window.console.log('analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte);
-	var originalPos = GM_getValue("capitan."+idCarte+".position");
+	var originalPos = CAPITAN_getValue("capitan."+idCarte+".position");
 	if(!originalPos || originalPos == null)
 	{
 		var infoPos = document.evaluate("//td/text()[contains(.,'ai été tué en')]",
@@ -698,7 +725,7 @@ function analyseObject()
 		var x = parseInt(listePos[1]);
 		var y = parseInt(listePos[2]);
 		var n = parseInt(listePos[3]);
-		GM_setValue("capitan."+idCarte+".position",x+";"+y+";"+n);
+		CAPITAN_setValue("capitan."+idCarte+".position",x+";"+y+";"+n);
 	}
 	// Roule 23/11/2016 travail dans le body (ancienne version, fenêtre indépendante) ou dans la div modale (nouvelle version en "popup")
 	var parentElt = document.body;
@@ -797,7 +824,7 @@ function blocMamoune(idCarte, currentPos) {
 	if (!currentPosAlreadyDone) tabtxt.push(currentPos.join('+') + '+%3F');	// spécial pour demander à Mamoune ce qu'elle pense d'un essai à la position courante
 	var tr2 = appendTr(tbody, 'mh_tdpage');
 	var td2 = appendTd(tr2);
-	var originalPos = GM_getValue("capitan."+idCarte+".position").split(";");
+	var originalPos = CAPITAN_getValue("capitan."+idCarte+".position").split(";");
 	if(originalPos.length!=3) {
 		td2.appendText('Erreur\u00A0: impossible de retrouver les coordonnées de la mort');
 	} else {
@@ -868,10 +895,10 @@ function delRecherche(e) {
 	for (var i = 0; i < essais.length; i++) {
 		if (i == essais.length - 1) {
 			window.console.log("delete capitan."+idCarte+".essai."+i)
-			GM_deleteValue("capitan."+idCarte+".essai."+i);
+			CAPITAN_deleteValue("capitan."+idCarte+".essai."+i);
 		} else if (i >= idEssaiDel) {
 			window.console.log("set capitan."+idCarte+".essai."+(i)+'+++'+essais[i+1][0]+";"+essais[i+1][1]+";"+essais[i+1][2]+";"+essais[i+1][3]);
-			GM_setValue("capitan."+idCarte+".essai."+(i),essais[i+1][0]+";"+essais[i+1][1]+";"+essais[i+1][2]+";"+essais[i+1][3]);
+			CAPITAN_setValue("capitan."+idCarte+".essai."+(i),essais[i+1][0]+";"+essais[i+1][1]+";"+essais[i+1][2]+";"+essais[i+1][3]);
 		}
 	}
 	window.location.replace(window.location);
@@ -1015,7 +1042,7 @@ function testAlready(idCarte, v) {
 	var v2;
 	// tester si cet essai est déjà connu sous Greasemonkey
 	var bAlready = false;
-	for (var iGM = 0; v2 = GM_getValue("capitan."+idCarte+".essai."+iGM); iGM++) {
+	for (var iGM = 0; v2 = CAPITAN_getValue("capitan."+idCarte+".essai."+iGM); iGM++) {
 		if (v2 != v) continue;
 		return true;
 		break;
@@ -1185,8 +1212,8 @@ function addRecherche()
 }
 
 function addOneRecherche(idCarte, x, y, n, nbChiffres) {
-	for (var i = 0; GM_getValue("capitan."+idCarte+".essai."+i); i++){}
-	GM_setValue("capitan."+idCarte+".essai."+i,parseInt(x)+";"+parseInt(y)+";"+parseInt(n)+";"+parseInt(nbChiffres));
+	for (var i = 0; CAPITAN_getValue("capitan."+idCarte+".essai."+i); i++){}
+	CAPITAN_setValue("capitan."+idCarte+".essai."+i,parseInt(x)+";"+parseInt(y)+";"+parseInt(n)+";"+parseInt(nbChiffres));
 }
 
 function addInput(parent, nom, size)
@@ -1215,13 +1242,13 @@ function infoRecherche()
 	if (nb === undefined) return;
 
 	var i = 0;
-	while(GM_getValue("capitan."+idCarte+".essai."+i) != null)
+	while(CAPITAN_getValue("capitan."+idCarte+".essai."+i) != null)
 	{
 		i++;
 	}
-	GM_setValue("capitan."+idCarte+".essai."+i,x+";"+y+";"+n+";"+nb);
+	CAPITAN_setValue("capitan."+idCarte+".essai."+i,x+";"+y+";"+n+";"+nb);
 
-	if(GM_getValue("capitan."+idCarte+".signe") == null)
+	if(CAPITAN_getValue("capitan."+idCarte+".signe") == null)
 	{
 		var infoXCoin = document.evaluate("//p/b/text()[contains(.,'Tu es dans le bon Xcoin')]",
 		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -1231,7 +1258,7 @@ function infoRecherche()
 		document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		if(!infoYCoin)
 			y = -y;
-		GM_setValue("capitan."+idCarte+".signe",signe(x)+";"+signe(y));
+		CAPITAN_setValue("capitan."+idCarte+".signe",signe(x)+";"+signe(y));
 	}
 
 	var table = afficheInfoCarte(idCarte);

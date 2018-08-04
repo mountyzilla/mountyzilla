@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.08
+// @version     1.2.18.09
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.09 04/08/2018",
+"	Protection contre diplomatie mal initialisée",
 "V1.2.18.08 11/07/2018",
 "	Correction pour fonctionnement hors GM",
 "V1.2.18.07 18/05/2018",
@@ -7929,11 +7931,18 @@ function creeTablePrincipale() {
 
 /*-[functions]----------------------- Main -----------------------------------*/
 
-var diploGuilde = MY_getValue(numTroll+'.diplo.guilde') ?
-	JSON.parse(MY_getValue(numTroll+'.diplo.guilde')) : {};
+function initDiplo(sType) {
+	var sDiplo = MY_getValue(numTroll + '.diplo.' + sType)
+	//console.log('sDiplo' + sType + '=' + sDiplo);
+	if (sDiplo && (sDiplo != 'null')) {	// le stockage JSON nous donne parfois 'null'
+		return JSON.parse(sDiploGuilde);
+	} else {
+		return {};
+	}
+}
+var diploGuilde = initDiplo('guilde');
+var diploPerso = initDiplo('perso');
 var isDetailOn = diploGuilde.isDetailOn=='true';
-var diploPerso = MY_getValue(numTroll+'.diplo.perso') ?
-	JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};
 var isMythiquesOn = diploPerso.mythiques!=undefined;
 
 function do_diplo() {
@@ -10414,8 +10423,7 @@ function computeDiplo() {
 	}
 	
 	/* Diplo Perso */
-	var diploPerso = MY_getValue(numTroll+'.diplo.perso') ?
-		JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};
+	//var diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
 	if(diploPerso && diploPerso.isOn=='true') {
 		for(var type in {Guilde:0,Troll:0,Monstre:0}) {
 			for(var id in diploPerso[type]) {
