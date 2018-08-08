@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.09
+// @version     1.2.18.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -7935,7 +7935,7 @@ function initDiplo(sType) {
 	var sDiplo = MY_getValue(numTroll + '.diplo.' + sType)
 	//console.log('sDiplo' + sType + '=' + sDiplo);
 	if (sDiplo && (sDiplo != 'null')) {	// le stockage JSON nous donne parfois 'null'
-		return JSON.parse(sDiploGuilde);
+		return JSON.parse(sDiplo);
 	} else {
 		return {};
 	}
