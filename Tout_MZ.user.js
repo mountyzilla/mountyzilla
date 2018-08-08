@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.10 08/08/2018",
+"	Correction boulette sDiplo",
 "V1.2.18.09 04/08/2018",
 "	Protection contre diplomatie mal initialisée",
 "V1.2.18.08 11/07/2018",
