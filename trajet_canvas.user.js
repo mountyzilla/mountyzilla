@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.3
+// @version 2.4
 // @description Trajet des gowap, version 2.2 du 10/10/2016 par Rouletabille
 // @grant GM_getValue
 // @grant GM_setValue
@@ -20,6 +20,8 @@
 //	correction intersection des trajets des suivants avec les trous (donnait un danger quand le trajet frôlait le trou)
 // V 2.3 05/11/2016 Roule'
 //	protection contre les golem (l'affichage des ordres donnait une erreur MZ)
+// V 2.4 12/11/2018 Roule'
+//	Adaptation à un changement MH (saut de ligne dans les coord.)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
