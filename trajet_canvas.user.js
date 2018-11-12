@@ -1675,7 +1675,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			// Roule 05/11/2016 protection contre le golems qui provoquent une erreur
 			var texteTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('td')[0].innerHTML;
 			if (texteTitre.match(/Golem/i)) return;
-			var pos = texteTitre.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015
+			var pos = texteTitre.match(/X[ \n]*= (-?\d+) \| Y[ \n]*= (-?\d+) \| N[ \n]*= (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015, ajout \n Rouletabille 12/11/2018
+			if (!pos) {
+				window.console.log("pas de position\n" + texteTitre);
+				return;
+			}
 			//var noeud = document.getElementsByTagName('p')[2];
 			var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
 
@@ -2517,4 +2521,5 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 }
 catch (e) { // ajout par Vapulabehemot (82169) le 30/08/2013
 	window.alert('trajet_canvas.user.js : ' + e.message);
+	window.console.log(e);
 }
