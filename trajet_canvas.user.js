@@ -9,7 +9,7 @@
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
 // @version 2.5
-// @description Trajet des gowap, version 2.2 du 10/10/2016 par Rouletabille
+// @description Trajet des gowap, version 2.5 du 14/11/2018 par Rouletabille
 // @grant GM_getValue
 // @grant GM_setValue
 // @injectframes 1
@@ -733,6 +733,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			var nb_etape = noeuds.length;
 			if(nb_etape == 0) return;
 			for(var i=0; i< nb_etape; i++) {
+				if (!noeuds[i]) return;	// Roule' 14/11/2018 protection
 				dx = noeuds[i][0] - ref[0];
 				dy = noeuds[i][1] - ref[1];
 				if(dx != 0 && dy != 0 && dx != dy) {
