@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.4
+// @version 2.5
 // @description Trajet des gowap, version 2.2 du 10/10/2016 par Rouletabille
 // @grant GM_getValue
 // @grant GM_setValue
@@ -22,6 +22,8 @@
 //	protection contre les golem (l'affichage des ordres donnait une erreur MZ)
 // V 2.4 12/11/2018 Roule'
 //	Adaptation à un changement MH (saut de ligne dans les coord.)
+// V 2.5 14/11/2018 Roule'
+//	Protection contre "ref" vide dans trace_reel
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1798,6 +1800,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_reel(couleur, ou, ref, noeuds, transition, refaire) {
+			//window.console.log("trace_reel\ncouleur=" + JSON.stringify(couleur) + "\nou=" + JSON.stringify(ou) + "\nref=" + JSON.stringify(ref) + "\nnoeuds=" + JSON.stringify(noeuds) + "\ntransition=" + JSON.stringify(transition) + "\nrefaire=" + JSON.stringify(refaire));
 			var continu = true, deb = 0, fin = 0, dx, dy, dxa, dya, inter, suivre = false;
 			for(var i in transition) {
 				fin = transition[i][1];
@@ -1807,7 +1810,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					deb++;
 					suivre = false;
 				}
-				if(deb != fin) {
+				if((deb != fin) && ref) {	// Roule' 14/11/2018 ajout de la protection sur "ref"
 					var points = new Array();
 					for(var j=deb; j<fin; j++) {
 						points.push(noeuds[j]);
