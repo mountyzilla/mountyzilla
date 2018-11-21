@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.10
+// @version     1.2.18.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.11 21/11/2018",
+"	Correction it bricol'troll, login avec accent",
 "V1.2.18.10 08/08/2018",
 "	Correction boulette sDiplo",
 "V1.2.18.09 04/08/2018",
@@ -10627,7 +10629,7 @@ function putScriptExterneOneIT(sInfo) {
 			FF_XMLHttpRequest({
 				method: 'GET',
 				url: URL_bricol+data[1]
-					+'/mz_json.php?login='+data[2]
+					+'/mz_json.php?login='+encodeURIComponent(data[2])
 					+'&password='+data[3],
 				trace: 'bricolTroll',
 				onload: function(responseDetails) {
