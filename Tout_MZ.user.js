@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.11
+// @version     1.2.18.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.12 23/12/2018",
+"	Message si \"Menu d'actions contextuelles\" est décoché",
 "V1.2.18.11 21/11/2018",
 "	Correction it bricol'troll, login avec accent",
 "V1.2.18.10 08/08/2018",
@@ -216,6 +218,8 @@ const MZ_changeLog = [
 /**********************************************************
 	À faire / propositions d'évolutions
 
+	Bireli-Gravos 08/12/2018
+		FAIT faire un warning si l'utilisateur a désactivé la case "Menu d'actions contextuelles" dans la fenêtre "limiter la vue"
 	breizhou13 20/12/2016
 		envoyer les données à l'IT (Bricol'Trolls) aussi
 			(Roule') Ça me semble difficile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
@@ -9824,7 +9828,12 @@ function retrieveCDMsOld() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) { return; }
-	
+	// Roule, message si l'utilisateur a décoché "Menu d'actions contextuelles"
+	if (!tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
+		avertissement('Vous avez décoché "Menu d\'actions contextuelles" dans la fenêtre de limitation de la vue, Moutyzilla ne peut pas afficher les niveaux dans ce mode<br />La fenêtre de limitation de la vue est celle qu\'on obtient en cliquant sur l\'œil dans le menu de gauche', 9999999);
+		return;
+	}
+
 	var str = '';
 	var begin = 1; // num de début de lot si plusieurs lots de CdM (501+ CdM)
 	var cdmMax = MY_getValue(numTroll+'.MAXCDM');

@@ -8,8 +8,8 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.5
-// @description Trajet des gowap, version 2.5 du 14/11/2018 par Rouletabille
+// @version 2.6
+// @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
 // @injectframes 1
@@ -24,6 +24,8 @@
 //	Adaptation à un changement MH (saut de ligne dans les coord.)
 // V 2.5 14/11/2018 Roule'
 //	Protection contre "ref" vide dans trace_reel
+// V 2.6 23/12/2018 Roule'
+//	Correction trajet en plusieurs étapes + changement de nom de la variable globale coeff (collision avec MZ)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -362,10 +364,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function coord_x(val) {
-			return decalh+coeff*(val+100);
+			return decalh+TC_coeff*(val+100);
 		}
 		function coord_y(val) {
-			return decalv+coeff*(100-val);
+			return decalv+TC_coeff*(100-val);
 		}
 		function creer_bulle_trajet() {
 			if(haut.getElementById("bulle_trajet")) {
@@ -385,7 +387,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		function declare_css() {
 			if(haut.getElementById("css_gow")) return;
-			css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, div.mh_tdpage { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; }\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
+			css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, div.mh_tdpage { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; white-space: nowrap;}\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
 
 			var node = document.createElement("style");
 			node.type = "text/css";
@@ -411,7 +413,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				param = MY_getValue("TRAJET_"+num_gow).split("/");
 				if(param[0] == "zoom") {
 					zoom = parseInt(param[1]);
-					coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
+					TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
+					//window.console.log('charge_trajet ' + num_gow + ' ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
 					typ_gow = parseInt(param[3]);
 					if (typ_gow == 2) typ_gow = 3;
 					dla = parseInt(param[5]);
@@ -423,6 +426,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 							etapes_ini.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2]), coord[3*i].match(/^\d+e$/g) !== null]);
 						}
 					}
+					//if (num_gow == 567387) window.console.log('etapes_ini=' + JSON.stringify(etapes_ini));
 					etapes = new Array();
 					coord = param[9].split(",");
 					if(coord.length > 1) {
@@ -434,6 +438,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					else {
 						choix_ini = true;
 					}
+					//if (num_gow == 567387) window.console.log('etapes=' + JSON.stringify(etapes));
 					if(param.length > 10) {
 						param = param[11].split(",");
 						if(param.length > 1) {
@@ -449,6 +454,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					else {
 						arret = [[-1, etapes.length]];
 					}
+					//if (num_gow == 567387) window.console.log('arret=' + JSON.stringify(arret));
 				}
 			}
 		}
@@ -471,7 +477,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(MY_getValue("OPT_POSITION_GOWAP")) {
 				param = MY_getValue("OPT_POSITION_GOWAP").split("/");
 				zoom = parseInt(param[1]);
-				coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
+				TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
+				//window.console.log('charge_opt_position ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
 				t_enreg = (param[3] == "1");
 				t_prev = (param[5] == "1");
 			}
@@ -590,8 +597,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			var val = parseInt(this.value);
 			if(val == -2) return;
 			dessin = document.getElementById("surligne");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 
 			if(choix_ini) {
 				var debut = depart
@@ -638,50 +645,50 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_trou() {
-			document.getElementById("carte_trajet").style.height = (200*coeff+2*decalv+10)+"px";
+			document.getElementById("carte_trajet").style.height = (200*TC_coeff+2*decalv+10)+"px";
 			dessin = document.getElementById("trou");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 
 				//repere
 				ctx.beginPath();
-				dessine_svg(ctx, [[0,100*coeff+decalh, decalv], [1,100*coeff+decalh, 200*coeff+decalv], [0,decalh, 100*coeff+decalv], [1,200*coeff+decalh, 100*coeff+decalv]]);
+				dessine_svg(ctx, [[0,100*TC_coeff+decalh, decalv], [1,100*TC_coeff+decalh, 200*TC_coeff+decalv], [0,decalh, 100*TC_coeff+decalv], [1,200*TC_coeff+decalh, 100*TC_coeff+decalv]]);
 				ctx.stroke();
-				ctx.strokeRect(decalh, decalv, coeff*200, coeff*200);
+				ctx.strokeRect(decalh, decalv, TC_coeff*200, TC_coeff*200);
 
 				//trous
 				ctx.fillStyle = couleur_trou;
 				for(var i in position_trous) {
 					ctx.beginPath();
-					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), coeff*position_trous[i][3], 0, Math.PI*2,  true);
+					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), TC_coeff*position_trous[i][3], 0, Math.PI*2,  true);
 					ctx.fill();
 				}
 			}
 		}
 		function trace_trou_fav() {
 			dessin = haut.getElementById("trou_fav");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 
 				//repere
 				ctx.beginPath();
-				ctx.moveTo(100*coeff+decalh, decalv);
-				ctx.lineTo(100*coeff+decalh, 200*coeff+decalv);
-				ctx.moveTo(decalh, 100*coeff+decalv);
-				ctx.lineTo(200*coeff+decalh, 100*coeff+decalv);
+				ctx.moveTo(100*TC_coeff+decalh, decalv);
+				ctx.lineTo(100*TC_coeff+decalh, 200*TC_coeff+decalv);
+				ctx.moveTo(decalh, 100*TC_coeff+decalv);
+				ctx.lineTo(200*TC_coeff+decalh, 100*TC_coeff+decalv);
 				ctx.stroke();
-				ctx.strokeRect(decalh, decalv, coeff*200, coeff*200);
+				ctx.strokeRect(decalh, decalv, TC_coeff*200, TC_coeff*200);
 
 				//trous
 				ctx.fillStyle = "rgb(200,0,0)";
 				for(var i in position_trous) {
 					ctx.beginPath();
-					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), coeff*position_trous[i][3], 0, Math.PI*2,  true);
+					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), TC_coeff*position_trous[i][3], 0, Math.PI*2,  true);
 					ctx.fill();
 				}
 			}
@@ -703,9 +710,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				var ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgba(0,0,0,0.6)";
 				ctx.lineWidth = 2;
-				ctx.strokeRect(coord_x(pos[0]-2.5), coord_y(pos[1]+2.5), 5*coeff, 5*coeff)
+				ctx.strokeRect(coord_x(pos[0]-2.5), coord_y(pos[1]+2.5), 5*TC_coeff, 5*TC_coeff)
 				ctx.beginPath();
-				dessine_svg(ctx, [[0,coord_x(pos[0]-2.5), coord_y(pos[1])], [1,coord_x(pos[0]-2.5)+5*coeff, coord_y(pos[1])], [0,coord_x(pos[0]), coord_y(pos[1]+2.5)], [1,coord_x(pos[0]), coord_y(pos[1]+2.5)+5*coeff]]);
+				dessine_svg(ctx, [[0,coord_x(pos[0]-2.5), coord_y(pos[1])], [1,coord_x(pos[0]-2.5)+5*TC_coeff, coord_y(pos[1])], [0,coord_x(pos[0]), coord_y(pos[1]+2.5)], [1,coord_x(pos[0]), coord_y(pos[1]+2.5)+5*TC_coeff]]);
 				ctx.stroke();
 			}
 		}
@@ -713,8 +720,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			sauve_trajet();
 			if(choix_ini) {
 				dessin = document.getElementById("trajet");
-				dessin.width = 200*coeff+2*decalh;
-				dessin.height = 200*coeff+2*decalv;
+				dessin.width = 200*TC_coeff+2*decalh;
+				dessin.height = 200*TC_coeff+2*decalv;
 			}
 			else {
 				trace_trajet(couleur_prev, "trajet", depart, etapes, true);
@@ -725,15 +732,18 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			var dessin = document.getElementById(ou);
 			var dx, dy, x_inter, y_inter;
 			if(refaire) {
-				dessin.width = 200*coeff+2*decalh;
-				dessin.height = 200*coeff+2*decalv;
+				dessin.width = 200*TC_coeff+2*decalh;
+				dessin.height = 200*TC_coeff+2*decalv;
 			}
 
 			var pts = [[ref[0], ref[1]]];
 			var nb_etape = noeuds.length;
 			if(nb_etape == 0) return;
 			for(var i=0; i< nb_etape; i++) {
-				if (!noeuds[i]) return;	// Roule' 14/11/2018 protection
+				if (!noeuds[i]) {
+					window.console.log('trace_trajet, noeuds vide pour i=' + i + ', noeuds=' + JSON.stringify(noeuds));
+					return;	// Roule' 14/11/2018 protection
+				}
 				dx = noeuds[i][0] - ref[0];
 				dy = noeuds[i][1] - ref[1];
 				if(dx != 0 && dy != 0 && dx != dy) {
@@ -752,7 +762,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
-				ctx.lineWidth = coeff;
+				ctx.lineWidth = TC_coeff;
 				ctx.lineCap = "round";
 				ctx.lineJoin = "round";
 				ctx.strokeStyle = couleur;
@@ -766,20 +776,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ctx.fillStyle = couleur;
 				for (var i=0; i<nb_etape; i++) {
 					if(noeuds[i][3]) {
-						ctx.fillRect(coord_x(noeuds[i][0])-coeff, coord_y(noeuds[i][1])-coeff, 2*coeff, 2*coeff);
+						ctx.fillRect(coord_x(noeuds[i][0])-TC_coeff, coord_y(noeuds[i][1])-TC_coeff, 2*TC_coeff, 2*TC_coeff);
 					}
 					else {
 						ctx.beginPath();
-						ctx.arc(coord_x(noeuds[i][0]), coord_y(noeuds[i][1]), coeff, 0, Math.PI*2,  true);
+						ctx.arc(coord_x(noeuds[i][0]), coord_y(noeuds[i][1]), TC_coeff, 0, Math.PI*2,  true);
 						ctx.fill();
 					}
 				}
 			}
 		}
 		function trace_fav() {
-			coeff = zoom_fav/50.0;
+			TC_coeff = zoom_fav/50.0;
 			place_fav();
-			coeff = zoom/50.0;
+			TC_coeff = zoom/50.0;
 			retrace_fav = false;
 		}
 		function place_fav() {
@@ -809,12 +819,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function trace_point(trace, xx, yy, couleur) {
 			trace.strokeStyle = couleur;
 			trace.fillStyle = couleur;
-			trace.lineWidth = coeff;
+			trace.lineWidth = TC_coeff;
 			trace.beginPath();
-			trace.arc(xx, yy, coeff, 0, Math.PI*2,  true);
+			trace.arc(xx, yy, TC_coeff, 0, Math.PI*2,  true);
 			trace.fill();
 			trace.beginPath();
-			trace.arc(xx, yy, 3*coeff, 0, Math.PI*2,  true);
+			trace.arc(xx, yy, 3*TC_coeff, 0, Math.PI*2,  true);
 			trace.stroke();
 		}
 		function trace_glissiere() {
@@ -832,7 +842,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
 				trace_glissiere();
 				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
-				coeff = zoom/50.0;
+				TC_coeff = zoom/50.0;
+				//window.console.log('ini_glisse, xpage=' + xpage + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
 				if(page == "trajet") {
 					echelle_trajet();
 					trace_trajet_prev();
@@ -892,7 +903,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				
 				trace_glissiere();
 				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
-				coeff = zoom/50.0;
+				TC_coeff = zoom/50.0;
+				//window.console.log('glisse, xpage=' + xpage + ',zoom=' + zoom + ', TC_coeff=' + TC_coeff);
 				if(page == "trajet") {
 					echelle_trajet();
 					trace_trajet_prev();
@@ -936,8 +948,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ypos = evt.pageY;
 			}
 
-			xcase = Math.round((xpage-decalh)/coeff-100.0);
-			ycase = Math.round(100.0-(ypage-decalv)/coeff);
+			xcase = Math.round((xpage-decalh)/TC_coeff-100.0);
+			ycase = Math.round(100.0-(ypage-decalv)/TC_coeff);
 			bulle.style.top = (ypos+8)+'px';
 			bulle.style.left = (xpos+16)+'px';
 			bulle.style.visibility = "visible";
@@ -1091,8 +1103,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ypos = evt.pageY;
 			}
 
-			xcase = (xpage-decalh)/coeff-100.0;
-			ycase = 100.0-(ypage-decalv)/coeff;
+			//window.console.log('afficher_position_suivant, xpage=' + xpage + ', decalh=' + decalh + ', TC_coeff=' + TC_coeff);
+			xcase = (xpage-decalh)/TC_coeff-100.0;
+			ycase = 100.0-(ypage-decalv)/TC_coeff;
 			bulle.style.top = (ypos+3)+'px';
 			bulle.style.left = (xpos+16)+'px';
 			bulle.style.visibility = 'visible';
@@ -1110,8 +1123,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			xcase = Math.round(xcase);
 			ycase = Math.round(ycase);
 			for (var i in suivants) {
-				if(suivants[i][2] == xcase && suivants[i][3] == ycase ) {
-					desc.appendChild(document.createTextNode(suivants[i][1]+", n="+suivants[i][4]))
+				if(Math.abs(suivants[i][2] - xcase) <= 4 && Math.abs(suivants[i][3] - ycase) <= 4 ) {
+					desc.appendChild(document.createTextNode(suivants[i][1]+", x=" + suivants[i][2] + ", y=" + suivants[i][3] + ", n="+suivants[i][4]))
 					desc.appendChild(document.createElement("br"));;
 				}
 			}
@@ -1131,8 +1144,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpos = evt.pageX;
 				ypos = evt.pageY;
 			}
-			xcase = (xpage-decalh)/coeff-100.0;
-			ycase = 100.0-(ypage-decalv)/coeff;
+			xcase = (xpage-decalh)/TC_coeff-100.0;
+			ycase = 100.0-(ypage-decalv)/TC_coeff;
 			bulle.style.top = (ypos+3)+'px';
 			bulle.style.left = (xpos+16)+'px';
 			bulle.style.visibility = 'visible';
@@ -1162,7 +1175,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_trajet_prev();
 			if(point_surligne) {
 				point_surligne = etapes[a_modifier];
-				surligne();
+				// Roule' 23/12/2018, la fonction surligne() n'existe pas, je ne sais pas ce que c'est supposé faire
+				//surligne();
 			}
 		}
 		function deplace_noeud(rg, xx, yy) {
@@ -1215,8 +1229,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ypos = evt.pageY;
 			}
 
-			xcase = Math.round((xpage-decalh)/coeff-100.0);
-			ycase = Math.round(100.0-(ypage-decalv)/coeff);
+			xcase = Math.round((xpage-decalh)/TC_coeff-100.0);
+			ycase = Math.round(100.0-(ypage-decalv)/TC_coeff);
 
 			for (var i = nb_ajout-1; i>=0; i--) {
 				if(xcase == etapes[i][0] && ycase == etapes[i][1]) {
@@ -1424,16 +1438,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				point_surligne = choix_ini? etapes_tt[parseInt(ref.split("_")[1])]:etapes[parseInt(ref.split("_")[1])];
 			}
 			dessin = document.getElementById("surligne");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 				if(point_surligne[3] == 1) {
 					ctx.fillStyle = "rgba(0,0,0,0.8)";
 					ctx.strokeStyle = "rgba(0,0,0,0.8)";
-					ctx.lineWidth = coeff;
-					ctx.fillRect(coord_x(point_surligne[0])-coeff, coord_y(point_surligne[1])-coeff, 2*coeff, 2*coeff);
-					ctx.strokeRect(coord_x(point_surligne[0])-3*coeff, coord_y(point_surligne[1])-3*coeff, 6*coeff, 6*coeff);
+					ctx.lineWidth = TC_coeff;
+					ctx.fillRect(coord_x(point_surligne[0])-TC_coeff, coord_y(point_surligne[1])-TC_coeff, 2*TC_coeff, 2*TC_coeff);
+					ctx.strokeRect(coord_x(point_surligne[0])-3*TC_coeff, coord_y(point_surligne[1])-3*TC_coeff, 6*TC_coeff, 6*TC_coeff);
 				}
 				else {
 					trace_point(ctx, coord_x(point_surligne[0]), coord_y(point_surligne[1]), "rgba(0,0,0,0.8)");
@@ -1449,15 +1463,15 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				trajet_surligne = [etapes[parseInt(val-1)], etapes[parseInt(val)]];
 			}
 			dessin = document.getElementById("surligne");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 			milieu = [Math.floor((trajet_surligne[0][0]+trajet_surligne[1][0])/2), Math.floor((trajet_surligne[0][1]+trajet_surligne[1][1])/2), Math.floor((trajet_surligne[0][2]+trajet_surligne[1][2])/2), ]
 			trace_trajet(couleur_surligne, "surligne", trajet_surligne[0], [milieu, trajet_surligne[1]], true);
 		}
 		function efface_surligne() {
 			dessin = document.getElementById("surligne");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 		}
 		function prepare_inserer() {
 			inserer = document.getElementById("inserer_etape");
@@ -1553,8 +1567,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				noeuds = etapes;
 			}
 			var dessin = document.getElementById("danger");
-			dessin.width = 200*coeff+2*decalh;
-			dessin.height = 200*coeff+2*decalv;
+			dessin.width = 200*TC_coeff+2*decalh;
+			dessin.height = 200*TC_coeff+2*decalv;
 
 			var nb_etape = noeuds.length;
 			for(var i=0; i<nb_etape; i++) {
@@ -1612,7 +1626,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 						ctx.fillStyle = couleur_chute;
 						for (var j in chute) {
 							ctx.beginPath();
-							ctx.arc(coord_x(chute[j][0]), coord_y(chute[j][1]), coeff*0.50, 0, Math.PI*2,  true);
+							ctx.arc(coord_x(chute[j][0]), coord_y(chute[j][1]), TC_coeff*0.50, 0, Math.PI*2,  true);
 							ctx.fill();
 						}
 					}
@@ -1781,13 +1795,17 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function echelle_trajet() {
 			trace_trou();
 			trace_position(depart);
-			document.getElementById("cadre_liste").style.left = 200*coeff+2*decalh+5+"px";
+			document.getElementById("cadre_liste").style.left = 200*TC_coeff+2*decalh+5+"px";
 			trace_reel(couleur_reel, "trou", depart, etapes_ini, arret, false);
 			efface_surligne();
 		}
 		function echelle_position() {
 			trace_trou();
+			//window.console.log('echelle_position suivants=' + JSON.stringify(suivants));
 			for(var i in suivants) {
+				// suivants[i] : [(0)num_gow, (1)nom, (2)x, (3)y, (4)n, (5)etapes_ini, (6)etapes, (7)arret];
+				//gowap_debug = suivants[i][0];
+				//if (gowap_debug == 567387) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivants[i]));
 				trace_position([suivants[i][2], suivants[i][3]]);
 				aleatoire = 50+Math.round(155.0*i/nbs);
 				//if(t_prev && suivants[i][6]) {
@@ -1800,13 +1818,19 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				}
 			}
 		}
+		//var gowap_debug = 0;
 		function trace_reel(couleur, ou, ref, noeuds, transition, refaire) {
 			//window.console.log("trace_reel\ncouleur=" + JSON.stringify(couleur) + "\nou=" + JSON.stringify(ou) + "\nref=" + JSON.stringify(ref) + "\nnoeuds=" + JSON.stringify(noeuds) + "\ntransition=" + JSON.stringify(transition) + "\nrefaire=" + JSON.stringify(refaire));
 			var continu = true, deb = 0, fin = 0, dx, dy, dxa, dya, inter, suivre = false;
 			for(var i in transition) {
 				fin = transition[i][1];
+				// if (gowap_debug == 567387) {
+					// window.console.log('trace_reel, transition(' + i + ')=' + JSON.stringify(transition[i]));
+					// window.console.log('trace_reel, couleur=' + couleur + ', deb=' + deb + ', fin=' + fin + ', suivre=' + suivre + ', ref=' + JSON.stringify(ref) + ', soi=' + JSON.stringify(soi));
+				// }
 				if(deb != fin && suivre) {
 					trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [noeuds[deb]], refaire);
+					//if (gowap_debug == 567387) window.console.log('trace_reel, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
 					ref = noeuds[deb];
 					deb++;
 					suivre = false;
@@ -1817,6 +1841,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 						points.push(noeuds[j]);
 					}
 					trace_trajet("rgba(0,0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, points, refaire);
+					//if (gowap_debug == 567387) window.console.log('trace_reel, trace2 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify(points));
 					ref = noeuds[fin-1];
 				}
 				if(transition[i][0] != -1 && soi) {
@@ -1827,6 +1852,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					if(dxa >0 || dya >0) {
 						inter = [ref[0]+((dx>0)? dxa:-dxa), ref[1]+((dy>0)? dya:-dya)];
 						trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [inter], refaire);
+						//if (gowap_debug == 567387) window.console.log('trace_reel, trace3 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([inter]));
 						ref = inter;
 						suivre = true;
 					}
@@ -1850,6 +1876,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					num_gow = cas.getElementsByTagName('a')[0].href.split("=")[1];
 					nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
 					point = cas.innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
+					arret = new Array();	// Roule' 23/12/2018
 					charge_trajet();
 					suivants[nbs] = [num_gow, nom, parseInt(point[1]), parseInt(point[2]), parseInt(point[3]), etapes_ini, etapes, arret];
 					nbs++;
@@ -1952,7 +1979,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			haut.body.appendChild(bulle_fav);
 		}
 		function echelle_fav() {
-			coeff = zoom_fav/50.0;
+			TC_coeff = zoom_fav/50.0;
 			haut.getElementById("liste_fav_gow").style.marginLeft = (4*zoom_fav+2*decalh+5)+"px";
 			haut.getElementById("cadre_fav").style.minHeight = (4*zoom_fav+2*decalv+40)+"px";
 			var gestion = haut.getElementById("gestion_fav_gow");
@@ -1960,7 +1987,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			trace_trou_fav();
 			place_fav();
-			coeff = zoom/50.0;
+			TC_coeff = zoom/50.0;
 		}
 		function ini_gestion() {
 			haut = (page == "action_ordre")? window.parent.frames[0].document:document;
@@ -2431,7 +2458,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return -1;
 		}
 		////////////////////////////////////////////////////////////
-		var coeff=2, decalv=30, decalh=30
+		var TC_coeff=2, decalv=30, decalh=30
 		var position_trous = [[-70.5, -7.5, 2, 1.5, -69]
 			, [-66.5, -37.5, 2, 1.5, -69]
 			, [-63.5, 8.5, 2, 1.5, -69]
