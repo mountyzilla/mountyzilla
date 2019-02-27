@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.12
+// @version     1.2.18.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.13 27/02/2019",
+"	Correction simple quote dans les familles de monstre des missions",
 "V1.2.18.12 23/12/2018",
 "	Message si \"Menu d'actions contextuelles\" est décoché",
 "V1.2.18.11 21/11/2018",
@@ -9955,7 +9957,7 @@ function computeMission(begin,end) {
 				case 'Famille':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
-						var familleMimi = epure(obMissions[num].famille.toLowerCase());
+						var familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g,'');	// Roule 27/02/2019 simple quote dans les familles
 						var familleMob = epure(donneesMonstre[1].toLowerCase());
 						if(familleMob.indexOf(familleMimi)!=-1) {
 							mobMission = true;
