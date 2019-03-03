@@ -13,7 +13,7 @@
 // @exclude *mzdev.mh.raistlin.fr*
 // @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.8.03
+// @version 8.8.04
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -34,6 +34,9 @@
 ****************************************************************/
 
 /*
+Roule 05/08/2018 V8.8.04
+	Saut de version suite à une erreur de numérotation
+	Correction ± (Tu es => Vous êtes)
 Roule 05/08/2018 V8.2.03
 	Passage en objet pour assurer l'indépendance par rapport aux autres scripts
 	Blindage de la détection sous/hors GreaseMonkey ou ViolentMonkey
@@ -414,6 +417,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		afficheSolutions: function(x,y,n,essais) {
 			var listeSolutions = this.calculeSolution(x,y,n,essais);
+			//window.console.log('ListeSolutions=' + JSON.stringify(listeSolutions) + ', x=' + x);
 			var string="Il y a "+listeSolutions.length+" solutions";
 			if(listeSolutions.length<=10)
 			{
@@ -537,6 +541,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				var signes = this.CAPITAN_getValue("capitan."+idCarte+".this.signe").split(";");
 				this.gListeSolutions = this.calculeSolution(Math.abs(originalPos[0])*this.signe(signes[0]),Math.abs(originalPos[1])*this.signe(signes[1]),originalPos[2],this.gEssais);
+				//window.console.log('gListeSolutions=' + JSON.stringify(this.gListeSolutions) + ', signe=' + JSON.stringify(signes));
 			}
 			else
 			{
@@ -545,6 +550,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					this.gListeSolutions[i][0] = Math.abs(this.gListeSolutions[i][0]);
 					this.gListeSolutions[i][1] = Math.abs(this.gListeSolutions[i][1]);
 				}
+				//window.console.log('sans signe, gListeSolutions=' + JSON.stringify(this.gListeSolutions));
 			}
 			return this.generateTable(this.gListeSolutions, signes != undefined);
 		},
@@ -1246,11 +1252,11 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
-				var infoXCoin = document.evaluate("//p/b/text()[contains(.,'Tu es dans le bon Xcoin')]",
+				var infoXCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Xcoin')]",	// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				if(!infoXCoin)
 					x = -x;
-				var infoYCoin = document.evaluate("//p/b/text()[contains(.,'Tu es dans le bon Ycoin')]",
+				var infoYCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Ycoin')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				if(!infoYCoin)
 					y = -y;
