@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.13
+// @version     1.2.18.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.14 09/03/2019",
+"	Correction affichage vues 2D externes suite à une modif MH",
 "V1.2.18.13 27/02/2019",
 "	Correction simple quote dans les familles de monstre des missions",
 "V1.2.18.12 23/12/2018",
@@ -9205,8 +9207,12 @@ function refresh2DViewButton() {
 function set2DViewSystem() {
 // Initialise le système de vue 2D
 	// Recherche du point d'insertion
+	var center;
 	try {
-		var center = document.evaluate(
+		// Roule 09/03/2019, encore un changement MH, je fais suivre comme je peux
+		center = document.getElementById('titre2');
+		// version initiale "pré-Roule"
+		if (!center) center = document.evaluate(
 			"//h2[@id='titre2']/following-sibling::center",
 			document, null, 9, null
 		).singleNodeValue;
@@ -9215,6 +9221,7 @@ function set2DViewSystem() {
 			"//h2[@id='titre2']/following-sibling::div",
 			document, null, 9, null
 		).singleNodeValue;
+		
 	} catch(e) {
 		avertissement("Erreur d'initialisation du système de vue 2D");
 		window.console.error(traceStack(e, 'set2DViewSystem'));
@@ -9252,8 +9259,18 @@ function set2DViewSystem() {
 		td = appendTd(tr);
 		td.style.fontSize = '0px'; // gère le bug de l'extra character
 		td.appendChild(form);
-		center.insertBefore(table,center.firstChild);
-		insertBr(center.childNodes[1]);
+		if (center.id == 'titre2') {	// 09/03/2019 nouvelle méthode
+			var eDiv = document.createElement('div');
+			eDiv.appendChild(table);
+			eDiv.style.witdth = '100%';
+			eDiv.style.textAlign = 'center';
+			table.style.width = '180px';
+			table.style.margin = '0 auto';
+			center.parentNode.insertBefore(eDiv,center.nextSibling);
+		} else {	// ancienne méthode
+			center.insertBefore(table,center.firstChild);
+			insertBr(center.childNodes[1]);
+		}
 		
 		// Appelle le handler pour initialiser le bouton de submit
 		refresh2DViewButton();
