@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.14
+// @version     1.2.18.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.15 29/03/2019",
+"	Correction simple quote dans toutes les missions",
 "V1.2.18.14 09/03/2019",
 "	Correction affichage vues 2D externes suite à une modif MH",
 "V1.2.18.13 27/02/2019",
@@ -5239,6 +5241,7 @@ function traiteMission() {
 				race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
 			race = race.replace(/\"/g,'');
+			race = removeEnclosingSimpleCote(race);	// Roule 29/03/2019 Maintenant, on a des '
 			saveMission(numMission,{
 				type: 'Race',
 				race: race,
@@ -5257,6 +5260,7 @@ function traiteMission() {
 				famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 			}
 			famille = famille.replace(/\"/g,'');
+			famille = removeEnclosingSimpleCote(famille);	// Roule 29/03/2019 Maintenant, on a des '
 			saveMission(numMission,{
 				type: 'Famille',
 				famille: famille,
@@ -5268,6 +5272,7 @@ function traiteMission() {
 		} else if(libelle.indexOf('capacité spéciale')!=-1) {
 			var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 			debugMZ('traiteMission étape capacité spéciale');
+			pouvoir = removeEnclosingSimpleCote(pouvoir);	// Roule 29/03/2019 Maintenant, on a des '
 			saveMission(numMission,{
 				type: 'Pouvoir',
 				pouvoir: pouvoir,
@@ -5281,6 +5286,10 @@ function traiteMission() {
 		window.console.error(traceStack(e, 'récupération étape mission'));
 		return;
 	}
+}
+
+function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
+	return x.replace(/'$/, '').replace(/^'/, '');
 }
 
 function do_mission() {
