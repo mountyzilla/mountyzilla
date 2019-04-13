@@ -12397,7 +12397,7 @@ function sortileges(sort) {
 		decumul_buff = function(nom,str,buff) {
 			// Décumul des sorts de buff (old school)
 			var
-				txt = '1<sup>ere</sup>'+nom+' : <b>'+str+' +'+buff+'</b>',
+				txt = "1<sup>ere</sup>"+nom+" : <b>"+str+" +"+buff+"</b>",
 				dec = buff,
 				total = buff,
 				i=1;
@@ -12406,10 +12406,10 @@ function sortileges(sort) {
 				dec = Math.floor(coefDecumul(i)*buff);
 				if(dec<=1 || i==6) break;
 				total += dec;
-				txt += '<br/><i>'+i+'<sup>e</sup> '+nom+' : '+
-					   str+' +'+dec+' (+'+total+')</i>';
+				txt += "<br/><i>"+i+"<sup>e</sup> "+nom+" : "+
+					   str+" +"+dec+" (+"+total+")</i>";
 			}
-			txt += '<br/><i>'+i+'<sup>e</sup> et + : '+str+' +'+dec+'</i>';
+			txt += "<br/><i>"+i+"<sup>e</sup> et + : "+str+" +"+dec+"</i>";
 			return txt;
 		},
 		nbrAdX = function(pc) {
@@ -12445,12 +12445,8 @@ function sortileges(sort) {
 				default: return 1; // Sous les 1 de moyenne même en D6
 			}
 		},
-		texte = "",
-		// Temporaires (dev)
-		pcA = atttour,
-		pcD = degtour,
-		mainCall = false;
-		
+		texte = "";
+	
 	if (sort.indexOf('Analyse Anatomique') != -1) {
 		texte = 'Portée horizontale : <b>'
 			+ Math.floor(vuetotale / 2) + '</b> case';
@@ -12480,7 +12476,7 @@ function sortileges(sort) {
 				"attx1/2": {
 					"Charge": "Charger",
 					"CA": "CA",
-					"Parer": "Parer"
+					"Parer": "Parer1"
 				},
 				"degx2/3": {
 					"Vampirisme": "Vampi"
@@ -12516,7 +12512,7 @@ function sortileges(sort) {
 				newTalent = false;
 				for(var talent in categoriesAdA[categorie]) {
 					if(getTalent(categoriesAdA[categorie][talent])) {
-						if(newTalent) { texte += ', '; }
+						if(newTalent) { texte += ", "; }
 						texte += talent;
 						newTalent = true;
 					}
@@ -12524,7 +12520,7 @@ function sortileges(sort) {
 				if(newTalent) {
 					// Si le trõll a au moins un talent dans la catégorie :
 					texte += ": <b>+"+DSup+"D6 +"+Math.floor(fixe)+"</b> <i>(+" +
-						     Math.floor(3.5*DSup+fixe) +")</i><br>";
+					         Math.floor(3.5*DSup+fixe) +")</i><br>";
 				}
 			}
 		}
@@ -12548,7 +12544,7 @@ function sortileges(sort) {
 					"Vampi": "Vampi"
 				},
 				"degx1/2": {
-					"GdS": "GdS"
+					"Griffe du Sorcier": "GdS"
 				},
 				"vuex1/2": {
 					"Projectile Magique": "Projo"
@@ -12584,15 +12580,16 @@ function sortileges(sort) {
 				newTalent = false;
 				for(var talent in categoriesAdD[categorie]) {
 					if(getTalent(categoriesAdD[categorie][talent])) {
-						if(newTalent) { texte += ', '; }
+						if(newTalent) { texte += ", "; }
 						texte += talent;
 						newTalent = true;
 					}
 				}
 				if(newTalent) {
 					// Si le trõll a au moins un talent dans la catégorie :
-					texte += ": <b>+"+DSup+"D3 +"+Math.floor(fixe)+"</b> <i>(+" +
-						     Math.floor(3.5*DSup+fixe) +")</i><br>";
+					texte += ": <b>+"+DSup+"D3 +"+Math.floor(fixe) +
+					         "</b> <i>(+"+Math.floor(3.5*DSup+fixe) +
+					         ")</i><br>";
 				}
 			}
 		}
@@ -12626,45 +12623,50 @@ function sortileges(sort) {
 	else if(sort.indexOf('Glue')!=-1) {
 		texte = 'Portée : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
 		if(vuetotale>2) texte += 's';
-	}
-	else if(sort.indexOf('Griffe du Sorcier')!=-1){
-		/* Frappe */
-		var modD = 0;
-		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA!=0){
-			modD = parseInt(att*pcA/100);
-			texte += '<i>'+aff(modD)+'D6</i> ';
+	} else if(sort.indexOf("Griffe du Sorcier")!=-1) {
+		var
+			modD =0,
+			addVenin = function(type, effet, duree) {
+				var
+					ret = "<b>Venin "+type+" : </b><br/><b>" + 
+					      effet+"</b> D3" + 
+					      " pendant <b>"+duree+"</b> tour",
+					dureeReduite = Math.max(Math.floor(duree/2),1);
+				if(duree>1) {
+					ret += "s";
+				}
+				return ret + 
+				       " => <b>"+2*effet+" x "+duree+" = "+2*effet*duree +
+				       "</b> ("+2*effet+" x "+dureeReduite+" = " + 
+				       2*effet*dureeReduite+")";
+			},
+			effet = 1+Math.floor((Math.floor(pvbase/10)+reg)/3);
+		// Frappe
+		texte = "Attaque : <b>"+att+"</b> D6 ";
+		if(atttour!=0) {
+			modD = Math.floor(att*atttour/100);
+			texte += "<i>"+aff(modD)+"D6</i> ";
 		}
 		texte += aff(attbm)
-			+' => <b>'+(Math.round(3.5*(att+modD))+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(deg/2)+'</b> D3 ';
-		if(pcD!=0) {
-			modD = parseInt(Math.floor(deg/2)*pcD/100);
-			texte += '<i>'+aff(modD)+'D3</i> ';
-		}else
+			+" => <b>"+(Math.round(3.5*(att+modD))+attbm)+"</b><br/>"
+			+"Dégâts : <b>"+Math.floor(deg/2)+"</b> D3 ";
+		if(degtour!=0) {
+			modD = Math.floor(Math.floor(deg/2)*degtour/100);
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		} else {
 			modD = 0;
-		texte += aff(degbm)+' => <b>'
-			+(2*(Math.floor(deg/2)+modD)+degbm)
-			+'/'+(2*(Math.floor(deg/2)+Math.floor(deg/4)+modD)+degbm)
-			+' ('+resiste(Math.floor(deg/2)+modD,degbm)
-			+'/'+resiste(Math.floor(deg/2)+Math.floor(deg/4)+modD,degbm)
-			+')</b>';
-		if(!mainCall) return texte;
-		/* Venins */
-		function addVenin(type,effet,duree) {
-			var ret = '<b>Venin '+type+' : </b><br/><b>'+effet+'</b> D3'
-				+' pendant <b>'+duree+'</b> tour';
-			if(duree>1) ret += 's';
-			var dred = Math.max(Math.floor(duree/2),1);
-			return ret+' => <b>'+2*effet+' x '+duree+' = '+2*effet*duree
-				+'</b> ('+2*effet+' x '+dred+' = '+2*effet*dred+')';
-			}
-		var effet = 1+Math.floor((Math.floor(pvbase/10)+reg)/3);
-		texte += '<hr>'+addVenin('insidieux',effet,2+Math.floor(vue/5));
+		}
+		texte += aff(degbm) +
+		         " => <b>"+(2*(Math.floor(deg/2)+modD)+degbm) +
+		         "/"+(2*(Math.floor(deg/2)+Math.floor(deg/4)+modD)+degbm) +
+		         " ("+resiste(Math.floor(deg/2)+modD,degbm) +
+		         "/"+resiste(Math.floor(deg/2)+Math.floor(deg/4)+modD,degbm) +
+		         ")</b>";
+		// Venins
+		texte += "<hr>"+addVenin("insidieux",effet,2+Math.floor(vue/5));
 		effet = Math.floor(1.5*effet);
-		texte += '<hr>'+addVenin('virulent',effet,1+Math.floor(vue/10));
-	}
-	else if(sort.indexOf('Hypnotisme')!=-1)
+		texte += "<hr>"+addVenin("virulent",effet,1+Math.floor(vue/10));
+	} else if(sort.indexOf('Hypnotisme')!=-1)
 		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
 			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
 	else if(sort.indexOf('Identification des tresors')!=-1)
@@ -12677,95 +12679,99 @@ function sortileges(sort) {
 	else if(sort.indexOf('Levitation')!=-1)
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
-	else if(sort.indexOf('Projectile Magique')!=-1) {
-		var modD = 0;
-		var portee = getPortee__Profil(vuetotale);
-		texte = 'Attaque : <b>'+vue+'</b> D6 ';
-		if(pcA!=0) {
-			modD = parseInt(vue*pcA/100);
-			texte += '<i>'+aff(modD)+'D6</i> ';
+	else if(sort.indexOf("Projectile Magique")!=-1) {
+		var
+			modD = 0,
+			portee = getPortee__Profil(vuetotale);
+		// Att
+		texte = "Attaque : <b>"+vue+"</b> D6 ";
+		if(atttour!=0) {
+			modD = Math.floor(vue*atttour/100);
+			texte += "<i>"+aff(modD)+"D6</i> ";
 		}
-		texte += aff(attbm)
-			+' => <b>'+(Math.round(3.5*(vue+modD))+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+Math.floor(vue/2)+'</b> D3 ';
-		if(pcD!=0) {
-			modD = parseInt(Math.floor(vue/2)+pcD);
-			texte += '<i>'+aff(modD)+'D3</i> ';
-		}else
-            modD = 0;
-		texte += aff(degbm)
-			+' => <b>'+(2*(Math.floor(vue/2)+modD)+degbm)
-			+'/'+(2*(Math.floor(1.5*Math.floor(vue/2))+modD)+degbm)
-			+' ('+resiste(Math.floor(vue/2)+modD,degbm)
-			+'/'+resiste(1.5*Math.floor(vue/2)+modD,degbm)+') (+ 1D3 par bonus de portée)</b>';
-		if(!mainCall) return texte;
-		texte += '<br/>Portée : <b>'+portee+'</b> case';
-		if(portee>1) texte += 's';
-	}
-	else if(sort.indexOf('Projection')!=-1) {
+		texte += aff(attbm) +
+		         " => <b>"+(Math.round(3.5*(vue+modD))+attbm)+"</b><br>" +
+		         "Dégâts : <b>"+Math.floor(vue/2)+"</b> D3 ";
+		// Deg
+		if(degtour!=0) {
+			modD = Math.floor(Math.floor(vue/2)*degtour/100);
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		} else {
+			modD = 0;
+		}
+		texte += aff(degbm) +
+		         " => <b>"+(2*(Math.floor(vue/2)+modD)+degbm) +
+		         "/"+(2*(Math.floor(1.5*Math.floor(vue/2))+modD)+degbm) +
+		         " ("+resiste(Math.floor(vue/2)+modD,degbm) +
+		         "/"+resiste(1.5*Math.floor(vue/2)+modD,degbm) +
+		         ") (+ 1D3 par bonus de portée)</b>";
+		// Portée
+		texte += "<br/>Portée : <b>"+portee+"</b> case";
+		if(portee>1) texte += "s";
+	} else if(sort.indexOf('Projection')!=-1) {
 		texte = 'Si le jet de résistance de la victime est raté:<br/>'
 			+'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
 			+'Si le jet de résistance de la victime est réussi:<br/>'
 			+'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
-	}
-	else if(sort.indexOf('Rafale Psychique')!=-1) {
+	} else if(sort.indexOf("Rafale Psychique")!=-1) {
 		var modD = 0;
-		texte = 'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD!=0) {
-			modD = parseInt(deg*pcD/100);
-			texte += '<i>'+aff(modD)+'D3</i> ';
+		texte = "Dégâts : <b>"+deg+"</b> D3 ";
+		if(degtour!=0) {
+			modD = Math.floor(deg*degtour/100);
+			texte += "<i>"+aff(modD)+"D3</i> ";
 		}
-		texte += aff(degbm)
-			+' => <b>'+(2*(deg+modD)+degbm)+' ('+resiste(deg+modD,degbm)+')</b>';
-		if(!mainCall) return texte;
-		texte += '<br/>Malus : régénération <b>-'+deg+'</b>';
-	}
-	else if(sort.indexOf('Sacrifice')!=-1) {
-		if(pvcourant<=0)
-			return '<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>';
-
-		function perteSacro(sac) {
-			return ' (-'+(sac+2*(1+Math.floor(sac/5)))+' PV)';
+		texte += aff(degbm) +
+		         " => <b>"+(2*(deg+modD)+degbm) +
+		         " ("+resiste(deg+modD,degbm)+")</b><br>" +
+		         "Malus : régénération <b>-"+(deg+modD)+"</b>";
+	} else if(sort.indexOf("Sacrifice")!=-1) {
+		if(pvcourant<=0) {
+			// N'est plus censé se produire : activation obligatoire si mort
+			return "<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>";
 		}
-
-		var sac = Math.floor((pvcourant-1)/2);
-		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
-			+'Soin maximal : <b>'+sac+'</b> PV'+perteSacro(sac);
-		/* Sacros max et optimal sans malus (propale R') */
-        var pvdispoSansMalusTemps = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
-        sac = Math.floor((pvdispoSansMalusTemps-2)*5/7);
-		if(sac>0)
-			texte += '<hr>Soin maximum limitant les risques de malus de temps : <b>' +sac+'</b> PV'+perteSacro(sac);
-        else
-            texte += '<hr>Vous ne pouvez pas compenser de blessures dues à un sacrifice';
-		/*if(sac>3) {
-			sac = 5*Math.floor((sac+1)/5)-1;
-			texte += '<br/>Soin optimal sans malus de temps : <b>'
-				+sac+'</b> PV'+perteSacro(sac);
-		}*/
-	}
-	else if(sort.indexOf('Siphon')!=-1) {
+		var
+			perteSacro = function(sac) {
+				return " (-"+(sac+2*(1+Math.floor(sac/5)))+" PV)";
+			},
+			sac = Math.floor((pvcourant-1)/2),
+			pvdispoSansMalusTemps = 
+				pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
+		
+		texte = "Portée horizontale : <b>" +
+		        Math.min(1,vuetotale)+"</b> case<br>" +
+		        "Soin maximal : <b>"+sac+"</b> PV"+perteSacro(sac);
+		// Sacros max et optimal sans malus (propale R')
+		sac = Math.floor((pvdispoSansMalusTemps-2)*5/7);
+		if(sac>0) {
+			texte += "<hr>Soin maximum limitant les risques de malus " +
+			         "de temps : <b>" +sac+"</b> PV"+perteSacro(sac);
+		} else {
+			texte += "<hr>Vous ne pouvez pas compenser de blessures " +
+			         "dues à un sacrifice";
+		}
+	} else if(sort.indexOf("Siphon")!=-1) {
 		var modD = 0;
-		texte = 'Attaque : <b>'+att+'</b> D6 ';
-		if(pcA!=0) {
-			modD = parseInt(att*pcA/100);
-			texte += '<i>'+aff(modD)+'D6</i> ';
+		texte = "Attaque : <b>"+att+"</b> D6 ";
+		if(atttour!=0) {
+			modD = Math.floor(att*atttour/100);
+			texte += "<i>"+aff(modD)+"D6</i> ";
 		}
-		texte += aff(attbm)
-			+' => <b>'+Math.round(3.5*(att+modD)+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+reg+'</b> D3 ';
-		if(pcD!=0) {
-			modD = parseInt(reg*pcD/100);
-			texte += '<i>'+aff(modD)+'D3</i> ';
-		}else
+		texte += aff(attbm) + 
+		         " => <b>"+Math.round(3.5*(att+modD)+attbm)+"</b><br>" +
+		         "Dégâts : <b>"+reg+"</b> D3 ";
+		if(degtour!=0) {
+			modD = Math.floor(reg*degtour/100);
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		} else {
 			modD = 0;
-		texte += aff(degbm)
-			+' => <b>'+(2*(reg+modD)+degbm)+'/'+(2*(Math.floor(1.5*reg)+modD)+degbm)
-			+' ('+resiste(reg+modD,degbm)+'/'+resiste(1.5*reg+modD,degbm)+')</b>';
-		if(!mainCall) return texte;
-		texte += '<br/>Nécrose : attaque magique <b>-'+reg+'</b>';
-	}
-	else if(sort.indexOf('Telekinesie')!=-1) {
+		}
+		texte += aff(degbm) +
+		         " => <b>"+(2*(reg+modD)+degbm) +
+		         "/" + (2*(Math.floor(1.5*reg)+modD)+degbm) +
+		         " ("+resiste(reg+modD,degbm) + 
+		         "/"+resiste(1.5*reg+modD,degbm)+")</b>";
+		texte += "<br>Nécrose : attaque magique <b>-"+(reg+modD)+"</b>";
+	} else if(sort.indexOf('Telekinesie')!=-1) {
 		texte = 'Portée horizontale  :';
 		var vt = Math.floor(vuetotale/2)+2;
 		var strList = ['d\'une Plum\' ou Très Léger','Léger',
@@ -12786,27 +12792,28 @@ function sortileges(sort) {
 			+'X compris entre '+(posX-pmh)+' et '+(posX+pmh)+'<br/>'
 			+'Y compris entre '+(posY-pmh)+' et '+(posY+pmh)+'<br/>'
 			+'N compris entre '+(posN-pmv)+' et '+Math.min(-1,posN+pmv)+'<br/>';
-	}
-	else if(sort.indexOf('Vampirisme')!=-1) {
+	} else if(sort.indexOf('Vampirisme')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+Math.floor(2*deg/3)+'</b> D6 ';
-		if(pcA!=0) {
-			modD = parseInt(Math.floor(2*deg/3)*pcA/100);
+		if(atttour!=0) {
+			modD = Math.floor(Math.floor(2*deg/3)*atttour/100);
 			texte += '<i>'+aff(modD)+'D6</i> ';
 		}
-		texte += aff(attbm)
-			+' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbm)+'</b><br/>'
-			+'Dégâts : <b>'+deg+'</b> D3 ';
-		if(pcD!=0) {
-			modD = parseInt(deg*pcD/100);
+		texte += aff(attbm) + 
+		         ' => <b>'+Math.round(3.5*(Math.floor(2*deg/3)+modD)+attbm) + 
+		         '</b><br/>Dégâts : <b>'+deg+'</b> D3 ';
+		if(degtour!=0) {
+			modD = Math.floor(deg*degtour/100);
 			texte += '<i>'+aff(modD)+'D3</i> ';
-		}else
+		} else {
 			modD = 0;
-		texte += aff(degbm)
-			+' => <b>'+(2*(deg+modD)+degbm)+'/'+(2*(Math.floor(1.5*deg)+modD)+degbm)
-			+' ('+resiste(deg+modD,degbm)+'/'+resiste(1.5*deg+modD,degbm)+')</b>';
-	}
-	else if(sort.indexOf('Vision Accrue')!=-1)
+		}
+		texte += aff(degbm) + 
+		         ' => <b>'+(2*(deg+modD)+degbm) + 
+		         '/'+(2*(Math.floor(1.5*deg)+modD)+degbm) + 
+		         ' ('+resiste(deg+modD,degbm) + 
+		         '/'+resiste(1.5*deg+modD,degbm)+')</b>';
+	} else if(sort.indexOf('Vision Accrue')!=-1)
 		texte = decumul_buff('VA','Vue',Math.floor(vue/2));
 	else if(sort.indexOf('Vision lointaine')!=-1)
 		texte = 'En ciblant une zone située n\'importe où dans le '
