@@ -328,7 +328,7 @@ var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
  
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
-var MY_DEBUG = false;
+var MY_DEBUG = true;
 
 var horsGM = false;
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
@@ -2016,7 +2016,8 @@ arrayTalents = {
 	/* Sortilèges */
 	'Analyse Anatomique':'AA',
 	'Armure Etheree':'AE',
-	'Augmentation de l´Attaque':'AdA',
+	'Augmentation de l´Attaque':'AdA', // obsolète?
+	"Augmentation de l'Attaque":'AdA',
 	'Augmentation de l´Esquive':'AdE',
 	'Augmentation des Degats':'AdD',
 	'Bulle Anti-Magie':'BAM',
@@ -2045,22 +2046,23 @@ arrayTalents = {
 	'Voir le Cache':'VlC',
 	'Vue Troublee':'VT'
 	//'':''
-	}
+}
 
 // DEBUG - Pour rétrocompatibilité 
 function getSortComp(nom,niveau) {
 	return getTalent(nom,niveau);
-	}
+}
 //
 
 function getTalent(nom,niveau) {
+	if(nom===true) return true;
 	var nomEnBase = arrayTalents[epure(nom)];
-	if(!nomEnBase) return 0;
+	if(!nomEnBase) nomEnBase=nom;
 	if(!niveau) var niveau = '';
 	if(MY_getValue(numTroll+'.talent.'+nomEnBase+niveau))
 		return MY_getValue(numTroll+'.talent.'+nomEnBase+niveau);
 	return 0;
-	}
+}
 
 function removeAllTalents() {
 	for(var talent in arrayTalents) {
@@ -2068,14 +2070,14 @@ function removeAllTalents() {
 		if(MY_getValue(numTroll+'.talent.'+nomEnBase)) {
 			MY_removeValue(numTroll+'.talent.'+nomEnBase);
 			continue;
-			}
+		}
 		var niveau = 1;
 		while(MY_getValue(numTroll+'.talent.'+nomEnBase+niveau)) {
 			MY_removeValue(numTroll+'.talent.'+nomEnBase+niveau);
 			niveau++;
-			}
 		}
 	}
+}
 
 function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 	try {	// Roule 07/06/2017 protection, ça plante si on est dans une callback de XMLHTTPREQUEST
@@ -11103,9 +11105,9 @@ var
 	vue, vuebp, vuebm, vuetotale,
 	pvbase, pvbp, pvbm, pvtotal, pvcourant,
 	reg, regbp, regbm, regmoy,
-	att, attbp, attbm, attmoy, atttourD,atttourP,atttourM, attmoytour,
-	esq, esqbp, esqbm, esqmoy, esqtourD,  esqmoytour,
-	deg, degbp, degbm, degmoy, degmoycrit, degtourP,degtourM, degmoytour, degmoycrittour,
+	att, attbp, attbm, attmoy, atttourD, atttour, attmoytour,
+	esq, esqbp, esqbm, esqmoy, esqtourD, esqmoytour,
+	deg, degbp, degbm, degmoy, degmoycrit, degtour, degmoytour, degmoycrittour,
 	arm, armbp, armbm, armmoy, armtourD, armmoytour,
 	rm, rmbp, rmbm, rmtotale,
 	mm, mmbp, mmbm, mmtotale,
@@ -11171,17 +11173,6 @@ function retourAZero(fatig) {
 		fat = Math.floor(fat/1.25);
 	}
 	return raz;
-}
-
-function decumulPumPrem(bonus) {
-	switch(bonus) {
-		case 20: return 33;
-		case 33: return 41;
-		case 41: return 46;
-		case 46: return 49;
-		case 49: return 51;
-		default: return 20;
-	}
 }
 
 function coefDecumul(i) {
@@ -11314,17 +11305,20 @@ function extractionDonnees() {
 // **************************
 // Cadre "Caracteristiques"
 // **************************
-	    // Attaque
+		// Attaque
 	att = getUniqueIntValueBySelector('#carac #att');
 	attbp = getUniqueIntValueBySelector('#carac #att_p');
 	attbm = getUniqueIntValueBySelector('#carac #att_m');
-	atttourD = getUniqueIntValueBySelector('#carac #att_tour_d');
-    atttourP = getUniqueIntValueBySelector('#carac #att_tour_p');
-    atttourM = getUniqueIntValueBySelector('#carac #att_tour_m');
+	atttour = getUniqueIntValueBySelector('#carac #att_tour');    // % bonus AdA
+	atttourD = getUniqueIntValueBySelector('#carac #att_tour_d'); // malus Parade
 	attmoy = 3.5*att + attbp + attbm;
-    var bmDAttTotalTour = atttourD + Math.floor(((att+atttourD)*(atttourP+atttourM)/100));
-	attmoytour = 3.5*(att+bmDAttTotalTour) + attbp + attbm;
-	debugMZ("ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+"; BM Dé att/tour:("+atttourD+"D;"+atttourP+"%;"+atttourM+"%)"+bmDAttTotalTour+" ;AttMoyTour:"+attmoytour);
+	var DAttBonus = Math.floor(((att+atttourD)*atttour/100)); // À vérifier
+	attmoytour = 3.5*(att+DAttBonus) + attbp + attbm;
+	debugMZ(
+		"ATT: "+att+"+("+attbp+")+("+attbm+") ;AttMoy:"+attmoy+
+		"; BM Dé att/tour:("+atttourD+"D;"+atttour+"%) "+(atttourD+DAttBonus)+
+		"D ;AttMoyTour:"+attmoytour
+	);
 	    // Esquive
 	esq = getUniqueIntValueBySelector('#carac #esq');
 	esqbp = getUniqueIntValueBySelector('#carac #esq_p');
@@ -11333,18 +11327,21 @@ function extractionDonnees() {
 	esqmoy = 3.5*esq + esqbp+esqbm;
 	esqmoytour = 3.5*(esq+esqtourD) + esqbp+esqbm;
 	debugMZ("ESQ: "+esq+"+("+esqbp+")+("+esqbm+") ;EsqMoy:"+esqmoy+"; esq/tour:"+esqtourD+" ;EsqMoyTour:"+esqmoytour);
-	    // Degat
+		// Degat
 	deg = getUniqueIntValueBySelector('#carac #deg');
 	degbp = getUniqueIntValueBySelector('#carac #deg_p');
 	degbm = getUniqueIntValueBySelector('#carac #deg_m');
-	degtourP = getUniqueIntValueBySelector('#carac #deg_tour_p');
-    degtourM = getUniqueIntValueBySelector('#carac #deg_tour_m');
-	degmoy = 2*deg + degbp+degbm;
-	degmoycrit = 3*deg + degbp+degbm;
-    var bmDDegTotalTour = Math.floor(deg*(degtourP+degtourM)/100);
-	degmoytour = 2*(deg + bmDDegTotalTour) + degbp + degbm;
-	degmoycrittour = 3 * (deg + bmDDegTotalTour) + degbp + degbm;
-	debugMZ("DEG: "+deg+"+("+degbp+")+("+degbm+") ;DegMoy:"+degmoy+"/"+degmoycrit+" ;deg/tour:("+degtourP+"%;"+degtourM+"%)"+bmDDegTotalTour+"; DegMoyTour:"+degmoytour+"/"+degmoycrittour);
+	degtour = getUniqueIntValueBySelector('#carac #deg_tour'); // % bonus AdD
+	degmoy = 2*deg + degbp + degbm;
+	degmoycrit = 2*(deg+Math.floor(deg/2)) + degbp + degbm;
+	var DDegBonus = Math.floor(deg*degtour/100);
+	degmoytour = 2*(deg + DDegBonus) + degbp + degbm;
+	degmoycrittour = degmoytour + 2*Math.floor(deg/2);
+	debugMZ(
+		"DEG: "+deg+"+("+degbp+")+("+degbm+") ;DegMoy:"+degmoy+"/"+degmoycrit+
+		" ;deg/tour:("+degtour+"%) "+DDegBonus+
+		"D; DegMoyTour:"+degmoytour+"/"+degmoycrittour
+	);
 	    // PV
 	pvbase = getUniqueIntValueBySelector('#carac #pv');
 	pvbp = getUniqueIntValueBySelector('#carac #pv_p');
@@ -11443,23 +11440,27 @@ function saveProfil() {
 	MY_setValue(idtroll+'.caracs.attaque.bm',(attbp+attbm));
 	MY_setValue(idtroll+'.caracs.attaque.bmp',attbp);
 	MY_setValue(idtroll+'.caracs.attaque.bmm',attbm);
-    if(atttourD||atttourP||atttourM) {
-        var bmDAttTotalTour = atttourD + Math.floor(((att+atttourD)*(atttourP+atttourM)/100));
-        MY_setValue(idtroll+'.bonus.DAttM',bmDAttTotalTour);
-    }
+	if(atttourD||atttour) {
+		var DAttBonus = atttourD + Math.floor((att+atttourD)*atttour/100);
+		MY_setValue(idtroll+'.bonus.DAttM',DAttBonus);
+	} else {
+		MY_removeValue(idtroll+'.bonus.DAttM');
+	}
 	MY_setValue(idtroll+'.caracs.esquive',esq);
-    MY_setValue(idtroll+'.caracs.esquive.bm',(esqbp+esqbm));
+	MY_setValue(idtroll+'.caracs.esquive.bm',(esqbp+esqbm));
 	MY_setValue(idtroll+'.caracs.esquive.bmp',esqbp);
 	MY_setValue(idtroll+'.caracs.esquive.bmm',esqbm);
-    MY_setValue(idtroll+'.caracs.esquive.nbattaques',esqtourD);
+	MY_setValue(idtroll+'.caracs.esquive.nbattaques',esqtourD);
 	MY_setValue(idtroll+'.caracs.degats',deg);
-    MY_setValue(idtroll+'.caracs.degats.bm',(degbp+degbm));
+	MY_setValue(idtroll+'.caracs.degats.bm',(degbp+degbm));
 	MY_setValue(idtroll+'.caracs.degats.bmp',degbp);
 	MY_setValue(idtroll+'.caracs.degats.bmm',degbm);
-    if(degtourP||degtourM){
-        var bmDDegTotalTour = Math.floor(deg*(degtourP+degtourM)/100);
-        MY_setValue(idtroll+'.bonus.DDegM',bmDDegTotalTour);
-    }
+	if(degtour) {
+		var DDegBonus = Math.floor(deg*degtour/100);
+		MY_setValue(idtroll+'.bonus.DDeg',DDegBonus);
+	} else {
+		MY_removeValue(idtroll+'.bonus.DDeg');
+	}
 	MY_setValue(idtroll+'.caracs.regeneration',reg);
 	MY_setValue(idtroll+'.caracs.regeneration.bm',(regbp+regbm));
 	MY_setValue(idtroll+'.caracs.regeneration.bmp',regbp);
@@ -11472,11 +11473,11 @@ function saveProfil() {
 	MY_setValue(idtroll+'.caracs.pv.base',pvbase);
 	MY_setValue(idtroll+'.caracs.pv.max',pvtotal);
 	MY_setValue(idtroll+'.caracs.rm',rm);
-    MY_setValue(idtroll+'.caracs.rm.bm',(rm+rmbp+rmbm));
+	MY_setValue(idtroll+'.caracs.rm.bm',(rm+rmbp+rmbm));
 	MY_setValue(idtroll+'.caracs.rm.bmp',rmbp);
 	MY_setValue(idtroll+'.caracs.rm.bmm',rmbm);
 	MY_setValue(idtroll+'.caracs.mm',mm);
-    MY_setValue(idtroll+'.caracs.mm.bm',(mm+mmbp+mmbm));
+	MY_setValue(idtroll+'.caracs.mm.bm',(mm+mmbp+mmbm));
 	MY_setValue(idtroll+'.caracs.mm.bmp',mmbp);
 	MY_setValue(idtroll+'.caracs.mm.bmm',mmbm);
 	MY_setValue(idtroll+'.caracs.armure',arm);
@@ -12021,7 +12022,10 @@ function setTalent(nom,pc,niveau,sousCompetences) {
 	// Nota : voir plus tard si stocker les effets des comps/sorts directement 
 	// (et pas les % dont osf) ne serait pas plus rentable
 	var nomEnBase = arrayTalents[epure(nom)];
-	if(!nomEnBase) { return; }
+	if(!nomEnBase) {
+		debugMZ("setTalent: le talent "+nom+" n'est pas dans la base MZ");
+		return;
+	}
 	if(!niveau) { niveau = 1; }
 	
 	switch(nomEnBase) {
@@ -12087,7 +12091,7 @@ function setBulle(evt) {
 	if(fonction=='competences'){
 		str=competences(nom,niveau);
 	} else if(fonction=='sortileges') {
-		str=sortileges(nom,true);
+		str=sortileges(nom);
 	}
 	if(str=='') return;
 	if(nom.indexOf('Golem')!=-1) nom='Golemologie';
@@ -12384,38 +12388,69 @@ function competences(comp,niveau) {
 	else if(comp.indexOf('Shamaner')!=-1)
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
 			+'des monstres en utilisant des champignons (de 1 à 3).';
-	else if(comp.indexOf('Tailler')!=-1){	// obsolète
-		texte = 'Permet d\'augmenter sensiblement la valeur marchande de certains '
-			+'minerais. Mais cette opération délicate n\'est pas sans risques...';
-	}
 	return texte;
-	}
+}
 
-function decumul_buff(nom,str,buff) {
-	// Decumul des sorts de buff
-	var ret = '1<sup>ere</sup>'+nom+' : <b>'+str+' +'+buff+'</b>';
-	var dec = buff, total = buff, i=1;
-	while(i<6) {
-		i++;
-		dec = Math.floor(coefDecumul(i)*buff);
-		if(dec<=1 || i==6) break;
-		total += dec;
-		ret += '<br/><i>'+i+'<sup>e</sup> '+nom+' : '
-			+str+' +'+dec+' (+'+total+')</i>';
-		}
-	ret += '<br/><i>'+i+'<sup>e</sup> et + : '+str+' +'+dec+'</i>';
-	return ret;
-	}
-
-
-function sortileges(sort,mainCall,pcA,pcD) {
-	// Si mainCall==false, affichage réduit des infos des sorts d'attaque pour PuM/PréM
-	var texte = '';
-	if (mainCall) {
-        /* pourcentages Des bonus/malus du a PuM/PreM : Att et Deg*/
-		pcA = (atttourP+atttourM);
-		pcD = (degtourP+degtourM);
-	}
+function sortileges(sort) {
+	var
+		// Fonctions utiles uniquement à "sortileges"
+		decumul_buff = function(nom,str,buff) {
+			// Décumul des sorts de buff (old school)
+			var
+				txt = '1<sup>ere</sup>'+nom+' : <b>'+str+' +'+buff+'</b>',
+				dec = buff,
+				total = buff,
+				i=1;
+			while(i<6) {
+				i++;
+				dec = Math.floor(coefDecumul(i)*buff);
+				if(dec<=1 || i==6) break;
+				total += dec;
+				txt += '<br/><i>'+i+'<sup>e</sup> '+nom+' : '+
+					   str+' +'+dec+' (+'+total+')</i>';
+			}
+			txt += '<br/><i>'+i+'<sup>e</sup> et + : '+str+' +'+dec+'</i>';
+			return txt;
+		},
+		nbrAdX = function(pc) {
+			// Détermine le nombre d'AdX actifs à partir du % de D
+			switch(Number(pc)) {
+				case 0 : return 0;
+				case 20: return 1;
+				case 33: return 2;
+				case 41: return 3;
+				case 46: return 4;
+				default: return Math.floor((Number(pc)-39)/2);
+			}
+		},
+		decumulPc = function(n) {
+			// Détermine le % de D décumulé du n-ième AdX
+			switch(Number(n)) {
+				case 0: return 0;
+				case 1: return 20;
+				case 2: return 13;
+				case 3: return 8;
+				case 4: return 5;
+				case 5: return 3;
+				default: return 2;
+			}
+		},
+		decumulFixe = function(bm, n) {
+			// Détermine le bonus fixe décumulé du n-ième AdX
+			switch(Number(n)) {
+				case 0: return 0;
+				case 1: return Math.max(1,bm);
+				case 2: return Math.max(1,Math.round(bm*6.7)/10);
+				case 3: return Math.max(1,Math.round(bm*4)/10);
+				default: return 1; // Sous les 1 de moyenne même en D6
+			}
+		},
+		texte = "",
+		// Temporaires (dev)
+		pcA = atttour,
+		pcD = degtour,
+		mainCall = false;
+		
 	if (sort.indexOf('Analyse Anatomique') != -1) {
 		texte = 'Portée horizontale : <b>'
 			+ Math.floor(vuetotale / 2) + '</b> case';
@@ -12423,20 +12458,145 @@ function sortileges(sort,mainCall,pcA,pcD) {
 		texte += '<br/>Portée verticale : <b>'
 			+ Math.floor((vuetotale+1)/4)+'</b> case';
 		if (vuetotale > 7){ texte += 's'; }
-	}
-	else if (sort.indexOf('Armure Etheree') != -1){
+	} else if (sort.indexOf('Armure Etheree') != -1) {
 		texte = decumul_buff('AE', 'Armure magique', reg);
-	}
-	else if (sort.indexOf('Augmentation') != -1 && sort.indexOf('Attaque') != -1){
-		texte = decumul_buff('AdA', 'Attaque physique', 1+Math.floor((att-3)/2));
-	}
-	else if (sort.indexOf('Augmentation') != -1 && sort.indexOf('Esquive') != -1){
-		texte = decumul_buff('AdE', 'Esquive', 1+Math.floor((esq-3)/2));
-	}
-	else if (sort.indexOf('Augmentation des Degats') != -1){
-		texte = decumul_buff('AdD', 'Dégâts physiques', 1 + Math.floor((deg-3)/2));
-	}
-	else if(sort.indexOf('Bulle Anti-Magie')!=-1){
+	} else if (sort.indexOf("Augmentation")!=-1 && sort.indexOf("Attaque")!=-1) {
+		var
+			categoriesAdA = {
+				"attx1": {
+					// Affichage: code MZ (cf arrayTalents)
+					"AN": true,
+					"AP": "AP1",
+					"Balayage": "Balayage",
+					"CdB": "CdB1",
+					"Frénésie": "Frenesie",
+					"Rotobaffe": "RB1",
+					"GdS": "GdS",
+					"Siphon": "Siphon"
+				},
+				"attx2/3": {
+					"Botte Secrète": "BS"
+				},
+				"attx1/2": {
+					"Charge": "Charger",
+					"CA": "CA",
+					"Parer": "Parer"
+				},
+				"degx2/3": {
+					"Vampirisme": "Vampi"
+				},
+				"vuex1": {
+					"Projectile Magique": "Projo"
+				}
+			},
+			baseAdA = {
+				"attx1"  : att,
+				"attx2/3": Math.floor(2*att/3),
+				"attx1/2": Math.floor(att/2),
+				"degx2/3": Math.floor(2*deg/3),
+				"vuex1"  : vue
+			},
+			pc = atttour,
+			pcInit = pc,
+			nbrAdA = nbrAdX(pc),
+			categorie, talent, newTalent,
+			i, DSup, fixe=0;
+		
+		i=nbrAdA;
+		while(i++<nbrAdA+3) {
+			pc += decumulPc(i);
+			fixe += decumulFixe(3.5,i);
+			if(texte) { texte += "<hr>"; }
+			texte += "<b>"+i+"<sup>e</sup> AdA : " + 
+			         aff(pc)+"% de Dés d'attaque :</b><br>";
+			for(categorie in categoriesAdA) {
+				// On génére la liste: "talent1, talent2"
+				DSup = Math.floor(baseAdA[categorie]*pc/100) -
+				       Math.floor(baseAdA[categorie]*pcInit/100);
+				newTalent = false;
+				for(var talent in categoriesAdA[categorie]) {
+					if(getTalent(categoriesAdA[categorie][talent])) {
+						if(newTalent) { texte += ', '; }
+						texte += talent;
+						newTalent = true;
+					}
+				}
+				if(newTalent) {
+					// Si le trõll a au moins un talent dans la catégorie :
+					texte += ": <b>+"+DSup+"D6 +"+Math.floor(fixe)+"</b> <i>(+" +
+						     Math.floor(3.5*DSup+fixe) +")</i><br>";
+				}
+			}
+		}
+	} else if (sort.indexOf('Augmentation') != -1 && sort.indexOf('Esquive') != -1) {
+		texte = decumul_buff('AdE', 'Esquive', Math.floor((esq-1)/2));
+	} else if (sort.indexOf("Augmentation des Degats")!=-1) {
+		var
+			categoriesAdD = {
+				"attx1/2": {
+					"Botte Secrète": "BS"
+				},
+				"degx1": {
+					"AN": true,
+					"AP": "AP1",
+					"Charge": "Charger",
+					"CA": "CA",
+					"CdB": "CdB1",
+					"Frénésie": "Frenesie",
+					"Rotobaffe": "RB1",
+					"Rafale": "Rafale",
+					"Vampi": "Vampi"
+				},
+				"degx1/2": {
+					"GdS": "GdS"
+				},
+				"vuex1/2": {
+					"Projectile Magique": "Projo"
+				},
+				"regx1": {
+					"Siphon des Âmes": "Siphon"
+				}
+			},
+			baseAdD = {
+				"attx1/2": Math.floor(att/2),
+				"degx1"  : deg,
+				"degx1/2": Math.floor(deg/2),
+				"vuex1/2": Math.floor(vue/2),
+				"regx1"  : reg
+			},
+			pc = degtour,
+			pcInit = pc,
+			nbrAdD = nbrAdX(pc),
+			categorie, talent, newTalent,
+			i, DSup, fixe=0;
+		
+		i=nbrAdD;
+		while(i++<nbrAdD+3) {
+			pc += decumulPc(i);
+			fixe += decumulFixe(2,i);
+			if(texte) { texte += "<hr>"; }
+			texte += "<b>"+i+"<sup>e</sup> AdD : " + 
+			         aff(pc)+"% de Dés de dégâts :</b><br>";
+			for(categorie in categoriesAdD) {
+				// On génére la liste: "talent1, talent2"
+				DSup = Math.floor(baseAdD[categorie]*pc/100) -
+				       Math.floor(baseAdD[categorie]*pcInit/100);
+				newTalent = false;
+				for(var talent in categoriesAdD[categorie]) {
+					if(getTalent(categoriesAdD[categorie][talent])) {
+						if(newTalent) { texte += ', '; }
+						texte += talent;
+						newTalent = true;
+					}
+				}
+				if(newTalent) {
+					// Si le trõll a au moins un talent dans la catégorie :
+					texte += ": <b>+"+DSup+"D3 +"+Math.floor(fixe)+"</b> <i>(+" +
+						     Math.floor(3.5*DSup+fixe) +")</i><br>";
+				}
+			}
+		}
+	} else if(sort.indexOf('Bulle Anti-Magie')!=-1) {
 		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
 	}
 	else if(sort.indexOf('Bulle Magique')!=-1){
@@ -12517,36 +12677,6 @@ function sortileges(sort,mainCall,pcA,pcD) {
 	else if(sort.indexOf('Levitation')!=-1)
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
-	else if(sort.indexOf('Precision')!=-1 || sort.indexOf('Puissance')!=-1) {
-		var eps = 1,
-            pc = 20;
-		var str = 'PréM';
-		var newSort;
-		var sortAtt = [
-			'Projectile Magique',
-			'Rafale Psychique',
-			'Siphon des Ames',
-			'Vampirisme',
-			'Griffe du Sorcier'
-		];
-		if(sort.indexOf('Puissance')!=-1) {
-			eps = -1; str='PuM';
-		}
-		for(var i=1 ; i<4 ; i++) {
-			if(texte) { texte += '<hr>'; }
-			texte += '<b>'+i+'<sup>e</sup> '+str+' ('+aff(pc)+' %) :</b><br/>';
-			newSort = false;
-			for(var j=0 ; j<sortAtt.length ; j++) {
-				if(getTalent(sortAtt[j])) {
-					if(newSort) { texte += '<br/><br/>'; }
-					texte += '<i>'+sortAtt[j]+' :</i><br/>'
-						+sortileges(sortAtt[j],false,eps*pc,-eps*pc);
-					newSort = true;
-				}
-			}
-			pc = decumulPumPrem(pc);
-		}
-	}
 	else if(sort.indexOf('Projectile Magique')!=-1) {
 		var modD = 0;
 		var portee = getPortee__Profil(vuetotale);
