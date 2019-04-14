@@ -328,7 +328,7 @@ var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
  
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
-var MY_DEBUG = true;
+var MY_DEBUG = false;
 
 var horsGM = false;
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
@@ -2008,7 +2008,7 @@ arrayTalents = {
 	'Regeneration Accrue':'RA',
 	'Reparation':'Reparation',
 	'Retraite':'Retraite',
-	'Rotobaffe':'RB',
+	'RotoBaffe':'RB',
 	'Shamaner':'Shamaner',
 	"S'interposer":'SInterposer',
 	'Tailler':'Tailler',
@@ -12130,39 +12130,65 @@ function setBulle(evt) {
 /*-[functions] Textes des infos-bulles pour les competences et sortileges ----*/
 
 function competences(comp,niveau) {
-	var texte = '';
+	var
+		modA = atttour?Math.floor((att+atttourD)*atttour/100):0,
+		modD = degtour?Math.floor(deg*degtour/100):0,
+		texte = "";
+	
 	if(comp.indexOf('Acceleration du Metabolisme')!=-1 && minParPV!=null) {
 		texte = '<b>1</b> PV = <b>'+minParPV+'</b> minute';
 		if(minParPV>1) texte += 's';
 		if(overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
-	}
-	else if(comp.indexOf('Attaque Precise')!=-1) {
-		var pc, lastmax=0, espatt=0;
-		var notMaxedOut = false;
-		for(var i=niveau ; i>0 ; i--) {
+	} else if(comp.indexOf("Attaque Precise")!=-1) {
+		var
+			i, pc,
+			lastmax=0,
+			jetatt, espatt=0,
+			notMaxedOut = false;
+		
+		for(i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
-			var jetatt = Math.round(3.5*Math.min(Math.floor(1.5*att),att+3*i))+
-				attbp+attbm;
-			texte += 'Attaque niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
-				Math.min(Math.floor(att*1.5),att+3*i)+'</b> D6 '+aff(attbp+attbm)+
-				' => <b>'+jetatt+'</b><br/>';
+			if(lastmax!=0 && pc<=lastmax) {
+				// Si %AP(i)<%AP(i+1), on passe AP(i)
+				continue;
+			}
+			jetatt = Math.round(3.5*(
+				Math.min(Math.floor(1.5*att), att+3*i) + modA
+			)) + attbp+attbm;
 			espatt += (pc-lastmax)*jetatt;
+			texte += "Attaque niv. "+i + 
+			         " ("+(pc-lastmax)+"%) : <b>" +
+			         Math.min(Math.floor(att*1.5), att+3*i)+"</b> D6 ";
+			if(modA) {
+				texte += "<i>"+aff(modA)+"D6</i> ";
+			}
+			texte += aff(attbp+attbm)+" => <b>"+jetatt+"</b><br>";
 			lastmax = pc;
-			if(i<niveau) notMaxedOut = true;
+			if(i<niveau) {
+				// Si l'un des % de niveau inf est > % nivmax,
+				// on affiche l'espérance à la fin
+				notMaxedOut = true;
+			}
 		}
 		if(notMaxedOut) {
-			texte += '<i>Attaque moyenne (si réussite) : <b>'+
-				Math.floor(10*espatt/lastmax)/10+'</b></i><br/>';
+			texte += "<i>Attaque moyenne (si réussite) : <b>" +
+			         Math.floor(10*espatt/lastmax)/10+"</b></i><br>";
 		}
-		texte += 'Dégâts : <b>'+deg+'</b> D3 '+aff(degbp+degbm)+
-			' => <b>'+degmoy+'/'+degmoycrit+'</b>';
-	}
-	else if(comp.indexOf('Balayage')!=-1)
-		texte = 'Déstabilisation : <b>'+att+'</b> D6 '+aff(attbp+attbm)
-			+' => <b>'+attmoy+'</b><br/>'
-			+'Effet : <b>Met à terre l\'adversaire</b>';
-	else if(comp.indexOf('Bidouille')!=-1)
+		texte += "Dégâts : <b>"+deg+"</b> D3 ";
+		if(modD) {
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		}
+		texte += aff(degbp+degbm) +
+		         " => <b>"+degmoytour+"/"+degmoycrittour+"</b>";
+	} else if(comp.indexOf("Balayage")!=-1) {
+		texte = "Déstabilisation : <b>"+att+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(attbp+attbm) +
+		         " => <b>"+attmoytour+"</b><br>" +
+		         "Effet : <b>Met à terre l'adversaire</b>";
+	} else if(comp.indexOf('Bidouille')!=-1)
 		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
 			+'de votre inventaire avec le texte de votre choix.';
 	else if(comp.indexOf('Baroufle')!=-1){
@@ -12186,44 +12212,63 @@ function competences(comp,niveau) {
             '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
             '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
         '</tbody></table>';
-    }
-    else if(comp.indexOf('Botte Secrete')!=-1){
-		texte = 'Attaque : <b>'
-			+Math.floor(2*att/3)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2))
-			+' => <b>'
-			+Math.round(3.5*Math.floor(2*att/3)+Math.floor((attbp+attbm)/2))
-			+'</b><br/>Dégâts : <b>'
-			+Math.floor(att/2)+'</b> D3 '+aff(Math.floor((degbp+degbm)/2))
-			+' => <b>'
-			+(2*Math.floor(att/2)+Math.floor((degbp+degbm)/2))
-			+'/'+(2*Math.floor(1.5*Math.floor(att/2))+Math.floor((degbp+degbm)/2))
-			+'</b>';
-	}
-	else if(comp.indexOf('Camouflage')!=-1) {
+	} else if(comp.indexOf("Botte Secrete")!=-1) {
+		modA = atttour?Math.floor(Math.floor(2*att/3)*atttour/100):0;
+		modD = degtour?Math.floor(Math.floor(att/2)*degtour/100):0;
+		texte = "Attaque : <b>"+Math.floor(2*att/3)+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(Math.floor((attbp+attbm)/2)) +
+		         " => <b>"+Math.round(
+		         	3.5*(Math.floor(2*att/3)+modA)+Math.floor((attbp+attbm)/2)
+		         )+"</b><br/>Dégâts : <b>"+Math.floor(att/2)+"</b> D3 ";
+		if(modD) {
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		}
+		texte += aff(Math.floor((degbp+degbm)/2))+" => <b>" +
+		         (2*(Math.floor(att/2)+modD)+Math.floor((degbp+degbm)/2)) +
+		         "/"+(
+		         	2*(Math.floor(1.5*Math.floor(att/2))+modD) +
+		         	Math.floor((degbp+degbm)/2)
+		         )+"</b>";
+	} else if(comp.indexOf('Camouflage')!=-1) {
 		var camou = getTalent('Camouflage');
 		texte = 'Pour conserver son camouflage, il faut réussir un jet sous:<br/>'
 			+'<i>Déplacement :</i> <b>'+Math.floor(0.75*camou)+'%</b><br/>'
 			+'<i>Attaque :</i> <b>perte automatique</b>.<br/>'
 			+'<i>Projectile Magique :</i> <b>'+Math.floor(0.25*camou)+'%</b>';
-	}
-	else if(comp.indexOf('Charger')!=-1) {
-		if(pvcourant<=0)
-			return '<i>On ne peut charger personne quand on est mort !</i>';
-		var portee = Math.min(
-			getPortee__Profil(reg+Math.floor(pvcourant/10))-Math.floor((fatigue+bmfatigue)/5),
-			vuetotale);
-		if(portee<1)
-			return '<b>Impossible de charger</b>';
-		else {
-			texte = 'Attaque : <b>'+att+'</b> D6 '+aff((attbp+attbm))
-				+' => <b>'+attmoy+'</b><br/>'
-				+'Dégâts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
-				+' => <b>'+degmoy+'/'+degmoycrit+'</b>'
-				+'<br/>Portée : <b>'+portee+'</b> case';
-			if(portee>1) texte += 's';
+	} else if(comp.indexOf("Charger")!=-1) {
+		if(pvcourant<=0) {
+			// N'est plus censé se produire : activation obligatoire si mort
+			return "<i>On ne peut charger personne quand on est mort !</i>";
 		}
-	}
-	else if(comp.indexOf('Connaissance des Monstres')!=-1) {
+		var portee = Math.min(
+			Math.max(
+				getPortee__Profil(reg+Math.floor(pvcourant/10)) -
+				Math.floor((fatigue+bmfatigue)/5),
+				1
+			),
+			vuetotale
+		);
+		if(portee<1) {
+			return "<b>Impossible de charger</b>";
+		}
+		texte = "Attaque : <b>"+att+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(attbp+attbm) +
+		         " => <b>"+attmoytour+"</b><br>" +
+		         "Dégâts : <b>"+deg+"</b> D3 ";
+		if(modD) {
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		}
+		texte += aff(degbp+degbm) +
+		         " => <b>"+degmoytour+"/"+degmoycrittour+"</b><br>" +
+		         "Portée : <b>"+portee+"</b> case";
+		if(portee>1) { texte += "s"; }
+	} else if(comp.indexOf('Connaissance des Monstres')!=-1) {
 		texte = 'Portée horizontale : <b>'+vuetotale+'</b> case';
 		if(vuetotale>1) texte += 's';
 		texte += '<br/>Portée verticale : <b>'+Math.ceil(vuetotale/2)+'</b> case';
@@ -12239,37 +12284,67 @@ function competences(comp,niveau) {
 			texte += 'Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
 				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b>';
 		}
-	}
-	else if(comp.indexOf('Contre-Attaquer')!=-1){
-		texte = 'Attaque : <b>'
-			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2))
-			+' => <b>'+Math.round(3.5*Math.floor(att/2)+Math.floor((attbp+attbm)/2))
-			+'</b><br/>Dégâts : <b>'+deg+'</b> D3 '+aff((degbp+degbm))
-			+' => <b>'+degmoy+'/'+degmoycrit+'</b>';
-	}
-	else if(comp.indexOf('Coup de Butoir')!=-1) {
-		var pc, lastmax=0, espdeg=0;
-		var notMaxedOut = false;
-		texte = 'Attaque : <b>'+att+'</b> D6 '+aff((attbp+attbm))
-			+' => <b>'+attmoy+'</b>';
-		for(var i=niveau ; i>0 ; i--) {
+	} else if(comp.indexOf("Contre-Attaquer")!=-1) {
+		modA = atttour?Math.floor(Math.floor(att/2)*atttour/100):0;
+		texte = "Attaque : <b>"+Math.floor(att/2)+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(Math.floor((attbp+attbm)/2)) +
+		         " => <b>"+Math.round(
+		         	3.5*(Math.floor(att/2)+modA)+Math.floor((attbp+attbm)/2)
+		         )+"</b><br>" +
+		         "Dégâts : <b>"+deg+"</b> D3 ";
+		if(modD) {
+			texte += "<i>"+aff(modD)+"D3</i> ";
+		}
+		texte += aff(degbp+degbm) +
+		         " => <b>"+degmoytour+"/"+degmoycrittour+"</b>";
+	} else if(comp.indexOf("Coup de Butoir")!=-1) {
+		var
+			i, pc,
+			lastmax=0,
+			jetdeg, espdeg=0,
+			notMaxedOut = false;
+		
+		texte = "Attaque : <b>"+att+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(attbp+attbm) +
+		         " => <b>"+attmoytour+"</b>";
+		for(i=niveau ; i>0 ; i--) {
 			pc = getTalent(comp,i);
-			if(lastmax!=0 && pc<=lastmax) continue;
-			var jetdeg = 2*Math.min(Math.floor(1.5*deg),deg+3*i)+(degbp+degbm);
-			texte += '<br/>Dégâts niv. '+i+' ('+(pc-lastmax)+'%) : <b>'+
-				Math.min(Math.floor(deg*1.5),deg+3*i)+'</b> D6 '+aff((degbp+degbm))+
-				' => <b>'+jetdeg+'/'+(jetdeg+2*Math.floor(deg/2))+'</b>';
+			if(lastmax!=0 && pc<=lastmax) {
+				// Si %CdB(i)<%CdB(i+1), on passe CdB(i)
+				continue;
+			}
+			jetdeg = 2*(
+			         	Math.min(Math.floor(1.5*deg), deg+3*i) + modD
+					) + degbp+degbm;
 			espdeg += (pc-lastmax)*jetdeg;
+			texte += "<br>Dégâts niv. "+i+" ("+(pc-lastmax)+"%) : <b>" +
+			         Math.min(Math.floor(deg*1.5),deg+3*i)+"</b> D3 ";
+			if(modD) {
+				texte += "<i>"+aff(modD)+"D3</i> ";
+			}
+			texte += aff(degbp+degbm) +
+			         " => <b>"+jetdeg +
+					 "/"+(jetdeg+2*Math.floor(deg/2))+"</b>";
 			lastmax = pc;
-			if(i<niveau) notMaxedOut = true;
+			if(i<niveau) {
+				// Si l'un des % de niveau inf est > % nivmax,
+				// on affiche l'espérance à la fin
+				notMaxedOut = true;
+			}
 		}
 		if(notMaxedOut) {
-			texte += '<br/><i>Dégâts moyens (si réussite) : <b>'+
-				Math.floor(10*espdeg/lastmax)/10+'/'+
-				(Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2))+'</b></i>';
+			texte += "<br><i>Dégâts moyens (si réussite) : <b>" +
+			         Math.floor(10*espdeg/lastmax)/10+"/" +
+			         (Math.floor(10*espdeg/lastmax)/10+2*Math.floor(deg/2)) +
+					 "</b></i>";
 		}
-	}
-	else if(comp.indexOf('Course')!=-1)
+	} else if(comp.indexOf('Course')!=-1)
 		texte = 'Déplacement gratuit : <b>'
 			+Math.floor(getTalent('Course')/2)
 			+' %</b> de chance';
@@ -12322,11 +12397,6 @@ function competences(comp,niveau) {
 		texte = 'Cette Compétence permet de combiner deux Potions pour '
 			+'en réaliser une nouvelle dont l\'effet est la somme '
 			+'des effets des potions initiales.';
-	else if(comp.indexOf('Miner')!=-1)	// obsolète
-		texte = 'Portée horizontale (officieuse) : <b>'
-			+2*vuetotale+'</b> cases<br/>'
-			+'Portée verticale (officieuse) : <b>'
-			+2*Math.ceil(vuetotale/2)+'</b> cases';
 	else if(comp.indexOf('Travail de la pierre')!=-1)
 		texte = 'Miner :<ul><li>Portée horizontale (officieuse) : <b>'
 			+2*vuetotale+'</b> cases</li>'
@@ -12341,17 +12411,27 @@ function competences(comp,niveau) {
 		texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier '
 			+'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite '
 			+'pour s\'inspirer, et laissez parler votre créativité.'
-	else if(comp.indexOf('Parer')!=-1)
-		texte = 'Jet de parade : <b>'
-			+Math.floor(att/2)+'</b> D6 '+aff(Math.floor((attbp+attbm))/2)
-			+' => <b>'
-			+Math.round(3.5*Math.floor(att/2)+Math.floor((attbp+attbm)/2))
-			+'</b><hr><i>Equivalent esquive : <b>'
-			+(Math.floor(att/2)+esq)+'</b> D6 '+aff(Math.floor((attbp+attbm)/2)+(esqbp+esqbm))
-			+' => <b>'
-			+(Math.round(3.5*(Math.floor(att/2)+esq)+Math.floor((attbp+attbm)/2))+(esqbp+esqbm))
-			+'</b></i>';
-	else if(comp.indexOf('Pistage')!=-1)
+	else if(comp.indexOf("Parer")!=-1) {
+		modA = atttour?Math.floor(Math.floor(att/2)*atttour/100):0;
+		texte = "Jet de parade : <b>"+Math.floor(att/2)+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(Math.floor((attbp+attbm)/2)) +
+		         " => <b>"+Math.round(
+		         	3.5*(Math.floor(att/2)+modA) + 
+		         	Math.floor((attbp+attbm)/2)
+		         )+"</b><hr>Equivalent esquive : <b>" +
+		         (Math.floor(att/2)+esq)+"</b> D6 ";
+		if(modA) {
+			texte += "<i>"+aff(modA)+"D6</i> ";
+		}
+		texte += aff(Math.floor((attbp+attbm)/2)+esqbp+esqbm) +
+		         " => <b>"+(Math.round(
+		         	3.5*(Math.floor(att/2)+modA+esq) + 
+		         	Math.floor((attbp+attbm)/2)
+				 )+esqbp+esqbm)+"</b></i>";
+	} else if(comp.indexOf('Pistage')!=-1)
 		texte = 'Portée horizontale : <b>'
 			+2*vuetotale+'</b> cases<br/>'
 			+'Portée verticale : <b>'
@@ -12371,21 +12451,34 @@ function competences(comp,niveau) {
 			+'préférable de préparer un repli stratégique pour déconcerter '
 			+'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! '
 			+'Quelle intelligence démoniaque.';
-	else if(comp.indexOf('Rotobaffe')!=-1) {
-		var Datt = att, vattbm = attbp+attbm;
-		var Ddeg = deg, vdegbm = degbp+degbm;
+	else if(comp.indexOf("RotoBaffe")!=-1) {
+		var
+			Datt = att, vattbm = attbp+attbm,
+			Ddeg = deg, vdegbm = degbp+degbm;
 		for(var i=1 ; i<niveau+2 ; i++) {
-			texte += '<b>Attaque n°'+i+' :</b><br/>'
-				+'Attaque : <b>'+Datt+'</b> D6 '+aff(vattbm)
-				+' => <b>'+(Math.round(3.5*Datt)+vattbm)+'</b><br/>'
-				+'Dégâts : <b>'+Ddeg+'</b> D3 '+aff(vdegbm)
-				+' => <b>'+(2*Ddeg+vdegbm)+'</b>';
-			Datt = Math.floor(0.75*Datt); vattbm = Math.floor(0.75*vattbm);
-			Ddeg = Math.floor(0.75*Ddeg); vdegbm = Math.floor(0.75*vdegbm);
-			if(i<niveau+1) texte += '<hr>';
+			texte += "<b>Attaque n°"+i+" :</b><br>" +
+			         "Attaque : <b>"+Datt+"</b> D6 ";
+			if(modA) {
+				texte += "<i>"+aff(modA)+"D6</i> ";
+			}
+			texte += aff(vattbm) +
+			         " => <b>"+(Math.round(3.5*(Datt+modA))+vattbm)+"</b><br>" +
+			         "Dégâts : <b>"+Ddeg+"</b> D3 ";
+			if(modD) {
+				texte += "<i>"+aff(modD)+"D3</i> ";
+			}
+			texte += aff(vdegbm) +
+			         " => <b>"+(2*(Ddeg+modD)+vdegbm) +
+			         "/"+(2*(Math.floor(1.5*Ddeg)+modD)+vdegbm)+"</b>";
+			Datt = Math.floor(0.75*Datt);
+			modA = atttour?Math.floor((Datt+atttourD)*atttour/100):0;
+			vattbm = Math.floor(0.75*vattbm);
+			Ddeg = Math.floor(0.75*Ddeg);
+			modD = degtour?Math.floor(Ddeg*degtour/100):0;
+			vdegbm = Math.floor(0.75*vdegbm);
+			if(i<niveau+1) { texte += "<hr>"; }
 		}
-	}
-	else if(comp.indexOf('Shamaner')!=-1)
+	} else if(comp.indexOf('Shamaner')!=-1)
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
 			+'des monstres en utilisant des champignons (de 1 à 3).';
 	return texte;
@@ -12464,9 +12557,10 @@ function sortileges(sort) {
 					"AN": true,
 					"AP": "AP1",
 					"Balayage": "Balayage",
+					"Charge": "Charger",
 					"CdB": "CdB1",
 					"Frénésie": "Frenesie",
-					"Rotobaffe": "RB1",
+					"RB": "RB1",
 					"GdS": "GdS",
 					"Siphon": "Siphon"
 				},
@@ -12474,7 +12568,6 @@ function sortileges(sort) {
 					"Botte Secrète": "BS"
 				},
 				"attx1/2": {
-					"Charge": "Charger",
 					"CA": "CA",
 					"Parer": "Parer1"
 				},
@@ -12539,7 +12632,7 @@ function sortileges(sort) {
 					"CA": "CA",
 					"CdB": "CdB1",
 					"Frénésie": "Frenesie",
-					"Rotobaffe": "RB1",
+					"RB": "RB1",
 					"Rafale": "Rafale",
 					"Vampi": "Vampi"
 				},
