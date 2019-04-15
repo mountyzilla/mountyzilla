@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.18.15
+// @version     1.2.19.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.18.1 15/04/2019",
+"	Dabihul, Nouvelles versions de AdA/AdD",
 "V1.2.18.15 29/03/2019",
 "	Correction simple quote dans toutes les missions",
 "V1.2.18.14 09/03/2019",
