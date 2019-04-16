@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.19.1
+// @version     1.2.19.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 
 try {
 const MZ_changeLog = [
-"V1.2.18.1 15/04/2019",
-"	Dabihul, Nouvelles versions de AdA/AdD",
+"V1.2.19.2 16/04/2019",
+"	Correction majuscules dans les talents",
+"V1.2.19.1 14/04/2019",
+"	Prise en compte des nouvelles AdX dans profil2",
 "V1.2.18.15 29/03/2019",
 "	Correction simple quote dans toutes les missions",
 "V1.2.18.14 09/03/2019",
@@ -2001,7 +2003,7 @@ arrayTalents = {
 	'Marquage':'Marquage',
 	'Melange Magique':'Melange',
 	'Miner':'Miner',
-	'Travail de la pierre':'Pierre',
+	'Travail de la Pierre':'Pierre',
 	'Necromancie':'Necro',
 	'Painthure de Guerre':'PG',
 	'Parer':'Parer',
@@ -2030,7 +2032,7 @@ arrayTalents = {
 	'Glue':'Glue',
 	'Griffe du Sorcier':'GdS',
 	'Hypnotisme':'Hypno',
-	'Identification des tresors':'IdT',
+	'Identification des Tresors':'IdT',
 	'Invisibilite':'Invi',
 	'Levitation':'Levitation',
 	'Precision Magique':'PreM',
@@ -12399,7 +12401,7 @@ function competences(comp,niveau) {
 		texte = 'Cette Compétence permet de combiner deux Potions pour '
 			+'en réaliser une nouvelle dont l\'effet est la somme '
 			+'des effets des potions initiales.';
-	else if(comp.indexOf('Travail de la pierre')!=-1)
+	else if(comp.indexOf('Travail de la Pierre')!=-1)
 		texte = 'Miner :<ul><li>Portée horizontale (officieuse) : <b>'
 			+2*vuetotale+'</b> cases</li>'
 			+'<li>Portée verticale (officieuse) : <b>'
@@ -12764,7 +12766,7 @@ function sortileges(sort) {
 	} else if(sort.indexOf('Hypnotisme')!=-1)
 		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
 			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
-	else if(sort.indexOf('Identification des tresors')!=-1)
+	else if(sort.indexOf('Identification des Tresors')!=-1)
 		texte = 'Permet de connaitre les caractéristiques et effets précis '
 			+'d\'un trésor.';
 	else if(sort.indexOf('Invisibilite')!=-1)
