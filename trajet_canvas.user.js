@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.7
+// @version 2.8
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -28,6 +28,8 @@
 //	Correction trajet en plusieurs étapes + changement de nom de la variable globale coeff (collision avec MZ)
 // V 2.7 03/05/2019 Roule'
 //	Adapation pour modification du message MH sur un lieu TP (plus d'espaces autour de "=")
+// V 2.8 03/05/2019 Roule'
+//	Adapation pour modification du tableau des ordres de gowap MH_Follower/FO_Ordres.php
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1724,26 +1726,30 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i=0;i<lignes.length;i++) {
 				//if(lignes[i].className == "mh_tdpage_fo") {
 				if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().indexOf('Aucun Ordre') == -1) { // correction par Vapulabehemot (82169) le 14/01/2015
-					ordre = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue;
-					point = ordre.match(expreg);
-					if(point) {
-						etapes_ini.push([parseInt(point[2]),  parseInt(point[3]),  parseInt(point[4]), (point[1] != "D\u00e9placement")]);
-						nb_ini++;
-					}
-					else if(ordre.match(/Arr\u00eat/)) {
-						//arret.push([-1, nb_ini]); ind_a = nb_ini;
-						if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
-					}
-					else {
-						point = ordre.match(expreg2);
+					// Rouletabille 09/05/2019 on n'a plus qu'un TD, les autres colonnes ont été trasnformées en TH
+					var tabTD = lignes[i].getElementsByTagName('td');
+					for (var j=0; j < tabTD.length; j++) {
+						ordre = tabTD[j].firstChild.nodeValue;
+						point = ordre.match(expreg);
 						if(point) {
-							if(soi && soi[3] == point[1]) {
-								arret.push([parseInt(point[2]), nb_ini]);
+							etapes_ini.push([parseInt(point[2]),  parseInt(point[3]),  parseInt(point[4]), (point[1] != "D\u00e9placement")]);
+							nb_ini++;
+						}
+						else if(ordre.match(/Arr\u00eat/)) {
+							//arret.push([-1, nb_ini]); ind_a = nb_ini;
+							if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
+						}
+						else {
+							point = ordre.match(expreg2);
+							if(point) {
+								if(soi && soi[3] == point[1]) {
+									arret.push([parseInt(point[2]), nb_ini]);
+								}
+								else {
+									arret.push([-1, nb_ini]);
+								}
+								ind_a = nb_ini;
 							}
-							else {
-								arret.push([-1, nb_ini]);
-							}
-							ind_a = nb_ini;
 						}
 					}
 				}
