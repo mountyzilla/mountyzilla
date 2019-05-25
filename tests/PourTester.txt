@@ -1,0 +1,15 @@
+Créer une page contenant le code à analyser avec un nom qui va déclencher MZ, par exemple CdM.competence.html pour une CdM
+Ajouter ceci dans l'entête pour basculer sur la version de dev de MZ
+
+<script>
+window.localStorage.setItem('MZ_SW__perso', 'mz_dev;https://mz.mh.raistlin.fr/mzdev/js/Tout_MZ.user.js');	// activer MZ dev
+window.localStorage.setItem('MZ_SW_Mountyzilla', 0);	// desactiver le MZ normal
+window.localStorage.setItem('MZ_dev', 1);	// pour passer en mode debug
+</script>
+
+Copier ce fichier html sur le serveur Raistlin dans /msdev/Tests/mountyhall
+
+Sous Firefox, patcher à la main l'adresse de la frame principale en mettant, par exemple
+https://mz.mh.raistlin.fr/mzdev/Tests/mountyhall/CdM.competence.html
+
+Rafraichir la frame pour tester

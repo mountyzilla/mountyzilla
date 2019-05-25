@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.19.2
+// @version     1.2.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.0 25/05/2019",
+"	Adaptation aux modifications des CdM par MH ",
 "V1.2.19.2 16/04/2019",
 "	Correction majuscules dans les talents",
 "V1.2.19.1 14/04/2019",
@@ -711,6 +713,13 @@ function insertText(next,text,bold) {
 		}
 	else
 		insertBefore(next,document.createTextNode(text));
+	}
+
+function appendThText(tr,text,bold) {
+	var th = document.createElement('th');
+	if(tr) tr.appendChild(th);
+	appendText(th,text,bold);
+	return th;
 	}
 
 function appendTdText(tr,text,bold) {
@@ -8016,67 +8025,15 @@ function traiteCdMcomp() {
 		return;
 	}
 
+	// Début de récupération de la CdM
+	cdm = msgEffet.innerText || msgEffet.textContent;	// récupération du contenu texte d'un élément HTML
+	if (MY_DEBUG) window.console.log('cdm=' + cdm);
+
 	// Teste si ce message du bot est un message de CdM
-	if(!document.evaluate(
-			"./p/text()[contains(.,'fait partie')]",
-			msgEffet, null, 9, null
-		).singleNodeValue) {
+	if (cdm.indexOf('Famille du monstre') < 0) {
 		if (MY_DEBUG) window.console.log('[MZ traiteCdMcomp] ce n\'est pas une CdM');
 		return;
 	}
-	
-	// Début de récupération de la CdM
-	/* 
-		Roule 10/03/2017 j'ai grandement simplifié ☺ ☺ ☺
-		zone à supprimer
-		traitement Armure Physique/Magique reporté en php
-
-	cdm = document.evaluate(
-		"./p/text()[contains(.,'fait partie')]",
-		msgEffet, null, 9, null
-	).singleNodeValue.nodeValue+'\n';
-	
-	var tbody = document.evaluate(
-		"descendant::table/tbody",
-		msgEffet, null, 9, null
-	).singleNodeValue;
-	var nomStat = document.evaluate(
-		"./tr/td[1]/b/text()",
-		tbody, null, 7, null
-	);
-	var valStat = document.evaluate(
-		"./tr/td[2]/descendant::text()",
-		tbody, null, 7, null
-	);
-	var i=0;
-	while(i<nomStat.snapshotLength) {
-		if(nomStat.snapshotItem(i).nodeValue.indexOf('Armure Physique')!=-1) {
-			cdm += 'Armure : ';
-			var armp = getNonNegInts(valStat.snapshotItem(i).nodeValue);
-			var armm = getNonNegInts(valStat.snapshotItem(i+1).nodeValue);
-			if(valStat.snapshotItem(i).nodeValue.indexOf('(inf')!=-1) {
-				armp = [0,armp[0]];
-			}
-			if(valStat.snapshotItem(i+1).nodeValue.indexOf('(inf')!=-1) {
-				armm = [0,armm[0]];
-			}
-			if(valStat.snapshotItem(i).nodeValue.indexOf('(sup')!=-1 ||
-				valStat.snapshotItem(i+1).nodeValue.indexOf('(sup')!=-1) {
-				cdm += 'adj (supérieur à '+(armp[0]+armm[0]);
-			} else {
-				cdm += 'adj (entre '+(armp[0]+armm[0])+' et '+(armp[1]+armm[1]);
-			}
-			cdm += ')\n';
-			i++;
-		} else {
-			cdm += nomStat.snapshotItem(i).nodeValue+
-				' '+valStat.snapshotItem(i).nodeValue+'\n';
-		}
-		i++;
-	}
-	*/
-	//cdm = msgEffet.innerText || msgEffet.textContent;	// récupération du contenu texte d'un élément HTML
-	//if (MY_DEBUG) window.console.log('cmd=' + cdm);
 
 	// envoi au serveur (PHP) d'un objet avec
 	//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
@@ -8170,32 +8127,25 @@ function traiteCdMcomp() {
 	}
 
 	// Insertion de l'estimation des PV restants
-	/*
-	var pv = valStat.snapshotItem(1).nodeValue;
-	if(pv.indexOf("entre")==-1) {
-		return;
-	}
-	var trPv = document.evaluate(
-		"//tr[contains(td/b/text(),'Points de Vie')]",
-			msgEffet, null, 9, null).singleNodeValue;
-	tdPv = trPv.cells[1];
-	txtPv = tdPv.innerText || tdPv.textContent;
-	if (MY_DEBUG) window.console.log('txtPv=' + txtPv);
-	if(0) { //pv) {	// bloqué en attendant correction
-	*/
 	if (MY_DEBUG) window.console.log('txtBlessure=' + txtBlessure + ', txtPv=' + txtPv);
 	if (txtBlessure !== undefined && txtPv !== undefined) {
 		var pv = getPVsRestants(txtPv,txtBlessure);
 		if (MY_DEBUG) window.console.log('pv=' + pv);
 		if (pv) {	// pv null si le monstre n'est pas blessé
 			var trBless = document.evaluate(
-				"//tr[contains(td/b/text(),'Blessure')]",
+				"//tr[contains(th/text(),'Blessure')]",
 					msgEffet, null, 9, null).singleNodeValue;
 			var tr = document.createElement('tr');
 			trBless.parentNode.insertBefore(tr, trBless.nextSibling);
 			appendTr(trBless);
-			appendTdText(tr, pv[0], true);
-			appendTdText(tr, pv[1], true);
+			var th = appendThText(tr, pv[0], false);
+			th.className = trBless.cells[0].className;
+			var td = appendTdText(tr, pv[1], false);
+			var eSpan = document.createElement('span');
+			appendText(eSpan, ' (Calculé par Mountyzilla)');
+			eSpan.style.fontSize = "small";
+			eSpan.style.fontStyle = "italic";
+			td.appendChild(eSpan);
 		}
 	}
 }
