@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.20
+// @version     1.2.20.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.2 25/05/2019",
+"	Gestion des Parasitus pour les missions",
 "V1.2.20.1 25/05/2019",
 "	Correction de la cible en cas de mission demandant un kill de Crasc + message d'alerte en cas de fumeux",
 "V1.2.20.0 25/05/2019",
@@ -9885,7 +9887,8 @@ function retrieveCDMsOld() {
 					}
 				}
 				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant computeMission');
-				computeMission(begin2,end2);
+				//computeMission(begin2,end2);
+				computeMission(1, nbMonstres);
 				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant filtreMonstres');
 				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres fin');
@@ -9931,9 +9934,22 @@ function computeMission(begin,end) {
 							} else if (nom.indexOf('maexus')!=-1) {
 								// pas éligible
 							} else if (nom.indexOf('parasitus')!=-1) {
+								if (nom.match(/^crasc parasitus \[/ui)) {
+									// on ne peut pas savoir
+									mobMissionPeutEtre = true;
+								} else {
+									// c'est un monstre de la race des Crasc Parasitus
+									mobMission = false;
+								}
+							} else {
+								mobMission = true;
+							}
+						} else if (race == 'crasc parasitus') {
+							if (nom.match(/^crasc parasitus \[/ui)) {
 								// on ne peut pas savoir
 								mobMissionPeutEtre = true;
 							} else {
+								// c'est un monstre de la race des Crasc Parasitus
 								mobMission = true;
 							}
 						} else {
@@ -9978,8 +9994,10 @@ function computeMission(begin,end) {
 				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
 			} else if (mobMissionPeutEtre) {
 				mess += mess ? '\n\n' : '';
-				mess += 'Impossible de savoir pour la Mission '+num+' :\n'+obMissions[num].libelle;
+				mess += 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n';
+				mess += 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"\n';
 				bPeutEtreIcone = true;
+				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
 			}
 		}
 		if(mess) {
