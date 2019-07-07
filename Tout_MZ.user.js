@@ -36,8 +36,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.1 25/05/2019",
+"	Correction de la cible en cas de mission demandant un kill de Crasc + message d'alerte en cas de fumeux",
 "V1.2.20.0 25/05/2019",
-"	Adaptation aux modifications des CdM par MH ",
+"	Adaptation aux modifications des CdM par MH",
 "V1.2.19.2 16/04/2019",
 "	Correction majuscules dans les talents",
 "V1.2.19.1 14/04/2019",
@@ -9914,14 +9916,29 @@ function computeMission(begin,end) {
 	
 	for(var i=end ; i>=begin ; i--) {
 		var mess = '';
+		var bPeutEtreIcone = false;
 		for(var num in obMissions) {
 			var mobMission = false;
+			var mobMissionPeutEtre = false;
 			switch(obMissions[num].type) {
 				case 'Race':
 					var race = epure(obMissions[num].race.toLowerCase());
 					var nom = epure(getMonstreNom(i).toLowerCase());
 					if(nom.indexOf(race)!=-1) {
-						mobMission = true;
+						if (race == 'crasc') {
+							if (nom.indexOf('medius')!=-1) {
+								// pas éligible
+							} else if (nom.indexOf('maexus')!=-1) {
+								// pas éligible
+							} else if (nom.indexOf('parasitus')!=-1) {
+								// on ne peut pas savoir
+								mobMissionPeutEtre = true;
+							} else {
+								mobMission = true;
+							}
+						} else {
+							mobMission = true;
+						}
 					}
 					break;
 				case 'Niveau':
@@ -9959,12 +9976,22 @@ function computeMission(begin,end) {
 			if(mobMission) {
 				mess += mess ? '\n\n' : '';
 				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
+			} else if (mobMissionPeutEtre) {
+				mess += mess ? '\n\n' : '';
+				mess += 'Impossible de savoir pour la Mission '+num+' :\n'+obMissions[num].libelle;
+				bPeutEtreIcone = true;
 			}
 		}
 		if(mess) {
 			var td = getMonstreNomNode(i);
 			appendText(td,' ');
-			td.appendChild(createImage(urlImg,mess));
+			var myURL;
+			if (bPeutEtreIcone) {
+				myURL = URL_MZimg+'missionX.png';
+			} else {
+				myURL = urlImg;
+			}
+			td.appendChild(createImage(myURL,mess));
 		}
 	}
 }
@@ -10060,8 +10087,8 @@ function updateTactique() {
 function filtreMonstres() {
 // = Handler universel pour les fonctions liées aux monstres
 	var urlImg = URL_MZimg+'Competences/ecritureMagique.png',
-		urlEnchantImg = URL_MZimg+'images/enchant.png';
-	
+	urlEnchantImg = URL_MZimg+'enchant.png';
+
 	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
 	var useCss = MY_getValue(numTroll+'.USECSS')=='true';
 	var noGowapsS = saveCheckBox(checkBoxGowapsS,'NOGOWAPS');
@@ -11002,7 +11029,7 @@ function do_vue() {
 		
 		displayScriptTime();
 	} catch(e) {
-		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
+		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).");
 		window.console.error(traceStack(e, 'vue'));
 	}
 }
