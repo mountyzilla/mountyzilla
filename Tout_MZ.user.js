@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.20.2
+// @version     1.2.20.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.3 02/09/2019",
+"	Compétence golem vers l'anatroliseur",
 "V1.2.20.2 25/05/2019",
 "	Gestion des Parasitus pour les missions",
 "V1.2.20.1 25/05/2019",
@@ -250,6 +252,8 @@ const MZ_changeLog = [
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
 			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
+		À traiter : ambiguité sur le nom de monstres de mission : Shai, Ombre, Geck'oo et Boujd'la
+		Sans doute à corriger, la compétence Baroufle pour le lien vers l'anatroliseur
 		Prévision des DLA de monstre
 		Niveau des monstres à la méthode Roule'
 	Raistlin
@@ -9952,6 +9956,7 @@ function computeMission(begin,end) {
 								// c'est un monstre de la race des Crasc Parasitus
 								mobMission = true;
 							}
+						// À traiter : Shai, Ombre, Geck'oo et Boujd'la
 						} else {
 							mobMission = true;
 						}
@@ -12014,7 +12019,8 @@ var arrayModifAnatroll = {
 	'HE':'Hurlement',
 	//'Insultes':'Insu',
 	'Pistage':'Pist',
-	'PuC':'Planter'
+	'PuC':'Planter',
+	'Golemo':'Golem',
 }
 
 function setTalent(nom,pc,niveau,sousCompetences) {
@@ -12033,7 +12039,6 @@ function setTalent(nom,pc,niveau,sousCompetences) {
 		case 'IdT':
 			nomEnBase += niveau;
 			break;
-		case 'Golemo':
 		case 'Piege':
 			for (var i=0 ; i < sousCompetences.length ; i++) {
 				urlAnatrolliseur += (arrayModifAnatroll[sousCompetences[i]] ? 
@@ -12053,6 +12058,7 @@ function setTalent(nom,pc,niveau,sousCompetences) {
 			urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ? 
 				arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
 	}
+	//debugMZ("setTalent: nom=" + nom + ", pc=" + pc + ", niveau=" + niveau + ", sousCompetences=" + JSON.stringify(sousCompetences) + "=>setValue(" + numTroll+'.talent.'+nomEnBase+", " + pc + ")");
 	MY_setValue(numTroll+'.talent.'+nomEnBase,pc);
 }
 
