@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.8
+// @version 2.9
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -30,6 +30,8 @@
 //	Adapation pour modification du message MH sur un lieu TP (plus d'espaces autour de "=")
 // V 2.8 03/05/2019 Roule'
 //	Adapation pour modification du tableau des ordres de gowap MH_Follower/FO_Ordres.php
+// V 2.9 07/09/2019 Roule'
+//	Adapation pour modification du tableau du profil de suivant MH_Follower/FO_Profil.php
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -2528,13 +2530,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		else if(page == "profil_gow") {
 			partd = document.getElementsByTagName('td');
-			curr = 0;
+			//curr = 0;
 			cadre_dla = null;
 			for (i=0;i<partd.length;i++) {
 				if (partd[i].className == "mh_tdpage_fo") {
-					curr++;
-					if(curr == 2) {
-						cadre_dla = partd[i];
+					// Roule 07/09/2019 adaptation nouvelle présentation
+					var tx = partd[i].innerText;
+					//window.console.log('curr=' + curr + ', partd[' + i + ']=' + tx);
+					//curr++;
+					// if(curr == 2) {
+						// cadre_dla = partd[i];
+						// break;
+					// }
+					if (tx.indexOf('Durée normale') >= 0) {
+						cadre_dla = partd[i+1];
 						break;
 					}
 				}
@@ -2543,8 +2552,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				//num_gow = location.href.split("=")[1];
 				num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
 				charge_trajet();
-				duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
+				// Roule 07/09/2019 adaptation nouvelle présentation
+				//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
+				duree = cadre_dla.innerText.match(/\d+/g);
 				dla = parseInt(duree[0])*60+parseInt(duree[1]);
+				//window.console.log('dla=' + dla);
 				nb_ajout = etapes.length;
 				sauve_trajet();
 			}
