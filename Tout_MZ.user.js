@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.20.3
+// @version     1.2.20.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.4 03/10/2019",
+"	Adaptation modif MH de la page des suivants",
 "V1.2.20.3 02/09/2019",
 "	Compétence golem vers l'anatroliseur",
 "V1.2.20.2 25/05/2019",
@@ -4422,22 +4424,40 @@ function do_equipgowap() {
 function MZ_setCarteUnGogoHTML5() {
 	// fabriquer la liste des positions successives
 	var listeDepl = [];	// ce sera un tableau d'objets
-	// position courrante
+	// position courante
 	var eTitle = document.getElementById('titre2');
-	var tabNomID = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'[')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/(\d+)\.(.*)/);
-	var tabPos = document.evaluate(".//table/descendant::table/tbody/tr/td/text()[contains(.,'X =')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
-	listeDepl.push({x: parseInt(tabPos[0])	// ParseInt obligatoire, javascript language de m*rd*
-		, y: parseInt(tabPos[1])
-		, n: parseInt(tabPos[2])
-		, nom: tabNomID[2]
-		, id: tabNomID[1]});
+	/*
+	var tabNomID = document.evaluate(".//table/tbody/tr/th/text()[contains(.,'[')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/(\d+)\.(.*)/);
+	var tabPos = document.evaluate(".//table/tbody/tr/th/text()[contains(.,'X =')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
+	*/
 	// déplacements
 	var lignes = eTitle.parentNode.getElementsByTagName('tr');
 	for(var i=0 ; i<lignes.length ; i++) {
+		//window.console.log('MZ_setCarteUnGogoHTML5 ' + i +  ' className=' + lignes[i].className);
+		//window.console.log('MZ_setCarteUnGogoHTML5 ' + i +  lignes[i].innerHTML);
+		if(lignes[i].className == 'mh_tdtitre_fo') {
+			var tds = lignes[i].getElementsByTagName('div');
+			for (var j=0; j < tds.length; j++) {
+				tabmatch = tds[j].innerText.match(/(\d+) *(.*\[.*\].*)$/);
+				if (tabmatch) var tabNomID = tabmatch;
+				tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-.\d+).*Y = (-.\d+).*N = (-.\d+)/i);
+				if (tabmatch) var tabPos = tabmatch;
+			}
+		if (tabPos != undefined && tabNomID != undefined) {	// null dans le cas des Golems
+			listeDepl.push({x: parseInt(tabPos[2])	// ParseInt obligatoire, javascript language de m*rd*
+				, y: parseInt(tabPos[3])
+				, n: parseInt(tabPos[4])
+				, nom: tabNomID[2]
+				, id: tabNomID[1]});
+		} else {
+			return;
+		}
+		}
 		if(lignes[i].className == 'mh_tdpage_fo') {
-			if (lignes[i].getElementsByTagName('td')[2] === undefined) return;	// cas des Golems
-			var point = lignes[i].getElementsByTagName('td')[2].firstChild.nodeValue.match(/X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
-			if(point) listeDepl.push({x: parseInt(point[1]), y: parseInt(point[2]), n: parseInt(point[3])});
+			var etd = lignes[i].getElementsByTagName('td')[0];
+			if (etd === undefined) return;	// cas des Golems
+			var point = etd.firstChild.nodeValue.match(/X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+			if (point) listeDepl.push({x: parseInt(point[1]), y: parseInt(point[2]), n: parseInt(point[3])});
 		}
 	}
 	MZ_showCarteBottom([listeDepl]);	// L'arg est un tableau de tableaux d'objets
