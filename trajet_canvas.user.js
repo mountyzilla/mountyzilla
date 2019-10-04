@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.10
+// @version 2.11
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -34,6 +34,8 @@
 //	Adapation pour modification du tableau du profil de suivant MH_Follower/FO_Profil.php
 // V 2.10 03/10/2019 Roule'
 //	Adaptation modif MH de la page des suivants
+// V 2.11 04/11/2019 Roule'
+//	Correction icône de copie de la position de départ
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1699,17 +1701,24 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function ini_trajet() {
 			var ind_a = -1;
 			//var pos = document.getElementsByTagName('p')[0].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
+			var eTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('th')[0];
+			var texteTitre = eTitre.innerHTML;
 			// Roule 05/11/2016 protection contre le golems qui provoquent une erreur
-			var texteTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('th')[0].innerHTML;
 			if (texteTitre.match(/Golem/i)) return;
-			var pos = texteTitre.match(/X[ \n]*= (-?\d+) \| Y[ \n]*= (-?\d+) \| N[ \n]*= (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015, ajout \n Rouletabille 12/11/2018
+			//var noeud = document.getElementsByTagName('p')[2];
+			//var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
+			//var noeud = document.getElementsByTagName('form')[0];	// Roule 03/10/2019
+			var tabDiv = eTitre.getElementsByTagName('div');		// Roule 04/10/2019
+			for (var i = 0; i < tabDiv.length; i++) {
+				var pos = tabDiv[i].innerText.match(/X[ \n]*= (-?\d+) \| Y[ \n]*= (-?\d+) \| N[ \n]*= (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015, ajout \n Rouletabille 12/11/2018
+				if (!pos) continue;
+				var noeud = tabDiv[i];
+				break;
+			}
 			if (!pos) {
 				window.console.log("trajet_canvas : pas de position\n" + texteTitre);
 				return;
 			}
-			//var noeud = document.getElementsByTagName('p')[2];
-			//var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
-			var noeud = document.getElementsByTagName('form')[0];
 
 			depart = [parseInt(pos[1]),parseInt(pos[2]),parseInt(pos[3])];
 			expreg = /(.*) .*X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
@@ -1721,7 +1730,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				var dessin = dessine_copie();
 				dessin.style.marginLeft = "4px";
 				addEvent(dessin, "click", copier_depart, true);
-				noeud.parentNode.insertBefore(dessin, noeud);
+				noeud.appendChild(dessin);
+				//noeud.parentNode.insertBefore(dessin, noeud);
 			}
 
 			charge_trajet(); introspection();
