@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.11
+// @version 2.12
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -34,14 +34,21 @@
 //	Adapation pour modification du tableau du profil de suivant MH_Follower/FO_Profil.php
 // V 2.10 03/10/2019 Roule'
 //	Adaptation modif MH de la page des suivants
-// V 2.11 04/11/2019 Roule'
+// V 2.11 04/10/2019 Roule'
 //	Correction icône de copie de la position de départ
+// V 2.12 16/10/2019 Roule'
+//	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
 
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var ie = (window.attachEvent)? true:false;
+	if("function" != typeof isPage) {
+		function isPage(url) {
+			return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
+		}
+	}
 	if("function" != typeof MY_getValue) {
 		//if(typeof localStorage == "object") { 
 		if(typeof window.localStorage == "object") { // correction par Vapulabehemot (82169) le 14/01/2015
@@ -414,7 +421,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return entree;
 		}
 		function trim(str) {
-		   return str.replace(/(^\s*)|(\s*$)/g,"");
+			return str.replace(/(^\s*)|(\s*$)/g,"");
 		}
 
 		////////////////////////////////////////////////////////////
@@ -428,7 +435,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					typ_gow = parseInt(param[3]);
 					if (typ_gow == 2) typ_gow = 3;
 					dla = parseInt(param[5]);
-					coord = param[7].split(",");
+					var coord = param[7].split(",");
 					etapes_ini = new Array();
 					if(coord.length > 1) {
 						nb_ini = Math.floor(coord.length/3);
@@ -1699,6 +1706,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return (jours? jours+"jr ":"")+heures+"h "+minutes+"mn";
 		}
 		function ini_trajet() {
+/* à supprimer, réécriture avec utilisation de MZ_analyse_page_ordre_suivant
 			var ind_a = -1;
 			//var pos = document.getElementsByTagName('p')[0].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
 			var eTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('th')[0];
@@ -1731,6 +1739,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				dessin.style.marginLeft = "4px";
 				addEvent(dessin, "click", copier_depart, true);
 				noeud.appendChild(dessin);
+				MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
 				//noeud.parentNode.insertBefore(dessin, noeud);
 			}
 
@@ -1741,7 +1750,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i=0;i<lignes.length;i++) {
 				//if(lignes[i].className == "mh_tdpage_fo") {
 				if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().indexOf('Aucun Ordre') == -1) { // correction par Vapulabehemot (82169) le 14/01/2015
-					// Rouletabille 09/05/2019 on n'a plus qu'un TD, les autres colonnes ont été trasnformées en TH
+					// Rouletabille 09/05/2019 on n'a plus qu'un TD, les autres colonnes ont été transformées en TH
 					var tabTD = lignes[i].getElementsByTagName('td');
 					for (var j=0; j < tabTD.length; j++) {
 						ordre = tabTD[j].firstChild.nodeValue;
@@ -1770,6 +1779,43 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				}
 			}
 			if(ind_a != nb_ini) arret.push([-1, nb_ini]);
+*/
+			depart = [MZ_analyse_page_ordre_suivant.result.x, MZ_analyse_page_ordre_suivant.result.y, MZ_analyse_page_ordre_suivant.result.n];	// variable globale "depart"
+			if(cadrable) {	// placer le petit double rectangle cliquable permettant de copier la loc vers la frame du bas
+				var dessin = dessine_copie();
+				dessin.style.marginLeft = "4px";
+				addEvent(dessin, "click", copier_depart, true);
+				MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
+			}
+
+			charge_trajet();	// chargement de certaines (!) variables globales à partir du LocalStorage
+			introspection();	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
+
+			var ind_a = -1;
+			etapes_ini = new Array(); arret = new Array(); nb_ini = 0;
+			for(var i=0; i<MZ_analyse_page_ordre_suivant.result.ordres.length; i++) {
+				var thisOrdre = MZ_analyse_page_ordre_suivant.result.ordres[i];
+				if (thisOrdre.x !== undefined) {	// c'est un déplacement (ou ébrouage)
+					etapes_ini.push([thisOrdre.x, thisOrdre.y, thisOrdre.n, (thisOrdre.ordre.substring(0, 11) != "Déplacement")]);
+					nb_ini++;
+				} else if(thisOrdre.ordre.match(/Arrêt/)) {
+					//arret.push([-1, nb_ini]); ind_a = nb_ini;
+					if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
+				} else {
+					point = thisOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
+					if(point) {	// si le suivant suit le Troll, on peut dessiner sa trajectoire
+						//window.console.log('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
+						if(soi && soi[3] == point[1]) {
+							arret.push([parseInt(point[2]), nb_ini]);
+						} else {
+							arret.push([-1, nb_ini]);
+						}
+						ind_a = nb_ini;
+					}
+				}
+			}
+			if(ind_a != nb_ini) arret.push([-1, nb_ini]);
+
 			nb_a = arret.length;
 			nb_ajout = etapes.length;
 			calc_etapes();
@@ -1782,11 +1828,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			lister_etapes(); charger_fav(); lister_fav();
 			trace_trajet_prev();
 		}
-		function introspection() {
+		function introspection() {	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
 			if(window.parent && window.parent.parent && window.parent.parent.frames.length > 1) {
 				var pos = (window.parent.parent.frames[0].document.getElementsByTagName('div')[1].innerHTML).match(/X=(-?\d+)\|Y=(-?\d+)\|N=(-?\d+)/);
 				if(pos) {
-					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].firstChild.innerHTML];
+					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].firstElementChild.innerHTML];
 				}
 			}
 		}
@@ -2447,9 +2493,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			else {
 				charger_fav()
-				document.forms[0].elements[1].value = favori[choix_fav][1];
-				document.forms[0].elements[2].value = favori[choix_fav][2];
-				document.forms[0].elements[3].value = favori[choix_fav][3];
+				if (favori[choix_fav]) {
+					document.forms[0].elements[1].value = favori[choix_fav][1];
+					document.forms[0].elements[2].value = favori[choix_fav][2];
+					document.forms[0].elements[3].value = favori[choix_fav][3];
+				}
 			}
 		}
 		function sauver_fav() {
@@ -2524,7 +2572,69 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		data_svg["annuler"] = [[0, 1,1], [1, 18,18], [0, 19,1], [1, 1,18]];
 
 		var cadrable = window.parent && window.parent.frames.length > 1 && window.parent.frames[0].document;
-		
+
+var MZ_analyse_page_ordre_suivant;
+if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
+	// Roule 07/10/2019
+	// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
+	// rend un object, par exemple
+	var MZ_analyse_page_ordre_suivant = {
+		'result': {ordres: []},
+		'init': function() {
+			// façon blindée de tester la variable MY_DEBUG
+			if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('start MZ_analyse_page_ordre_suivant.init');
+			try {
+				var eTitle = document.getElementById('titre2');
+				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'titre2'
+				//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('eTitle.nextSibling=' + eTitle.parentNode);
+				var lignes = eTitle.parentNode.getElementsByTagName('tr');
+				for(var i=0 ; i<lignes.length ; i++) {
+					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
+					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
+					if(lignes[i].className == 'mh_tdtitre_fo') {
+						var tds = lignes[i].getElementsByTagName('div');
+						for (var j=0; j < tds.length; j++) {
+							//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
+							var tabmatch = tds[j].innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
+							if (tabmatch) {
+								// ID, Nom
+								this.result.id = tabmatch[1].trim();
+								this.result.nom = tabmatch[2].trim();
+							}
+							tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
+							if (tabmatch) {
+								// PA, x, y, n
+								this.result.PA = parseInt(tabmatch[1]);
+								this.result.x = parseInt(tabmatch[2]);
+								this.result.y = parseInt(tabmatch[3]);
+								this.result.n = parseInt(tabmatch[4]);
+								// Trajet_canvas a besoin d'un pointeur vers cette div
+								this.result.eltPos = tds[j];
+							}
+						}
+					}
+					if(lignes[i].className == 'mh_tdpage_fo') {
+						var etd = lignes[i].getElementsByTagName('td')[0];
+						if (etd !== undefined) {	// undefined dans le cas des Golems
+							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant etd ' + etd.firstChild.nodeValue);
+							var tabmatch = etd.firstChild.nodeValue.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+							if (tabmatch) {
+								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
+							} else {
+								this.result.ordres.push({ordre: etd.firstChild.nodeValue.trim()});
+							}
+						}
+					}
+				}
+				if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('fin MZ_analyse_page_ordre_suivant ' + JSON.stringify(this.result));
+			} catch(e) {
+				window.console.log('Exception dans MZ_analyse_page_ordre_suivant.init ' + e);
+			}
+		}
+	}
+	MZ_analyse_page_ordre_suivant.init();
+}
+
 		if(page == "trajet") {
 			var ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
 			var noeud_courant = 0;

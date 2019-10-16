@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.20.4
+// @version     1.2.20.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.2.20.5 16/10/2019",
+"	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant",
 "V1.2.20.4 03/10/2019",
 "	Adaptation modif MH de la page des suivants",
 "V1.2.20.3 02/09/2019",
@@ -474,6 +476,12 @@ function debugMZ(str){
             window.console.debug(str);
         }
     }
+}
+
+if("function" != typeof isPage) {
+	function isPage(url) {
+		return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
+	}
 }
 
 function FF_XMLHttpRequest(MY_XHR_Ob) {
@@ -4420,16 +4428,84 @@ function do_equipgowap() {
 
 // x~x ordresgowap
 
+var MZ_analyse_page_ordre_suivant;
+if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
+	// Roule 07/10/2019
+	// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
+	// rend un object, par exemple
+	var MZ_analyse_page_ordre_suivant = {
+		'result': {ordres: []},
+		'init': function() {
+			// façon blindée de tester la variable MY_DEBUG
+			if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('start MZ_analyse_page_ordre_suivant.init');
+			try {
+				var eTitle = document.getElementById('titre2');
+				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'titre2'
+				//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('eTitle.nextSibling=' + eTitle.parentNode);
+				var lignes = eTitle.parentNode.getElementsByTagName('tr');
+				for(var i=0 ; i<lignes.length ; i++) {
+					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
+					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
+					if(lignes[i].className == 'mh_tdtitre_fo') {
+						var tds = lignes[i].getElementsByTagName('div');
+						for (var j=0; j < tds.length; j++) {
+							//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
+							var tabmatch = tds[j].innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
+							if (tabmatch) {
+								// ID, Nom
+								this.result.id = tabmatch[1].trim();
+								this.result.nom = tabmatch[2].trim();
+							}
+							tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
+							if (tabmatch) {
+								// PA, x, y, n
+								this.result.PA = parseInt(tabmatch[1]);
+								this.result.x = parseInt(tabmatch[2]);
+								this.result.y = parseInt(tabmatch[3]);
+								this.result.n = parseInt(tabmatch[4]);
+								// Trajet_canvas a besoin d'un pointeur vers cette div
+								this.result.eltPos = tds[j];
+							}
+						}
+					}
+					if(lignes[i].className == 'mh_tdpage_fo') {
+						var etd = lignes[i].getElementsByTagName('td')[0];
+						if (etd !== undefined) {	// undefined dans le cas des Golems
+							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant etd ' + etd.firstChild.nodeValue);
+							var tabmatch = etd.firstChild.nodeValue.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+							if (tabmatch) {
+								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
+							} else {
+								this.result.ordres.push({ordre: etd.firstChild.nodeValue.trim()});
+							}
+						}
+					}
+				}
+				if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('fin MZ_analyse_page_ordre_suivant ' + JSON.stringify(this.result));
+			} catch(e) {
+				window.console.log('Exception dans MZ_analyse_page_ordre_suivant.init ' + e);
+			}
+		}
+	}
+	MZ_analyse_page_ordre_suivant.init();
+}
+
 // version Roule' janvier 2017
 function MZ_setCarteUnGogoHTML5() {
 	// fabriquer la liste des positions successives
 	var listeDepl = [];	// ce sera un tableau d'objets
+	listeDepl = MZ_analyse_page_ordre_suivant.result.ordres.slice(0);	// clone array
+	listeDepl.unshift(MZ_analyse_page_ordre_suivant.result);	// le result de MZ_analyse_page_ordre_suivant a déjà juste les bonne propriétés
+
+	/* à supprimer, remplacé par MZ_analyse_page_ordre_suivant
+	listeDepl.push({x: parseInt(tabPos[2])	// ParseInt obligatoire, javascript language de m*rd*
+		, y: parseInt(tabPos[3])
+		, n: parseInt(tabPos[4])
+		, nom: tabNomID[2]
+		, id: tabNomID[1]});
+	
 	// position courante
 	var eTitle = document.getElementById('titre2');
-	/*
-	var tabNomID = document.evaluate(".//table/tbody/tr/th/text()[contains(.,'[')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/(\d+)\.(.*)/);
-	var tabPos = document.evaluate(".//table/tbody/tr/th/text()[contains(.,'X =')]", eTitle.parentNode, null, 9, null).singleNodeValue.nodeValue.match(/-?\d+/g);
-	*/
 	// déplacements
 	var lignes = eTitle.parentNode.getElementsByTagName('tr');
 	for(var i=0 ; i<lignes.length ; i++) {
@@ -4449,9 +4525,9 @@ function MZ_setCarteUnGogoHTML5() {
 				, n: parseInt(tabPos[4])
 				, nom: tabNomID[2]
 				, id: tabNomID[1]});
-		} else {
-			return;
-		}
+			} else {
+				return;
+			}
 		}
 		if(lignes[i].className == 'mh_tdpage_fo') {
 			var etd = lignes[i].getElementsByTagName('td')[0];
@@ -4460,6 +4536,7 @@ function MZ_setCarteUnGogoHTML5() {
 			if (point) listeDepl.push({x: parseInt(point[1]), y: parseInt(point[2]), n: parseInt(point[3])});
 		}
 	}
+	*/
 	MZ_showCarteBottom([listeDepl]);	// L'arg est un tableau de tableaux d'objets
 }
 
@@ -12995,10 +13072,6 @@ function do_profil2()
 *******************************************************************************/
 
 // x~x script_principal
-
-function isPage(url) {
-	return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
-}
 
 // x~x md5.js
 /*
