@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.12
+// @version 2.13
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -38,6 +38,8 @@
 //	Correction icône de copie de la position de départ
 // V 2.12 16/10/2019 Roule'
 //	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant
+// V 2.13 25/10/2019 Roule'
+//	Ajout du surlignage de la position du suivant au survol de la souris dans la liste des suivants
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1448,10 +1450,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function surligne_point() {
 			var ref = this.id;
+			var couleur = "rgba(0,0,0,0.8)";
 			if(ref == "etape_depart") {
 				point_surligne = depart;
-			}
-			else {
+			} else if (page == "suivants") {	// Roule 25/10/2019 pour surlignage position suivant
+				point_surligne = [this.suivant[2], this.suivant[3], 0, 0];
+				couleur = "rgba(0, 255, 0, 1)";
+			} else {
 				point_surligne = choix_ini? etapes_tt[parseInt(ref.split("_")[1])]:etapes[parseInt(ref.split("_")[1])];
 			}
 			dessin = document.getElementById("surligne");
@@ -1460,14 +1465,15 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 				if(point_surligne[3] == 1) {
-					ctx.fillStyle = "rgba(0,0,0,0.8)";
-					ctx.strokeStyle = "rgba(0,0,0,0.8)";
+					ctx.fillStyle = couleur;
+					ctx.strokeStyle = couleur;
 					ctx.lineWidth = TC_coeff;
 					ctx.fillRect(coord_x(point_surligne[0])-TC_coeff, coord_y(point_surligne[1])-TC_coeff, 2*TC_coeff, 2*TC_coeff);
 					ctx.strokeRect(coord_x(point_surligne[0])-3*TC_coeff, coord_y(point_surligne[1])-3*TC_coeff, 6*TC_coeff, 6*TC_coeff);
 				}
 				else {
-					trace_point(ctx, coord_x(point_surligne[0]), coord_y(point_surligne[1]), "rgba(0,0,0,0.8)");
+					//window.console.log("surligne_point " + JSON.stringify(point_surligne));
+					trace_point(ctx, coord_x(point_surligne[0]), coord_y(point_surligne[1]), couleur);
 				}
 			}
 		}
@@ -1948,6 +1954,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					arret = new Array();	// Roule' 23/12/2018
 					charge_trajet();
 					suivants[nbs] = [num_gow, nom, parseInt(point[1]), parseInt(point[2]), parseInt(point[3]), etapes_ini, etapes, arret];
+					cas.suivant = suivants[nbs];	// Roule 25/10/2019 pour surlignage position suivant
+					addEvent(cas, "mouseover", surligne_point, true);
+					addEvent(cas, "mouseout", efface_surligne, true);
 					nbs++;
 				}
 			}
@@ -1980,7 +1989,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				trace_glissiere();
 				echelle_position();
 				creer_bulle_trajet();
-			}
+				var dessin = creer_canvas("surligne");	// Roule 25/10/2019 pour surlignage position suivant
+				trajet.appendChild(dessin);
+}
 		}
 		function ini_teleport() {
 			// Roule 03/05/2019 Un dev MH a cru bon d'enlever les espaces autour des "=" :(
