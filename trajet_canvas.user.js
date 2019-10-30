@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.13
+// @version 2.14
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -40,6 +40,8 @@
 //	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant
 // V 2.13 25/10/2019 Roule'
 //	Ajout du surlignage de la position du suivant au survol de la souris dans la liste des suivants
+// V 2.14 30/10/2019 Roule'
+//	Correction bug sur l'affichage des coordonnées sur la carte
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1459,9 +1461,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			} else {
 				point_surligne = choix_ini? etapes_tt[parseInt(ref.split("_")[1])]:etapes[parseInt(ref.split("_")[1])];
 			}
-			dessin = document.getElementById("surligne");
+			var dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
+			dessin.style.display = '';	// default
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 				if(point_surligne[3] == 1) {
@@ -1492,9 +1495,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_trajet(couleur_surligne, "surligne", trajet_surligne[0], [milieu, trajet_surligne[1]], true);
 		}
 		function efface_surligne() {
-			dessin = document.getElementById("surligne");
+			var dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
+			dessin.style.display = 'none';
 		}
 		function prepare_inserer() {
 			inserer = document.getElementById("inserer_etape");
@@ -1990,6 +1994,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				echelle_position();
 				creer_bulle_trajet();
 				var dessin = creer_canvas("surligne");	// Roule 25/10/2019 pour surlignage position suivant
+				dessin.style.display = 'none';
 				trajet.appendChild(dessin);
 }
 		}
