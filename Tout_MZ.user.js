@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.2.20.5
+// @version     1.3.0
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0 15/11/2019",
+"	Refonte calculs tactiques de la vue - beta",
 "V1.2.20.5 16/10/2019",
 "	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant",
 "V1.2.20.4 03/10/2019",
@@ -429,7 +431,7 @@ function start_script(nbJours_exp) {
 		}
 	}
 
-function displayScriptTime() {
+function displayScriptTime(duree, texte) {
 	var footerNode = document.getElementById('footer2');
 	if(!footerNode) return;
 	try{
@@ -438,6 +440,11 @@ function displayScriptTime() {
 		footerNode,null,9,null).singleNodeValue;
 	}
 	catch(e){return;}
+	if (duree) {
+		insertText(node,
+			' - [' + texte + ' en ' + (duree/1000) +' sec.]');
+		return;
+	}
 	insertText(node,
 		' - [Script MZ exécuté en '
 		+(new Date().getTime()-date_debut.getTime())/1000+' sec.]');
@@ -531,23 +538,27 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 }
 
 // rend une chaine affichant date et heure et milliseconds (maintenant si le paramètre est absent)
-function MZ_formatDateMS(d) {
-if (d === undefined) d = new Date();
+function MZ_formatDateMS(d, sansMicroSecondes) {
+	if (d === undefined) d = new Date();
 	var day = d.getDate();
 	var month = d.getMonth()+1;
 	var year = d.getFullYear();
 	var hours = d.getHours();
 	var minutes = d.getMinutes();
 	var seconds = d.getSeconds();
-	var ms = d.getMilliseconds();
 	if (day     < 10) {day     = "0"+day;}
 	if (month   < 10) {month   = "0"+month;}
 	if (hours   < 10) {hours   = "0"+hours;}
 	if (hours   < 10) {hours   = "0"+hours;}
 	if (minutes < 10) {minutes = "0"+minutes;}
 	if (seconds < 10) {seconds = "0"+seconds;}
-	ms = ('000' + ms).substr(-3, 3);
-	return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds + '.' + ms;
+	if (sansMicroSecondes) {
+		return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+	} else {
+		var ms = d.getMilliseconds();
+		ms = ('000' + ms).substr(-3, 3);
+		return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds + '.' + ms;
+	}
 }
 
 /*-[functions]-------------- Interface utilisateur ---------------------------*/
@@ -2137,6 +2148,11 @@ function getPVsRestants(pv,bless,vue) {
 	bless = Number(bless.match(/\d+/)[0]);
 	if(bless==0) return null;
 	var pvminmax = pv.match(/\d+/g);
+	var oMinMaxPV = {min: pvminmax[0], max: pvminmax[1]};
+	var oMinMaxPVRestant = MZ_getPVsRestants(oMinMaxPV, bless);
+	return vue ? ' ('+oMinMaxPVRestant.min+'-'+oMinMaxPVRestant.max+')' :
+		['Points de Vie restants : ','Entre '+oMinMaxPVRestant.min+' et '+oMinMaxPVRestant.max];
+/* à supprimer	
 	if(bless==95) {
 		var pvb = 1;
 		var pvh = Math.floor( pvminmax[1]/20 );
@@ -2152,6 +2168,18 @@ function getPVsRestants(pv,bless,vue) {
 	return vue ? ' ('+pvb+'-'+pvh+')' :
 		['Points de Vie restants : ','Entre '+pvb+' et '+pvh];
 	}
+*/
+}
+
+function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
+	if(bless==95) {
+		return {min: 1, max:Math.floor( oMinMaxPV.max/20 )};
+	} else if(bless==5) {
+		return {min: Math.floor( oMinMaxPV.min*19/20 ), max: oMinMaxPV.max};
+	} else {
+		return {min: Math.ceil( oMinMaxPV.min*(95-bless) / 100 ), max: Math.floor( oMinMaxPV.max*(105-bless) / 100 )};
+	}
+}
 
 function insertButtonCdm(nextName,onClick,texte) {
 	if(texte==null) texte = 'Participer au bestiaire';
@@ -2170,10 +2198,6 @@ function insertButtonCdm(nextName,onClick,texte) {
 	return button;
 	}
 
-var listeTitres = ['Niveau','Famille','Points de Vie','Blessure',
-	'Attaque','Esquive','Dégâts','Régénération','Armure','Vue',
-	'Capacité spéciale','Résistance Magique','Autres'];
-
 /* appelé par
 	createCDMTable (dans le popup DcM)
 	computeTactique (à coté du nom des monstres dans la vue et dans la page de détail des monstres)
@@ -2189,9 +2213,9 @@ function createImageTactique(url,id,nom) {
 	return img;
 }
 
-function createCDMTable(id,nom,donneesMonstre) {
+function createCDMTable(id,nom,donneesMonstre) {	// rend un Élément Table
 try {
-	var urlImg = URL_MZimg;
+	var URL_MZimg = URL_MZimg;
 	var table = document.createElement('table');
 	var profilActif = isProfilActif();
 	table.className = 'mh_tdborder';
@@ -2201,134 +2225,250 @@ try {
 	
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
-	var td = appendTdText(tr,
-		'CDM de '+nom+ (donneesMonstre[11]!='???' ? ' (N° '+id+')' : ''),
-		true
-	);
+	var td = appendTdText(tr, 'CDM de ' + nom + ' (N° '+ id + ')', true);
 	td.colSpan = 2;
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
-	
-	for(var i=0 ; i<listeTitres.length-3 ; i++) {
-		createCase(listeTitres[i],tbody,80);
+
+	// calcul des PX gagnés
+	var ominmaxPX = {};
+	if (donneesMonstre.niv) {
+		if (donneesMonstre.niv.min) ominmaxPX.min = getPXKill(donneesMonstre.niv.min);
+		if (donneesMonstre.niv.max) ominmaxPX.max = getPXKill(donneesMonstre.niv.max);
 	}
-	var TypeMonstre = getEM(nom);
-	var infosCompo='';
-	if(TypeMonstre!='') {
-	   infosCompo = compoEM(TypeMonstre);
-	}
-	var nodes = tbody.childNodes;
-	nodes[0].childNodes[1].innerHTML =
-		bbcode(donneesMonstre[0])+analysePX(bbcode(donneesMonstre[0]));
-	nodes[1].childNodes[1].firstChild.nodeValue = bbcode(donneesMonstre[1]);
-	nodes[2].childNodes[1].innerHTML = bbcode(donneesMonstre[2]);
-	nodes[3].childNodes[1].innerHTML = bbcode(donneesMonstre[11]);
-	nodes[4].childNodes[1].innerHTML = bbcode(donneesMonstre[3]);
-	nodes[5].childNodes[1].innerHTML = bbcode(donneesMonstre[4]);
-	nodes[6].childNodes[1].innerHTML = bbcode(donneesMonstre[5]);
-	nodes[7].childNodes[1].innerHTML = bbcode(donneesMonstre[6]);
-	nodes[8].childNodes[1].innerHTML = bbcode(donneesMonstre[7]);
-	nodes[9].childNodes[1].innerHTML = bbcode(donneesMonstre[8]);
-	if(donneesMonstre[10] && donneesMonstre[10].length>0) {
-		td = createCase(listeTitres[10],tbody);
-		td.innerHTML = bbcode(donneesMonstre[10]);
-		if(donneesMonstre[16] && donneesMonstre[16].length>0) {
-			td.appendChild(document.createTextNode(" "));
-			if(donneesMonstre[16] == "De zone")
-				td.appendChild(createImage(urlImg+"zone.gif","Portée : Zone"));
-			else if(donneesMonstre[16] == "Automatique")
-				td.appendChild(createImage(urlImg+"automatique.gif","Toucher automatique"));
-			else if(donneesMonstre[16] == "Au toucher")
-				td.appendChild(createImage(urlImg+"toucher.gif","Pouvoir au toucher"));
-			}
-		}
-	if(donneesMonstre[9] && donneesMonstre[9].length>0)
-	{
-		td = createCase(listeTitres[11],tbody);
-		td.innerHTML = bbcode(donneesMonstre[9]);
-		// seuil de résistance du monstre
-		var lb = td.getElementsByTagName('b');
-		if(lb.length == 1) {
-			var mrm = lb[0].firstChild.nodeValue * 1;
-			var v = (mrm / mmTroll);
-			lb[0].firstChild.nodeValue += " ("
-					+ (mrm < mmTroll ? Math.max(10,Math.floor(v*50)) : Math.min(90,Math.floor(100 - 50/v))) + " %)";
-		}
-	}
-	
-	if(donneesMonstre[12]>0 || donneesMonstre[13]>=0 || donneesMonstre[14]>0 || donneesMonstre[15].length>0
-		|| (donneesMonstre[17] && donneesMonstre[17].length>0)
-		|| infosCompo.length>0 || nom.indexOf("Gowap Apprivoisé")==-1)
-	{
-		
-		td = createCase(listeTitres[12],tbody);
-		if(donneesMonstre[12]==1)
-		{
-			td.appendChild(createImage(urlImg+"oeil.gif","Voit le caché"));
-		}
-		
-		if(donneesMonstre[13]==1)
-		{
-			td.appendChild(createImage(urlImg+"distance.gif","Attaque à distance"));
-		}
-		else if(donneesMonstre[13]==0)
-		{
-			td.appendChild(createImage(urlImg+"cac.gif","Corps à corps"));
-		}
-		
-		if(donneesMonstre[14]==1)
-		{
-			td.appendChild(createImage(urlImg+"1.gif","1 attaque par tour"));
-		}
-		
-		if(donneesMonstre[14]>1 && donneesMonstre[14]<=6)
-		{
-			td.appendChild(createImage(urlImg+donneesMonstre[14]+".gif",donneesMonstre[14]+" attaque(s) par tour"));
-		}
-		else if(donneesMonstre[14]>6)
-		{
-			td.appendChild(createImage(urlImg+"plus.gif","Beaucoup d'attaques par tour"));
-		}
-		
-		if(donneesMonstre[15]=="Lente")
-		{
-			td.appendChild(createImage(urlImg+"lent.gif","Lent à se déplacer"));
-		}
-		else if(donneesMonstre[15]=="Normale")
-		{
-			td.appendChild(createImage(urlImg+"normal.gif","Vitesse normale de déplacement"));
-		}
-		else if(donneesMonstre[15]=="Rapide")
-		{
-			td.appendChild(createImage(urlImg+"rapide.gif","Déplacement rapide"));
-		}
-		
-		if(donneesMonstre[17] && donneesMonstre[17].length>0 && donneesMonstre[17]!="Vide")
-		{
-			td.appendChild(createImage(urlImg+"charge2.gif","Possède de l'équipement ("+donneesMonstre[17]+")"));
-		}
-		if(infosCompo.length>0)
-		{
-			td.appendChild(createImage(urlImg+"Competences/ecritureMagique.png",infosCompo));
-		}
-		
-		if(profilActif && nom.indexOf("Gowap Apprivoisé")==-1 && nom.indexOf("Gowap Sauvage")==-1)
-		{
-			td.appendChild(createImageTactique(urlImg+"calc.png",id,nom));
-		}
-	}
-	
-	// pourcentage de blessure
-	lb = nodes[3].childNodes[1].getElementsByTagName('b');
-	if(lb.length == 1 && donneesMonstre[2].indexOf("-") != -1) {
-		var pvs = getPVsRestants(donneesMonstre[2],lb[0].firstChild.nodeValue,true);
-		if(pvs)
-			lb[0].firstChild.nodeValue += pvs;
-	}
+
+	MZ_tab_carac_add_tr_minmax2(tbody, 'Niveau', donneesMonstre.niv, 'PX', 0, ominmaxPX);
+	MZ_tab_carac_add_tr_texte(tbody, 'Famille', donneesMonstre.fam, '', 0);
+	MZ_tab_carac_add_tr_texte(tbody, 'Blessure', MZ_tab_carac_mkBlessureTexte(donneesMonstre), '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Points de Vie', donneesMonstre.pv, 'PV', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Attaque', donneesMonstre.att, 'D6', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Esquive', donneesMonstre.esq, 'D6', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Dégâts', donneesMonstre.deg, 'D3', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Régénération', donneesMonstre.reg, 'D3', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure physique', donneesMonstre.armP, '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure magique', donneesMonstre.armM, '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure totale', donneesMonstre.arm, '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Vue', donneesMonstre.vue, 'Case(s)', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'MM', donneesMonstre.MM, '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'RM', donneesMonstre.RM, '', 0);
+	MZ_tab_carac_add_tr_minmax(tbody, 'Durée du tour', donneesMonstre.duree, ' heures', 0);
+	MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre, 0);
+	MZ_tab_carac_add_tr_autres(tbody, donneesMonstre, 0, id, nom);
+	var msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
+	if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
 	return table;
 	}
 	catch(e){window.alert('Erreur createCDMTable() :\n'+e);}
+}
+
+function MZ_tab_carac_mkBlessureTexte(donneesMonstre) {
+	if (donneesMonstre.bless === undefined) return;
+	var texte = donneesMonstre.bless + '%';
+	if (donneesMonstre.bless > 0 && donneesMonstre.pv && donneesMonstre.pv.min && donneesMonstre.pv.max) {
+		ominmax = MZ_getPVsRestants(donneesMonstre.pv, donneesMonstre.bless);
+		texte += ' (' + ominmax.min + '-' + ominmax.max + ')';
+	}
+	if (donneesMonstre.timegmt) {
+		texte += ' le ' + MZ_formatDateMS(new Date(donneesMonstre.timegmt * 1000), true);
+	}
+	return texte;
+}
+
+function MZ_tab_carac_add_tr_sansTitre(table, msg, width, bItalic) {
+	if (!msg) return;
+	if(!width) width=120;
+	var tr = appendTr(table,'mh_tdpage');
+	td = appendTdText(tr,msg);
+	td.colSpan = 2;
+	if (bItalic) td.style.fontStyle = 'italic';
+	td.className = 'mh_tdpage';
+	return td;
+}
+
+function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre, width) {
+	if (!donneesMonstre.pouv) return;
+	var td = MZ_tab_carac_add_tr_texte(tbody, 'Pouvoir', donneesMonstre.pouv + ' ', '', 0);
+	var tabImg = [];
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.portpouv, {
+		'de zone': ["zone.gif","Pouvoir de zone"], 
+		'automatique': ["automatique.gif","Pouvoir automatique"], 
+		'au toucher': ["toucher.gif","Pouvoir au toucher"]});
+	for (var iImg = 0; iImg < tabImg.length; iImg++) {
+		var thisImg = tabImg[iImg];
+		td.appendChild(createImage(URL_MZimg + thisImg[0],thisImg[1]));
+	}
+}
+
+function MZ_tab_carac_add_tr_autres(table, donneesMonstre, width, id, nom) {
+	if(!width) width=120;
+		// if (isset($this->Pouvoir)) $oRet->pouv = $this->Pouvoir;
+		// if (isset($this->Nb_att)) $oRet->nb_att = $this->Nb_att;
+		// if (isset($this->Vitesse)) $oRet->vit = $this->Vitesse;
+		// if (isset($this->VlC) && $this->VlC) $oRet->vlc = 1;
+		// if (isset($this->Att_dist) && $this->Att_dist) $oRet->attd = 1;
+		// if (isset($this->Att_mag) && $this->Att_mag) $oRet->attm = 1;
+		// if (isset($this->Vole) && $this->Vole) $oRet->vole = 1;
+		// if (isset($this->Sang_froid)) $oRet->sangf = $this->Sang_froid;
+		// if (isset($this->Position_DLA)) $oRet->posdla = $this->Position_DLA;
+		// if (isset($this->Chargement)) $oRet->charg = $this->Chargement;
+		// if (isset($this->Bonus_malus)) $oRet->bm = $this->Bonus_malus;
+		// if (isset($this->Portee_pouvoir)) $oRet->portpouv = $this->Portee_pouvoir;
+	var tabImg = [];
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.attd, {
+		'1': ["distance.gif","Attaque à distance"],
+		'~': ["cac.gif","Corps à corps"]});	// si absent
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.nb_att, {
+		'1': ["1.gif","1 attaque par tour"], 
+		'2': ["2.gif","2 attaques par tour"], 
+		'3': ["3.gif","3 attaques par tour"], 
+		'4': ["4.gif","4 attaques par tour"], 
+		'5': ["5.gif","5 attaques par tour"], 
+		'6': ["6.gif","6 attaques par tour"], 
+		'999': ["plus.gif","Beaucoup d'attaques par tour"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.attm, {
+		'1': ["magic-wand.png","Attaque magique"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vit, {
+		'lente': ["lent.gif","Lent à se déplacer"], 
+		'normale': ["normal.gif","Vitesse normale de déplacement"], 
+		'rapide': ["rapide.gif","Déplacement rapide"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.charg, {
+		'vide': [null,null], 
+		'~': ["charge2.gif", "Possède de l'équipement (" + donneesMonstre.charg + ")"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vlc, {
+		'1': ["oeil.gif","Voit le caché"]});
+
+	if (tabImg.length == 0) return;
+
+	var tr = appendTr(table,'mh_tdpage');
+	var td = appendTdText(tr,'Autres',true);
+	td.className = 'mh_tdtitre';
+	td.width = width;
+
+	td = appendTd(tr);
+	td.className = 'mh_tdpage';
+	for (var iImg = 0; iImg < tabImg.length; iImg++) {
+		var thisImg = tabImg[iImg];
+		td.appendChild(createImage(URL_MZimg + thisImg[0],thisImg[1]));
+	}
+	if (donneesMonstre.esq != undefined) td.appendChild(createImageTactique(URL_MZimg+"calc.png", id, nom), null);
+
+	return td;
+}
+
+function MZ_tab_carac_add_tr_one_img(tabImg, val, listCas) {
+	if (val == undefined) return;
+	//console.log('MZ_tab_carac_add_tr_one_img: val=' + val);
+	var lVal = (val + '').toLowerCase();	// astuce : transformer le nombre en string (beurk !)
+	if (listCas[lVal]) {
+		var t = listCas[lVal];
+		if (t[0] == null) return;
+		tabImg.push(t);
+	} else if (listCas['~']) {
+		tabImg.push(listCas['~']);
+	}
+}
+
+function MZ_tab_carac_add_tr_texte(table, titre, msg, unit, width) {
+	if (!msg) return;
+	if(!width) width=120;
+	var tr = appendTr(table,'mh_tdpage');
+
+	var td = appendTdText(tr,titre,true);
+	td.className = 'mh_tdtitre';
+	td.width = width;
+
+	var texte = msg;
+	if (unit) texte += ' ' + unit;
+	td = appendTdText(tr,texte);
+	td.className = 'mh_tdpage';
+	return td;
+}
+
+function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit, width) {
+	if (!ominmax) return;
+	if (!(ominmax.min || ominmax.max)) return;
+
+	if(!width) width=120;
+	var tr = appendTr(table,'mh_tdpage');
+
+	var td = appendTdText(tr,titre,true);
+	td.className = 'mh_tdtitre';
+	td.width = width;
+
+	if ((!ominmax.min) || ominmax.min == 0) {
+		var texte = '⩽' + ominmax.max + ' ' + unit;
+	} else if (!ominmax.max) {
+		var texte = '⩾' + ominmax.min + ' ' + unit;
+	} else {
+		var texte = '';
+		if (ominmax.min != ominmax.max) {
+			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
+			if (ominmax.min > ominmax.min) {
+				td.style.color = 'red';
+				unit += ' *** erreur ***';
+			}
+		}
+		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
+	}
+	td = appendTdText(tr,texte);
+	td.className = 'mh_tdpage';
+	return td;
+}
+
+function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, width, ominmaxUnit) {
+	if (!ominmax) return;
+	if (!(ominmax.min || ominmax.max)) return;
+
+	if(!width) width=120;
+	var tr = appendTr(table,'mh_tdpage');
+
+	var td = appendTdText(tr,titre,true);
+	td.className = 'mh_tdtitre';
+	td.width = width;
+
+	if ((!ominmax.min) || ominmax.min == 0) {
+		var texte = '⩽' + ominmax.max + ' ' + unit;
+	} else if (!ominmax.max) {
+		var texte = '⩾' + ominmax.min + ' ' + unit;
+	} else {
+		var texte = '';
+		if (ominmax.min != ominmax.max) {
+			var texte = ominmax.min + '-' + ominmax.max;
+			if (ominmax.min > ominmax.max) {
+				td.style.color = 'red';
+				texte += ' *** erreur ***';
+			}
+		} else {
+			var texte = ominmax.min;
+		}
+	}
+
+	if (ominmaxUnit.min === undefined) {
+		if (ominmaxUnit.max === undefined) {
+			// ignore (ne devrait pas arriver)
+		} else {
+			texte += ' --> ' + Unit + '⩽' + ominmaxUnit.max;
+		}
+	} else {
+		if (ominmaxUnit.max === undefined) {
+			texte += ' --> ' + Unit + '⩾' + ominmaxUnit.max;
+		} else if (ominmaxUnit.min != ominmaxUnit.max) {
+			texte += ' --> ' + ominmaxUnit.min + '⩽' + unit + '⩽' + ominmaxUnit.max;
+			if (ominmaxUnit.min > ominmaxUnit.max) {
+				td.style.color = 'red';
+				texte += ' *** erreur ***';
+			}
+		} else if (isNaN(ominmaxUnit.min)) {
+			texte += ' --> ' + ominmaxUnit.min;
+		} else {
+			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
+		}
+	}
+	
+	td = appendTdText(tr,texte);
+	td.className = 'mh_tdpage';
+	return td;
 }
 
 
@@ -2680,12 +2820,11 @@ function getTexteAnalyse(modificateur,chiffre)
 {
 	if(chiffre==0)
 		return chiffre;
-	return modificateur+chiffre;
+	return modificateur+ chiffre;
 } 
 
 // rend le HTML pour le tableau de la "calculette"
-function getAnalyseTactique(id,nom)
-{
+function getAnalyseTactique(id,nom) {
 	var donneesMonstre = listeCDM[id];
 	var needAutres=false;
 	var i;
@@ -2719,7 +2858,25 @@ function getAnalyseTactique(id,nom)
 		else
 			str+= "<tr class=mh_tdpage><td>Autres attaques</td><td>100%</td><td>0%</td><td>0%</td><td>0</td></tr>";
 	}
+	var txtCdM = MZ_carac_build_nb_cmd_msg(donneesMonstre);
+	if (txtCdM) str += '<tr class="mh_tdpage"><td colspan="5" style="font-style: italic;">' + txtCdM + '</td></tr>';
 	return str+"</table>";
+}
+
+function MZ_carac_build_nb_cmd_msg(donneesMonstre) {
+	if (!donneesMonstre) return;
+	if (!donneesMonstre.Mode) return;
+	switch (donneesMonstre.Mode) {
+		case 'cdm':
+			return 'fondé sur ' + (+donneesMonstre.nCdM) + ' CdM' + (donneesMonstre.nCdM > 1 ? 's' : '') + ' de ce monstre à cet âge';
+		case 'stat':
+			return 'fondé sur les statistiques de ' + (+donneesMonstre.nCdM) + ' CdM' + (donneesMonstre.nCdM > 1 ? 's' : '') + ' de ce type de monstre (même type, même âge, même template)';
+		case 'statV1':
+			return 'fondé sur les statistiques anciennes (MZ V1)';
+		case 'nom':
+			return 'fondé sur le nom du monstre, pas de CdM';
+	}
+	return 'Mode ' + donneesMonstre.Mode;
 }
 
 // rend un tableau (un par attaque du Trõll ou du monstre) de tableaux contenant:
@@ -2750,90 +2907,169 @@ function analyseTactique(donneesMonstre,nom) {
 	var modificateurEsquiveM = '';
 	var modificateurArmureM = '';
 	var pasDeSR=false;
-	var esqM,attM,armM,degM;
+	var esqM=0,attM=0,armM_mag=0,armM_tot=0,degM=0;
 	if(donneesMonstre==null || att==null || attbmp==null || attbmm==null || mm==null || deg==null || degbmp==null || degbmm==null || vue==null ||pv==null || esq==null || arm==null)
 		return null;
-	
-	var td = document.createElement('td')
-	td.innerHTML = bbcode(donneesMonstre[4]); // sans déconner ? C'est quoi cette histoire ?
-	var esqM = 0;
-	try
-	{
-		esqM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-	} 
-	catch(e)
-	{
-		debugMZ('analyseTactique, exeception calcul esqM ' + e.message);
-		esqM=Math.ceil(parseInt(td.firstChild.nodeValue));
-		modificateurEsquive = '<';
-		modificateurArmure = '<';
-		modificateurMagie = '<';
+
+	if (MY_DEBUG) window.console.log('analyseTactique nom=' + nom + ' ' + JSON.stringify(donneesMonstre));
+	if (donneesMonstre.index == undefined) {
+		// à supprimer
+		var td = document.createElement('td')
+		td.innerHTML = bbcode(donneesMonstre[4]); // sans déconner ? C'est quoi cette histoire ?
+		var esqM = 0;
+		try
+		{
+			esqM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
+		} 
+		catch(e)
+		{
+			debugMZ('analyseTactique, exeception calcul esqM ' + e.message);
+			esqM=Math.ceil(parseInt(td.firstChild.nodeValue));
+			modificateurEsquive = '<';
+			modificateurArmure = '<';
+			modificateurMagie = '<';
+		}
+		
+		td.innerHTML = bbcode(donneesMonstre[3]);
+		var attM = 0;
+		try
+		{
+			attM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
+		} 
+		catch(e)
+		{
+			debugMZ('analyseTactique, exeception calcul attM ' + e.message);
+			attM=Math.ceil(parseInt(td.firstChild.nodeValue));
+			modificateurEsquiveM = '>';
+			modificateurArmureM = '>';
+		}
+		
+		td.innerHTML = bbcode(donneesMonstre[5]);
+		var degM = 0;
+		try
+		{
+			degM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
+		} 
+		catch(e)
+		{
+			debugMZ('analyseTactique, exeception calcul degM ' + e.message);
+			degM=Math.ceil(parseInt(td.firstChild.nodeValue));
+			modificateurArmureM = '>';
+		}
+		
+		td.innerHTML = bbcode(donneesMonstre[7]);
+		try
+		{
+			armM_tot=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
+			armM_mag=armM_tot;	// compatibilité avec ancien calcul
+		} 
+		catch(e)
+		{
+			debugMZ('analyseTactique, exeception calcul armM ' + e.message);
+			armM_tot=Math.ceil(parseInt(td.firstChild.nodeValue));
+			armM_mag=armM_tot;
+			modificateurArmure = '<';
+		}
+		
+		var coeffSeuil = 0.95;
+		try
+		{
+			td.innerHTML = bbcode(donneesMonstre[9]);
+			//debugMZ('analyseTactique, calcul SR, donnessMonstre=' + donneesMonstre[9] + ', bbcode=' + bbcode(donneesMonstre[9]));
+			var rm = parseInt(td.getElementsByTagName('b')[0].firstChild.nodeValue);
+			var v = (rm / mm);
+			var seuil = (rm < mm ? Math.max(10,Math.floor(v*50)) : Math.min(90,Math.floor(100 - 50/v)));
+			coeffSeuil = (200-seuil)/200;
+		}
+		catch(e) 
+		{
+			debugMZ('analyseTactique, exeception calcul SR ' + e.message);
+			modificateurMagie = '<';
+			pasDeSR = true;
+		}
+	} else {
+		//calcul de modificateurEsquive, modificateurArmure, modificateurMagie, modificateurEsquiveM, modificateurArmureM, pasDeSR, esqM, attM, armM_mag, armM_tot, degM;
+		if (donneesMonstre.esq) {
+			if (donneesMonstre.esq.min && donneesMonstre.esq.max) {
+				esqM = Math.ceil((donneesMonstre.esq.min + donneesMonstre.esq.max) / 2);
+			} else if (donneesMonstre.esq.max) {
+				esqM = donneesMonstre.esq.max;
+				modificateurEsquive = '<';
+				modificateurArmure = '<';
+				modificateurMagie = '<';
+			}
+		}
+
+		if (donneesMonstre.att) {
+			if (donneesMonstre.att.min && donneesMonstre.att.max) {
+				attM = Math.ceil((donneesMonstre.att.min + donneesMonstre.att.max) / 2);
+			} else if (donneesMonstre.att.max) {
+				attM = donneesMonstre.att.max;
+				modificateurEsquiveM = '>';
+				modificateurArmureM = '>';
+			}
+		}
+
+		if (donneesMonstre.armM) {
+			if (donneesMonstre.armM.min && donneesMonstre.armM.max) {
+				armM_mag = Math.ceil((donneesMonstre.armM.min + donneesMonstre.armM.max) / 2);
+			} else if (donneesMonstre.armM.max) {
+				armM_mag = donneesMonstre.armM.max;
+				modificateurArmure = '<';
+			}
+			if (donneesMonstre.armP) {
+				if (donneesMonstre.armP.min && donneesMonstre.armP.max) {
+					armM_phy = Math.ceil((donneesMonstre.armP.min + donneesMonstre.armP.max) / 2);
+				} else if (donneesMonstre.armP.max) {
+					armM_phy = donneesMonstre.armP.max;
+					modificateurArmure = '<';
+				}
+				armM_tot = armM_mag + armM_phy;
+			} else {	// ça ne devrait pas arriver
+				armM_tot = armM_mag;
+			}
+		} else if (donneesMonstre.arm) {
+			if (donneesMonstre.arm.min && donneesMonstre.arm.max) {
+				armM_tot = Math.ceil((donneesMonstre.arm.min + donneesMonstre.arm.max) / 2);
+				armM_mag=armM_tot;	// worst case
+			} else if (donneesMonstre.arm.max) {
+				armM_tot = donneesMonstre.arm.max;
+				armM_mag=armM_tot;
+				modificateurArmure = '<';
+			}
+		}
+
+		if (donneesMonstre.deg) {
+			if (donneesMonstre.deg.min && donneesMonstre.deg.max) {
+				degM = Math.ceil((donneesMonstre.deg.min + donneesMonstre.deg.max) / 2);
+			} else if (donneesMonstre.deg.max) {
+				degM = donneesMonstre.deg.max;
+				modificateurArmureM = '>';
+			}
+		}
+
+		var coeffSeuil = 0.95;
+		if (donneesMonstre.RM) {
+			if (donneesMonstre.RM.min && donneesMonstre.RM.max) {
+				var rmM = Math.ceil((donneesMonstre.RM.min + donneesMonstre.RM.max) / 2);
+				var v = (rmM / mm);
+				var seuil = (rmM < mm ? Math.max(10,Math.floor(v*50)) : Math.min(90,Math.floor(100 - 50/v)));
+				coeffSeuil = (200-seuil)/200;
+			} else if (donneesMonstre.deg.max) {
+			}
+			modificateurMagie = '<';
+			pasDeSR = true;
+		}
 	}
-	
-	td.innerHTML = bbcode(donneesMonstre[3]);
-	var attM = 0;
-	try
-	{
-		attM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-	} 
-	catch(e)
-	{
-		debugMZ('analyseTactique, exeception calcul attM ' + e.message);
-		attM=Math.ceil(parseInt(td.firstChild.nodeValue));
-		modificateurEsquiveM = '>';
-		modificateurArmureM = '>';
-	}
-	
-	td.innerHTML = bbcode(donneesMonstre[5]);
-	var degM = 0;
-	try
-	{
-		degM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-	} 
-	catch(e)
-	{
-		debugMZ('analyseTactique, exeception calcul degM ' + e.message);
-		degM=Math.ceil(parseInt(td.firstChild.nodeValue));
-		modificateurArmureM = '>';
-	}
-	
-	td.innerHTML = bbcode(donneesMonstre[7]);
-	var armM = 0;
-	try
-	{
-		armM=Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-	} 
-	catch(e)
-	{
-		debugMZ('analyseTactique, exeception calcul armM ' + e.message);
-		armM=Math.ceil(parseInt(td.firstChild.nodeValue));
-		modificateurArmure = '<';
-	}
-	
-	var coeffSeuil = 0.95;
-	try
-	{
-		td.innerHTML = bbcode(donneesMonstre[9]);
-		//debugMZ('analyseTactique, calcul SR, donnessMonstre=' + donneesMonstre[9] + ', bbcode=' + bbcode(donneesMonstre[9]));
-		var rm = parseInt(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-		var v = (rm / mm);
-		var seuil = (rm < mm ? Math.max(10,Math.floor(v*50)) : Math.min(90,Math.floor(100 - 50/v)));
-		coeffSeuil = (200-seuil)/200;
-	}
-	catch(e) 
-	{
-		debugMZ('analyseTactique, exeception calcul SR ' + e.message);
-		modificateurMagie = '<';
-		pasDeSR = true;
-	}
-	
+	if (MY_DEBUG) window.console.log('modificateurEsquive=' + modificateurEsquive + ', modificateurArmure=' + modificateurArmure + ', modificateurMagie=' + modificateurMagie + ', modificateurEsquiveM=' + modificateurEsquiveM + ', modificateurArmureM=' + modificateurArmureM + ', pasDeSR=' + pasDeSR + ', esqM=' + esqM + ', attM=' + attM + ', armM_tot=' + armM_tot + ', armM_mag=' + armM_mag + ', degM=' + degM + ', coeffSeuil=' + coeffSeuil);
+
 	var chanceDEsquiveParfaite = chanceEsquiveParfaite(att,esqM,attbmp+attbmm,0);
 	var chanceDeTouche = chanceTouche(att,esqM,attbmp+attbmm,0);
 	var chanceDeCritique = chanceCritique(att,esqM,attbmp+attbmm,0);
 	// roule debug
 	//window.console.log('Attaque normale troll sur monstre, att=' + att + ', esqM=' + esqM + ', attbmp=' + attbmp + ', attbmm=' + attbmm 
 	//	+ ', chanceDEsquiveParfaite=' + chanceDEsquiveParfaite + ', chanceDeTouche=' + chanceDeTouche + ', chanceDeCritique=' + chanceDeCritique);
-	var degats = (((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-armM,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-armM,1))/100);
+	var degats = (((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-armM_tot,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-armM_tot,1))/100);
 	//str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);	
 	listeAttaques.push(new Array("Attaque normale",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	if(getSortComp("Vampirisme")>0)
@@ -2842,7 +3078,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(Math.floor(deg*2/3),esqM,attbmm,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(Math.floor(deg*2/3),esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(Math.floor(deg*2/3),esqM,attbmm,0)*pour/100);
-		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm,1)))/100;
+		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm-armM_mag,1)))/100;
 		//str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Vampirisme",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
@@ -2852,7 +3088,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att,esqM,attbmm,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm,0)*pour/100);
-		degats = (((chanceDeTouche-chanceDeCritique)*Math.max(reg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(reg*1.5)*2+degbmm,1))/100);
+		degats = (((chanceDeTouche-chanceDeCritique)*Math.max(reg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(reg*1.5)*2+degbmm-armM_mag,1))/100);
 		listeAttaques.push(new Array("Siphon des âmes",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurMagie));
 	}
 	if(getSortComp("Botte Secrète")>0)
@@ -2861,7 +3097,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(Math.floor(2*att/3),esqM,Math.floor((attbmp+attbmm)/2),0)*pour/100);
-		degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(deg/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM/2),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM/2),1)))/100;
+		degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(deg/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM_tot/2),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5/2)*2+Math.floor((degbmp+degbmm)/2)-Math.floor(armM_tot/2),1)))/100;
 		//str += "\nBotte Secrète : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Botte Secrète",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
@@ -2871,7 +3107,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = 0;
 		chanceDeTouche = Math.round(100*pour/100);
 		chanceDeCritique = Math.round(0*pour/100);
-		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm,1)))/100;
+		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm-armM_mag,1)))/100;
 		//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Rafale Psychique",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,'',pasDeSR?modificateurMagie:''));
 	}
@@ -2892,18 +3128,18 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDeTouche = Math.round(chanceTouche(vue,esqM,attbmm,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(vue,esqM,attbmm,0)*pour/100);
 		// distance troll - monstre
-		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm,1)))/100;
+		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm-armM_mag,1)))/100;
 		//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-		if (donneesMonstre['iTR'] !== undefined) {
-			var dist = getMonstreDistance(donneesMonstre['iTR']+1);
+		if (donneesMonstre.index !== undefined && tr_monstres !== undefined && tr_monstres[donneesMonstre.index] !== undefined) {
+			var dist = getMonstreDistance(donneesMonstre.index+1);
 			var vue_bm = parseInt(MY_getValue(numTroll+".caracs.vue.bm"), 10);
 			var portee = getPortee__Profil(vue+vue_bm);
 			if (dist <= portee) {
-				degats += 2 * (portee-dist);
+				degats = Math.round((degats + 2 * (portee-dist)) * 100) / 100;
 			} else {
 				degats += ' (plus bonus de portée)';
 			}
-			debugMZ('analyseTactique, iTR= ' + donneesMonstre['iTR'] + ', dist=' + dist + ', porteePM=' + portee);
+			debugMZ('analyseTactique, iTR= ' + donneesMonstre.index + ', dist=' + dist + ', porteePM=' + portee);
 		} else {
 			degats += ' (plus bonus de portée)';
 		}
@@ -2915,7 +3151,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm+attbmp,0)*pour/100);
-		degats = Math.round(((chanceDeTouche-chanceDeCritique)*2*Math.max((deg*2+degbmp+degbmm-armM),1)+chanceDeCritique*2*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM,1)))/100;
+		degats = Math.round(((chanceDeTouche-chanceDeCritique)*2*Math.max((deg*2+degbmp+degbmm-armM_tot),1)+chanceDeCritique*2*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM_tot,1)))/100;
 		//str += "\nFrénésie : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Frénésie",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
@@ -2925,7 +3161,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeTouche = Math.round(chanceTouche(att,esqM,attbmm+attbmp,0)*pour/100);
 		chanceDeCritique = Math.round(chanceCritique(att,esqM,attbmm+attbmp,0)*pour/100);
-		var degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max((deg*2+degbmp+degbmm-armM),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM,1)))/100;
+		var degats = Math.round(((chanceDeTouche-chanceDeCritique)*Math.max((deg*2+degbmp+degbmm-armM_tot),1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM_tot,1)))/100;
 		//str += "\nCharge : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Charger",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure));
 	}
@@ -2958,7 +3194,7 @@ function analyseTactique(donneesMonstre,nom) {
 				chanceDEsquiveParfaite += chanceDEsquiveParfaiteNiveau;
 				chanceDeTouche += chanceDeToucheNiveau;
 				chanceDeCritique += chanceDeCritiqueNiveau;
-				degats += (((chanceDeToucheNiveau-chanceDeCritiqueNiveau)*Math.max((deg*2+degbmp+degbmm-armM),1)+chanceDeCritiqueNiveau*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM,1))/100);
+				degats += (((chanceDeToucheNiveau-chanceDeCritiqueNiveau)*Math.max((deg*2+degbmp+degbmm-armM_tot),1)+chanceDeCritiqueNiveau*Math.max(Math.floor(deg*1.5)*2+degbmm+degbmp-armM_tot,1))/100);
 				oldPour = pour;
 			}
 			niveau--;
@@ -2985,7 +3221,7 @@ function analyseTactique(donneesMonstre,nom) {
 				chanceDEsquiveParfaite += chanceDEsquiveParfaiteNiveau;
 				chanceDeTouche += chanceDeToucheNiveau;
 				chanceDeCritique += chanceDeCritiqueNiveau;
-				degats += (((chanceDeToucheNiveau-chanceDeCritiqueNiveau)*Math.max((Math.min(Math.floor(deg*1.5),deg+3*niveau)*2+degbmp+degbmm-armM),1)+chanceDeCritiqueNiveau*Math.max(Math.floor(Math.min(Math.floor(deg*1.5),deg+3*niveau)*1.5)*2+degbmm+degbmp-armM,1))/100);
+				degats += (((chanceDeToucheNiveau-chanceDeCritiqueNiveau)*Math.max((Math.min(Math.floor(deg*1.5),deg+3*niveau)*2+degbmp+degbmm-armM_tot),1)+chanceDeCritiqueNiveau*Math.max(Math.floor(Math.min(Math.floor(deg*1.5),deg+3*niveau)*1.5)*2+degbmm+degbmp-armM_tot,1))/100);
 				oldPour = pour;
 			}
 			niveau--;
@@ -5078,6 +5314,49 @@ function traiteMonstre() {
 		nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
 	}
 	idMonstre = texte.match(/\d+/)[0];
+	var tReq = [{'index':1, 'id':+idMonstre, 'nom':nomMonstre}];	// "+" pour forcer du numérique
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: URL_MZgetCaracMonstre,
+		headers : {
+			'Content-type':'application/x-www-form-urlencoded'
+		},
+		data: 'l=' + JSON.stringify(tReq),
+		trace: 'demande niveaux monstres V2, MonsterView',
+		onload: function(responseDetails) {
+			try {
+				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+				if (responseDetails.status == 0) return;
+				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+				var texte = responseDetails.responseText;
+				var infosRet = JSON.parse(texte);
+				if(infosRet.length==0) return;
+				var info = infosRet[0];
+				listeCDM[idMonstre]=info;
+				try {
+					var nodeInsert = document.evaluate(
+						"//div[@class = 'titre3']",
+						document, null, 9, null
+					).singleNodeValue;
+				} catch(e) {
+					window.console.log(traceStack(e, 'recherche node pour info CdM'));
+					return;
+				}
+				var table = createCDMTable(idMonstre,nomMonstre,info);
+				table.align = 'center';
+				tbody = table.childNodes[1];
+				table.firstChild.firstChild.firstChild.onclick = toggleTableau;
+				table.firstChild.firstChild.style.cursor = 'pointer';
+				table.firstChild.firstChild.style = 'mh_tdpage';
+				tbody.style.display = 'none';
+				table.style.width = '350px';
+				insertBefore(nodeInsert,table);
+			} catch(e) {
+				window.console.log(e);
+			}
+		},
+	});
+/* ancienne méthode à supprimer
 	FF_XMLHttpRequest({
 		method: 'GET',
 		url: URL_MZinfoMonstre + '?begin=-1&idcdm='
@@ -5105,6 +5384,7 @@ function traiteMonstre() {
 			}
 		}
 	});
+// */
 }
 
 function initPopupInfomonstre() {
@@ -5127,7 +5407,7 @@ function showPopupTactique(evt) {
 		var id = this.id;
 		var nom = this.nom;
 		var texte = getAnalyseTactique(id,nom);
-		if(texte=='') { return; }
+		if(texte==undefined || texte=='') { return; }
 		popup.innerHTML = texte;
 		// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
 		if(isPage("View/MonsterView")) {
@@ -5138,7 +5418,8 @@ function showPopupTactique(evt) {
 		popup.style.top = evt.pageY+15+'px';
 		popup.style.visibility = 'visible';
 	} catch(e) {
-		window.alert(e);
+		//window.alert(e);
+		window.console.log(e);
 	}
 }
 
@@ -5151,7 +5432,8 @@ function toggleTableau() {
 	tbody.style.display = tbody.style.display=='none' ? '' : 'none';
 }
 
-function computeMissionInfomonstre() {
+/*
+function computeMissionInfomonstre() {	// à supprimer
 // C'est quoi ce titre de fonction ? (O_o)
 	try {
 		var nodeInsert = document.evaluate(
@@ -5177,6 +5459,7 @@ function computeMissionInfomonstre() {
 	table.style.width = '350px';
 	insertBefore(nodeInsert,table);
 }
+// */
 
 function do_infomonstre() {
 	start_script();
@@ -5335,6 +5618,10 @@ function traiteMission() {
 					mod = mod ? Number(mod[0]) : 'plus';
 				}
 			}
+			// if (isDEV) {
+				// niveau = 35;	// pour les tests Roule
+				// alert('niveau forcé à 35 pour test');
+			// }
 			// debug Roule'
 			if (MY_DEBUG) {
 				window.console.log('traiteMission, save niveau=' + niveau + ', mod=' + mod + ', siMundidey=' + siMundidey + ', libelle=' + libelle);
@@ -5848,12 +6135,8 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
-	news.push(['25/08/2017', 'Possibilité d\'afficher les caractéristiques de Trõlls venant de plusieurs IT Bricol\'Troll (utiliser le petit +, à gauche dans la liste)']);
+	news.push(['15/11/2019', 'Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).']);
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
-	news.push(['01/01/2017', 'Lien vers Troogle pour les missions dans les étapes monstre']);
-	news.push(['06/01/2017', 'Petite icône dans le cadre de gauche pour rafraîchir les coordonnées']);
-	news.push(['10/01/2017', '<span style="color:red">Il n\'est plus nécessaire de bloquer les mises à jour de Firefox</span>. MZ devrait fonctionner sur toutes les versions&nbsp;: anciennes, récentes, béta']);
-	news.push(['25/01/2017', 'Cartes pour l\'ensemble des suivants et pour visualiser l\'arrivée du TP']);
 	afficherNouvelles(news);
 }
 
@@ -7026,7 +7309,7 @@ function addBricolIT(sSystem, sLogin, nAffhv, bFirst, bLast) {
 	var itBody = document.getElementById('itBody');
 	var nTr = itBody.rows.length;
 	// enlever tous les "+" des lignes précédentes
-	for (iTr = 0; iTr < nTr; iTr++) {
+	for (var iTr = 0; iTr < nTr; iTr++) {
 		var td = itBody.rows[iTr].cells[0];
 		td.innerHTML = '';
 		td.title = '';
@@ -8822,11 +9105,12 @@ function getXxxPosition(xxx, i) {
 
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
+	//debugMZ('getMonstreDistance, i=' + i + ', tr=' + tr_monstres[i].innerHTML);
 	return parseInt(tr_monstres[i].cells[0].textContent);
 }
 
 function getMonstreID(i) {
-	return tr_monstres[i].cells[2].firstChild.nodeValue;
+	return Number(tr_monstres[i].cells[2].firstChild.nodeValue);
 }
 
 function getMonstreIDByTR(tr) {
@@ -9644,13 +9928,15 @@ function ajoutDesFiltres() {
 
 /* [functions] Affichage de la colonne des niveaux */
 function insertLevelColumn() {
-// Déclenché si bascule vers affichage des niveaux des mobs
-	//window.console.log('nbMonstres=' + nbMonstres + ', tr_monstres.length=' + tr_monstres.length);	// debug Roule
+	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
+	
 	var td = insertTdText(getMonstreLevelNode(0),'Niveau',true);
 	td.width = 25;
+	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for(var i=1 ; i<=nbMonstres ; i++) {
 		//window.console.log('nbMonstres=' + nbMonstres + ', tr_monstres.length=' + tr_monstres.length);	// debug Roule
 		td = insertTdText(getMonstreLevelNode(i), '-');
+/* à supprimer
 		td.onclick = function() {
 			basculeCDM(
 				getMonstreNomByTR(this.parentNode),
@@ -9668,15 +9954,39 @@ function insertLevelColumn() {
 				this.className = 'mh_tdpage';
 			}
 		};
+*/
 		td.style = 'font-weight:bold;text-align:center;';
+/* à supprimer
 		if(isCDMsRetrieved) {
 			// Rappel des niveaux si mémorisés
 			td.innerHTML = listeLevels[i];
 		}
+*/
 	}
 }
 
-function toggleLevelColumn() {
+function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue et au click/unclick de la checkbox NOCDM
+	var eltMZ_TITRE_NIVEAU_MONSTRE = document.getElementById('MZ_TITRE_NIVEAU_MONSTRE');	// test si la colonne a déjà été ajoutée
+	if(saveCheckBox(checkBoxLevels,'NOLEVEL')) {
+		if (!eltMZ_TITRE_NIVEAU_MONSTRE) return;	// rien à faire si la colonne n'existe pas. C'est le cas à l'ouverture de la page avec NOCMD coché
+		// cacher tous les td
+		for(var i=0 ; i<=nbMonstres ; i++) {
+			getMonstreLevelNode(i).style.display = 'none';
+		}
+	} else {
+		if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
+			insertLevelColumn();
+			retrieveCDMs();
+		} else {
+			// afficher tous les td
+			for(var i=0 ; i<=nbMonstres ; i++) {
+				getMonstreLevelNode(i).style.display  = '';
+			}
+		}
+	}
+}
+
+function toggleLevelColumn_old() {	// à supprimer, uje garde un certain temps comme référence
 // = Handler checkBox noLevel
 	if(!saveCheckBox(checkBoxLevels,'NOLEVEL')) {
 		insertLevelColumn();
@@ -9702,8 +10012,10 @@ function basculeCDM(nom,id) {
 		} else {
 			cacherPopupCDM('popupCDM'+id);
 		}
+	} else {
+		// DEBUG: prévoir un "else" ou désactiver l'effet onmouseover si pas de CdM
+		window.console.log("pas de CdM pour id=" + id + ', nom=' + nom);
 	}
-	// DEBUG: prévoir un "else" ou désactiver l'effet onmouseover si pas de CdM
 }
 
 function cacherPopupCDM(titre) {
@@ -9756,8 +10068,7 @@ function afficherCDM(nom,id) {
 		'z-index:1;'+
 		'top:'+(300+(30*nbCDM))%(30*Math.floor((window.innerHeight-400)/30))+'px;'+
 		'left:'+(window.innerWidth-365)+'px;'+
-		'width:300px;'+
-		'height:200px;';
+		'width:300px;';
 	/* Ajout du titre avec gestion Drag & Drop */
 	var tr = table.firstChild;
 	tr.style.cursor = 'move';
@@ -9765,8 +10076,8 @@ function afficherCDM(nom,id) {
 	tr.onmouseup = stopDrag;
 	/* Ajout du bouton "Fermer" */
 	tr = appendTr(table.childNodes[1], 'mh_tdtitre');
+	tr.style.cursor = 'pointer';
 	tr.onmouseover = function() {
-		this.style.cursor = 'pointer';
 		this.className = 'mh_tdpage';
 	};
 	tr.onmouseout = function() {
@@ -9842,21 +10153,36 @@ function showPopupError(sHTML) {
 
 function retrieveCDMs() {
 	// Roule 18/11/2017 mise en sommeil MZ V2, on a besoin de tester en mode dev avec l'ancienne version
-	return retrieveCDMsOld();
-	//if (isDEV) return retrieveCDMsNew();
-	//else       return retrieveCDMsOld();
+	//return retrieveCDMsOld();
+	return retrieveCDMsNew();
+	//return retrieveCDMsOld();	// a supprimer
 }
 
 function retrieveCDMsNew() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) return;
+	// Roule, message si l'utilisateur a décoché "Menu d'actions contextuelles"
+	if (!tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
+		avertissement('Vous avez décoché "Menu d\'actions contextuelles" dans la fenêtre de limitation de la vue, Moutyzilla ne peut pas afficher les niveaux dans ce mode<br />La fenêtre de limitation de la vue est celle qu\'on obtient en cliquant sur l\'œil dans le menu de gauche', 9999999);
+		return;
+	}
 	if (nbMonstres < 1) return;
 
 	var tReq = [];
 	for (var i=1 ; i<=nbMonstres ; i++) {
-		tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
+		//tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
+		// ne pas demander pour les Gowaps
+		var nom = getMonstreNom(i);
+		if (nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
+			var id = getMonstreID(i);
+			listeCDM[id] = {id:id, index: i};
+			continue;
+		}
+		tReq.push({'index':i, 'id':getMonstreID(i), 'nom':nom});
+		if (i > 5000) break;	// limitation car on a un dépassement mémoire coté serveur si c'est trop gros
 	}
+	var startAjaxCdM = new Date();
 
 	FF_XMLHttpRequest({
 		method: 'POST',
@@ -9864,37 +10190,94 @@ function retrieveCDMsNew() {
 		headers : {
 			'Content-type':'application/x-www-form-urlencoded'
 		},
-		data: 'l=' + tReq.join("\n"),
+		//data: 'l=' + tReq.join("\n"),
+		data: 'l=' + JSON.stringify(tReq),
 		trace: 'demande niveaux monstres V2',
 		onload: function(responseDetails) {
 			try {
+				// traiter les Gowaps
+				for (var id in listeCDM) {
+					info = listeCDM[id];
+					//window.console.log('aff gowap ' + JSON.stringify(info));
+					getMonstreLevelNode(info.index).innerHTML = mkMinMaxHTML(info.niv);
+				}
 				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 				if (responseDetails.status == 0) return;
 				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
 				var texte = responseDetails.responseText;
-				var lines = texte.split('\n');
-				if(lines.length==0) return;
+				var infos = JSON.parse(texte);
+				displayScriptTime(new Date().getTime()-date_debut.getTime(), 'Analyse des CdM MZ');
+				if(infos.length==0) return;
+
+				// ajouter les styles CSS pour les popup
+				var mystyle = document.createElement('style');
+				mystyle.type = 'text/css';
+				var sCSS = '.MZtooltip {position: relative;color:red;text-align:center;}\n';
+				sCSS += '.MZtooltip .MZtooltiptext {visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white}\n';
+				sCSS += '.MZtooltip:hover .MZtooltiptext {visibility: visible;}\n';
+				mystyle.innerHTML = sCSS;
+				document.getElementsByTagName('head')[0].appendChild(mystyle);
+
+				// if (MY_DEBUG) {
+					// for (var i = 0; i < 20; i++) window.console.log('infos[' + i + ']=' + JSON.stringify(infos[i]));
+				// }
 				var begin2, end2, index;
-				for(var j=0 ; j<lines.length ; j++) {
-					var infos = lines[j].split("\t");
-					if(infos.length<3) { continue; }
-					var index = infos[0]
-					var idMonstre=infos[1];
-					var level = infos[2];
-					// 3 cas
-					// il y a des infos, infos[] a plus de 3 valeurs
-					// il n'y a pas d'info pour ce monstre, infos[] a 4 valeur, la 4e est "-"
-					// les infos n'ont pas été récupérées (après le 50e monstre), il n'y a que 3 valeurs
-					if (infos.length == 3) {
-						getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
+				for(var j=0 ; j<infos.length ; j++) {
+					var info = infos[j];
+					if (info.index == undefined) continue;
+					var eTdLevel = getMonstreLevelNode(info.index)
+					this.className = 'mh_tdpage';
+					if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
+						eTdLevel.className = "MZtooltip";
+						eTdLevel.style.color = "black";
+						eTdLevel.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
+						continue;
+					}
+					eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
+					//info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
+					listeCDM[info.id] = info;
+					if (!(info && info.esq)) {
+						//if (MY_DEBUG) window.console.log("pas d'esquive id=" + info.id + ", index=" + info.index);
+						eTdLevel.className = "MZtooltip";
+						eTdLevel.innerHTML = mkMinMaxHTML(info.niv) + '<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>';
+						continue;
+					}
+					switch (info.Mode) {
+						case 'cdm':
+							eTdLevel.style.color = 'blue'; break;
+						case 'stat':
+							eTdLevel.style.color = 'purple'; break;
+						case 'statV1':
+							eTdLevel.style.color = 'orange'; break;
+					}
+					eTdLevel.style.cursor = 'pointer';
+					eTdLevel.onclick = function() {
+						basculeCDM(
+							getMonstreNomByTR(this.parentNode),
+							getMonstreIDByTR(this.parentNode)
+						);
+					};
+/* Roule' à étudier plus tard, cette différence de style selon la diplo...
+						eTdLevel.onmouseover = function() {
+							this.className = 'mh_tdtitre';
+						};
+						eTdLevel.onmouseout = function() {
+							if(this.parentNode.diploActive=='oui') {
+								this.className = '';
+							} else {
+								this.className = 'mh_tdpage';
+							}
+						};
+*/
+/*	a supprimer
 					} else if (infos.length > 4) {
 						infos = infos.slice(3);
-						infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
 						listeCDM[idMonstre] = infos;
 						getMonstreLevelNode(index).innerHTML = '<b>'+level+'</b>';
 					} else {
 						getMonstreLevelNode(index).innerHTML = level;
 					}
+*/
 				}
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant computeMission');
 				computeMission(1, nbMonstres);
@@ -9902,8 +10285,9 @@ function retrieveCDMsNew() {
 				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres fin');
 			} catch(e) {
-				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
+				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZgetCaracMonstre+'\n'+texte);
 			}
+			//if (MY_DEBUG) window.console.log('id=6376829, info=' + JSON.stringify(listeCDM[6376829]));
 			isCDMsRetrieved=true;
 		},
 	});
@@ -9913,7 +10297,28 @@ function retrieveCDMsNew() {
 	if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' requête ajax partie pour ' + tReq.length + ' monstres');
 }
 
-function retrieveCDMsOld() {
+function mkMinMaxHTML(oMM) {
+	if (oMM == undefined) return '';
+	if (oMM.min == undefined) {
+		if (oMM.max == undefined) {
+			return;
+		} else {
+			return "⩽" + oMM.max;	// le caractère qui ne s'affiche peut-être pas bien est le U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
+		}
+	} else {
+		if (oMM.max == undefined) {
+			return "⩾" + oMM.min;	// le caractère qui ne s'affiche peut-être pas bien est le U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
+		} else if (oMM.min == oMM.max) {
+			return oMM.min;
+		} else if (oMM.min < oMM.max) {
+			return oMM.min + '-' + oMM.max;
+		} else {
+			return '<span style="color:red">' + oMM.min + '-' + oMM.max + '</span>';
+		}
+	}
+}
+
+function retrieveCDMsOld() {	// a supprimer
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) { return; }
@@ -10023,7 +10428,7 @@ function computeMission(begin,end) {
 		var bPeutEtreIcone = false;
 		for(var num in obMissions) {
 			var mobMission = false;
-			var mobMissionPeutEtre = false;
+			var mobMissionPeutEtre = undefined;
 			switch(obMissions[num].type) {
 				case 'Race':
 					var race = epure(obMissions[num].race.toLowerCase());
@@ -10037,7 +10442,8 @@ function computeMission(begin,end) {
 							} else if (nom.indexOf('parasitus')!=-1) {
 								if (nom.match(/^crasc parasitus \[/ui)) {
 									// on ne peut pas savoir
-									mobMissionPeutEtre = true;
+									mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n'
+										+ 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
 								} else {
 									// c'est un monstre de la race des Crasc Parasitus
 									mobMission = false;
@@ -10048,7 +10454,8 @@ function computeMission(begin,end) {
 						} else if (race == 'crasc parasitus') {
 							if (nom.match(/^crasc parasitus \[/ui)) {
 								// on ne peut pas savoir
-								mobMissionPeutEtre = true;
+								mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n'
+									+ 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
 							} else {
 								// c'est un monstre de la race des Crasc Parasitus
 								mobMission = true;
@@ -10061,13 +10468,39 @@ function computeMission(begin,end) {
 					break;
 				case 'Niveau':
 					var donneesMonstre = listeCDM[getMonstreID(i)];
-					if(donneesMonstre) {
-						var nivMob = Number(donneesMonstre[0]);
-						var	nivMimi = Number(obMissions[num].niveau),
-							mod = obMissions[num].mod;
-						if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
-							|| (isNaN(mod) && nivMob>=nivMimi)) {
-							mobMission = true;
+					if (donneesMonstre) {
+						var nivMimi = Number(obMissions[num].niveau);
+						var mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est ⩾ nimMimi
+						if (isNaN(mod)) {
+							var minMimi = nivMimi;
+							var maxMimi = nivMimi + 999999;
+						} else {
+							var minMimi = nivMimi - mod;
+							var maxMimi = nivMimi + mod;
+						}
+						if (donneesMonstre.niv) {	// nouveau mode
+							if (donneesMonstre.niv.max && donneesMonstre.niv.min) {
+								if (donneesMonstre.niv.max <= maxMimi && donneesMonstre.niv.min >= minMimi) {
+									mobMission = true;
+								} else if (!(donneesMonstre.niv.max <  minMimi || donneesMonstre.niv.min >  maxMimi)) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+									if (isDEV) mobMissionPeutEtre += '\nMonstre=(' + donneesMonstre.niv.min + ', ' + donneesMonstre.niv.max + '), mimi=(' + minMimi + ', ' + maxMimi + ')'
+								}
+							} else if (donneesMonstre.niv.max) {
+								if (donneesMonstre.niv.max >= minMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							} else if (donneesMonstre.niv.min) {
+								if (donneesMonstre.niv.min <= maxMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							}
+						} else {	// ancien mode à supprimer
+							var nivMob = Number(donneesMonstre[0]);
+							if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
+								|| (isNaN(mod) && nivMob>=nivMimi)) {
+								mobMission = true;
+							}
 						}
 					}
 					break;
@@ -10094,12 +10527,11 @@ function computeMission(begin,end) {
 			if(mobMission) {
 				mess += mess ? '\n\n' : '';
 				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
-			} else if (mobMissionPeutEtre) {
+			} else if (mobMissionPeutEtre !== undefined) {
 				mess += mess ? '\n\n' : '';
-				mess += 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n';
-				mess += 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"\n';
+				mess += mobMissionPeutEtre + '\n';
 				bPeutEtreIcone = true;
-				mess += 'Mission '+num+' :\n'+obMissions[num].libelle;
+				mess += 'Mission '+ num + ' :\n'+obMissions[num].libelle;
 			}
 		}
 		if(mess) {
@@ -10131,14 +10563,20 @@ function computeVLC(begin,end) {
 	{
 		var id = getMonstreID(i);
 		var donneesMonstre = listeCDM[id];
+		var vlc = false;
+		/* ancien mode à supprimer
 		if(donneesMonstre && donneesMonstre.length>12)
 		{
-			if(donneesMonstre[12]==1)
-			{
-				var td = getMonstreNomNode(i);
-				td.appendChild(document.createTextNode(" "));
-				td.appendChild(createImage(urlImg, "Voit le caché"));
-			}
+			if(donneesMonstre[12]==1) vlc = 1;
+		}
+		// */
+		// nouveau mode
+		if (donneesMonstre && donneesMonstre.vlc) vlc = donneesMonstre.vlc;
+		//if (donneesMonstre) window.console.log('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
+		if (vlc) {
+			var td = getMonstreNomNode(i);
+			td.appendChild(document.createTextNode(" "));
+			td.appendChild(createImage(urlImg, "Voit le caché"));
 		}
 	}
 }
@@ -10167,7 +10605,13 @@ function computeTactique(begin, end) {
 			var id = getMonstreID(j);
 			var nom = getMonstreNom(j);
 			var donneesMonstre = listeCDM[id];
-			if(donneesMonstre && nom.indexOf('Gowap')==-1) {
+			var bShowTactique = false;
+			//if (isDEV) {
+				if (donneesMonstre && donneesMonstre.esq) bShowTactique = true;
+			// } else {
+				// if(donneesMonstre && nom.indexOf('Gowap')==-1) bShowTactique = true;
+			// }
+			if (bShowTactique) {
 				var td = getMonstreNomNode(j);
 				appendText(td,' ');
 				td.appendChild(
@@ -11103,7 +11547,7 @@ function do_vue() {
 		putBoutonPXMP();
 		
 		synchroniseFiltres();
-		toggleLevelColumn();
+		toggleLevelColumn();	// appel des CdM, ne fait rien si la checkbox NOCDM est cochée
 
 		refreshDiplo();
 		
