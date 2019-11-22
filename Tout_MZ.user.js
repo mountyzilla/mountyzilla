@@ -38,6 +38,8 @@ try {
 const MZ_changeLog = [
 "V1.3.0 15/11/2019",
 "	Refonte calculs tactiques de la vue - beta",
+"V1.2.20.6 09/11/2019",
+"	Correction de la formule d'AdD dans le profil",
 "V1.2.20.5 16/10/2019",
 "	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant",
 "V1.2.20.4 03/10/2019",
@@ -13227,7 +13229,7 @@ function sortileges(sort) {
 				if(newTalent) {
 					// Si le trõll a au moins un talent dans la catégorie :
 					texte += ": <b>+"+DSup+"D3 +"+Math.floor(fixe) +
-					         "</b> <i>(+"+Math.floor(3.5*DSup+fixe) +
+					         "</b> <i>(+"+Math.floor(2*DSup+fixe) +
 					         ")</i><br>";
 				}
 			}
