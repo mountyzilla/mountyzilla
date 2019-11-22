@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0
+// @version     1.3.0.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.1 22/11/2019",
+"	Ajustements sur les infos tactiques",
 "V1.3.0 15/11/2019",
 "	Refonte calculs tactiques de la vue - beta",
 "V1.2.20.6 09/11/2019",
@@ -2827,7 +2829,7 @@ function getTexteAnalyse(modificateur,chiffre)
 
 // rend le HTML pour le tableau de la "calculette"
 function getAnalyseTactique(id,nom) {
-	var donneesMonstre = listeCDM[id];
+	var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 	var needAutres=false;
 	var i;
 	if(donneesMonstre == null)
@@ -3132,7 +3134,7 @@ function analyseTactique(donneesMonstre,nom) {
 		// distance troll - monstre
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm-armM_mag,1)))/100;
 		//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-		if (donneesMonstre.index !== undefined && tr_monstres !== undefined && tr_monstres[donneesMonstre.index] !== undefined) {
+		if (donneesMonstre.index !== undefined && MZ_EtatCdMs.tr_monstres !== undefined && MZ_EtatCdMs.tr_monstres[donneesMonstre.index] !== undefined) {
 			var dist = getMonstreDistance(donneesMonstre.index+1);
 			var vue_bm = parseInt(MY_getValue(numTroll+".caracs.vue.bm"), 10);
 			var portee = getPortee__Profil(vue+vue_bm);
@@ -5291,9 +5293,6 @@ function do_attaque() {
 // x~x infomonstre
 
 // DEBUG
-// Utilisation obligatoire de listeCDM à cause de getAnalyseTactique()
-// À corriger, évidemment.
-var listeCDM = {};
 var nomMonstre='';
 var idMonstre=-1;
 var tbody;
@@ -5334,7 +5333,7 @@ function traiteMonstre() {
 				var infosRet = JSON.parse(texte);
 				if(infosRet.length==0) return;
 				var info = infosRet[0];
-				listeCDM[idMonstre]=info;
+				MZ_EtatCdMs.listeCDM[idMonstre]=info;
 				try {
 					var nodeInsert = document.evaluate(
 						"//div[@class = 'titre3']",
@@ -5358,35 +5357,6 @@ function traiteMonstre() {
 			}
 		},
 	});
-/* ancienne méthode à supprimer
-	FF_XMLHttpRequest({
-		method: 'GET',
-		url: URL_MZinfoMonstre + '?begin=-1&idcdm='
-			+MY_getValue('CDMID')
-			+'&nom[]='+escape(nomMonstre)+'$'+idMonstre,
-		headers : {
-			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-			'Accept': 'application/atom+xml,application/xml,text/xml'
-		},
-		trace: 'info monstre ' + nomMonstre,
-		onload: function(responseDetails) {
-			try {
-				var texte = responseDetails.responseText;
-				var lines = texte.split("\n");
-				if(lines.length>=1) {
-					var infos = lines[0].split(";");
-					if(infos.length<4) { return; }
-					var idMonstre = infos[0];
-					infos=infos.slice(3);
-					listeCDM[idMonstre]=infos;
-					computeMissionInfomonstre();
-				}
-			} catch(e) {
-				window.alert(e);
-			}
-		}
-	});
-// */
 }
 
 function initPopupInfomonstre() {
@@ -5425,43 +5395,9 @@ function showPopupTactique(evt) {
 	}
 }
 
-// roule 16/03/2016, existe déjà ailleurs
-// function hidePopup() {
-	// popup.style.visibility = 'hidden';
-// }
-
 function toggleTableau() {
 	tbody.style.display = tbody.style.display=='none' ? '' : 'none';
 }
-
-/*
-function computeMissionInfomonstre() {	// à supprimer
-// C'est quoi ce titre de fonction ? (O_o)
-	try {
-		var nodeInsert = document.evaluate(
-			"//div[@class = 'titre3']",
-			document, null, 9, null
-		).singleNodeValue;
-	} catch(e) {
-		window.console.log(traceStack(e, 'computeMissionInfomonstre'));
-		return;
-	}
-	var table = createCDMTable(idMonstre,nomMonstre,listeCDM[idMonstre]);
-	table.align = 'center';
-	tbody = table.childNodes[1];
-	table.firstChild.firstChild.firstChild.onclick = toggleTableau;
-	table.firstChild.firstChild.onmouseover = function() {
-		this.style.cursor = 'pointer';
-		this.className = 'mh_tdpage';
-	};
-	table.firstChild.firstChild.onmouseout = function() {
-		this.className = 'mh_tdtitre';
-	};
-	tbody.style.display = 'none';
-	table.style.width = '350px';
-	insertBefore(nodeInsert,table);
-}
-// */
 
 function do_infomonstre() {
 	start_script();
@@ -6137,7 +6073,7 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
-	news.push(['15/11/2019', 'Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).']);
+	news.push(['15/11/2019', '<span style="color:red">Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).</span>']);
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 	afficherNouvelles(news);
 }
@@ -8968,9 +8904,6 @@ function do_menu() {
 
 /*--------------------------- Variables Globales -----------------------------*/
 
-// Infos remplies par des scripts extérieurs
-var listeCDM = [], listeLevels = [];
-
 // Position actuelle
 var currentPosition=[0,0,0];
 
@@ -8993,10 +8926,7 @@ var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 // Infos tactiques
 var popup;
 
-// Gère l'affichage en cascade des popups de CdM
-var nbCDM = 0;
 
-var isCDMsRetrieved = false; // = si les CdM ont déjà été DL
 
 // Utilisé pour supprimer les monstres "engagés"
 var listeEngages = {};
@@ -9020,9 +8950,20 @@ const typesAFetcher = {
 	'champignons':1,
 	'lieux':1
 }
-var tr_monstres = {}, tr_trolls = {}, tr_tresors = {},
+
+var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
+	nbMonstres: 0,
+	tr_monstres: [],
+	lastIndexDone: 0,
+	isCDMsRetrieved: false, // = si les CdM ont déjà été DL
+	listeCDM: [],
+	// Gère l'affichage en cascade des popups de CdM
+	yIndexCDM: 0,
+};
+
+var tr_trolls = {}, tr_tresors = {},
 	tr_champignons = {}, tr_lieux = {};
-var nbMonstres = 0, nbTrolls = 0, nbTresors = 0,
+var nbTrolls = 0, nbTresors = 0,
 	nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
@@ -9040,7 +8981,7 @@ function fetchData(type) {
 
 /*---------------------------------- DEBUG -----------------------------------*/
 var mainTabs = document.getElementsByClassName('mh_tdborder');
-var x_monstres = tr_monstres;
+var x_monstres = MZ_EtatCdMs.tr_monstres;
 var x_trolls = tr_trolls;
 var x_tresors = tr_tresors;
 var x_champis = tr_champignons;
@@ -9107,12 +9048,12 @@ function getXxxPosition(xxx, i) {
 
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
-	//debugMZ('getMonstreDistance, i=' + i + ', tr=' + tr_monstres[i].innerHTML);
-	return parseInt(tr_monstres[i].cells[0].textContent);
+	//debugMZ('getMonstreDistance, i=' + i + ', tr=' + MZ_EtatCdMs.tr_monstres[i].innerHTML);
+	return parseInt(MZ_EtatCdMs.tr_monstres[i].cells[0].textContent);
 }
 
 function getMonstreID(i) {
-	return Number(tr_monstres[i].cells[2].firstChild.nodeValue);
+	return Number(MZ_EtatCdMs.tr_monstres[i].cells[2].firstChild.nodeValue);
 }
 
 function getMonstreIDByTR(tr) {
@@ -9120,34 +9061,17 @@ function getMonstreIDByTR(tr) {
 }
 
 function getMonstreLevelNode(i) {
-	return tr_monstres[i].cells[3];
+	return MZ_EtatCdMs.tr_monstres[i].cells[3];
 }
 
-// Roule 20/01/2017, à supprimer, remplacé par isMonstreLevelOutLimit
-// function getMonstreLevel(i) {
-	// if(!isCDMsRetrieved) return -1;
-	// var donneesMonstre = listeCDM[getMonstreID(i)];
-	// return donneesMonstre ? parseInt(donneesMonstre[0]) : -1;
-// }
-
 function isMonstreLevelOutLimit(i, limitMin, limitMax) {
-	if(!isCDMsRetrieved) return false;
-	var donneesMonstre = listeCDM[getMonstreID(i)];
+	if(!MZ_EtatCdMs.isCDMsRetrieved) return false;
+	var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 	if (!donneesMonstre) return false;
-	var nivTxt = donneesMonstre[0];
-	// calcul min/max du monstre
-	var monstreMin, monstreMax, iPos;
-	if (nivTxt.substring(0, 2) == '<=') {
-		monstreMin = 0;
-		monstreMax = parseInt(nivTxt.substring(2, 99));
-	} else if ((iPos = nivTxt.indexOf('-')) > 0) {
-		monstreMin = parseInt(nivTxt.substring(0, iPos));
-		monstreMax = parseInt(nivTxt.substring(iPos+1, 99));
-	} else {
-		monstreMin = monstreMax = parseInt(nivTxt);
-	}
-	if (limitMin > 0 && monstreMax < limitMin) return true;
-	if (limitMax > 0 && monstreMin > limitMax) return true;
+	var niv = donneesMonstre.niv;
+	if (niv == undefined) return false;
+	if (limitMin > 0 && niv.max && niv.max < limitMin) return true;
+	if (limitMax > 0 && niv.min && niv.min > limitMax) return true;
 	return false;
 }
 
@@ -9155,7 +9079,7 @@ function getMonstreNomNode(i) {
 	try {
 		var td = document.evaluate(
 			"./td/a[starts-with(@href, 'javascript:EMV')]/..",
-			tr_monstres[i], null, 9, null
+			MZ_EtatCdMs.tr_monstres[i], null, 9, null
 		).singleNodeValue;
 		return td;
 	} catch(e) {
@@ -9165,7 +9089,7 @@ function getMonstreNomNode(i) {
 }
 
 function getMonstreNom(i) {
-	return getMonstreNomByTR(tr_monstres[i]);
+	return getMonstreNomByTR(MZ_EtatCdMs.tr_monstres[i]);
 }
 
 function getMonstreNomByTR(tr) {
@@ -9182,7 +9106,7 @@ function getMonstreNomByTR(tr) {
 }
 
 function getMonstrePosition(i) {
-	var tds = tr_monstres[i].childNodes;
+	var tds = MZ_EtatCdMs.tr_monstres[i].childNodes;
 	var l = tds.length;
 	return [
 		parseInt(tds[l-3].textContent),
@@ -9192,7 +9116,7 @@ function getMonstrePosition(i) {
 }
 
 function appendMonstres(txt) {
-	for(var i=1; i<=nbMonstres ; i++)
+	for(var i=1; i<=MZ_EtatCdMs.nbMonstres ; i++)
 		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+positionToString(getMonstrePosition(i))+'\n';
 	return txt;
 }
@@ -9204,8 +9128,8 @@ function getMonstres() {
 
 function bddMonstres(start,stop) {
 	if(!start) { var start = 1; }
-	if(!stop) { var stop = nbMonstres; }
-	stop = Math.min(nbMonstres,stop);
+	if(!stop) { var stop = MZ_EtatCdMs.nbMonstres; }
+	stop = Math.min(MZ_EtatCdMs.nbMonstres,stop);
 	var txt='';
 	for(var i=start ; i<=stop ; i++) {
 		txt += getMonstreID(i)+';'+
@@ -9935,35 +9859,10 @@ function insertLevelColumn() {
 	var td = insertTdText(getMonstreLevelNode(0),'Niveau',true);
 	td.width = 25;
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
-	for(var i=1 ; i<=nbMonstres ; i++) {
-		//window.console.log('nbMonstres=' + nbMonstres + ', tr_monstres.length=' + tr_monstres.length);	// debug Roule
+	for(var i=1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
+		//window.console.log('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
 		td = insertTdText(getMonstreLevelNode(i), '-');
-/* à supprimer
-		td.onclick = function() {
-			basculeCDM(
-				getMonstreNomByTR(this.parentNode),
-				getMonstreIDByTR(this.parentNode)
-			);
-		};
-		td.onmouseover = function() {
-			this.style.cursor = 'pointer';
-			this.className = 'mh_tdtitre';
-		};
-		td.onmouseout = function() {
-			if(this.parentNode.diploActive=='oui') {
-				this.className = '';
-			} else {
-				this.className = 'mh_tdpage';
-			}
-		};
-*/
 		td.style = 'font-weight:bold;text-align:center;';
-/* à supprimer
-		if(isCDMsRetrieved) {
-			// Rappel des niveaux si mémorisés
-			td.innerHTML = listeLevels[i];
-		}
-*/
 	}
 }
 
@@ -9972,7 +9871,7 @@ function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue
 	if(saveCheckBox(checkBoxLevels,'NOLEVEL')) {
 		if (!eltMZ_TITRE_NIVEAU_MONSTRE) return;	// rien à faire si la colonne n'existe pas. C'est le cas à l'ouverture de la page avec NOCMD coché
 		// cacher tous les td
-		for(var i=0 ; i<=nbMonstres ; i++) {
+		for(var i=0 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
 			getMonstreLevelNode(i).style.display = 'none';
 		}
 	} else {
@@ -9981,26 +9880,9 @@ function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue
 			retrieveCDMs();
 		} else {
 			// afficher tous les td
-			for(var i=0 ; i<=nbMonstres ; i++) {
+			for(var i=0 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
 				getMonstreLevelNode(i).style.display  = '';
 			}
-		}
-	}
-}
-
-function toggleLevelColumn_old() {	// à supprimer, uje garde un certain temps comme référence
-// = Handler checkBox noLevel
-	if(!saveCheckBox(checkBoxLevels,'NOLEVEL')) {
-		insertLevelColumn();
-		if(!isCDMsRetrieved) { retrieveCDMs(); }
-	} else if(getMonstreLevelNode(0).textContent=='Niveau') {
-		for(var i=0 ; i<=nbMonstres ; i++) {
-			if(isCDMsRetrieved) {
-				// Mémorisation des niveaux pour rappel éventuel
-				listeLevels[i] = getMonstreLevelNode(i).innerHTML;
-			}
-			// Suppression du td Niveau
-			tr_monstres[i].removeChild(getMonstreLevelNode(i));
 		}
 	}
 }
@@ -10008,7 +9890,7 @@ function toggleLevelColumn_old() {	// à supprimer, uje garde un certain temps c
 /* [functions] Gestion de l'AFFICHAGE des CdMs */
 function basculeCDM(nom,id) {
 // = Bascule l'affichage des popups CdM
-	if(listeCDM[id]) {
+	if(MZ_EtatCdMs.listeCDM[id]) {
 		if(!document.getElementById('popupCDM'+id)) {
 			afficherCDM(nom, id);
 		} else {
@@ -10061,16 +9943,9 @@ if(!isPage("MH_Play/Play_equipement")) {
 
 function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
-	var donneesMonstre = listeCDM[id];
+	var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 	/* Début création table */
 	var table = createCDMTable(id,nom,donneesMonstre); // voir Libs
-	table.id = 'popupCDM'+id;
-	table.style =
-		'position:fixed;'+
-		'z-index:1;'+
-		'top:'+(300+(30*nbCDM))%(30*Math.floor((window.innerHeight-400)/30))+'px;'+
-		'left:'+(window.innerWidth-365)+'px;'+
-		'width:300px;';
 	/* Ajout du titre avec gestion Drag & Drop */
 	var tr = table.firstChild;
 	tr.style.cursor = 'move';
@@ -10093,9 +9968,23 @@ function afficherCDM(nom,id) {
 	td = appendTdText(tr,'Fermer',true);
 	td.colSpan = 2;
 	td.style = 'text-align:center;';
-	nbCDM++;
+	table.id = 'popupCDM'+id;
+	table.style.position = 'fixed';
+	table.style.zIndex = 1;
+	//var topY = +(300+(30*MZ_EtatCdMs.yIndexCDM))%(30*Math.floor((window.innerHeight-400)/30));
+	table.style.left = +(window.innerWidth-365)+'px';
+	table.style.width = '300px';
 	/* Fin création table & Affichage */
 	document.body.appendChild(table);
+	var topY = 90 + (30*MZ_EtatCdMs.yIndexCDM);
+	//window.console.log('topY=' + topY + ', offsetHeight=' + table.offsetHeight + ', innerHeight=' + window.innerHeight);
+	if ((topY + table.offsetHeight) > window.innerHeight) {
+		MZ_EtatCdMs.yIndexCDM = 0;	// on se repositionne en haut s'il n'y a pas assez de place
+		topY = 90;
+	} else {
+		MZ_EtatCdMs.yIndexCDM++;	// décalage pour la fois suivante
+	}
+	table.style.top = topY + 'px';
 }
 
 /* [functions] Gestion de l'AFFICHAGE des Infos de combat */
@@ -10111,19 +10000,6 @@ function initPopupVue() {
 		'z-index: 3;'+
 		'max-width: 400px;';
 	document.body.appendChild(popup);
-}
-
-/* [functions] Récupération / Computation des Infos Tactiques */
-// TODO à revoir
-function retireMarquage(nom) {
-	var i = nom.indexOf(']');
-	switch(i) {
-		case -1:
-		case nom.length-1:
-			return nom;
-		default:
-			return nom.slice(0,i+1);
-	}
 }
 
 function showPopupError(sHTML) {
@@ -10154,37 +10030,34 @@ function showPopupError(sHTML) {
 }
 
 function retrieveCDMs() {
-	// Roule 18/11/2017 mise en sommeil MZ V2, on a besoin de tester en mode dev avec l'ancienne version
-	//return retrieveCDMsOld();
-	return retrieveCDMsNew();
-	//return retrieveCDMsOld();	// a supprimer
-}
-
-function retrieveCDMsNew() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) return;
 	// Roule, message si l'utilisateur a décoché "Menu d'actions contextuelles"
-	if (!tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
+	if (!MZ_EtatCdMs.tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
 		avertissement('Vous avez décoché "Menu d\'actions contextuelles" dans la fenêtre de limitation de la vue, Moutyzilla ne peut pas afficher les niveaux dans ce mode<br />La fenêtre de limitation de la vue est celle qu\'on obtient en cliquant sur l\'œil dans le menu de gauche', 9999999);
 		return;
 	}
-	if (nbMonstres < 1) return;
+	if (MZ_EtatCdMs.nbMonstres < 1) return;
 
 	var tReq = [];
-	for (var i=1 ; i<=nbMonstres ; i++) {
+	var nbReq = 0;
+	var prevLastIndexDone = MZ_EtatCdMs.lastIndexDone;
+	for (var i=prevLastIndexDone+1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
 		//tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
 		// ne pas demander pour les Gowaps
 		var nom = getMonstreNom(i);
 		if (nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
-			var id = getMonstreID(i);
-			listeCDM[id] = {id:id, index: i};
+			getMonstreLevelNode(i).innerHTML = '';
 			continue;
 		}
 		tReq.push({'index':i, 'id':getMonstreID(i), 'nom':nom});
-		if (i > 5000) break;	// limitation car on a un dépassement mémoire coté serveur si c'est trop gros
+		nbReq++;
+		if (nbReq >= 500) break;	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 	}
+	MZ_EtatCdMs.lastIndexDone = i;
 	var startAjaxCdM = new Date();
+	window.console.log('[MZ] ' + MZ_formatDateMS() + ' lancement AJAX ' + nbReq + ' demandes niveaux monstres V2');
 
 	FF_XMLHttpRequest({
 		method: 'POST',
@@ -10197,12 +10070,6 @@ function retrieveCDMsNew() {
 		trace: 'demande niveaux monstres V2',
 		onload: function(responseDetails) {
 			try {
-				// traiter les Gowaps
-				for (var id in listeCDM) {
-					info = listeCDM[id];
-					//window.console.log('aff gowap ' + JSON.stringify(info));
-					getMonstreLevelNode(info.index).innerHTML = mkMinMaxHTML(info.niv);
-				}
 				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 				if (responseDetails.status == 0) return;
 				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
@@ -10237,7 +10104,7 @@ function retrieveCDMsNew() {
 					}
 					eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
 					//info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
-					listeCDM[info.id] = info;
+					MZ_EtatCdMs.listeCDM[info.id] = info;
 					if (!(info && info.esq)) {
 						//if (MY_DEBUG) window.console.log("pas d'esquive id=" + info.id + ", index=" + info.index);
 						eTdLevel.className = "MZtooltip";
@@ -10271,32 +10138,78 @@ function retrieveCDMsNew() {
 							}
 						};
 */
-/*	a supprimer
-					} else if (infos.length > 4) {
-						infos = infos.slice(3);
-						listeCDM[idMonstre] = infos;
-						getMonstreLevelNode(index).innerHTML = '<b>'+level+'</b>';
-					} else {
-						getMonstreLevelNode(index).innerHTML = level;
-					}
-*/
 				}
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant computeMission');
-				computeMission(1, nbMonstres);
+				computeMission(prevLastIndexDone+1, MZ_EtatCdMs.nbMonstres);
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant filtreMonstres');
 				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres fin');
 			} catch(e) {
 				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZgetCaracMonstre+'\n'+texte);
 			}
-			//if (MY_DEBUG) window.console.log('id=6376829, info=' + JSON.stringify(listeCDM[6376829]));
-			isCDMsRetrieved=true;
+			//if (MY_DEBUG) window.console.log('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
+			MZ_EtatCdMs.isCDMsRetrieved=true;
+			// afficher/supprimer le bouton pour demander la suite
+			var eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
+			window.console.log('[MZ] lastIndexDone=' + MZ_EtatCdMs.lastIndexDone + ', nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', eltBoutonSuite=' + eltBoutonSuite);
+			if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
+				if (eltBoutonSuite) {
+					while (eltBoutonSuite.firstChild) eltBoutonSuite.removeChild(eltBoutonSuite.firstChild);	// vider
+					appendText(eltBoutonSuite, 'en cours ' + MZ_EtatCdMs.lastIndexDone + "/" + MZ_EtatCdMs.nbMonstres);
+					retrieveCDMs();	// lancer la suite
+				} else {
+					eltBoutonSuite = document.createElement('div');
+					eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
+					eltBoutonSuite.style.position = 'fixed';
+					eltBoutonSuite.style.border = '1px solid black';
+					eltBoutonSuite.style.top = '10px';
+					eltBoutonSuite.style.right = '10px';
+					//eltBoutonSuite.style.backgroundColor = 'white';
+					eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
+					eltBoutonSuite.style.color = 'black';
+					eltBoutonSuite.style.fontSize = 'large';
+					eltBoutonSuite.style.padding = '5px';
+					eltBoutonSuite.style.borderRadius  = '10px';
+					eltBoutonSuite.style.cursor = 'pointer';
+					eltBoutonSuite.style.zIndex = '500';
+					appendText(eltBoutonSuite, nbReq + ' CdM(s) récupérées');
+					appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
+					appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
+					appendBr(eltBoutonSuite);
+					appendText(eltBoutonSuite, 'des ' + MZ_EtatCdMs.nbMonstres + ' monstres');
+					eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
+					eltBoutonSuite.onclick = MZ_SuiteCdMs;
+					document.body.appendChild(eltBoutonSuite);
+				}
+			} else {
+				if (eltBoutonSuite) eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
+			}
 		},
 	});
 	//str = '';
 	//begin = i+1;
-	//isCDMsRetrieved=true;
 	if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' requête ajax partie pour ' + tReq.length + ' monstres');
+}
+
+function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
+	var evt = e || window.event;
+	if (evt.shiftKey) {
+		this.parentNode.removeChild(this);
+		return;
+	}
+	while (this.firstChild) this.removeChild(this.firstChild);	// vider
+	appendText(this, 'en cours ' + MZ_EtatCdMs.lastIndexDone + "/" + MZ_EtatCdMs.nbMonstres);
+	this.title = 'Shift-Click pour faire disparaitre ce bouton';
+	this.style.cursor = '';	// default
+	this.onclick = MZ_SupprBoutonCdMs;
+	retrieveCDMs();
+}
+
+function MZ_SupprBoutonCdMs(e) {
+	var evt = e || window.event;
+	if (evt.shiftKey) {
+		this.parentNode.removeChild(this);
+	}
 }
 
 function mkMinMaxHTML(oMM) {
@@ -10320,105 +10233,13 @@ function mkMinMaxHTML(oMM) {
 	}
 }
 
-function retrieveCDMsOld() {	// a supprimer
-// Récupère les CdM disponibles dans la BDD
-// Lancé uniquement sur toggleLevelColumn
-	if(checkBoxLevels.checked) { return; }
-	// Roule, message si l'utilisateur a décoché "Menu d'actions contextuelles"
-	if (!tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
-		avertissement('Vous avez décoché "Menu d\'actions contextuelles" dans la fenêtre de limitation de la vue, Moutyzilla ne peut pas afficher les niveaux dans ce mode<br />La fenêtre de limitation de la vue est celle qu\'on obtient en cliquant sur l\'œil dans le menu de gauche', 9999999);
-		return;
-	}
-
-	var str = '';
-	var begin = 1; // num de début de lot si plusieurs lots de CdM (501+ CdM)
-	var cdmMax = MY_getValue(numTroll+'.MAXCDM');
-	cdmMax = Math.min(nbMonstres, cdmMax ? cdmMax : 500);
-	if(MY_getValue('CDMID')==null) MY_setValue('CDMID',1); // à quoi sert CDMID ??
-	
-	for(var i=1 ; i<=cdmMax ; i++) {
-		var nomMonstre = retireMarquage(getMonstreNom(i));
-		if(nomMonstre.indexOf(']') != -1) {
-			nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
-		}
-		// *** WARNING : PROXY RATIBUS ***
-		// *** NE PAS CHANGER la fonction obsolète 'escape' ***
-		str += 'nom[]='+escape(nomMonstre)+'$'+(
-			getMonstreDistance(i)<=5 ? getMonstreID(i) : -getMonstreID(i)
-		)+'&';
-	}
-
-		// Roule 31/07/2017 suppression du saucissonnage : inutile et complique les choses ensuite
-		//if(i%500==0 || i==cdmMax) { // demandes de CdM par lots de 500 max
-	FF_XMLHttpRequest({
-		method: 'POST',
-		url: URL_MZinfoMonstre,
-		headers : {
-			'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-			'Accept': 'application/atom+xml,application/xml,text/xml',
-			'Content-type':'application/x-www-form-urlencoded'
-		},
-		data: 'begin='+begin+'&idcdm='+MY_getValue('CDMID')+'&'+str,
-		trace: 'demande niveaux monstres',
-		onload: function(responseDetails) {
-			try {
-				//window.console.log('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-				if (responseDetails.status == 0 && isHTTPS) {	// ça donne ça sur une erreur de certificat HTTPS
-					showPopupError('<a style="color:inherit;font-size: inherits;" href="' + URL_CertifRaistlin1 +
-						'" target="raistlin">Mountyzilla - https<br />'+
-						'Tu dois accepter le certificat de Raistlin<br />'+
-						'clique ici<br />puis « Avancé » ... « Ajouter une exception » ...'+
-						' « Confirmer l\'exception de sécurité »</a>');
-					return;
-				}
-				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-				var texte = responseDetails.responseText;
-				var lines = texte.split('\n');
-				if(lines.length==0) { return; }
-				var begin2, end2, index;
-				for(var j=0 ; j<lines.length ; j++) {
-					var infos = lines[j].split(';');
-					if(infos.length<4) { continue; }
-					var idMonstre=infos[0];
-					var isCDM = infos[1];
-					index = parseInt(infos[2]);
-					var level = infos[3];
-					infos = infos.slice(3);
-					infos['iTR'] = j;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM)
-					if(begin2==null) { begin2 = index; }
-					end2 = index;
-					listeCDM[idMonstre] = infos;
-					if(isCDM==1) {
-						getMonstreLevelNode(index).innerHTML = '<i>'+level+'</i>';
-					} else {
-						getMonstreLevelNode(index).innerHTML = level;
-					}
-				}
-				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant computeMission');
-				//computeMission(begin2,end2);
-				computeMission(1, nbMonstres);
-				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres avant filtreMonstres');
-				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
-				//window.console.log('[MZd] ' + (+new Date) + ' ajax niv monstres fin');
-			} catch(e) {
-				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZinfoMonstre+'\n'+texte);
-			}
-			isCDMsRetrieved=true;
-		},
-	});
-	//str = '';
-	//begin = i+1;
-	//isCDMsRetrieved=true;
-	//window.console.log('[MZd] ' + (+new Date) + ' requête ajax partie pour ' + cdmMax + ' monstres');
-}
-
 function computeMission(begin,end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance
 	//+++window.console.log('computeMission, begin=' + begin + ', end=' + end);	
 	computeVLC(begin,end);
 	//+++window.console.log('computeMission, après computeVLC');	
 	if(!begin) begin=1;
-	if(!end) end=nbMonstres;
+	if(!end) end=MZ_EtatCdMs.nbMonstres;
 	var str = MY_getValue(numTroll+'.MISSIONS');
 	if(!str) { return; }
 	
@@ -10469,7 +10290,7 @@ function computeMission(begin,end) {
 					}
 					break;
 				case 'Niveau':
-					var donneesMonstre = listeCDM[getMonstreID(i)];
+					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 					if (donneesMonstre) {
 						var nivMimi = Number(obMissions[num].niveau);
 						var mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est ⩾ nimMimi
@@ -10507,7 +10328,7 @@ function computeMission(begin,end) {
 					}
 					break;
 				case 'Famille':
-					var donneesMonstre = listeCDM[getMonstreID(i)];
+					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
 						var familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g,'');	// Roule 27/02/2019 simple quote dans les familles
 						var familleMob = epure(donneesMonstre[1].toLowerCase());
@@ -10517,7 +10338,7 @@ function computeMission(begin,end) {
 					}
 					break;
 				case 'Pouvoir':
-					var donneesMonstre = listeCDM[getMonstreID(i)];
+					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 					if(donneesMonstre) {
 						var pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
 						var pvrMob = epure(donneesMonstre[10].toLowerCase());
@@ -10556,7 +10377,7 @@ function computeVLC(begin,end) {
 	computeTactique(begin,end);
 	//+++window.console.log('computeVLC, après computeTactique');	
 	if(!begin) begin=1;
-	if(!end) end=nbMonstres;
+	if(!end) end=MZ_EtatCdMs.nbMonstres;
 	var cache = getSortComp("Invisibilité")>0 || getSortComp("Camouflage")>0;
 	if(!cache)
 		return false;
@@ -10564,7 +10385,7 @@ function computeVLC(begin,end) {
 	for(var i = end; i >= begin;i--)
 	{
 		var id = getMonstreID(i);
-		var donneesMonstre = listeCDM[id];
+		var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 		var vlc = false;
 		/* ancien mode à supprimer
 		if(donneesMonstre && donneesMonstre.length>12)
@@ -10596,7 +10417,7 @@ function computeTactique(begin, end) {
 // pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeVLC
 	try {
 		if(!begin) begin = 1;
-		if(!end) end = nbMonstres;
+		if(!end) end = MZ_EtatCdMs.nbMonstres;
 		//+++window.console.log('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);	
 		var noTactique = saveCheckBox(checkBoxTactique,'NOTACTIQUE');
 		//+++window.console.log('computeTactique, noTactique=' + noTactique);	
@@ -10606,7 +10427,7 @@ function computeTactique(begin, end) {
 		for(var j=end ; j>=begin ; j--) {
 			var id = getMonstreID(j);
 			var nom = getMonstreNom(j);
-			var donneesMonstre = listeCDM[id];
+			var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 			var bShowTactique = false;
 			//if (isDEV) {
 				if (donneesMonstre && donneesMonstre.esq) bShowTactique = true;
@@ -10632,11 +10453,11 @@ function updateTactique() {
 // = Handler checkBox noTactique
 	var noTactique = saveCheckBox(checkBoxTactique,'NOTACTIQUE');
 	//+++window.console.log('updateTactique, noTactique=' + noTactique);
-	if(!isCDMsRetrieved) return;
-	//+++window.console.log('updateTactique, isCDMsRetrieved=' + isCDMsRetrieved);
+	if(!MZ_EtatCdMs.isCDMsRetrieved) return;
+	//+++window.console.log('updateTactique, isCDMsRetrieved=' + MZ_EtatCdMs.isCDMsRetrieved);
 
 	if(noTactique) {
-		for(var i=nbMonstres ; i>0 ; i--) {
+		for(var i=MZ_EtatCdMs.nbMonstres ; i>0 ; i--) {
 			var tr = getMonstreNomNode(i);
 			var img = document.evaluate("img[@src='"+URL_MZimg+"calc2.png']",
 				tr, null, 9, null).singleNodeValue;
@@ -10689,7 +10510,7 @@ function filtreMonstres() {
 	 * Sans computation :
 	 * - Gowap ? engagé ?
 	 */
-	for(var i=nbMonstres ; i>0 ; i--) {
+	for(var i=MZ_EtatCdMs.nbMonstres ; i>0 ; i--) {
 		var pos = getMonstrePosition(i);
 		var nom = getMonstreNom(i).toLowerCase();
 		if(noEM!=oldNOEM) {
@@ -10721,7 +10542,7 @@ function filtreMonstres() {
 			}
 		}
 		
-		tr_monstres[i].style.display = (
+		MZ_EtatCdMs.tr_monstres[i].style.display = (
 			noGowapsS &&
 			nom.indexOf('gowap sauvage')!=-1 &&
 			getMonstreDistance(i)>1
@@ -10747,7 +10568,7 @@ function filtreMonstres() {
 	
 	if(MY_getValue('NOINFOEM')!='true') {
 		if(noEM != oldNOEM) {
-			if(noEM && isCDMsRetrieved) computeMission();
+			if(noEM && MZ_EtatCdMs.isCDMsRetrieved) computeMission();
 		}
 		oldNOEM = noEM;
 	}
@@ -11067,13 +10888,14 @@ function appliqueDiplo() {
 	}
 	
 	// Diplo Monstres
-	for(var i=nbMonstres ; i>0 ; i--) {
+	for(var i=MZ_EtatCdMs.nbMonstres ; i>0 ; i--) {
 		var id = getMonstreID(i);
 		var nom = getMonstreNom(i).toLowerCase();
+		var tr = MZ_EtatCdMs.tr_monstres[i];
 		if(aAppliquer.Monstre[id]) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.Monstre[id].couleur;
-			tr_monstres[i].diploActive = 'oui';
+			tr.className = '';
+			tr.style.backgroundColor = aAppliquer.Monstre[id].couleur;
+			tr.diploActive = 'oui';
 			var descr = aAppliquer.Monstre[id].titre;
 			if(descr) {
 				getMonstreNomNode(i).title = descr;
@@ -11083,13 +10905,13 @@ function appliqueDiplo() {
 			nom.indexOf('hydre')==0 ||
 			nom.indexOf('balrog')==0 ||
 			nom.indexOf('beholder')==0)) {
-			tr_monstres[i].className = '';
-			tr_monstres[i].style.backgroundColor = aAppliquer.mythiques;
-			tr_monstres[i].diploActive = 'oui';
+			tr.className = '';
+			tr.style.backgroundColor = aAppliquer.mythiques;
+			tr.diploActive = 'oui';
 			getMonstreNomNode(i).title = 'Monstre Mythique';
 		} else {
-			tr_monstres[i].className = 'mh_tdpage';
-			tr_monstres[i].diploActive = '';
+			tr.className = 'mh_tdpage';
+			tr.diploActive = '';
 		}
 	}
 }
@@ -11520,13 +11342,13 @@ function do_vue() {
 	// roule' 11/03/2016
 	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 	// je fais une recopie :(
-	tr_monstres = this['tr_monstres'];
+	MZ_EtatCdMs.tr_monstres = this['tr_monstres'];
 	tr_trolls = this['tr_trolls'];
 	tr_tresors = this['tr_tresors'];
 	tr_champignons = this['tr_champignons'];
 	tr_lieux = this['tr_lieux'];
 
-	nbMonstres = this['nbMonstres']; 
+	MZ_EtatCdMs.nbMonstres = this['nbMonstres']; 
 	nbTrolls = this['nbTrolls']; 
 	nbTresors = this['nbTresors']; 
 	nbChampignons = this['nbChampignons']; 
