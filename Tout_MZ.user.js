@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.1
+// @version     1.3.0.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.2 24/11/2019",
+"	Réduction taille info CdM",
 "V1.3.0.1 22/11/2019",
 "	Ajustements sur les infos tactiques",
 "V1.3.0 15/11/2019",
@@ -751,13 +753,15 @@ function insertText(next,text,bold) {
 function appendThText(tr,text,bold) {
 	var th = document.createElement('th');
 	if(tr) tr.appendChild(th);
-	appendText(th,text,bold);
+	th.appendChild(document.createTextNode(text));
+	if (bold) th.style.fontWeight = 'bold';
 	return th;
 	}
 
 function appendTdText(tr,text,bold) {
 	var td = appendTd(tr);
-	appendText(td,text,bold);
+	td.appendChild(document.createTextNode(text));
+	if (bold) td.style.fontWeight = 'bold';
 	return td;
 	}
 
@@ -2217,9 +2221,8 @@ function createImageTactique(url,id,nom) {
 	return img;
 }
 
-function createCDMTable(id,nom,donneesMonstre) {	// rend un Élément Table
+function createCDMTable(id,nom,donneesMonstre, closeFunct) {	// rend un Élément Table
 try {
-	var URL_MZimg = URL_MZimg;
 	var table = document.createElement('table');
 	var profilActif = isProfilActif();
 	table.className = 'mh_tdborder';
@@ -2229,8 +2232,21 @@ try {
 	
 	var thead = document.createElement('thead');
 	var tr = appendTr(thead,'mh_tdtitre');
-	var td = appendTdText(tr, 'CDM de ' + nom + ' (N° '+ id + ')', true);
-	td.colSpan = 2;
+	var td = appendTdText(tr, 'CDM de ' + nom + ' (N° '+ id + ')', false);
+	td.style.fontWeight = 'bold';
+	if (closeFunct) {
+		td.colSpan = 2;
+		td.style.borderRight = 'none';
+		td = appendTdText(tr, 'X', false);
+		td.style.cursor = 'pointer';
+		td.style.textAlign = 'right';
+		td.style.fontWeight = 'bold';
+		td.style.width = '1%';
+		td.style.borderLeft = 'none';
+		td.onclick = closeFunct;
+	} else {
+		td.colSpan = 3;
+	}
 	table.appendChild(thead);
 	var tbody = document.createElement('tbody');
 	table.appendChild(tbody);
@@ -2242,25 +2258,27 @@ try {
 		if (donneesMonstre.niv.max) ominmaxPX.max = getPXKill(donneesMonstre.niv.max);
 	}
 
-	MZ_tab_carac_add_tr_minmax2(tbody, 'Niveau', donneesMonstre.niv, 'PX', 0, ominmaxPX);
-	MZ_tab_carac_add_tr_texte(tbody, 'Famille', donneesMonstre.fam, '', 0);
-	MZ_tab_carac_add_tr_texte(tbody, 'Blessure', MZ_tab_carac_mkBlessureTexte(donneesMonstre), '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Points de Vie', donneesMonstre.pv, 'PV', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Attaque', donneesMonstre.att, 'D6', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Esquive', donneesMonstre.esq, 'D6', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Dégâts', donneesMonstre.deg, 'D3', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Régénération', donneesMonstre.reg, 'D3', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Armure physique', donneesMonstre.armP, '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Armure magique', donneesMonstre.armM, '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Armure totale', donneesMonstre.arm, '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Vue', donneesMonstre.vue, 'Case(s)', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'MM', donneesMonstre.MM, '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'RM', donneesMonstre.RM, '', 0);
-	MZ_tab_carac_add_tr_minmax(tbody, 'Durée du tour', donneesMonstre.duree, ' heures', 0);
-	MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre, 0);
-	MZ_tab_carac_add_tr_autres(tbody, donneesMonstre, 0, id, nom);
+	MZ_tab_carac_add_tr_minmax2(tbody, 'Niveau', donneesMonstre.niv, 'PX', ominmaxPX);
+	MZ_tab_carac_add_tr_texte(tbody, 'Famille', donneesMonstre.fam, '');
+	MZ_tab_carac_add_tr_texte(tbody, 'Blessure', MZ_tab_carac_mkBlessureTexte(donneesMonstre), '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Points de Vie', donneesMonstre.pv, 'PV');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Attaque', donneesMonstre.att, 'D6');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Esquive', donneesMonstre.esq, 'D6');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Dégâts', donneesMonstre.deg, 'D3');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Régénération', donneesMonstre.reg, 'D3');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure physique', donneesMonstre.armP, '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure magique', donneesMonstre.armM, '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Armure totale', donneesMonstre.arm, '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Vue', donneesMonstre.vue, 'Case(s)');
+	MZ_tab_carac_add_tr_minmax(tbody, 'MM', donneesMonstre.MM, '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'RM', donneesMonstre.RM, '');
+	MZ_tab_carac_add_tr_minmax(tbody, 'Durée du tour', donneesMonstre.duree, ' heures');
+	MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre);
+	MZ_tab_carac_add_tr_autres(tbody, donneesMonstre, id, nom);
+	/* à supprimer, remplacé par un "title" sur le 3e td de "autres"
 	var msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
 	if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
+	*/
 	return table;
 	}
 	catch(e){window.alert('Erreur createCDMTable() :\n'+e);}
@@ -2279,18 +2297,17 @@ function MZ_tab_carac_mkBlessureTexte(donneesMonstre) {
 	return texte;
 }
 
-function MZ_tab_carac_add_tr_sansTitre(table, msg, width, bItalic) {
+function MZ_tab_carac_add_tr_sansTitre(table, msg, bItalic) {
 	if (!msg) return;
-	if(!width) width=120;
 	var tr = appendTr(table,'mh_tdpage');
 	td = appendTdText(tr,msg);
-	td.colSpan = 2;
+	td.colSpan = 3;
 	if (bItalic) td.style.fontStyle = 'italic';
 	td.className = 'mh_tdpage';
 	return td;
 }
 
-function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre, width) {
+function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre) {
 	if (!donneesMonstre.pouv) return;
 	var td = MZ_tab_carac_add_tr_texte(tbody, 'Pouvoir', donneesMonstre.pouv + ' ', '', 0);
 	var tabImg = [];
@@ -2304,8 +2321,7 @@ function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre, width) {
 	}
 }
 
-function MZ_tab_carac_add_tr_autres(table, donneesMonstre, width, id, nom) {
-	if(!width) width=120;
+function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		// if (isset($this->Pouvoir)) $oRet->pouv = $this->Pouvoir;
 		// if (isset($this->Nb_att)) $oRet->nb_att = $this->Nb_att;
 		// if (isset($this->Vitesse)) $oRet->vit = $this->Vitesse;
@@ -2342,12 +2358,12 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, width, id, nom) {
 	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vlc, {
 		'1': ["oeil.gif","Voit le caché"]});
 
-	if (tabImg.length == 0) return;
+	//if (tabImg.length == 0) return;
 
 	var tr = appendTr(table,'mh_tdpage');
 	var td = appendTdText(tr,'Autres',true);
 	td.className = 'mh_tdtitre';
-	td.width = width;
+	td.width = MZ_EtatCdMs.tdWitdh;
 
 	td = appendTd(tr);
 	td.className = 'mh_tdpage';
@@ -2356,6 +2372,17 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, width, id, nom) {
 		td.appendChild(createImage(URL_MZimg + thisImg[0],thisImg[1]));
 	}
 	if (donneesMonstre.esq != undefined) td.appendChild(createImageTactique(URL_MZimg+"calc.png", id, nom), null);
+
+	var txt = String.fromCharCode(160);	// blanc insécable
+	if (donneesMonstre.nCdM) txt = donneesMonstre.nCdM;
+	var td2 = appendTdText(tr, txt);
+	td2.title = MZ_carac_build_nb_cmd_msg(donneesMonstre);
+	td2.style.width = '1%';
+	var myColor = MZ_CdMColorFromMode(donneesMonstre);
+	if (myColor) {
+		td2.style.backgroundColor = myColor;
+		td2.style.color = 'white';
+	}
 
 	return td;
 }
@@ -2373,32 +2400,31 @@ function MZ_tab_carac_add_tr_one_img(tabImg, val, listCas) {
 	}
 }
 
-function MZ_tab_carac_add_tr_texte(table, titre, msg, unit, width) {
+function MZ_tab_carac_add_tr_texte(table, titre, msg, unit) {
 	if (!msg) return;
-	if(!width) width=120;
 	var tr = appendTr(table,'mh_tdpage');
 
 	var td = appendTdText(tr,titre,true);
 	td.className = 'mh_tdtitre';
-	td.width = width;
+	td.width = MZ_EtatCdMs.tdWitdh;
 
 	var texte = msg;
 	if (unit) texte += ' ' + unit;
 	td = appendTdText(tr,texte);
+	td.colSpan = 2;
 	td.className = 'mh_tdpage';
 	return td;
 }
 
-function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit, width) {
+function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	if (!ominmax) return;
 	if (!(ominmax.min || ominmax.max)) return;
 
-	if(!width) width=120;
 	var tr = appendTr(table,'mh_tdpage');
 
 	var td = appendTdText(tr,titre,true);
 	td.className = 'mh_tdtitre';
-	td.width = width;
+	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
 		var texte = '⩽' + ominmax.max + ' ' + unit;
@@ -2416,25 +2442,25 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit, width) {
 		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
 	}
 	td = appendTdText(tr,texte);
+	td.colSpan = 2;
 	td.className = 'mh_tdpage';
 	return td;
 }
 
-function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, width, ominmaxUnit) {
+function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 	if (!ominmax) return;
 	if (!(ominmax.min || ominmax.max)) return;
 
-	if(!width) width=120;
 	var tr = appendTr(table,'mh_tdpage');
 
 	var td = appendTdText(tr,titre,true);
 	td.className = 'mh_tdtitre';
-	td.width = width;
+	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max + ' ' + unit;
+		var texte = '⩽' + ominmax.max;
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min + ' ' + unit;
+		var texte = '⩾' + ominmax.min;
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
@@ -2452,11 +2478,11 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, width, ominmax
 		if (ominmaxUnit.max === undefined) {
 			// ignore (ne devrait pas arriver)
 		} else {
-			texte += ' --> ' + Unit + '⩽' + ominmaxUnit.max;
+			texte += ' --> ' + unit + '⩽' + ominmaxUnit.max;
 		}
 	} else {
 		if (ominmaxUnit.max === undefined) {
-			texte += ' --> ' + Unit + '⩾' + ominmaxUnit.max;
+			texte += ' --> ' + unit + '⩾' + ominmaxUnit.min;
 		} else if (ominmaxUnit.min != ominmaxUnit.max) {
 			texte += ' --> ' + ominmaxUnit.min + '⩽' + unit + '⩽' + ominmaxUnit.max;
 			if (ominmaxUnit.min > ominmaxUnit.max) {
@@ -2471,6 +2497,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, width, ominmax
 	}
 	
 	td = appendTdText(tr,texte);
+	td.colSpan = 2;
 	td.className = 'mh_tdpage';
 	return td;
 }
@@ -5295,7 +5322,7 @@ function do_attaque() {
 // DEBUG
 var nomMonstre='';
 var idMonstre=-1;
-var tbody;
+//var tbody;
 var popup;
 
 function traiteMonstre() {
@@ -5345,10 +5372,12 @@ function traiteMonstre() {
 				}
 				var table = createCDMTable(idMonstre,nomMonstre,info);
 				table.align = 'center';
-				tbody = table.childNodes[1];
-				table.firstChild.firstChild.firstChild.onclick = toggleTableau;
-				table.firstChild.firstChild.style.cursor = 'pointer';
-				table.firstChild.firstChild.style = 'mh_tdpage';
+				var tbody = table.childNodes[1];
+				var thead = table.childNodes[0];
+				var tdEntete = thead.firstChild.firstChild;
+				tdEntete.onclick = toggleTableau;
+				tdEntete.style.cursor = 'pointer';
+				thead.firstChild.style = 'mh_tdpage';
 				tbody.style.display = 'none';
 				table.style.width = '350px';
 				insertBefore(nodeInsert,table);
@@ -5395,7 +5424,8 @@ function showPopupTactique(evt) {
 	}
 }
 
-function toggleTableau() {
+function toggleTableau() {	// click sur un td de thead
+	var tbody = this.parentNode.parentNode.parentNode.childNodes[1];
 	tbody.style.display = tbody.style.display=='none' ? '' : 'none';
 }
 
@@ -8959,6 +8989,7 @@ var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la 
 	listeCDM: [],
 	// Gère l'affichage en cascade des popups de CdM
 	yIndexCDM: 0,
+	tdWitdh: 80,
 };
 
 var tr_trolls = {}, tr_tresors = {},
@@ -9907,6 +9938,11 @@ function cacherPopupCDM(titre) {
 	popup.parentNode.removeChild(popup);
 }
 
+function removeTableFromClickEvent() {	// "this" est supposé être un <td> ou <th> d'une <table>
+	var table = this.parentNode.parentNode.parentNode;	// <tr><tbody/thead/tfoot><table>
+	table.parentNode.removeChild(table);
+}
+
 /* DEBUG: Section à mettre à jour */
 var selectionFunction;
 
@@ -9945,13 +9981,14 @@ function afficherCDM(nom,id) {
 // Crée la table de CdM du mob n° id
 	var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 	/* Début création table */
-	var table = createCDMTable(id,nom,donneesMonstre); // voir Libs
+	var table = createCDMTable(id,nom,donneesMonstre, removeTableFromClickEvent);
 	/* Ajout du titre avec gestion Drag & Drop */
 	var tr = table.firstChild;
 	tr.style.cursor = 'move';
 	tr.onmousedown = startDrag;
 	tr.onmouseup = stopDrag;
-	/* Ajout du bouton "Fermer" */
+	/* à supprimer, remplacé par un "x" sur l'entête
+	// Ajout du bouton "Fermer"
 	tr = appendTr(table.childNodes[1], 'mh_tdtitre');
 	tr.style.cursor = 'pointer';
 	tr.onmouseover = function() {
@@ -9968,6 +10005,7 @@ function afficherCDM(nom,id) {
 	td = appendTdText(tr,'Fermer',true);
 	td.colSpan = 2;
 	td.style = 'text-align:center;';
+	*/
 	table.id = 'popupCDM'+id;
 	table.style.position = 'fixed';
 	table.style.zIndex = 1;
@@ -10111,14 +10149,8 @@ function retrieveCDMs() {
 						eTdLevel.innerHTML = mkMinMaxHTML(info.niv) + '<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>';
 						continue;
 					}
-					switch (info.Mode) {
-						case 'cdm':
-							eTdLevel.style.color = 'blue'; break;
-						case 'stat':
-							eTdLevel.style.color = 'purple'; break;
-						case 'statV1':
-							eTdLevel.style.color = 'orange'; break;
-					}
+					var myColor = MZ_CdMColorFromMode(info);
+					if (myColor) eTdLevel.style.color = myColor;
 					eTdLevel.style.cursor = 'pointer';
 					eTdLevel.onclick = function() {
 						basculeCDM(
@@ -10189,6 +10221,17 @@ function retrieveCDMs() {
 	//str = '';
 	//begin = i+1;
 	if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' requête ajax partie pour ' + tReq.length + ' monstres');
+}
+
+function MZ_CdMColorFromMode(info) {
+	switch (info.Mode) {
+		case 'cdm':
+			return 'blue';
+		case 'stat':
+			return 'purple';
+		case 'statV1':
+			return 'orange';
+	}
 }
 
 function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
