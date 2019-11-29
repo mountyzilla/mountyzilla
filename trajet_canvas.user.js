@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.14
+// @version 2.15
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -42,6 +42,8 @@
 //	Ajout du surlignage de la position du suivant au survol de la souris dans la liste des suivants
 // V 2.14 30/10/2019 Roule'
 //	Correction bug sur l'affichage des coordonnées sur la carte
+// V 2.15 25/11/2019 Roule'
+//	Protection à l'utilisation sur smartphone
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -174,7 +176,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		if(!document.getElementById("action_lieu")) {
 			var tableau_tete = new Array();
 			//var tableau = document.getElementsByTagName("p")[0].childNodes;
-			var tableau = document.getElementById("mhPlay").childNodes; // correction par Vapulabehemot (82169) le 10/07/2015
+			var tableau = [];
+			var eltMhPlay = document.getElementById("mhPlay");
+			if (eltMhPlay) tableau = eltMhPlay.childNodes; // correction par Vapulabehemot (82169) le 10/07/2015 et Roule 25/11/2019 (protection pour mode smartphone)
 			var nb1 = tableau.length, nb2=0, nb3=1;
 			for(var i=0; i<nb1; i++) {
 				if(tableau[i].nodeName == "TABLE") {

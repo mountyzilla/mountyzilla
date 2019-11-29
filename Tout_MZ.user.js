@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.2
+// @version     1.3.0.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.3 29/11/2019",
+"	Affichage d'une icône pour les Phœnix dont la génération est connue",
 "V1.3.0.2 24/11/2019",
 "	Réduction taille info CdM",
 "V1.3.0.1 22/11/2019",
@@ -2260,6 +2262,7 @@ try {
 
 	MZ_tab_carac_add_tr_minmax2(tbody, 'Niveau', donneesMonstre.niv, 'PX', ominmaxPX);
 	MZ_tab_carac_add_tr_texte(tbody, 'Famille', donneesMonstre.fam, '');
+	//MZ_tab_carac_add_tr_texte(tbody, 'Génération', donneesMonstre.gen == 23 ? '2 ou 3' : donneesMonstre.gen, '');	// remplacé par une icône
 	MZ_tab_carac_add_tr_texte(tbody, 'Blessure', MZ_tab_carac_mkBlessureTexte(donneesMonstre), '');
 	MZ_tab_carac_add_tr_minmax(tbody, 'Points de Vie', donneesMonstre.pv, 'PV');
 	MZ_tab_carac_add_tr_minmax(tbody, 'Attaque', donneesMonstre.att, 'D6');
@@ -2357,6 +2360,12 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		'~': ["charge2.gif", "Possède de l'équipement (" + donneesMonstre.charg + ")"]});
 	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vlc, {
 		'1': ["oeil.gif","Voit le caché"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.gen, {
+		'1': ["Phoenix1.png","Phœnix de première génération"],
+		'2': ["Phoenix2.png","Phœnix de deuxième génération"],
+		'3': ["Phoenix3.png","Phœnix de troisième génération"],
+		'23': ["Phoenix23.png","Phœnix de deuxième ou troisième génération"],
+		});
 
 	//if (tabImg.length == 0) return;
 
@@ -8989,7 +8998,7 @@ var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la 
 	listeCDM: [],
 	// Gère l'affichage en cascade des popups de CdM
 	yIndexCDM: 0,
-	tdWitdh: 80,
+	tdWitdh: 110,
 };
 
 var tr_trolls = {}, tr_tresors = {},
@@ -10437,12 +10446,36 @@ function computeVLC(begin,end) {
 		}
 		// */
 		// nouveau mode
-		if (donneesMonstre && donneesMonstre.vlc) vlc = donneesMonstre.vlc;
-		//if (donneesMonstre) window.console.log('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
-		if (vlc) {
+		if (donneesMonstre && donneesMonstre.vlc) {
+			//if (donneesMonstre) window.console.log('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
 			var td = getMonstreNomNode(i);
 			td.appendChild(document.createTextNode(" "));
 			td.appendChild(createImage(urlImg, "Voit le caché"));
+		}
+		if (donneesMonstre && donneesMonstre.gen) {
+			switch (donneesMonstre.gen) {
+				case 1:
+					var imgPh = URL_MZimg + "Phoenix1.png";
+					var txtPh = 'Phœnix de première génération';
+					break;
+				case 2:
+					var imgPh = URL_MZimg + "Phoenix2.png";
+					var txtPh = 'Phœnix de deuxième génération';
+					break;
+				case 3:
+					var imgPh = URL_MZimg + "Phoenix3.png";
+					var txtPh = 'Phœnix de troisième génération';
+					break;
+				case 23:
+					var imgPh = URL_MZimg + "Phoenix23.png";
+					var txtPh = 'Phœnix de deuxième ou troisième génération';
+					break;
+			}
+			var td = getMonstreNomNode(i);
+			td.appendChild(document.createTextNode(" "));
+			var img = td.appendChild(createImage(imgPh, txtPh));
+			img.style.height = '15px';
+			img.style.width = 'auto';
 		}
 	}
 }
