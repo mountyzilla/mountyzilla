@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.3
+// @version     1.3.0.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.4 29/11/2019",
+"	Ajout des déciles",
 "V1.3.0.3 29/11/2019",
 "	Affichage d'une icône pour les Phœnix dont la génération est connue",
 "V1.3.0.2 24/11/2019",
@@ -2282,6 +2284,7 @@ try {
 	var msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
 	if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
 	*/
+	table.title = "En jaune : intervalle de confiance à 80%";
 	return table;
 	}
 	catch(e){window.alert('Erreur createCDMTable() :\n'+e);}
@@ -2436,9 +2439,9 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max + ' ' + unit;
+		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min + ' ' + unit;
+		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
@@ -2451,6 +2454,21 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
 	}
 	td = appendTdText(tr,texte);
+	if (ominmax.min2 || ominmax.max2) {	// affichage de l'intervalle de confiance à 80%
+		if (!ominmax.min2) {
+			var txt2 = '⩽' + ominmax.max2; // <= (mais plus beau)
+		} else if (!ominmax.max2) {
+			var txt2 = '⩾' + ominmax.min2;	// >=
+		} else {
+			var txt2 = ominmax.min2 + '-' + ominmax.max2;
+		}
+		var span = document.createElement('span');
+		span.appendChild(document.createTextNode(txt2));
+		span.style.float = 'right';
+		span.style.textAlign = 'right';
+		span.style.background = 'yellow';
+		td.insertBefore(span, td.firstChild);
+	}
 	td.colSpan = 2;
 	td.className = 'mh_tdpage';
 	return td;
