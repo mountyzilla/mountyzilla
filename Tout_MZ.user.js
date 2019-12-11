@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.4
+// @version     1.3.0.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.5 05/12/2019",
+"	suppression infobulle sur l'intervalle de confiance s'il n'y en a pas, correction affiche de l'heure dernière CdM, plus de debug en profil de monstre",
 "V1.3.0.4 29/11/2019",
 "	Ajout des déciles",
 "V1.3.0.3 29/11/2019",
@@ -558,7 +560,6 @@ function MZ_formatDateMS(d, sansMicroSecondes) {
 	var seconds = d.getSeconds();
 	if (day     < 10) {day     = "0"+day;}
 	if (month   < 10) {month   = "0"+month;}
-	if (hours   < 10) {hours   = "0"+hours;}
 	if (hours   < 10) {hours   = "0"+hours;}
 	if (minutes < 10) {minutes = "0"+minutes;}
 	if (seconds < 10) {seconds = "0"+seconds;}
@@ -2284,7 +2285,6 @@ try {
 	var msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
 	if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
 	*/
-	table.title = "En jaune : intervalle de confiance à 80%";
 	return table;
 	}
 	catch(e){window.alert('Erreur createCDMTable() :\n'+e);}
@@ -2328,18 +2328,6 @@ function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre) {
 }
 
 function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
-		// if (isset($this->Pouvoir)) $oRet->pouv = $this->Pouvoir;
-		// if (isset($this->Nb_att)) $oRet->nb_att = $this->Nb_att;
-		// if (isset($this->Vitesse)) $oRet->vit = $this->Vitesse;
-		// if (isset($this->VlC) && $this->VlC) $oRet->vlc = 1;
-		// if (isset($this->Att_dist) && $this->Att_dist) $oRet->attd = 1;
-		// if (isset($this->Att_mag) && $this->Att_mag) $oRet->attm = 1;
-		// if (isset($this->Vole) && $this->Vole) $oRet->vole = 1;
-		// if (isset($this->Sang_froid)) $oRet->sangf = $this->Sang_froid;
-		// if (isset($this->Position_DLA)) $oRet->posdla = $this->Position_DLA;
-		// if (isset($this->Chargement)) $oRet->charg = $this->Chargement;
-		// if (isset($this->Bonus_malus)) $oRet->bm = $this->Bonus_malus;
-		// if (isset($this->Portee_pouvoir)) $oRet->portpouv = $this->Portee_pouvoir;
 	var tabImg = [];
 	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.attd, {
 		'1': ["distance.gif","Attaque à distance"],
@@ -2369,8 +2357,6 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		'3': ["Phoenix3.png","Phœnix de troisième génération"],
 		'23': ["Phoenix23.png","Phœnix de deuxième ou troisième génération"],
 		});
-
-	//if (tabImg.length == 0) return;
 
 	var tr = appendTr(table,'mh_tdpage');
 	var td = appendTdText(tr,'Autres',true);
@@ -2468,6 +2454,7 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 		span.style.textAlign = 'right';
 		span.style.background = 'yellow';
 		td.insertBefore(span, td.firstChild);
+		table.title = "En jaune : intervalle de confiance à 80%";
 	}
 	td.colSpan = 2;
 	td.className = 'mh_tdpage';
@@ -3189,7 +3176,8 @@ function analyseTactique(donneesMonstre,nom) {
 		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(vue/2)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(vue/2)*1.5)*2+degbmm-armM_mag,1)))/100;
 		//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		if (donneesMonstre.index !== undefined && MZ_EtatCdMs.tr_monstres !== undefined && MZ_EtatCdMs.tr_monstres[donneesMonstre.index] !== undefined) {
-			var dist = getMonstreDistance(donneesMonstre.index+1);
+			var dist = getMonstreDistance(donneesMonstre.index);
+			//if (isDEV) window.console.log('Dist pour PM=' + dist);
 			var vue_bm = parseInt(MY_getValue(numTroll+".caracs.vue.bm"), 10);
 			var portee = getPortee__Profil(vue+vue_bm);
 			if (dist <= portee) {
@@ -3305,7 +3293,10 @@ function analyseTactique(donneesMonstre,nom) {
 	listeAttaques.unshift(new Array("Monstre",Math.round(chanceDEsquiveParfaite*100)/100,Math.round(chanceDeTouche*100)/100,Math.round(chanceDeCritique*100)/100,Math.round(degats*100)/100,modificateurEsquive,modificateurArmure));
 	return listeAttaques;
 	}
-	catch(e) { window.alert(e);}
+	catch(e) {
+		window.console.error(traceStack(e, 'analyseTactique'));
+		window.alert(e);
+		}
 	}
 
 // x~~x	marque pour s'y retrouver sous l'éditeur
@@ -5462,6 +5453,7 @@ function do_infomonstre() {
 		initPopupInfomonstre();
 		traiteMonstre();
 	} catch(e) {
+		window.console.error(traceStack(e, 'do_infomonstre'));
 		window.alert('Erreur infoMonstre:\n'+e);
 	}
 	displayScriptTime();
@@ -11511,8 +11503,8 @@ function do_vue() {
 		
 		displayScriptTime();
 	} catch(e) {
-		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).");
 		window.console.error(traceStack(e, 'vue'));
+		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).");
 	}
 }
 
@@ -12739,15 +12731,10 @@ function competences(comp,niveau) {
 		if(vuetotale>2) texte += 's';
 	}
 	else if(comp.indexOf('Piege')!=-1) {
-		if(comp.indexOf('Glue')!=-1)
-			texte = 'Et si vous colliez vos adversaires au sol ?';
-		if(comp.indexOf('Feu')!=-1) {
-			if(texte){
-				texte += ' À moins que vous ne préfériez les envoyer en l\'air !<br/>';
-			}
-			texte += 'Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
-				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b>';
-		}
+		texte = 'Piège à Glue :<ul><li>Et si vous colliez vos adversaires au sol ?</li></ul>';
+		texte += 'Piège à Feu: <ul><li>À moins que vous ne préfériez les envoyer en l\'air !</li>';
+		texte += '<li>Dégats du piège à feu : <b>'+Math.floor((esq+vue)/2)+'</b> D3'
+				+' => <b>'+2*Math.floor((esq+vue)/2)+' ('+resiste((esq+vue)/2)+')</b></li></ul>';
 	} else if(comp.indexOf("Contre-Attaquer")!=-1) {
 		modA = atttour?Math.floor(Math.floor(att/2)*atttour/100):0;
 		texte = "Attaque : <b>"+Math.floor(att/2)+"</b> D6 ";
