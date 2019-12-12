@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.6
+// @version     1.3.0.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.7 12/12/2019",
+"	correction cibles des missions 'famille', 'pouvoir' et cas particulier de 'race'",
 "V1.3.0.6 11/12/2019",
 "	suppression infobulle sur l'intervalle de confiance s'il n'y en a pas, correction affiche de l'heure dernière CdM, plus de debug en profil de monstre",
 "V1.3.0.5 11/12/2019",
@@ -272,10 +274,10 @@ const MZ_changeLog = [
 		06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
 			- voir l'intérêt de refaire fonctionner
 			- gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
-		À traiter : ambiguité sur le nom de monstres de mission : Shai, Ombre, Geck'oo et Boujd'la
+		FAIT : ambiguité sur le nom de monstres de mission : Shai, Ombre, Geck'oo et Boujd'la
 		Sans doute à corriger, la compétence Baroufle pour le lien vers l'anatroliseur
 		Prévision des DLA de monstre
-		Niveau des monstres à la méthode Roule'
+		FAIT Niveau des monstres à la méthode Roule'
 	Raistlin
 		FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
@@ -10429,7 +10431,30 @@ function computeMission(begin,end) {
 								// c'est un monstre de la race des Crasc Parasitus
 								mobMission = true;
 							}
-						// À traiter : Shai, Ombre, Geck'oo et Boujd'la
+						} else if (race == 'shai') {
+							if (nom.match(/abishai/ui)) {
+								mobMission = false;
+							} else {
+								mobMission = true;
+							}
+						} else if (race == 'ombre') {
+							if (nom.match(/roche/ui)) {
+								mobMission = false;
+							} else {
+								mobMission = true;
+							}
+						} else if (race == 'geck\'oo') {
+							if (nom.match(/majestueux/ui)) {
+								mobMission = false;
+							} else {
+								mobMission = true;
+							}
+						} else if (race == 'bouj\'dla') {
+							if (nom.match(/placide/ui)) {
+								mobMission = false;
+							} else {
+								mobMission = true;
+							}
 						} else {
 							mobMission = true;
 						}
@@ -10464,20 +10489,14 @@ function computeMission(begin,end) {
 									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
 								}
 							}
-						} else {	// ancien mode à supprimer
-							var nivMob = Number(donneesMonstre[0]);
-							if((!isNaN(mod) && Math.abs(nivMimi-nivMob)<=Number(mod))
-								|| (isNaN(mod) && nivMob>=nivMimi)) {
-								mobMission = true;
-							}
 						}
 					}
 					break;
 				case 'Famille':
 					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-					if(donneesMonstre) {
+					if(donneesMonstre && donneesMonstre.fam) {
 						var familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g,'');	// Roule 27/02/2019 simple quote dans les familles
-						var familleMob = epure(donneesMonstre[1].toLowerCase());
+						var familleMob = epure(donneesMonstre.fam.toLowerCase());
 						if(familleMob.indexOf(familleMimi)!=-1) {
 							mobMission = true;
 						}
@@ -10485,9 +10504,9 @@ function computeMission(begin,end) {
 					break;
 				case 'Pouvoir':
 					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-					if(donneesMonstre) {
+					if(donneesMonstre && donneesMonstre.pouv) {
 						var pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
-						var pvrMob = epure(donneesMonstre[10].toLowerCase());
+						var pvrMob = epure(donneesMonstre.pouv.toLowerCase());
 						if(pvrMob.indexOf(pvrMimi)!=-1) {
 							mobMission = true;
 						}
