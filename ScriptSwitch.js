@@ -148,13 +148,24 @@ var MZ_Switch = {
 		window.localStorage.setItem('MZ_SW__perso', tabStr.join(';'));
 	},
 
-	displayMsg: function(msg) {
-		//console.log('msg: ' + msg);
-		alert(msg);
+	displayMsg: function(msg, tr) {
+		if (!tr) {
+			//console.log('msg: ' + msg);
+			alert(msg);
+			return;
+		}
+		var prevMsgEle = document.getElementById('MZ_Switch_msg');
+		if (prevMsgEle) prevMsgEle.parentNode.removeChild(prevMsgEle);
+		var msgEle = document.createElement('span');
+		msgEle.id = 'MZ_Switch_msg';
+		msgEle.style.color = 'purple';
+		msgEle.appendChild(document.createTextNode(' [' + msg + ']'));
+		tr.cells[2].appendChild(msgEle);
 	},
 
 	onCheckChange: function() {
 		var k = this.id.substr(6, 99);
+		var tr = this.parentNode.parentNode;
 		//console.log('id=' + this.id + ', k=' + k);
 		if (this.checked) {
 			if (this.MZ_perso) {
@@ -167,7 +178,7 @@ var MZ_Switch = {
 			} else {
 				window.localStorage.setItem('MZ_SW_' + k, 1);
 			}
-			MZ_Switch.displayMsg('Le script ' + k + ' a été activé');
+			MZ_Switch.displayMsg('Le script ' + k + ' a été activé', tr);
 		} else {
 			if (this.MZ_perso) {
 				var tabScriptPerso = MZ_Switch.getScriptPerso();
@@ -179,7 +190,7 @@ var MZ_Switch = {
 			} else {
 				window.localStorage.setItem('MZ_SW_' + k, 0);
 			}
-			MZ_Switch.displayMsg('Le script ' + k + ' a été désactivé');
+			MZ_Switch.displayMsg('Le script ' + k + ' a été désactivé', tr);
 		}
 	},
 

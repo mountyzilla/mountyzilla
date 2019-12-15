@@ -7346,8 +7346,8 @@ function saveAll() {
 
 		MY_setValue(numTroll+'.AUTOCDM',
 			document.getElementById('autoCdM').checked ? 'true' : 'false');
-		MY_setValue('VUECARAC',
-			document.getElementById('vueCarac').checked ? 'true' : 'false');
+		// MY_setValue('VUECARAC',	// Roule 12/12/2019 ça ne fait plus rien
+			// document.getElementById('vueCarac').checked ? 'true' : 'false');
 		MY_setValue('CONFIRMEDECALAGE',
 			document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
 
@@ -7623,9 +7623,9 @@ function insertOptionTable(insertPt) {
 	appendCheckBox(td,'autoCdM',MY_getValue(numTroll+'.AUTOCDM')=='true');
 	appendText(td,' Envoyer automatiquement les CdM vers la base MountyZilla');
 
-	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
-	appendText(td,' Afficher la Vue avec les caractéristique dans le Profil');
+	// td = appendTd(appendTr(mainBody,'mh_tdpage'));	// Roule 12/12/2019 ça ne fait plus rien
+	// appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
+	// appendText(td,' Afficher la Vue avec les caractéristiques dans le Profil');
 
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'confirmeDecalage',MY_getValue('CONFIRMEDECALAGE')=='true');
