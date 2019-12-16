@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.8 16/12/2019",
+"	Amélioration su support SCIZ (Fixes + Play_evenement + PJView_Events)",
 "V1.3.0.7 12/12/2019",
 "	correction cibles des missions 'famille', 'pouvoir' et cas particulier de 'race'",
 "V1.3.0.6 11/12/2019",
@@ -2429,19 +2431,19 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
+		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
+		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
-			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
+			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
 			if (ominmax.min > ominmax.min) {
 				td.style.color = 'red';
 				unit += ' *** erreur ***';
 			}
 		}
-		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
+		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
 	}
 	td = appendTdText(tr,texte);
 	if (ominmax.min2 || ominmax.max2) {	// affichage de l'intervalle de confiance à 80%
@@ -2510,7 +2512,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		} else if (isNaN(ominmaxUnit.min)) {
 			texte += ' --> ' + ominmaxUnit.min;
 		} else {
-			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
+			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
 		}
 	}
 
@@ -5456,8 +5458,6 @@ function do_infomonstre() {
 	try {
 		initPopupInfomonstre();
 		traiteMonstre();
-		/* SCIZ */
-		scizOverwriteEvents();
 	} catch(e) {
 		window.console.error(traceStack(e, 'do_infomonstre'));
 		window.alert('Erreur infoMonstre:\n'+e);
@@ -5465,16 +5465,40 @@ function do_infomonstre() {
 	displayScriptTime();
 }
 
-/* SCIZ */
-function scizOverwriteEvents() {
+/***
+ *** SCIZ
+ ***/
+function scizPrettyPrintEvent(e) {
+	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
+	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
+	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom]];
+	beings.forEach(b => {
+		if (b[0] && b[1]) {
+			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			if (b[0].toString().length > 6) {
+				// Mob
+				b[1] = b[1].replace(/^une?\s/g, '');
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
+			} else {
+				// Troll
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
+			}
+		}
+	});
+	return e;
+}
+
+function do_scizOverwriteEvents() {
 	// Ensure we have a JWT setup for the current user
-	jwt = MY_getValue(numTroll+'.SCIZJWT');
+	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	if (!jwt) { return; }
 
-	// Retrieve monster ID
-	var url = new URL(window.location.href);
+	// Retrieve being ID
+	const url = new URL(window.location.href);
 	var id = url.searchParams.get('ai_IDPJ');
-	if (!id) { return; }
+	if (!id) {
+		id = numTroll;
+	}
 
 	// Retrieve local events
 	var localEvents = [];
@@ -5484,11 +5508,13 @@ function scizOverwriteEvents() {
 			'time': Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
 			'type': xPathEvent.children[1].innerHTML,
 			'desc': xPathEvent.children[2].innerHTML,
+			'sciz_desc': null,
 			'node': xPathEvent,
 		});
 	}
-	var startTime = Math.min.apply(Math, localEvents.map(function(e) { return e.time; }))
-	var endTime = Math.max.apply(Math, localEvents.map(function(e) { return e.time; }))
+	const interval = 5000; // Maximum interval (seconds) for matching some events
+	const startTime = Math.min.apply(Math, localEvents.map(function(e) { return e.time; })) - interval;
+	const endTime = Math.max.apply(Math, localEvents.map(function(e) { return e.time; })) + interval;
 
 	// Call SCIZ
 	FF_XMLHttpRequest({
@@ -5500,31 +5526,29 @@ function scizOverwriteEvents() {
 			try {
 				if (responseDetails.status == 0) return;
 				var events = JSON.parse(responseDetails.responseText);
-				if(events.length==0) return;
+				if (events.length == 0) return;
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
-					const i = localEvents.findIndex(le => le.time === Date.parse(StringToDate(e.time)));
+					const t = Date.parse(StringToDate(e.time));
+					// Look for the best event matching and not already replaced
+					var i = -1;
+					var lastDelta = Infinity;
+					for (j = 0; j < localEvents.length; j++) {
+						if (localEvents[j].sciz_desc === null) {
+							var delta = Math.abs(t - localEvents[j].time);
+							if (delta <= interval && delta < lastDelta) {
+								lastDelta = delta;
+								i = j;
+							}
+						}
+					}
 					if (i > -1) {
 						// PrettyPrint
-						e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
-						e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-						const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom]];
-						beings.forEach(b => {
-							if (b[0] && b[1]) {
-								b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-								if (b[0].toString().length > 6) {
-									// Mob
-									b[1] = b[1].replace(/^une?\s/g, '');
-									e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
-								} else {
-									// Troll
-									e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
-								}
-							}
-						});
-						// Actual overwrite
-						localEvents[i].node.children[2].innerHTML = e.message;
-						localEvents.splice(i,1);
+						e = scizPrettyPrintEvent(e);
+						// Store the SCIZ event
+						localEvents[i].sciz_desc = e.message;
+						// Actual display overwrite
+						localEvents[i].node.children[2].innerHTML = localEvents[i].sciz_desc;
 					}
 				});
 			} catch(e) {
@@ -14120,6 +14144,9 @@ function do_trolligion() {
 	} else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
 		do_option();
 		//showEssaiCartes();
+	} else if(isPage("View/PJView_Events")) {
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("View/PJView")) {
 		do_pjview();
 	} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
@@ -14130,12 +14157,17 @@ function do_trolligion() {
 		do_vue();
 	} else if(isPage("MH_Play/Play_news")) {
 		do_news();
+	} else if(isPage("MH_Play/Play_evenement")) {
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("MH_Play/Actions/Play_a_Move")) {
 		do_move();
 	} else if(isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
 	} else if(isPage("View/MonsterView")) {
 		do_infomonstre();
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
 		do_attaque();
 	} else if(isPage("MH_Play/Play_e_follo.php")) {
