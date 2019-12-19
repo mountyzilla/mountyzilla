@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -36,6 +36,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.9 19/12/2019",
+"	Amélioration du support SCIZ (Fixes + AdvancedCSS + SwitchEvent)",
+"V1.3.0.8 16/12/2019",
+"	Amélioration du support SCIZ (Fixes + Play_evenement + PJView_Events)",
 "V1.3.0.7 12/12/2019",
 "	correction cibles des missions 'famille', 'pouvoir' et cas particulier de 'race'",
 "V1.3.0.6 11/12/2019",
@@ -2429,19 +2433,19 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
+		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
+		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
-			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
+			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
 			if (ominmax.min > ominmax.min) {
 				td.style.color = 'red';
 				unit += ' *** erreur ***';
 			}
 		}
-		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
+		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
 	}
 	td = appendTdText(tr,texte);
 	if (ominmax.min2 || ominmax.max2) {	// affichage de l'intervalle de confiance à 80%
@@ -2510,7 +2514,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		} else if (isNaN(ominmaxUnit.min)) {
 			texte += ' --> ' + ominmaxUnit.min;
 		} else {
-			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
+			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
 		}
 	}
 
@@ -5456,8 +5460,6 @@ function do_infomonstre() {
 	try {
 		initPopupInfomonstre();
 		traiteMonstre();
-		/* SCIZ */
-		scizOverwriteEvents();
 	} catch(e) {
 		window.console.error(traceStack(e, 'do_infomonstre'));
 		window.alert('Erreur infoMonstre:\n'+e);
@@ -5465,72 +5467,144 @@ function do_infomonstre() {
 	displayScriptTime();
 }
 
-/* SCIZ */
-function scizOverwriteEvents() {
+/***
+ *** SCIZ
+ ***/
+var scizGlobal = {
+    events: []
+};
+
+function scizPrettyPrintEvent(e) {
+	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
+	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
+	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
+	beings.forEach(b => {
+		if (b[0] && b[1]) {
+			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			if (b[0].toString().length > 6) {
+				// Mob
+				b[1] = b[1].replace(/^une?\s/g, '');
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
+			} else {
+				// Troll
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
+			}
+		}
+	});
+	return e;
+}
+
+function do_scizOverwriteEvents() {
+	scizGlobal.events = [];
+	var eventTableNode = null;
+
 	// Ensure we have a JWT setup for the current user
-	jwt = MY_getValue(numTroll+'.SCIZJWT');
+	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	if (!jwt) { return; }
 
-	// Retrieve monster ID
-	var url = new URL(window.location.href);
+	// Retrieve being ID
+	const url = new URL(window.location.href);
 	var id = url.searchParams.get('ai_IDPJ');
-	if (!id) { return; }
+	id = (!id) ? numTroll : id;
+
+	// Check for advanced profil
+	const advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
+	const xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[@class='mh_tdpage']";
 
 	// Retrieve local events
-	var localEvents = [];
-	var xPathEvents = document.evaluate("//*/tr[@class='mh_tdpage']", document, null, 0, null);
+	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 	while (xPathEvent = xPathEvents.iterateNext()) {
-		localEvents.push({
+		scizGlobal.events.push({
 			'time': Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
 			'type': xPathEvent.children[1].innerHTML,
 			'desc': xPathEvent.children[2].innerHTML,
+			'sciz_desc': null,
 			'node': xPathEvent,
 		});
+		if (eventTableNode === null) {
+			eventTableNode = xPathEvent.parentNode.parentNode;
+		}
 	}
-	var startTime = Math.min.apply(Math, localEvents.map(function(e) { return e.time; }))
-	var endTime = Math.max.apply(Math, localEvents.map(function(e) { return e.time; }))
+	const interval = 5000; // Maximum interval (seconds) for matching some events
+	const startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - interval;
+	const endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + interval;
+
+	// Check if events have been found in the page
+	if (scizGlobal.events.length < 1) {
+		window.console.log('ERREUR - MZ/SCIZ - Aucun événement trouvé sur la page...');
+		return;
+	}
 
 	// Call SCIZ
+	var sciz_url = 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime;
+	const eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
+	sciz_url += (eventType !== null && eventType !== '') ? '/' + eventType.split(' ')[0] : '' // Only the first word used for filtering ("MORT par monstre" => "MORT");
 	FF_XMLHttpRequest({
 		method: 'GET',
-		url: 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime,
+		url: sciz_url,
 		headers : { 'Authorization': jwt },
-		// trace: 'Appel à SCIZ pour le monstre ' + id,
+		// trace: 'Appel à SCIZ pour l'entité ' + id,
 		onload: function(responseDetails) {
 			try {
-				if (responseDetails.status == 0) return;
+				if (responseDetails.status == 0) {
+					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+					window.console.log(responseDetails);
+					return;
+				}
 				var events = JSON.parse(responseDetails.responseText);
-				if(events.length==0) return;
+				if (events.length == 0) {
+					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+					return;
+				}
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
-					const i = localEvents.findIndex(le => le.time === Date.parse(StringToDate(e.time)));
+					const t = Date.parse(StringToDate(e.time));
+					// Look for the best event matching and not already replaced
+					var i = -1;
+					var lastDelta = Infinity;
+					for (j = 0; j < scizGlobal.events.length; j++) {
+						if (scizGlobal.events[j].sciz_desc === null) {
+							var delta = Math.abs(t - scizGlobal.events[j].time);
+							if (delta <= interval && delta < lastDelta) {
+								lastDelta = delta;
+								i = j;
+							}
+						}
+					}
 					if (i > -1) {
 						// PrettyPrint
-						e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
-						e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-						const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom]];
-						beings.forEach(b => {
-							if (b[0] && b[1]) {
-								b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-								if (b[0].toString().length > 6) {
-									// Mob
-									b[1] = b[1].replace(/^une?\s/g, '');
-									e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
-								} else {
-									// Troll
-									e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
-								}
-							}
-						});
-						// Actual overwrite
-						localEvents[i].node.children[2].innerHTML = e.message;
-						localEvents.splice(i,1);
+						e = scizPrettyPrintEvent(e);
+						// Store the SCIZ event
+						scizGlobal.events[i].sciz_desc = e.message;
+						// Actual display overwrite
+						scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
 					}
 				});
 			} catch(e) {
+				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
 				window.console.log(e);
 			}
 		}
+	});
+
+	// Add the switch button
+	if (eventTableNode !== null) {
+		var img = document.createElement('img');
+		img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
+		img.alt = 'SCIZ logo';
+		img.style = 'height: 50px; cursor: pointer;';
+		img.onclick = do_scizSwitchEvents;
+		var div = document.createElement('div');
+		div.style = 'text-align: center;';
+		div.appendChild(img);
+		eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
+	}
+}
+
+function do_scizSwitchEvents() {
+	scizGlobal.events.forEach((e) => {
+		const currentDesc = e.node.children[2].innerHTML;
+		e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
 	});
 }
 
@@ -14120,6 +14194,9 @@ function do_trolligion() {
 	} else if(isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
 		do_option();
 		//showEssaiCartes();
+	} else if(isPage("View/PJView_Events")) {
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("View/PJView")) {
 		do_pjview();
 	} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
@@ -14130,12 +14207,17 @@ function do_trolligion() {
 		do_vue();
 	} else if(isPage("MH_Play/Play_news")) {
 		do_news();
+	} else if(isPage("MH_Play/Play_evenement")) {
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("MH_Play/Actions/Play_a_Move")) {
 		do_move();
 	} else if(isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
 	} else if(isPage("View/MonsterView")) {
 		do_infomonstre();
+		/* SCIZ */
+		do_scizOverwriteEvents();
 	} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
 		do_attaque();
 	} else if(isPage("MH_Play/Play_e_follo.php")) {
