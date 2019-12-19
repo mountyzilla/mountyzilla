@@ -36,8 +36,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.9 19/12/2019",
+"	Amélioration du support SCIZ (Fixes + AdvancedCSS + SwitchEvent)",
 "V1.3.0.8 16/12/2019",
-"	Amélioration su support SCIZ (Fixes + Play_evenement + PJView_Events)",
+"	Amélioration du support SCIZ (Fixes + Play_evenement + PJView_Events)",
 "V1.3.0.7 12/12/2019",
 "	correction cibles des missions 'famille', 'pouvoir' et cas particulier de 'race'",
 "V1.3.0.6 11/12/2019",
@@ -5468,10 +5470,14 @@ function do_infomonstre() {
 /***
  *** SCIZ
  ***/
+var scizGlobal = {
+    events: []
+};
+
 function scizPrettyPrintEvent(e) {
 	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
 	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom]];
+	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
 	beings.forEach(b => {
 		if (b[0] && b[1]) {
 			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -5489,6 +5495,9 @@ function scizPrettyPrintEvent(e) {
 }
 
 function do_scizOverwriteEvents() {
+	scizGlobal.events = [];
+	var eventTableNode = null;
+
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	if (!jwt) { return; }
@@ -5496,46 +5505,66 @@ function do_scizOverwriteEvents() {
 	// Retrieve being ID
 	const url = new URL(window.location.href);
 	var id = url.searchParams.get('ai_IDPJ');
-	if (!id) {
-		id = numTroll;
-	}
+	id = (!id) ? numTroll : id;
+
+	// Check for advanced profil
+	const advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
+	const xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[@class='mh_tdpage']";
 
 	// Retrieve local events
-	var localEvents = [];
-	var xPathEvents = document.evaluate("//*/tr[@class='mh_tdpage']", document, null, 0, null);
+	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 	while (xPathEvent = xPathEvents.iterateNext()) {
-		localEvents.push({
+		scizGlobal.events.push({
 			'time': Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
 			'type': xPathEvent.children[1].innerHTML,
 			'desc': xPathEvent.children[2].innerHTML,
 			'sciz_desc': null,
 			'node': xPathEvent,
 		});
+		if (eventTableNode === null) {
+			eventTableNode = xPathEvent.parentNode.parentNode;
+		}
 	}
 	const interval = 5000; // Maximum interval (seconds) for matching some events
-	const startTime = Math.min.apply(Math, localEvents.map(function(e) { return e.time; })) - interval;
-	const endTime = Math.max.apply(Math, localEvents.map(function(e) { return e.time; })) + interval;
+	const startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - interval;
+	const endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + interval;
+
+	// Check if events have been found in the page
+	if (scizGlobal.events.length < 1) {
+		window.console.log('ERREUR - MZ/SCIZ - Aucun événement trouvé sur la page...');
+		return;
+	}
 
 	// Call SCIZ
+	var sciz_url = 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime;
+	const eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
+	sciz_url += (eventType !== null && eventType !== '') ? '/' + eventType.split(' ')[0] : '' // Only the first word used for filtering ("MORT par monstre" => "MORT");
 	FF_XMLHttpRequest({
 		method: 'GET',
-		url: 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime,
+		url: sciz_url,
 		headers : { 'Authorization': jwt },
-		// trace: 'Appel à SCIZ pour le monstre ' + id,
+		// trace: 'Appel à SCIZ pour l'entité ' + id,
 		onload: function(responseDetails) {
 			try {
-				if (responseDetails.status == 0) return;
+				if (responseDetails.status == 0) {
+					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+					window.console.log(responseDetails);
+					return;
+				}
 				var events = JSON.parse(responseDetails.responseText);
-				if (events.length == 0) return;
+				if (events.length == 0) {
+					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+					return;
+				}
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
 					const t = Date.parse(StringToDate(e.time));
 					// Look for the best event matching and not already replaced
 					var i = -1;
 					var lastDelta = Infinity;
-					for (j = 0; j < localEvents.length; j++) {
-						if (localEvents[j].sciz_desc === null) {
-							var delta = Math.abs(t - localEvents[j].time);
+					for (j = 0; j < scizGlobal.events.length; j++) {
+						if (scizGlobal.events[j].sciz_desc === null) {
+							var delta = Math.abs(t - scizGlobal.events[j].time);
 							if (delta <= interval && delta < lastDelta) {
 								lastDelta = delta;
 								i = j;
@@ -5546,15 +5575,36 @@ function do_scizOverwriteEvents() {
 						// PrettyPrint
 						e = scizPrettyPrintEvent(e);
 						// Store the SCIZ event
-						localEvents[i].sciz_desc = e.message;
+						scizGlobal.events[i].sciz_desc = e.message;
 						// Actual display overwrite
-						localEvents[i].node.children[2].innerHTML = localEvents[i].sciz_desc;
+						scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
 					}
 				});
 			} catch(e) {
+				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
 				window.console.log(e);
 			}
 		}
+	});
+
+	// Add the switch button
+	if (eventTableNode !== null) {
+		var img = document.createElement('img');
+		img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
+		img.alt = 'SCIZ logo';
+		img.style = 'height: 50px; cursor: pointer;';
+		img.onclick = do_scizSwitchEvents;
+		var div = document.createElement('div');
+		div.style = 'text-align: center;';
+		div.appendChild(img);
+		eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
+	}
+}
+
+function do_scizSwitchEvents() {
+	scizGlobal.events.forEach((e) => {
+		const currentDesc = e.node.children[2].innerHTML;
+		e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
 	});
 }
 
