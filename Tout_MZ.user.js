@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.10 22/12/2019",
+"	Corrections mineures pour SCIZ",
 "V1.3.0.9 19/12/2019",
 "	Amélioration du support SCIZ (Fixes + AdvancedCSS + SwitchEvent)",
 "V1.3.0.8 16/12/2019",
@@ -5552,7 +5554,7 @@ function do_scizOverwriteEvents() {
 					return;
 				}
 				var events = JSON.parse(responseDetails.responseText);
-				if (events.length == 0) {
+				if (events.events.length < 1) {
 					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 					return;
 				}
@@ -5580,25 +5582,24 @@ function do_scizOverwriteEvents() {
 						scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
 					}
 				});
+				// Add the switch button
+				if (eventTableNode !== null) {
+					var img = document.createElement('img');
+					img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
+					img.alt = 'SCIZ logo';
+					img.style = 'height: 50px; cursor: pointer;';
+					img.onclick = do_scizSwitchEvents;
+					var div = document.createElement('div');
+					div.style = 'text-align: center;';
+					div.appendChild(img);
+					eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
+				}
 			} catch(e) {
 				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
 				window.console.log(e);
 			}
 		}
 	});
-
-	// Add the switch button
-	if (eventTableNode !== null) {
-		var img = document.createElement('img');
-		img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
-		img.alt = 'SCIZ logo';
-		img.style = 'height: 50px; cursor: pointer;';
-		img.onclick = do_scizSwitchEvents;
-		var div = document.createElement('div');
-		div.style = 'text-align: center;';
-		div.appendChild(img);
-		eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
-	}
 }
 
 function do_scizSwitchEvents() {
@@ -7426,8 +7427,11 @@ function saveAll() {
 			document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
 
 		/* SCIZ */
-		// FIXME : check fot JWT validity before storing it?
-		MY_setValue(numTroll+'.SCIZJWT', document.getElementById('sciz_jwt').value);
+		var sciz_jwt = document.getElementById('sciz_jwt').value;
+		if (sciz_jwt) {
+			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\.]','g'), '');
+			MY_setValue(numTroll + '.SCIZJWT', document.getElementById('sciz_jwt').value);
+		}
 
 		saveITData();
 	} catch (e) {
