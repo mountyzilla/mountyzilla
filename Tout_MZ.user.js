@@ -7430,7 +7430,7 @@ function saveAll() {
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
 		if (sciz_jwt) {
 			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\.]','g'), '');
-			MY_setValue(numTroll + '.SCIZJWT', document.getElementById('sciz_jwt').value);
+			MY_setValue(numTroll + '.SCIZJWT', sciz_jwt);
 		}
 
 		saveITData();
