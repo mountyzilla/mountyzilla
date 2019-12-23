@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -2433,26 +2433,26 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max + ' ' + unit; // <= (mais plus beau)
+		var texte = '\u2A7D' + ominmax.max + '\u00A0' + unit; // <= (mais plus beau)
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min + ' ' + unit;	// >=
+		var texte = '\u2A7E' + ominmax.min + '\u00A0' + unit;	// >=
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
-			var texte = ominmax.min + '-' + ominmax.max + ' --> ';
+			var texte = ominmax.min + '-' + ominmax.max + '\u00A0-->\u00A0';
 			if (ominmax.min > ominmax.min) {
 				td.style.color = 'red';
 				unit += ' *** erreur ***';
 			}
 		}
-		texte += ((ominmax.min + ominmax.max)/2) + ' ' + unit;
+		texte += ((ominmax.min + ominmax.max)/2) + '\u00A0' + unit;
 	}
 	td = appendTdText(tr,texte);
 	if (ominmax.min2 || ominmax.max2) {	// affichage de l'intervalle de confiance à 80%
 		if (!ominmax.min2) {
-			var txt2 = '⩽' + ominmax.max2; // <= (mais plus beau)
+			var txt2 = '\u2A7D' + ominmax.max2; // <= (mais plus beau)
 		} else if (!ominmax.max2) {
-			var txt2 = '⩾' + ominmax.min2;	// >=
+			var txt2 = '\u2A7E' + ominmax.min2;	// >=
 		} else {
 			var txt2 = ominmax.min2 + '-' + ominmax.max2;
 		}
@@ -2480,9 +2480,9 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 	td.width = MZ_EtatCdMs.tdWitdh;
 
 	if ((!ominmax.min) || ominmax.min == 0) {
-		var texte = '⩽' + ominmax.max;
+		var texte = '\u2A7D' + ominmax.max;
 	} else if (!ominmax.max) {
-		var texte = '⩾' + ominmax.min;
+		var texte = '\u2A7E' + ominmax.min;
 	} else {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
@@ -2500,13 +2500,13 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		if (ominmaxUnit.max === undefined) {
 			// ignore (ne devrait pas arriver)
 		} else {
-			texte += ' --> ' + unit + '⩽' + ominmaxUnit.max;
+			texte += ' --> ' + unit + '\u2A7D' + ominmaxUnit.max;
 		}
 	} else {
 		if (ominmaxUnit.max === undefined) {
-			texte += ' --> ' + unit + '⩾' + ominmaxUnit.min;
+			texte += ' --> ' + unit + '\u2A7E' + ominmaxUnit.min;
 		} else if (ominmaxUnit.min != ominmaxUnit.max) {
-			texte += ' --> ' + ominmaxUnit.min + '⩽' + unit + '⩽' + ominmaxUnit.max;
+			texte += ' --> ' + ominmaxUnit.min + '\u2A7D' + unit + '\u2A7D' + ominmaxUnit.max;
 			if (ominmaxUnit.min > ominmaxUnit.max) {
 				td.style.color = 'red';
 				texte += ' *** erreur ***';
@@ -2514,7 +2514,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		} else if (isNaN(ominmaxUnit.min)) {
 			texte += ' --> ' + ominmaxUnit.min;
 		} else {
-			texte += ' --> ' + ominmaxUnit.max + ' ' + unit;
+			texte += ' --> ' + ominmaxUnit.max + '\u00A0' + unit;
 		}
 	}
 
@@ -10440,11 +10440,11 @@ function mkMinMaxHTML(oMM) {
 		if (oMM.max == undefined) {
 			return;
 		} else {
-			return "⩽" + oMM.max;	// le caractère qui ne s'affiche peut-être pas bien est le U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
+			return "\u2A7D" + oMM.max;	// U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
 		}
 	} else {
 		if (oMM.max == undefined) {
-			return "⩾" + oMM.min;	// le caractère qui ne s'affiche peut-être pas bien est le U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
+			return "\u2A7E" + oMM.min;	// U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
 		} else if (oMM.min == oMM.max) {
 			return oMM.min;
 		} else if (oMM.min < oMM.max) {
@@ -10538,7 +10538,7 @@ function computeMission(begin,end) {
 					var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 					if (donneesMonstre) {
 						var nivMimi = Number(obMissions[num].niveau);
-						var mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est ⩾ nimMimi
+						var mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
 						if (isNaN(mod)) {
 							var minMimi = nivMimi;
 							var maxMimi = nivMimi + 999999;
