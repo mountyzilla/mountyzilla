@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.10
+// @version     1.3.0.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.11 28/12/2019",
+"	Bug fix pour SCIZ (JWT)",
 "V1.3.0.10 22/12/2019",
 "	Corrections mineures pour SCIZ",
 "V1.3.0.9 19/12/2019",
@@ -7429,7 +7431,7 @@ function saveAll() {
 		/* SCIZ */
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
 		if (sciz_jwt) {
-			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\.]','g'), '');
+			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\.\-_]','g'), '');
 			MY_setValue(numTroll + '.SCIZJWT', sciz_jwt);
 		}
 
