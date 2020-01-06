@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.13
+// @version     1.3.0.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,9 @@
 
 try {
 const MZ_changeLog = [
-"V1.3.0.13 28/12/2019",
+"V1.3.0.14 06/01/2020",
+"	Correction filtre par famille piur les monstres variables et sans cdm",
+"V1.3.0.13 06/01/2020",
 "	Ajout du filtre sur la famille des monstres",
 "V1.3.0.12 28/12/2019",
 "	Fixed bug fix pour SCIZ (JWT)",
@@ -10060,7 +10062,7 @@ function ajoutDesFiltres() {
 		comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
 		appendText(td,'\u00a0');
 		appendText(td,'Famille: ');
-		comboBoxFamille = ajoutFiltreMenu(td,'FamilleMonstres',filtreMonstres,['Animal', 'Insecte','Démon','Humanoïde','Monstre','Mort-Vivant']);
+		comboBoxFamille = ajoutFiltreMenu(td,'FamilleMonstres',filtreMonstres,['Animal', 'Insecte','Démon','Humanoide','Monstre','Mort-Vivant']);
 	}
 	/* Trõlls */
 	td = prepareFiltrage('Trolls',50);
@@ -10334,30 +10336,29 @@ function retrieveCDMs() {
 					if (info.index == undefined) continue;
 					var eTdLevel = getMonstreLevelNode(info.index)
 					this.className = 'mh_tdpage';
+					var myColor = undefined;
 					if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
 						eTdLevel.className = "MZtooltip";
 						eTdLevel.style.color = "black";
 						eTdLevel.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
-						continue;
-					}
-					eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
-					//info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
-					MZ_EtatCdMs.listeCDM[info.id] = info;
-					if (!(info && info.esq)) {
+					} else if (!(info && info.esq)) {
 						//if (MY_DEBUG) window.console.log("pas d'esquive id=" + info.id + ", index=" + info.index);
 						eTdLevel.className = "MZtooltip";
 						eTdLevel.innerHTML = mkMinMaxHTML(info.niv) + '<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>';
-						continue;
+					} else {
+						eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
+						//info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
+						myColor = MZ_CdMColorFromMode(info);
+						eTdLevel.style.cursor = 'pointer';
+						eTdLevel.onclick = function() {
+							basculeCDM(
+								getMonstreNomByTR(this.parentNode),
+								getMonstreIDByTR(this.parentNode)
+							);
+						};
 					}
-					var myColor = MZ_CdMColorFromMode(info);
+					MZ_EtatCdMs.listeCDM[info.id] = info;
 					if (myColor) eTdLevel.style.color = myColor;
-					eTdLevel.style.cursor = 'pointer';
-					eTdLevel.onclick = function() {
-						basculeCDM(
-							getMonstreNomByTR(this.parentNode),
-							getMonstreIDByTR(this.parentNode)
-						);
-					};
 /* Roule' à étudier plus tard, cette différence de style selon la diplo...
 						eTdLevel.onmouseover = function() {
 							this.className = 'mh_tdtitre';
