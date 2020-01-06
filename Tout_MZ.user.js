@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.12
+// @version     1.3.0.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.13 28/12/2019",
+"	Ajout du filtre sur la famille des monstres",
 "V1.3.0.12 28/12/2019",
-"	Fiexed bug fix pour SCIZ (JWT)",
+"	Fixed bug fix pour SCIZ (JWT)",
 "V1.3.0.11 28/12/2019",
 "	Bug fix pour SCIZ (JWT)",
 "V1.3.0.10 22/12/2019",
@@ -9157,7 +9159,7 @@ var needComputeEnchantement = MY_getValue(numTroll+'.enchantement.liste')
 var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
 	checkBoxTactique, checkBoxLevels, checkBoxGowapsS, checkBoxGowapsA, checkBoxEngages,
-	comboBoxNiveauMin, comboBoxNiveauMax;
+	comboBoxNiveauMin, comboBoxNiveauMax, comboBoxFamille;
 
 /* Acquisition & Stockage des données de DB */
 const typesAFetcher = {
@@ -9576,7 +9578,9 @@ function recallCheckBox(chkbox, pref) {
 
 function saveComboBox(cbb, pref) {
 	// Enregistre et retourne l'état d'une ComboBox
-	var etat = cbb.selectedIndex;
+	var opt = cbb.options[cbb.selectedIndex];
+	if (!opt) return;
+	var etat = cbb.options[cbb.selectedIndex].value;
 	MY_setValue(pref, etat);
 	return etat;
 	}
@@ -9592,6 +9596,7 @@ function synchroniseFiltres() {
 	// Récupération de toutes les options de la vue
 	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
 	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
+	numBool = recallComboBox(comboBoxFamille,'FAMILLEMONSTRE') || numBool;
 	if(numBool) {
 		debutFiltrage('Monstres');
 	}
@@ -9981,6 +9986,7 @@ function finFiltrage(ref) {
 		case 'Monstres':
 			document.getElementById('nivMinMonstres').value = 0;
 			document.getElementById('nivMaxMonstres').value = 0;
+			document.getElementById('FamilleMonstres').value = 0;
 			break;
 		case 'Trolls':
 			document.getElementById('strGuildes').value = '';
@@ -10025,13 +10031,17 @@ function ajoutFiltreStr(td,nomBouton,id,onClick) {
 	};
 }
 
-function ajoutFiltreMenu(tr,id,onChange) {
+function ajoutFiltreMenu(tr,id,onChange,liste) {
 	var select = document.createElement('select');
 	select.id = id;
 	select.onchange = onChange;
 	appendOption(select,0,'Aucun');
-	for(var i=1 ; i<=60 ; i++) {
-		appendOption(select,i,i);
+	if (liste == undefined) {
+		for(var i=1 ; i<=60 ; i++) {
+			appendOption(select,i,i);
+		}
+	} else {
+		liste.forEach(function(f) {appendOption(select,f,f);});
 	}
 	tr.appendChild(select);
 	return select;
@@ -10048,6 +10058,9 @@ function ajoutDesFiltres() {
 		appendText(td,'\u00a0');
 		appendText(td,'Niveau Max: ');
 		comboBoxNiveauMax = ajoutFiltreMenu(td,'nivMaxMonstres',filtreMonstres);
+		appendText(td,'\u00a0');
+		appendText(td,'Famille: ');
+		comboBoxFamille = ajoutFiltreMenu(td,'FamilleMonstres',filtreMonstres,['Animal', 'Insecte','Démon','Humanoïde','Monstre','Mort-Vivant']);
 	}
 	/* Trõlls */
 	td = prepareFiltrage('Trolls',50);
@@ -10754,6 +10767,7 @@ function filtreMonstres() {
 	var noEngages = saveCheckBox(checkBoxEngages,'NOENGAGE');
 	var nivMin = saveComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
 	var nivMax = saveComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE');
+	var famille = saveComboBox(comboBoxFamille,'FAMILLEMONSTRE');
 	// old/new : détermine s'il faut ou non nettoyer les tr
 	var oldNOEM = true, noEM = true;
 	if(MY_getValue('NOINFOEM')!='true') {
@@ -10813,6 +10827,7 @@ function filtreMonstres() {
 			}
 		}
 
+		var dataV2 = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 		MZ_EtatCdMs.tr_monstres[i].style.display = (
 			noGowapsS &&
 			nom.indexOf('gowap sauvage')!=-1 &&
@@ -10834,6 +10849,11 @@ function filtreMonstres() {
 			isMonstreLevelOutLimit(i, nivMin, nivMax) &&
 			getMonstreDistance(i)>1 &&
 			nom.toLowerCase().indexOf("kilamo")==-1
+		) || (
+			famille!='0' &&
+			dataV2 &&
+			dataV2.fam &&
+			dataV2.fam != famille
 		) ? 'none' : '';
 	}
 
@@ -12988,8 +13008,8 @@ function competences(comp,niveau) {
 		texte = 'Permet d\'économiser <b>1</b> PA '
 			+'par rapport au déplacement classique';
 	else if(comp.indexOf('Dressage')!=-1)
-		texte = 'Le dressage permet d\'apprivoiser un gowap redevenu sauvage '
-			+'ou un gnu sauvage.';
+		texte = 'Le dressage permet d\'apprivoiser un Gowap redevenu sauvage, un Mouch\'oo Sauvage '
+			+'ou un Gnu Sauvage. La portée est de une case.';
 	else if(comp.indexOf('Ecriture Magique')!=-1)
 		texte = 'Réaliser la copie d\'un sortilège après en avoir découvert '
 			+'la formule nécessite de réunir les composants de cette formule, '
