@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.15
+// @version     1.3.0.16
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.16 10/01/2020",
+"	Amélioration du support SCIZ (Fix sur le prettyprint)",
 "V1.3.0.15 10/01/2020",
 "	Amélioration du support SCIZ (Fix sur les événements de zone)",
 "V1.3.0.14 06/01/2020",
@@ -5496,10 +5498,10 @@ function scizPrettyPrintEvent(e) {
 			if (b[0].toString().length > 6) {
 				// Mob
 				b[1] = b[1].replace(/^une?\s/g, '');
-				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','gi'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
 			} else {
 				// Troll
-				e.message = e.message.replace(new RegExp('(' + b[1] + ')','g'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
+				e.message = e.message.replace(new RegExp('(' + b[1] + ')','gi'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
 			}
 		}
 	});
