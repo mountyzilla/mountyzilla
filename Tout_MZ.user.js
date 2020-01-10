@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.14
+// @version     1.3.0.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.15 10/01/2020",
+"	Amélioration du support SCIZ (Fix sur les événements de zone)",
 "V1.3.0.14 06/01/2020",
 "	Correction filtre par famille piur les monstres variables et sans cdm",
 "V1.3.0.13 06/01/2020",
@@ -5568,26 +5570,28 @@ function do_scizOverwriteEvents() {
 				}
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
-					const t = Date.parse(StringToDate(e.time));
-					// Look for the best event matching and not already replaced
-					var i = -1;
-					var lastDelta = Infinity;
-					for (j = 0; j < scizGlobal.events.length; j++) {
-						if (scizGlobal.events[j].sciz_desc === null) {
-							var delta = Math.abs(t - scizGlobal.events[j].time);
-							if (delta <= interval && delta < lastDelta) {
-								lastDelta = delta;
-								i = j;
+					if (e.message.includes(id)) { // Exclude any event we were not looking for...
+						const t = Date.parse(StringToDate(e.time));
+						// Look for the best event matching and not already replaced
+						var i = -1;
+						var lastDelta = Infinity;
+						for (j = 0; j < scizGlobal.events.length; j++) {
+							if (scizGlobal.events[j].sciz_desc === null) {
+								var delta = Math.abs(t - scizGlobal.events[j].time);
+								if (delta <= interval && delta < lastDelta) {
+									lastDelta = delta;
+									i = j;
+								}
 							}
 						}
-					}
-					if (i > -1) {
-						// PrettyPrint
-						e = scizPrettyPrintEvent(e);
-						// Store the SCIZ event
-						scizGlobal.events[i].sciz_desc = e.message;
-						// Actual display overwrite
-						scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
+						if (i > -1) {
+							// PrettyPrint
+							e = scizPrettyPrintEvent(e);
+							// Store the SCIZ event
+							scizGlobal.events[i].sciz_desc = e.message;
+							// Actual display overwrite
+							scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
+						}
 					}
 				});
 				// Add the switch button
