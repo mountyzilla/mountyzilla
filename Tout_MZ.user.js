@@ -3800,7 +3800,7 @@ function treatePreEnchantement() {
 	return true;
 }
 
-function treateEnchantement() {
+function treateEnchantement_pre() {
 	var input = document.evaluate("//input[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	if(!input || input.getAttribute("type")!="hidden")
 	{
@@ -3847,7 +3847,7 @@ function treateEnchantement() {
 function do_pre_enchant() {
 	start_script(60);
 	if(!treatePreEnchantement())
-		treateEnchantement();
+		treateEnchantement_pre();
 	displayScriptTime();
 }
 
@@ -6458,7 +6458,7 @@ function showPopup(evt) {
 	// popup.style.visibility = 'hidden';
 // }
 
-function createPopupImage(url, text)
+function createPopupImage_tabcompo(url, text)
 {
 	var img = document.createElement('img');
 	img.setAttribute('src',url);
@@ -6469,7 +6469,7 @@ function createPopupImage(url, text)
 	return img;
 }
 
-function formateTexte(texte)
+function formateTexte_tabcompo(texte)
 {
 	texte = texte.replace(/\n/g,"<br/>");
 	texte = texte.replace(/^([^<]*) d'un/g,"<b>$1</b> d'un");
@@ -6484,7 +6484,7 @@ function arrondi(x) {
 	return Math.ceil(x-0.5); // arrondi à l'entier le plus proche, valeurs inf
 	}
 
-function traiteMinerai() {
+function traiteMinerai_tabcompo() {
 	if (currentURL.indexOf("as_type=Divers")==-1) return;
 	try {
 	var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'"
@@ -6575,7 +6575,7 @@ function treateAllComposants() {
 	var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
 		+ "or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']"
 		+ "/descendant::tr[contains(td[1]/a/b/text(),']') and ("
-			+ "td["+c+"]/text()[1] = '\240-\240' "
+			+ "td["+c+"]/text()[1] = '\u0040-\u0040' "
 			+ "or contains(td["+c+"]/text()[2],'Tous les trolls') "
 			+ "or contains(td["+c+"]/text()[1],'Tous les trolls') "
 			+ "or (count(td["+c+"]/text()) = 1 and td["+c+"]/text()[1]='n°') ) "
@@ -6674,7 +6674,7 @@ function treateEM()
 	}
 }
 
-function treateChampi() {
+function treateChampi_tabcompo() {
 	if (currentURL.indexOf('as_type=Champi')==-1)
 		return false;
 	var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
@@ -6735,7 +6735,7 @@ function treateEquipEnchant()
 	if(currentURL.indexOf('as_type=Arme')==-1 && currentURL.indexOf('as_type=Armure')==-1)
 		return false;
 	initPopupTabcompo();
-	computeEnchantementEquipement(createPopupImage,formateTexte);
+	computeEnchantementEquipement(createPopupImage_tabcompo,formateTexte_tabcompo);
 }
 
 function do_tancompo() {
@@ -6743,9 +6743,9 @@ function do_tancompo() {
 
 	treateAllComposants();
 	treateComposants();
-	traiteMinerai();
+	traiteMinerai_tabcompo();
 	if (MY_getValue('NOINFOEM')!='true') {
-		treateChampi();
+		treateChampi_tabcompo();
 		treateEM();
 		}
 	if (MY_getValue(numTroll+'.enchantement.liste') && MY_getValue(numTroll+'.enchantement.liste')!='') {
