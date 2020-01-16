@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.16
+// @version     1.3.0.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.17 16/01/2020",
+"	Correctif pour le recall du filtre des Monstres",
 "V1.3.0.16 10/01/2020",
 "	Amélioration du support SCIZ (Fix sur le prettyprint)",
 "V1.3.0.15 10/01/2020",
@@ -9195,27 +9197,16 @@ var nbTrolls = 0, nbTresors = 0,
 	nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
+	// NOTE: Dans VM, global = window
+	var node;
 	try {
-		var node = document.getElementById('mh_vue_hidden_'+type);
-		// this = MZ.global = sandBox de travail de MZ
-		// On définit donc des variables MZ-globales
-		this['tr_'+type] = node.getElementsByTagName('tr');
-		this['nb'+type[0].toUpperCase()+type.slice(1)] = this['tr_'+type].length-1;
+		node = document.getElementById('mh_vue_hidden_'+type);
+		window['tr_'+type] = node.getElementsByTagName('tr');
+		window['nb'+type[0].toUpperCase()+type.slice(1)] = window['tr_'+type].length-1;
 	} catch(e) {
-		window.console.warn('[MZ Vue] Erreur acquisition type '+type+'\n'+e);
+		window.console.warn('[MZ Vue] Erreur acquisition type '+type, e);
 	}
 }
-
-
-/*---------------------------------- DEBUG -----------------------------------*/
-var mainTabs = document.getElementsByClassName('mh_tdborder');
-var x_monstres = MZ_EtatCdMs.tr_monstres;
-var x_trolls = tr_trolls;
-var x_tresors = tr_tresors;
-var x_champis = tr_champignons;
-var x_lieux = tr_lieux;
-/*-------------------------------- FIN DEBUG ---------------------------------*/
-
 
 /*-[functions]-------------- Fonctions utilitaires ---------------------------*/
 
@@ -9572,17 +9563,17 @@ function bddLieux(start,stop) {
 
 /*-[functions]--------- Gestion Préférences Utilisateur ----------------------*/
 
-function saveCheckBox(chkbo, pref) {
+function saveCheckBox(chkbox, pref) {
 	// Enregistre et retourne l'état d'une CheckBox
-	var etat = chkbo.checked;
+	var etat = chkbox.checked;
 	MY_setValue(pref, etat ? 'true' : 'false' );
 	return etat;
-	}
+}
 
 function recallCheckBox(chkbox, pref) {
 	// Restitue l'état d'une CheckBox
 	chkbox.checked = (MY_getValue(pref)=='true');
-	}
+}
 
 function saveComboBox(cbb, pref) {
 	// Enregistre et retourne l'état d'une ComboBox
@@ -9591,21 +9582,22 @@ function saveComboBox(cbb, pref) {
 	var etat = cbb.options[cbb.selectedIndex].value;
 	MY_setValue(pref, etat);
 	return etat;
-	}
+}
 
 function recallComboBox(cbb, pref) {
 	// Restitue l'état d'une ComboBox
 	var nb = MY_getValue(pref);
 	if(nb) cbb.value = nb;
 	return nb;
-	}
+}
 
 function synchroniseFiltres() {
 	// Récupération de toutes les options de la vue
-	var numBool = recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE');
-	numBool = recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE') || numBool;
-	numBool = recallComboBox(comboBoxFamille,'FAMILLEMONSTRE') || numBool;
-	if(numBool) {
+	var wasActive =
+		Number(recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE')) +
+		Number(recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE')) +
+		Number(recallComboBox(comboBoxFamille,'FAMILLEMONSTRE'));
+	if(wasActive>0) {
 		debutFiltrage('Monstres');
 	}
 	recallCheckBox(checkBoxGowapsS,'NOGOWAPS');
@@ -9947,10 +9939,10 @@ function prepareFiltrage(ref,width) {
 	try {
 		var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
 	} catch(e) {
-		window.console.warn('[prepareFiltrage] Référence filtrage '+ref+' non trouvée\n'+e);
+		window.console.warn('[prepareFiltrage] Référence filtrage '+ref+' non trouvée', e);
 		return false;
 	}
-	if(width) { tdTitre.width = width; }
+	if(width) { tdTitre.width = width+'px'; }
 	// Ajout du tr de Filtrage (masqué)
 	var tbody = tdTitre.parentNode.parentNode;
 	var tr = appendTr(tbody,'mh_tdpage');
@@ -9963,8 +9955,8 @@ function prepareFiltrage(ref,width) {
 	tdBtn.id = 'tdInsert'+ref;
 	var btn = appendButton(tdBtn,'Filtrer');
 	btn.id = 'btnFiltre'+ref;
-	btn.onclick =	function() {
-		debutFiltrage(ref)
+	btn.onclick = function() {
+		debutFiltrage(ref);
 	};
 	return td;
 }
@@ -10057,7 +10049,7 @@ function ajoutFiltreMenu(tr,id,onChange,liste) {
 
 function ajoutDesFiltres() {
 	/* Monstres */
-	var td = prepareFiltrage('Monstres',120);
+	var td = prepareFiltrage('Monstres',130);
 	if(td) {
 		ajoutFiltreStr(td,'Nom du monstre:','strMonstres',filtreMonstres);
 		appendText(td,'\u00a0\u00a0\u00a0');
@@ -11640,17 +11632,10 @@ function do_vue() {
 	// roule' 11/03/2016
 	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 	// je fais une recopie :(
-	MZ_EtatCdMs.tr_monstres = this['tr_monstres'];
-	tr_trolls = this['tr_trolls'];
-	tr_tresors = this['tr_tresors'];
-	tr_champignons = this['tr_champignons'];
-	tr_lieux = this['tr_lieux'];
-
-	MZ_EtatCdMs.nbMonstres = this['nbMonstres'];
-	nbTrolls = this['nbTrolls'];
-	nbTresors = this['nbTresors'];
-	nbChampignons = this['nbChampignons'];
-	nbLieux = this['nbLieux'];
+	// Dabi 16/01/2020
+	// C'est ce qui arrive quand on change d'API ;p
+	MZ_EtatCdMs.tr_monstres = tr_monstres;
+	MZ_EtatCdMs.nbMonstres = nbMonstres;
 
 	try {
 		start_script(31);
