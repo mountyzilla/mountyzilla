@@ -9191,18 +9191,18 @@ var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la 
 	tdWitdh: 110,
 };
 
+var VueContext = {};
 var tr_trolls = {}, tr_tresors = {},
 	tr_champignons = {}, tr_lieux = {};
 var nbTrolls = 0, nbTresors = 0,
 	nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
-	// NOTE: Dans VM, global = window
 	var node;
 	try {
 		node = document.getElementById('mh_vue_hidden_'+type);
-		window['tr_'+type] = node.getElementsByTagName('tr');
-		window['nb'+type[0].toUpperCase()+type.slice(1)] = window['tr_'+type].length-1;
+		VueContext['tr_'+type] = node.getElementsByTagName('tr');
+		VueContext['nb'+type[0].toUpperCase()+type.slice(1)] = VueContext['tr_'+type].length-1;
 	} catch(e) {
 		window.console.warn('[MZ Vue] Erreur acquisition type '+type, e);
 	}
@@ -11632,10 +11632,17 @@ function do_vue() {
 	// roule' 11/03/2016
 	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 	// je fais une recopie :(
-	// Dabi 16/01/2020
-	// C'est ce qui arrive quand on change d'API ;p
-	MZ_EtatCdMs.tr_monstres = tr_monstres;
-	MZ_EtatCdMs.nbMonstres = nbMonstres;
+	MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
+	tr_trolls = VueContext.tr_trolls;
+	tr_tresors = VueContext.tr_tresors;
+	tr_champignons = VueContext.tr_champignons;
+	tr_lieux = VueContext.tr_lieux;
+
+	MZ_EtatCdMs.nbMonstres = VueContext.nbMonstres;
+	nbTrolls = VueContext.nbTrolls;
+	nbTresors = VueContext.nbTresors;
+	nbChampignons = VueContext.nbChampignons;
+	nbLieux = VueContext.nbLieux;
 
 	try {
 		start_script(31);
