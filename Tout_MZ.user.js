@@ -5318,31 +5318,6 @@ function do_lieuTeleport() {
 	MZ_setCarteTP();
 }
 
-/*********************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
-// x~x attaque
-
-// Script désactivé en attendant la màj vers le nouveau système de missions.
-
-function do_attaque() {
-}
-
 /*******************************************************************************
 *  This file is part of Mountyzilla.                                           *
 *                                                                              *
@@ -14248,8 +14223,6 @@ function do_trolligion() {
 		do_infomonstre();
 		/* SCIZ */
 		do_scizOverwriteEvents();
-	} else if(isPage("MH_Play/Actions/Play_a_Attack")) {
-		do_attaque();
 	} else if(isPage("MH_Play/Play_e_follo.php")) {
 		do_listegowap();
 	} else if(isPage("MH_Lieux/Lieu_Description.php")) {
