@@ -1585,18 +1585,12 @@ if (isDEV) {
 }
 
 /*---------- regroupement des getPortee() ------------------------------------*/
-// issu des script profil et profil2
-function getPortee__Profil(param) {
+
+function getPortee(param) {
 	param = Math.max(0,Number(param));
 	return Math.ceil( Math.sqrt( 2*param+10.75 )-3.5 );
 	// ça devrait être floor, +10.25, -2.5
 }
-
-// issu du script vue
-function getPortee__Vue(param) {
-	return Math.ceil((Math.sqrt(19 + 8 * (param + 3)) - 7) / 2);
-}
-
 
 /*-[functions]----------- Calculs expérience / niveau ------------------------*/
 
@@ -3205,7 +3199,7 @@ function analyseTactique(donneesMonstre,nom) {
 			var dist = getMonstreDistance(donneesMonstre.index);
 			//if (isDEV) window.console.log('Dist pour PM=' + dist);
 			var vue_bm = parseInt(MY_getValue(numTroll+".caracs.vue.bm"), 10);
-			var portee = getPortee__Profil(vue+vue_bm);
+			var portee = getPortee(vue+vue_bm);
 			if (dist <= portee) {
 				degats = Math.round((degats + 2 * (portee-dist)) * 100) / 100;
 			} else {
@@ -11228,7 +11222,7 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 
 function computeCharge() {
 	computeActionDistante(1,
-		getPortee__Vue(
+		getPortee(
 			Math.ceil(MY_getValue(numTroll+".caracs.pv")/10)+
 			MY_getValue(numTroll+".caracs.regeneration")
 		),
@@ -11241,7 +11235,7 @@ function computeCharge() {
 
 function computeProjo() {
 	computeActionDistante(0,
-		getPortee__Vue(
+		getPortee(
 			parseInt(MY_getValue(numTroll+".caracs.vue"))+
 			parseInt(MY_getValue(numTroll+".caracs.vue.bm"))
 		),
@@ -12883,7 +12877,7 @@ function competences(comp,niveau) {
 		}
 		var portee = Math.min(
 			Math.max(
-				getPortee__Profil(reg+Math.floor(pvcourant/10)) -
+				getPortee(reg+Math.floor(pvcourant/10)) -
 				Math.floor((fatigue+bmfatigue)/5),
 				1
 			),
@@ -13408,7 +13402,7 @@ function sortileges(sort) {
 	else if(sort.indexOf("Projectile Magique")!=-1) {
 		var
 			modD = 0,
-			portee = getPortee__Profil(vuetotale);
+			portee = getPortee(vuetotale);
 		// Att
 		texte = "Attaque : <b>"+vue+"</b> D6 ";
 		if(atttour!=0) {
@@ -13509,7 +13503,7 @@ function sortileges(sort) {
 		}
 	}
 	else if(sort.indexOf('Teleportation')!=-1) {
-		var portee = getPortee__Profil(pitotal/5);	// Roule, 30/09/2016, TP basé sur les PI
+		var portee = getPortee(pitotal/5);	// Roule, 30/09/2016, TP basé sur les PI
 		debugMZ('calcul portée Teleportation, pitotal=' + pitotal + ', portée=' + portee);
 		var pmh = (20+vue+portee);
 		var pmv = 3+Math.floor(portee/3);
@@ -13546,9 +13540,9 @@ function sortileges(sort) {
 			+'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
 	else if(sort.indexOf('Voir le Cache')!=-1)
 		texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
-			+Math.min(5,getPortee__Profil(vue))+'</b> cases<hr>'
+			+Math.min(5,getPortee(vue))+'</b> cases<hr>'
 			+'<b>A distance :</b><br/>Portée horizontale : <b>'
-			+getPortee__Profil(vuetotale)+'</b> cases';
+			+getPortee(vuetotale)+'</b> cases';
 	else if(sort.indexOf('Vue Troublee')!=-1)
 		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Vue : <b>-'+Math.floor(vue/3)+'</b>';
