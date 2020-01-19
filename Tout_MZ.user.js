@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.17
+// @version     1.3.0.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.18 19/01/2020",
+"	Correctif pour les icônes d'action à distance dans la vue",
 "V1.3.0.17 16/01/2020",
 "	Correctif pour le recall du filtre des Monstres",
 "V1.3.0.16 10/01/2020",
@@ -6288,7 +6290,7 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
-	news.push(['15/11/2019', '<span style="color:red">Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).</span>']);
+	news.push(['15/11/2019', 'Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).']);
 	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 	afficherNouvelles(news);
 }
@@ -9252,10 +9254,10 @@ function getVue() {
 // Roule 11/03/2016
 /* [functions] Récup données monstres, trolls, etc. */
 function getXxxDistance(xxx, i) {
-	return parseInt(this['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
+	return parseInt(VueContext['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
 }
 function getXxxPosition(xxx, i) {
-	var tds = this['tr_' + xxx.toLowerCase()][i].childNodes;
+	var tds = VueContext['tr_' + xxx.toLowerCase()][i].childNodes;
 	var l = tds.length;
 	return [
 		parseInt(tds[l-3].textContent),
@@ -11213,9 +11215,10 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 	var monN = parseInt(getPosition()[2]);
 
 	for(var type in keltypes) {
+		if (MY_DEBUG) window.console.log('MZ computeActionDistante(' + dmin + ', ' + dmax + ', ' + oussa + ', ' + urlIcon+ ', ' + message + ') type=' + type);
 		alt = oussa=='self' ? type.slice(0,-1) : oussa;
-		for(var i=this['nb'+type] ; i>0 ; i--)  {
-			var tr = this['tr_'+type.toLowerCase()][i];
+		for(var i=VueContext['nb'+type] ; i>0 ; i--)  {
+			var tr = VueContext['tr_'+type.toLowerCase()][i];
 			// Roule 11/03/2016, on passe par les nouvelles fonctions getXxxPosition et getXxxDistance
 			//var sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
 			//var d = this['get'+type.slice(0,-1)+'Distance'](i);
@@ -11609,7 +11612,7 @@ function inversionCoord() {
 		'trolls':6,
 	};
 	for(var type in listeOffsets) {
-		var trList = this['tr_'+type];
+		var trList = VueContext['tr_'+type];
 		var offset = listeOffsets[type];
 		for(var i=trList.length-1 ; i>0 ; i--) {
 			var oldX = parseInt(trList[i].cells[offset].textContent);
