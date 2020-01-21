@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.19
+// @version     1.3.0.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.20 21/01/2020",
+"	Adaptation modif MH (affichage des durées négatives)",
 "V1.3.0.19 19/01/2020",
 "	Centralisation des éléments tactiques",
 "V1.3.0.18 19/01/2020",
@@ -11830,6 +11832,9 @@ function extractionDuree(selecteur) {
 	if (!s) return 0;
 	var tabN = getNumbers(s);
 	if (tabN.length < 2) return 0;
+	if (tabN[0] < 0) {
+		return tabN[0] * 60 - tabN[1];
+	}
 	return tabN[0] * 60 + tabN[1];
 }
 
