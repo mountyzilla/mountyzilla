@@ -7,7 +7,7 @@
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.20
+// @version     1.3.0.21
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.21 21/01/2020",
+"	Adaptation à une modif MH dans la page des suivants",
 "V1.3.0.20 21/01/2020",
 "	Adaptation modif MH (affichage des durées négatives)",
 "V1.3.0.19 19/01/2020",
