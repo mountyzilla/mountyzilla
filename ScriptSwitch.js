@@ -24,6 +24,7 @@ try {
 
 var MZ_Switch = {
 	ChangeLog: [
+		"V1.1.3 20/01/2020 Poissotron actif par défaut sur mhp.mh",
 		"V1.1.2 15/12/2019 ajout du Poissotron V2",
 		"V1.1.1 11/07/2018 retour MZ sur greasyfork qui est plus réactif",
 		"V1.1 19/03/2018 disable ou delete des scripts persos",
@@ -89,12 +90,7 @@ var MZ_Switch = {
 		}
 		// scripts connus
 		for (var k in tabKnownScript) {
-			var activ = window.localStorage.getItem('MZ_SW_' + k);
-			if (activ == undefined)
-					activ = (k == 'Mountyzilla');	// Mountyzilla actif par défaut, les autres non
-			else
-					activ = activ == 0 ? false : true; // le localStorage est mal adapté aux booléens :(
-			if (!activ) continue;
+			if (!this.isActiv(k)) continue;
 			this.injectOneScript(tabKnownScript[k], true);
 		}
 		// scripts perso
@@ -103,6 +99,23 @@ var MZ_Switch = {
 			if (!tabScriptPerso[i].enabled) continue;
 			this.injectOneScript(tabScriptPerso[i].script, true);
 		}
+	},
+
+	isActiv: function(k) {
+		var activ = window.localStorage.getItem('MZ_SW_' + k);
+		if (activ == undefined) {
+			if (k == 'Mountyzilla') {
+				activ = true;	// Mountyzilla actif par défaut
+			} else if (k == 'Poissotron') {
+				activ = window.location.href.includes('mhp.mh');	// Le poissotron est actif par défaut sur mhp.mh....
+				//window.console.log('Poissotron href=' + window.location.href + ', activ=' + activ);
+			} else {
+				activ = false;	// les autres sont inactifs par défaut
+			}
+		} else {
+			activ = activ == 0 ? false : true; // le localStorage est mal adapté aux booléens :(
+		}
+		return activ;
 	},
 
 	// rend un tableau d'objets, chaque objet a une propriété key, une propriété script et une propriété enabled
@@ -303,12 +316,7 @@ var MZ_Switch = {
 
 		var tabKnownScript = this.bDev ? this.listeScriptDEV : this.listeScript;
 		for (var k in tabKnownScript) {
-			var activ = window.localStorage.getItem('MZ_SW_' + k);
-			if (activ == undefined)
-					activ = (k == 'Mountyzilla');	// Mountyzilla actif par défaut, les autres non
-			else
-					activ = activ == 0 ? false : true; // le localStorage est mal adapté aux booléens :(
-			this.addTrScript(tbody, activ, false, k, decodeURIComponent(tabKnownScript[k]));
+			this.addTrScript(tbody, this.isActiv(k), false, k, decodeURIComponent(tabKnownScript[k]));
 		}
 		// scripts persos
 		var tabScriptPerso = MZ_Switch.getScriptPerso();

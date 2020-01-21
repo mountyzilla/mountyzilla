@@ -4921,7 +4921,7 @@ function MZ_setCarteTousGogoHTML5() {
 			var oGogo = {};
 			oGogo.id = parseInt(cas.getElementsByTagName('a')[0].href.split("=")[1]);
 			oGogo.nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
-			var point = cas.innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
+			var point = cas.innerHTML.match(/X[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+Y[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+N =[ \n\r]+(-?\d+)/);	// Roule 21/01/2020 des espaces multiples et un saut de ligne sont apparus entre "Y" et "="
 			oGogo.x = parseInt(point[1]);
 			oGogo.y = parseInt(point[2]);
 			oGogo.n = parseInt(point[3]);
@@ -5423,6 +5423,7 @@ function traiteMonstre() {
 				if(infosRet.length==0) return;
 				var info = infosRet[0];
 				// QUESTION Quelle est l'utilité de ceci?
+				// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
 				MZ_EtatCdMs.listeCDM[idMonstre] = info;
 				try {
 					var nodeInsert = document.evaluate(

@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.15
+// @version 2.16
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -44,6 +44,8 @@
 //	Correction bug sur l'affichage des coordonnées sur la carte
 // V 2.15 25/11/2019 Roule'
 //	Protection à l'utilisation sur smartphone
+// V 2.16 21/01/2020 Roule'
+//	Adaptation à un changement MH (encore des sauts de ligne dans les coord.)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -1958,7 +1960,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
 					num_gow = cas.getElementsByTagName('a')[0].href.split("=")[1];
 					nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
-					point = cas.innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
+					point = cas.innerHTML.match(/X[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+Y[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+N =[ \n\r]+(-?\d+)/);	// Roule 21/01/2020 des espaces multiples et un saut de ligne sont apparus entre "Y" et "="
 					arret = new Array();	// Roule' 23/12/2018
 					charge_trajet();
 					suivants[nbs] = [num_gow, nom, parseInt(point[1]), parseInt(point[2]), parseInt(point[3]), etapes_ini, etapes, arret];
