@@ -2406,7 +2406,7 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		td.appendChild(createImage(URL_MZimg + thisImg[0],thisImg[1]));
 	}
 	if (donneesMonstre.esq != undefined) {
-		td.appendChild(Tactique.createImage(id, nom));
+		td.appendChild(MZ_Tactique.createImage(id, nom));
 	}
 
 	var txt = String.fromCharCode(160);	// blanc insécable
@@ -2748,7 +2748,7 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 /*-[functions]---------------- Analyse Tactique ------------------------------*/
 // Cette section est commune à InfoMonstre et Vue
 
-var Tactique = {
+var MZ_Tactique = {
 	// Variables
 	popup: null,
 
@@ -2761,28 +2761,28 @@ var Tactique = {
 		img.id = id;
 		img.nom = nom;
 		img.style.verticalAlign = 'middle';
-		img.onmouseover = Tactique.showPopup;
-		img.onmouseout = Tactique.hidePopup;
+		img.onmouseover = MZ_Tactique.showPopup;
+		img.onmouseout = MZ_Tactique.hidePopup;
 		return img;
 	},
 
 	hidePopup: function() {
 		// Masquage du popup tactique
-		Tactique.popup.style.display = 'none';
+		MZ_Tactique.popup.style.display = 'none';
 	},
 
 	initPopup: function() {
-		// @mandatory Initialisation du popup tactique
-		Tactique.popup = document.createElement('div');
-		Tactique.popup.id = 'Tactique.popup';
-		Tactique.popup.className = 'mh_textbox';
-		Tactique.popup.style =
+		/** @mandatory Initialisation du popup tactique */
+		MZ_Tactique.popup = document.createElement('div');
+		MZ_Tactique.popup.id = 'MZ_Tactique.popup';
+		MZ_Tactique.popup.className = 'mh_textbox';
+		MZ_Tactique.popup.style =
 			'position: absolute;' +
 			'border: 1px solid #000000;' +
 			'display: none;' +
 			'z-index: 3;' +
 			'max-width: 400px;';
-		document.body.appendChild(Tactique.popup);
+		document.body.appendChild(MZ_Tactique.popup);
 	},
 
 	showPopup: function(evt) {
@@ -2792,15 +2792,15 @@ var Tactique = {
 			var nom = this.nom;
 			var texte = getAnalyseTactique(id, nom);
 			if (texte == undefined || texte == '') return;
-			Tactique.popup.innerHTML = texte;
+			MZ_Tactique.popup.innerHTML = texte;
 			// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
 			if (isPage('View/MonsterView')) {
-				Tactique.popup.style.left = Math.min(evt.pageX - 120, window.innerWidth - 300) + 'px';
+				MZ_Tactique.popup.style.left = Math.min(evt.pageX - 120, window.innerWidth - 300) + 'px';
 			} else {
-				Tactique.popup.style.left = Math.min(evt.pageX + 15, window.innerWidth - 400) + 'px';
+				MZ_Tactique.popup.style.left = Math.min(evt.pageX + 15, window.innerWidth - 400) + 'px';
 			}
-			Tactique.popup.style.top = evt.pageY + 15 + 'px';
-			Tactique.popup.style.display = 'block';
+			MZ_Tactique.popup.style.top = evt.pageY + 15 + 'px';
+			MZ_Tactique.popup.style.display = 'block';
 		} catch (e) {
 			// window.alert(e);
 			window.console.error(e);
@@ -5489,7 +5489,7 @@ function toggleTableau() {	// click sur un td de thead
 function do_infomonstre() {
 	start_script();
 	try {
-		Tactique.initPopup();
+		MZ_Tactique.initPopup();
 		traiteMonstre();
 	} catch(e) {
 		window.console.error(traceStack(e, 'do_infomonstre'));
@@ -9168,7 +9168,7 @@ var Diplo = {
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
 // Infos tactiques
-// => Tactique.popup
+// => MZ_Tactique.popup
 
 // Utilisé pour supprimer les monstres "engagés"
 var listeEngages = {};
@@ -10720,7 +10720,7 @@ function computeTactique(begin, end) {
 			if (bShowTactique) {
 				var td = getMonstreNomNode(j);
 				appendText(td,' ');
-				td.appendChild(Tactique.createImage(id, nom));
+				td.appendChild(MZ_Tactique.createImage(id, nom));
 			}
 		}
 	}
@@ -11686,7 +11686,7 @@ function do_vue() {
 			filtreLieux();
 		}
 
-		Tactique.initPopup();
+		MZ_Tactique.initPopup();
 		initPXTroll();
 
 		if(getTalent("Projectile Magique")!=0) {
