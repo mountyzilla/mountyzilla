@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.21
+// @version     1.3.0.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.22 23/01/2020",
+"	Re-adaptation re-modif MH (affichage des durées négatives)",
 "V1.3.0.21 21/01/2020",
 "	Adaptation à une modif MH dans la page des suivants",
 "V1.3.0.20 21/01/2020",
@@ -989,8 +991,8 @@ function insertAfter(elt,newElt) {
 /*-[functions]------- Fonctions de mise en forme du texte --------------------*/
 
 function aff(nb) {
-	return (nb>=0) ? '+'+nb : nb;
-	}
+	return (nb >= 0) ? '+' + nb : nb;
+}
 
 function getNumber(str) {
 	var nbr = str.match(/\d+/);
@@ -998,50 +1000,66 @@ function getNumber(str) {
 }
 
 function getNumbers(str) {
+	var nbrs = str.match(/\d+/g);
+	if (!nbrs) return [];
+	for (var i = 0; i < nbrs.length; i++) {
+		nbrs[i] = Number(nbrs[i]);
+	}
+	return nbrs;
+}
+
+function getIntegers(str) {
 	var nbrs = str.match(/-?\d+/g);
 	if (!nbrs) return [];
-	for(var i=0 ; i<nbrs.length ; i++)
+	for(var i=0 ; i<nbrs.length ; i++) {
 		nbrs[i] = Number(nbrs[i]);
-	return nbrs;
 	}
+	return nbrs;
+}
 
 function trim(str) {
-	return str.replace(/(^\s*)|(\s*$)/g,'');
-	}
+	return str.replace(/(^\s*)|(\s*$)/g, '');
+}
 
-String.prototype.trim = function() {
-    return this.replace(/^\s+/,'').replace(/\s+$/,'');
-    }
+if (typeof String.prototype.trim != 'function') {
+	// Intégré depuis ES5, pour rétrocompatibilité
+	String.prototype.trim = function() {
+		return this.replace(/^\s+/, '').replace(/\s+$/, '');
+	}
+}
 
 function epure(texte) {
-	return texte.replace(/[àâä]/g,'a').replace(/Â/g,'A')
+	return texte
+		.replace(/[àâä]/g,'a').replace(/Â/g,'A')
 		.replace(/[ç]/g,'c')
 		.replace(/[éêèë]/g,'e')
 		.replace(/[ïî]/g,'i')
 		.replace(/[ôöõ]/g,'o')
 		.replace(/[ùûü]/g,'u');
-	}
+}
 
-String.prototype.epure = function () {
-	return this.replace(/[àâä]/g,'a').replace(/Â/g,'A')
+// WARNING Modifier des constantes, c'est mal
+String.prototype.epure = function() {
+	return this
+		.replace(/[àâä]/g,'a').replace(/Â/g,'A')
 		.replace(/[ç]/g,'c')
 		.replace(/[éêèë]/g,'e')
 		.replace(/[ïî]/g,'i')
 		.replace(/[ôöõ]/g,'o')
 		.replace(/[ùûü]/g,'u');
-	}
+}
 
 function bbcode(texte) {
-	return texte.replace(/&/g,'&amp;')
-		.replace(/"/g,'&quot;')
-		.replace(/</g,'&lt;')
-		.replace(/>/g,'&gt;')
-		.replace(/'/g,'&#146;')
-		.replace(/\[b\](.*?)\[\/b\]/g,'<b>$1</b>')
-		.replace(/\[i\](.*?)\[\/i\]/g,'<i>$1</i>')
-		.replace(/\[img\]([^"]*?)\[\/img\]/g,'<img src="$1" />');
-	}
-
+	return texte
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/'/g, '&#146;')
+		.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>')
+		.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>')
+		.replace(/\[img\]([^"]*?)\[\/img\]/g, '<img src="$1" />');
+}
 
 /*-[functions]------- Gestion / Transformation des Dates ---------------------*/
 
@@ -9792,7 +9810,7 @@ function initialiseInfos() {
 				infoTab, null, 9, null
 			).singleNodeValue.nodeValue;
 		// ***INIT GLOBALE*** currentPosition
-		currentPosition = getNumbers(strPos);
+		currentPosition = getIntegers(strPos);
 		debugMZ("retrievePosition(): "+currentPosition);
 	} catch(e) {
 		// Si on ne trouve pas le "X ="
@@ -11828,7 +11846,7 @@ function dureeHM(dmin) {
 }
 
 // extraction d'une durée
-// l'élément pointé par le sélecteur contient "9 h 33 m" ou "-2 h -30 m"
+// l'élément pointé par le sélecteur contient "9 h 33 m" ou "- 2 h 30 m"
 // c'est protégé (rend 0 si l'élément est absent)
 // Roule' 24/12/2016
 function extractionDuree(selecteur) {
@@ -11836,8 +11854,8 @@ function extractionDuree(selecteur) {
 	if (!s) return 0;
 	var tabN = getNumbers(s);
 	if (tabN.length < 2) return 0;
-	if (tabN[0] < 0) {
-		return tabN[0] * 60 - tabN[1];
+	if (s.includes('-')) {
+		return - tabN[0] * 60 - tabN[1];
 	}
 	return tabN[0] * 60 + tabN[1];
 }
@@ -11888,37 +11906,27 @@ function extractionDonnees() {
 // Cadre "Tour de Jeu"
 // *********************
 	    // DLA
-	Nbrs["dla"] = getUniqueStringValueBySelector("#dla #dla>b");
-	DLA = new Date(StringToDate(Nbrs["dla"]));
-	debugMZ("DLA: " + DLA);
+	Nbrs['dla'] = getUniqueStringValueBySelector('#dla #dla>b');
+	DLA = new Date(StringToDate(Nbrs['dla']));
+	debugMZ('DLA: ' + DLA);
 	    // DLA suivante
-	Nbrs["dlasuiv"] = getUniqueStringValueBySelector("#dla #dla_next");
-	DLAsuiv = new Date(StringToDate(Nbrs["dlasuiv"]));
-	debugMZ("DLAsuiv: " + DLAsuiv);
+	Nbrs['dlasuiv'] = getUniqueStringValueBySelector('#dla #dla_next');
+	DLAsuiv = new Date(StringToDate(Nbrs['dlasuiv']));
+	debugMZ('DLAsuiv: ' + DLAsuiv);
 	    // Duree normale de mon Tour
-	//Nbrs["dtb"] = getNumbers(getUniqueStringValueBySelector("#dla #tour"));
-	//dtb = Nbrs["dtb"][0] * 60 + Nbrs["dtb"][1];
-	dtb = extractionDuree("#dla #tour");
-	debugMZ("Duree normale de mon Tour : " + dtb);
+	dtb = extractionDuree('#dla #tour');
+	debugMZ('Duree normale de mon Tour : ' + dtb);
 	    // Bonus/Malus sur la duree
-	//Nbrs["bmt"] = getNumbers(getUniqueStringValueBySelector("#dla #bm"));
-	//bmt = Nbrs["bmt"][0] * 60 + Nbrs["bmt"][1];
-	bmt = extractionDuree("#dla #bm");	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
-	debugMZ("Bonus/Malus sur la duree : " + bmt);
+	bmt = extractionDuree('#dla #bm');	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
+	debugMZ('Bonus/Malus sur la duree : ' + bmt);
 	    // Augmentation due aux blessures
-	//Nbrs["adb"] = getNumbers(getUniqueStringValueBySelector("#dla #blessure"));
-	//adb = Nbrs["adb"][0] * 60 + Nbrs["adb"][1];
-	adb = extractionDuree("#dla #blessure");
-	debugMZ("Augmentation due aux blessures : " + adb);
+	adb = extractionDuree('#dla #blessure');
+	debugMZ('Augmentation due aux blessures : ' + adb);
 	    // Poids de l'equipement
-	//Nbrs["pdm"] = getNumbers(getUniqueStringValueBySelector("#dla #poids"));
-	//pdm = Nbrs["pdm"][0] * 60 + Nbrs["pdm"][1];
-	pdm = extractionDuree("#dla #poids");
-	debugMZ("Poids de l'equipement : " + pdm);
+	pdm = extractionDuree('#dla #poids');
+	debugMZ('Poids de l\'equipement : ' + pdm);
 	    // Duree de mon prochain Tour
-	//Nbrs["dpt"] = getNumbers(getUniqueStringValueBySelector("#dla #duree>b"));
-	//dpt = Nbrs["dpt"][0] * 60 + Nbrs["dpt"][1];
-	dpt = extractionDuree("#dla #duree>b");
+	dpt = extractionDuree('#dla #duree>b');
 	debugMZ('Duree de mon prochain Tour : ' + dpt);
 
 // ****************
