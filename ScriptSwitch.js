@@ -310,6 +310,7 @@ var MZ_Switch = {
 		table.cellPadding = 2;
 		table.cellSpacing = 1;
 		table.className =  'mh_tdborder';
+		table.id = 'MZ_switch_table';
 		var tbody = document.createElement('tbody');
 		table.appendChild(tbody);
 		insertPoint.parentNode.insertBefore(table, insertPoint);

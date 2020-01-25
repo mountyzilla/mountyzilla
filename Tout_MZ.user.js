@@ -6,6 +6,7 @@
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
 // @exclude     *mh2.mh.raistlin.fr*
+// @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
 // @version     1.3.0.21
 // @grant GM_getValue
