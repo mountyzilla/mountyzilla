@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.22
+// @version     1.3.0.23
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.23 30/01/2020",
+"	Correction affichage filtre monstre",
 "V1.3.0.22 23/01/2020",
 "	Re-adaptation re-modif MH (affichage des durées négatives)",
 "V1.3.0.21 21/01/2020",
@@ -9603,7 +9605,7 @@ function synchroniseFiltres() {
 	var wasActive =
 		Number(recallComboBox(comboBoxNiveauMin,'NIVEAUMINMONSTRE')) +
 		Number(recallComboBox(comboBoxNiveauMax,'NIVEAUMAXMONSTRE')) +
-		Number(recallComboBox(comboBoxFamille,'FAMILLEMONSTRE'));
+		(recallComboBox(comboBoxFamille,'FAMILLEMONSTRE') == 0 ? 0 : 1);	// Roule 30/01/2020 on obtient du non numérique si il y a filtre par famille
 	if(wasActive>0) {
 		debutFiltrage('Monstres');
 	}
