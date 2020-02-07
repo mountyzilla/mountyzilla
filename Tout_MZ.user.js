@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.23
+// @version     1.3.0.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.24 07/02/2020",
+"	Adaptation basique au profil modifié",
 "V1.3.0.23 30/01/2020",
 "	Correction affichage filtre monstre",
 "V1.3.0.22 23/01/2020",
@@ -397,7 +399,7 @@ var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
 
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
-var MY_DEBUG = false;
+var MY_DEBUG = true;
 
 var horsGM = false;
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
@@ -12268,7 +12270,7 @@ function setInfosExp() {
     var pxRestant = (pxdistribuables + pxperso) - 2 * nivTroll;
     if (pxRestant >= 0) {
         var tdinfoEntrainement = document.querySelector("#exp table tr:nth-child(4) td span");
-        tdinfoEntrainement.innerHTML += " <i>Il vous restera " + pxRestant + " PX</i>";
+        if (tdinfoEntrainement) tdinfoEntrainement.innerHTML += " <i>Il vous restera " + pxRestant + " PX</i>";
     }
 
     // Calul pi/jour
@@ -14213,8 +14215,6 @@ function do_trolligion() {
 		do_scizOverwriteEvents();
 	} else if(isPage("View/PJView")) {
 		do_pjview();
-	} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
-		do_profil();
 	} else if(isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
 		do_tancompo();
 	} else if(isPage("MH_Play/Play_vue")) {
@@ -14258,6 +14258,8 @@ function do_trolligion() {
 		do_mission_liste();
 	} else if(isPage('MH_Play/Play_action')) {
 		do_actions();
+	} else if(isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
+		do_profil2();
 	} else if(isPage('MH_Play/Play_profil2')) {
 		do_profil2();
 	} else if(isPage('View/TrolligionView.php')) {
