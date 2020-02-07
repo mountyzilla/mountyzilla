@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.24
+// @version     1.3.0.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,7 @@
 
 try {
 const MZ_changeLog = [
-"V1.3.0.24 07/02/2020",
+"V1.3.0.25 07/02/2020",
 "	Adaptation basique au profil modifié",
 "V1.3.0.23 30/01/2020",
 "	Correction affichage filtre monstre",
@@ -399,7 +399,7 @@ var URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
 
 var MHicons = '/mountyhall/Images/Icones/';
 // Active l'affichage des log de DEBUG (fonction debugMZ(str))
-var MY_DEBUG = true;
+var MY_DEBUG = false;
 
 var horsGM = false;
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
