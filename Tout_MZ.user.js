@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.25
+// @version     1.3.0.26
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.26 08/02/2020",
+"	Lisibilité CdM en mode smartphone",
 "V1.3.0.25 07/02/2020",
 "	Adaptation basique au profil modifié",
 "V1.3.0.23 30/01/2020",
@@ -2975,7 +2977,7 @@ function getAnalyseTactique(id,nom) {
 	//window.console.log('getAnalyseTactique ' + JSON.stringify(array));
 	if(array==null)
 		return "";
-	var str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
+	var str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203)'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
 	for(i=0;i<array.length;i++)
 	{
 		if(array[i][1]==100 && i>0)	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
@@ -10219,6 +10221,7 @@ function afficherCDM(nom,id) {
 	*/
 	table.id = 'popupCDM'+id;
 	table.style.position = 'fixed';
+	table.style.backgroundColor = 'rgb(229, 222, 203)';
 	table.style.zIndex = 1;
 	//var topY = +(300+(30*MZ_EtatCdMs.yIndexCDM))%(30*Math.floor((window.innerHeight-400)/30));
 	table.style.left = +(window.innerWidth-365)+'px';
@@ -12121,11 +12124,11 @@ function saveProfil() {
 	MY_setValue(idtroll+'.caracs.pv.base',pvbase);
 	MY_setValue(idtroll+'.caracs.pv.max',pvtotal);
 	MY_setValue(idtroll+'.caracs.rm',rm);
-	MY_setValue(idtroll+'.caracs.rm.bm',(rm+rmbp+rmbm));
+	MY_setValue(idtroll+'.caracs.rm.bm',(rmtotale));
 	MY_setValue(idtroll+'.caracs.rm.bmp',rmbp);
 	MY_setValue(idtroll+'.caracs.rm.bmm',rmbm);
 	MY_setValue(idtroll+'.caracs.mm',mm);
-	MY_setValue(idtroll+'.caracs.mm.bm',(mm+mmbp+mmbm));
+	MY_setValue(idtroll+'.caracs.mm.bm',(mmtotale));
 	MY_setValue(idtroll+'.caracs.mm.bmp',mmbp);
 	MY_setValue(idtroll+'.caracs.mm.bmm',mmbm);
 	MY_setValue(idtroll+'.caracs.armure',arm);
