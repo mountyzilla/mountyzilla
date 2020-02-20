@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.26
+// @version     1.3.0.27
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.27 20/02/2020",
+"	Ajout de la probabilité de toucher avec Lancer de Potion dans la Vue",
 "V1.3.0.26 08/02/2020",
 "	Lisibilité CdM en mode smartphone",
 "V1.3.0.25 07/02/2020",
@@ -60,7 +62,7 @@ const MZ_changeLog = [
 "V1.3.0.15 10/01/2020",
 "	Amélioration du support SCIZ (Fix sur les événements de zone)",
 "V1.3.0.14 06/01/2020",
-"	Correction filtre par famille piur les monstres variables et sans cdm",
+"	Correction filtre par famille pour les monstres variables et sans cdm",
 "V1.3.0.13 06/01/2020",
 "	Ajout du filtre sur la famille des monstres",
 "V1.3.0.12 28/12/2019",
@@ -2166,7 +2168,7 @@ function getTalent(nom,niveau) {
 	if(!nomEnBase) nomEnBase=nom;
 	if(!niveau) var niveau = '';
 	if(MY_getValue(numTroll+'.talent.'+nomEnBase+niveau))
-		return MY_getValue(numTroll+'.talent.'+nomEnBase+niveau);
+		return Number(MY_getValue(numTroll+'.talent.'+nomEnBase+niveau));
 	return 0;
 }
 
@@ -2406,7 +2408,7 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		td.appendChild(createImage(URL_MZimg + thisImg[0],thisImg[1]));
 	}
 	if (donneesMonstre.esq != undefined) {
-		td.appendChild(Tactique.createImage(id, nom));
+		td.appendChild(MZ_Tactique.createImage(id, nom));
 	}
 
 	var txt = String.fromCharCode(160);	// blanc insécable
@@ -2748,7 +2750,7 @@ function computeEnchantementEquipement(fontionTexte,formateTexte)
 /*-[functions]---------------- Analyse Tactique ------------------------------*/
 // Cette section est commune à InfoMonstre et Vue
 
-var Tactique = {
+var MZ_Tactique = {
 	// Variables
 	popup: null,
 
@@ -2761,28 +2763,28 @@ var Tactique = {
 		img.id = id;
 		img.nom = nom;
 		img.style.verticalAlign = 'middle';
-		img.onmouseover = Tactique.showPopup;
-		img.onmouseout = Tactique.hidePopup;
+		img.onmouseover = MZ_Tactique.showPopup;
+		img.onmouseout = MZ_Tactique.hidePopup;
 		return img;
 	},
 
 	hidePopup: function() {
 		// Masquage du popup tactique
-		Tactique.popup.style.display = 'none';
+		MZ_Tactique.popup.style.display = 'none';
 	},
 
 	initPopup: function() {
-		// @mandatory Initialisation du popup tactique
-		Tactique.popup = document.createElement('div');
-		Tactique.popup.id = 'Tactique.popup';
-		Tactique.popup.className = 'mh_textbox';
-		Tactique.popup.style =
+		/** @mandatory Initialisation du popup tactique */
+		MZ_Tactique.popup = document.createElement('div');
+		MZ_Tactique.popup.id = 'MZ_Tactique.popup';
+		MZ_Tactique.popup.className = 'mh_textbox';
+		MZ_Tactique.popup.style =
 			'position: absolute;' +
 			'border: 1px solid #000000;' +
 			'display: none;' +
 			'z-index: 3;' +
 			'max-width: 400px;';
-		document.body.appendChild(Tactique.popup);
+		document.body.appendChild(MZ_Tactique.popup);
 	},
 
 	showPopup: function(evt) {
@@ -2792,15 +2794,15 @@ var Tactique = {
 			var nom = this.nom;
 			var texte = getAnalyseTactique(id, nom);
 			if (texte == undefined || texte == '') return;
-			Tactique.popup.innerHTML = texte;
+			MZ_Tactique.popup.innerHTML = texte;
 			// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
 			if (isPage('View/MonsterView')) {
-				Tactique.popup.style.left = Math.min(evt.pageX - 120, window.innerWidth - 300) + 'px';
+				MZ_Tactique.popup.style.left = Math.min(evt.pageX - 120, window.innerWidth - 300) + 'px';
 			} else {
-				Tactique.popup.style.left = Math.min(evt.pageX + 15, window.innerWidth - 400) + 'px';
+				MZ_Tactique.popup.style.left = Math.min(evt.pageX + 15, window.innerWidth - 400) + 'px';
 			}
-			Tactique.popup.style.top = evt.pageY + 15 + 'px';
-			Tactique.popup.style.display = 'block';
+			MZ_Tactique.popup.style.top = evt.pageY + 15 + 'px';
+			MZ_Tactique.popup.style.display = 'block';
 		} catch (e) {
 			// window.alert(e);
 			window.console.error(e);
@@ -5489,7 +5491,7 @@ function toggleTableau() {	// click sur un td de thead
 function do_infomonstre() {
 	start_script();
 	try {
-		Tactique.initPopup();
+		MZ_Tactique.initPopup();
 		traiteMonstre();
 	} catch(e) {
 		window.console.error(traceStack(e, 'do_infomonstre'));
@@ -9168,7 +9170,7 @@ var Diplo = {
 var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
 // Infos tactiques
-// => Tactique.popup
+// => MZ_Tactique.popup
 
 // Utilisé pour supprimer les monstres "engagés"
 var listeEngages = {};
@@ -10720,7 +10722,7 @@ function computeTactique(begin, end) {
 			if (bShowTactique) {
 				var td = getMonstreNomNode(j);
 				appendText(td,' ');
-				td.appendChild(Tactique.createImage(id, nom));
+				td.appendChild(MZ_Tactique.createImage(id, nom));
 			}
 		}
 	}
@@ -11208,10 +11210,17 @@ function appliqueDiplo() {
 /*-[functions]---------------- Actions à distance ----------------------------*/
 
 function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
-	var monN = parseInt(getPosition()[2]);
+	var
+		monN = parseInt(getPosition()[2]),
+		isLdP = oussa=='self';
 
 	for(var type in keltypes) {
-		if (MY_DEBUG) window.console.log('MZ computeActionDistante(' + dmin + ', ' + dmax + ', ' + oussa + ', ' + urlIcon+ ', ' + message + ') type=' + type);
+		if (MY_DEBUG) {
+			window.console.log(
+				'MZ computeActionDistante(' + dmin + ', ' + dmax + ', ' +
+				oussa + ', ' + urlIcon+ ', ' + message + ') type=' + type
+			);
+		}
 		alt = oussa=='self' ? type.slice(0,-1) : oussa;
 		for(var i=VueContext['nb'+type] ; i>0 ; i--)  {
 			var tr = VueContext['tr_'+type.toLowerCase()][i];
@@ -11220,6 +11229,15 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 			//var d = this['get'+type.slice(0,-1)+'Distance'](i);
 			var sonN = getXxxPosition(type, i)[2];
 			var d = getXxxDistance(type, i);
+			var thismessage = message;
+			if (isLdP) {
+				var chanceToucher = getTalent("Lancer de Potions") + Math.min(10,
+					10 - 10 * d +
+					parseInt(MY_getValue(numTroll+".caracs.vue")) +
+					parseInt(MY_getValue(numTroll+".caracs.vue.bm"))
+				);
+				thismessage += ' (' + chanceToucher + '%)';
+			}
 
 			if(sonN==monN && d>=dmin && d<=dmax) {
 				var iconeAction = document.evaluate(
@@ -11228,9 +11246,9 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 				).singleNodeValue;
 				if(iconeAction) {
 					if(iconeAction.title) {
-						iconeAction.title += "\n"+message;
+						iconeAction.title += "\n"+thismessage;
 					} else {
-						iconeAction.title = message;
+						iconeAction.title = thismessage;
 					}
 					iconeAction.src = urlIcon;
 				} else {
@@ -11239,7 +11257,7 @@ function computeActionDistante(dmin,dmax,keltypes,oussa,urlIcon,message) {
 					icon.src = urlIcon;
 					icon.height = 20;
 					icon.alt = alt;
-					icon.title = message;
+					icon.title = thismessage;
 					tdAction.appendChild(icon);
 				}
 			}
@@ -11686,19 +11704,19 @@ function do_vue() {
 			filtreLieux();
 		}
 
-		Tactique.initPopup();
+		MZ_Tactique.initPopup();
 		initPXTroll();
 
-		if(getTalent("Projectile Magique")!=0) {
+		if(getTalent("Projectile Magique")) {
 			computeProjo();
 		}
-		if(getTalent("Charger")!=0) {
+		if(getTalent("Charger")) {
 			computeCharge();
 		}
-		if(getTalent("Télékinésie")!=0) {
+		if(getTalent("Télékinésie")) {
 			computeTelek();
 		}
-		if(getTalent("Lancer de Potions")!=0) {
+		if(getTalent("Lancer de Potions")) {
 			computeLdP();
 		}
 
