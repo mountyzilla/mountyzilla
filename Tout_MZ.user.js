@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.27
+// @version     1.3.0.28
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.28 13/032020",
+"	Fix la détection incohérence CdM et affichage en rouge",
 "V1.3.0.27 20/02/2020",
 "	Ajout de la probabilité de toucher avec Lancer de Potion dans la Vue",
 "V1.3.0.26 08/02/2020",
@@ -2472,7 +2474,7 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 		var texte = '';
 		if (ominmax.min != ominmax.max) {
 			var texte = ominmax.min + '-' + ominmax.max + '\u00A0-->\u00A0';
-			if (ominmax.min > ominmax.min) {
+			if (ominmax.min > ominmax.max) {
 				td.style.color = 'red';
 				unit += ' *** erreur ***';
 			}
