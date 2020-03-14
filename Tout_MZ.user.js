@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.28
+// @version     1.3.0.29
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,9 @@
 
 try {
 const MZ_changeLog = [
-"V1.3.0.28 13/032020",
+"V1.3.0.29 14/03/2020",
+"	Fix calcul PV après blessure en cas de maxPV inconnu",
+"V1.3.0.28 13/03/2020",
 "	Fix la détection incohérence CdM et affichage en rouge",
 "V1.3.0.27 20/02/2020",
 "	Ajout de la probabilité de toucher avec Lancer de Potion dans la Vue",
@@ -2218,8 +2220,36 @@ function getPVsRestants(pv,bless,vue) {
 	var pvminmax = pv.match(/\d+/g);
 	var oMinMaxPV = {min: pvminmax[0], max: pvminmax[1]};
 	var oMinMaxPVRestant = MZ_getPVsRestants(oMinMaxPV, bless);
-	return vue ? ' ('+oMinMaxPVRestant.min+'-'+oMinMaxPVRestant.max+')' :
-		['Points de Vie restants : ','Entre '+oMinMaxPVRestant.min+' et '+oMinMaxPVRestant.max];
+	if (vue) {
+		if (oMinMaxPVRestant.min) {
+			if (oMinMaxPVRestant.max) {
+				return ' (' + oMinMaxPVRestant.min + '-' + oMinMaxPVRestant.max + ')';
+			} else {
+				return " (\u2A7E" + oMinMaxPVRestant.min + ')';	// U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
+			}
+		} else {
+			if (oMinMaxPVRestant.max) {
+				return " (\u2A7D" + oMinMaxPVRestant.max + ')';	// U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
+			} else {
+				return '';
+			}
+		}
+	}
+	var oRet = ['Points de Vie restants : '];
+	if (oMinMaxPVRestant.min) {
+		if (oMinMaxPVRestant.max) {
+			oRet[1] = 'Entre '+oMinMaxPVRestant.min+' et '+oMinMaxPVRestant.max;
+		} else {
+			oRet[1] = "\u2A7E" + oMinMaxPVRestant.min;	// U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
+		}
+	} else {
+		if (oMinMaxPVRestant.max) {
+			oRet[1] = "\u2A7D" + oMinMaxPVRestant.max;	// U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
+		} else {
+			oRet[1] = 'inconnu';
+		}
+	}
+	return oRet;
 /* à supprimer
 	if(bless==95) {
 		var pvb = 1;
@@ -2240,13 +2270,18 @@ function getPVsRestants(pv,bless,vue) {
 }
 
 function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
+	var oRet = {};
 	if(bless==95) {
-		return {min: 1, max:Math.floor( oMinMaxPV.max/20 )};
+		oRet.min = 1;
+		if (oMinMaxPV.max) oRet.max = Math.floor( oMinMaxPV.max/20);
 	} else if(bless==5) {
-		return {min: Math.floor( oMinMaxPV.min*19/20 ), max: oMinMaxPV.max};
+		if (oMinMaxPV.min) oRet.min = Math.floor( oMinMaxPV.min*19/20);
+		if (oMinMaxPV.max) oRet.max = oMinMaxPV.max;
 	} else {
-		return {min: Math.ceil( oMinMaxPV.min*(95-bless) / 100 ), max: Math.floor( oMinMaxPV.max*(105-bless) / 100 )};
+		if (oMinMaxPV.min) oRet.min = Math.ceil( oMinMaxPV.min*(95-bless) / 100);
+		if (oMinMaxPV.max) oRet.max = Math.floor( oMinMaxPV.max*(105-bless) / 100);
 	}
+	return oRet;
 }
 
 function insertButtonCdm(nextName,onClick,texte) {
@@ -14214,6 +14249,14 @@ function do_trolligion() {
 //chargerScriptDev("libs");
 //chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
 //if (isDEV) testBoolLocalStorage();
+/* Roule, test getPVsRestants
+	var pv = 'Inimaginables (supérieurs à 200)';
+	var pvminmax = pv.match(/\d+/g);
+	var oMinMaxPV = {min: pvminmax[0], max: pvminmax[1]};
+	window.console.log('minmax=' + JSON.stringify(pvminmax) + ', oMinMaxPV=' + JSON.stringify(oMinMaxPV));
+	window.console.log('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%')));
+	window.console.log('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%', true)));
+*/
 
 	// Détection de la page à traiter
 	if(isPage("Messagerie/ViewMessageBot")) {
