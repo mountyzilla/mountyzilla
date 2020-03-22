@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.29
+// @version     1.3.0.30
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.30 22/03/2020",
+"	Amélioration du support SCIZ (Trésors dans la vue !)",
 "V1.3.0.29 14/03/2020",
 "	Fix calcul PV après blessure en cas de maxPV inconnu",
 "V1.3.0.28 13/03/2020",
@@ -5540,9 +5542,117 @@ function do_infomonstre() {
 /***
  *** SCIZ
  ***/
-var scizGlobal = {
-    events: []
+
+const scizSetup = {
+	// Maximum interval (seconds) for matching some events
+	eventsMaxMatchingInterval: 5000,
+	// Maximum number of treasures to enhanced in the view
+	viewMaxEnhancedTreasure: 100
 };
+
+var scizGlobal = {
+	events: [],
+	treasures: []
+};
+
+function scizCreateClickable(height, display, callbackOnClick) {
+	var img = document.createElement('img');
+	img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
+	img.alt = 'SCIZ logo';
+	img.style = 'height: ' + height + 'px; cursor: pointer;';
+	img.onclick = callbackOnClick;
+	var div = document.createElement('div');
+	div.style = 'text-align: center;display: ' + display;
+	div.appendChild(img);
+	return div;
+};
+
+/* SCIZ - View */
+
+function scizPrettyPrintTreasure(t) {
+	var res = '';
+	res += /* t.type + ' - ' + */ t.nom;
+	if (t.templates) { res +=  ' <b>' + t.templates + '</b>' };
+	if (t.mithril) { res +=  ' <b>en Mithril</b>' };
+	if (t.effet) { res +=  ' (' + t.effet + ')' };
+	return res;
+}
+
+function do_scizEnhanceView() {
+	scizGlobal.treasures = [];
+
+	// Ensure we have a JWT setup for the current user
+	jwt = MY_getValue(numTroll + '.SCIZJWT');
+	if (!jwt) { return; }
+
+	// Retrieve treasures
+	var ids = [];
+	const xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
+	while (xPathEvent = xPathEvents.iterateNext()) {
+		scizGlobal.treasures.push({
+			'id': parseInt(xPathEvent.children[2].innerHTML),
+			'type': xPathEvent.children[3].innerHTML,
+			'sciz_desc': null,
+			'node': xPathEvent,
+		});
+		ids.push(xPathEvent.children[2].innerHTML)
+		if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) { break; }
+	}
+
+	// Call SCIZ
+	var sciz_url = 'https://www.sciz.fr/api/hook/treasures';
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: sciz_url,
+		headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+		data: JSON.stringify({'ids': ids}),
+		onload: function(responseDetails) {
+			try {
+				if (responseDetails.status == 0) {
+					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+					window.console.log(responseDetails);
+					return;
+				}
+				var treasures = JSON.parse(responseDetails.responseText);
+				if (treasures.treasures.length < 1) {
+					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+					return;
+				}
+				// Look for treasures to enhanced
+				treasures.treasures.forEach(t => {
+					for (i = 0; i < scizGlobal.treasures.length; i++) {
+						if (scizGlobal.treasures[i].id === t.id)  {
+							// PrettyPrint
+							t = scizPrettyPrintTreasure(t);
+							// Store the SCIZ treasure desc
+							scizGlobal.treasures[i].sciz_desc = t;
+						}
+					}
+				});
+			} catch(e) {
+				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+				window.console.log(e);
+			}
+			// Do the display overwrite and add the switches
+			do_scizSwitchTreasures();
+		}
+	});
+}
+
+function do_scizSwitchTreasures() {
+	scizGlobal.treasures.forEach((t) => {
+		// Do the switch
+		const currentDesc = t.node.children[3].firstChild.textContent;
+		t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
+		// Add the SCIZ switcher
+		if (t.sciz_desc !== null) {
+			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
+		}
+	});
+}
+
+/* SCIZ - Events */
 
 function scizPrettyPrintEvent(e) {
 	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
@@ -5595,9 +5705,9 @@ function do_scizOverwriteEvents() {
 			eventTableNode = xPathEvent.parentNode.parentNode;
 		}
 	}
-	const interval = 5000; // Maximum interval (seconds) for matching some events
-	const startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - interval;
-	const endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + interval;
+
+	const startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - scizSetup.eventsMaxMatchingInterval;
+	const endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + scizSetup.eventsMaxMatchingInterval;
 
 	// Check if events have been found in the page
 	if (scizGlobal.events.length < 1) {
@@ -5612,7 +5722,7 @@ function do_scizOverwriteEvents() {
 	FF_XMLHttpRequest({
 		method: 'GET',
 		url: sciz_url,
-		headers : { 'Authorization': jwt },
+		headers: { 'Authorization': jwt },
 		// trace: 'Appel à SCIZ pour l'entité ' + id,
 		onload: function(responseDetails) {
 			try {
@@ -5636,7 +5746,7 @@ function do_scizOverwriteEvents() {
 						for (j = 0; j < scizGlobal.events.length; j++) {
 							if (scizGlobal.events[j].sciz_desc === null) {
 								var delta = Math.abs(t - scizGlobal.events[j].time);
-								if (delta <= interval && delta < lastDelta) {
+								if (delta <= scizSetup.eventsMaxMatchingInterval && delta < lastDelta) {
 									lastDelta = delta;
 									i = j;
 								}
@@ -5654,14 +5764,7 @@ function do_scizOverwriteEvents() {
 				});
 				// Add the switch button
 				if (eventTableNode !== null) {
-					var img = document.createElement('img');
-					img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
-					img.alt = 'SCIZ logo';
-					img.style = 'height: 50px; cursor: pointer;';
-					img.onclick = do_scizSwitchEvents;
-					var div = document.createElement('div');
-					div.style = 'text-align: center;';
-					div.appendChild(img);
+					var div = scizCreateClickable('50', 'block', do_scizSwitchEvents);
 					eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
 				}
 			} catch(e) {
@@ -14337,6 +14440,8 @@ function do_trolligion() {
 		do_tancompo();
 	} else if(isPage("MH_Play/Play_vue")) {
 		do_vue();
+		/* SCIZ */
+		do_scizEnhanceView();
 	} else if(isPage("MH_Play/Play_news")) {
 		do_news();
 	} else if(isPage("MH_Play/Play_evenement")) {
