@@ -8626,43 +8626,81 @@ function getNonNegInts(str) {
 	return nbrs;
 }
 
-function traiteCdMcomp() {
-	try {
-		var msgEffet = document.getElementById('msgEffet');
-	} catch(e) {
-		window.console.log('[MZ traiteCdMcomp] msgEffet non trouvé');
-		return;
-	}
-
-	// Début de récupération de la CdM
-	cdm = msgEffet.innerText || msgEffet.textContent;	// récupération du contenu texte d'un élément HTML
-	if (MY_DEBUG) window.console.log('cdm=' + cdm);
-
-	// Teste si ce message du bot est un message de CdM
-	if (cdm.indexOf('Famille du monstre') < 0) {
-		if (MY_DEBUG) window.console.log('[MZ traiteCdMcomp] ce n\'est pas une CdM');
-		return;
-	}
-
+function MZ_comp_traiteCdMcomp() {
 	// envoi au serveur (PHP) d'un objet avec
 	//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
 	//	tstamp:	l'horodatage
-	var tabCdM = new Array();
+	var oContexteCdM = MZ_analyseCdM('msgEffet');	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
+	oContexteCdM.nameBut = 'as_Action';	// nom du bouton avant lequel insérer le bouton ou les textes
+	if (!oContexteCdM.ok) {
+		window.console.log('MZ_comp_traiteCdMcomp, pas de msgEffet');
+		MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+		return;
+	}
+	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify( oContexteCdM.oData));
+
+	MZ_comp_addPvRestant('as_Action', oContexteCdM);
+
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
-	var txtBlessure;
-	var txtPv;
-	for (var iElt = 0; iElt < msgEffet.childNodes.length; iElt++) { //eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
-		var eHTML = msgEffet.childNodes[iElt];
+	if (tstamp == undefined) {
+		window.console.log('MZ_comp_traiteCdMcomp, pas de date/heure');
+		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
+		return;
+	}
+	oContexteCdM.oData.tstamp = tstamp.replace(/\]/, '').trim();
+
+	// Envoi auto ou insertion bouton envoi (suivant option)
+	if(MY_getValue(numTroll+'.AUTOCDM')=='true') {
+		oContexteCdM.sendInfoCDM();
+		MZ_comp_addMessage(oContexteCdM, 'CdM envoyée vers la base MountyZilla !');
+	} else {
+		insertButtonCdm('as_Action', oContexteCdM.sendInfoCDM);
+	}
+}
+
+function MZ_comp_addMessage(oContexteCdM, msg) {
+	var eBefore = document.getElementsByName(oContexteCdM.nameBut)[0].parentNode;
+	if (!eBefore) {
+		window.console.log('MZ_comp_addMessage, pas de ' + oContexteCdM.nameBut);
+		return;
+	}
+	var p = document.createElement('p');
+	p.style.color = 'green';
+	appendText(p, msg);
+	insertBefore(eBefore, p);
+}
+
+function MZ_analyseCdM(idHTMLCdM) {	// rend un contexte
+	var eltCdM = document.getElementById(idHTMLCdM);
+	if (!eltCdM) return {ok:false, error:'Pas d\'elt ' + idHTMLCdM};
+
+	// le contexte contiendra
+	// txtHeure : le texte de l'heure de la CdM
+	// trBlessure : le <tr> de la ligne "blessure"
+	// txtBlessure : le texte donnant le % de blessure
+	// txtPv : le texte donnant les PV
+	// ok : 1 si on a bien reconnu une CdM
+	// oData : les data à envoyer en JSON au serveur MZ
+	var oRet = {};
+	oRet.oData = {}
+	oRet.oData.tabCdM = new Array();
+	for (var iElt = 0; iElt < eltCdM.childNodes.length; iElt++) { //eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
+		var eHTML = eltCdM.childNodes[iElt];
+		var s = undefined;
 		switch (eHTML.nodeName) {
 			case '#text':
-				var s = eHTML.nodeValue.trim();
-				if (s != '') tabCdM.push(s);
-				break;
+				s = eHTML.nodeValue;
+				// suite : même code que <B> ou <p>
 			case 'P':
-				var s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
+			case 'B':
+				if (s === undefined) s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
 				s = s.trim();
-				if (s != '') tabCdM.push(s);
+				if (s != '') {
+					if (s.match(/aux *alentours* *de/i)) oRet.txtHeure = s;
+					if (s.match(/Connaissance *des* *Monstres/i)) oRet.ok = true;
+					oRet.oData.tabCdM.push(s);
+				}
 				break;
 			case 'TABLE':
 				var s = 'table';
@@ -8677,42 +8715,37 @@ function traiteCdMcomp() {
 					}
 					if (tabTd.length >= 2) {
 						if (tabTd[0].match(/Blessure/i)) {
-							txtBlessure = tabTd[1]
+							oRet.trBlessure = eTr;
+							oRet.txtBlessure = tabTd[1]
 						} else if (tabTd[0].match(/Points* *de *Vie/i)) {
-							txtPv = tabTd[1]
+							oRet.txtPv = tabTd[1]
 						}
 					}
-					tabCdM.push(tabTd);
+					oRet.oData.tabCdM.push(tabTd);
 				}
 				break;
+			case 'BR':
+				break;	// ignore
 			default:
-				window.console.log('[MZ ' + GM_info.script.version + '] traiteCdMcomp, type d\'élément non traité : ' + eHTML.nodeName);
 				var s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
-				if (s != '') tabCdM.push(s);
+				if (s != '') oRet.oData.tabCdM.push(s);
+				window.console.log('[MZ ' + GM_info.script.version + '] MZ_analyseCdM, type d\'élément non traité : ' + eHTML.nodeName + ' ' + s);
 				break;
 		}
 	}
-	var oData = {};
-	if (tstamp != undefined) oData.tstamp = tstamp.replace(/\]/, '').trim();
-	oData.idTroll = numTroll;
-	oData.tabCdM = tabCdM;
-	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify(oData));
+	oRet.oData.idTroll = numTroll;
 
-	// envoi d'une CdM issue de compte-rendu de compétence
+	// préparation de l'envoi d'une CdM issue de compte-rendu de compétence
 	// fonction définie ici pour avoir vue sur la variable tabCdM
-	var sendInfoCDM = function () {
+	oRet.sendInfoCDM = function () {
 		MY_setValue('CDMID', 1+parseInt(MY_getValue('CDMID')) );
 		var buttonCDM = this;
 		var texte = '';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: URL_pageDispatcherV2,
-			data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oData)),
+			data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oRet.oData)),
 			headers : {
-				/* inutile, à supprimer
-				'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
-				'Accept': 'application/atom+xml,application/xml,text/xml',
-				*/
 				'Content-type':'application/x-www-form-urlencoded',
 			},
 			trace: 'envoi CdM',
@@ -8723,45 +8756,31 @@ function traiteCdMcomp() {
 			}
 		});
 	}
+	return oRet;
+}
 
-	// Envoi auto ou insertion bouton envoi (suivant option)
-	if(MY_getValue(numTroll+'.AUTOCDM')=='true') {
-		sendInfoCDM();
-		var p = document.createElement('p');
-		p.style.color = 'green';
-		appendText(p,'CdM envoyée vers la base MountyZilla !');
-		insertBefore(document.getElementsByName('as_Action')[0].parentNode,p);
-	} else {
-		insertButtonCdm('as_Action', sendInfoCDM);
-	}
-
+function MZ_comp_addPvRestant(oContexteCdM) {
 	// Insertion de l'estimation des PV restants
-	if (MY_DEBUG) window.console.log('txtBlessure=' + txtBlessure + ', txtPv=' + txtPv);
-	if (txtBlessure !== undefined && txtPv !== undefined) {
-		var pv = getPVsRestants(txtPv,txtBlessure);
-		if (MY_DEBUG) window.console.log('pv=' + pv);
-		if (pv) {	// pv null si le monstre n'est pas blessé
-			var trBless = document.evaluate(
-				"//tr[contains(th/text(),'Blessure')]",
-					msgEffet, null, 9, null).singleNodeValue;
-			var tr = document.createElement('tr');
-			trBless.parentNode.insertBefore(tr, trBless.nextSibling);
-			appendTr(trBless);
-			var th = appendThText(tr, pv[0], false);
-			th.className = trBless.cells[0].className;
-			var td = appendTdText(tr, pv[1], false);
-			var eSpan = document.createElement('span');
-			appendText(eSpan, ' (Calculé par Mountyzilla)');
-			eSpan.style.fontSize = "small";
-			eSpan.style.fontStyle = "italic";
-			td.appendChild(eSpan);
-		}
-	}
+	if (MY_DEBUG) window.console.log('txtBlessure=' + oContexteCdM.txtBlessure + ', txtPv=' + oContexteCdM.txtPv);
+	if (oContexteCdM.txtBlessure === undefined || oContexteCdM.txtPv === undefined) return;
+	var pv = getPVsRestants(oContexteCdM.txtPv, oContexteCdM.txtBlessure);
+	if (MY_DEBUG) window.console.log('pv=' + pv);
+	if (!pv) return;	// pv null si le monstre n'est pas blessé
+	var tr = document.createElement('tr');
+	oContexteCdM.trBlessure.parentNode.insertBefore(tr, oContexteCdM.trBlessure.nextSibling);
+	var th = appendThText(tr, pv[0], false);
+	th.className = oContexteCdM.trBlessure.cells[0].className;
+	var td = appendTdText(tr, pv[1], false);
+	var eSpan = document.createElement('span');
+	appendText(eSpan, ' (Calculé par Mountyzilla)');
+	eSpan.style.fontSize = "small";
+	eSpan.style.fontStyle = "italic";
+	td.appendChild(eSpan);
 }
 
 function do_cdmcomp() {
 	start_script(31);
-	traiteCdMcomp();
+	MZ_comp_traiteCdMcomp();
 	displayScriptTime();
 }
 
@@ -8912,8 +8931,40 @@ function sendCDM() {
 				});
 	}
 
-function traiteCdMmsg() {
+function MZ_traiteCdMmsg() {
+	var oContexteCdM = MZ_analyseCdM('messageContent');	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
+	oContexteCdM.nameBut = 'bForward';	// nom du bouton avant lequel insérer le bouton ou les textes
+	if (!oContexteCdM.ok) {
+		if (oContexteCdM.error) {
+			window.console.log('MZ_traiteCdMmsg, pas de messageContent');
+			MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+		}
+		return;
+	}
+	if (MY_DEBUG) window.console.log('oContexteCdM=' + JSON.stringify( oContexteCdM));
+
+	MZ_comp_addPvRestant(oContexteCdM);
+
+	if (oContexteCdM.txtHeure) {
+		var m = oContexteCdM.txtHeure.match(/\d+\/\d+\/\d+ +\d+:\d+:\d+/);
+		if (m) var tstamp = m[0];
+	}
+	if (tstamp == undefined) {
+		window.console.log('MZ_traiteCdMmsg, pas de date/heure');
+		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
+		return;
+	}
+	oContexteCdM.oData.tstamp = tstamp.trim();
+	oContexteCdM.oData.bMsgBot = 1;
+
+	// Insertion bouton envoi
+	insertButtonCdm(oContexteCdM.nameBut, oContexteCdM.sendInfoCDM);
+
+	/* à supprimer
 	// Teste si ce message du bot est un message de CdM
+	var tdMessageContent = document.getElementById('messageContent');
+	if (!tdMessageContent) return;
+
 	var td = document.evaluate("//td/text()[contains(.,'fait partie')]/..",
 								document, null, 9, null).singleNodeValue;
 	if (!td) return false;
@@ -8929,7 +8980,8 @@ function traiteCdMmsg() {
 
 	// Insertion bouton envoi + espace
 	buttonCDM = insertButtonCdm('bClose',sendCDM);
-	}
+	*/
+}
 
 /*function traitePouvoir() {
 	// Teste si ce message du bot est un message de CdM
@@ -8978,7 +9030,7 @@ function traiteCdMmsg() {
 }*/
 
 function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du bot
-	traiteCdMmsg();
+	MZ_traiteCdMmsg();
 }
 //traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
 
