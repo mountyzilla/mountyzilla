@@ -5547,7 +5547,7 @@ const scizSetup = {
 	// Maximum interval (seconds) for matching some events
 	eventsMaxMatchingInterval: 5000,
 	// Maximum number of treasures to enhanced in the view
-// viewMaxEnhancedTreasure: 100
+	viewMaxEnhancedTreasure: 100
 };
 
 var scizGlobal = {
