@@ -5586,7 +5586,7 @@ function do_scizEnhanceView() {
 	if (!jwt) { return; }
 
 	// Retrieve treasures
-	// var ids = [];
+	var ids = [];
 	const xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
 	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 	while (xPathEvent = xPathEvents.iterateNext()) {
