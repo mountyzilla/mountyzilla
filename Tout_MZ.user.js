@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.30
+// @version     1.3.0.31
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.31 22/03/2020",
+"	Envoi des CdM à partir du message du Bot",
 "V1.3.0.30 22/03/2020",
 "	Amélioration du support SCIZ (Trésors dans la vue !)",
 "V1.3.0.29 14/03/2020",
@@ -8742,7 +8744,7 @@ function MZ_comp_traiteCdMcomp() {
 	}
 	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify( oContexteCdM.oData));
 
-	MZ_comp_addPvRestant('as_Action', oContexteCdM);
+	MZ_comp_addPvRestant(oContexteCdM);
 
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
