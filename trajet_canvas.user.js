@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.16
+// @version 2.17
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -46,9 +46,13 @@
 //	Protection à l'utilisation sur smartphone
 // V 2.16 21/01/2020 Roule'
 //	Adaptation à un changement MH (encore des sauts de ligne dans les coord.)
+// V 2.17 14/04/2020 Roule'
+//	Adaptation à un changement MH (page d'ordres des suivants)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
+
+//var MY_DEBUG = true;
 
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var ie = (window.attachEvent)? true:false;
@@ -2638,12 +2642,12 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 					if(lignes[i].className == 'mh_tdpage_fo') {
 						var etd = lignes[i].getElementsByTagName('td')[0];
 						if (etd !== undefined) {	// undefined dans le cas des Golems
-							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant etd ' + etd.firstChild.nodeValue);
-							var tabmatch = etd.firstChild.nodeValue.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant td[0]=' + etd.textContent);
+							var tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
 							if (tabmatch) {
 								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
 							} else {
-								this.result.ordres.push({ordre: etd.firstChild.nodeValue.trim()});
+								this.result.ordres.push({ordre: etd.textContent.trim()});
 							}
 						}
 					}

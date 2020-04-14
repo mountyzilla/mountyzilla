@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.31
+// @version     1.3.0.32
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.32 14/04/2020",
+"	Adaptation page des ordres des suivant + [état et callback] pour les scripts tiers (voir doc sur le mot clef MZ_callback_init)",
 "V1.3.0.31 22/03/2020",
 "	Envoi des CdM à partir du message du Bot",
 "V1.3.0.30 22/03/2020",
@@ -339,6 +341,26 @@ const MZ_changeLog = [
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
 	Kali
 		MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
+**********************************************************/
+
+/**********************************************************
+Doc État et Callback pour l'utilisation par les scripts tiers
+	MZ met à jour la propriété document.body.dataset.MZ_Etat
+		1 à la fin de l'initialisation (tout le code MZ s'est déroulé mais il peut y avoir des appels AJAX en cours)
+		2 (uniquement sur l'onglet de la vue) quand l'onglet a été mis à jour avec les niveaux, etc.
+			ATTENTION, l'utilisateur peut demander un complément de CdM s'il voit plus de 500 monstres
+	MZ appelle les callback définies dans les tableaux suivants, si ces tableaux existent
+		document.body.MZ_Callback_init: fonctions que MZ appellera quand MZ aura fini sont initialisation
+			ATTENTION, si MZ est chargé avant le script tiers, cette fonction ne sera jamais appelée. Le script tiers doit donc tester l'état document.body.dataset.MZ_Etat et faire l'appel à la callback lui-même si l'état est déjà défini, ce qui signifie que MZ est déjà initialisé.
+		document.body.MZ_Callback_fin_vue: fonctions que MZ appellera quand MZ aura fini son premier traitement des CdM dans la vue
+		ATTENTION document.body.MZ_Callback_init et document.body.MZ_Callback_fin_vue sont des tableaux.
+			Vous n'êtes pas seuls au monde. Un autre script externe peut s'être déjà enregistré en callback
+			Voici un exemple de code pour enregistrer une callback
+			if (document.body.MZ_Callback_init === undefined) {
+				document.body.MZ_Callback_init = [myCallback];
+			} else {
+				document.body.MZ_Callback_init.push(myCallback);
+			}
 **********************************************************/
 
 /**********************************************************
@@ -4897,12 +4919,12 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 					if(lignes[i].className == 'mh_tdpage_fo') {
 						var etd = lignes[i].getElementsByTagName('td')[0];
 						if (etd !== undefined) {	// undefined dans le cas des Golems
-							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant etd ' + etd.firstChild.nodeValue);
-							var tabmatch = etd.firstChild.nodeValue.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant td[0]=' + etd.textContent);
+							var tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
 							if (tabmatch) {
 								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
 							} else {
-								this.result.ordres.push({ordre: etd.firstChild.nodeValue.trim()});
+								this.result.ordres.push({ordre: etd.textContent.trim()});
 							}
 						}
 					}
@@ -10571,6 +10593,12 @@ function retrieveCDMs() {
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant filtreMonstres');
 				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 				if (MY_DEBUG) window.console.log('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres fin');
+				document.body.dataset.MZ_Etat = 2;	// indiquer aux scripts tiers qu'on a récupéré les carac
+				if (document.body.MZ_Callback_fin_vue !== undefined) {
+					for (var iCallback = 0;  iCallback < document.body.MZ_Callback_fin_vue.length; iCallback++) {
+						document.body.MZ_Callback_fin_vue[iCallback]();
+					}
+				}
 			} catch(e) {
 				window.console.error(traceStack(e, 'retrieveCDMs')+'\n'+URL_MZgetCaracMonstre+'\n'+texte);
 			}
@@ -14489,6 +14517,14 @@ function do_trolligion() {
 		do_profil2();
 	} else if(isPage('View/TrolligionView.php')) {
 		do_trolligion();
+	}
+	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
+		document.body.dataset.MZ_Etat = 1;	// indiquer aux scripts tiers qu'on a fini la première initialisation
+	}
+	if (document.body.MZ_Callback_init !== undefined) {
+		for (var iCallback = 0;  iCallback < document.body.MZ_Callback_init.length; iCallback++) {
+			document.body.MZ_Callback_init[iCallback]();
+		}
 	}
 } catch(e) {
 	try {
