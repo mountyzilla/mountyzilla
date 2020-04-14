@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.32
+// @version     1.3.0.33
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.33 14/04/2020",
+"	Correction fausse reconnaissance de CdM sur les autres compétences",
 "V1.3.0.32 14/04/2020",
 "	Adaptation page des ordres des suivant + [état et callback] pour les scripts tiers (voir doc sur le mot clef MZ_callback_init)",
 "V1.3.0.31 22/03/2020",
@@ -8757,11 +8759,13 @@ function MZ_comp_traiteCdMcomp() {
 	// envoi au serveur (PHP) d'un objet avec
 	//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
 	//	tstamp:	l'horodatage
-	var oContexteCdM = MZ_analyseCdM('msgEffet');	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
+	var oContexteCdM = MZ_analyseCdM('msgEffet', true);	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
 	oContexteCdM.nameBut = 'as_Action';	// nom du bouton avant lequel insérer le bouton ou les textes
 	if (!oContexteCdM.ok) {
-		window.console.log('MZ_comp_traiteCdMcomp, pas de msgEffet');
-		MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+		if (oContexteCdM.error) {
+			window.console.log('MZ_comp_traiteCdMcomp, ' + oContexteCdM.error);
+			MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+		}
 		return;
 	}
 	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify( oContexteCdM.oData));
@@ -8798,9 +8802,14 @@ function MZ_comp_addMessage(oContexteCdM, msg) {
 	insertBefore(eBefore, p);
 }
 
-function MZ_analyseCdM(idHTMLCdM) {	// rend un contexte
+function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 	var eltCdM = document.getElementById(idHTMLCdM);
-	if (!eltCdM) return {ok:false, error:'Pas d\'elt ' + idHTMLCdM};
+	var oRet = {};
+	if (!eltCdM) {
+		oRet.ok = false;
+		if (!bIgnoreEltAbsent) oRet.error = 'Pas d\'elt ' + idHTMLCdM;
+		return oRet;
+	}
 
 	// le contexte contiendra
 	// txtHeure : le texte de l'heure de la CdM
@@ -8809,7 +8818,6 @@ function MZ_analyseCdM(idHTMLCdM) {	// rend un contexte
 	// txtPv : le texte donnant les PV
 	// ok : 1 si on a bien reconnu une CdM
 	// oData : les data à envoyer en JSON au serveur MZ
-	var oRet = {};
 	oRet.oData = {}
 	oRet.oData.tabCdM = new Array();
 	for (var iElt = 0; iElt < eltCdM.childNodes.length; iElt++) { //eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
@@ -9063,7 +9071,7 @@ function MZ_traiteCdMmsg() {
 	oContexteCdM.nameBut = 'bForward';	// nom du bouton avant lequel insérer le bouton ou les textes
 	if (!oContexteCdM.ok) {
 		if (oContexteCdM.error) {
-			window.console.log('MZ_traiteCdMmsg, pas de messageContent');
+			window.console.log('MZ_traiteCdMmsg, ' + oContexteCdM.error);
 			MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
 		}
 		return;
