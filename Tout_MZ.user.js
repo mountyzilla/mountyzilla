@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.33
+// @version     1.3.0.34
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.34 19/04/2020",
+"	Ignorer l'absence de date/heure des CdM (cas smartphone)",
 "V1.3.0.33 14/04/2020",
 "	Correction fausse reconnaissance de CdM sur les autres compétences",
 "V1.3.0.32 14/04/2020",
@@ -8774,11 +8776,13 @@ function MZ_comp_traiteCdMcomp() {
 
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
+	/* dans le cas de la comp, le serveur se repliera sur la date/heure courrante
 	if (tstamp == undefined) {
 		window.console.log('MZ_comp_traiteCdMcomp, pas de date/heure');
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
 	}
+	*/
 	oContexteCdM.oData.tstamp = tstamp.replace(/\]/, '').trim();
 
 	// Envoi auto ou insertion bouton envoi (suivant option)
