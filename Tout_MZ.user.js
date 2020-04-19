@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.34
+// @version     1.3.0.35
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,8 +37,8 @@
 
 try {
 const MZ_changeLog = [
-"V1.3.0.34 19/04/2020",
-"	Ignorer l'absence de date/heure des CdM (cas smartphone)",
+"V1.3.0.35 19/04/2020",
+"	Ignorer l'absence de date/heure des CdM et gestion smartphone",
 "V1.3.0.33 14/04/2020",
 "	Correction fausse reconnaissance de CdM sur les autres compétences",
 "V1.3.0.32 14/04/2020",
@@ -2314,10 +2314,31 @@ function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
 	return oRet;
 }
 
+function insertButtonCdmSmartphone(nextName,onClick,texte) {
+	if (window.jQuery == undefined) return;
+	//window.console.log('jQuery OK');
+	var eInput = $('[name="' + nextName + '"]');
+	if (!eInput) return;
+	//window.console.log('eInput OK');
+	var eDiv = eInput.parent();
+	if (!eDiv) return;
+	//window.console.log('eDiv OK');
+	var newDiv = eDiv.clone();
+	var newSpan = eDiv.children('span');
+	newSpan.children(':first-child').text(texte);
+	var newInput = eDiv.children('input');
+	newInput.removeAttr('onclick');
+	newInput.click(onClick);
+	newInput.val(texte);
+	eDiv.parent().prepend(newDiv);
+	return true;
+}
+
 function insertButtonCdm(nextName,onClick,texte) {
 	if(texte==null) texte = 'Participer au bestiaire';
-	var nextNode = document.getElementsByName(nextName)[0];
+	if (insertButtonCdmSmartphone(nextName,onClick,texte)) return;
 
+	var nextNode = document.getElementsByName(nextName)[0];
 	var espace = document.createTextNode('\t');
 	insertBefore(nextNode,espace);
 
@@ -8776,14 +8797,15 @@ function MZ_comp_traiteCdMcomp() {
 
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
-	/* dans le cas de la comp, le serveur se repliera sur la date/heure courrante
 	if (tstamp == undefined) {
+		/* dans le cas de la comp, le serveur se repliera sur la date/heure courrante
 		window.console.log('MZ_comp_traiteCdMcomp, pas de date/heure');
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
+		*/
+	} else {
+		oContexteCdM.oData.tstamp = tstamp.replace(/\]/, '').trim();
 	}
-	*/
-	oContexteCdM.oData.tstamp = tstamp.replace(/\]/, '').trim();
 
 	// Envoi auto ou insertion bouton envoi (suivant option)
 	if(MY_getValue(numTroll+'.AUTOCDM')=='true') {
@@ -8891,6 +8913,10 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 			onload: function(responseDetails) {
 				texte = responseDetails.responseText;
 				buttonCDM.value = texte;
+				//window.console.log('buttonCDM.parentNode.firstChild.nodeName=' + buttonCDM.parentNode.firstChild.nodeName);
+				if (buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
+					buttonCDM.parentNode.firstChild.innerHTML = texte;
+				}
 				if (!isDEV) buttonCDM.disabled = true;
 			}
 		});
