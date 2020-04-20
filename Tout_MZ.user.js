@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.36
+// @version     1.3.0.37
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,11 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.37 19/04/2020",
+"	Suite travail sur l'envoi de CdM en mode smartphone",
 "V1.3.0.36 20/04/2020",
+"	Amélioration du support SCIZ (Icônes pour les événements !)",
+"V1.3.0.35 19/04/2020",
 "	Ignorer l'absence de date/heure des CdM et gestion smartphone",
 "V1.3.0.33 14/04/2020",
 "	Correction fausse reconnaissance de CdM sur les autres compétences",
@@ -5647,10 +5651,21 @@ var scizGlobal = {
 
 function scizCreateClickable(height, display, callbackOnClick) {
 	var img = document.createElement('img');
-	img.src = 'https://www.sciz.fr/static/104126/sciz-logo-quarter.png';
+	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
 	img.alt = 'SCIZ logo';
 	img.style = 'height: ' + height + 'px; cursor: pointer;';
 	img.onclick = callbackOnClick;
+	var div = document.createElement('div');
+	div.style = 'text-align: center;display: ' + display;
+	div.appendChild(img);
+	return div;
+};
+
+function scizCreateIcon(height, display, icon) {
+	var img = document.createElement('img');
+	img.src = 'https://www.sciz.fr/static/' + icon;
+	img.alt = 'SCIZ icon';
+	img.style = 'height: ' + height + 'px;';
 	var div = document.createElement('div');
 	div.style = 'text-align: center;display: ' + display;
 	div.appendChild(img);
@@ -5745,7 +5760,7 @@ function do_scizSwitchTreasures() {
 /* SCIZ - Events */
 
 function scizPrettyPrintEvent(e) {
-	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}(\sMORT\s\-)?/g, ''); // Delete date and death flag
+	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, ''); // Delete date
 	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
 	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
 	beings.forEach(b => {
@@ -5788,6 +5803,7 @@ function do_scizOverwriteEvents() {
 			'time': Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
 			'type': xPathEvent.children[1].innerHTML,
 			'desc': xPathEvent.children[2].innerHTML,
+			'sciz_type': null,
 			'sciz_desc': null,
 			'node': xPathEvent,
 		});
@@ -5845,9 +5861,14 @@ function do_scizOverwriteEvents() {
 						if (i > -1) {
 							// PrettyPrint
 							e = scizPrettyPrintEvent(e);
-							// Store the SCIZ event
+							// Store the SCIZ event and icon
+							var div = scizCreateIcon('20', 'block', e.icon);
+							scizGlobal.events[i].sciz_type = div.outerHTML;
 							scizGlobal.events[i].sciz_desc = e.message;
 							// Actual display overwrite
+							scizGlobal.events[i].node.children[1].setAttribute("valign", "middle");
+							scizGlobal.events[i].node.children[2].setAttribute("valign", "middle");
+							scizGlobal.events[i].node.children[1].innerHTML = scizGlobal.events[i].sciz_type;
 							scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
 						}
 					}
@@ -5867,6 +5888,8 @@ function do_scizOverwriteEvents() {
 
 function do_scizSwitchEvents() {
 	scizGlobal.events.forEach((e) => {
+		const currentType = e.node.children[1].innerHTML;
+		e.node.children[1].innerHTML = (currentType === e.type) ? ((e.sciz_type !== null) ? e.sciz_type : e.type) : e.type;
 		const currentDesc = e.node.children[2].innerHTML;
 		e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
 	});
