@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.35
+// @version     1.3.0.36
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,7 @@
 
 try {
 const MZ_changeLog = [
-"V1.3.0.35 19/04/2020",
+"V1.3.0.36 20/04/2020",
 "	Ignorer l'absence de date/heure des CdM et gestion smartphone",
 "V1.3.0.33 14/04/2020",
 "	Correction fausse reconnaissance de CdM sur les autres compétences",
@@ -606,6 +606,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 				sousCadre.style.border = 'solid 1px black';
 				grandCadre.appendChild(sousCadre);
 			}
+			if (MY_XHR_Ob.onerror) MY_XHR_Ob.onerror(request);
 			//showHttpsErrorContenuMixte();
 			return;
 		}
@@ -2314,29 +2315,69 @@ function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
 	return oRet;
 }
 
-function insertButtonCdmSmartphone(nextName,onClick,texte) {
+/* tentative via jQuery abandonnée
+function insertButtonCdmSmartphone_to_delete(nextName,onClick,texte) {
 	if (window.jQuery == undefined) return;
 	//window.console.log('jQuery OK');
 	var eInput = $('[name="' + nextName + '"]');
 	if (!eInput) return;
 	//window.console.log('eInput OK');
-	var eDiv = eInput.parent();
+	var eDiv = eInput.closest("div");
 	if (!eDiv) return;
 	//window.console.log('eDiv OK');
 	var newDiv = eDiv.clone();
-	var newSpan = eDiv.children('span');
+	var newSpan = newDiv.children('span');
 	newSpan.children(':first-child').text(texte);
-	var newInput = eDiv.children('input');
+	var newInput = newDiv.children('input');
 	newInput.removeAttr('onclick');
 	newInput.click(onClick);
 	newInput.val(texte);
-	eDiv.parent().prepend(newDiv);
+	newInput.removeAttr("type").attr("type", "button");
+	var eForm = eDiv.parent();
+	window.console.log("insertButtonCdmSmartphone tag newdiv=" + newDiv.prop('tagName') + ', parent tag=' + eForm.prop('tagName'));
+	eForm.prepend(newDiv);
 	return true;
 }
 
+function insertButtonCdmSmartphone(nextName,onClick,texte) {
+	var tabInput = document.getElementsByName(nextName);
+	if (!tabInput) return;
+	var eInput = tabInput[0];
+	if (!eInput) return;
+	//window.console.log('eInput OK');
+	var eDiv = eInput.parentNode;
+	if (!eDiv) return;
+	window.console.log('eDiv.outerHTML=' + eDiv.outerHTML);
+	var eNewDiv = eDiv.cloneNode(true);
+	window.console.log('eNewDiv.outerHTML=' + eNewDiv.outerHTML);
+	var tabNewSpan = eNewDiv.getElementsByTagName('span');
+	if (!tabNewSpan) return;
+	window.console.log('tabNewSpan lg=' + tabNewSpan.length);
+	if (tabNewSpan.length == 0) return;
+	tabNewSpan.forEach(function(pSpan) {
+		if (pSpan.getElementsByTagName('span').length > 0) return;
+		window.console.log('newSpan old text=' + pSpan.innerText);
+		while (pSpan.firstChild) pSpan.removeChild(pSpan.firstChild);	// vider
+		pSpan.appendChild(document.createTextNode(texte));
+	});
+	var tabNewInput = eNewDiv.getElementsByTagName('input');
+	if (!tabNewInput) return;
+	var eNewInput = tabNewInput[0];
+	if (!eNewInput) return;
+	eNewInput.removeAttr('onclick');
+	eNewInput.onClick = onClick;
+	eNewInput.value = texte;
+	eNewInput.type = "button";
+	var eForm = eDiv.parentNode;
+	window.console.log("insertButtonCdmSmartphone tag eNewDiv=" + eNewDiv.nodeName + ', parent tag=' + eForm.nodeName);
+	eForm.insertBefore(eNewDiv, eForm.firstChild);
+	return true;
+}
+*/
+
 function insertButtonCdm(nextName,onClick,texte) {
-	if(texte==null) texte = 'Participer au bestiaire';
-	if (insertButtonCdmSmartphone(nextName,onClick,texte)) return;
+	if (texte==null) texte = 'Participer au bestiaire';
+	//if (insertButtonCdmSmartphone(nextName,onClick,texte)) return;
 
 	var nextNode = document.getElementsByName(nextName)[0];
 	var espace = document.createTextNode('\t');
@@ -2347,7 +2388,7 @@ function insertButtonCdm(nextName,onClick,texte) {
 	button.className = 'mh_form_submit';
 	button.value = texte;
 	button.onmouseover = function(){this.style.cursor='pointer';};
-	if(onClick)  button.onclick = onClick;
+	if (onClick)   button.onclick = onClick;
 	insertBefore(espace,button);
 	return button;
 	}
@@ -8918,7 +8959,17 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 					buttonCDM.parentNode.firstChild.innerHTML = texte;
 				}
 				if (!isDEV) buttonCDM.disabled = true;
-			}
+			},
+			onerror: function(responseDetails) {
+				var msgError = 'inconnue';
+				if (responseDetails.status == 0) msgError = ' HTTPS ou CORS'
+				if (responseDetails.error) msgError = responseDetails.error;
+				msgError = 'Erreur MZ ' + msgError;
+				buttonCDM.value = msgError;
+				if (buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
+					buttonCDM.parentNode.firstChild.innerHTML = msgError;
+				}
+			},
 		});
 	}
 	return oRet;
