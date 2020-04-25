@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.37
+// @version     1.3.0.38
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.38 25/04/2020",
+"	Amélioration du support SCIZ (Gestion des trésors cachés)",
 "V1.3.0.37 19/04/2020",
 "	Suite travail sur l'envoi de CdM en mode smartphone",
 "V1.3.0.36 20/04/2020",
@@ -5699,6 +5701,7 @@ function do_scizEnhanceView() {
 			'id': parseInt(xPathEvent.children[2].innerHTML),
 			'type': xPathEvent.children[3].innerHTML,
 			'sciz_desc': null,
+			'buried': xPathEvent.children[3].innerHTML.includes('Enterré'),
 			'node': xPathEvent,
 		});
 		ids.push(xPathEvent.children[2].innerHTML)
@@ -5732,6 +5735,8 @@ function do_scizEnhanceView() {
 							t = scizPrettyPrintTreasure(t);
 							// Store the SCIZ treasure desc
 							scizGlobal.treasures[i].sciz_desc = t;
+							// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
+							scizGlobal.treasures[i].type = scizGlobal.treasures[i].node.children[3].firstChild.textContent;
 						}
 					}
 				});
@@ -5747,11 +5752,14 @@ function do_scizEnhanceView() {
 
 function do_scizSwitchTreasures() {
 	scizGlobal.treasures.forEach((t) => {
-		// Do the switch
-		const currentDesc = t.node.children[3].firstChild.textContent;
-		t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
-		// Add the SCIZ switcher
 		if (t.sciz_desc !== null) {
+			// Do the switch
+			const currentDesc = t.node.children[3].firstChild.textContent;
+			t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
+			if (t.buried) {
+				t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
+			}
+			// Add the SCIZ switcher
 			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
 		}
 	});
@@ -5862,7 +5870,7 @@ function do_scizOverwriteEvents() {
 							// PrettyPrint
 							e = scizPrettyPrintEvent(e);
 							// Store the SCIZ event and icon
-							var div = scizCreateIcon('20', 'block', e.icon);
+							var div = scizCreateIcon('25', 'block', e.icon);
 							scizGlobal.events[i].sciz_type = div.outerHTML;
 							scizGlobal.events[i].sciz_desc = e.message;
 							// Actual display overwrite
