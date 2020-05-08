@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.38
+// @version     1.3.0.39
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.39 08/05/2020",
+"	Correction erreur sur le profil en mode smartphone",
 "V1.3.0.38 25/04/2020",
 "	Amélioration du support SCIZ (Gestion des trésors cachés)",
 "V1.3.0.37 19/04/2020",
@@ -12559,7 +12561,9 @@ function setInfosCaracteristiques() {
 
 function setLienAnatrolliseur(){
 	var pTableAmelio = document.querySelector("#carac>div>p");
-	pTableAmelio.innerHTML+=" - ";
+	if (!pTableAmelio) pTableAmelio = document.querySelector("#carac>div>div>p");
+	if (!pTableAmelio) return;
+	pTableAmelio.appendChild(document.createTextNode(' - '));
 	var aElt = document.createElement("a");
 	aElt.setAttribute("href",urlAnatrolliseur);
 	aElt.setAttribute("target","_blank");
