@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.40
+// @version     1.3.0.41
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.41 15/05/2020",
+"	Amélioration du support SCIZ (Vie des trolls de la coterie)",
 "V1.3.0.40 13/05/2020",
 "	Correction ARM dans le cas d'un grosse perte pour le tour",
 "V1.3.0.39 08/05/2020",
@@ -5652,8 +5654,42 @@ const scizSetup = {
 
 var scizGlobal = {
 	events: [],
+	trolls: [],
 	treasures: []
 };
+
+function scizAddCSS() {
+	// SCIZ style
+	var scizStyle = `
+		.sciz-progress-bar-wrapper {
+			width: 100px;
+			text-align: center;
+			display: inline-block;
+		}
+		.sciz-progress-bar {
+			width: 100%;
+			background-color: #e0e0e0;
+			padding: 1px;
+			border-radius: 1px;
+			box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+		}
+		.sciz-progress-bar-fill {
+			display: block;
+			height: 5px;
+			border-radius: 1px;
+			transition: width 500ms ease-in-out;
+		}
+	`;
+	// Actually add the SCIZ style
+	var scizStyleSheet = document.createElement('style');
+	scizStyleSheet.type = 'text/css';
+	if (scizStyleSheet.styleSheet) {
+		scizStyleSheet.styleSheet.cssText = scizStyle;
+	} else {
+		scizStyleSheet.appendChild(document.createTextNode(scizStyle));
+	}
+	document.getElementsByTagName('head')[0].appendChild(scizStyleSheet);
+}
 
 function scizCreateClickable(height, display, callbackOnClick) {
 	var img = document.createElement('img');
@@ -5680,6 +5716,17 @@ function scizCreateIcon(height, display, icon) {
 
 /* SCIZ - View */
 
+function scizPrettyPrintTroll(t) {
+	var res = '';
+	// SCIZ progress bar
+	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? t.pdv / t.pdv_max * 100 : -1;
+	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
+	t.pdv_max = (t.pdv_max === null) ? '?' : t.pdv_max;
+	res = '<div class="sciz-progress-bar-wrapper">' + t.pdv + ' / ' + t.pdv_max + '<div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>';
+	// SCIZ other view enhancement...
+	return res;
+}
+
 function scizPrettyPrintTreasure(t) {
 	var res = '';
 	res += /* t.type + ' - ' + */ t.nom;
@@ -5695,6 +5742,76 @@ function do_scizEnhanceView() {
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	if (!jwt) { return; }
+
+	scizAddCSS();
+
+	/* SCIZ View - TROLLS */
+
+	// Retrieve trolls
+	var ids = [];
+	const xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
+	var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+	while (xPathTroll = xPathTrolls.iterateNext()) {
+		scizGlobal.trolls.push({
+			'id': parseInt(xPathTroll.children[2].innerHTML),
+			'name': xPathTroll.children[3].innerHTML,
+			'sciz_desc': null,
+			'node': xPathTroll,
+		});
+		ids.push(xPathTroll.children[2].innerHTML);
+	}
+
+	// Add the new column for the SCIZ troll view
+	const xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
+	var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
+	var th = document.createElement('th');
+	th.align = 'center';
+	th.appendChild(scizCreateIcon('25', 'block', 'sciz-logo-quarter.png'));
+	xPathHeaderTrolls.insertBefore(th, xPathHeaderTrolls.children[4]);
+	for (i = 0; i < scizGlobal.trolls.length; i++) {
+		var td = document.createElement('td');
+		td.align = 'center';
+		scizGlobal.trolls[i].node.insertBefore(td, scizGlobal.trolls[i].node.children[4]);
+	}
+
+	// Call SCIZ
+	var sciz_url = 'https://www.sciz.fr/api/hook/trolls';
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: sciz_url,
+		headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+		data: JSON.stringify({'ids': ids}),
+		onload: function(responseDetails) {
+			try {
+				if (responseDetails.status == 0) {
+					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+					window.console.log(responseDetails);
+					return;
+				}
+				var trolls = JSON.parse(responseDetails.responseText);
+				if (trolls.trolls.length < 1) {
+					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+					return;
+				}
+				// Look for trolls to enhanced
+				trolls.trolls.forEach(t => {
+					for (i = 0; i < scizGlobal.trolls.length; i++) {
+						if (scizGlobal.trolls[i].id === t.id) {
+							// PrettyPrint
+							t = scizPrettyPrintTroll(t);
+							// Store the SCIZ troll desc
+							scizGlobal.trolls[i].sciz_desc = t;
+							// Add the SCIZ view
+							scizGlobal.trolls[i].node.children[4].innerHTML = t;
+						}
+					}
+				});
+			} catch(e) {
+				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+				window.console.log(e);
+			}
+		}
+	});
 
 	// Retrieve treasures
 	var ids = [];
@@ -14659,3 +14776,4 @@ function do_trolligion() {
 		window.console.log('catch général page ' + window.location.pathname + "\n" + e.message);
 	}
 }
+
