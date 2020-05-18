@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.41
+// @version     1.3.0.42
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.42 18/05/2020",
+"	Amélioration du support SCIZ (Mise en option des fonctionnalités)",
 "V1.3.0.41 15/05/2020",
 "	Amélioration du support SCIZ (Vie des trolls de la coterie)",
 "V1.3.0.40 13/05/2020",
@@ -5746,129 +5748,134 @@ function do_scizEnhanceView() {
 	scizAddCSS();
 
 	/* SCIZ View - TROLLS */
-
-	// Retrieve trolls
-	var ids = [];
-	const xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
-	var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
-	while (xPathTroll = xPathTrolls.iterateNext()) {
-		scizGlobal.trolls.push({
-			'id': parseInt(xPathTroll.children[2].innerHTML),
-			'name': xPathTroll.children[3].innerHTML,
-			'sciz_desc': null,
-			'node': xPathTroll,
-		});
-		ids.push(xPathTroll.children[2].innerHTML);
-	}
-
-	// Add the new column for the SCIZ troll view
-	const xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
-	var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
-	var th = document.createElement('th');
-	th.align = 'center';
-	th.appendChild(scizCreateIcon('25', 'block', 'sciz-logo-quarter.png'));
-	xPathHeaderTrolls.insertBefore(th, xPathHeaderTrolls.children[4]);
-	for (i = 0; i < scizGlobal.trolls.length; i++) {
-		var td = document.createElement('td');
-		td.align = 'center';
-		scizGlobal.trolls[i].node.insertBefore(td, scizGlobal.trolls[i].node.children[4]);
-	}
-
-	// Call SCIZ
-	var sciz_url = 'https://www.sciz.fr/api/hook/trolls';
-	FF_XMLHttpRequest({
-		method: 'POST',
-		url: sciz_url,
-		headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
-		data: JSON.stringify({'ids': ids}),
-		onload: function(responseDetails) {
-			try {
-				if (responseDetails.status == 0) {
-					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-					window.console.log(responseDetails);
-					return;
-				}
-				var trolls = JSON.parse(responseDetails.responseText);
-				if (trolls.trolls.length < 1) {
-					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
-					return;
-				}
-				// Look for trolls to enhanced
-				trolls.trolls.forEach(t => {
-					for (i = 0; i < scizGlobal.trolls.length; i++) {
-						if (scizGlobal.trolls[i].id === t.id) {
-							// PrettyPrint
-							t = scizPrettyPrintTroll(t);
-							// Store the SCIZ troll desc
-							scizGlobal.trolls[i].sciz_desc = t;
-							// Add the SCIZ view
-							scizGlobal.trolls[i].node.children[4].innerHTML = t;
-						}
-					}
-				});
-			} catch(e) {
-				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
-				window.console.log(e);
-			}
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS');
+	if (cbx !== '0') {
+		// Retrieve trolls
+		var ids = [];
+		const xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
+		var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+		while (xPathTroll = xPathTrolls.iterateNext()) {
+			scizGlobal.trolls.push({
+				'id': parseInt(xPathTroll.children[2].innerHTML),
+				'name': xPathTroll.children[3].innerHTML,
+				'sciz_desc': null,
+				'node': xPathTroll,
+			});
+			ids.push(xPathTroll.children[2].innerHTML);
 		}
-	});
 
-	// Retrieve treasures
-	var ids = [];
-	const xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
-	while (xPathEvent = xPathEvents.iterateNext()) {
-		scizGlobal.treasures.push({
-			'id': parseInt(xPathEvent.children[2].innerHTML),
-			'type': xPathEvent.children[3].innerHTML,
-			'sciz_desc': null,
-			'buried': xPathEvent.children[3].innerHTML.includes('Enterré'),
-			'node': xPathEvent,
+		// Add the new column for the SCIZ troll view
+		const xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
+		var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
+		var th = document.createElement('th');
+		th.align = 'center';
+		th.appendChild(scizCreateIcon('25', 'block', 'sciz-logo-quarter.png'));
+		xPathHeaderTrolls.insertBefore(th, xPathHeaderTrolls.children[4]);
+		for (i = 0; i < scizGlobal.trolls.length; i++) {
+			var td = document.createElement('td');
+			td.align = 'center';
+			scizGlobal.trolls[i].node.insertBefore(td, scizGlobal.trolls[i].node.children[4]);
+		}
+
+		// Call SCIZ
+		var sciz_url = 'https://www.sciz.fr/api/hook/trolls';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'ids': ids}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+					var trolls = JSON.parse(responseDetails.responseText);
+					if (trolls.trolls.length < 1) {
+						// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for trolls to enhanced
+					trolls.trolls.forEach(t => {
+						for (i = 0; i < scizGlobal.trolls.length; i++) {
+							if (scizGlobal.trolls[i].id === t.id) {
+								// PrettyPrint
+								t = scizPrettyPrintTroll(t);
+								// Store the SCIZ troll desc
+								scizGlobal.trolls[i].sciz_desc = t;
+								// Add the SCIZ view
+								scizGlobal.trolls[i].node.children[4].innerHTML = t;
+							}
+						}
+					});
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+			}
 		});
-		ids.push(xPathEvent.children[2].innerHTML)
-		if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) { break; }
 	}
 
-	// Call SCIZ
-	var sciz_url = 'https://www.sciz.fr/api/hook/treasures';
-	FF_XMLHttpRequest({
-		method: 'POST',
-		url: sciz_url,
-		headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
-		data: JSON.stringify({'ids': ids}),
-		onload: function(responseDetails) {
-			try {
-				if (responseDetails.status == 0) {
-					window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-					window.console.log(responseDetails);
-					return;
-				}
-				var treasures = JSON.parse(responseDetails.responseText);
-				if (treasures.treasures.length < 1) {
-					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
-					return;
-				}
-				// Look for treasures to enhanced
-				treasures.treasures.forEach(t => {
-					for (i = 0; i < scizGlobal.treasures.length; i++) {
-						if (scizGlobal.treasures[i].id === t.id)  {
-							// PrettyPrint
-							t = scizPrettyPrintTreasure(t);
-							// Store the SCIZ treasure desc
-							scizGlobal.treasures[i].sciz_desc = t;
-							// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
-							scizGlobal.treasures[i].type = scizGlobal.treasures[i].node.children[3].firstChild.textContent;
-						}
-					}
-				});
-			} catch(e) {
-				window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
-				window.console.log(e);
-			}
-			// Do the display overwrite and add the switches
-			do_scizSwitchTreasures();
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES');
+	if (cbx !== '0') {
+		// Retrieve treasures
+		var ids = [];
+		const xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+		var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
+		while (xPathEvent = xPathEvents.iterateNext()) {
+			scizGlobal.treasures.push({
+				'id': parseInt(xPathEvent.children[2].innerHTML),
+				'type': xPathEvent.children[3].innerHTML,
+				'sciz_desc': null,
+				'buried': xPathEvent.children[3].innerHTML.includes('Enterré'),
+				'node': xPathEvent,
+			});
+			ids.push(xPathEvent.children[2].innerHTML)
+			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) { break; }
 		}
-	});
+
+		// Call SCIZ
+		var sciz_url = 'https://www.sciz.fr/api/hook/treasures';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'ids': ids}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+					var treasures = JSON.parse(responseDetails.responseText);
+					if (treasures.treasures.length < 1) {
+						// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for treasures to enhanced
+					treasures.treasures.forEach(t => {
+						for (i = 0; i < scizGlobal.treasures.length; i++) {
+							if (scizGlobal.treasures[i].id === t.id)  {
+								// PrettyPrint
+								t = scizPrettyPrintTreasure(t);
+								// Store the SCIZ treasure desc
+								scizGlobal.treasures[i].sciz_desc = t;
+								// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
+								scizGlobal.treasures[i].type = scizGlobal.treasures[i].node.children[3].firstChild.textContent;
+							}
+						}
+					});
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+				// Do the display overwrite and add the switches
+				do_scizSwitchTreasures();
+			}
+		});
+	}
 }
 
 function do_scizSwitchTreasures() {
@@ -5914,7 +5921,8 @@ function do_scizOverwriteEvents() {
 
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
-	if (!jwt) { return; }
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_EVENTS');
+	if (!jwt || cbx === '0') { return; }
 
 	// Retrieve being ID
 	const url = new URL(window.location.href);
@@ -7847,6 +7855,15 @@ function saveAll() {
 			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\._\-]','g'), '');
 			MY_setValue(numTroll + '.SCIZJWT', sciz_jwt);
 		}
+		var sciz_cb_events = document.getElementById('sciz_cb_events').checked;
+		sciz_cb_events = (sciz_cb_events !== null) ? sciz_cb_events : true;
+		MY_setValue(numTroll + '.SCIZ_CB_EVENTS', sciz_cb_events);
+		var sciz_cb_view_treasures = document.getElementById('sciz_cb_view_treasures').checked;
+		sciz_cb_view_treasures = (sciz_cb_view_treasures !== null) ? sciz_cb_view_treasures : true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TREASURES', sciz_cb_view_treasures);
+		var sciz_cb_view_trolls = document.getElementById('sciz_cb_view_trolls').checked;
+		sciz_cb_view_trolls = (sciz_cb_view_trolls !== null) ? sciz_cb_view_trolls : true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TROLLS', sciz_cb_view_trolls);
 
 		saveITData();
 	} catch (e) {
@@ -8094,11 +8111,30 @@ function insertOptionTable(insertPt) {
 	}
 
 	/* SCIZ */
-	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
-	appendText(td,'SCIZ :',true);
-	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	td = appendTdText(td,'JWT : ');
-	appendTextbox(td,'text','sciz_jwt',150,500, MY_getValue(numTroll+'.SCIZJWT'));
+	// JWT
+	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
+	appendText(td, 'SCIZ :', true);
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	td = appendTdText(td, 'JWT : ');
+	appendTextbox(td, 'text', 'sciz_jwt', 150, 500, MY_getValue(numTroll + '.SCIZJWT'));
+	// Event checkbox
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	tbody = appendSubTable(td);
+	tr = appendTr(tbody)
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_EVENTS')));
+	appendText(td, ' Surcharger les événementsde ma coterie');
+	// Treasure checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_treasures', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES')));
+	appendText(td, ' Afficher les trésors identifiés par ma coterie dans la vue');
+	// Trolls data
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS')));
+	appendText(td, ' Afficher les données des trolls de ma coterie dans la vue');
 
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
@@ -14776,4 +14812,3 @@ function do_trolligion() {
 		window.console.log('catch général page ' + window.location.pathname + "\n" + e.message);
 	}
 }
-
