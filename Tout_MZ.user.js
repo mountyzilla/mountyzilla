@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.42
+// @version     1.3.0.43
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 const MZ_changeLog = [
+"V1.3.0.43 11/06/2020",
+"	Affichage callstack en erreur profil",
 "V1.3.0.42 18/05/2020",
 "	Amélioration du support SCIZ (Mise en option des fonctionnalités)",
 "V1.3.0.41 15/05/2020",
@@ -718,7 +720,7 @@ function copyTextToClipboard(text) {
   return successful;
 }
 
-function avertissement(txt,duree) {
+function avertissement(txt,duree,bBloque) {
 	window.console.log('[MZ] affichage avertissement ' + txt + (duree ? ' pour (' + duree + ' ms)' : ''));
 	if(!duree) duree = 15000;
 	var div = document.createElement('div');
@@ -736,7 +738,7 @@ function avertissement(txt,duree) {
 	div.style.cursor = 'pointer';
 	div.style.fontSize = 'large';
 	div.innerHTML = txt;
-	div.onclick=function(){ tueAvertissement(this.num) };
+	if (!bBloque) div.onclick=function(){ tueAvertissement(this.num) };
 
 	// un croix en haut à droite pour signifier à l'utilisateur qu'il peut cliquer pour fermer ce popup
 	var divcroix = document.createElement('div');
@@ -14112,7 +14114,7 @@ function do_profil2()
 		saveProfil();
 		displayScriptTime();
 	} catch(e) {
-		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.");
+		avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.<br>" + traceStack(e, 'profil2').replace("\n", "<br>"), 1000000, true);
 		window.console.error(traceStack(e, 'profil2'));
 	}
 }
