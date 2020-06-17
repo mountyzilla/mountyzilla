@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.44
+// @version     1.3.0.45
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.45 17/06/2020",
+"	Pas de reset (erroné ?) fatigue en affichage profil",
 "V1.3.0.44 13/06/2020",
 "	Remplacement CONST par VAR à cause de IOS (bug ?)",	// voir https://stackoverflow.com/questions/37228892/why-is-my-javascript-not-working-correctly-in-strict-mode-on-safari
 "V1.3.0.43 11/06/2020",
@@ -4594,6 +4596,7 @@ function traiteMalus() {
 
 		for(var j=0 ; j<caracGerees.length ; j++) {
 			var carac = caracGerees[j], str = '';
+			if (MY_DEBUG) window.console.log('MZ traiteMalus, j=' + j + ', carac=' + carac + ', effetsCeTour=' + effetsCeTour[carac] + ', toursGeres=' + toursGeres[i]);
 
 			switch( carac ) {
 				case 'ATT':
@@ -4623,6 +4626,7 @@ function traiteMalus() {
 				texteD += str;
 				texteS += str;
 			}
+			if (MY_DEBUG) window.console.log('MZ traiteMalus, j=' + j + ', strfat=' + strfat);
 		}	// fin boucle sur les caractéristiques
 
 		/* Affichage */
@@ -12541,6 +12545,7 @@ function setAccel() {
 
 	// Gestion des BM de fatigue
 	if(bmfatigue>0) {
+		if (MY_DEBUG) window.console.log('MZE setAccel, bmfatigue=' + bmfatigue + ', ' + numTroll+'.bm.fatigue=' + MY_getValue(numTroll+'.bm.fatigue'));
 		// On tente de recuperer les BM de fatigue de la page des BM
 		if(MY_getValue(numTroll+'.bm.fatigue')) {
 			var BMmemoire = MY_getValue(numTroll+'.bm.fatigue').split(';');
@@ -12557,7 +12562,8 @@ function setAccel() {
 		if(listeBmFat[0]==bmfatigue) {
 			// Si (bm profil=1er bm stocke), on suppose que les bm stockes sont a jour
 			BMfrais = true;
-			MY_removeValue(numTroll+".bm.fatigue");
+			// Roule 17/06/2020 je ne vois pas du tout pourquoi on viderait xxx;bm.fatigue ici. Et ça fait que la fatigue des Kastars affiche une erreur la 2e fois qu'on va sur le profil... J'enlève
+			//MY_removeValue(numTroll+".bm.fatigue");
 		}
 	} else {
 		// S'il n'y a pas de bm de fatigue sur le profil, on est a jour
@@ -13748,7 +13754,7 @@ function do_profil2()
 		setLienAnatrolliseur();
 
 		// Cette fonction modifie lourdement le DOM, à placer en dernier :
-		if(race=='Kastar'){ setAccel(); }
+		if(race=='Kastar' || MY_DEBUG){ setAccel(); }
 		saveProfil();
 		displayScriptTime();
 	} catch(e) {
