@@ -1254,11 +1254,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
 				var msg = document.getElementById("msgEffet").textContent;
+
 				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
 				if(!msg.match(/es dans le bon Xcoin/))
 					x = -x;
 				if(!msg.match(/es dans le bon Ycoin/))
 					y = -y;
+
 				this.CAPITAN_setValue("capitan."+idCarte+".this.signe",this.signe(x)+";"+this.signe(y));
 			}
 
