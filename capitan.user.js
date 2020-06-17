@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @author TilK, Dabihul, Rouletabille
 // @description Aide à la recherche de cachettes de Capitan
 // @grant GM_getValue
@@ -11,9 +11,8 @@
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
-// @downloadURL https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js
 // @name Capitan
-// @version 8.8.04
+// @version 8.8.05
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -34,6 +33,8 @@
 ****************************************************************/
 
 /*
+disciple 17/06/2020 V8.8.05
+	Correction ± #2
 Roule 05/08/2018 V8.8.04
 	Saut de version suite à une erreur de numérotation
 	Correction ± (Tu es => Vous êtes)
@@ -68,7 +69,7 @@ Roule 08 à 10/08/2016
 */
 
 /* À faire
-	Hera 23/08/2017 
+	Hera 23/08/2017
 		FAIT les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--) 		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
 */
 
@@ -123,7 +124,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		appendTd: function(tr) {
 			var td = document.createElement('td');
 			if(tr) { tr.appendChild(td); }
-			return td;	
+			return td;
 		},
 
 		appendText: function(paren,text,bold) {
@@ -431,7 +432,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		toggleTableau: function() {
 			var tbody = this.parentNode.parentNode.parentNode.childNodes[1];
-			
+
 			tbody.setAttribute('style', !tbody.getAttribute('style') || tbody.getAttribute('style') == '' ? 'display:none;' : '');
 		},
 
@@ -490,13 +491,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				table.appendChild(thead);
 				return table;
 			}
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Il y a "+listeSolutions.length+" positions possibles", true);
 			td.setAttribute('align', 'center');
 			table.appendChild(thead);
-			
+
 			this.gbody = document.createElement('tbody');
 			table.appendChild(this.gbody);
 
@@ -519,7 +520,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
 			this.gbody.setAttribute('style', 'display:none;');
-			
+
 			return table;
 		},
 
@@ -590,7 +591,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var repartition = this.getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
 			var size = repartition.length;
 			//window.console.log('this.newRecherche, repartition=' + JSON.stringify(repartition));
-			
+
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
 			table.setAttribute('border', '0');
@@ -598,7 +599,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('cellpadding', '4');
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
-			
+
 			var nbNotZero = 0;
 			for(var i=0;i<size;i++)
 			{
@@ -639,7 +640,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 				string = "Conseil : allez faire une recherche en "+newpos;
 			}
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr,string, true);
@@ -664,7 +665,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					i+=n-1;
 				}
 			}
-			
+
 			td.addEventListener("click", this.toggleTableau, true);
 			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
@@ -807,17 +808,17 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('cellpadding', '4');
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Outil du cercle des Psyko-Chasseurs", true);
 			td.setAttribute('align', 'center');
 			td.setAttribute('title', 'sélectionnez (triple-clic), copiez et collez dans l\'outil des Psyko-Chasseurs');
 			table.appendChild(thead);
-			
+
 			var tbody = document.createElement('tbody');
 			table.appendChild(tbody);
-			
+
 			// http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=1&y=2&n=3&t=4+5+6+7%0D%0A10+11+12+5&enter=Go#
 			var tabtxt = new Array();
 			var currentPosAlreadyDone = false;
@@ -838,18 +839,18 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				a.setAttribute('target', 'psykochasseurs');
 				td2.appendChild(a);
 			}
-			
+
 			td.setAttribute('class', 'mh_tdpage');
 			//td.setAttribute('width', width);
 			td.setAttribute('align', 'center');
 
-			
+
 			td.addEventListener("click", this.toggleTableau, true);
 			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
 			td.setAttribute('colspan', 2);
 			tbody.setAttribute('style', 'display:none;');
-			
+
 			return table;
 		},
 
@@ -861,7 +862,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('cellpadding', '4');
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Vous avez mémorisé " + this.gEssais.length + " essai" + (this.gEssais.length > 1 ? "s" : ""), true);
@@ -887,7 +888,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
 			td.setAttribute('colspan', 2);
 			tbody.setAttribute('style', 'display:none;');
-			
+
 			return table;
 		},
 
@@ -909,7 +910,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		createNewRecherche: function(parentElt) {
 			p = document.createElement('p');
-			
+
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
 			table.setAttribute('border', '0');
@@ -919,7 +920,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('align', 'center');
 			var tbody = document.createElement('tbody');
 			table.appendChild(tbody);
-			
+
 			var td = this.createCase("Rajouter manuellement  une recherche :",tbody);
 
 			td.appendChild(document.createElement('br'));
@@ -934,7 +935,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			this.addInput(td, "rBP",1);
 			td.appendChild(document.createElement('br'));
 			var button=this.appendButton(td, "Ajouter", this.addRecherche);
-			
+
 			p.appendChild(table);
 			parentElt.appendChild(p);
 		},
@@ -948,24 +949,24 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('cellpadding', '4');
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Récupération des anciens essais V1.1", true);
 			td.setAttribute('align', 'center');
 			td.title = "C'est ici pour tenter de récupérer les essais faits avec le version 1.1 du script";
 			table.appendChild(thead);
-			
+
 			var tbody = document.createElement('tbody');
 			tbody.idCarte = idCarte;
 			table.appendChild(tbody);
-			
+
 			td.addEventListener("click", this.recupFromLocalStorage, true);
 			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
 			td.setAttribute('colspan', 2);
 			tbody.setAttribute('style', 'display:none;');
-			
+
 			return table;
 		},
 
@@ -1061,7 +1062,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('cellpadding', '4');
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
-			
+
 			var thead = document.createElement('thead');
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Récupération des anciens essais V1.0", true);
@@ -1104,7 +1105,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
 			td.setAttribute('colspan', 2);
 			tbody.setAttribute('style', 'display:none;');
-			
+
 			return table;
 		},
 
@@ -1163,14 +1164,14 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			}
 			var bAlready = this.testAlready(m[1], m[3] + ';' + m[4] + ';' + m[5] + ';' + m[6]);
 			if (bAlready) {
-				alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
-					+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+				alert("L'essai pour la carte " + m[1] + "\nX = " + m[3]
+					+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6]
 					+ "\navait DÉJÀ été entré");
 				return true;
 			}
 			this.addOneRecherche(parseInt(m[1]), m[3], m[4], m[5], m[6]);
-			alert("L'essai pour la carte " + m[1] + "\nX = " + m[3] 
-				+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6] 
+			alert("L'essai pour la carte " + m[1] + "\nX = " + m[3]
+				+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6]
 				+ "\na bien été enregistré\nIl faudra rafraichir cette page (F5) quand vous aurez terminé");
 			return true;
 		},
@@ -1252,19 +1253,19 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
-				var infoXCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Xcoin')]",	// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-				if(!infoXCoin)
+				var msg = document.getElementById("msgEffet").textContent;
+
+				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
+				if(!msg.match(/es dans le bon Xcoin/))
 					x = -x;
-				var infoYCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Ycoin')]",
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-				if(!infoYCoin)
+				if(!msg.match(/es dans le bon Ycoin/))
 					y = -y;
+
 				this.CAPITAN_setValue("capitan."+idCarte+".this.signe",this.signe(x)+";"+this.signe(y));
 			}
 
 			var table = this.afficheInfoCarte(idCarte);
-			
+
 			form = document.getElementsByTagName('FORM')[0];
 			var p = document.createElement('p');
 			p.appendChild(table);
