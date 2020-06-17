@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.04
+// @version 8.8.05
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +33,8 @@
 ****************************************************************/
 
 /*
+disciple 17/06/2020 V8.8.05
+	Correction ± #2
 Roule 05/08/2018 V8.8.04
 	Saut de version suite à une erreur de numérotation
 	Correction ± (Tu es => Vous êtes)
@@ -1251,13 +1253,11 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
-				var infoXCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Xcoin')]",	// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-				if(!infoXCoin)
+				var msg = document.getElementById("msgEffet").textContent;
+				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
+				if(!msg.match(/es dans le bon Xcoin/))
 					x = -x;
-				var infoYCoin = document.evaluate("//p/b/text()[contains(.,'es dans le bon Ycoin')]",
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-				if(!infoYCoin)
+				if(!msg.match(/es dans le bon Ycoin/))
 					y = -y;
 				this.CAPITAN_setValue("capitan."+idCarte+".this.signe",this.signe(x)+";"+this.signe(y));
 			}
