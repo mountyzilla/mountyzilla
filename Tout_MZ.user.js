@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.45
+// @version     1.3.0.46
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.46 23/06/2020",
+"	Adaptation réserve de temps",
 "V1.3.0.45 17/06/2020",
 "	Pas de reset (erroné ?) fatigue en affichage profil",
 "V1.3.0.44 13/06/2020",
@@ -12084,15 +12086,21 @@ function extractionDonnees() {
 	    // Duree normale de mon Tour
 	dtb = extractionDuree('#dla #tour');
 	debugMZ('Duree normale de mon Tour : ' + dtb);
-	    // Bonus/Malus sur la duree
-	bmt = extractionDuree('#dla #bm');	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
+	    // Réserve
+	dtreserve = extractionDuree('#dla #reserve');
+	debugMZ('Durée de réserve : ' + dtreserve);
+	    // Poids de l'equipement
+	pdm = extractionDuree('#dla #poids');
+	debugMZ('Poids de l\'equipement : ' + pdm);
+	    // Bonus/Malus equipemente
+	bmt = extractionDuree('#dla #bmequipement');	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
 	debugMZ('Bonus/Malus sur la duree : ' + bmt);
 	    // Augmentation due aux blessures
 	adb = extractionDuree('#dla #blessure');
 	debugMZ('Augmentation due aux blessures : ' + adb);
-	    // Poids de l'equipement
-	pdm = extractionDuree('#dla #poids');
-	debugMZ('Poids de l\'equipement : ' + pdm);
+	    // Mouches
+	bmmouche = extractionDuree('#dla #mouche');
+	debugMZ('Bonus des mouches : ' + bmmouche);
 	    // Duree de mon prochain Tour
 	dpt = extractionDuree('#dla #duree>b');
 	debugMZ('Duree de mon prochain Tour : ' + dpt);
@@ -12401,13 +12409,14 @@ function setInfosEtatPV() { // pour AM et Sacro
 	if(pvcourant<=0) { return; }
 
 	// Difference PV p/r a equilibre de temps (propale R')
-	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(bmt+pdm))
+	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + adb + bmmouche))
 	// ***INIT GLOBALE*** pvdispo
-	var pvdispo = pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
+	var bmTotalPV = dtreserve + pdm + bmt + adb + bmmouche;
+	var pvdispo = pvcourant-pvtotal-Math.ceil(bmTotalPV*pvtotal/250);
 	var	span = document.createElement("span");
 	span.title = txt;
 	span.style.fontStyle = "italic";
-	if(bmt+pdm>=0) {
+	if(bmTotalPV>=0) {
 		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
 	} else if(pvdispo>0) {
 		txt = "Vous pouvez encore perdre "+
