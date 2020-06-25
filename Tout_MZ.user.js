@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.46
+// @version     1.3.0.47
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.47 23/06/2020",
+"	Correction blessure",
 "V1.3.0.46 23/06/2020",
 "	Adaptation réserve de temps",
 "V1.3.0.45 17/06/2020",
@@ -12409,14 +12411,14 @@ function setInfosEtatPV() { // pour AM et Sacro
 	if(pvcourant<=0) { return; }
 
 	// Difference PV p/r a equilibre de temps (propale R')
-	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + adb + bmmouche))
+	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + bmmouche))
 	// ***INIT GLOBALE*** pvdispo
-	var bmTotalPV = dtreserve + pdm + bmt + adb + bmmouche;
-	var pvdispo = pvcourant-pvtotal-Math.ceil(bmTotalPV*pvtotal/250);
+	var bmPVHorsBlessure = dtreserve + pdm + bmt + bmmouche;
+	var pvdispo = pvcourant-pvtotal-Math.ceil(bmPVHorsBlessure*pvtotal/250);
 	var	span = document.createElement("span");
 	span.title = txt;
 	span.style.fontStyle = "italic";
-	if(bmTotalPV>=0) {
+	if(bmPVHorsBlessure>=0) {
 		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
 	} else if(pvdispo>0) {
 		txt = "Vous pouvez encore perdre "+
