@@ -10126,7 +10126,7 @@ function toggleTableauInfos(firstRun) {
 function prepareFiltrage(ref,width) {
 // = Initialise le filtre 'ref'
 	try {
-		var tdTitre = document.getElementById(ref.toLowerCase()).parentNode;
+		var tdTitre = document.getElementById(ref.toLowerCase()).closest('td');
 	} catch(e) {
 		window.console.warn('[prepareFiltrage] Référence filtrage '+ref+' non trouvée', e);
 		return false;
