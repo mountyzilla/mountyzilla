@@ -1,4 +1,5 @@
 // ==UserScript==
+// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -8,7 +9,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.47
+// @version     1.3.0.48
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +38,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.48 23/06/2020",
+"	Version provisoire de correction de la vue",
 "V1.3.0.47 23/06/2020",
 "	Correction blessure",
 "V1.3.0.46 23/06/2020",
@@ -356,6 +359,7 @@ var MZ_changeLog = [
 		Prévision des DLA de monstre
 		FAIT Niveau des monstres à la méthode Roule'
 	Raistlin
+*		et si la popup des compétences s'affichait aussi au survol des raccourcis ?
 		FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
 	80117 - Héra
@@ -365,7 +369,8 @@ var MZ_changeLog = [
 		en 1.2.17.18 SyntaxError: expected expression, got end of script[En savoir plus] Tout_MZ.user.js:12731:6
 	?
 		FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
-	Alanae/Gnu
+	Alanae/Gnu/Pen-Hiss
+*		popup d'erreur js en mode smartphone sur un TP (pb trajet_canvas)
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
 	Kali
 		MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
@@ -807,6 +812,12 @@ function insertTd(next) {
 	return td;
 	}
 
+function insertTh(next) {
+	var th = document.createElement('th');
+	insertBefore(next,th);
+	return th;
+	}
+
 	// handle when eTd is the last (in this case eTd.nextSibling is null, which is fine for insertBefore)
 function insertAfterTd(eTd) {
 	var newTd = document.createElement('td');
@@ -868,6 +879,12 @@ function appendTdText(tr,text,bold) {
 	td.appendChild(document.createTextNode(text));
 	if (bold) td.style.fontWeight = 'bold';
 	return td;
+	}
+
+function insertThText(next,text,bold) {
+	var th = insertTh(next);
+	appendText(th,text,bold);
+	return th;
 	}
 
 function insertTdText(next,text,bold) {
@@ -9255,6 +9272,20 @@ function initUpdateCoordGauche() {
 	div.appendChild(img);
 }
 
+// ajout sur les raccoucis des mêmes popup que dans le profil
+function MZ_initPopupFrameGauche() {
+	var eListeFavoris = document.getElementById('listeFavori');
+	if (!eListeFavoris) {
+		window.console.log('MZ **erreur** pas de listeFavori dans la frame de gauche');
+		return;
+	}
+	var tabA = eListeFavoris.getElementsByTagName('A');
+	for (var i = 0; i < tabA.length; i++) {
+		var a = tabA[i];
+		setInfos(a,epure(trim(a.textContent)),'*',1);
+	}
+}
+
 function do_menu() {
 	// met à jour les carac sauvegardées (position, DLA, etc.)
 	updateData();
@@ -9262,6 +9293,8 @@ function do_menu() {
 	initRaccourcis();
 	// Ajout bouton de mise à jour coordonnées
 	initUpdateCoordGauche();
+	// Ajout popup sur les raccourcis des actions
+	//MZ_initPopupFrameGauche();
 }
 
 /*******************************************************************************
@@ -10093,7 +10126,7 @@ function toggleTableauInfos(firstRun) {
 function prepareFiltrage(ref,width) {
 // = Initialise le filtre 'ref'
 	try {
-		var tdTitre = document.getElementsByName(ref.toLowerCase())[0].parentNode;
+		var tdTitre = document.getElementById(ref.toLowerCase()).parentNode;
 	} catch(e) {
 		window.console.warn('[prepareFiltrage] Référence filtrage '+ref+' non trouvée', e);
 		return false;
@@ -10243,8 +10276,13 @@ function ajoutDesFiltres() {
 function insertLevelColumn() {
 	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
 
-	var td = insertTdText(getMonstreLevelNode(0),'Niveau',true);
-	td.width = 25;
+	var td = insertThText(getMonstreLevelNode(0),'Niveau',false);
+	//td.width = 25;
+	var eColGroup = getMonstreLevelNode(0).parentNode.parentNode.parentNode.getElementsByTagName('colgroup')[0];
+	var eCol = document.createElement('col');
+	eCol.style.width= '30px';
+	insertBefore(eColGroup.children[3],eCol);
+
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for(var i=1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
 		//window.console.log('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
@@ -12904,6 +12942,7 @@ function creerBulleVide() {
 	appendTdText(tr,'Contenu');
 	var aList = document.getElementsByTagName('a');
 	aList[aList.length-1].parentNode.appendChild(table);
+	return table;
 	}
 
 function cacherBulle() {
@@ -12920,8 +12959,14 @@ function setBulle(evt) {
 		str=competences(nom,niveau);
 	} else if(fonction=='sortileges') {
 		str=sortileges(nom);
+	} else if (fonction == '*') {	// pour les raccourcis de la frame de gauche : on ne sait pas si c'est compétence ou sort
+		str=competences(nom,niveau);
+		if (str == '') str=sortileges(nom);
 	}
-	if(str=='') return;
+	if(str=='') {
+		if (MY_DEBUG) window.console.log('MZ setBulle, pas de description sur ' + nom);
+		return;
+	}
 	if(nom.indexOf('Golem')!=-1) nom='Golemologie';
 
 	var xfenetre, yfenetre, xpage, ypage, element = null;
@@ -12929,6 +12974,7 @@ function setBulle(evt) {
 	var bulleWidth = 300;
 	if(!hauteur) hauteur = 50;
 	element = document.getElementById('bulle');
+	if (!element) element = creerBulleVide();
 	xfenetre = evt.clientX;
 	yfenetre = evt.clientY;
 	xpage = xfenetre;
@@ -13308,6 +13354,7 @@ function competences(comp,niveau) {
 }
 
 function sortileges(sort) {
+	sort = sort.toLowerCase();
 	var
 		// Fonctions utiles uniquement à "sortileges"
 		decumul_buff = function(nom,str,buff) {
@@ -13363,16 +13410,16 @@ function sortileges(sort) {
 		},
 		texte = "";
 
-	if (sort.indexOf('Analyse Anatomique') != -1) {
+	if (sort.indexOf('analyse anatomique') != -1) {
 		texte = 'Portée horizontale : <b>'
 			+ Math.floor(vuetotale / 2) + '</b> case';
 		if (vuetotale > 3){ texte += 's'; }
 		texte += '<br/>Portée verticale : <b>'
 			+ Math.floor((vuetotale+1)/4)+'</b> case';
 		if (vuetotale > 7){ texte += 's'; }
-	} else if (sort.indexOf('Armure Etheree') != -1) {
+	} else if (sort.indexOf('armure etheree') != -1) {
 		texte = decumul_buff('AE', 'Armure magique', reg);
-	} else if (sort.indexOf("Augmentation")!=-1 && sort.indexOf("Attaque")!=-1) {
+	} else if (sort.indexOf("augmentation")!=-1 && sort.indexOf("attaque")!=-1) {
 		var
 			categoriesAdA = {
 				"attx1": {
@@ -13440,9 +13487,9 @@ function sortileges(sort) {
 				}
 			}
 		}
-	} else if (sort.indexOf('Augmentation') != -1 && sort.indexOf('Esquive') != -1) {
+	} else if (sort.indexOf('augmentation') != -1 && sort.indexOf('esquive') != -1) {
 		texte = decumul_buff('AdE', 'Esquive', Math.floor((esq-1)/2));
-	} else if (sort.indexOf("Augmentation des Degats")!=-1) {
+	} else if (sort.indexOf("augmentation des degats")!=-1) {
 		var
 			categoriesAdD = {
 				"attx1/2": {
@@ -13509,19 +13556,19 @@ function sortileges(sort) {
 				}
 			}
 		}
-	} else if(sort.indexOf('Bulle Anti-Magie')!=-1) {
+	} else if(sort.indexOf('bulle anti-magie')!=-1) {
 		texte = 'RM : <b>+'+rm+'</b><br/>MM : <b>-'+mm+'</b>';
 	}
-	else if(sort.indexOf('Bulle Magique')!=-1){
+	else if(sort.indexOf('bulle magique')!=-1){
 		texte = 'RM : <b>-'+rm+'</b><br/>MM : <b>+'+mm+'</b>';
 	}
-	else if(sort.indexOf('Explosion')!=-1){
+	else if(sort.indexOf('explosion')!=-1){
 		texte = 'Dégâts : <b>'
 			+Math.floor( 1+(deg+Math.floor(pvtotal/10))/2 )+'</b> D3 '
 			+' => <b>'+2*Math.floor(1+(deg+Math.floor(pvtotal/10))/2)
 			+' ('+resiste(1+(deg+Math.floor(pvtotal/10))/2 )+')</b>';
 	}
-	else if(sort.indexOf('Faiblesse Passagere')!=-1){
+	else if(sort.indexOf('faiblesse passagere')!=-1){
 		if(pvcourant<=0)
 			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
 		texte = 'Portée horizontale : <b>'
@@ -13533,13 +13580,13 @@ function sortileges(sort) {
 			+Math.floor( (Math.floor(pvcourant/10)+deg-4)/4 )
 			+' (-'+Math.floor( (Math.floor(pvcourant/10)+deg-2)/8 )+')</b>';
 	}
-	else if(sort.indexOf('Flash Aveuglant')!=-1){
+	else if(sort.indexOf('flash aveuglant')!=-1){
 		texte = 'Vue, Attaque, Esquive : <b>-'+(1+Math.floor(vue/5))+'</b>';
 	}
-	else if(sort.indexOf('Glue')!=-1) {
+	else if(sort.indexOf('glue')!=-1) {
 		texte = 'Portée : <b>'+(1+Math.floor(vuetotale/3))+'</b> case';
 		if(vuetotale>2) texte += 's';
-	} else if(sort.indexOf("Griffe du Sorcier")!=-1) {
+	} else if(sort.indexOf("griffe du sorcier")!=-1) {
 		var
 			modD =0,
 			addVenin = function(type, effet, duree) {
@@ -13582,20 +13629,20 @@ function sortileges(sort) {
 		texte += "<hr>"+addVenin("insidieux",effet,2+Math.floor(vue/5));
 		effet = Math.floor(1.5*effet);
 		texte += "<hr>"+addVenin("virulent",effet,1+Math.floor(vue/10));
-	} else if(sort.indexOf('Hypnotisme')!=-1)
+	} else if(sort.indexOf('hypnotisme')!=-1)
 		texte = 'Esquive : <b>-'+Math.floor(1.5*esq)+'</b> Dés'
 			+' (<b>-'+Math.floor(esq/3)+'</b> Dés)';
-	else if(sort.indexOf('Identification des Tresors')!=-1)
+	else if(sort.indexOf('identification des tresors')!=-1)
 		texte = 'Permet de connaitre les caractéristiques et effets précis '
 			+'d\'un trésor.';
-	else if(sort.indexOf('Invisibilite')!=-1)
+	else if(sort.indexOf('invisibilite')!=-1)
 		texte = 'Un troll invisible est indétectable même quand on se trouve '
 			+'sur sa zone. Toute action physique ou sortilège d\'attaque '
 			+'fait disparaître l\'invisibilité.';
-	else if(sort.indexOf('Levitation')!=-1)
+	else if(sort.indexOf('levitation')!=-1)
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
 			+'Comme les pièges ou les trous par exemple...';
-	else if(sort.indexOf("Projectile Magique")!=-1) {
+	else if(sort.indexOf("projectile magique")!=-1) {
 		var
 			modD = 0,
 			portee = getPortee(vuetotale);
@@ -13624,12 +13671,12 @@ function sortileges(sort) {
 		// Portée
 		texte += "<br/>Portée : <b>"+portee+"</b> case";
 		if(portee>1) texte += "s";
-	} else if(sort.indexOf('Projection')!=-1) {
+	} else if(sort.indexOf('projection')!=-1) {
 		texte = 'Si le jet de résistance de la victime est raté:<br/>'
 			+'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
 			+'Si le jet de résistance de la victime est réussi:<br/>'
 			+'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
-	} else if(sort.indexOf("Rafale Psychique")!=-1) {
+	} else if(sort.indexOf("rafale psychique")!=-1) {
 		var modD = 0;
 		texte = "Dégâts : <b>"+deg+"</b> D3 ";
 		if(degtour!=0) {
@@ -13640,7 +13687,7 @@ function sortileges(sort) {
 		         " => <b>"+(2*(deg+modD)+degbm) +
 		         " ("+resiste(deg+modD,degbm)+")</b><br>" +
 		         "Malus : régénération <b>-"+(deg+modD)+"</b>";
-	} else if(sort.indexOf("Sacrifice")!=-1) {
+	} else if(sort.indexOf("sacrifice")!=-1) {
 		if(pvcourant<=0) {
 			// N'est plus censé se produire : activation obligatoire si mort
 			return "<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>";
@@ -13665,7 +13712,7 @@ function sortileges(sort) {
 			texte += "<hr>Vous ne pouvez pas compenser de blessures " +
 			         "dues à un sacrifice";
 		}
-	} else if(sort.indexOf("Siphon")!=-1) {
+	} else if(sort.indexOf("siphon")!=-1) {
 		var modD = 0;
 		texte = "Attaque : <b>"+att+"</b> D6 ";
 		if(atttour!=0) {
@@ -13687,7 +13734,7 @@ function sortileges(sort) {
 		         " ("+resiste(reg+modD,degbm) +
 		         "/"+resiste(1.5*reg+modD,degbm)+")</b>";
 		texte += "<br>Nécrose : attaque magique <b>-"+(reg+modD)+"</b>";
-	} else if(sort.indexOf('Telekinesie')!=-1) {
+	} else if(sort.indexOf('telekinesie')!=-1) {
 		texte = 'Portée horizontale  :';
 		var vt = Math.floor(vuetotale/2)+2;
 		var strList = ['d\'une Plum\' ou Très Léger','Léger',
@@ -13698,7 +13745,7 @@ function sortileges(sort) {
 			vt=Math.max(0,vt-1);
 		}
 	}
-	else if(sort.indexOf('Teleportation')!=-1) {
+	else if(sort.indexOf('teleportation')!=-1) {
 		var portee = getPortee(pitotal/5);	// Roule, 30/09/2016, TP basé sur les PI
 		debugMZ('calcul portée Teleportation, pitotal=' + pitotal + ', portée=' + portee);
 		var pmh = (20+vue+portee);
@@ -13708,7 +13755,7 @@ function sortileges(sort) {
 			+'X compris entre '+(posX-pmh)+' et '+(posX+pmh)+'<br/>'
 			+'Y compris entre '+(posY-pmh)+' et '+(posY+pmh)+'<br/>'
 			+'N compris entre '+(posN-pmv)+' et '+Math.min(-1,posN+pmv)+'<br/>';
-	} else if(sort.indexOf('Vampirisme')!=-1) {
+	} else if(sort.indexOf('vampirisme')!=-1) {
 		var modD = 0;
 		texte = 'Attaque : <b>'+Math.floor(2*deg/3)+'</b> D6 ';
 		if(atttour!=0) {
@@ -13729,17 +13776,17 @@ function sortileges(sort) {
 		         '/'+(2*(Math.floor(1.5*deg)+modD)+degbm) +
 		         ' ('+resiste(deg+modD,degbm) +
 		         '/'+resiste(1.5*deg+modD,degbm)+')</b>';
-	} else if(sort.indexOf('Vision Accrue')!=-1)
+	} else if(sort.indexOf('vision accrue')!=-1)
 		texte = decumul_buff('VA','Vue',Math.floor(vue/2));
-	else if(sort.indexOf('Vision lointaine')!=-1)
+	else if(sort.indexOf('vision lointaine')!=-1)
 		texte = 'En ciblant une zone située n\'importe où dans le '
 			+'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
-	else if(sort.indexOf('Voir le Cache')!=-1)
+	else if(sort.indexOf('voir le cache')!=-1)
 		texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
 			+Math.min(5,getPortee(vue))+'</b> cases<hr>'
 			+'<b>A distance :</b><br/>Portée horizontale : <b>'
 			+getPortee(vuetotale)+'</b> cases';
-	else if(sort.indexOf('Vue Troublee')!=-1)
+	else if(sort.indexOf('vue troublee')!=-1)
 		texte = 'Portée horizontale : <b>'+Math.min(1,vuetotale)+'</b> case<br/>'
 			+'Vue : <b>-'+Math.floor(vue/3)+'</b>';
 	return texte;
