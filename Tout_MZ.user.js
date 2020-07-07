@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.49
+// @version     1.3.0.50
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -10280,7 +10280,7 @@ function insertLevelColumn() {
 
 	var eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
 	var eCol = document.createElement('col');
-	eCol.style.width= '30px';
+	eCol.style.width= '35px';
 	insertBefore(eColGroup.children[3],eCol);
 
 	var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
