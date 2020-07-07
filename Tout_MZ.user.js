@@ -1,5 +1,4 @@
 // ==UserScript==
-// ==UserScript==
 // @name        Tout_MZ
 // @namespace   MH
 // @description Client MountyZilla
@@ -9,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.48
+// @version     1.3.0.49
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -10276,12 +10275,19 @@ function ajoutDesFiltres() {
 function insertLevelColumn() {
 	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
 
-	var td = insertThText(getMonstreLevelNode(0),'Niveau',false);
+	var td = insertThText(getMonstreLevelNode(0),'Niv.',false);
 	//td.width = 25;
-	var eColGroup = getMonstreLevelNode(0).parentNode.parentNode.parentNode.getElementsByTagName('colgroup')[0];
+
+	var eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
 	var eCol = document.createElement('col');
 	eCol.style.width= '30px';
 	insertBefore(eColGroup.children[3],eCol);
+
+	var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
+	monsterStyle.innerHTML =
+		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(3), ' +
+		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(2), ' +
+		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(1) { text-align: center; }';
 
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for(var i=1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
