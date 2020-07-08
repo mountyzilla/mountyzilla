@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.50
+// @version     1.3.0.51
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,8 +37,8 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.48 23/06/2020",
-"	Version provisoire de correction de la vue",
+"V1.3.0.51 23/06/2020",
+"	Correction de la vue",
 "V1.3.0.47 23/06/2020",
 "	Correction blessure",
 "V1.3.0.46 23/06/2020",
@@ -337,6 +337,8 @@ var MZ_changeLog = [
 /**********************************************************
 	À faire / propositions d'évolutions
 
+	H2P 08/07/2020
+*		dans la vue des minerais, ça devrait a priori afficher, sur base des formules de mountypedia, le nombre de carats de chaque pépite de minerai
 	Bireli-Gravos 08/12/2018
 		FAIT faire un warning si l'utilisateur a désactivé la case "Menu d'actions contextuelles" dans la fenêtre "limiter la vue"
 	breizhou13 20/12/2016
@@ -10278,16 +10280,39 @@ function insertLevelColumn() {
 	var td = insertThText(getMonstreLevelNode(0),'Niv.',false);
 	//td.width = 25;
 
+	/* plus de colgroup le 08/07/2020. Mais comme ça pourait revenir, je laisse le bout de code en commentaire (Roule)
 	var eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
 	var eCol = document.createElement('col');
 	eCol.style.width= '35px';
 	insertBefore(eColGroup.children[3],eCol);
+	*/
 
 	var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
-	monsterStyle.innerHTML =
-		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(3), ' +
-		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(2), ' +
-		'.mh_tdborder.footable#VueMONSTRE td:nth-last-child(1) { text-align: center; }';
+	monsterStyle.innerHTML = 
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(1), ' +
+'.mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(3), ' +
+'.mh_tdborder.footable#VueMONSTRE td:nth-child(3) { width: 50px; text-align: right; }' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(4) { width: 35px; text-align: center; }' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(6), ' +
+'.mh_tdborder.footable#VueMONSTRE td:nth-child(6), ' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(7), ' +
+'.mh_tdborder.footable#VueMONSTRE td:nth-child(7), ' +
+'.mh_tdborder.footable#VueMONSTRE th:nth-child(8), ' +
+'.mh_tdborder.footable#VueMONSTRE td:nth-child(8) { width: 30px; text-align: center; }';
+/* version MH hors MZ
+.mh_tdborder.footable#VueMONSTRE th:nth-child(1), 
+.mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }
+.mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }
+.mh_tdborder.footable#VueMONSTRE th:nth-child(3) { width: 50px; }
+.mh_tdborder.footable#VueMONSTRE th:nth-child(5), 
+.mh_tdborder.footable#VueMONSTRE td:nth-child(5), 
+.mh_tdborder.footable#VueMONSTRE th:nth-child(6), 
+.mh_tdborder.footable#VueMONSTRE td:nth-child(6), 
+.mh_tdborder.footable#VueMONSTRE th:nth-child(7), 
+.mh_tdborder.footable#VueMONSTRE td:nth-child(7) { width: 30px; text-align: center; }
+*/
 
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for(var i=1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
