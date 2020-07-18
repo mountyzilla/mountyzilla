@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.17
+// @version 2.18
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -48,6 +48,8 @@
 //	Adaptation à un changement MH (encore des sauts de ligne dans les coord.)
 // V 2.17 14/04/2020 Roule'
 //	Adaptation à un changement MH (page d'ordres des suivants)
+// V 2.18 18/07/2020 Roule'
+//	Adaptation à un changement MH (vue)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -181,30 +183,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		if(!document.getElementById("action_lieu")) {
 			var tableau_tete = new Array();
-			//var tableau = document.getElementsByTagName("p")[0].childNodes;
-			var tableau = [];
-			var eltMhPlay = document.getElementById("mhPlay");
-			if (eltMhPlay) tableau = eltMhPlay.childNodes; // correction par Vapulabehemot (82169) le 10/07/2015 et Roule 25/11/2019 (protection pour mode smartphone)
-			var nb1 = tableau.length, nb2=0, nb3=1;
-			for(var i=0; i<nb1; i++) {
-				if(tableau[i].nodeName == "TABLE") {
-					if(tableau[i].className == "mh_tdborder") {
-						nb2++;
-						if(nb2 > nb3) {
-							tableau_tete[nb3] = false;
-							nb3++;
-						}
-					}
-					else {
-						tableau_tete[nb3] = tableau[i];
-						nb3++;
-					}
-				}
-			}
+			tableau_tete[1] = document.getElementById('VueMONSTRE');
+			tableau_tete[2] = document.getElementById('VueTROLL');
+			tableau_tete[3] = document.getElementById('VueTRESOR');
+			tableau_tete[4] = document.getElementById('VueCHAMPIGNON');
+			tableau_tete[5] = document.getElementById('VueLIEU');
+			tableau_tete[6] = document.getElementById('VueCADAVRE');
 			function prepare_click(num) {
 				if(!tableau_tete[num]) return;
-				if ( !tableau_tete[num].getElementsByTagName("tbody")[1] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
-				var tableau = tableau_tete[num].getElementsByTagName("tbody")[1].getElementsByTagName("tr");
+				if ( !tableau_tete[num].getElementsByTagName("tbody")[0] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
+				var tableau = tableau_tete[num].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
 				var nb = tableau.length;
 				//if(nb > 1) {
 				if(nb > 0) { // correction par Vapulabehemot (82169) le 10/07/2015
