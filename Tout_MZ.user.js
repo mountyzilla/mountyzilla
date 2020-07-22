@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.51
+// @version     1.3.0.52
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.52 20/07/2020",
+"	Correction de la vue smartphone",
 "V1.3.0.51 23/06/2020",
 "	Correction de la vue",
 "V1.3.0.47 23/06/2020",
@@ -9376,6 +9378,13 @@ var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la 
 	lastIndexDone: 0,
 	isCDMsRetrieved: false, // = si les CdM ont déjà été DL
 	listeCDM: [],
+	indexCellDist: -1,
+	indexCellActions: -1,
+	indexCellID: -1,
+	indexCellNivMZ: -1,
+	indexCellX: -1,
+	indexCellY: -1,
+	indexCellN: -1,
 	// Gère l'affichage en cascade des popups de CdM
 	yIndexCDM: 0,
 	tdWitdh: 110,
@@ -9458,19 +9467,19 @@ function getXxxPosition(xxx, i) {
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
 	//debugMZ('getMonstreDistance, i=' + i + ', tr=' + MZ_EtatCdMs.tr_monstres[i].innerHTML);
-	return parseInt(MZ_EtatCdMs.tr_monstres[i].cells[0].textContent);
+	return parseInt(MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellDist].textContent);
 }
 
 function getMonstreID(i) {
-	return Number(MZ_EtatCdMs.tr_monstres[i].cells[2].firstChild.nodeValue);
+	return Number(MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellID].firstChild.nodeValue);
 }
 
 function getMonstreIDByTR(tr) {
-	return tr.cells[2].firstChild.nodeValue;
+	return tr.cells[MZ_EtatCdMs.indexCellID].firstChild.nodeValue;
 }
 
 function getMonstreLevelNode(i) {
-	return MZ_EtatCdMs.tr_monstres[i].cells[3];
+	return MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellNivMZ];
 }
 
 function isMonstreLevelOutLimit(i, limitMin, limitMax) {
@@ -9516,11 +9525,10 @@ function getMonstreNomByTR(tr) {
 
 function getMonstrePosition(i) {
 	var tds = MZ_EtatCdMs.tr_monstres[i].childNodes;
-	var l = tds.length;
 	return [
-		parseInt(tds[l-3].textContent),
-		parseInt(tds[l-2].textContent),
-		parseInt(tds[l-1].textContent)
+		parseInt(tds[MZ_EtatCdMs.indexCellX].textContent),
+		parseInt(tds[MZ_EtatCdMs.indexCellY].textContent),
+		parseInt(tds[MZ_EtatCdMs.indexCellN].textContent)
 	];
 }
 
@@ -9766,6 +9774,7 @@ function recallCheckBox(chkbox, pref) {
 }
 
 function saveComboBox(cbb, pref) {
+	if (!cbb) return;
 	// Enregistre et retourne l'état d'une ComboBox
 	var opt = cbb.options[cbb.selectedIndex];
 	if (!opt) return;
@@ -9777,7 +9786,7 @@ function saveComboBox(cbb, pref) {
 function recallComboBox(cbb, pref) {
 	// Restitue l'état d'une ComboBox
 	var nb = MY_getValue(pref);
-	if(nb) cbb.value = nb;
+	if(nb && cbb) cbb.value = nb;
 	return nb;
 }
 
@@ -9978,8 +9987,7 @@ function set2DViewSystem() {
 function initialiseInfos() {
 	// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
 	var
-		infoTab = document.getElementsByName('LimitViewForm')[0].
-			getElementsByTagName('table')[0],
+		infoTab = document.getElementById('infoTab'),
 		tbody = infoTab.tBodies[0],
 		thead = infoTab.createTHead(),
 		tr = appendTr(thead,'mh_tdtitre'),
@@ -9989,7 +9997,7 @@ function initialiseInfos() {
 	// Récupération de la position du joueur
 	try {
 		var strPos = document.evaluate(
-				".//li/b/text()[contains(.,'X = ')]",
+				".//b/text()[contains(.,'X = ') or contains(.,'X\u00A0=\u00A0')]",	// &nbsp; en vue smartphone
 				infoTab, null, 9, null
 			).singleNodeValue.nodeValue;
 		// ***INIT GLOBALE*** currentPosition
@@ -10004,16 +10012,20 @@ function initialiseInfos() {
 	try {
 		var
 			nodes = document.evaluate(
-				".//li/b/text()[contains(.,'horizontalement') "+
+				".//b/text()[contains(.,'horizontalement') "+
 				"or contains(.,'verticalement')]",
 				infoTab, null, 7, null
-			),
-			array = [];
-		for(var i=0 ; i<4 ; i++) {
+			);
+			var array = [];
+		for(var i=0 ; i<4 && i<nodes.snapshotLength ; i++) {
 			array.push(parseInt(nodes.snapshotItem(i).nodeValue));
 		}
 		// ***INIT GLOBALE*** porteeVue
 		porteeVue = array;
+		if (porteeVue.length < 4) {
+			porteeVue[2] = array[0];
+			porteeVue[3] = array[1];
+		}
 	} catch(e) {
 		window.console.error(traceStack(e, 'Vue Portées Vue non trouvée'));
 	}
@@ -10021,6 +10033,7 @@ function initialiseInfos() {
 	infoTab.id = 'infoTab'; // Pour scripts externes
 	tbody.id = 'corpsInfoTab';
 	tbody.rows[0].cells[0].colSpan = 2;
+	if (tbody.rows.length > 1) tbody.rows[1].cells[0].colSpan = 2;
 	td.colSpan = 3;
 	td.onmouseover = function() {
 		this.style.cursor = 'pointer';
@@ -10277,10 +10290,14 @@ function ajoutDesFiltres() {
 function insertLevelColumn() {
 	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
 
+	MZ_EtatCdMs.indexCellNivMZ = MZ_EtatCdMs.indexCellID + 1;	// la colonne des niveaux sera insérée après la colonne des ID
+	MZ_EtatCdMs.indexCellX += 1;	// et ça décale les colonnes suivantes
+	MZ_EtatCdMs.indexCellY += 1;
+	MZ_EtatCdMs.indexCellN += 1;
 	var td = insertThText(getMonstreLevelNode(0),'Niv.',false);
 	//td.width = 25;
 
-	/* plus de colgroup le 08/07/2020. Mais comme ça pourait revenir, je laisse le bout de code en commentaire (Roule)
+	/* plus de colgroup le 08/07/2020. Mais comme ça pourrait revenir, je laisse le bout de code en commentaire (Roule)
 	var eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
 	var eCol = document.createElement('col');
 	eCol.style.width= '35px';
@@ -10288,20 +10305,20 @@ function insertLevelColumn() {
 	*/
 
 	var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
-	monsterStyle.innerHTML = 
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(1), ' +
-'.mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(3), ' +
-'.mh_tdborder.footable#VueMONSTRE td:nth-child(3) { width: 50px; text-align: right; }' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(4) { width: 35px; text-align: center; }' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(6), ' +
-'.mh_tdborder.footable#VueMONSTRE td:nth-child(6), ' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(7), ' +
-'.mh_tdborder.footable#VueMONSTRE td:nth-child(7), ' +
-'.mh_tdborder.footable#VueMONSTRE th:nth-child(8), ' +
-'.mh_tdborder.footable#VueMONSTRE td:nth-child(8) { width: 30px; text-align: center; }';
-/* version MH hors MZ
+	var sStyle = '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellDist + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellDist + 1) + ') { width: 40px; text-align: right; }';
+	if (MZ_EtatCdMs.indexCellActions >= 0) sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellActions + 1) + ') { width: 33px; }';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellID + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellID + 1) + ') { width: 50px; text-align: right; }';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') { width: 35px; text-align: center; }';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellX + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellX + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellY + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellY + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellN + 1) + '), ';
+	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellN + 1) + ') { width: 30px; text-align: center; }';
+	monsterStyle.innerHTML = sStyle;
+/* version MH hors MZ avec colonne des menus contextuels (non smartphone)
 .mh_tdborder.footable#VueMONSTRE th:nth-child(1), 
 .mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }
 .mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }
@@ -10483,11 +10500,6 @@ function retrieveCDMs() {
 // Récupère les CdM disponibles dans la BDD
 // Lancé uniquement sur toggleLevelColumn
 	if(checkBoxLevels.checked) return;
-	// Roule, message si l'utilisateur a décoché "Menu d'actions contextuelles"
-	if (!MZ_EtatCdMs.tr_monstres[0].cells[2].innerHTML.match(/r[eéè]f/i)) {
-		avertissement('Vous avez décoché "Menu d\'actions contextuelles" dans la fenêtre de limitation de la vue, Moutyzilla ne peut pas afficher les niveaux dans ce mode<br />La fenêtre de limitation de la vue est celle qu\'on obtient en cliquant sur l\'œil dans le menu de gauche', 9999999);
-		return;
-	}
 	if (MZ_EtatCdMs.nbMonstres < 1) return;
 
 	var tReq = [];
@@ -10989,7 +11001,9 @@ function filtreMonstres() {
 		noEM = saveCheckBox(checkBoxEM, 'NOEM');
 	}
 	// Filtrage par nom
-	var strMonstre = document.getElementById('strMonstres').value.toLowerCase();
+	var eMonstre = document.getElementById('strMonstres');
+	if (!eMonstre) return;	// cas smartphone
+	var strMonstre = eMonstre.value.toLowerCase();
 	// Génère la liste des mobs engagés (si filtrés)
 	if(noEngages && !isEngagesComputed) {
 		for(var i=nbTrolls ; i>0 ; i--) {
@@ -11866,6 +11880,18 @@ function do_vue() {
 	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 	// je fais une recopie :(
 	MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
+	for (var i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) {// Roule 22/07/2020
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/Dist/i)) MZ_EtatCdMs.indexCellDist = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/Action/i)) MZ_EtatCdMs.indexCellActions = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/r[eéè]f/i)) MZ_EtatCdMs.indexCellID = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^X$/i)) MZ_EtatCdMs.indexCellX = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^Y$/i)) MZ_EtatCdMs.indexCellY = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^N$/i)) MZ_EtatCdMs.indexCellN = i;
+	}
+	if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
+		avertissement('Impossible de retrouver les colonne de la vue des monstres, arrêt MZ', 9999999);
+		return;
+	}
 	tr_trolls = VueContext.tr_trolls;
 	tr_tresors = VueContext.tr_tresors;
 	tr_champignons = VueContext.tr_champignons;
