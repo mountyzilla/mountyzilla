@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.52
+// @version     1.3.0.53
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,7 +37,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.52 20/07/2020",
+"V1.3.0.53 20/07/2020",
 "	Correction de la vue smartphone",
 "V1.3.0.51 23/06/2020",
 "	Correction de la vue",
@@ -11881,15 +11881,15 @@ function do_vue() {
 	// je fais une recopie :(
 	MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
 	for (var i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) {// Roule 22/07/2020
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/Dist/i)) MZ_EtatCdMs.indexCellDist = i;
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/Action/i)) MZ_EtatCdMs.indexCellActions = i;
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/r[eéè]f/i)) MZ_EtatCdMs.indexCellID = i;
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^X$/i)) MZ_EtatCdMs.indexCellX = i;
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^Y$/i)) MZ_EtatCdMs.indexCellY = i;
-		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerHTML.match(/^N$/i)) MZ_EtatCdMs.indexCellN = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Dist/i)) MZ_EtatCdMs.indexCellDist = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Action/i)) MZ_EtatCdMs.indexCellActions = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/r[eéè]f/i)) MZ_EtatCdMs.indexCellID = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^X$/i)) MZ_EtatCdMs.indexCellX = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^Y$/i)) MZ_EtatCdMs.indexCellY = i;
+		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^N$/i)) MZ_EtatCdMs.indexCellN = i;
 	}
 	if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
-		avertissement('Impossible de retrouver les colonne de la vue des monstres, arrêt MZ', 9999999);
+		avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
 		return;
 	}
 	tr_trolls = VueContext.tr_trolls;
