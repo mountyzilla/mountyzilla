@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.53
+// @version     1.3.0.54
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -37,6 +37,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.54 28/08/2020",
+"	Supprime le déplacement de la page de vue au survol de la souris du titre \"INFORMATIONS\"",
 "V1.3.0.53 20/07/2020",
 "	Correction de la vue smartphone",
 "V1.3.0.51 23/06/2020",
@@ -10035,6 +10037,8 @@ function initialiseInfos() {
 	tbody.rows[0].cells[0].colSpan = 2;
 	if (tbody.rows.length > 1) tbody.rows[1].cells[0].colSpan = 2;
 	td.colSpan = 3;
+	td.style.cursor = 'pointer';
+	/* quel intérêt de changer de className ? et ça fait bouger toute la frame d'un pixel ou deux, c'est désagréable
 	td.onmouseover = function() {
 		this.style.cursor = 'pointer';
 		this.className = 'mh_tdpage';
@@ -10042,6 +10046,7 @@ function initialiseInfos() {
 	td.onmouseout = function() {
 		this.className = 'mh_tdtitre';
 	};
+	*/
 	td.onclick = function() {
 		toggleTableauInfos(false);
 	};
@@ -13127,21 +13132,22 @@ function competences(comp,niveau) {
 			+'Ramassez quelques Coquillages, et en avant la musique !<br>';
         texte +='<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
             '<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th></tr>' +
-            '<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td></tr>' +
             '<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td></tr>' +
-            '<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
-            '<tr class="mh_tdpage"><td>Whoooom</td><td>concentration +2</td></tr>' +
-            '<tr class="mh_tdpage"><td>Krouiiik</td><td>concentration -2</td></tr>' +
-            '<tr class="mh_tdpage"><td>Tuutuuuut</td><td>att -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td></tr>' +
             '<tr class="mh_tdpage"><td>Gaaaw</td><td>Fatigue +1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Ghimighimighimi</td><td>Impacte le baroufleur</td></tr>' +
             '<tr class="mh_tdpage"><td>Huitsch</td><td>deg -1</td></tr>' +
             '<tr class="mh_tdpage"><td>Kliketiiik</td><td>esq -1 / concentration -1</td></tr>' +
+            '<tr class="mh_tdpage"><td>Krouiiik</td><td>concentration -2</td></tr>' +
             '<tr class="mh_tdpage"><td>Kssksss</td><td>esq +1</td></tr>' +
             '<tr class="mh_tdpage"><td>Praaaouuut</td><td>reg-1 </td></tr>'+
             '<tr class="mh_tdpage"><td>Sssrileur</td><td>seuil 6, rend visible</td></tr>' +
             '<tr class="mh_tdpage"><td>Tagadagada</td><td>augmente le nombre de tours (1 tour par tranche de 2)</td></tr>' +
-            '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
+            '<tr class="mh_tdpage"><td>Tuutuuuut</td><td>att -1</td></tr>' +
             '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
+            '<tr class="mh_tdpage"><td>Whoooom</td><td>concentration +2</td></tr>' +
+            '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
+            '<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
         '</tbody></table>';
 	} else if(comp.indexOf("Botte Secrete")!=-1) {
 		modA = atttour?Math.floor(Math.floor(2*att/3)*atttour/100):0;
