@@ -8,11 +8,10 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.54
+// @version     1.3.0.55
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
-// @downloadURL https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js
 // ==/UserScript==
 
 // vérif UTF-8 ş
@@ -37,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.55 05/09/2020",
+"	Ajout compte à rebours de DLA",
 "V1.3.0.54 28/08/2020",
 "	Supprime le déplacement de la page de vue au survol de la souris du titre \"INFORMATIONS\"",
 "V1.3.0.53 20/07/2020",
@@ -3909,6 +3910,50 @@ function changeActionDecalage() {
 	}
 }
 
+/*-[functions]------------------- Compte à rebours de DLA --------------------*/
+function DMYHMSToDate(t) { return new Date(t.replace(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/, "$2/$1/$3 $4:$5:$6")); }
+
+function DateDiff(d1, d2) {
+	var diff = {},
+	    tmp = Math.floor((d2 - d1) / 1000); // on s'affranchit des 1000e de s
+
+	diff.sec  = tmp % 60; tmp = Math.floor((tmp - diff.sec) / 60);
+	diff.min  = tmp % 60; tmp = Math.floor((tmp - diff.min) / 60);
+	diff.hour = tmp % 24; tmp = Math.floor((tmp - diff.hour) / 24);
+	diff.day  = tmp;
+
+	return (diff.day > 5) ? "> 5j" : [
+		diff.day  > 0 ? diff.day  + "j" : null,
+		diff.hour > 0 ? diff.hour + "h" : null,
+		diff.min  > 0 ? diff.min  + "m" : null,
+		diff.sec  > 0 ? diff.sec  + "s" : null
+	].filter(function (o){ return o; }).join(" ");
+}
+
+function initCompteAreboursDLA() {
+	if(MY_getValue('COMPTEAREBOURSDLA')!='true') {
+		return;
+	}
+	var div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue,
+	    br = div.getElementsByTagName('br')[0];
+	//window.console.log('initCompteAreboursDLA' + div.innerHTML);
+
+	var dla = DMYHMSToDate(/DLA:\s+([^<]+)</.exec(div.innerHTML)[1]),
+	    cnt = document.createElement('div');
+
+	div.insertBefore(cnt, br);
+	div.removeChild(br);
+
+	var timer = setInterval(function() {
+		var diff = DateDiff(new Date(), dla);
+		if(diff.length <= 0) {
+			diff = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#AEFFAE'>Vous pouvez réactiver!</a>";
+			clearInterval(timer);
+		}
+		cnt.innerHTML = diff;
+	}, 1000);
+}
+
 /*-[functions]------------------- Alerte Mundi -------------------------------*/
 
 function prochainMundi() {
@@ -7519,6 +7564,10 @@ function saveAll() {
 		MY_setValue('CONFIRMEDECALAGE',
 			document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
 
+		MY_setValue('COMPTEAREBOURSDLA',
+			document.getElementById('compteAreboursDLA').checked ? 'true':'false');
+
+
 		/* SCIZ */
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
 		if (sciz_jwt) {
@@ -7829,6 +7878,10 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'confirmeDecalage',MY_getValue('CONFIRMEDECALAGE')=='true');
 	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
+
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'compteAreboursDLA',MY_getValue('COMPTEAREBOURSDLA')=='true');
+	appendText(td,' Compte à rebours de DLA');
 
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
@@ -9296,6 +9349,8 @@ function do_menu() {
 	updateData();
 	// ajoute les raccourcis (paramétrables dans Options/Pack Graphique)
 	initRaccourcis();
+	// Ajout du compte à rebours de DLA
+	initCompteAreboursDLA();
 	// Ajout bouton de mise à jour coordonnées
 	initUpdateCoordGauche();
 	// Ajout popup sur les raccourcis des actions
