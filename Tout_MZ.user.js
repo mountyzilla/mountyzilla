@@ -377,6 +377,7 @@ var MZ_changeLog = [
 	Alanae/Gnu/Pen-Hiss
 *		popup d'erreur js en mode smartphone sur un TP (pb trajet_canvas)
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
+		est-ce que l'infobulle de charger pourrait calculer la portée pour les tours suivants en fonction de la diminution de fatigue (ce serait plus compliqué d'estimer quand on est blessé en fonction de la reg)
 	Kali
 		MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
 **********************************************************/
