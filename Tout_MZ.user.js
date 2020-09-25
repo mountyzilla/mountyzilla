@@ -377,6 +377,7 @@ var MZ_changeLog = [
 		FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
 	Alanae/Gnu/Pen-Hiss
 *		popup d'erreur js en mode smartphone sur un TP (pb trajet_canvas)
+		Dans https://mhp.mh.raistlin.fr/mountyhall/View/View_closed.php, le lien pour se connecter à son troll est games.mountyhall.com Est-ce que ça peut être modifié par MZ ?
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
 		est-ce que l'infobulle de charger pourrait calculer la portée pour les tours suivants en fonction de la diminution de fatigue (ce serait plus compliqué d'estimer quand on est blessé en fonction de la reg)
 	Kali
@@ -422,6 +423,7 @@ var URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
 var URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 var URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 var URL_vue_Grouky= 'http://mh.ythogtha.org/grouky.py/grouky';
+var URL_vue_cube= 'vueCube/vueCube.html';
 var URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 var URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 var URL_troogle = 'http://troogle.iktomi.eu/entities/';
@@ -1669,6 +1671,95 @@ function carte_MZ(ref, tabDepl) {
 
 	} catch (e) {window.console.log(traceStack(e, 'carte_MZ'))}
 }
+
+/**********************
+* analyse de la vue pour produire un objet
+* Raistlin 25/09/2020, intégré par Roule
+*
+* en mode objet car ça permet d'isoler les noms
+/**********************/
+
+var MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
+	sectionList: {
+		"Monstre":"VueMONSTRE",
+		"Troll":"VueTROLL",
+		"Tresor":"VueTRESOR",
+		"Champignon":"VueCHAMPIGNON",
+		"Lieu":"VueLIEU",
+		"Cenotaphe":"VueCADAVRE"
+	},
+	columnTranslation: {
+		"Dist.":"distance",
+		"Actions":"actions",
+		"Réf.":"Id",
+		"Nom":"nom",
+		"X":"x",
+		"Y":"y",
+		"N":"n",
+		"Niv.":"niveau",
+		"Type":"nom",
+		"Champignon":"nom",
+	},
+
+	getSectionVueColsHeader: function(section){
+		var colList = [];
+		for (let col of document.getElementById(section).childNodes[0].childNodes[0].childNodes) {
+			if (typeof col.innerText !== 'undefined') colList.push(col.innerText);
+		}
+		return colList;
+	},
+
+	getSectionVueLines: function(section){
+		var sectionArray=[];
+		for (let line of document.getElementById(section).childNodes[1].childNodes){
+			let lineArray = [];
+			for (let field of line.childNodes) {
+				lineArray.push(field.innerText);
+			}
+				sectionArray.push(lineArray);
+		}
+		return sectionArray;
+	},
+
+	htmlToObj: function(){
+		this.oVue = {};
+		for(let section in this.sectionList) {
+			let sectionColList = this.getSectionVueColsHeader(this.sectionList[section]);
+			let sectionLineList = this.getSectionVueLines(this.sectionList[section]);
+			let oSection=[];
+			for (let line in sectionLineList) {
+				let oElement = {};
+				for(let col in sectionColList) {
+					let colTranslated = this.columnTranslation[sectionColList[col]];
+					if (!colTranslated) continue;
+					oElement[colTranslated]=sectionLineList[line][col];
+				}
+				oSection.push(oElement);
+			}
+			this.oVue[section] = oSection;
+		}
+		this.oVue['caseOrigine'] = {"x":MY_getValue(numTroll+".position.X"), "y":MY_getValue(numTroll+".position.Y"), "n":MY_getValue(numTroll+".position.N")};
+	},
+
+	messageHandler: function (event) {
+		if (MY_DEBUG) window.console.log('get event, origin=' + event.origin);
+		if (MY_DEBUG) window.console.log('get event, data=' + event.data);
+		if (MY_DEBUG) window.console.log('sendVueExterne, domaine=' + MZ_AnalyseVue.domaine);
+		MZ_AnalyseVue.otherTab.postMessage(MZ_AnalyseVue.oVue, MZ_AnalyseVue.domaine);
+	},
+
+	openVueExterne: function(url) {
+		window.addEventListener("message", this.messageHandler);
+		// extraire le hostname, on en aura besoin dans sendVueExterne
+		var oURL = new URL(url);
+		this.htmlToObj();
+		//if (MY_DEBUG) window.console.log(JSON.stringify(this.oVue));
+		this.url = url;
+		this.domaine = oURL.protocol + '//' + oURL.hostname;
+		this.otherTab = window.open(url, 'vueExtnMZ');
+		// l'onglet (ou fenêtre) va envoyer un message quand il sera prêt et on lui enevrra la vue alors (fonction messageHandler)
+	},
+};
 
 
 /**********************************************************
@@ -9934,34 +10025,44 @@ var vue2Ddata = {
 			'type_vue': 'V5b1'
 		}
 	},
+	'Cube': {
+		noform: true,
+		func: function() {MZ_AnalyseVue.openVueExterne(URL_MZ + '/' + URL_vue_cube)},
+		extra_params: {},
+	},
 	/*'DEBUG': {
 		url: 'http://weblocal/testeur.php',
 		paramid: 'vue',
 		func: getVueScript,
 		extra_params: {}
-	}*/
+	},*/
 };
 
 function refresh2DViewButton() {
 	// = EventListener menu+bouton vue 2D
 	var vueext = document.getElementById('selectVue2D').value;
 	MY_setValue('VUEEXT',vueext);
+	var oParamVue = vue2Ddata[vueext];
 	var form = document.getElementById('viewForm');
 	form.innerHTML = '';
 	form.method = 'post';
-	form.action = vue2Ddata[vueext].url;
+	form.action = oParamVue.url;
 	form.target = '_blank';
-	appendHidden(form, vue2Ddata[vueext].paramid, '');
-	for(var key in vue2Ddata[vueext].extra_params) {
-		appendHidden(form, key, vue2Ddata[vueext].extra_params[key]);
+	if (oParamVue.paramid) appendHidden(form, oParamVue.paramid, '');
+	for(var key in oParamVue.extra_params) {
+		appendHidden(form, key, oParamVue.extra_params[key]);
 	}
-	appendSubmit(form, 'Voir',
-		function() {
-			window.console.log('[MZd ' + GM_info.script.version + '] click voir vue externe');
-			document.getElementsByName(vue2Ddata[vueext].paramid)[0].value =
-				vue2Ddata[vueext].func();
-		}
-	);
+	if (oParamVue.noform) {
+		appendButton(form, 'Voir', oParamVue.func);
+	} else {
+		appendSubmit(form, 'Voir',
+			function() {
+				window.console.log('[MZd ' + GM_info.script.version + '] click voir vue externe');
+				document.getElementsByName(oParamVue.paramid)[0].value =
+					oParamVue.func();
+			}
+		);
+	}
 }
 
 function set2DViewSystem() {
