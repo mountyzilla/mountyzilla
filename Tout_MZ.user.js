@@ -1698,6 +1698,7 @@ var MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
 		"N":"n",
 		"Niv.":"niveau",
 		"Type":"nom",
+		"Race":"race",
 		"Champignon":"nom",
 	},
 

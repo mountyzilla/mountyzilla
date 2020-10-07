@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.05
+// @version 8.8.07
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,7 +33,9 @@
 ****************************************************************/
 
 /*
-disciple 17/06/2020 V8.8.05
+Roule 07/10/2020 V8.8.07
+	Adaptation à des modifications MH
+disciple 17/06/2020 V8.8.06
 	Correction ± #2
 Roule 05/08/2018 V8.8.04
 	Saut de version suite à une erreur de numérotation
@@ -77,7 +79,7 @@ Roule 08 à 10/08/2016
 	avantages
 		indépendance du nomage par rapport aux autres scripts (il y avait effectivement un souci aléatoire sans doute lié à une collision de nom)
 	inconvénient
-		syntaxe plus compliquée (utilisation de this, déclaration pas naturelle des fonction
+		syntaxe plus compliquée (utilisation de this, déclaration pas naturelle des fonctions
 		complexité pour l'utilisation des callback (par exemple setIntervale)
 */
 
@@ -86,6 +88,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 	window.console.log("script capitan déjà chargé");	// ça arrive dans le cas de l'affichage des détails d'une carte en popup
 } else {
 	oCAPITAN_MH_ROULE = {
+		bDebug: false,
 		appendButton: function(paren,value,onClick) {
 			var input = document.createElement('input');
 			input.type = 'button';
@@ -418,7 +421,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		afficheSolutions: function(x,y,n,essais) {
 			var listeSolutions = this.calculeSolution(x,y,n,essais);
-			//window.console.log('ListeSolutions=' + JSON.stringify(listeSolutions) + ', x=' + x);
+			if (this.bDebug) window.console.log('afficheSolutions: ListeSolutions=' + JSON.stringify(listeSolutions) + ', x=' + x);
 			var string="Il y a "+listeSolutions.length+" solutions";
 			if(listeSolutions.length<=10)
 			{
@@ -542,7 +545,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				var signes = this.CAPITAN_getValue("capitan."+idCarte+".this.signe").split(";");
 				this.gListeSolutions = this.calculeSolution(Math.abs(originalPos[0])*this.signe(signes[0]),Math.abs(originalPos[1])*this.signe(signes[1]),originalPos[2],this.gEssais);
-				//window.console.log('gListeSolutions=' + JSON.stringify(this.gListeSolutions) + ', signe=' + JSON.stringify(signes));
+				if (this.bDebug) window.console.log('afficheInfoCarte: gListeSolutions=' + JSON.stringify(this.gListeSolutions) + ', signe=' + JSON.stringify(signes));
 			}
 			else
 			{
@@ -551,7 +554,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					this.gListeSolutions[i][0] = Math.abs(this.gListeSolutions[i][0]);
 					this.gListeSolutions[i][1] = Math.abs(this.gListeSolutions[i][1]);
 				}
-				//window.console.log('sans signe, gListeSolutions=' + JSON.stringify(this.gListeSolutions));
+				if (this.bDebug) window.console.log('afficheInfoCarte: sans signe, gListeSolutions=' + JSON.stringify(this.gListeSolutions));
 			}
 			return this.generateTable(this.gListeSolutions, signes != undefined);
 		},
@@ -590,7 +593,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
 			var repartition = this.getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
 			var size = repartition.length;
-			//window.console.log('this.newRecherche, repartition=' + JSON.stringify(repartition));
+			if (this.bDebug) window.console.log('newRecherche: this.newRecherche, repartition=' + JSON.stringify(repartition));
 
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
@@ -675,25 +678,37 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
 		getNumTroll: function() {
+			/* 07/10/2020, l'info n'est plus dans la page, on se replie sur le localStorage
 			var infoObjet = document.evaluate("//td[@class = 'mh_tdtitre']/text()[contains(.,'Propriétaire actuel')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-			//window.console.log('infoObjet.nodeValue=' + infoObjet.nodeValue);
+			if (this.bDebug) {
+				if (infoObjet) {
+					window.console.log('CAPITAN getNumTroll: infoObjet.nodeValue=' + infoObjet.nodeValue);
+				} else {
+					window.console.log('CAPITAN getNumTroll: infoObjet est nul');
+				}
+			}
 			var numTroll = 0;
-			if(infoObjet)
+			if (infoObjet)
 			{
 				// infoObjet.nodeValue=Propriétaire actuel : TROLL - 91305. Rouletabille
 				var m = infoObjet.nodeValue.match(/troll[ -]*(\d*)[. +]/i);
 				if (m) {
-					//window.console.log(m);
+					if (this.bDebug) window.console.log('CAPITAN getNumTroll: m=' + m);
 					if (m.length > 1) numTroll = parseInt(m[1]);
 				}
 			}
-			//window.console.log('numTroll=' + numTroll);
+			*/
+			numTroll = parseInt(window.localStorage['NUM_TROLL']);
+			if (this.bDebug) window.console.log('CAPITAN getNumTroll: numTroll=' + numTroll);
 			return numTroll;
 		},
 
 		getIDCarte: function() {
-			var infoObjet = document.evaluate("//div[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
+			var infoObjet = document.evaluate("//td[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
+				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			// si échec, essayer avec l'ancienne méthode
+			if (!infoObjet) infoObjet = document.evaluate("//div[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 			var idCarte = 0;
 			if(infoObjet)
@@ -711,25 +726,30 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var eSpacer = document.getElementById('spacerMZCapitan');
 			if (eSpacer) return;	// déjà affiché
 			var numTroll = this.getNumTroll();	// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
+			if( !numTroll) {
+				window.console.log('CAPITAN analyseObject: *** erreur *** pas de numéro de Trõll');
+				return;
+			}
 			var idCarte = this.getIDCarte();
-			//debug*/window.console.log('this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte);
-			var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			if (idCarte > 0) var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			if (this.bDebug) window.console.log('CAPITAN analyseObject: this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', originalPos=' + originalPos);
 			if(!originalPos || originalPos == null)
 			{
 				var infoPos = document.evaluate("//td/text()[contains(.,'ai été tué en')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				if(!infoPos) {
-					//debug*/window.console.log('this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
+					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
 					return;
 				}
 				var listePos = infoPos.nodeValue.split("=");
 				if(listePos.length!=4) {
-					window.console.log('this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver les coord. de la mort du Capitan ' + infoPos.nodeValue);
+					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver les coord. de la mort du Capitan ' + infoPos.nodeValue);
 					return;
 				}
 				var x = parseInt(listePos[1]);
 				var y = parseInt(listePos[2]);
 				var n = parseInt(listePos[3]);
+				if (this.bDebug) window.console.log('CAPITAN analyseObject: setValue("capitan.'+idCarte+'.position, '+x+";"+y+";"+n);
 				this.CAPITAN_setValue("capitan."+idCarte+".position",x+";"+y+";"+n);
 			}
 			// Roule 23/11/2016 travail dans le body (ancienne version, fenêtre indépendante) ou dans la div modale (nouvelle version en "popup")
@@ -751,6 +771,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			curPos[0] = parseInt(window.localStorage[numTroll+".position.X"]);
 			curPos[1] = parseInt(window.localStorage[numTroll+".position.Y"]);
 			curPos[2] = parseInt(window.localStorage[numTroll+".position.N"]);
+			if (this.bDebug) window.console.log('CAPITAN analyseObject: position du troll récupérée en localStorage=' + JSON.stringify(curPos));
 
 			// bloc utilité de faire une recherche sur la position courante
 			table = this.newRecherche(this.gListeSolutions, curPos);
@@ -895,13 +916,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		delRecherche: function(e) {	// ATTENTION, cette fonction ne tourne pas dans le contexte de l'objet ("this" pointe vers le bouton)
 			var idEssaiDel = e.target.idEssai;
 			var idCarte = e.target.idCarte;
-			window.console.log('idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
+			if (this.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
 			for (var i = 0; i < oCAPITAN_MH_ROULE.gEssais.length; i++) {
 				if (i == oCAPITAN_MH_ROULE.gEssais.length - 1) {
-					window.console.log("delete capitan."+idCarte+".essai."+i)
+					window.console.log("CAPITAN delRecherche: capitan."+idCarte+".essai."+i)
 					CAPITAN_deleteValue("capitan."+idCarte+".essai."+i);
 				} else if (i >= idEssaiDel) {
-					window.console.log("set capitan."+idCarte+".essai."+(i)+'+++'+oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
+					window.console.log("CAPITAN delRecherche: set capitan."+idCarte+".essai."+(i)+'+++'+oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
 					oCAPITAN_MH_ROULE.CAPITAN_setValue("capitan."+idCarte+".essai."+(i),oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
 				}
 			}
@@ -1133,14 +1154,14 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		addV1Pref: function(val) {
 			// on a tout le contenu de pref.js dans val
 			tabPref = val.split(/\);/);
-			//window.console.log('nb val=' + tabPref.length);
+			if (this.bDebug) window.console.log('CAPITAN addV1Pref: nb val=' + tabPref.length);
 			//user_pref("mountyzilla.storage.91305.capitan.8600686.essai.1", "1;2;3;4");
 			var nAlready = 0;
 			var nDone = 0;
 			for (var i = 0; i < tabPref.length; i++) {
 				var m = tabPref[i].match(/user_pref\(\"mountyzilla\.storage\.(\d*)\.capitan\.(\d*)\.essai\.(\d*)\", *\"([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)\"/i);
 				if (!m) continue;
-				//window.console.log('trouvé troll ' + m[1] + ', carte ' + m[2] + ', essai ' + m[3] + ', X = ' + m[4] + ', Y=' + m[5] + ', N=' + m[6] + ' => ' + m[7]);
+				//window.console.log('CAPITAN addV1Pref: trouvé troll ' + m[1] + ', carte ' + m[2] + ', essai ' + m[3] + ', X = ' + m[4] + ', Y=' + m[5] + ', N=' + m[6] + ' => ' + m[7]);
 				var bAlready = this.testAlready(m[2], m[4] + ';' + m[5] + ';' + m[6] + ';' + m[7]);
 				if (bAlready) {
 					nAlready++;
@@ -1156,7 +1177,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		addV1Unitaire: function(val) {
-			//window.console.log('val=' + val);
+			if (this.bDebug) window.console.log('CAPITAN addV1Unitaire: val=' + val);
 			var m = val.match(/capitan\.(\d*)\.essai\.(\d*);([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
 			if (!m) {
 				alert("Désolé, impossible de retrouver le numéro de carte, les coordonnées et le nombre de chiffres bien placés");
@@ -1327,31 +1348,31 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		getEssaiV1_2: function() {
 			if (!GM_getValue) {
-				window.console.log('this.getEssaiV1_2, pas de GM_getValue');
+				window.console.log('CAPITAN getEssaiV1_2: pas de GM_getValue');
 				return;
 			}
 			var tabKey = GM_listValues();
-			window.console.log('this.getEssaiV1_2, nb key : ' + tabKey.length);
+			window.console.log('CAPITAN getEssaiV1_2: nb key : ' + tabKey.length);
 			var r = [];
 			for (var i = 0; i < tabKey.length; i++) {
 				var k = tabKey[i];
-				//window.console.log('this.getEssaiV1_2 key ' + k + ' => ' + GM_getValue(k));
+				//window.console.log('CAPITAN getEssaiV1_2: key ' + k + ' => ' + GM_getValue(k));
 				var t = k.split(/\./);
 				if (t[0] !== 'capitan') continue;
 				if (t[2] !== 'essai') continue;
 				var carte = 'carte n°' + t[1];
 				if (r[carte]) r[carte]++;
 				else         r[carte] = 1;
-				//window.console.log('this.getEssaiV1_2 r[' + carte + ']=' + r[carte]);
+				//window.console.log('CAPITAN getEssaiV1_2: r[' + carte + ']=' + r[carte]);
 			}
 			return r;
 		},
 
 		showEssai: function() {
-			window.console.log('début this.showEssai CapitanList');
+			window.console.log('CAPITAN début this.showEssai CapitanList');
 			var essai1_2 = this.getEssaiV1_2();
 			this.AfficheEssais(essai1_2, 'V1.2');
-			window.console.log('fin this.showEssai CapitanList');
+			window.console.log('CAPITAN fin this.showEssai CapitanList');
 		},
 
 		CAPITAN_horsGM: false,
@@ -1365,7 +1386,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				//window.console.log('test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_getValue == undefined) {
@@ -1374,7 +1395,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				GM_getValue('x');	// provoque une exception hors GM
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				//window.console.log('test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_deleteValue == undefined) {
@@ -1382,9 +1403,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				//window.console.log('test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
 			}
-			window.console.log('CAPITAN horsGM=' + this.CAPITAN_horsGM);
+			window.console.log('CAPITAN init: horsGM=' + this.CAPITAN_horsGM);
 			if (this.CAPITAN_horsGM) {	// remplacer GM_xxxValue
 				this.CAPITAN_getValue = function(key) {
 					return window.localStorage[key];
