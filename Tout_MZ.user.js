@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.55
+// @version     1.3.0.56
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.56 08/10/2020",
+"	Retour de la carte des suivants",
 "V1.3.0.55 05/09/2020",
 "	Ajout compte à rebours de DLA",
 "V1.3.0.54 28/08/2020",
@@ -5327,19 +5329,16 @@ function do_ordresgowap() {
 }
 
 function do_listegowap() {
-	if (!newCarte) return;
 	MZ_setCarteTousGogoHTML5();
 }
 
 function do_lieuDescription() {
-	if (!newCarte) return;
 	if (window.document.getElementsByTagName("body")[0].innerHTML.indexOf("Portail : Portail de T") != -1)
 		MZ_setCarteTP();
 }
 
 function do_lieuTeleport() {
 	changeButtonValidate();
-	if (!newCarte) return;
 	MZ_setCarteTP();
 }
 
