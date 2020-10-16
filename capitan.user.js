@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.07
+// @version 8.8.08
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +33,8 @@
 ****************************************************************/
 
 /*
+Roule 16/10/2020 V8.8.08
+	Adaptation à des modifications MH
 Roule 07/10/2020 V8.8.07
 	Adaptation à des modifications MH
 disciple 17/06/2020 V8.8.06
@@ -713,7 +715,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var idCarte = 0;
 			if(infoObjet)
 			{
-				idCarte = parseInt(infoObjet.nodeValue);
+				idCarte = parseInt(infoObjet.nodeValue.replace('[', ''));
 			}
 			return idCarte;
 		},
