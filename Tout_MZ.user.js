@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.56
+// @version     1.3.0.57
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.57 30/10/2020",
+"	Fix mouches présentes",
 "V1.3.0.56 08/10/2020",
 "	Retour de la carte des suivants",
 "V1.3.0.55 05/09/2020",
@@ -4916,6 +4918,7 @@ function toggleMouches() {
 function traiteMouches() {
 // Traitement complet: présence et effets des mouches
 	var listeTypes = {}, effetsActifs = {};
+	//if (MY_DEBUG) window.console.log('traiteMouches, tr_mouches.length=' + tr_mouches.snapshotLength);
 
 	for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 		var tr = tr_mouches.snapshotItem(i);
@@ -4925,6 +4928,7 @@ function traiteMouches() {
 			'./img',
 			tr.cells[6], null, 9, null
 		).singleNodeValue.alt;
+		//if (MY_DEBUG) window.console.log('traiteMouches, i=' + i + ', etat=' + etat + ', type=' + trim(tr.cells[3].textContent));
 		if(etat!='La Mouche est là') { continue; }
 		// Extraction du type de mouche
 		var type = trim(tr.cells[3].textContent);
@@ -4933,6 +4937,7 @@ function traiteMouches() {
 		} else {
 			listeTypes[type]++;
 		}
+		//if (MY_DEBUG) window.console.log('traiteMouches, i=' + i + ', etat=' + etat + ', type=' + type + ', nb=' + listeTypes[type]);
 
 		// La mouche a-t-elle un effet?
 		var effet = trim(tr.cells[2].textContent);
@@ -4984,11 +4989,16 @@ function traiteMouches() {
 	);
 	for(var i=0 ; i<mouchesParType.snapshotLength ; i++) {
 		var node = mouchesParType.snapshotItem(i);
-		var mots = node.nodeValue.split(' ');
-		var type = mots.pop();
+		//var mots = node.nodeValue.split(' ');
+		//var type = mots.pop();
+		var tMatch = node.nodeValue.match(/([0-9]+) .*à *([^ ]+)/);
+		if (!tMatch) continue;
+		var nMouche = tMatch[1];
+		var type = tMatch[2];
+		if (MY_DEBUG) window.console.log('traiteMouches, texte=' + node.nodeValue + ', tMatch=' + JSON.stringify(tMatch) + ', type=' + type);
 		if(!listeTypes[type]) {
 			node.nodeValue += ' (0 présente)';
-		} else if(mots[0]!=listeTypes[type]) {
+		} else if(nMouche != listeTypes[type]) {
 			if(listeTypes[type]==1) {
 				node.nodeValue += ' (1 présente)';
 			} else {
