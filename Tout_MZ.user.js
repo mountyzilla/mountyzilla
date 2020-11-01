@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.57
+// @version     1.3.0.58
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.58 0111/2020",
+"	Remplacement CONST par VAR dans SCIZ",
 "V1.3.0.57 30/10/2020",
 "	Fix mouches présentes",
 "V1.3.0.56 08/10/2020",
@@ -5464,7 +5466,7 @@ function do_infomonstre() {
  *** SCIZ
  ***/
 
-const scizSetup = {
+var scizSetup = {
 	// Maximum interval (seconds) for matching some events
 	eventsMaxMatchingInterval: 5000,
 	// Maximum number of treasures to enhanced in the view
@@ -5569,7 +5571,7 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve trolls
 		var ids = [];
-		const xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
+		var xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
 		var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 		while (xPathTroll = xPathTrolls.iterateNext()) {
 			scizGlobal.trolls.push({
@@ -5582,7 +5584,7 @@ function do_scizEnhanceView() {
 		}
 
 		// Add the new column for the SCIZ troll view
-		const xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
+		var xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
 		var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
 		var th = document.createElement('th');
 		th.align = 'center';
@@ -5638,7 +5640,7 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve treasures
 		var ids = [];
-		const xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+		var xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
 		var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 		while (xPathEvent = xPathEvents.iterateNext()) {
 			scizGlobal.treasures.push({
@@ -5699,7 +5701,7 @@ function do_scizSwitchTreasures() {
 	scizGlobal.treasures.forEach((t) => {
 		if (t.sciz_desc !== null) {
 			// Do the switch
-			const currentDesc = t.node.children[3].firstChild.textContent;
+			var currentDesc = t.node.children[3].firstChild.textContent;
 			t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
 			if (t.buried) {
 				t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
@@ -5715,7 +5717,7 @@ function do_scizSwitchTreasures() {
 function scizPrettyPrintEvent(e) {
 	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, ''); // Delete date
 	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-	const beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
+	var beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
 	beings.forEach(b => {
 		if (b[0] && b[1]) {
 			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -5742,13 +5744,13 @@ function do_scizOverwriteEvents() {
 	if (!jwt || cbx === '0') { return; }
 
 	// Retrieve being ID
-	const url = new URL(window.location.href);
+	var url = new URL(window.location.href);
 	var id = url.searchParams.get('ai_IDPJ');
 	id = (!id) ? numTroll : id;
 
 	// Check for advanced profil
-	const advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
-	const xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[@class='mh_tdpage']";
+	var advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
+	var xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[@class='mh_tdpage']";
 
 	// Retrieve local events
 	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
@@ -5766,8 +5768,8 @@ function do_scizOverwriteEvents() {
 		}
 	}
 
-	const startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - scizSetup.eventsMaxMatchingInterval;
-	const endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + scizSetup.eventsMaxMatchingInterval;
+	var startTime = Math.min.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) - scizSetup.eventsMaxMatchingInterval;
+	var endTime = Math.max.apply(Math, scizGlobal.events.map(function(e) { return e.time; })) + scizSetup.eventsMaxMatchingInterval;
 
 	// Check if events have been found in the page
 	if (scizGlobal.events.length < 1) {
@@ -5777,7 +5779,7 @@ function do_scizOverwriteEvents() {
 
 	// Call SCIZ
 	var sciz_url = 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime;
-	const eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
+	var eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
 	sciz_url += (eventType !== null && eventType !== '') ? '/' + eventType.split(' ')[0] : '' // Only the first word used for filtering ("MORT par monstre" => "MORT");
 	FF_XMLHttpRequest({
 		method: 'GET',
@@ -5799,7 +5801,7 @@ function do_scizOverwriteEvents() {
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
 					if (e.message.includes(id)) { // Exclude any event we were not looking for...
-						const t = Date.parse(StringToDate(e.time));
+						var t = Date.parse(StringToDate(e.time));
 						// Look for the best event matching and not already replaced
 						var i = -1;
 						var lastDelta = Infinity;
@@ -5842,9 +5844,9 @@ function do_scizOverwriteEvents() {
 
 function do_scizSwitchEvents() {
 	scizGlobal.events.forEach((e) => {
-		const currentType = e.node.children[1].innerHTML;
+		var currentType = e.node.children[1].innerHTML;
 		e.node.children[1].innerHTML = (currentType === e.type) ? ((e.sciz_type !== null) ? e.sciz_type : e.type) : e.type;
-		const currentDesc = e.node.children[2].innerHTML;
+		var currentDesc = e.node.children[2].innerHTML;
 		e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
 	});
 }
