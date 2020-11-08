@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.58
+// @version     1.3.0.59
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,9 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.58 0111/2020",
+"V1.3.0.59 08/11/2020",
+"	Adaptation page Bonus-Malus",
+"V1.3.0.58 01/11/2020",
 "	Remplacement CONST par VAR dans SCIZ",
 "V1.3.0.57 30/10/2020",
 "	Fix mouches présentes",
@@ -4644,9 +4646,16 @@ function setDisplayBM() {
 /* [functions]                 Fonction principale                              */
 
 function traiteMalus() {
-	var mainTab = document.getElementsByTagName('table')[0];
-	listeBM = document.evaluate('./tbody/tr', mainTab, null, 7, null);
-	if(listeBM.snapshotLength==0) return;
+	var mainTab = document.getElementById('bmm');
+	if (!mainTab) {
+		window.console.log('[MZ], traiteMalus, pas de table bmm');
+		return;
+	}
+	var tbody = mainTab.tBodies[0];
+	if (!tbody) {
+		window.console.log('[MZ], traiteMalus, pas de BM (pas de tbody)');
+		return;
+	}
 
 	/* Suppression des BM de fatigue stockés */
 	if(MY_getValue(numTroll+'.bm.fatigue'))
@@ -4655,11 +4664,11 @@ function traiteMalus() {
 	/* Extraction des données */
 	var uniListe = [], listeDurees = {}, listeDecumuls = {};
 	var nb = 0;
-	while(nb<listeBM.snapshotLength) {
-		tr = listeBM.snapshotItem(nb); nb++;
-		var effetsT = tr.childNodes[5].textContent.split(' | ');
-		var phymag = tr.childNodes[9].textContent;
-		var duree = tr.childNodes[11].textContent.match(/\d+/);
+	for (var tr of tbody.rows) {
+		nb++;
+		var effetsT = tr.cells[1].textContent.split(' | ');
+		var phymag = tr.cells[3].textContent;
+		var duree = tr.cells[4].textContent.match(/\d+/);
 		if (duree == null) {	// Roule 28/01/2018 protection malus Crasc sans durée
 			duree = 1;
 		} else {
@@ -4697,7 +4706,7 @@ function traiteMalus() {
 			if(carac=='ATT' || carac=='DEG' || carac=='Armure')
 				uniListe[nb]['type'] = phymag;
 			//var bm = Number(effetsT[i].match(/-?\d+/)[0]);
-			var tmatch = effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et optionellement un autre numérique précédé d'un antislash
+			var tmatch = effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et exceptionnellement un autre numérique précédé d'un antislash
 			if (tmatch[2] == undefined) var bm = Number(tmatch[1]);	// cas DEG : -6
 			else                        var bm = Number(tmatch[3]);	// cas DEG : +0\-5
 			uniListe[nb]['caracs'][carac] = bm;
@@ -4808,7 +4817,7 @@ function traiteMalus() {
 		if(MY_getValue('BMDETAIL')=='false')
 			tr.style.display = 'none';
 		var td = appendTdText(tr,texteD.substring(3));
-		td.colSpan = 5-nbHidden;
+		td.colSpan = 4-nbHidden;
 		var txttour = toursGeres[i]+' Tour';
 		if(toursGeres[i]>1) txttour += 's';
 		appendTdText(tr,txttour);
@@ -4817,7 +4826,7 @@ function traiteMalus() {
 		if(MY_getValue('BMDETAIL')!='false')
 			tr.style.display = 'none';
 		td = appendTdText(tr,texteS);
-		td.colSpan = 5-nbHidden;
+		td.colSpan = 4-nbHidden;
 		appendTdText(tr,txttour);
 	}	// fin boucle sur les tours générés
 
@@ -11598,7 +11607,8 @@ function appliqueDiplo() {
 			(nom.indexOf('liche')==0 ||
 			nom.indexOf('hydre')==0 ||
 			nom.indexOf('balrog')==0 ||
-			nom.indexOf('beholder')==0)) {
+			nom.indexOf('beholder')==0 ||
+			nom.indexOf('sidoine')==0)) {
 			tr.className = '';
 			tr.style.backgroundColor = aAppliquer.mythiques;
 			tr.diploActive = 'oui';
@@ -12810,7 +12820,7 @@ function setAccel() {
 	// Creation ligne speciale pour AM dans le cadre "Etat"
 	tr = document.createElement('tr');
 	th = document.createElement('th');
-	appendText(th,'Fatigue et AM',true);
+	appendText(th,'[MZ] Fatigue et AM',true);
 	tr.appendChild(th);
 	insertPt = document.createElement('td');
 	tr.appendChild(insertPt);
