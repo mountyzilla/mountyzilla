@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.59
+// @version     1.3.0.60
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.60 16/11/2020",
+"	Vue externe en mode smartphone",
 "V1.3.0.59 08/11/2020",
 "	Adaptation page Bonus-Malus",
 "V1.3.0.58 01/11/2020",
@@ -7956,7 +7958,7 @@ function insertOptionTable(insertPt) {
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_EVENTS')));
-	appendText(td, ' Surcharger les événementsde ma coterie');
+	appendText(td, ' Surcharger les événements de ma coterie');
 	// Treasure checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
@@ -9816,12 +9818,16 @@ function getTresorDistance(i) {
 }
 
 function getTresorID(i) {
-	return trim(tr_tresors[i].cells[2].textContent);
+	var tds = tr_tresors[i].childNodes;
+	var l = tds.length;
+	return trim(tr_tresors[i].cells[l-5].textContent);
 }
 
 function getTresorNom(i) {
+	var tds = tr_tresors[i].childNodes;
+	var l = tds.length;
 	// Utilisation de textContent pour régler le "bug de Pollux"
-	return trim(tr_tresors[i].cells[3].textContent);
+	return trim(tr_tresors[i].cells[l-4].textContent);
 }
 
 function getTresorPosition(i) {
@@ -9999,7 +10005,8 @@ function getVueScript() {
 			'#DEBUT ORIGINE\n'+
 			getPorteVue()[2]+';'+positionToString(getPosition())+
 			'\n#FIN ORIGINE\n';
-			window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
+		if (MY_DEBUG) window.console.log('MZ getVueScript nbTrolls=' + nbTrolls + ', txt=' + txt);
+		window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
 		return txt;
 	} catch(e) {
 		avertissement("[getVueScript] Erreur d'export vers Vue externe");
@@ -12064,7 +12071,8 @@ function do_vue() {
 	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 	// je fais une recopie :(
 	MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
-	for (var i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) {// Roule 22/07/2020
+	if (MZ_EtatCdMs.tr_monstres && MZ_EtatCdMs.tr_monstres[0])
+		for (var i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) {// Roule 22/07/2020
 		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Dist/i)) MZ_EtatCdMs.indexCellDist = i;
 		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Action/i)) MZ_EtatCdMs.indexCellActions = i;
 		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/r[eéè]f/i)) MZ_EtatCdMs.indexCellID = i;
@@ -12072,10 +12080,7 @@ function do_vue() {
 		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^Y$/i)) MZ_EtatCdMs.indexCellY = i;
 		if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^N$/i)) MZ_EtatCdMs.indexCellN = i;
 	}
-	if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
-		avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
-		return;
-	}
+
 	tr_trolls = VueContext.tr_trolls;
 	tr_tresors = VueContext.tr_tresors;
 	tr_champignons = VueContext.tr_champignons;
@@ -12092,6 +12097,13 @@ function do_vue() {
 
 		initialiseInfos();
 		savePosition();
+
+		if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
+			// c'est le cas en mode smartphone, dans le cas d'une vue qui ne montre pas les monstres
+			//avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
+			set2DViewSystem();
+			return;
+		}
 
 		// Fonctionnalité "Têtalenvert" cachée, en test :
 		if(MY_getValue(numTroll+'.VERLAN')=='true') {
