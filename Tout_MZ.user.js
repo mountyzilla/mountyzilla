@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.61
+// @version     1.3.0.62
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.61 20/11/2020",
+"V1.3.0.62 20/11/2020",
 "	Ajout du calcul de la marge de temps de tour dans le profil",
 "V1.3.0.60 16/11/2020",
 "	Vue externe en mode smartphone",
@@ -12214,7 +12214,7 @@ var
 		// calcul des DLA suivantes
 	DLA, DLAsuiv, HeureServeur,
 		// details duree du tour (calcul pvdispo) :
-	dtb, pdm, bmt, adb, dpt,
+	dtb, pdm, bmt, adb, dpt, dtbm,
 		//posale
 	posX, posY, posN,
 		// caracs physiques
@@ -12381,15 +12381,18 @@ function extractionDonnees() {
 	    // Duree normale de mon Tour
 	dtb = extractionDuree('#dla #tour');
 	debugMZ('Duree normale de mon Tour : ' + dtb);
+	    // Bonus/malus
+	dtbm = extractionDuree('#dla #bm');
+	debugMZ('Bonus/Malus équipement sur la duree : ' + dtbm);
 	    // Réserve
 	dtreserve = extractionDuree('#dla #reserve');
 	debugMZ('Durée de réserve : ' + dtreserve);
 	    // Poids de l'equipement
 	pdm = extractionDuree('#dla #poids');
 	debugMZ('Poids de l\'equipement : ' + pdm);
-	    // Bonus/Malus equipemente
+	    // Bonus/Malus equipement
 	bmt = extractionDuree('#dla #bmequipement');	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
-	debugMZ('Bonus/Malus sur la duree : ' + bmt);
+	debugMZ('Bonus/Malus équipement sur la duree : ' + bmt);
 	    // Augmentation due aux blessures
 	adb = extractionDuree('#dla #blessure');
 	debugMZ('Augmentation due aux blessures : ' + adb);
@@ -12706,7 +12709,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 	// Difference PV p/r a equilibre de temps (propale R')
 	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + bmmouche))
 	// ***INIT GLOBALE*** pvdispo
-	var bmPVHorsBlessure = dtreserve + pdm + bmt + bmmouche;
+	var bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
 	var pvdispo = pvcourant-pvtotal-Math.ceil(bmPVHorsBlessure*pvtotal/250);
 	var span = document.createElement("span");
 	span.title = txt;
@@ -12726,7 +12729,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 	}
 	appendText(span,txt);
 	document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
-	var marge = (dtb + dtreserve + pdm + bmt + adb + bmmouche) - dpt;
+	var marge = dtbm + dtreserve + pdm + bmt + adb + bmmouche;
 	var tr = document.createElement('tr');
 	tr.className = 'detail';
 	var th = document.createElement('th');
