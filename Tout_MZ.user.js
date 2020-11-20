@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.60
+// @version     1.3.0.61
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.61 20/11/2020",
+"	Ajout du calcul de la marge de temps de tour dans le profil",
 "V1.3.0.60 16/11/2020",
 "	Vue externe en mode smartphone",
 "V1.3.0.59 08/11/2020",
@@ -12706,24 +12708,47 @@ function setInfosEtatPV() { // pour AM et Sacro
 	// ***INIT GLOBALE*** pvdispo
 	var bmPVHorsBlessure = dtreserve + pdm + bmt + bmmouche;
 	var pvdispo = pvcourant-pvtotal-Math.ceil(bmPVHorsBlessure*pvtotal/250);
-	var	span = document.createElement("span");
+	var span = document.createElement("span");
 	span.title = txt;
 	span.style.fontStyle = "italic";
 	if(bmPVHorsBlessure>=0) {
-		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
+		txt = "[MZ] Vous ne pouvez compenser aucune blessure actuellement.";
 	} else if(pvdispo>0) {
-		txt = "Vous pouvez encore perdre "+
+		txt = "[MZ] Vous pouvez encore perdre "+
 			Math.min(pvdispo,pvcourant)+
 			" PV sans malus de temps.";
 	} else if(pvdispo<0) {
-		txt = "Il vous manque "
+		txt = "[MZ] Il vous manque "
 			+(-pvdispo)
 			+" PV pour ne plus avoir de malus de temps.";
 	} else {
-		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
+		txt = "[MZ] Vous êtes à l'équilibre en temps (+/- 30sec).";
 	}
 	appendText(span,txt);
 	document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
+	var marge = (dtb + dtreserve + pdm + bmt + adb + bmmouche) - dpt;
+	var tr = document.createElement('tr');
+	tr.className = 'detail';
+	var th = document.createElement('th');
+	appendText(th, '[MZ] Marge');
+	tr.appendChild(th);
+	var td = document.createElement('td');
+	appendText(td, MZ_FormatHeureMinute(marge, true));
+	tr.appendChild(td);
+	document.querySelector("#dla #duree").parentElement.parentElement.appendChild(tr);
+}
+
+function MZ_FormatHeureMinute(duree, bPlus) {
+	if (duree < 0) {
+		var txt = '- ';
+		duree = -duree;
+	} else if (duree > 0 && bPlus) {
+		var txt = '+ ';
+	}
+	var h = Math.floor(duree / 60);
+	if (h) txt += h + ' h ';
+	txt += (duree % 60) + ' m';
+	return txt;
 }
 
 // Complete le cadre "Experience"
