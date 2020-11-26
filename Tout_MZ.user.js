@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.62
+// @version     1.3.0.63
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,8 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.62 20/11/2020",
-"	Ajout du calcul de la marge de temps de tour dans le profil",
+"V1.3.0.63 20/11/2020",
+"	Ajout du calcul de la marge de temps de tour dans le profil (nommé marge ou augmentation)",
 "V1.3.0.60 16/11/2020",
 "	Vue externe en mode smartphone",
 "V1.3.0.59 08/11/2020",
@@ -12733,7 +12733,12 @@ function setInfosEtatPV() { // pour AM et Sacro
 	var tr = document.createElement('tr');
 	tr.className = 'detail';
 	var th = document.createElement('th');
-	appendText(th, '[MZ] Marge');
+	if (marge <= 0) {
+		appendText(th, '[MZ] Marge');
+	} else {
+		appendText(th, '[MZ] Augmentation');
+		tr.style.color = 'red';
+	}
 	tr.appendChild(th);
 	var td = document.createElement('td');
 	appendText(td, MZ_FormatHeureMinute(marge, true));

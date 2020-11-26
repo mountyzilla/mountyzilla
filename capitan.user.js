@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.08
+// @version 8.8.09
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +33,8 @@
 ****************************************************************/
 
 /*
+Roule 26/11/2020 V8.8.09
+	Fix supression d'essai
 Roule 16/10/2020 V8.8.08
 	Adaptation à des modifications MH
 Roule 07/10/2020 V8.8.07
@@ -918,11 +920,11 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		delRecherche: function(e) {	// ATTENTION, cette fonction ne tourne pas dans le contexte de l'objet ("this" pointe vers le bouton)
 			var idEssaiDel = e.target.idEssai;
 			var idCarte = e.target.idCarte;
-			if (this.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
+			if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
 			for (var i = 0; i < oCAPITAN_MH_ROULE.gEssais.length; i++) {
 				if (i == oCAPITAN_MH_ROULE.gEssais.length - 1) {
 					window.console.log("CAPITAN delRecherche: capitan."+idCarte+".essai."+i)
-					CAPITAN_deleteValue("capitan."+idCarte+".essai."+i);
+					oCAPITAN_MH_ROULE.CAPITAN_deleteValue("capitan."+idCarte+".essai."+i);
 				} else if (i >= idEssaiDel) {
 					window.console.log("CAPITAN delRecherche: set capitan."+idCarte+".essai."+(i)+'+++'+oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
 					oCAPITAN_MH_ROULE.CAPITAN_setValue("capitan."+idCarte+".essai."+(i),oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
