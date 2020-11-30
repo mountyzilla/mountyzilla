@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.64
+// @version     1.3.0.65
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,8 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.64 30/11/2020",
-"	Fix mémorisation des missions (donc cibles plus affichées)",
+"V1.3.0.65 30/11/2020",
+"	Fix mémorisation des missions (donc cibles plus affichées) + fix filtre en mode smartphone",
 "V1.3.0.63 20/11/2020",
 "	Ajout du calcul de la marge de temps de tour dans le profil (nommé marge ou augmentation)",
 "V1.3.0.60 16/11/2020",
@@ -10362,12 +10362,15 @@ function prepareFiltrage(ref,width) {
 
 function debutFiltrage(ref) {
 	// = Handler de début de filtrage (filtre 'ref')
-	document.getElementById('trFiltre'+ref).style.display = '';
+	var e = document.getElementById('trFiltre'+ref);
+	if (e) e.style.display = '';
 	var btn = document.getElementById('btnFiltre'+ref);
-	btn.value = 'Annuler Filtre';
-	btn.onclick = function() {
-		finFiltrage(ref);
-	};
+	if (btn) {
+		btn.value = 'Annuler Filtre';
+		btn.onclick = function() {
+			finFiltrage(ref);
+		};
+	}
 }
 
 function finFiltrage(ref) {
