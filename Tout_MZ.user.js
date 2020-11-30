@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.63
+// @version     1.3.0.64
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.64 30/11/2020",
+"	Fix mémorisation des missions (donc cibles plus affichées)",
 "V1.3.0.63 20/11/2020",
 "	Ajout du calcul de la marge de temps de tour dans le profil (nommé marge ou augmentation)",
 "V1.3.0.60 16/11/2020",
@@ -3693,7 +3695,7 @@ function analyseTactique(donneesMonstre,nom) {
 function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 	try {
 		var titresMimis = document.evaluate(
-			"//div[@class='mh_titre3']/b/a[contains(@href,'Mission_')]",
+			"//b[@class='mh_titre3']/a[contains(@href,'Mission_')]",
 			document, null, 7, null
 		);
 		var obMissions = JSON.parse(MY_getValue(numTroll+'.MISSIONS'));
@@ -3703,7 +3705,9 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 	}
 
 	var enCours = {};
+	if (MY_DEBUG) window.console.log('MZ checkLesMimis nb=' + titresMimis.snapshotLength);
 	for(var i=0 ; i<titresMimis.snapshotLength ; i++) {
+		if (MY_DEBUG) window.console.log('MZ checkLesMimis text=' + titresMimis.snapshotItem(i).textContent);
 		var num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
 		enCours[num] = true;
 	}
