@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.65
+// @version     1.3.0.66
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.66 07/12/2020",
+"	Options en mode smartphone",
 "V1.3.0.65 30/11/2020",
 "	Fix mémorisation des missions (donc cibles plus affichées) + fix filtre en mode smartphone",
 "V1.3.0.63 20/11/2020",
@@ -383,6 +385,8 @@ var MZ_changeLog = [
 		FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
 		FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
 	80117 - Héra
+*		Il semble que l'icône de LdP n'apparait que pour les Tom
+*		l'infobulle de sacrifice donne des info erronées maintenant (dues aux changement d'affichage des gains/bm de temps probablement). pour moi, ça me dit "vous ne pouvez pas compenser de blessures dues à un sacrifice" alors que clairement, je peux
 		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
 		FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
 		FAIT Possibilité de plusieurs systèmes Bricol'troll
@@ -390,6 +394,7 @@ var MZ_changeLog = [
 	?
 		FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
 	Alanae/Gnu/Pen-Hiss
+*		l'infobulle du lancer de potion pourrait donner le % du jet de toucher en fonction de la distance
 *		popup d'erreur js en mode smartphone sur un TP (pb trajet_canvas)
 		Dans https://mhp.mh.raistlin.fr/mountyhall/View/View_closed.php, le lien pour se connecter à son troll est games.mountyhall.com Est-ce que ça peut être modifié par MZ ?
 		a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
@@ -8098,6 +8103,7 @@ function deleteEnchantement()
 function do_option() {
 	start_script(712);
 	var insertPoint = document.getElementById('footer1');
+	if (!insertPoint) insertPoint = document.getElementById('footer');	// mode smartphone
 	insertBefore(insertPoint,document.createElement('p'));
 	var ti = insertTitle(insertPoint,'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
 	ti.onclick = function (e) {
@@ -14407,6 +14413,7 @@ function AfficheEssais(essais, sMode) {
 	var eBigDiv = document.getElementById('ListeEssaiCapitan');
 	if (!eBigDiv) {
 		var insertPoint = document.getElementById('footer1');
+		if (!insertPoint) insertPoint = document.getElementById('footer');	// mode smartphone
 		eBigDiv = document.createElement('table');
 		eBigDiv.id = 'ListeEssaiCapitan';
 		insertBefore(insertPoint, document.createElement('p'));

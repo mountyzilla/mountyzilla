@@ -292,6 +292,7 @@ var MZ_Switch = {
 	insertBlocConfig: function() {
 		// gestion des scripts dans la page "Pack Graphique"
 		var insertPoint = document.getElementById('footer1');
+		if (!insertPoint) insertPoint = document.getElementById('footer');	// mode smartphone
 
 		// aérer
 		insertPoint.parentNode.insertBefore(document.createElement('p'),insertPoint);
