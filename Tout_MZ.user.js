@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.66
+// @version     1.3.0.67
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.67 10/12/2020",
+"	Limitation vue externe",
 "V1.3.0.66 07/12/2020",
 "	Options en mode smartphone",
 "V1.3.0.65 30/11/2020",
@@ -502,7 +504,7 @@ try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une excep
 	//window.console.log('test GM_getValue, exception=' + e2);
 }
 if (horsGM) {	// éviter le blocage si pas sous GM
-	window.console.log('Fonctionnement hors Greasemonkey');
+	window.console.log('[MZ] Fonctionnement hors Greasemonkey');
 	// Roule 18/11/2017 il ne faut pas de "var" dans les ligne précédente. Ça fonctionnait sous Greasemonkey mais plus sous Violentmonkey
 	GM_getValue = function(key) {};
 	GM_setValue = function(key, val) {};
@@ -9597,6 +9599,14 @@ function positionToString(arr) {
 	return arr.join(';');
 }
 
+function MZ_deltaH(pos1, pos2) {	// pos1 et pos2 doivent être des tableaux [x, y, n]
+	return Math.max(Math.abs(pos1[0]-pos2[0]), Math.abs(pos1[1]-pos2[1]));
+}
+
+function MZ_deltaV(pos1, pos2) {
+	return Math.abs(pos1[2]-pos2[2]);
+}
+
 function savePosition() {
 	// Stocke la position (à jour) de la vue pour les autres scripts
 	// DEBUG: Lesquels et pourquoi?
@@ -9727,15 +9737,19 @@ function getMonstres() {
 	return appendMonstres(positionToString(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
-function bddMonstres(start,stop) {
+function bddMonstres(start,stop, limitH, limitV) {
 	if(!start) { var start = 1; }
 	if(!stop) { var stop = MZ_EtatCdMs.nbMonstres; }
 	stop = Math.min(MZ_EtatCdMs.nbMonstres,stop);
 	var txt='';
+	var myPosition = getPosition();
 	for(var i=start ; i<=stop ; i++) {
+		var monstrePosition = getMonstrePosition(i);
+		if (MZ_deltaH(myPosition, monstrePosition) > limitH) continue;
+		if (MZ_deltaV(myPosition, monstrePosition) > limitV) continue;
 		txt += getMonstreID(i)+';'+
 			getMonstreNom(i)+';'+
-			positionToString(getMonstrePosition(i))+'\n';
+			positionToString(monstrePosition)+'\n';
 	}
 	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES\n' : '';
 }
@@ -9814,12 +9828,16 @@ function getTrollPosition(i) {
 	];
 }
 
-function bddTrolls() {
+function bddTrolls(limitH, limitV) {
+	var myPosition = getPosition();
 	var txt='#DEBUT TROLLS\n'+
-		numTroll+';'+positionToString(getPosition())+'\n';
+		numTroll+';'+positionToString(myPosition)+'\n';
 	for(var i=1 ; i<=nbTrolls ; i++) {
+		var trollPosition = getTrollPosition(i);
+		if (MZ_deltaH(myPosition, trollPosition) > limitH) continue;
+		if (MZ_deltaV(myPosition, trollPosition) > limitV) continue;
 		txt += getTrollID(i)+';'+
-			positionToString(getTrollPosition(i))+'\n';
+			positionToString(trollPosition)+'\n';
 	}
 	return txt+'#FIN TROLLS';
 }
@@ -9852,18 +9870,22 @@ function getTresorPosition(i) {
 	];
 }
 
-function bddTresors(dmin,start,stop) {
+function bddTresors(dmin,start,stop, limitH, limitV) {
 // On retire les trésors proches (dmin) pour Troogle à cause de leur description
 	if(!dmin) { var dmin = 0; }
 	if(!start) { var start = 1; }
 	if(!stop) { var stop = nbTresors; }
 	stop = Math.min(nbTresors,stop);
+	var myPosition = getPosition();
 	var txt='';
 	for(var i=start ; i<=stop ; i++) {
+		var tresorPosition = getTresorPosition(i);
+		if (MZ_deltaH(myPosition, tresorPosition) > limitH) continue;
+		if (MZ_deltaV(myPosition, tresorPosition) > limitV) continue;
 		if(getTresorDistance(i)>=dmin) {
 			txt += getTresorID(i)+';'+
 				getTresorNom(i)+';'+
-				positionToString(getTresorPosition(i))+'\n';
+				positionToString(tresorPosition)+'\n';
 		}
 	}
 	return txt ? '#DEBUT TRESORS\n'+txt+'#FIN TRESORS\n' : '';
@@ -9885,12 +9907,16 @@ function getChampignonPosition(i) {
 	];
 }
 
-function bddChampignons() {
+function bddChampignons(limitH, limitV) {
+	var myPosition = getPosition();
 	var txt='';
 	for(var i=1 ; i<=nbChampignons ; i++) {
+		var champignonPosition = getChampignonPosition(i);
+		if (MZ_deltaH(myPosition, champignonPosition) > limitH) continue;
+		if (MZ_deltaV(myPosition, champignonPosition) > limitV) continue;
 		txt += ';'+ // Les champis n'ont pas de Référence
 			getChampignonNom(i)+';'+
-			positionToString(getChampignonPosition(i))+'\n';
+			positionToString(champignonPosition)+'\n';
 	}
 	return txt ? '#DEBUT CHAMPIGNONS\n'+txt+'#FIN CHAMPIGNONS\n' : '';
 }
@@ -9933,15 +9959,19 @@ function getLieux() {
 	return appendLieux(positionToString(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
 }
 
-function bddLieux(start,stop) {
+function bddLieux(start, stop, limitH, limitV) {
 	if(!start) { var start = 1; }
 	if(!stop) { var stop = nbLieux; }
 	stop = Math.min(nbLieux,stop);
+	var myPosition = getPosition();
 	var txt='';
 	for(var i=start ; i<=stop ; i++) {
+		var lieuPosition = getLieuPosition(i);
+		if (MZ_deltaH(myPosition, lieuPosition) > limitH) continue;
+		if (MZ_deltaV(myPosition, lieuPosition) > limitV) continue;
 		txt += getLieuID(i)+';'+
 			epure(getLieuNom(i))+';'+
-			positionToString(getLieuPosition(i))+'\n';
+			positionToString(lieuPosition)+'\n';
 	}
 	return txt ? '#DEBUT LIEUX\n'+txt+'#FIN LIEUX\n' : '';
 }
@@ -10009,13 +10039,31 @@ function synchroniseFiltres() {
 
 function getVueScript() {
 	try {
-		var txt = bddTrolls()+
-			bddMonstres()+
-			bddChampignons()+
-			bddTresors()+
-			bddLieux()+
+		var eLimitH = document.getElementById('MZvueExtMaxH');
+		if (eLimitH) var limitH = eLimitH.value;
+		if (limitH != '') limitH = parseInt(limitH);
+		var eLimitV = document.getElementById('MZvueExtMaxV');
+		if (eLimitV) var limitV = eLimitV.value;
+		if (limitV != '') limitV = parseInt(limitV);
+		if (limitH == '' || limitH == 0) {
+			MY_removeValue('MZ_VueExtMaxH');
+			var porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
+		} else {
+			MY_setValue('MZ_VueExtMaxH', limitH);
+			var porteeVueExt = limitH;
+		}
+		if (limitV == '' || limitV == 0) {
+			MY_removeValue('MZ_VueExtMaxV');
+		} else {
+			MY_setValue('MZ_VueExtMaxV', limitV);
+		}
+		var txt = bddTrolls(limitH, limitV)+
+			bddMonstres(null, null, limitH, limitV)+
+			bddChampignons(limitH, limitV)+
+			bddTresors(null, null, null, limitH, limitV)+
+			bddLieux(null, null, limitH, limitV)+
 			'#DEBUT ORIGINE\n'+
-			getPorteVue()[2]+';'+positionToString(getPosition())+
+			porteeVueExt+';'+positionToString(getPosition())+
 			'\n#FIN ORIGINE\n';
 		if (MY_DEBUG) window.console.log('MZ getVueScript nbTrolls=' + nbTrolls + ', txt=' + txt);
 		window.console.log('[MZd ' + GM_info.script.version + '] fin getVueScript');
@@ -10141,7 +10189,7 @@ function set2DViewSystem() {
 		selectVue2D = document.createElement('select');
 		selectVue2D.id = 'selectVue2D';
 		selectVue2D.className = 'SelectboxV2';
-		window.console.log('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
+		//window.console.log('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
 		for(var view in vue2Ddata) {
 			appendOption(selectVue2D, view, view);
 		}
@@ -10157,6 +10205,13 @@ function set2DViewSystem() {
 		var tr = appendTr(table);
 		var td = appendTd(tr);
 		td.appendChild(selectVue2D);
+		appendTdText(tr, 'Limiter à ').style.whiteSpace = 'nowrap';
+		td = appendTd(tr);
+		appendTextbox(td,'input','MZvueExtMaxH',3,3,MY_getValue('MZ_VueExtMaxH'), 'MZvueExtMaxH');
+		appendTdText(tr, ' cases horizontales et ').style.whiteSpace = 'nowrap';
+		td = appendTd(tr);
+		appendTextbox(td,'input','MZvueExtMaxV',3,3,MY_getValue('MZ_VueExtMaxV'), 'MZvueExtMaxV');
+		appendTdText(tr, ' cases verticales').style.whiteSpace = 'nowrap';
 		td = appendTd(tr);
 		td.style.fontSize = '0px'; // gère le bug de l'extra character
 		td.appendChild(form);
@@ -10177,7 +10232,7 @@ function set2DViewSystem() {
 		refresh2DViewButton();
 		window.console.log('[MZd ' + GM_info.script.version + '] fin préparation des vues externes');
 	} catch(e) {
-		avertissement("Erreur de traitement du système de vue 2D");
+		avertissement("Erreur de traitement du système de vue externe");
 		window.console.error(traceStack(e, 'set2DViewSystem'));
 	}
 }
