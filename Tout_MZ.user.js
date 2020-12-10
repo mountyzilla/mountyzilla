@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.67
+// @version     1.3.0.68
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.68 10/12/2020",
+"	Réhausse des lignes de tableaux de la vue",
 "V1.3.0.67 10/12/2020",
 "	Limitation vue externe",
 "V1.3.0.66 07/12/2020",
@@ -4070,6 +4072,55 @@ function initCompteAreboursDLA() {
 	}, 1000);
 }
 
+/*-[functions]-------------- Highlight Table Lines ---------------------------*/
+function initHighlightTableLines() {
+	if(MY_getValue('HIGHLIGHTTABLELINES')!='true') {
+		return;
+	}
+
+	(function($) {
+		/*if (typeof $ == "function")
+			console.log("jQuery version " + $.fn.jquery); */
+
+		var monsterTableSpec = "table#VueMONSTRE",
+			trollTableSpec = "table#VueTROLL",
+			treasureTableSpec = "table#VueTRESOR",
+			champiTableSpec = "table#VueCHAMPIGNON",
+			lieuxTableSpec = "table#VueLIEU",
+			cadavresTableSpec = "table#VueCADAVRE",
+
+			addSameXYN = function(tableSpecs) {
+				$("<style type='text/css'>tr.xyn td, tr.xyn-sel td { background-color: beige; }</style>").appendTo("head");
+
+				var toggleFn = function (e) {
+					var tr = $(this).parent("tr");
+					$('tr[data-xyn="' + tr.attr("data-xyn") + '"]').toggleClass(e.data.class);
+				};
+				$.each(tableSpecs, function (i, tableSpec) {
+					var nthChild = $(tableSpec + ' tr.mh_tdtitre  th:contains("X")').index(),
+						xId = nthChild + 1,
+						yId = nthChild + 2,
+						nId = nthChild + 3;
+					$(tableSpec + " tr.mh_tdpage").each(function(i, e) {
+						var tr =  $(e),
+							tdX = tr.find("td:nth-child(" + xId + ")"),
+							tdY = tr.find("td:nth-child(" + yId + ")"),
+							tdN = tr.find("td:nth-child(" + nId + ")");
+
+						tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
+
+						$.each([tdX, tdY, tdN], function(i, e) {
+							var td = $(e);
+							td.on("mouseenter mouseleave", {class:"xyn"}, toggleFn);
+							td.on("click", {class:"xyn-sel"}, toggleFn);
+						});
+					});
+				});
+			};
+		addSameXYN([monsterTableSpec, trollTableSpec, treasureTableSpec, champiTableSpec, lieuxTableSpec, cadavresTableSpec]);
+	})(unsafeWindow.jQuery);
+}
+
 /*-[functions]------------------- Alerte Mundi -------------------------------*/
 
 function prochainMundi() {
@@ -7695,6 +7746,8 @@ function saveAll() {
 		MY_setValue('COMPTEAREBOURSDLA',
 			document.getElementById('compteAreboursDLA').checked ? 'true':'false');
 
+		MY_setValue('HIGHLIGHTTABLELINES',
+			document.getElementById('highlightTableLines').checked ? 'true':'false');
 
 		/* SCIZ */
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
@@ -8010,6 +8063,10 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'compteAreboursDLA',MY_getValue('COMPTEAREBOURSDLA')=='true');
 	appendText(td,' Compte à rebours de DLA');
+
+	td = appendTd(appendTr(mainBody,'mh_tdpage'));
+	appendCheckBox(td,'highlightTableLines',MY_getValue('HIGHLIGHTTABLELINES')=='true');
+	appendText(td,' Réhausse des lignes de tableaux de la vue');
 
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
@@ -12229,6 +12286,9 @@ function do_vue() {
 		}
 
 		putScriptExterne();
+
+		// Ajout de la réhausse des lignes de vue
+		initHighlightTableLines();
 
 		displayScriptTime();
 	} catch(e) {
