@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.67
+// @version     1.3.0.68
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.67 10/12/2020",
+"V1.3.0.68 10/12/2020",
 "	Limitation vue externe",
 "V1.3.0.66 07/12/2020",
 "	Options en mode smartphone",
@@ -8995,7 +8995,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 				texte = responseDetails.responseText;
 				buttonCDM.value = texte;
 				//window.console.log('buttonCDM.parentNode.firstChild.nodeName=' + buttonCDM.parentNode.firstChild.nodeName);
-				if (buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
+				if (buttonCDM.parentNode && buttonCDM.parentNode.firstChild && buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
 					buttonCDM.parentNode.firstChild.innerHTML = texte;
 				}
 				if (!isDEV) buttonCDM.disabled = true;
@@ -10048,12 +10048,14 @@ function getVueScript() {
 		if (limitH == '' || limitH == 0) {
 			MY_removeValue('MZ_VueExtMaxH');
 			var porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
+			limitH = 999;
 		} else {
 			MY_setValue('MZ_VueExtMaxH', limitH);
 			var porteeVueExt = limitH;
 		}
 		if (limitV == '' || limitV == 0) {
 			MY_removeValue('MZ_VueExtMaxV');
+			limitV = 999;
 		} else {
 			MY_setValue('MZ_VueExtMaxV', limitV);
 		}
