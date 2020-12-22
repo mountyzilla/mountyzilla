@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.68
+// @version     1.3.0.69
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13263,7 +13263,6 @@ function setTalent(nom,pc,niveau,sousCompetences) {
 			}
 			break;
 		case 'AP':
-		case 'Baroufle':
 		case 'CdB':
 		case 'CdM':
 		case 'Parer':
