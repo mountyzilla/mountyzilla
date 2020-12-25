@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.69 25/12/2020",
+"	Fix (tentative) message d'erreur sur armM_phy dans la vue",
 "V1.3.0.68 10/12/2020",
 "	Limitation vue externe",
 "V1.3.0.66 07/12/2020",
