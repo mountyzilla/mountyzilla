@@ -3077,9 +3077,10 @@ var MZ_Tactique = {
 
 	showPopup: function(evt) {
 		// Affichage du popup tactique
+		var id, nom
 		try {
-			var id = this.id;
-			var nom = this.nom;
+			id = this.id;
+			nom = this.nom;
 			var texte = getAnalyseTactique(id, nom);
 			if (texte == undefined || texte == '') return;
 			MZ_Tactique.popup.innerHTML = texte;
@@ -3093,6 +3094,7 @@ var MZ_Tactique = {
 			MZ_Tactique.popup.style.display = 'block';
 		} catch (e) {
 			// window.alert(e);
+			window.console.log('[MZ] showPopup exception pour id=' + id + ', nom=' + nom);
 			window.console.error(e);
 		}
 	}
@@ -3340,7 +3342,7 @@ function analyseTactique(donneesMonstre,nom) {
 	var modificateurEsquiveM = '';
 	var modificateurArmureM = '';
 	var pasDeSR=false;
-	var esqM=0,attM=0,armM_mag=0,armM_tot=0,degM=0;
+	var esqM=0,attM=0,armM_mag=0,armM_phy=0,armM_tot=0,degM=0;
 	if(donneesMonstre==null || att==null || attbmp==null || attbmm==null || mm==null || deg==null || degbmp==null || degbmm==null || vue==null ||pv==null || esq==null || arm==null)
 		return null;
 
@@ -3682,7 +3684,13 @@ function analyseTactique(donneesMonstre,nom) {
 	return listeAttaques;
 	}
 	catch(e) {
-		window.console.error(traceStack(e, 'analyseTactique'));
+		var msgid = '';
+		try {
+			msgid = ', monstre ' + donneesMonstre.id;
+		}
+		catch(e2) {
+		}
+		window.console.error(traceStack(e, 'analyseTactique' + msgid));
 		window.alert(e);
 		}
 	}
