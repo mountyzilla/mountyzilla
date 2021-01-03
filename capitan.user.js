@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.09
+// @version 8.8.10
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,8 +33,10 @@
 ****************************************************************/
 
 /*
+Roule 03/01/2021 V8.8.10
+	Réécriture de la recherche des solutions
 Roule 26/11/2020 V8.8.09
-	Fix supression d'essai
+	Fix suppression d'essai
 Roule 16/10/2020 V8.8.08
 	Adaptation à des modifications MH
 Roule 07/10/2020 V8.8.07
@@ -176,36 +178,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return string;
 		},
 
-		combi: function(tab) {
-			var newTab = new Array();
-			if(tab.length==1)
-			{
-				newTab[""+tab[0]]=1;
-				return newTab;
-			}
-			var val = this.tabToString(tab);
-			if(this.cache[val])
-				return this.cache[val];
-			for(var i=0;i<tab.length;i++)
-			{
-				var lastTab = this.combi(this.removeTab(tab,i));
-				for(var j in lastTab)
-					newTab[tab[i]+";"+j]=1;
-			}
-			this.cache[val]=newTab;
-			return newTab;
-		},
-
-		affiche: function(tab) {
-			var newTab = this.combi(tab);
-			var string="";
-			for(var i in newTab)
-			{
-				string += i+"\n";
-			}
-			window.alert(string);
-		},
-
 		extractPosition: function(nombre, indice) {
 			if((nombre+"").length<=indice)
 				return "%";
@@ -246,197 +218,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return parseInt(pos, 10);
 		},
 
-		calculeSolution6: function(x,y,n,essais) {
-			var listeChiffre = new Array();
-			for(var i=0;i<(Math.abs(x)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(x),i));
-			for(var i=0;i<(Math.abs(y)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(y),i));
-			for(var i=0;i<(Math.abs(n)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(n),i));
-			var listeSolutionsPossibles = this.combi(listeChiffre);
-			var listeSolutions = new Array();
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,listeChiffre.length/3);
-				var y1 = this.getPosFromArray(liste,listeChiffre.length/3,listeChiffre.length/3);
-				var n1 = this.getPosFromArray(liste,2*(listeChiffre.length)/3,listeChiffre.length/3);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			return listeSolutions;
-		},
-
-		calculeSolution5: function(x,y,n,essais) {
-			var listeChiffre = new Array();
-			for(var i=0;i<(Math.abs(x)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(x),i));
-			for(var i=0;i<(Math.abs(y)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(y),i));
-			for(var i=0;i<(Math.abs(n)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(n),i));
-			var listeSolutionsPossibles = this.combi(listeChiffre);
-			var length = Math.floor(listeChiffre.length/3);
-			var listeSolutions = new Array();
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length);
-				var y1 = this.getPosFromArray(liste,length,length+1);
-				var n1 = this.getPosFromArray(liste,2*length+1,length+1);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length+1);
-				var y1 = this.getPosFromArray(liste,length+1,length);
-				var n1 = this.getPosFromArray(liste,2*length+1,length+1);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length+1);
-				var y1 = this.getPosFromArray(liste,length+1,length+1);
-				var n1 = this.getPosFromArray(liste,2*length+2,length);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			return listeSolutions;
-		},
-
-		calculeSolution4: function(x,y,n,essais) {
-			var listeChiffre = new Array();
-			for(var i=0;i<(Math.abs(x)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(x),i));
-			for(var i=0;i<(Math.abs(y)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(y),i));
-			for(var i=0;i<(Math.abs(n)+"").length;i++)
-				listeChiffre.push(this.extractPosition(Math.abs(n),i));
-			var listeSolutionsPossibles = this.combi(listeChiffre);
-			var length = Math.floor(listeChiffre.length/3);
-			var listeSolutions = new Array();
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length);
-				var y1 = this.getPosFromArray(liste,length,length);
-				var n1 = this.getPosFromArray(liste,2*length,length+1);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length+1);
-				var y1 = this.getPosFromArray(liste,length+1,length);
-				var n1 = this.getPosFromArray(liste,2*length+1,length);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			for(var key in listeSolutionsPossibles)
-			{
-				var liste = key.split(";");
-				var x1 = this.getPosFromArray(liste,0,length);
-				var y1 = this.getPosFromArray(liste,length,length+1);
-				var n1 = this.getPosFromArray(liste,2*length+1,length);
-				var oki = true;
-				for(var i=0;i<essais.length;i++)
-				{
-					if(essais[i][3] != this.comparePos(x1,y1,n1,Math.abs(essais[i][0]),Math.abs(essais[i][1]),Math.abs(essais[i][2])))
-					{
-						oki=false;
-						break;
-					}
-				}
-				if(oki)
-					listeSolutions.push(new Array(x1*this.signe(x),y1*this.signe(y),n1*this.signe(n)));
-			}
-			return listeSolutions;
-		},
-
-		calculeSolution: function(x,y,n,essais) {
-			var size = (";"+Math.abs(x)+Math.abs(y)+Math.abs(n)).length-1;
-			if(size%3==0)
-				return this.calculeSolution6(x,y,n,essais);
-			if(size%3==1)
-				return this.calculeSolution4(x,y,n,essais);
-			if(size%3==2)
-				return this.calculeSolution5(x,y,n,essais);
-		},
-
-		afficheSolutions: function(x,y,n,essais) {
-			var listeSolutions = this.calculeSolution(x,y,n,essais);
-			if (this.bDebug) window.console.log('afficheSolutions: ListeSolutions=' + JSON.stringify(listeSolutions) + ', x=' + x);
-			var string="Il y a "+listeSolutions.length+" solutions";
-			if(listeSolutions.length<=10)
-			{
-				for(var i=0;i<listeSolutions.length;i++)
-				{
-					string+= "\n x="+listeSolutions[i][0]+" y="+listeSolutions[i][1]+" n="+listeSolutions[i][2];
-				}
-			}
-			return string;
-		},
-
 		toggleTableau: function() {
 			var tbody = this.parentNode.parentNode.parentNode.childNodes[1];
 
@@ -456,10 +237,16 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return td;
 		},
 
-		showXYN: function(tabXYN, bSigneOK) {
-			if (bSigneOK)
-					return "X = " + tabXYN[0] + ", Y = " + tabXYN[1] + ", N = " + tabXYN[2];
-			return "X = ±" + Math.abs(tabXYN[0]) + ", Y = ±" + Math.abs(tabXYN[1]) + ", N = " + tabXYN[2];
+		showXYN: function(tabXYN, signes) {
+			var sx = '±';
+			var sy = '±';
+			if (signes) {
+				sx = '+';
+				sy = '+';
+				if (signes[0] < 0) sx = '-';
+				if (signes[1] < 0) sy = '-';
+			}
+			return "X = " + sx + Math.abs(tabXYN[0]) + ", Y = " + sy + Math.abs(tabXYN[1]) + ", N = -" + Math.abs(tabXYN[2]);
 		},
 
 		is200: function(tabXYN) {	// vrai si au moins une coord >= 200
@@ -471,7 +258,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		gbody: null,
 
-		generateTable: function(listeSolutions, bSigneOK) {
+		generateTable: function(listeSolutions, signes) {
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
 			table.setAttribute('border', '0');
@@ -484,7 +271,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				var thead = document.createElement('thead');
 				var tr = this.appendTr(thead, 'mh_tdtitre');
-				var td = this.appendTdText(tr, "Position de la cachette : " + this.showXYN(listeSolutions[0], bSigneOK), true);
+				var td = this.appendTdText(tr, "Position de la cachette : " + this.showXYN(listeSolutions[0], signes), true);
 				td.setAttribute('align', 'center');
 				table.appendChild(thead);
 				return table;
@@ -513,13 +300,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				if (this.is200(listeSolutions[i]))
 					bExist200 = true;
 				else
-					this.createCase(this.showXYN(listeSolutions[i], bSigneOK),this.gbody,400);
+					this.createCase(this.showXYN(listeSolutions[i], signes),this.gbody,400);
 			}
 			if (bExist200) {
 				this.createCase("Les suivantes sont peu probables car trop en dehors du Hall",this.gbody,400);
 				for (var i = 0; i < listeSolutions.length; i++) {
 					if (this.is200(listeSolutions[i]))
-						this.createCase(this.showXYN(listeSolutions[i], bSigneOK),this.gbody,400);
+						this.createCase(this.showXYN(listeSolutions[i], signes),this.gbody,400);
 				}
 			}
 
@@ -531,36 +318,179 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return table;
 		},
 
-		gListeSolutions: new Array(),
-		gEssais: null,	// Roule 08/08/2016 essais en variable globale (pour générer le bloc liste et le bloc pour l'outils de Psycho Chasseurs)
+		gListeSolutions: new Array(),	// tableau de tableaux des 3 coord
+		gEssais: new Array(),	// tableau d'objets de type oEssai
+		oMort: null,	// objet de type oEssai sans "c"
+
+		oEssai: function(x, y, n, c) {	// déclaration d'objet méthode "function"
+			if (y == undefined) {	// initialisation à partir d'une chaine séparée par ";"
+				let t = x.split(";");
+				this.x = parseInt(t[0], 10);
+				this.y = parseInt(t[1], 10);
+				this.n = parseInt(t[2], 10);
+				this.c = parseInt(t[3], 10);
+			} else {
+				this.x = x;
+				this.y = y;
+				this.n = n;
+				this.c = c;
+			}
+
+			this.xAbs = Math.abs(this.x);
+			this.yAbs = Math.abs(this.y);
+			this.nAbs = Math.abs(this.n);
+			this.xText = this.xAbs + '';
+			if (this.xText.length < 2) this.xText = '0' + this.xText;
+			this.yText = this.yAbs + '';
+			if (this.yText.length < 2) this.yText = '0' + this.yText;
+			this.nText = this.nAbs + '';
+			if (this.nText.length < 2) this.nText = '0' + this.nText;
+
+			this.nbMatchesOne = function (t1, t2) {
+				t1 = '' + parseInt(t1, 10);	// virer le zéro à gauche. MH n'en tient pas compte quand il compte le nombre de match
+				t2 = '' + parseInt(t2, 10);
+				var nRet = 0;
+				var l1 = t1.length;
+				var l2 = t2.length;
+				for (var i = 0; i < l1 && i < l2; i++)
+					if (t1.substring(l1 - (i+1), l1 - i) == t2.substring(l2 - (i+1), l2 - i)) nRet++;
+				return nRet;
+			};
+
+			this.isCompatible = function(tabCoord) {	// vérifie si c'est compatible avec les coord passées en argument sous forme de tableau de chaines
+				var nMatches = this.nbMatchesOne(this.xText, tabCoord[0]);
+				nMatches += this.nbMatchesOne(this.yText, tabCoord[1]);
+				nMatches += this.nbMatchesOne(this.nText, tabCoord[2]);
+				return nMatches == this.c
+			};
+
+			this.forPsychoChasseur = function() {	// rend le bout de texte à mettre dans l'URL vers l'outil des Psycho Chasseurs
+				return this.xAbs + '+' + this.yAbs + '+' + this.nAbs + '+' + this.c;
+			};
+
+			this.nbChiffre = function() {	// rend le nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités)
+				return this.xText.length + this.yText.length + this.nText.length;
+			};
+
+			this.tabOccurenceChiffre = function() {	// le nombre d'occurrence de chaque chiffre (0 à 9) dans les coord
+				var tabRet = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+				this.addOccurenceChiffre(tabRet, this.xText);
+				this.addOccurenceChiffre(tabRet, this.yText);
+				this.addOccurenceChiffre(tabRet, this.nText);
+				return tabRet;
+			};
+
+			this.addOccurenceChiffre = function(t, s) {
+				var l = s.length;
+				for (var i = 0; i < l; i++) {
+					var c = s.substring(i, i+1);
+					var n = parseInt(c, 10);
+					if (!isNaN(n)) t[n]++;
+				}
+			};
+		},
+
+		calculeSolution2: function() {	// calcule les solutions à partir des propriétés de oMort et gEssai
+			var oContexte = {
+				// nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités) dans les coord de la mort du Capitan
+				nbChiffre: this.oMort.nbChiffre(),
+				// nombre d'occurrence de chaque chiffre (0 à 9) dans les coord de la mort du Capitan
+				tabOccurrenceChiffre: this.oMort.tabOccurenceChiffre(),
+				// Si on a plus de 6 chiffres, il y a des coordonnées à 3 chiffres, leur nombre sera calculé plus loin
+				nCoord3: undefined,
+				// On n'a encore traité aucune coordonnée
+				nCoordEnCours: 0,	// 0:x, 1:y, 2:n
+				// les chaines des coord en cours de construction
+				tabCoord: ['', '', ''],
+			};
+			oContexte.nCoord3 = oContexte.nbChiffre - 6;
+			if (this.bDebug) window.console.log("CAPITAN calculeSolution2 contexte initial=" + JSON.stringify(oContexte));
+
+			// On lance le balayage récursif des possibilités
+			this.calculeSolutionRecursifCoord(oContexte);
+		},
+
+		calculeSolutionRecursifCoord: function(oContexte) {	// balayage récursif des solutions, balayage coordonnée (x, y ou n)
+			if (oContexte.nCoord3 > 0) {	// lancer le test sur une coord à 3 chiffres
+				var newContexte = Object.assign({}, oContexte);	// clone car on modifie le contexte
+				newContexte.nCoord3--;
+				this.calculeSolutionRecursifDigit(newContexte, 3);
+			}
+			if (oContexte.nCoord3 <= (2- oContexte.nCoordEnCours)) {	// pas de test à 2 chiffres si toutes les coord restantes doivent être à 3 chiffres
+				this.calculeSolutionRecursifDigit(oContexte, 2);
+			}
+		},
+
+		calculeSolutionRecursifDigit: function(oContexte, nChiffreThisCoord) {	// balayage récursif des solutions, balayages des suites de chiffres possibles
+			var thisCoord = '';
+			var newContexte = Object.assign({}, oContexte);	// clone car on modifie le contexte
+			newContexte.tabCoord = oContexte.tabCoord.slice();	// clone (le clone ci-dessus est un "shallow" clone)
+			for (var i = 0; i <= 9; i++) {	// boucle sur les chiffres possibles à cette position
+				if (oContexte.tabOccurrenceChiffre[i] == 0) continue;	// chiffre non disponible
+				newContexte.tabCoord[oContexte.nCoordEnCours] = oContexte.tabCoord[oContexte.nCoordEnCours] + i;
+				newContexte.tabOccurrenceChiffre = oContexte.tabOccurrenceChiffre.slice();	// clone car on modifie ce tableau
+				newContexte.tabOccurrenceChiffre[i]--;
+				if (nChiffreThisCoord > 1) {	// continuer à tirer des chiffres pour cette coord
+					this.calculeSolutionRecursifDigit(newContexte, nChiffreThisCoord-1);
+					continue;
+				}
+				// on a fini avec cette coord
+				if (oContexte.nCoordEnCours != 2) {
+					// continuer sur la coord suivante
+					newContexte.nCoordEnCours = oContexte.nCoordEnCours + 1;
+					this.calculeSolutionRecursifCoord(newContexte);
+					continue;
+				}
+				// ici, on a tiré tous les chiffres des 3 coordonnées, on teste si ces coord sont compatibles avec les essais
+				var isCompatible = true;
+				for (oEssai of this.gEssais) {
+					if (!oEssai.isCompatible(newContexte.tabCoord)) {
+						isCompatible = false;
+						break;
+					}
+				}
+				if (this.bDebug && newContexte.tabCoord[0] == '03' && newContexte.tabCoord[1] == '80') {
+					let sCause = '';
+					if (!isCompatible) {
+						sCause = ' bad ' + oEssai.forPsychoChasseur() + ' nMatches=';
+						sCause += oEssai.nbMatchesOne(oEssai.xText, newContexte.tabCoord[0]);
+						sCause += ' ' + oEssai.nbMatchesOne(oEssai.yText, newContexte.tabCoord[1]);
+						sCause += ' ' + oEssai.nbMatchesOne(oEssai.nText, newContexte.tabCoord[2]);
+					}
+					window.console.log('CAPITAN calculeSolutionRecursifDigit, teste ' + newContexte.tabCoord.join("; ") + ', isCompatible=' + isCompatible + sCause);
+				}
+				if (isCompatible) {
+					this.gListeSolutions.push(newContexte.tabCoord.slice());	// slice pour cloner le tableau
+				}
+			}
+		},
 
 		afficheInfoCarte: function(idCarte) {
-			var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position").split(";");
+			var originalPosText = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			var originalPos = originalPosText.split(";");
 			if(originalPos.length!=3)
 				return;
+			this.oMort = new this.oEssai(originalPosText);
 			this.gEssais = new Array();
 			var i = 0;
-			while(this.CAPITAN_getValue("capitan."+idCarte+".essai."+i) != null)
+			var essaiText;
+			while((essaiText = this.CAPITAN_getValue("capitan."+idCarte+".essai."+i)) != null)
 			{
-				this.gEssais.push(this.CAPITAN_getValue("capitan."+idCarte+".essai."+i).split(";"));
+				//this.gEssais.push(this.CAPITAN_getValue("capitan."+idCarte+".essai."+i).split(";"));
+				this.gEssais.push(new this.oEssai(essaiText));
 				i++;
 			}
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") !=null)
 			{
 				var signes = this.CAPITAN_getValue("capitan."+idCarte+".this.signe").split(";");
-				this.gListeSolutions = this.calculeSolution(Math.abs(originalPos[0])*this.signe(signes[0]),Math.abs(originalPos[1])*this.signe(signes[1]),originalPos[2],this.gEssais);
-				if (this.bDebug) window.console.log('afficheInfoCarte: gListeSolutions=' + JSON.stringify(this.gListeSolutions) + ', signe=' + JSON.stringify(signes));
+				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte signes=' + JSON.stringify(signes));
 			}
 			else
 			{
-				this.gListeSolutions = this.calculeSolution(originalPos[0],originalPos[1],originalPos[2],this.gEssais);
-				for (var i = 0; i < this.gListeSolutions; i++) {
-					this.gListeSolutions[i][0] = Math.abs(this.gListeSolutions[i][0]);
-					this.gListeSolutions[i][1] = Math.abs(this.gListeSolutions[i][1]);
-				}
-				if (this.bDebug) window.console.log('afficheInfoCarte: sans signe, gListeSolutions=' + JSON.stringify(this.gListeSolutions));
+				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte pas de signe ' + originalPos[0] + ',' + originalPos[1] + ',' + originalPos[2]);
 			}
-			return this.generateTable(this.gListeSolutions, signes != undefined);
+			this.calculeSolution2();
+			return this.generateTable(this.gListeSolutions, signes);
 		},
 
 		getRepartitionFromCase: function(tx, ty, tn, listeSolutions) {
@@ -735,7 +665,12 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				return;
 			}
 			var idCarte = this.getIDCarte();
-			if (idCarte > 0) var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			if (this.bDebug && idCarte == 11987020) {	// test Roule
+				var originalPos = '-101;-8;-73';
+				this.CAPITAN_setValue("capitan."+idCarte+".position", originalPos)
+			} else if (idCarte > 0) {
+				var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			}
 			if (this.bDebug) window.console.log('CAPITAN analyseObject: this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', originalPos=' + originalPos);
 			if(!originalPos || originalPos == null)
 			{
@@ -844,12 +779,14 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var tbody = document.createElement('tbody');
 			table.appendChild(tbody);
 
-			// http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=1&y=2&n=3&t=4+5+6+7%0D%0A10+11+12+5&enter=Go#
+			// http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=101&y=8&n=73&t=3+77+30+1%0D%0A37+57+48+0%0D%0A33+32+29+1%0D%0A87+20+74+2%0D%0A17+56+63+0%0D%0A22+89+78+2&voir=1&cent=100&enter=Go#
 			var tabtxt = new Array();
 			var currentPosAlreadyDone = false;
 			for (var i = 0; i < this.gEssais.length; i++) {
-				tabtxt.push(this.gEssais[i].join('+'));
-				if (this.gEssais[i][0] == currentPos[0] && this.gEssais[i][1] == currentPos[1] && this.gEssais[i][2] == currentPos[2]) currentPosAlreadyDone = true;
+				tabtxt.push(this.gEssais[i].forPsychoChasseur());
+				if (this.gEssais[i].x == currentPos[0] && this.gEssais[i].y == currentPos[1] && this.gEssais[i].n == currentPos[2]) currentPosAlreadyDone = true;
+				//tabtxt.push(this.gEssais[i].join('+'));
+				//if (this.gEssais[i][0] == currentPos[0] && this.gEssais[i][1] == currentPos[1] && this.gEssais[i][2] == currentPos[2]) currentPosAlreadyDone = true;
 			}
 			if (!currentPosAlreadyDone) tabtxt.push(currentPos.join('+') + '+%3F');	// spécial pour demander à Mamoune ce qu'elle pense d'un essai à la position courante
 			var tr2 = this.appendTr(tbody, 'mh_tdpage');
@@ -860,7 +797,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			} else {
 				var a = document.createElement('a');
 				this.appendText(a, 'Cliquer ici pour savoir ce qu\'en pensent les Psyko-Chasseurs');
-				a.setAttribute('href', 'http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=' + originalPos[0] + '&y=' + originalPos[1] + '&n=' + originalPos[2] + '&t=' + tabtxt.join('%0D%0A'));
+				a.setAttribute('href', 'http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=' + originalPos[0] + '&y=' + originalPos[1] + '&n=' + originalPos[2] + '&t=' + tabtxt.join('%0D%0A') + '&voir=1&cent=100');
 				a.setAttribute('target', 'psykochasseurs');
 				td2.appendChild(a);
 			}
@@ -898,7 +835,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.appendChild(tbody);
 
 			for (var i = 0; i < this.gEssais.length; i++) {
-				var td2 = this.createCase("X = "+this.gEssais[i][0]+", Y = "+this.gEssais[i][1]+", N = "+this.gEssais[i][2]+" => "+this.gEssais[i][3],tbody,400);
+				var td2 = this.createCase("X = " + this.gEssais[i].x + ", Y = "+this.gEssais[i].y +", N = " + this.gEssais[i].n + " => " + this.gEssais[i].c,tbody,400);
 				var td3 = this.appendTd(td2.parentNode);
 				var bt = this.appendButton(td3, "Supprimer", this.delRecherche);
 				bt.idEssai = i;
@@ -1450,6 +1387,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 	{
 		oCAPITAN_MH_ROULE.init();
 	} catch(e) {
-		window.console.log('script capitan exception: ' + e);
+		window.console.log('script capitan exception: ' + e + "\n" + e.stack);
 	}
 }
