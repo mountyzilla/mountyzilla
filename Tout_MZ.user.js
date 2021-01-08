@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.69
+// @version     1.3.0.70
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.70 08/01/2021",
+"	adaptation vue externe dist H/V",
 "V1.3.0.69 25/12/2020",
 "	Fix (tentative) message d'erreur sur armM_phy dans la vue",
 "V1.3.0.68 10/12/2020",
@@ -9849,12 +9851,18 @@ function bddTrolls(limitH, limitV) {
 		txt += getTrollID(i)+';'+
 			positionToString(trollPosition)+'\n';
 	}
-	return txt+'#FIN TROLLS';
+	return txt+'#FIN TROLLS\n';
 }
 
 /* [functions] Récup données Trésors */
 function getTresorDistance(i) {
-	return tr_tresors[i].cells[0].firstChild.nodeValue;
+	var cellTxt = tr_tresors[i].cells[0].firstChild.nodeValue;
+	var txtSplitted = cellTxt.split('|');
+	if (txtSplitted.length == 1) txtSplitted = cellTxt.split('/');
+	if (txtSplitted.length == 1) return txtSplitted;
+	var dH = Math.abs(txtSplitted[0]);
+	var dV = Math.abs(txtSplitted[1]);
+	return Math.max(dH, dV);
 }
 
 function getTresorID(i) {
