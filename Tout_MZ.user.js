@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.71
+// @version     1.3.0.72
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.72 11/01/2021",
+"	Correction de la vue des trolls avec SCIZ",
 "V1.3.0.71 11/01/2021",
 "	Amélioration du support SCIZ (Vue trolls)",
 "V1.3.0.70 08/01/2021",
@@ -5521,8 +5523,8 @@ function scizAddCSS() {
 	// SCIZ style
 	var scizStyle = `
 		.sciz-progress-bar-wrapper {
-			width: 100px;
-			text-align: center;
+			width: 75px;
+			margin-right: 5px;
 			display: inline-block;
 		}
 		.sciz-progress-bar {
@@ -5537,6 +5539,13 @@ function scizAddCSS() {
 			height: 5px;
 			border-radius: 1px;
 			transition: width 500ms ease-in-out;
+		}
+		.sciz-troll-view-block {
+			display: inline-block;
+			padding-left: 10px;
+			margin-left: 10px;
+			border-left: 1px solid black;
+			white-space: pre-wrap;
 		}
 	`;
 	// Actually add the SCIZ style
@@ -5576,20 +5585,21 @@ function scizCreateIcon(height, display, icon) {
 /* SCIZ - View */
 
 function scizPrettyPrintTroll(t) {
-	var res = [];
+	var res = '';
 	// Life progress bar
 	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? t.pdv / t.pdv_max * 100 : -1;
 	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
 	t.pdv_max = (t.pdv_max === null) ? '?' : t.pdv_max;
-	res.push('<div class="sciz-progress-bar-wrapper">' + t.pdv + ' / ' + t.pdv_max + '<div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>');
+	res += '<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>';
+	res += '' + t.pdv + ' / ' + t.pdv_max;
 	// DLA
-	res.push(t.dla);
+	res += '<div class="sciz-troll-view-block">DLA ' + t.dla + '</div>';
 	// PA
-	res.push('<=' + t.pa);
+	res += '<div class="sciz-troll-view-block"><= ' + t.pa + ' PA</div>';
 	// Fatigue
-	res.push(t.fatigue);
+	res += '<div class="sciz-troll-view-block">Fatigue ' + ('  ' + t.fatigue).slice(-3) + '</div>';
 	// Concentration
-	res.push(t.concentration + '%');
+	res += '<div class="sciz-troll-view-block">Conc ' + (' ' + t.concentration).slice(-2) + '%</div>';
 	return res;
 }
 
@@ -5619,33 +5629,20 @@ function do_scizEnhanceView() {
 		var xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
 		var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 		while (xPathTroll = xPathTrolls.iterateNext()) {
+			var totalWidth = 0;
+			for (var j = 0; j < xPathTroll.children[3].children.length; j++) {
+				totalWidth += xPathTroll.children[3].children[j].offsetWidth;
+			}
 			scizGlobal.trolls.push({
 				'id': parseInt(xPathTroll.children[2].innerHTML),
 				'name': xPathTroll.children[3].innerHTML,
+				'sciz_desc': null,
 				'node': xPathTroll,
+				'width': totalWidth,
+				'displayed': false,
+				'caracs': null,
 			});
 			ids.push(xPathTroll.children[2].innerHTML);
-		}
-
-		// Add the new column for the SCIZ troll view
-		var headers = ['Points de vie', 'Date Limite d\'Action', 'Points d\'action', 'Fatigue', 'Concentration'];
-		var xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
-		var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
-		headers.forEach(h => {
-			var span = document.createElement('span');
-			span.innerHTML = h;
-			var th = document.createElement('th');
-			th.align = 'center';
-			th.appendChild(span);
-			th.appendChild(scizCreateIcon('15', 'inline-block', 'sciz-logo-quarter.png'));
-			xPathHeaderTrolls.append(th);
-		});
-		for (i = 0; i < scizGlobal.trolls.length; i++) {
-			headers.forEach(h => {
-				var td = document.createElement('td');
-				td.align = 'center';
-				scizGlobal.trolls[i].node.append(td);
-			});
 		}
 
 		// Call SCIZ
@@ -5667,21 +5664,27 @@ function do_scizEnhanceView() {
 						// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 						return;
 					}
+					// Pre-compute padding
+					var greatestWidth = 0;
+					trolls.trolls.forEach(t => {
+						for (i = 0; i < scizGlobal.trolls.length; i++) {
+							if (scizGlobal.trolls[i].id === t.id && scizGlobal.trolls[i].width > greatestWidth) {
+								greatestWidth = scizGlobal.trolls[i].width;
+							}
+						}
+					});
 					// Look for trolls to enhanced
 					trolls.trolls.forEach(t => {
 						for (i = 0; i < scizGlobal.trolls.length; i++) {
 							if (scizGlobal.trolls[i].id === t.id) {
+								// Compute padding
+								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML;
+								var spacer = '<div style="display: inline-block; width: ' + (greatestWidth - scizGlobal.trolls[i].width) +  'px"></div>';
+								scizGlobal.trolls[i].sciz_desc += spacer;
 								// PrettyPrint
-								v = scizPrettyPrintTroll(t);
-								// Add the SCIZ lifebar and DLA columns
-								var l = scizGlobal.trolls[i].node.children.length;
-								for (j = 0; j < v.length; j++) {
-									scizGlobal.trolls[i].node.children[l - v.length + j].innerHTML = v[j];
-								}
-								// Add the SCIZ icons with all caracs
-								var icon = scizCreateIcon('15', 'inline-block', 'sciz-logo-quarter.png');
-								icon.title = t.caracs;
-								scizGlobal.trolls[i].node.children[3].appendChild(icon);
+								scizGlobal.trolls[i].sciz_desc += scizPrettyPrintTroll(t);
+								// Store caracs
+								scizGlobal.trolls[i].caracs = t.caracs;
 							}
 						}
 					});
@@ -5689,6 +5692,8 @@ function do_scizEnhanceView() {
 					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
 					window.console.log(e);
 				}
+				// Do the display overwrite and add the switches
+				do_scizSwitchTrolls();
 			}
 		});
 	}
@@ -5752,6 +5757,26 @@ function do_scizEnhanceView() {
 			}
 		});
 	}
+}
+
+function do_scizSwitchTrolls() {
+	scizGlobal.trolls.forEach((t) => {
+		if (t.sciz_desc !== null) {
+			var icon = scizCreateClickable('15', 'inline', do_scizSwitchTrolls);
+			t.displayed = !t.displayed;
+			// Do the switch
+			if (t.displayed) {
+				t.node.children[3].innerHTML = t.sciz_desc;
+				if (t.caracs !== null) {
+					icon.title = t.caracs;
+				}
+			} else {
+				t.node.children[3].innerHTML = t.name;
+			}
+			// Add the SCIZ switcher
+			t.node.children[3].appendChild(icon);
+		}
+	});
 }
 
 function do_scizSwitchTreasures() {
