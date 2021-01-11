@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.70
+// @version     1.3.0.71
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.71 11/01/2021",
+"	Amélioration du support SCIZ (Vue trolls)",
 "V1.3.0.70 08/01/2021",
 "	adaptation vue externe dist H/V",
 "V1.3.0.69 25/12/2020",
@@ -5574,13 +5576,20 @@ function scizCreateIcon(height, display, icon) {
 /* SCIZ - View */
 
 function scizPrettyPrintTroll(t) {
-	var res = '';
-	// SCIZ progress bar
+	var res = [];
+	// Life progress bar
 	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? t.pdv / t.pdv_max * 100 : -1;
 	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
 	t.pdv_max = (t.pdv_max === null) ? '?' : t.pdv_max;
-	res = '<div class="sciz-progress-bar-wrapper">' + t.pdv + ' / ' + t.pdv_max + '<div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>';
-	// SCIZ other view enhancement...
+	res.push('<div class="sciz-progress-bar-wrapper">' + t.pdv + ' / ' + t.pdv_max + '<div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>');
+	// DLA
+	res.push(t.dla);
+	// PA
+	res.push('<=' + t.pa);
+	// Fatigue
+	res.push(t.fatigue);
+	// Concentration
+	res.push(t.concentration + '%');
 	return res;
 }
 
@@ -5613,23 +5622,30 @@ function do_scizEnhanceView() {
 			scizGlobal.trolls.push({
 				'id': parseInt(xPathTroll.children[2].innerHTML),
 				'name': xPathTroll.children[3].innerHTML,
-				'sciz_desc': null,
 				'node': xPathTroll,
 			});
 			ids.push(xPathTroll.children[2].innerHTML);
 		}
 
 		// Add the new column for the SCIZ troll view
+		var headers = ['Points de vie', 'Date Limite d\'Action', 'Points d\'action', 'Fatigue', 'Concentration'];
 		var xPathHeaderTrollQuery = "//*/table[@id='VueTROLL']/thead/tr";
 		var xPathHeaderTrolls = document.evaluate(xPathHeaderTrollQuery, document, null, 0, null).iterateNext();
-		var th = document.createElement('th');
-		th.align = 'center';
-		th.appendChild(scizCreateIcon('25', 'block', 'sciz-logo-quarter.png'));
-		xPathHeaderTrolls.insertBefore(th, xPathHeaderTrolls.children[4]);
+		headers.forEach(h => {
+			var span = document.createElement('span');
+			span.innerHTML = h;
+			var th = document.createElement('th');
+			th.align = 'center';
+			th.appendChild(span);
+			th.appendChild(scizCreateIcon('15', 'inline-block', 'sciz-logo-quarter.png'));
+			xPathHeaderTrolls.append(th);
+		});
 		for (i = 0; i < scizGlobal.trolls.length; i++) {
-			var td = document.createElement('td');
-			td.align = 'center';
-			scizGlobal.trolls[i].node.insertBefore(td, scizGlobal.trolls[i].node.children[4]);
+			headers.forEach(h => {
+				var td = document.createElement('td');
+				td.align = 'center';
+				scizGlobal.trolls[i].node.append(td);
+			});
 		}
 
 		// Call SCIZ
@@ -5656,11 +5672,16 @@ function do_scizEnhanceView() {
 						for (i = 0; i < scizGlobal.trolls.length; i++) {
 							if (scizGlobal.trolls[i].id === t.id) {
 								// PrettyPrint
-								t = scizPrettyPrintTroll(t);
-								// Store the SCIZ troll desc
-								scizGlobal.trolls[i].sciz_desc = t;
-								// Add the SCIZ view
-								scizGlobal.trolls[i].node.children[4].innerHTML = t;
+								v = scizPrettyPrintTroll(t);
+								// Add the SCIZ lifebar and DLA columns
+								var l = scizGlobal.trolls[i].node.children.length;
+								for (j = 0; j < v.length; j++) {
+									scizGlobal.trolls[i].node.children[l - v.length + j].innerHTML = v[j];
+								}
+								// Add the SCIZ icons with all caracs
+								var icon = scizCreateIcon('15', 'inline-block', 'sciz-logo-quarter.png');
+								icon.title = t.caracs;
+								scizGlobal.trolls[i].node.children[3].appendChild(icon);
 							}
 						}
 					});
@@ -10599,15 +10620,15 @@ function insertLevelColumn() {
 	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellN + 1) + ') { width: 30px; text-align: center; }';
 	monsterStyle.innerHTML = sStyle;
 /* version MH hors MZ avec colonne des menus contextuels (non smartphone)
-.mh_tdborder.footable#VueMONSTRE th:nth-child(1), 
+.mh_tdborder.footable#VueMONSTRE th:nth-child(1),
 .mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }
 .mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }
 .mh_tdborder.footable#VueMONSTRE th:nth-child(3) { width: 50px; }
-.mh_tdborder.footable#VueMONSTRE th:nth-child(5), 
-.mh_tdborder.footable#VueMONSTRE td:nth-child(5), 
-.mh_tdborder.footable#VueMONSTRE th:nth-child(6), 
-.mh_tdborder.footable#VueMONSTRE td:nth-child(6), 
-.mh_tdborder.footable#VueMONSTRE th:nth-child(7), 
+.mh_tdborder.footable#VueMONSTRE th:nth-child(5),
+.mh_tdborder.footable#VueMONSTRE td:nth-child(5),
+.mh_tdborder.footable#VueMONSTRE th:nth-child(6),
+.mh_tdborder.footable#VueMONSTRE td:nth-child(6),
+.mh_tdborder.footable#VueMONSTRE th:nth-child(7),
 .mh_tdborder.footable#VueMONSTRE td:nth-child(7) { width: 30px; text-align: center; }
 */
 
