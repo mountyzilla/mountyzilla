@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.72
+// @version     1.3.0.73
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.73 15/01/2021",
+"	Adaptation à Dist H/V MH",
 "V1.3.0.72 11/01/2021",
 "	Correction de la vue des trolls avec SCIZ",
 "V1.3.0.71 11/01/2021",
@@ -10612,6 +10614,16 @@ function ajoutDesFiltres() {
 
 /*-[functions]--------------- Fonctions Monstres -----------------------------*/
 
+function MZ_insertStyleNth(eStyle, newCol, newStyle, maxCol) {	// DOMElement du style, numéro de colonne insérée, Style supplémentaire, nombre max de col (pas grave si c'est beaucoup plus grand)
+	// cette fonction patche la série de styles en "déplaçant" les colonnes qui suivent celle insérée
+	var sStyle = eStyle.innerHTML;
+	for (var i = maxCol; i >= newCol; i--) {	// on déplace à partir de la fin
+		sStyle = sStyle.replaceAll('(' + (i+1) + ')', '(' + (i+2) + ')');	// les styles "nth" comptent à partir de "1"
+	}
+	sStyle += newStyle;
+	eStyle.innerHTML = sStyle;
+}
+
 /* [functions] Affichage de la colonne des niveaux */
 function insertLevelColumn() {
 	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
@@ -10629,39 +10641,15 @@ function insertLevelColumn() {
 	eCol.style.width= '35px';
 	insertBefore(eColGroup.children[3],eCol);
 	*/
-
 	var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
-	var sStyle = '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellDist + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellDist + 1) + ') { width: 40px; text-align: right; }';
-	if (MZ_EtatCdMs.indexCellActions >= 0) sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellActions + 1) + ') { width: 33px; }';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellID + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellID + 1) + ') { width: 50px; text-align: right; }';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') { width: 35px; text-align: center; }';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellX + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellX + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellY + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellY + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellN + 1) + '), ';
-	sStyle += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellN + 1) + ') { width: 30px; text-align: center; }';
-	monsterStyle.innerHTML = sStyle;
-/* version MH hors MZ avec colonne des menus contextuels (non smartphone)
-.mh_tdborder.footable#VueMONSTRE th:nth-child(1),
-.mh_tdborder.footable#VueMONSTRE td:nth-child(1) { width: 40px; text-align: right; }
-.mh_tdborder.footable#VueMONSTRE th:nth-child(2) { width: 33px; }
-.mh_tdborder.footable#VueMONSTRE th:nth-child(3) { width: 50px; }
-.mh_tdborder.footable#VueMONSTRE th:nth-child(5),
-.mh_tdborder.footable#VueMONSTRE td:nth-child(5),
-.mh_tdborder.footable#VueMONSTRE th:nth-child(6),
-.mh_tdborder.footable#VueMONSTRE td:nth-child(6),
-.mh_tdborder.footable#VueMONSTRE th:nth-child(7),
-.mh_tdborder.footable#VueMONSTRE td:nth-child(7) { width: 30px; text-align: center; }
-*/
+	var styleColNivMZ = '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') {width:35px; text-align:center;}';
+	styleColNivMZ += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') {font-weight:bold;text-align:center;}';
+	MZ_insertStyleNth(monsterStyle, MZ_EtatCdMs.indexCellNivMZ, styleColNivMZ, MZ_EtatCdMs.indexCellN);
 
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for(var i=1 ; i<=MZ_EtatCdMs.nbMonstres ; i++) {
 		//window.console.log('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
 		td = insertTdText(getMonstreLevelNode(i), '-');
-		td.style = 'font-weight:bold;text-align:center;';
 	}
 }
 
