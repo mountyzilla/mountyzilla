@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.73
+// @version     1.3.0.74
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.74 18/01/2021",
+"	Support ancien Firefox",
 "V1.3.0.73 15/01/2021",
 "	Adaptation à Dist H/V MH",
 "V1.3.0.72 11/01/2021",
@@ -9506,6 +9508,7 @@ function cacheMenu(e) {
 function initUpdateCoordGauche() {
 	var div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	//window.console.log('initUpdateCoordGauche ' + div.innerHTML);
+	if (!div) return;
 	var img = document.createElement('img');
 	img.src = URL_MZimg + 'recycl.png'
 	img.onclick = function(evt) {
@@ -10618,7 +10621,9 @@ function MZ_insertStyleNth(eStyle, newCol, newStyle, maxCol) {	// DOMElement du 
 	// cette fonction patche la série de styles en "déplaçant" les colonnes qui suivent celle insérée
 	var sStyle = eStyle.innerHTML;
 	for (var i = maxCol; i >= newCol; i--) {	// on déplace à partir de la fin
-		sStyle = sStyle.replaceAll('(' + (i+1) + ')', '(' + (i+2) + ')');	// les styles "nth" comptent à partir de "1"
+		// Roule : j'avais utilisé string.replaceAll() mais ce n'est pas supporté par Firefox ESR
+		var rNeedle = new RegExp('\\(' + (i+1) + '\\)', "g");	// les styles "nth" comptent à partir de "1"
+		sStyle = sStyle.replace(rNeedle, '(' + (i+2) + ')');
 	}
 	sStyle += newStyle;
 	eStyle.innerHTML = sStyle;
