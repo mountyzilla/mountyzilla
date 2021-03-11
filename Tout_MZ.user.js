@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.74
+// @version     1.3.0.75
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.75 11/03/2021",
+"	Masquer en vue externe les monstres masqués dans la vue",
 "V1.3.0.74 18/01/2021",
 "	Support ancien Firefox",
 "V1.3.0.73 15/01/2021",
@@ -9789,6 +9791,12 @@ function getMonstrePosition(i) {
 	];
 }
 
+function isMonstreVisible(i) {
+	var tr = MZ_EtatCdMs.tr_monstres[i];
+	//window.console.log('isMonstreVisible(' + i + '), display=' + tr.style.display);
+	return tr.style.display !== 'none';
+}
+
 function appendMonstres(txt) {
 	for(var i=1; i<=MZ_EtatCdMs.nbMonstres ; i++)
 		txt += getMonstreID(i)+';'+getMonstreNom(i)+';'+positionToString(getMonstrePosition(i))+'\n';
@@ -9810,6 +9818,7 @@ function bddMonstres(start,stop, limitH, limitV) {
 		var monstrePosition = getMonstrePosition(i);
 		if (MZ_deltaH(myPosition, monstrePosition) > limitH) continue;
 		if (MZ_deltaV(myPosition, monstrePosition) > limitV) continue;
+		if (!isMonstreVisible(i)) continue;
 		txt += getMonstreID(i)+';'+
 			getMonstreNom(i)+';'+
 			positionToString(monstrePosition)+'\n';
