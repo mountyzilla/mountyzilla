@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.76
+// @version     1.3.0.77
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.76 23/04/2021",
-"	Ajout icône pour vole (=lévite)",
+"V1.3.0.77 23/04/2021",
+"	Ajout d'une icône pour les monstres qui volent (=lévitent)",
+"V1.3.0.76 23/03/2021",
+"	Correction pour SCIZ (surcharge des événements)",
 "V1.3.0.75 11/03/2021",
 "	Masquer en vue externe les monstres masqués dans la vue",
 "V1.3.0.74 18/01/2021",
@@ -5842,7 +5844,7 @@ function do_scizOverwriteEvents() {
 
 	// Check for advanced profil
 	var advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
-	var xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[@class='mh_tdpage']";
+	var xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[contains(@class, 'mh_tdpage')]";
 
 	// Retrieve local events
 	var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
