@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.75
+// @version     1.3.0.76
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.76 23/04/2021",
+"	Ajout icône pour vole (=lévite)",
 "V1.3.0.75 11/03/2021",
 "	Masquer en vue externe les monstres masqués dans la vue",
 "V1.3.0.74 18/01/2021",
@@ -2682,6 +2684,8 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 		'999': ["plus.gif","Beaucoup d'attaques par tour"]});
 	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.attm, {
 		'1': ["magic-wand.png","Attaque magique"]});
+	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vole, {
+		'1': ["levite.png","Lévite"]});
 	MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vit, {
 		'lente': ["lent.gif","Lent à se déplacer"],
 		'normale': ["normal.gif","Vitesse normale de déplacement"],
