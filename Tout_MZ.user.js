@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.77
+// @version     1.3.0.78
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.78 17/06/2021",
+"	Correction affichage des trésors en vue externe",
 "V1.3.0.77 23/04/2021",
 "	Ajout d'une icône pour les monstres qui volent (=lévitent)",
 "V1.3.0.76 23/03/2021",
@@ -9716,7 +9718,7 @@ function getVue() {
 // Roule 11/03/2016
 /* [functions] Récup données monstres, trolls, etc. */
 function getXxxDistance(xxx, i) {
-	return parseInt(VueContext['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
+	return MZ_getDistanceAvecSplit(VueContext['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
 }
 function getXxxPosition(xxx, i) {
 	var tds = VueContext['tr_' + xxx.toLowerCase()][i].childNodes;
@@ -9922,10 +9924,14 @@ function bddTrolls(limitH, limitV) {
 
 /* [functions] Récup données Trésors */
 function getTresorDistance(i) {
-	var cellTxt = tr_tresors[i].cells[0].firstChild.nodeValue;
+	return MZ_getDistanceAvecSplit(tr_tresors[i].cells[0].firstChild.nodeValue);
+}
+
+function MZ_getDistanceAvecSplit(cellTxt) {
+	cellTxt = cellTxt.replace('\u2007', ' ').replace('\u2212', '-');
 	var txtSplitted = cellTxt.split('|');
 	if (txtSplitted.length == 1) txtSplitted = cellTxt.split('/');
-	if (txtSplitted.length == 1) return txtSplitted;
+	if (txtSplitted.length == 1) return parseInt(txtSplitted[0], 10);
 	var dH = Math.abs(txtSplitted[0]);
 	var dV = Math.abs(txtSplitted[1]);
 	return Math.max(dH, dV);
@@ -9964,6 +9970,7 @@ function bddTresors(dmin,start,stop, limitH, limitV) {
 	var txt='';
 	for(var i=start ; i<=stop ; i++) {
 		var tresorPosition = getTresorPosition(i);
+		//if (MY_DEBUG) window.console.log('bddTresors, i=' + i + ', ' + getTresorID(i)+';'+ getTresorNom(i)+';'+ positionToString(tresorPosition) + ', dmin=' + dmin + ', start=' + start + ', stop=' + stop + ', limitH=' + limitH + ', limitV=' + limitV + ', MZ_deltaH=' + MZ_deltaH(myPosition, tresorPosition) + ', MZ_deltaV=' + MZ_deltaV(myPosition, tresorPosition) + ', distance=' + getTresorDistance(i));
 		if (MZ_deltaH(myPosition, tresorPosition) > limitH) continue;
 		if (MZ_deltaV(myPosition, tresorPosition) > limitV) continue;
 		if(getTresorDistance(i)>=dmin) {
@@ -10007,7 +10014,7 @@ function bddChampignons(limitH, limitV) {
 
 /* [functions] Récup données Lieux */
 function getLieuDistance(i) {
-	return parseInt(tr_lieux[i].cells[0].textContent);
+	return MZ_getDistanceAvecSplit(tr_tresors[i].cells[0].firstChild.nodeValue);
 }
 
 function getLieuID(i) {
