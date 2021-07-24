@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.78
+// @version     1.3.0.79
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.79 14/07/2021",
+"	Correction effet venin GdS",
 "V1.3.0.78 17/06/2021",
 "	Correction affichage des trésors en vue externe",
 "V1.3.0.77 23/04/2021",
@@ -12368,7 +12370,7 @@ var
 	posX, posY, posN,
 		// caracs physiques
 	vue, vuebp, vuebm, vuetotale,
-	pvbase, pvbp, pvbm, pvtotal, pvcourant,
+	pvbase, pvbp, pvbm, pvtotal, pvcourant, pvmax,
 	reg, regbp, regbm, regmoy,
 	att, attbp, attbm, attmoy, atttourD, atttour, attmoytour,
 	esq, esqbp, esqbm, esqmoy, esqtourD, esqmoytour,
@@ -12614,6 +12616,7 @@ function extractionDonnees() {
 	pvbp = getUniqueIntValueBySelector('#carac #pv_p');
 	pvbm = getUniqueIntValueBySelector('#carac #pv_m');
 	pvtotal = getUniqueIntValueBySelector('#carac #pv_tot');
+	pvmax = getUniqueIntValueBySelector('#pv_max');
 	debugMZ("PV: " + pvbase + " + (" + pvbp + ") + (" + pvbm + ") = " + pvtotal);
 	    // Regeneration
 	reg = getUniqueIntValueBySelector('#carac #reg');
@@ -14038,7 +14041,7 @@ function sortileges(sort) {
 				       "</b> ("+2*effet+" x "+dureeReduite+" = " +
 				       2*effet*dureeReduite+")";
 			},
-			effet = 1+Math.floor((Math.floor(pvbase/10)+reg)/3);
+			effet = 1+Math.floor((Math.floor(pvmax/10)+reg)/3);
 		// Frappe
 		texte = "Attaque : <b>"+att+"</b> D6 ";
 		if(atttour!=0) {
