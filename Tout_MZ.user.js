@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.79
+// @version     1.3.0.80
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.80 20/10/2021",
+"	fix plantage à l'affichage du profil publique en cas de CSS avancé",
 "V1.3.0.79 14/07/2021",
 "	Correction effet venin GdS",
 "V1.3.0.78 17/06/2021",
@@ -7539,6 +7541,8 @@ function showInfos() {
 	var currentInfos = this.infos;
 	DivInfo.innerHTML = currentInfos;
 	DivInfo.style.visibility = 'visible';
+	var compStyles = window.getComputedStyle(DivInfo);
+	if (compStyles.getPropertyValue('background-color') == 'rgba(0, 0, 0, 0)') DivInfo.style.backgroundColor = 'rgb(255, 255, 238)';
 }
 
 function hideInfos() {
@@ -7601,7 +7605,7 @@ function treateEquipement() {
 			for(var i=0 ; i<nodes.snapshotLength ; i++) {
 				var node = nodes.snapshotItem(i);
 				var nom = node.firstChild.nodeValue.toLowerCase();
-				if(node.childNodes.length>1) {
+				if(node.childNodes.length>1 && node.childNodes[1].firstChild) {
 					nom += node.childNodes[1].firstChild.nodeValue;
 				}
 				nom = nom.trim();
