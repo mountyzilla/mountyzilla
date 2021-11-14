@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.80
+// @version     1.3.0.81
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.81 14/11/2021",
+"	fix CdM sans date dans les messages du bot",
 "V1.3.0.80 20/10/2021",
 "	fix plantage à l'affichage du profil publique en cas de CSS avancé",
 "V1.3.0.79 14/07/2021",
@@ -8957,7 +8959,7 @@ function MZ_comp_traiteCdMcomp() {
 	var etimestamp = document.getElementById('hserveur');
 	if (etimestamp != undefined) {var tstamp =  etimestamp.innerText || etimestamp.textContent;}
 	if (tstamp == undefined) {
-		/* dans le cas de la comp, le serveur se repliera sur la date/heure courrante
+		/* dans le cas de la comp, le serveur se repliera sur la date/heure courante
 		window.console.log('MZ_comp_traiteCdMcomp, pas de date/heure');
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
@@ -9280,13 +9282,21 @@ function MZ_traiteCdMmsg() {
 	MZ_comp_addPvRestant(oContexteCdM);
 
 	if (oContexteCdM.txtHeure) {
-		var m = oContexteCdM.txtHeure.match(/\d+\/\d+\/\d+ +\d+:\d+:\d+/);
+		var txtHeure = oContexteCdM.txtHeure;
+	} else {
+		var etimestamp = document.getElementById('messageDateHeure');
+		if (etimestamp) var txtHeure = etimestamp.innerText || etimestamp.textContent;
+	}
+	if (txtHeure) {
+		var m = txtHeure.match(/\d+\/\d+\/\d+ +\d+:\d+:\d+/);
 		if (m) var tstamp = m[0];
 	}
 	if (tstamp == undefined) {
 		window.console.log('MZ_traiteCdMmsg, pas de date/heure');
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
+	} else {
+		
 	}
 	oContexteCdM.oData.tstamp = tstamp.trim();
 	oContexteCdM.oData.bMsgBot = 1;
