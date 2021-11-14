@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.81
+// @version     1.3.0.82
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.82 14/11/2021",
+"	fix nom monstre marqué avec un nombre",
 "V1.3.0.81 14/11/2021",
 "	fix CdM sans date dans les messages du bot",
 "V1.3.0.80 20/10/2021",
@@ -5456,7 +5458,7 @@ function traiteMonstre() {
 	if(nomMonstre.indexOf(']')!=-1) {
 		nomMonstre = nomMonstre.slice(0,nomMonstre.indexOf(']')+1);
 	}
-	idMonstre = texte.match(/\d+/)[0];
+	idMonstre = texte.match(/[^\]]\].*\((\d+)\)/)[1];
 	var tReq = [{'index':1, 'id':+idMonstre, 'nom':nomMonstre}];	// "+" pour forcer du numérique
 	FF_XMLHttpRequest({
 		method: 'POST',
