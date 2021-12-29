@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.82
+// @version     1.3.0.83
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.83 29/12/2021",
+"	Amélioration du support SCIZ (bestiaire, champignons et pièges)",
 "V1.3.0.82 14/11/2021",
 "	fix nom monstre marqué avec un nombre",
 "V1.3.0.81 14/11/2021",
@@ -5532,13 +5534,18 @@ var scizSetup = {
 	// Maximum interval (seconds) for matching some events
 	eventsMaxMatchingInterval: 5000,
 	// Maximum number of treasures to enhanced in the view
-	viewMaxEnhancedTreasure: 100
+	viewMaxEnhancedTreasure: 100,
+	// Maximum number of treasures to enhanced in the view
+	viewMaxEnhancedMushroom: 100
 };
 
 var scizGlobal = {
 	events: [],
 	trolls: [],
-	treasures: []
+	treasures: [],
+	monsters: [],
+	traps: [],
+	mushrooms: []
 };
 
 function scizAddCSS() {
@@ -5581,6 +5588,18 @@ function scizAddCSS() {
 	document.getElementsByTagName('head')[0].appendChild(scizStyleSheet);
 }
 
+function scizCreateHoverable(height, display, callbackOnHover) {
+	var img = document.createElement('img');
+	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
+	img.alt = 'SCIZ logo';
+	img.style = 'height: ' + height + 'px; cursor: pointer;';
+	img.onmouseover = callbackOnHover;
+	var div = document.createElement('div');
+	div.style = 'text-align: center;display: ' + display;
+	div.appendChild(img);
+	return div;
+};
+
 function scizCreateClickable(height, display, callbackOnClick) {
 	var img = document.createElement('img');
 	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
@@ -5609,7 +5628,7 @@ function scizCreateIcon(height, display, icon) {
 function scizPrettyPrintTroll(t) {
 	var res = '';
 	// Life progress bar
-	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? t.pdv / t.pdv_max * 100 : -1;
+	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
 	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
 	t.pdv_max = (t.pdv_max === null) ? '?' : t.pdv_max;
 	res += '<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>';
@@ -5628,9 +5647,25 @@ function scizPrettyPrintTroll(t) {
 function scizPrettyPrintTreasure(t) {
 	var res = '';
 	res += /* t.type + ' - ' + */ t.nom;
-	if (t.templates) { res +=  ' <b>' + t.templates + '</b>' };
-	if (t.mithril) { res +=  ' <b>en Mithril</b>' };
-	if (t.effet) { res +=  ' (' + t.effet + ')' };
+	if (t.templates) { res += ' <b>' + t.templates + '</b>' };
+	if (t.mithril) { res += ' <b>en Mithril</b>' };
+	if (t.effet) { res += ' (' + t.effet + ')' };
+	return res;
+}
+
+function scizPrettyPrintTrap(t) {
+	var res = '<span style="color:#990000">';
+	res += 'Piège à ' + t.type + ' ';
+	if (t.mm) { res += '(MM ' + t.mm + ') ' };
+	if (t.creation_datetime) { res += ' - ' + t.creation_datetime + ' '};
+	res += '</span>';
+	return res;
+}
+
+function scizPrettyPrintMushroom(m) {
+	var res = '';
+	res += m.nom;
+	if (m.qualite) { res += ' <b>' + m.qualite + '</b>' };
 	return res;
 }
 
@@ -5641,7 +5676,16 @@ function do_scizEnhanceView() {
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	if (!jwt) { return; }
 
+	// Add our CSS
 	scizAddCSS();
+
+	// Retrieve position and view
+	var pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
+	var posX = parseInt(pos[1]);
+	var posY = parseInt(pos[2]);
+	var posN = parseInt(pos[3]);
+	var viewH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
+	var viewV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
 
 	/* SCIZ View - TROLLS */
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS');
@@ -5707,6 +5751,7 @@ function do_scizEnhanceView() {
 								scizGlobal.trolls[i].sciz_desc += scizPrettyPrintTroll(t);
 								// Store caracs
 								scizGlobal.trolls[i].caracs = t.caracs;
+	                            break;
 							}
 						}
 					});
@@ -5720,21 +5765,22 @@ function do_scizEnhanceView() {
 		});
 	}
 
+	/* SCIZ View - TREASURES */
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES');
 	if (cbx !== '0') {
 		// Retrieve treasures
 		var ids = [];
 		var xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-		var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
-		while (xPathEvent = xPathEvents.iterateNext()) {
+		var xPathTreasures = document.evaluate(xPathQuery, document, null, 0, null);
+		while (xPathTreasure = xPathTreasures.iterateNext()) {
 			scizGlobal.treasures.push({
-				'id': parseInt(xPathEvent.children[2].innerHTML),
-				'type': xPathEvent.children[3].innerHTML,
+				'id': parseInt(xPathTreasure.children[2].innerHTML),
+				'type': xPathTreasure.children[3].innerHTML,
 				'sciz_desc': null,
-				'buried': xPathEvent.children[3].innerHTML.includes('Enterré'),
-				'node': xPathEvent,
+				'buried': xPathTreasure.children[3].innerHTML.includes('Enterré'),
+				'node': xPathTreasure,
 			});
-			ids.push(xPathEvent.children[2].innerHTML)
+			ids.push(xPathTreasure.children[2].innerHTML)
 			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) { break; }
 		}
 
@@ -5754,7 +5800,7 @@ function do_scizEnhanceView() {
 					}
 					var treasures = JSON.parse(responseDetails.responseText);
 					if (treasures.treasures.length < 1) {
-						// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+						// window.console.log('DEBUG - MZ/SCIZ - Aucun trésor trouvé dans la base SCIZ...');
 						return;
 					}
 					// Look for treasures to enhanced
@@ -5767,6 +5813,7 @@ function do_scizEnhanceView() {
 								scizGlobal.treasures[i].sciz_desc = t;
 								// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
 								scizGlobal.treasures[i].type = scizGlobal.treasures[i].node.children[3].firstChild.textContent;
+	                            break;
 							}
 						}
 					});
@@ -5776,6 +5823,177 @@ function do_scizEnhanceView() {
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchTreasures();
+			}
+		});
+	}
+
+
+	/* SCIZ View - MUSHROOMS */
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS');
+	if (cbx !== '0') {
+		// Retrieve mushrooms
+		var ids = [];
+		var xPathQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
+		var xPathMushrooms = document.evaluate(xPathQuery, document, null, 0, null);
+		while (xPathMushroom = xPathMushrooms.iterateNext()) {
+			scizGlobal.mushrooms.push({
+				'id': parseInt(xPathMushroom.children[2].innerHTML),
+				'type': xPathMushroom.children[3].innerHTML,
+				'sciz_desc': null,
+				'node': xPathMushroom,
+			});
+			ids.push(xPathMushroom.children[2].innerHTML)
+			if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) { break; }
+		}
+
+		// Call SCIZ
+		var sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'ids': ids}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+					var mushrooms = JSON.parse(responseDetails.responseText);
+					if (mushrooms.mushrooms.length < 1) {
+						// window.console.log('DEBUG - MZ/SCIZ - Aucun champignon trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for mushrooms to enhanced
+					mushrooms.mushrooms.forEach(m => {
+						for (i = 0; i < scizGlobal.mushrooms.length; i++) {
+							if (scizGlobal.mushrooms[i].id === m.id)  {
+	                            // PrettyPrint
+								m = scizPrettyPrintMushroom(m);
+								// Store the SCIZ mushroom desc
+								scizGlobal.mushrooms[i].sciz_desc = m;
+	                            break;
+							}
+						}
+					});
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+				// Do the display overwrite and add the switches
+				do_scizSwitchMushrooms();
+			}
+		});
+	}
+
+	/* SCIZ View - BESTIAIRE */
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE');
+	if (cbx !== '0') {
+		// Retrieve monsters
+		var xPathQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
+		var xPathMonsters = document.evaluate(xPathQuery, document, null, 0, null);
+		while (xPathMonster = xPathMonsters.iterateNext()) {
+	        var mob = xPathMonster.children[4].innerHTML.match(/>\s*(.+?)\s*\[\s*(.+)\s*]/);
+			scizGlobal.monsters.push({
+				'id': parseInt(xPathMonster.children[2].innerHTML),
+				'name': mob[1],
+	            'age': mob[2],
+	            'sciz_desc': null,
+	            'icon': null,
+				'node': xPathMonster
+			});
+	   	}
+	    // Add the SCIZ icons
+		scizGlobal.monsters.forEach(m => {
+	        var icon = scizCreateHoverable('15', 'inline', function() { do_scizBestiaire(m); });
+	        m.icon = icon;
+	        m.node.children[4].appendChild(icon);
+		});
+	}
+
+	/* SCIZ View - TRAPS */
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS');
+	if (cbx !== '0') {
+		// Retrieve traps
+		var ids = [];
+		var xPathQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+		var xPathPlaces = document.evaluate(xPathQuery, document, null, 0, null);
+		while (xPathPlace = xPathPlaces.iterateNext()) {
+	        var trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
+			if (trap === null) {
+	            continue
+	        }
+	        scizGlobal.traps.push({
+				'id': parseInt(xPathPlace.children[2].innerHTML),
+				'type': xPathPlace.children[3].innerHTML,
+				'hidden': xPathPlace.children[3].innerHTML.includes('Caché'),
+				'sciz_desc': null,
+				'node': xPathPlace
+			});
+			ids.push(xPathPlace.children[2].innerHTML);
+		}
+
+		// Call SCIZ
+		var sciz_url = 'https://www.sciz.fr/api/hook/traps';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'pos_x': posX, 'pos_y': posY, 'pos_n': posN, 'view_h': viewH, 'view_v': viewV}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+					var traps = JSON.parse(responseDetails.responseText);
+					if (traps.traps.length < 1) {
+						return;
+					}
+					// Look for traps to enhanced
+					traps.traps.forEach(t => {
+	                    var found = false;
+						for (i = 0; i < scizGlobal.traps.length; i++) {
+							if (scizGlobal.traps[i].id === t.id) {
+								// PrettyPrint
+								scizGlobal.traps[i].sciz_desc = scizPrettyPrintTrap(t);
+	                            // Adapt the sciz type (delete the hidden marker, the do_scizSwitchTraps will handle it)
+								scizGlobal.traps[i].type = scizGlobal.traps[i].node.children[3].firstChild.textContent;
+	                            found = true;
+	                            break;
+							}
+						}
+	                    if (!found) {
+	                        // Find the right index
+	                        var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+	                        var xPathPlaces = document.evaluate(xPathQuery, document, null, 0, null);
+	                        while (xPathPlace = xPathPlaces.iterateNext()) {
+	                            if (parseInt(xPathPlace.children[0].innerHTML) > distance) {
+	                                break;
+	                            }
+	                        }
+	                        // Create the trap
+	                        var template = document.createElement('template');
+	                        template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td>Piège à ' + t.type
+	                            + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
+	                        var trap = template.content.firstChild;
+	                        // Add the hidden trap
+	                        scizGlobal.traps.push({
+	                            'id': t.id, 'type': 'Piège à ' + t.type, 'hidden': true, 'sciz_desc': scizPrettyPrintTrap(t), 'node': trap
+	                        });
+	                        if (xPathPlace !== null) {
+	                            xPathPlace.parentNode.insertBefore(trap, xPathPlace);
+	                        }
+	                    }
+					});
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+				// Do the display overwrite and add the switches
+				do_scizSwitchTraps();
 			}
 		});
 	}
@@ -5814,6 +6032,68 @@ function do_scizSwitchTreasures() {
 			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
 		}
 	});
+}
+
+function do_scizSwitchMushrooms() {
+	scizGlobal.mushrooms.forEach((m) => {
+		if (m.sciz_desc !== null) {
+			// Do the switch
+			var currentDesc = m.node.children[3].firstChild.textContent;
+			m.node.children[3].innerHTML = (currentDesc === m.type) ? ((m.sciz_desc !== null) ? m.sciz_desc : m.type) : m.type;
+			// Add the SCIZ switcher
+			m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchMushrooms));
+		}
+	});
+}
+
+function do_scizSwitchTraps() {
+	scizGlobal.traps.forEach((t) => {
+		if (t.sciz_desc !== null) {
+			// Do the switch
+			var currentDesc = t.node.children[3].firstChild.textContent;
+			t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
+			if (t.hidden) {
+				t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Caché]" title="Caché" width="15" height="15">';
+			}
+			// Add the SCIZ switcher
+			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTraps));
+		}
+	});
+}
+
+function do_scizBestiaire(monster) {
+	// Ensure we have a JWT setup for the current user
+	jwt = MY_getValue(numTroll + '.SCIZJWT');
+	if (!jwt) { return; }
+	// Don't do anything if we already called the bestiary for this monster
+	if (monster.sciz_desc === null) {
+	    // Call SCIZ
+		var sciz_url = 'https://www.sciz.fr/api/hook/bestiaire';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'name': monster.name, 'age': monster.age}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+	                monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
+	                // Add the tooltip (kind of)
+	                var abbr = document.createElement('abbr');
+	                abbr.title = monster.sciz_desc;
+	                monster.icon.parentNode.replaceChild(abbr, monster.icon);
+	                abbr.appendChild(monster.icon);
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+			}
+		});
+	}
 }
 
 /* SCIZ - Events */
@@ -7790,9 +8070,18 @@ function saveAll() {
 		var sciz_cb_view_treasures = document.getElementById('sciz_cb_view_treasures').checked;
 		sciz_cb_view_treasures = (sciz_cb_view_treasures !== null) ? sciz_cb_view_treasures : true;
 		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TREASURES', sciz_cb_view_treasures);
+	    var sciz_cb_view_mushrooms = document.getElementById('sciz_cb_view_mushrooms').checked;
+		sciz_cb_view_mushrooms = (sciz_cb_view_mushrooms !== null) ? sciz_cb_view_mushrooms : true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS', sciz_cb_view_mushrooms);
+		var sciz_cb_bestiaire = document.getElementById('sciz_cb_bestiaire').checked;
+		sciz_cb_bestiaire = (sciz_cb_bestiaire !== null) ? sciz_cb_bestiaire : true;
+		MY_setValue(numTroll + '.SCIZ_CB_BESTIAIRE', sciz_cb_bestiaire);
 		var sciz_cb_view_trolls = document.getElementById('sciz_cb_view_trolls').checked;
 		sciz_cb_view_trolls = (sciz_cb_view_trolls !== null) ? sciz_cb_view_trolls : true;
 		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TROLLS', sciz_cb_view_trolls);
+		var sciz_cb_view_traps = document.getElementById('sciz_cb_view_traps').checked;
+		sciz_cb_view_traps = (sciz_cb_view_traps !== null) ? sciz_cb_view_traps : true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TRAPS', sciz_cb_view_traps);
 
 		saveITData();
 	} catch (e) {
@@ -8053,17 +8342,32 @@ function insertOptionTable(insertPt) {
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_EVENTS')));
-	appendText(td, ' Surcharger les événements de ma coterie');
-	// Treasure checkbox
+	appendText(td, ' Surcharger les événements');
+	// Bestiaire checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_bestiaire', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE')));
+	appendText(td, ' Afficher les données du bestiaire');
+	// Treasures checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_view_treasures', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES')));
-	appendText(td, ' Afficher les trésors identifiés par ma coterie dans la vue');
-	// Trolls data
+	appendText(td, ' Afficher les trésors identifiés');
+	// Mushrooms checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_mushrooms', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS')));
+	appendText(td, ' Afficher les champignons identifiés');
+	// Trolls data checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS')));
-	appendText(td, ' Afficher les données des trolls de ma coterie dans la vue');
+	appendText(td, ' Afficher les données des trolls');
+	// Traps checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_traps', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS')));
+	appendText(td, ' Afficher les pièges');
 
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
@@ -9298,7 +9602,7 @@ function MZ_traiteCdMmsg() {
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
 	} else {
-		
+
 	}
 	oContexteCdM.oData.tstamp = tstamp.trim();
 	oContexteCdM.oData.bMsgBot = 1;
@@ -14971,3 +15275,4 @@ function do_trolligion() {
 		window.console.log('catch général page ' + window.location.pathname + "\n" + e.message);
 	}
 }
+
