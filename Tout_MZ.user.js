@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.83
+// @version     1.3.0.84
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.84 29/12/2021",
+"   Corrections pour SCIZ",
 "V1.3.0.83 29/12/2021",
-"	Amélioration du support SCIZ (bestiaire, champignons et pièges)",
+"   Amélioration du support SCIZ (bestiaire, champignons et pièges)",
 "V1.3.0.82 14/11/2021",
 "	fix nom monstre marqué avec un nombre",
 "V1.3.0.81 14/11/2021",
@@ -5674,7 +5676,7 @@ function do_scizEnhanceView() {
 
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
-	if (!jwt) { return; }
+	if (jwt === null || jwt === undefined || jwt.trim() === '') { return; }
 
 	// Add our CSS
 	scizAddCSS();
@@ -5720,7 +5722,7 @@ function do_scizEnhanceView() {
 			data: JSON.stringify({'ids': ids}),
 			onload: function(responseDetails) {
 				try {
-					if (responseDetails.status == 0) {
+					if (responseDetails.status !== 200) {
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
 						return;
@@ -5793,7 +5795,7 @@ function do_scizEnhanceView() {
 			data: JSON.stringify({'ids': ids}),
 			onload: function(responseDetails) {
 				try {
-					if (responseDetails.status == 0) {
+					if (responseDetails.status !== 200) {
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
 						return;
@@ -5855,7 +5857,7 @@ function do_scizEnhanceView() {
 			data: JSON.stringify({'ids': ids}),
 			onload: function(responseDetails) {
 				try {
-					if (responseDetails.status == 0) {
+					if (responseDetails.status !== 200) {
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
 						return;
@@ -5943,7 +5945,7 @@ function do_scizEnhanceView() {
 			data: JSON.stringify({'pos_x': posX, 'pos_y': posY, 'pos_n': posN, 'view_h': viewH, 'view_v': viewV}),
 			onload: function(responseDetails) {
 				try {
-					if (responseDetails.status == 0) {
+					if (responseDetails.status !== 200) {
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
 						return;
@@ -6064,7 +6066,7 @@ function do_scizSwitchTraps() {
 function do_scizBestiaire(monster) {
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
-	if (!jwt) { return; }
+	if (jwt === null || jwt === undefined || jwt.trim() === '') { return; }
 	// Don't do anything if we already called the bestiary for this monster
 	if (monster.sciz_desc === null) {
 	    // Call SCIZ
@@ -6076,17 +6078,20 @@ function do_scizBestiaire(monster) {
 			data: JSON.stringify({'name': monster.name, 'age': monster.age}),
 			onload: function(responseDetails) {
 				try {
-					if (responseDetails.status == 0) {
+					if (responseDetails.status !== 200) {
+	                    monster.sciz_desc = "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.";
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
 						return;
 					}
 	                monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
 	                // Add the tooltip (kind of)
-	                var abbr = document.createElement('abbr');
-	                abbr.title = monster.sciz_desc;
-	                monster.icon.parentNode.replaceChild(abbr, monster.icon);
-	                abbr.appendChild(monster.icon);
+	                if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
+	                    var abbr = document.createElement('abbr');
+	                    abbr.title = monster.sciz_desc;
+	                    monster.icon.parentNode.replaceChild(abbr, monster.icon);
+	                    abbr.appendChild(monster.icon);
+	                }
 				} catch(e) {
 					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
 					window.console.log(e);
@@ -6125,7 +6130,7 @@ function do_scizOverwriteEvents() {
 	// Ensure we have a JWT setup for the current user
 	jwt = MY_getValue(numTroll + '.SCIZJWT');
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_EVENTS');
-	if (!jwt || cbx === '0') { return; }
+	if (jwt === null || jwt === undefined || jwt.trim() === '' || cbx === '0') { return; }
 
 	// Retrieve being ID
 	var url = new URL(window.location.href);
@@ -8060,7 +8065,7 @@ function saveAll() {
 
 		/* SCIZ */
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
-		if (sciz_jwt) {
+		if (sciz_jwt !== null && sciz_jwt !== undefined) {
 			sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\._\-]','g'), '');
 			MY_setValue(numTroll + '.SCIZJWT', sciz_jwt);
 		}
@@ -15275,4 +15280,3 @@ function do_trolligion() {
 		window.console.log('catch général page ' + window.location.pathname + "\n" + e.message);
 	}
 }
-
