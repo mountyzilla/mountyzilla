@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.84
+// @version     1.3.0.85
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.85 31/12/2021",
+"   Amélioration du support SCIZ (trolls cachés ou hors-vue)",
 "V1.3.0.84 29/12/2021",
 "   Corrections pour SCIZ",
 "V1.3.0.83 29/12/2021",
@@ -5628,7 +5630,7 @@ function scizCreateIcon(height, display, icon) {
 /* SCIZ - View */
 
 function scizPrettyPrintTroll(t) {
-	var res = '';
+	var res = '<div style="float:right">';
 	// Life progress bar
 	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
 	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
@@ -5643,6 +5645,7 @@ function scizPrettyPrintTroll(t) {
 	res += '<div class="sciz-troll-view-block">Fatigue ' + ('  ' + t.fatigue).slice(-3) + '</div>';
 	// Concentration
 	res += '<div class="sciz-troll-view-block">Conc ' + (' ' + t.concentration).slice(-2) + '%</div>';
+	res += '</div>';
 	return res;
 }
 
@@ -5693,7 +5696,6 @@ function do_scizEnhanceView() {
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS');
 	if (cbx !== '0') {
 		// Retrieve trolls
-		var ids = [];
 		var xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
 		var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 		while (xPathTroll = xPathTrolls.iterateNext()) {
@@ -5710,7 +5712,6 @@ function do_scizEnhanceView() {
 				'displayed': false,
 				'caracs': null,
 			});
-			ids.push(xPathTroll.children[2].innerHTML);
 		}
 
 		// Call SCIZ
@@ -5719,7 +5720,6 @@ function do_scizEnhanceView() {
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
-			data: JSON.stringify({'ids': ids}),
 			onload: function(responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
@@ -5744,6 +5744,7 @@ function do_scizEnhanceView() {
 					// Look for trolls to enhanced
 					trolls.trolls.forEach(t => {
 						for (i = 0; i < scizGlobal.trolls.length; i++) {
+	                        var found = false;
 							if (scizGlobal.trolls[i].id === t.id) {
 								// Compute padding
 								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML;
@@ -5753,9 +5754,34 @@ function do_scizEnhanceView() {
 								scizGlobal.trolls[i].sciz_desc += scizPrettyPrintTroll(t);
 								// Store caracs
 								scizGlobal.trolls[i].caracs = t.caracs;
+	                            found = true;
 	                            break;
 							}
-						}
+	                    }
+	                    if (!found) {
+	                        // Find the right index
+	                        var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+	                        var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+	                        while (xPathTroll = xPathTrolls.iterateNext()) {
+	                            if (parseInt(xPathTroll.children[0].innerHTML) > distance) {
+	                                break;
+	                            }
+	                        }
+	                        // Create the troll
+	                        var template = document.createElement('template');
+	                        var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + ' </a>';
+	                        template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td title="">' + html_nom + '</td><td></td><td>' + t.niv + '</td><td>' + t.race + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
+	                        var troll = template.content.firstChild;
+	                        // Add the troll
+	                        scizGlobal.trolls.push({
+	                            'id': t.id, 'name': html_nom, 'sciz_desc': html_nom + scizPrettyPrintTroll(t), 'node': troll, 'width':0, 'displayed': false, 'caracs': t.caracs
+	                        });
+	                        if (xPathTroll !== null) {
+	                            xPathTroll.parentNode.insertBefore(troll, xPathTroll);
+	                        } else {
+	                            document.evaluate("//*/table[@id='VueTROLL']/tbody", document, null, 0, null).iterateNext().appendChild(troll);
+	                        }
+	                    }
 					});
 				} catch(e) {
 					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
@@ -5772,8 +5798,8 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve treasures
 		var ids = [];
-		var xPathQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-		var xPathTreasures = document.evaluate(xPathQuery, document, null, 0, null);
+		var xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+		var xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
 		while (xPathTreasure = xPathTreasures.iterateNext()) {
 			scizGlobal.treasures.push({
 				'id': parseInt(xPathTreasure.children[2].innerHTML),
@@ -5835,8 +5861,8 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve mushrooms
 		var ids = [];
-		var xPathQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
-		var xPathMushrooms = document.evaluate(xPathQuery, document, null, 0, null);
+		var xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
+		var xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
 		while (xPathMushroom = xPathMushrooms.iterateNext()) {
 			scizGlobal.mushrooms.push({
 				'id': parseInt(xPathMushroom.children[2].innerHTML),
@@ -5893,8 +5919,8 @@ function do_scizEnhanceView() {
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE');
 	if (cbx !== '0') {
 		// Retrieve monsters
-		var xPathQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
-		var xPathMonsters = document.evaluate(xPathQuery, document, null, 0, null);
+		var xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
+		var xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
 		while (xPathMonster = xPathMonsters.iterateNext()) {
 	        var mob = xPathMonster.children[4].innerHTML.match(/>\s*(.+?)\s*\[\s*(.+)\s*]/);
 			scizGlobal.monsters.push({
@@ -5919,8 +5945,8 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve traps
 		var ids = [];
-		var xPathQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-		var xPathPlaces = document.evaluate(xPathQuery, document, null, 0, null);
+		var xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+		var xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 		while (xPathPlace = xPathPlaces.iterateNext()) {
 	        var trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
 			if (trap === null) {
@@ -5970,7 +5996,7 @@ function do_scizEnhanceView() {
 	                    if (!found) {
 	                        // Find the right index
 	                        var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
-	                        var xPathPlaces = document.evaluate(xPathQuery, document, null, 0, null);
+	                        var xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 	                        while (xPathPlace = xPathPlaces.iterateNext()) {
 	                            if (parseInt(xPathPlace.children[0].innerHTML) > distance) {
 	                                break;
@@ -5987,6 +6013,8 @@ function do_scizEnhanceView() {
 	                        });
 	                        if (xPathPlace !== null) {
 	                            xPathPlace.parentNode.insertBefore(trap, xPathPlace);
+	                        } else {
+	                            document.evaluate("//*/table[@id='VueLIEU']/tbody", document, null, 0, null).iterateNext().appendChild(trap);
 	                        }
 	                    }
 					});
@@ -6070,7 +6098,7 @@ function do_scizBestiaire(monster) {
 	// Don't do anything if we already called the bestiary for this monster
 	if (monster.sciz_desc === null) {
 	    // Call SCIZ
-		var sciz_url = 'https://www.sciz.fr/api/hook/bestiaire';
+		var sciz_url = 'https://www.sciz.fr/api/bestiaire';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
@@ -6088,7 +6116,7 @@ function do_scizBestiaire(monster) {
 	                // Add the tooltip (kind of)
 	                if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
 	                    var abbr = document.createElement('abbr');
-	                    abbr.title = monster.sciz_desc;
+	                    abbr.title = monster.sciz_desc.replace(/Blason.*/, '');
 	                    monster.icon.parentNode.replaceChild(abbr, monster.icon);
 	                    abbr.appendChild(monster.icon);
 	                }
