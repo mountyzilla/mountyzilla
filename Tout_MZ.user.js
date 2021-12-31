@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.85
+// @version     1.3.0.86
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.86 31/12/2021",
+"   Corrections pour SCIZ",
 "V1.3.0.85 31/12/2021",
 "   Amélioration du support SCIZ (trolls cachés ou hors-vue)",
 "V1.3.0.84 29/12/2021",
@@ -5630,7 +5632,7 @@ function scizCreateIcon(height, display, icon) {
 /* SCIZ - View */
 
 function scizPrettyPrintTroll(t) {
-	var res = '<div style="float:right">';
+	var res = '<div style="float:right;margin-right:10px">';
 	// Life progress bar
 	var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
 	var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
@@ -5699,16 +5701,11 @@ function do_scizEnhanceView() {
 		var xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
 		var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 		while (xPathTroll = xPathTrolls.iterateNext()) {
-			var totalWidth = 0;
-			for (var j = 0; j < xPathTroll.children[3].children.length; j++) {
-				totalWidth += xPathTroll.children[3].children[j].offsetWidth;
-			}
 			scizGlobal.trolls.push({
 				'id': parseInt(xPathTroll.children[2].innerHTML),
 				'name': xPathTroll.children[3].innerHTML,
 				'sciz_desc': null,
 				'node': xPathTroll,
-				'width': totalWidth,
 				'displayed': false,
 				'caracs': null,
 			});
@@ -5732,26 +5729,13 @@ function do_scizEnhanceView() {
 						// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 						return;
 					}
-					// Pre-compute padding
-					var greatestWidth = 0;
-					trolls.trolls.forEach(t => {
-						for (i = 0; i < scizGlobal.trolls.length; i++) {
-							if (scizGlobal.trolls[i].id === t.id && scizGlobal.trolls[i].width > greatestWidth) {
-								greatestWidth = scizGlobal.trolls[i].width;
-							}
-						}
-					});
 					// Look for trolls to enhanced
 					trolls.trolls.forEach(t => {
 						for (i = 0; i < scizGlobal.trolls.length; i++) {
 	                        var found = false;
 							if (scizGlobal.trolls[i].id === t.id) {
-								// Compute padding
-								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML;
-								var spacer = '<div style="display: inline-block; width: ' + (greatestWidth - scizGlobal.trolls[i].width) +  'px"></div>';
-								scizGlobal.trolls[i].sciz_desc += spacer;
 								// PrettyPrint
-								scizGlobal.trolls[i].sciz_desc += scizPrettyPrintTroll(t);
+								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML + scizPrettyPrintTroll(t);
 								// Store caracs
 								scizGlobal.trolls[i].caracs = t.caracs;
 	                            found = true;
@@ -5774,7 +5758,7 @@ function do_scizEnhanceView() {
 	                        var troll = template.content.firstChild;
 	                        // Add the troll
 	                        scizGlobal.trolls.push({
-	                            'id': t.id, 'name': html_nom, 'sciz_desc': html_nom + scizPrettyPrintTroll(t), 'node': troll, 'width':0, 'displayed': false, 'caracs': t.caracs
+	                            'id': t.id, 'name': html_nom, 'sciz_desc': html_nom + scizPrettyPrintTroll(t), 'node': troll, 'displayed': false, 'caracs': t.caracs
 	                        });
 	                        if (xPathTroll !== null) {
 	                            xPathTroll.parentNode.insertBefore(troll, xPathTroll);
