@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.18
+// @version 2.19
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -50,6 +50,8 @@
 //	Adaptation à un changement MH (page d'ordres des suivants)
 // V 2.18 18/07/2020 Roule'
 //	Adaptation à un changement MH (vue)
+// V 2.19 01/01/2022 Roule'
+//	Adaptation à un changement MH (suivants)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
