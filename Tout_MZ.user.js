@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.86
+// @version     1.3.0.87
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.87 01/01/2022",
+"   Adaptation aux modifs MH pages des suivants",
 "V1.3.0.86 31/12/2021",
 "   Corrections pour SCIZ",
 "V1.3.0.85 31/12/2021",
@@ -5228,7 +5230,9 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 				for(var i=0 ; i<lignes.length ; i++) {
 					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
 					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
-					if(lignes[i].className == 'mh_tdtitre_fo') {
+					var etd = lignes[i].getElementsByTagName('td')[0];
+					if(lignes[i].className == 'mh_tdtitre_fo'
+						|| (etd && etd.className == 'mh_tdtitre_fo')) {
 						var tds = lignes[i].getElementsByTagName('div');
 						for (var j=0; j < tds.length; j++) {
 							//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
@@ -5250,8 +5254,7 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 							}
 						}
 					}
-					if(lignes[i].className == 'mh_tdpage_fo') {
-						var etd = lignes[i].getElementsByTagName('td')[0];
+					else if(lignes[i].className == 'mh_tdpage_fo') {
 						if (etd !== undefined) {	// undefined dans le cas des Golems
 							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant td[0]=' + etd.textContent);
 							var tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
@@ -5339,7 +5342,9 @@ function MZ_showCarteBottom(listeSuiv) {
 
 function MZ_setCarteTousGogoHTML5() {
 	// partie récupérée de "trajet gowaps" de feldspath et Vapulabehemot
-	var ligne = document.getElementsByTagName("form")[0].getElementsByTagName("tbody")[0].childNodes;
+	var tabForm = document.getElementsByTagName("form");
+	if (tabForm.length < 0) var ligne = [0].getElementsByTagName("tbody")[0].childNodes;	// ancienne version
+	else                    var ligne = document.getElementById("mhPlay").getElementsByTagName("tbody")[0].childNodes;
 	var suivants = [];
 	for (var i=0;i<ligne.length;i++) {
 		if(ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) continue;
