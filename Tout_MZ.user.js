@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.87
+// @version     1.3.0.88
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.88 01/01/2022",
+"   Fix cacher les gowaps au même niveau",
 "V1.3.0.87 01/01/2022",
 "   Adaptation aux modifs MH pages des suivants",
 "V1.3.0.86 31/12/2021",
@@ -10078,7 +10080,11 @@ function getXxxPosition(xxx, i) {
 /* [functions] Récup données monstres */
 function getMonstreDistance(i) {
 	//debugMZ('getMonstreDistance, i=' + i + ', tr=' + MZ_EtatCdMs.tr_monstres[i].innerHTML);
-	return parseInt(MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellDist].textContent);
+	var s = MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellDist].textContent;
+	if (s.indexOf('|') < 0) return parseInt(s);
+	var m = s.match(/(\d+)[^\d]+(\d+)/);
+	if (!(m && m.length >= 3)) return 0;
+	return Math.max(m[1], m[2]);
 }
 
 function getMonstreID(i) {
