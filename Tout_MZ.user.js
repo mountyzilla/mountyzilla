@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.88
+// @version     1.3.0.89
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.89 05/01/2022",
+"   Corrections variées pour SCIZ",
 "V1.3.0.88 01/01/2022",
 "   Fix cacher les gowaps au même niveau",
 "V1.3.0.87 01/01/2022",
@@ -5750,6 +5752,17 @@ function do_scizEnhanceView() {
 							}
 	                    }
 	                    if (!found) {
+	                        // Special case of itself
+	                        if (parseInt(numTroll) === t.id) {
+	                            t.pos_x = posX;
+	                            t.pos_y = posY;
+	                            t.pos_n = posN;
+	                            // Don't display the user itslef if he does not want to
+	                            cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER');
+	                            if (cbx === '0') {
+	                                return;
+	                            }
+	                        }
 	                        // Find the right index
 	                        var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
 	                        var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
@@ -5861,7 +5874,7 @@ function do_scizEnhanceView() {
 				'sciz_desc': null,
 				'node': xPathMushroom,
 			});
-			ids.push(xPathMushroom.children[2].innerHTML)
+			ids.push(xPathMushroom.children[2].innerHTML);
 			if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) { break; }
 		}
 
@@ -5910,10 +5923,11 @@ function do_scizEnhanceView() {
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE');
 	if (cbx !== '0') {
 		// Retrieve monsters
-		var xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
+		var mobs = [];
+	    var xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
 		var xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
 		while (xPathMonster = xPathMonsters.iterateNext()) {
-	        var mob = xPathMonster.children[4].innerHTML.match(/>\s*(.+?)\s*\[\s*(.+)\s*]/);
+	        var mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
 			scizGlobal.monsters.push({
 				'id': parseInt(xPathMonster.children[2].innerHTML),
 				'name': mob[1],
@@ -5922,13 +5936,38 @@ function do_scizEnhanceView() {
 	            'icon': null,
 				'node': xPathMonster
 			});
-	   	}
-	    // Add the SCIZ icons
-		scizGlobal.monsters.forEach(m => {
-	        var icon = scizCreateHoverable('15', 'inline', function() { do_scizBestiaire(m); });
-	        m.icon = icon;
-	        m.node.children[4].appendChild(icon);
+	        mobs.push({'name': mob[1], 'age': mob[2]});
+	    }
+	    // Check the list against the SCIZ bestiaire
+		var sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'mobs': mobs}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+	                    return;
+					}
+	                var mobs = JSON.parse(responseDetails.responseText);
+	                // Add the SCIZ icons
+	                scizGlobal.monsters.forEach(m => {
+	                    if (mobs.bestiaire.includes(m.name + ' ' + m.age)) {
+	                        var icon = scizCreateHoverable('15', 'inline', function() { do_scizBestiaire(m); });
+	                        m.icon = icon;
+	                        m.node.children[4].appendChild(icon);
+	                    }
+	                });
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+			}
 		});
+
 	}
 
 	/* SCIZ View - TRAPS */
@@ -6101,7 +6140,6 @@ function do_scizBestiaire(monster) {
 	                    monster.sciz_desc = "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.";
 						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
 						window.console.log(responseDetails);
-						return;
 					}
 	                monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
 	                // Add the tooltip (kind of)
@@ -8103,6 +8141,9 @@ function saveAll() {
 		var sciz_cb_view_trolls = document.getElementById('sciz_cb_view_trolls').checked;
 		sciz_cb_view_trolls = (sciz_cb_view_trolls !== null) ? sciz_cb_view_trolls : true;
 		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TROLLS', sciz_cb_view_trolls);
+	    var sciz_cb_view_user = document.getElementById('sciz_cb_view_user').checked;
+		sciz_cb_view_user = (sciz_cb_view_user !== null) ? sciz_cb_view_user : true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_USER', sciz_cb_view_user);
 		var sciz_cb_view_traps = document.getElementById('sciz_cb_view_traps').checked;
 		sciz_cb_view_traps = (sciz_cb_view_traps !== null) ? sciz_cb_view_traps : true;
 		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TRAPS', sciz_cb_view_traps);
@@ -8387,6 +8428,11 @@ function insertOptionTable(insertPt) {
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS')));
 	appendText(td, ' Afficher les données des trolls');
+	// User data checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_user', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER')));
+	appendText(td, ' S\'afficher soit même');
 	// Traps checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
