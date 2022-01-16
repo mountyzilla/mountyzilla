@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.89
+// @version     1.3.0.90
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.90 16/01/2022",
+"   Correction BM vue en %",
 "V1.3.0.89 05/01/2022",
 "   Corrections variées pour SCIZ",
 "V1.3.0.88 01/01/2022",
@@ -4862,6 +4864,7 @@ function traiteMalus() {
 				case 'ESQ':
 				case 'REG':
 				case 'Vue':
+				case 'VUE':
 				case 'Voir le Caché':
 					str = effetsCeTour[carac]? ' | '+carac+' : '+aff( effetsCeTour[carac] ) : '';
 					break;
