@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.90
+// @version     1.3.0.91
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,8 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.0.90 16/01/2022",
-"   Correction BM vue en %",
+"V1.3.0.91 16/01/2022",
+"   Correction BM vue, PVMax en %",
 "V1.3.0.89 05/01/2022",
 "   Corrections variées pour SCIZ",
 "V1.3.0.88 01/01/2022",
@@ -4861,6 +4861,7 @@ function traiteMalus() {
  				case 'Fatigue':
 					strfat += toursGeres[i]+'-'+effetsCeTour[carac]+';';
 				case 'PV':
+				case 'PVMax':
 				case 'ESQ':
 				case 'REG':
 				case 'Vue':
