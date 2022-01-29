@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.91
+// @version     1.3.0.92
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.92 29/01/2022",
+"   modif suite à changement MH sur les CdM",
 "V1.3.0.91 16/01/2022",
 "   Correction BM vue, PVMax en %",
 "V1.3.0.89 05/01/2022",
@@ -9326,11 +9328,14 @@ function MZ_comp_traiteCdMcomp() {
 	var oContexteCdM = MZ_analyseCdM('msgEffet', true);	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
 	oContexteCdM.nameBut = 'as_Action';	// nom du bouton avant lequel insérer le bouton ou les textes
 	if (!oContexteCdM.ok) {
-		if (oContexteCdM.error) {
-			window.console.log('MZ_comp_traiteCdMcomp, ' + oContexteCdM.error);
-			MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+		if (!oContexteCdM.error) oContexteCdM = MZ_analyseCdM('msgDiv', true);
+		if (!oContexteCdM.ok) {
+			if (oContexteCdM.error) {
+				window.console.log('MZ_comp_traiteCdMcomp, ' + oContexteCdM.error);
+				MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+			}
+			return;
 		}
-		return;
 	}
 	if (MY_DEBUG) window.console.log('oData=' + JSON.stringify( oContexteCdM.oData));
 
