@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.92
+// @version     1.3.0.93
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.93 20/02/2022",
+"   Ajout guilde et mention 'HORS VUE' pour les trolls de la coterie SCIZ",
 "V1.3.0.92 29/01/2022",
 "   modif suite à changement MH sur les CdM",
 "V1.3.0.91 16/01/2022",
@@ -5779,8 +5781,9 @@ function do_scizEnhanceView() {
 	                        }
 	                        // Create the troll
 	                        var template = document.createElement('template');
-	                        var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + ' </a>';
-	                        template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td title="">' + html_nom + '</td><td></td><td>' + t.niv + '</td><td>' + t.race + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
+	                        var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + '</a> (HORS VUE)';
+	                        var html_guilde = '<a href="javascript:EAV(' + t.guilde_id + ',750,550)" class="mh_links">' + t.guilde_nom + '</a>';
+	                        template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td title="">' + html_nom + '</td><td>' + html_guilde + '</td><td>' + t.niv + '</td><td>' + t.race + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
 	                        var troll = template.content.firstChild;
 	                        // Add the troll
 	                        scizGlobal.trolls.push({
