@@ -13170,12 +13170,12 @@ function saveProfil() {
 /*-[functions]----------- Fonctions modifiant la page ------------------------*/
 
 function setInfosCaracteristiques() {
-        // Modification de l'entete
-    var thTotal = document.querySelector("table#caracs>thead>tr>th:nth-child(6)");
-    thTotal.innerHTML+='|<i>Moyenne</i>';
-    thTotal.title="Moyenne (Moyenne ce tour)";
+	// Modification de l'entete
+	var thTotal = document.querySelector("table#caracs>thead>tr>th:nth-child(6)");
+	thTotal.innerHTML+='|<i>Moyenne</i>';
+	thTotal.title="Moyenne (Moyenne ce tour)";
 
-	    // Ajout des informations calculees
+	// Ajout des informations calculees
 	var tdAttTotal = document.querySelector("table#caracs td#att").parentElement.children[5];
 	tdAttTotal.innerHTML="<i>"+attmoy+"</i>";
 	if(attmoy!=attmoytour){tdAttTotal.innerHTML+=" ("+attmoytour+")";}
@@ -13302,11 +13302,12 @@ function setInfosEtatPV() { // pour AM et Sacro
 }
 
 function MZ_FormatHeureMinute(duree, bPlus) {
+	vat txt = '';
 	if (duree < 0) {
-		var txt = '- ';
+		txt = '- ';
 		duree = -duree;
 	} else if (duree > 0 && bPlus) {
-		var txt = '+ ';
+		txt = '+ ';
 	}
 	var h = Math.floor(duree / 60);
 	if (h) txt += h + ' h ';
