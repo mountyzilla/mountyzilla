@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.93
+// @version     1.3.0.94
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.94 22/03/2022",
+"   Fix message quand la réserve de temps de tour est exactement 0",
 "V1.3.0.93 20/02/2022",
 "   Ajout guilde et mention 'HORS VUE' pour les trolls de la coterie SCIZ",
 "V1.3.0.92 29/01/2022",
@@ -13305,7 +13307,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 }
 
 function MZ_FormatHeureMinute(duree, bPlus) {
-	vat txt = '';
+	var txt = '';
 	if (duree < 0) {
 		txt = '- ';
 		duree = -duree;
