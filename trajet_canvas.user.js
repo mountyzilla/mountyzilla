@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.19
+// @version 2.20
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -52,6 +52,8 @@
 //	Adaptation à un changement MH (vue)
 // V 2.19 01/01/2022 Roule'
 //	Adaptation à un changement MH (suivants)
+// V 2.20 10/04/2022 Roule'
+//	Gestion des durées de tour sans minutes (nombre entier d'heures)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -2697,8 +2699,11 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 				// Roule 07/09/2019 adaptation nouvelle présentation
 				//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
 				duree = cadre_dla.innerText.match(/\d+/g);
-				dla = parseInt(duree[0])*60+parseInt(duree[1]);
-				//window.console.log('dla=' + dla);
+				if (duree.length == 1)	// cas d'un suivant avec une durée de tour multiple exact d'heures
+					dla = parseInt(duree[0])*60;
+				else
+					dla = parseInt(duree[0])*60+parseInt(duree[1]);
+				//window.console.log('texte durée=' + cadre_dla.innerText + ', dla=' + dla);
 				nb_ajout = etapes.length;
 				sauve_trajet();
 			}
