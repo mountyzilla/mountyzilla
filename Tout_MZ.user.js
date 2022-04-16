@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.94
+// @version     1.3.0.95
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.95 16/04/2022",
+"   Corrections du cas de soit-même dans la vue pour SCIZ",
 "V1.3.0.94 22/03/2022",
 "   Fix message quand la réserve de temps de tour est exactement 0",
 "V1.3.0.93 20/02/2022",
@@ -5763,11 +5765,13 @@ function do_scizEnhanceView() {
 	                    }
 	                    if (!found) {
 	                        // Special case of itself
-	                        if (parseInt(numTroll) === t.id) {
+                            var is_self = false;
+                            if (parseInt(numTroll) === t.id) {
+                                is_self = true;
 	                            t.pos_x = posX;
 	                            t.pos_y = posY;
 	                            t.pos_n = posN;
-	                            // Don't display the user itslef if he does not want to
+	                            // Don't display the user itself if he does not want to
 	                            cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER');
 	                            if (cbx === '0') {
 	                                return;
@@ -5777,13 +5781,17 @@ function do_scizEnhanceView() {
 	                        var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
 	                        var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 	                        while (xPathTroll = xPathTrolls.iterateNext()) {
+                                if (is_self) break;
 	                            if (parseInt(xPathTroll.children[0].innerHTML) > distance) {
 	                                break;
 	                            }
 	                        }
 	                        // Create the troll
 	                        var template = document.createElement('template');
-	                        var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + '</a> (HORS VUE)';
+	                        var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + '</a>';
+                            if (!is_self) {
+                                html_nom = html_nom + ' (HORS VUE)';
+                            }
 	                        var html_guilde = '<a href="javascript:EAV(' + t.guilde_id + ',750,550)" class="mh_links">' + t.guilde_nom + '</a>';
 	                        template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td title="">' + html_nom + '</td><td>' + html_guilde + '</td><td>' + t.niv + '</td><td>' + t.race + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
 	                        var troll = template.content.firstChild;
