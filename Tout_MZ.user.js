@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.95
+// @version     1.3.0.96
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.96 18/04/2022",
+"   Ajout de la gestion des portails pour SCIZ",
 "V1.3.0.95 16/04/2022",
 "   Corrections du cas de soit-même dans la vue pour SCIZ",
 "V1.3.0.94 22/03/2022",
@@ -5572,7 +5574,8 @@ var scizGlobal = {
 	treasures: [],
 	monsters: [],
 	traps: [],
-	mushrooms: []
+	mushrooms: [],
+    portals: []
 };
 
 function scizAddCSS() {
@@ -5697,6 +5700,13 @@ function scizPrettyPrintMushroom(m) {
 	return res;
 }
 
+function scizPrettyPrintPortal(p) {
+	var res = '';
+    var html_nom = '<a href="javascript:EPV(' + p.owner_id + ')" class="mh_trolls_1">' + p.owner_nom + '</a>'
+	res += 'Portail de Téléportaion de ' + html_nom + ' vers X = ' + p.pos_x_dst + ' | Y = ' + p.pos_y_dst + ' | N = ' + p.pos_n_dst;
+	return res;
+}
+
 function do_scizEnhanceView() {
 	scizGlobal.treasures = [];
 
@@ -5765,7 +5775,7 @@ function do_scizEnhanceView() {
 	                    }
 	                    if (!found) {
 	                        // Special case of itself
-                            var is_self = false;
+	                        var is_self = false;
                             if (parseInt(numTroll) === t.id) {
                                 is_self = true;
 	                            t.pos_x = posX;
@@ -5836,7 +5846,7 @@ function do_scizEnhanceView() {
 		}
 
 		// Call SCIZ
-		var sciz_url = 'https://www.sciz.fr/api/hook/treasures';
+		sciz_url = 'https://www.sciz.fr/api/hook/treasures';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
@@ -5883,7 +5893,7 @@ function do_scizEnhanceView() {
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS');
 	if (cbx !== '0') {
 		// Retrieve mushrooms
-		var ids = [];
+		ids = [];
 		var xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
 		var xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
 		while (xPathMushroom = xPathMushrooms.iterateNext()) {
@@ -5898,7 +5908,7 @@ function do_scizEnhanceView() {
 		}
 
 		// Call SCIZ
-		var sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
+		sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
@@ -5958,7 +5968,7 @@ function do_scizEnhanceView() {
 	        mobs.push({'name': mob[1], 'age': mob[2]});
 	    }
 	    // Check the list against the SCIZ bestiaire
-		var sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
+		sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
@@ -5993,7 +6003,7 @@ function do_scizEnhanceView() {
 	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS');
 	if (cbx !== '0') {
 		// Retrieve traps
-		var ids = [];
+		ids = [];
 		var xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
 		var xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 		while (xPathPlace = xPathPlaces.iterateNext()) {
@@ -6012,7 +6022,7 @@ function do_scizEnhanceView() {
 		}
 
 		// Call SCIZ
-		var sciz_url = 'https://www.sciz.fr/api/hook/traps';
+		sciz_url = 'https://www.sciz.fr/api/hook/traps';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
@@ -6076,6 +6086,65 @@ function do_scizEnhanceView() {
 			}
 		});
 	}
+
+   	/* SCIZ View - PORTALS */
+	cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_PORTALS');
+	if (cbx !== '0') {
+		// Retrieve portals
+		ids = [];
+		xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+		xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+		while (xPathPlace = xPathPlaces.iterateNext()) {
+	        var portal = xPathPlace.children[3].innerHTML.match(/Portail/);
+			if (portal === null) {
+	            continue
+	        }
+	        scizGlobal.portals.push({
+				'id': parseInt(xPathPlace.children[2].innerHTML),
+				'type': xPathPlace.children[3].innerHTML,
+				'sciz_desc': null,
+				'node': xPathPlace
+			});
+			ids.push(xPathPlace.children[2].innerHTML);
+		}
+		// Call SCIZ
+		sciz_url = 'https://www.sciz.fr/api/hook/portals';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': jwt, 'Content-type': 'application/json'},
+			data: JSON.stringify({'ids': ids}),
+			onload: function(responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						window.console.log('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
+						window.console.log(responseDetails);
+						return;
+					}
+					var portals = JSON.parse(responseDetails.responseText);
+					if (portals.portals.length < 1) {
+						// window.console.log('DEBUG - MZ/SCIZ - Aucun portail trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for treasures to enhanced
+					portals.portals.forEach(t => {
+						for (i = 0; i < scizGlobal.portals.length; i++) {
+							if (scizGlobal.portals[i].id === t.id) {
+								// PrettyPrint
+								scizGlobal.portals[i].sciz_desc = scizPrettyPrintPortal(t);
+	                            break;
+							}
+						}
+					});
+				} catch(e) {
+					window.console.log('ERREUR - MZ/SCIZ - Stacktrace');
+					window.console.log(e);
+				}
+				// Do the display overwrite and add the switches
+				do_scizSwitchPortals();
+			}
+		});
+	}
 }
 
 function do_scizSwitchTrolls() {
@@ -6136,6 +6205,18 @@ function do_scizSwitchTraps() {
 			}
 			// Add the SCIZ switcher
 			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTraps));
+		}
+	});
+}
+
+function do_scizSwitchPortals() {
+	scizGlobal.portals.forEach((m) => {
+		if (m.sciz_desc !== null) {
+			// Do the switch
+			var currentDesc = m.node.children[3].firstChild.textContent;
+			m.node.children[3].innerHTML = (currentDesc === m.type) ? ((m.sciz_desc !== null) ? m.sciz_desc : m.type) : m.type;
+			// Add the SCIZ switcher
+			m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchPortals));
 		}
 	});
 }
@@ -8166,7 +8247,9 @@ function saveAll() {
 		var sciz_cb_view_traps = document.getElementById('sciz_cb_view_traps').checked;
 		sciz_cb_view_traps = (sciz_cb_view_traps !== null) ? sciz_cb_view_traps : true;
 		MY_setValue(numTroll + '.SCIZ_CB_VIEW_TRAPS', sciz_cb_view_traps);
-
+		var sciz_cb_view_portals = document.getElementById('sciz_cb_view_portals').checked;
+		sciz_cb_view_portals = (sciz_cb_view_portals !== null) ? sciz_cb_view_portals: true;
+		MY_setValue(numTroll + '.SCIZ_CB_VIEW_PORTALS', sciz_cb_view_portals);
 		saveITData();
 	} catch (e) {
 		var bouton = document.getElementById('saveAll');
@@ -8457,6 +8540,11 @@ function insertOptionTable(insertPt) {
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_view_traps', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS')));
 	appendText(td, ' Afficher les pièges');
+	// Portals checkbox
+	td = appendTd(tr);
+	td.setAttribute('align', 'center');
+	appendCheckBox(td, 'sciz_cb_view_portals', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_PORTALS')));
+	appendText(td, ' Afficher les destinations de portails');
 
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
