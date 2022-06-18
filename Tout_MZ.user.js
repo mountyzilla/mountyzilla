@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.96
+// @version     1.3.0.97
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.97 18/06/2022",
+"   Fix tableau de Fatigue et AM dans certains cas",
 "V1.3.0.96 18/04/2022",
 "   Ajout de la gestion des portails pour SCIZ",
 "V1.3.0.95 16/04/2022",
@@ -13542,6 +13544,12 @@ function setAccel() {
 		if(MY_getValue(numTroll+'.bm.fatigue')) {
 			var BMmemoire = MY_getValue(numTroll+'.bm.fatigue').split(';');
 			BMmemoire.pop();
+			for(var i=0 ; i<BMmemoire.length ; i++) {
+				var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
+				var s = '0000' + nbrs[0];
+				BMmemoire[i] = s.substr(s.length-4) + ' ' + nbrs[1];
+			}
+			BMmemoire.sort();	// tri par n° de tour
 			var tour = 0;
 			for(var i=0 ; i<BMmemoire.length ; i++) {
 				var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
@@ -13568,6 +13576,7 @@ function setAccel() {
 		} else {
 			listeBmFat = [30,30,15];
 		}
+		
 	}
 	if(overDLA) {
 		// Si on est en over-DLA, on decale les bm d'un tour
@@ -13621,7 +13630,7 @@ function setAccel() {
 			if(listeBmFat[col]) {
 				if(BMfrais || (!overDLA && col==0)) {
 					appendTdText(ligneFat,fat+'+'+listeBmFat[col]);
-					appendTdText(ligneMin,minppv[1]+'\'');
+					appendTdText(ligneMin,Math.max(1, minppv[1])+'\'');
 				} else {
 					appendTdText(ligneFat,fat+'+'+listeBmFat[col]+' (?)');
 					appendTdText(ligneMin,minppv[1]+'\' ('+minppv[0]+'\')');
@@ -13648,12 +13657,12 @@ function setAccel() {
 
 		if(!BMfrais && bmfatigue) {
 			// si les BM n'ont pas ete rafraichis, on signale:
-			appendText(
-				insertPt,
-				'/!\\ Visitez la page des Bonus/Malus '+
-				'pour mettre à jour votre fatigue. /!\\',
-				true
-			);
+			var b = document.createElement('b');
+			b.appendChild(document.createTextNode('/!\\ Attention, ce tableau est probablement faux.'
+				+ ' Visitez la page des Bonus/Malus'
+				+ ' pour mettre à jour votre fatigue. /!\\'));
+			b.style.color = 'red';
+			insertPt.appendChild(b);
 			appendBr(insertPt);
 		}
 		appendBr(insertPt);
