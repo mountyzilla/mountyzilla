@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.97
+// @version     1.3.0.98
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.98 28/06/2022",
+"   Fix pb suite à changement de présentation de la vue",
 "V1.3.0.97 18/06/2022",
 "   Fix tableau de Fatigue et AM dans certains cas",
 "V1.3.0.96 18/04/2022",
@@ -10432,7 +10434,7 @@ function bddTrolls(limitH, limitV) {
 
 /* [functions] Récup données Trésors */
 function getTresorDistance(i) {
-	return MZ_getDistanceAvecSplit(tr_tresors[i].cells[0].firstChild.nodeValue);
+	return MZ_getDistanceAvecSplit(tr_tresors[i].cells[0].innerText);
 }
 
 function MZ_getDistanceAvecSplit(cellTxt) {
