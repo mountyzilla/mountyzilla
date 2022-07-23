@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.98
+// @version     1.3.0.99
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.0.99 23/07/2022",
+"   Mémorise si on veut la vue SCIZ ou pas dans les Events",
 "V1.3.0.98 28/06/2022",
 "   Fix pb suite à changement de présentation de la vue",
 "V1.3.0.97 18/06/2022",
@@ -6348,6 +6350,8 @@ function do_scizOverwriteEvents() {
 					// window.console.log('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 					return;
 				}
+				// Read if switch to SCIZ view or not
+				var bViewSCIZ = (MY_getValue('SCIZ_view') !== 'no');
 				// Look for events to overwrite (based on timestamps)
 				events.events.forEach(e => {
 					if (e.message.includes(id)) { // Exclude any event we were not looking for...
@@ -6374,8 +6378,10 @@ function do_scizOverwriteEvents() {
 							// Actual display overwrite
 							scizGlobal.events[i].node.children[1].setAttribute("valign", "middle");
 							scizGlobal.events[i].node.children[2].setAttribute("valign", "middle");
-							scizGlobal.events[i].node.children[1].innerHTML = scizGlobal.events[i].sciz_type;
-							scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
+							if (bViewSCIZ) {
+								scizGlobal.events[i].node.children[1].innerHTML = scizGlobal.events[i].sciz_type;
+								scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
+							}
 						}
 					}
 				});
@@ -6393,12 +6399,20 @@ function do_scizOverwriteEvents() {
 }
 
 function do_scizSwitchEvents() {
+	var bMaskSCIZ = false;
 	scizGlobal.events.forEach((e) => {
 		var currentType = e.node.children[1].innerHTML;
-		e.node.children[1].innerHTML = (currentType === e.type) ? ((e.sciz_type !== null) ? e.sciz_type : e.type) : e.type;
+		if (currentType === e.type) {
+			e.node.children[1].innerHTML = (e.sciz_type !== null) ? e.sciz_type : e.type;
+		} else {
+			e.node.children[1].innerHTML = e.type;
+			bMaskSCIZ = true;
+		}
 		var currentDesc = e.node.children[2].innerHTML;
 		e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
 	});
+	if (bMaskSCIZ) MY_setValue('SCIZ_view', 'no');
+	else           MY_removeValue('SCIZ_view');
 }
 
 /*******************************************************************************
