@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.0.99
+// @version     1.3.1.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.1 15/08/2022",
+"   Enrichissement de la page des suivants",
 "V1.3.0.99 23/07/2022",
 "   Mémorise si on veut la vue SCIZ ou pas dans les Events",
 "V1.3.0.98 28/06/2022",
@@ -609,6 +611,20 @@ function MY_setValue(key, val) {
 		window.console.log('[MZ ' + GM_info.script.version + '] MY_setValue echec localStorage[' + key + '] = ' + val);
 	}
 }
+function MZ_setOrRemoveValue(key, val) {
+	if (val === true)
+		val = 'true';
+	else if (val === false || val === undefined || val === '')
+		val = null;
+	if (val == null) MY_removeValue(key);
+	else             MY_setValue(key, val);
+}
+function MZ_getValueBoolean(key) {
+	var val = MY_getValue(key);
+	if (val == 'true') return true;
+	if (val == 1) return true;
+	return false;
+}
 
 /*---------------- mise à jour de variables globales utiles ------------------*/
 // utilisé pour accès bdd (un peu partout) :
@@ -1012,6 +1028,18 @@ function appendTextbox(paren,type,nam,size,maxlength,value, sId) {
 	paren.appendChild(input);
 	return input;
 	}
+	
+function appendTextboxBlock(paren,type,nam,text,size,maxlength,value, sId, bTextRight) {
+	var label = document.createElement('label');
+	label.style.display = 'inline-block';
+	label.style.marginRight = '10px';
+	if (!bTextRight) label.appendChild(document.createTextNode(text));
+	var i = appendTextbox(label,type,nam,size,maxlength,value, sId);
+	i.style.marginRight = '5px';
+	if (bTextRight) label.appendChild(document.createTextNode(text));
+	paren.appendChild(label);
+	return label;
+	}
 
 function appendCheckBox(paren,nam,checked,onClick) {
 	var input = document.createElement('input');
@@ -1023,6 +1051,23 @@ function appendCheckBox(paren,nam,checked,onClick) {
 	paren.appendChild(input);
 	return input;
 	}
+	
+function appendCheckBoxBlock(paren, nam, text, checked, onClick) {
+	var label = document.createElement('label');
+	label.style.display = 'inline-block';
+	label.style.marginRight = '10px';
+	var input = document.createElement('input');
+	input.type = 'checkbox';
+	input.name = nam;
+	input.id = nam;
+	if(checked) input.checked = true;
+	if(onClick) input.onclick = onClick;
+	input.style.marginRight = '5px;'
+	label.appendChild(input);
+	label.appendChild(document.createTextNode(text));
+	paren.appendChild(label);
+	return label;
+}
 
 function appendNobr(paren,id,delgg,text) {
 	var nobr = document.createElement('nobr');
@@ -5299,6 +5344,116 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 	MZ_analyse_page_ordre_suivant.init();
 }
 
+var MZ_analyse_page_suivants;
+if (isPage("MH_Play/Play_e_follo")) {
+	if (MZ_analyse_page_suivants === undefined) {
+		// Roule 26/07/2021
+		// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
+		// rend un object, par exemple
+		MZ_analyse_page_suivants = {
+			suivants: [],	// objet de type oMZ_TrSuivant
+			eTabSuivant: undefined,
+			init: function() {
+				this.eTabSuivant = document.getElementById('suivants');
+				if (!this.eTabSuivant) {
+					window.console.log("MZ_analyse_page_suivants : pas d'élément 'suivants' dans la page");
+					return;
+				}
+				for (let eTr of this.eTabSuivant.rows) {
+					let oSuivant = new this.oMZ_TrSuivant(eTr);
+					if (oSuivant.oJSON) {
+						this.suivants.push(oSuivant);
+					} else {
+						//window.console.log('MZ_analyse_page_suivants ignore tr ' + eTr.innerHTML);
+					}
+				}
+			},
+			oMZ_TrSuivant: function(eTr) {	// ceci est un objet
+				// .eTrTi   : le TR HTML de titre
+				// .eTrTr   : le TR HTML des trésors
+				// .oJSON : l'objet reçu en JSON dans le data-json'
+				// .categories : tableau d'objets de type oMz_categorieTresorSuivant
+				// .nVide : true si le suivant est vide
+				this.eTrTi = eTr;
+				this.eTrTr = MZ_getTrTresorSuivant(eTr);
+
+				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
+					this.eTableCategorie = eTable;
+					this.eDivTresors = eDiv;
+					this.eTableTresors = eDiv.children[0];
+				};
+
+				// lecture des infos des trésors et valorisation de this.categories
+				this.initTresors = function() {
+					var eTd = this.eTrTr.cells[0];
+					if (!eTd) return;
+					var eContenu = eTd.children[0];
+					if (!eContenu || eContenu.tagName == "DIV") {	// no equipement
+						this.bVide = true;
+						return;
+					}
+					// énumération des catégories. 2 éléments pour chaque
+					this.categories = [];
+					for (var i = 0, l = eTd.children.length; i < l; i ++) {
+						var eTable = eTd.children[i];
+						var sTag = eTable.tagName;
+						if (sTag == 'SCRIPT') continue;	// c'est le cas pour le premier suivant qui porte du matos
+						if (sTag == 'STYLE') continue;	// ça pourrait bien se produire aussi...
+						if (sTag != 'TABLE') {	// ce n'est pas normal
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément de type non attendu : ' + sTag);
+							continue;
+						}
+						// le suivant doit être une DIV
+						if (++i >= l) {
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ", pas d'élément suivant");
+							continue;
+						}
+						var eDiv = eTd.children[i];
+						if (eDiv.tagName != 'DIV') {
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément suivant de type non attendu : ' + eDiv.tagName);
+							continue;
+						}
+						var oCategorie = new this.oMZ_categorieSuivant(this, eTable, eDiv);
+						//window.console.log('oMZ_TrSuivant.initTresors oCategorie=' + oCategorie);
+						this.categories.push(oCategorie);
+					}
+				}
+
+				for (let eTd of eTr.cells) {
+					if (eTd.hasAttribute('data-json')) {
+						//window.console.log('oMZ_TrSuivant json=' + eTd.getAttribute('data-json'));
+						this.oJSON = JSON.parse(eTd.getAttribute('data-json'));
+						break;
+					}
+					for (let eDiv of eTd.getElementsByTagName('div')) {
+						if (eDiv.hasAttribute('data-json')) {
+							//window.console.log('oMZ_TrSuivant json=' + eDiv.getAttribute('data-json'));
+							this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
+						}
+					}
+					if (this.oJSON) break;
+				}
+			},
+			autoTest: function() {
+				window.console.log('MZ_analyse_page_suivants.autoTest : nb suivants=' + this.suivants.length)
+				for (let oSuivant of this.suivants) window.console.log(JSON.stringify(oSuivant));
+			},
+		}
+		MZ_analyse_page_suivants.init();
+	}
+	//MZ_analyse_page_suivants.autoTest();
+}
+
+function MZ_getTrTresorSuivant(eTrTitre) {
+	var eTr2 = eTrTitre.nextElementSibling;
+	if (!eTr2) return;
+	if (eTr2.tagName != 'TR') return;
+	var eTd = eTr2.cells[0];
+	if (!eTd) return;
+	if (!eTd.classList.contains('mh_tdpage')) return;
+	return eTr2;
+}
+
 // version Roule' janvier 2017
 function MZ_setCarteUnGogoHTML5() {
 	// fabriquer la liste des positions successives
@@ -5306,46 +5461,6 @@ function MZ_setCarteUnGogoHTML5() {
 	listeDepl = MZ_analyse_page_ordre_suivant.result.ordres.slice(0);	// clone array
 	listeDepl.unshift(MZ_analyse_page_ordre_suivant.result);	// le result de MZ_analyse_page_ordre_suivant a déjà juste les bonne propriétés
 
-	/* à supprimer, remplacé par MZ_analyse_page_ordre_suivant
-	listeDepl.push({x: parseInt(tabPos[2])	// ParseInt obligatoire, javascript language de m*rd*
-		, y: parseInt(tabPos[3])
-		, n: parseInt(tabPos[4])
-		, nom: tabNomID[2]
-		, id: tabNomID[1]});
-
-	// position courante
-	var eTitle = document.getElementById('titre2');
-	// déplacements
-	var lignes = eTitle.parentNode.getElementsByTagName('tr');
-	for(var i=0 ; i<lignes.length ; i++) {
-		//window.console.log('MZ_setCarteUnGogoHTML5 ' + i +  ' className=' + lignes[i].className);
-		//window.console.log('MZ_setCarteUnGogoHTML5 ' + i +  lignes[i].innerHTML);
-		if(lignes[i].className == 'mh_tdtitre_fo') {
-			var tds = lignes[i].getElementsByTagName('div');
-			for (var j=0; j < tds.length; j++) {
-				tabmatch = tds[j].innerText.match(/(\d+) *(.*\[.*\].*)$/);
-				if (tabmatch) var tabNomID = tabmatch;
-				tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-.\d+).*Y = (-.\d+).*N = (-.\d+)/i);
-				if (tabmatch) var tabPos = tabmatch;
-			}
-		if (tabPos != undefined && tabNomID != undefined) {	// null dans le cas des Golems
-			listeDepl.push({x: parseInt(tabPos[2])	// ParseInt obligatoire, javascript language de m*rd*
-				, y: parseInt(tabPos[3])
-				, n: parseInt(tabPos[4])
-				, nom: tabNomID[2]
-				, id: tabNomID[1]});
-			} else {
-				return;
-			}
-		}
-		if(lignes[i].className == 'mh_tdpage_fo') {
-			var etd = lignes[i].getElementsByTagName('td')[0];
-			if (etd === undefined) return;	// cas des Golems
-			var point = etd.firstChild.nodeValue.match(/X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
-			if (point) listeDepl.push({x: parseInt(point[1]), y: parseInt(point[2]), n: parseInt(point[3])});
-		}
-	}
-	*/
 	MZ_showCarteBottom([listeDepl]);	// L'arg est un tableau de tableaux d'objets
 }
 
@@ -5440,7 +5555,95 @@ function do_ordresgowap() {
 }
 
 function do_listegowap() {
+	if (MY_getValue('MZ_upgradeVueSuivants') !== undefined) MZ_upgradeVueSuivants();
 	MZ_setCarteTousGogoHTML5();
+}
+
+function MZ_upgradeVueSuivants() {
+	if (MZ_analyse_page_suivants == undefined) {
+		window.console.log('MZ_upgradeVueSuivants impossible, pas de MZ_analyse_page_suivants');
+		return;
+	}
+	var bVueCompressee = MZ_getValueBoolean('MZ_SuivantsCompress');
+	var bTresorUnique = MZ_getValueBoolean('MZ_SuivantsTresUnique');
+	var nMaxOrdres = MY_getValue('MZ_SuivantsOrdres');
+	if (bVueCompressee && MZ_analyse_page_suivants.eTabSuivant) {
+		// reduce padding of all TD
+		var e = MZ_analyse_page_suivants.eTabSuivant.getElementsByTagName('TD');
+		for (var iRow = 0; iRow < e.length; iRow++) {
+			e[iRow].style.paddingTop = '0';
+			e[iRow].style.paddingBottom = '0';
+		}
+	}
+	for (oSuivant of MZ_analyse_page_suivants.suivants) {
+		if (nMaxOrdres != undefined && oSuivant.oJSON.ordres && oSuivant.oJSON.ordres.length > 0) {
+			var tabTxtOrdre = [];
+			var nDisplayOrdre = 0;
+			var lastSecouerAllerChercher = undefined;
+			for (var oOrdre of oSuivant.oJSON.ordres) {
+				tabTxtOrdre.push(oOrdre.ordre);
+				if (nMaxOrdres > 0 && nDisplayOrdre >= (nMaxOrdres - 1)) break;
+				if (nMaxOrdres < 0) {
+					if (oOrdre.ordre.indexOf('rrêt') >= 0) break;
+					if (oOrdre.ordre.indexOf('ller chercher') >= 0) lastSecouerAllerChercher = nDisplayOrdre;
+					if (oOrdre.ordre.indexOf('secouer') >= 0) lastSecouerAllerChercher = nDisplayOrdre;
+					if (oOrdre.ordre.indexOf('uivre') >= 0) break;
+				}
+				nDisplayOrdre++;
+			}
+			if (lastSecouerAllerChercher != undefined) {
+				tabTxtOrdre = tabTxtOrdre.slice(0, lastSecouerAllerChercher + 1);
+			}
+			var eOuterDiv = document.createElement('div');
+			eOuterDiv.id = 'MZ_suiv_outer_' + oSuivant.oJSON.id;
+			eOuterDiv.style.width = "100%";
+			eOuterDiv.style.fontSize = '12px';
+			eOuterDiv.style.display = 'inline-block';
+
+			var eDLA = document.createElement('div');
+			eDLA.id = 'MZ_suiv_dla_' + oSuivant.oJSON.id;
+			eDLA.style.whiteSpace = 'nowrap';
+			var d = new Date(oSuivant.oJSON.dla);
+			eDLA.appendChild(document.createTextNode('DLA : ' + d.toLocaleString("fr-FR")));
+			eDLA.style.display = 'inline-block';
+			eOuterDiv.appendChild(eDLA);
+
+			var eA = document.createElement('a');
+			eA.id = 'MZ_suiv_ordres_' + oSuivant.oJSON.id;
+			eA.style.display = 'inline-block';
+			eA.style.cssFloat = 'right';
+			eA.style.whiteSpace = 'nowrap';
+			eA.href = '/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=' + oSuivant.oJSON.id;
+			eA.title = 'Accès direct aux ordres';
+			eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
+			eOuterDiv.appendChild(eA);
+
+			oSuivant.eTrTi.cells[0].appendChild(eOuterDiv);
+		}
+		if (!bVueCompressee && !bTresorUnique) continue;
+		oSuivant.initTresors();
+		if (oSuivant.bVide) {	// no equipement
+			if (bVueCompressee) oSuivant.eTrTr.style.display = 'none';
+			continue;
+		}
+		if (!bTresorUnique) continue;	// la suite ne concerne que l'affichage des trésors uniques
+
+		for (var oCategorie of oSuivant.categories) {
+			if (oCategorie.eTableTresors.rows.length != 1) continue;
+			oCategorie.eTableCategorie.style.display = 'none';
+			oCategorie.eDivTresors.style.display = '';
+			// copy weight from category to single trésor
+			try {	// ignore error
+				var e = oCategorie.eTableCategorie.rows[0].cells[3];	// cell containing total weight
+				var s = e.textContent.match(/poids total *\u00A0*: *(.*)$/i)[1];
+				e = oCategorie.eTableTresors.rows[0].cells[4];	// cell for weight of first trésor
+				e.innerHTML = s;
+				oCategorie.eTableTresors.rows[0].cells[3].style.whiteSpace = 'nowrap';
+			} catch(e) {
+				window.console.log('Erreur dans copie poids ' + e);
+			}
+		}
+	}
 }
 
 function do_lieuDescription() {
@@ -7078,8 +7281,8 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
-	news.push(['15/11/2019', 'Refonte des calculs tactiques dans la vue. Affichage du niveau du monstre à tout coup (ou presque).']);
-	news.push(['24/12/2016', 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
+	news.push(['2022-08-16', 'Enrichissement de la page des suivants (voir les options).']);
+	news.push([null, 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront peut-être. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 	afficherNouvelles(news);
 }
 
@@ -7101,12 +7304,26 @@ function afficherNouvelles(items) {
 	tbody.rows[0].cells[0].style.position = 'relative';
 	tbody.rows[0].cells[0].appendChild(div);
 	for(var i=0 ; i<items.length ; i++) {
+		var color = undefined;
+		var d = undefined;
+		if (items[i][0] != null) {
+			d = new Date(items[i][0]);
+			// plus vieux que 2 mois => ne pas afficher
+			var d2 = new Date();
+			d2.setMonth(d.getMonth() - 3);
+			if (d < d2) continue;
+			// afficher en rouge si moins de 15 jours
+			d2 = new Date();
+			d2.setDate(d.getDate() - 15);
+			if (d > d2) color = 'red';
+		}
 		var tr = appendTr(tbody,'mh_tdpage');
+		if (color) tr.style.color = color;
 		var td = appendTdCenter(tr);
 		td.style.verticalAlign = 'top'; // semble sans effet
-		appendText(td,items[i][0],true);
+		if (d) td.appendChild(document.createTextNode(d.toLocaleDateString("fr-FR")));
 		td = appendTd(tr);
-		td.innerHTML = items[i][1];
+		td.appendChild(document.createTextNode(items[i][1]));
 	}
 	insertBefore(footer,p);
 
@@ -8137,7 +8354,7 @@ function saveITData() {
 			var eltSystem = document.getElementById('urlbricol'+iBricol);
 			if (eltSystem == undefined) break;
 			var system = eltSystem.value;
-			window.console.log("[MZ] saveITData system=" + system);
+			//window.console.log("[MZ] saveITData system=" + system);
 			var login = document.getElementById('loginbricol'+iBricol).value;
 			var pass = document.getElementById('passbricol'+iBricol).value;
 			var affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
@@ -8203,40 +8420,36 @@ function saveAll() {
 		saveLinks();
 		refreshLinks();
 
-		MY_setValue('VUEEXT',document.getElementById('vueext').value);
+		MZ_setOrRemoveValue('VUEEXT',document.getElementById('vueext').value);
 
 		var maxcdm = parseInt(document.getElementById('maxcdm').value);
 		if(maxcdm) {
-			MY_setValue(numTroll+'.MAXCDM', maxcdm );
+			MZ_setOrRemoveValue(numTroll+'.MAXCDM', maxcdm );
 		}
 		else {
 			MY_removeValue(numTroll+'.MAXCDM');
 			document.getElementById('maxcdm').value = '';
 		}
 
-		MY_setValue('NOINFOEM',
-			document.getElementById('noInfoEM').checked ? 'true' : 'false');
+		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
-		MY_setValue(numTroll+'.USECSS',
-			document.getElementById('usecss').checked ? 'true':'false');
-		MY_setValue('INFOCARAC',
-			document.getElementById('infocarac').checked ? 'true' : 'false');
-		//MY_setValue(numTroll+'.SEND_IDT',
-		//	document.getElementById('send_idt').checked ? 'oui' : 'non');
+		MZ_setOrRemoveValue(numTroll+'.USECSS', document.getElementById('usecss').checked);
+		MZ_setOrRemoveValue('INFOCARAC', document.getElementById('infocarac').checked);
+		//MY_setValue(numTroll+'.SEND_IDT', document.getElementById('send_idt').checked);
 		// Fonctionnalité désactivée
 
-		MY_setValue(numTroll+'.AUTOCDM',
-			document.getElementById('autoCdM').checked ? 'true' : 'false');
+		MZ_setOrRemoveValue(numTroll+'.AUTOCDM', document.getElementById('autoCdM').checked);
 		// MY_setValue('VUECARAC',	// Roule 12/12/2019 ça ne fait plus rien
 			// document.getElementById('vueCarac').checked ? 'true' : 'false');
-		MY_setValue('CONFIRMEDECALAGE',
-			document.getElementById('confirmeDecalage').checked ? 'true' : 'false');
+		MZ_setOrRemoveValue('CONFIRMEDECALAGE', document.getElementById('confirmeDecalage').checked);
 
-		MY_setValue('COMPTEAREBOURSDLA',
-			document.getElementById('compteAreboursDLA').checked ? 'true':'false');
+		MZ_setOrRemoveValue('COMPTEAREBOURSDLA', document.getElementById('compteAreboursDLA').checked);
 
+		MZ_setOrRemoveValue('MZ_SuivantsOrdres', document.getElementById('MZ_SuivantsOrdres').value);
+		MZ_setOrRemoveValue('MZ_SuivantsCompress', document.getElementById('MZ_SuivantsCompress').checked);
+		MZ_setOrRemoveValue('MZ_SuivantsTresUnique', document.getElementById('MZ_SuivantsTresUnique').checked);
 
 		/* SCIZ */
 		var sciz_jwt = document.getElementById('sciz_jwt').value;
@@ -8568,29 +8781,35 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody,'mh_tdtitre'));
 	appendText(td,'Options diverses :',true);
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'infocarac',MY_getValue('INFOCARAC')!='false');
-	appendText(td,
-		' Afficher les caractéristiques des équipements des autres Trõlls');
+	appendCheckBoxBlock(td,'infocarac','Afficher les caractéristiques des équipements des autres Trõlls',MY_getValue('INFOCARAC')!='false');
 
 	/*td = appendTd(appendTr(mainBody,'mh_tdpage'));
 	appendCheckBox(td,'send_idt',MY_getValue(numTroll+'.SEND_IDT') != 'non')
 	appendText(td,' Envoyer les objets identifiés au système de stats');*/
 
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'autoCdM',MY_getValue(numTroll+'.AUTOCDM')=='true');
-	appendText(td,' Envoyer automatiquement les CdM vers la base MountyZilla');
+	appendCheckBoxBlock(td,'autoCdM','Envoyer automatiquement les CdM vers la base MountyZilla',MY_getValue(numTroll+'.AUTOCDM')=='true');
 
 	// td = appendTd(appendTr(mainBody,'mh_tdpage'));	// Roule 12/12/2019 ça ne fait plus rien
 	// appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
 	// appendText(td,' Afficher la Vue avec les caractéristiques dans le Profil');
 
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'confirmeDecalage',MY_getValue('CONFIRMEDECALAGE')=='true');
-	appendText(td,' Demander confirmation lors d\'un décalage de DLA');
+	appendCheckBoxBlock(td,'confirmeDecalage',"Demander confirmation lors d'un décalage de DLA",MY_getValue('CONFIRMEDECALAGE')=='true');
+	appendCheckBoxBlock(td,'compteAreboursDLA','Compte à rebours de DLA',MY_getValue('COMPTEAREBOURSDLA')=='true');
 
 	td = appendTd(appendTr(mainBody,'mh_tdpage'));
-	appendCheckBox(td,'compteAreboursDLA',MY_getValue('COMPTEAREBOURSDLA')=='true');
-	appendText(td,' Compte à rebours de DLA');
+	appendText(td, 'Page des suivants : ');
+	var e = appendTextboxBlock(td,'text','MZ_SuivantsOrdres','Ordres',3,3,MY_getValue('MZ_SuivantsOrdres'),undefined,true);
+	e.setAttribute('Title', "Permet de voir les ordres des Gowaps dans la page des suivants\n" +
+		"Vide : pas d'affichage\n" +
+		"0 : tous les ordres\n" +
+		"1 à 99 : limité à ce nombre\n" +
+		"-1 : jusqu'à Arrêt, Ramassage, Ébrouage, Suivre");
+	e = appendCheckBoxBlock(td,'MZ_SuivantsCompress','Vue compressée',MY_getValue('MZ_SuivantsCompress')=='true');
+	e.setAttribute('Title', 'Permet de réduire la longueur de la page pour beaucoup de suivants\nSupprime "Aucune équipement sur ce suivant"');
+	e = appendCheckBoxBlock(td,'MZ_SuivantsTresUnique','Aff. trésors uniques',MY_getValue('MZ_SuivantsTresUnique')=='true');
+	e.setAttribute('Title', "Permet de rémplacer la liste par le trésor unique s'il n'y en a qu'un dans une catégorie\nTrès pratique pour les Gowaps qui ne portent qu'un trésor");
 
 	/* Bouton SaveAll */
 	td = appendTdCenter(appendTr(mainBody,'mh_tdtitre'));
