@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.1
+// @version     1.3.1.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.1.1 15/08/2022",
+"V1.3.1.2 18/08/2022",
 "   Enrichissement de la page des suivants",
 "V1.3.0.99 23/07/2022",
 "   Mémorise si on veut la vue SCIZ ou pas dans les Events",
@@ -5371,11 +5371,28 @@ if (isPage("MH_Play/Play_e_follo")) {
 			oMZ_TrSuivant: function(eTr) {	// ceci est un objet
 				// .eTrTi   : le TR HTML de titre
 				// .eTrTr   : le TR HTML des trésors
-				// .oJSON : l'objet reçu en JSON dans le data-json'
+				// .oJSON : l'objet reçu en JSON dans le data-json
+				// .nom   : le nom complet
 				// .categories : tableau d'objets de type oMz_categorieTresorSuivant
-				// .nVide : true si le suivant est vide
+				// .bVide : true si le suivant est vide
+				// .loc : objet avec x, y, n
 				this.eTrTi = eTr;
 				this.eTrTr = MZ_getTrTresorSuivant(eTr);
+				for (var eDiv of this.eTrTi.cells[0].getElementsByTagName('div')) {
+					var sTextDiv = eDiv.textContent.trim();
+					if (eDiv.classList.contains('mh_titre3')) {
+						this.nom = sTextDiv;
+						if (this.loc) break;
+					}
+					var m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
+					if (m && m.length >= 5) {
+						this.loc = new Object();
+						this.loc.x = parseInt(m[2], 10);
+						this.loc.y = parseInt(m[3], 10);
+						this.loc.n = parseInt(m[4], 10);
+						if (this.nom) break;
+					}
+				}
 
 				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
 					this.eTableCategorie = eTable;

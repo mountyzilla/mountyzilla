@@ -3,7 +3,7 @@
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
 // @author       Dabihul
-// @version      1.0.0.0
+// @version      1.0.0.1
 // @include      */mountyhall/MH_Play/Actions/Competences/Play_a_Competence43b*
 // @grant        none
 // ==/UserScript==
