@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.2
+// @version     1.3.1.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.3 20/08/2022",
+"   Pilotage externe de certaines options",
 "V1.3.1.2 18/08/2022",
 "   Enrichissement de la page des suivants",
 "V1.3.0.99 23/07/2022",
@@ -15617,6 +15619,16 @@ function do_trolligion() {
 	document.body.appendChild(divpopup);
 }
 
+function MZ_extern_param() {
+	if (!document.body.MZ_Params) return;
+	if (document.body.MZ_Params.INFOCARAC != undefined) MY_setValue('INFOCARAC', document.body.MZ_Params.INFOCARAC);
+	if (document.body.MZ_Params.CONFIRMEDECALAGE != undefined) MY_setValue('CONFIRMEDECALAGE', document.body.MZ_Params.CONFIRMEDECALAGE);
+	if (document.body.MZ_Params.COMPTEAREBOURSDLA != undefined) MY_setValue('COMPTEAREBOURSDLA', document.body.MZ_Params.COMPTEAREBOURSDLA);
+	if (document.body.MZ_Params.MZ_SuivantsOrdres != undefined) MY_setValue('MZ_SuivantsOrdres', document.body.MZ_Params.MZ_SuivantsOrdres);
+	if (document.body.MZ_Params.MZ_SuivantsCompress != undefined) MY_setValue('MZ_SuivantsCompress', document.body.MZ_Params.MZ_SuivantsCompress);
+	if (document.body.MZ_Params.MZ_SuivantsTresUnique != undefined) MY_setValue('MZ_SuivantsTresUnique', document.body.MZ_Params.MZ_SuivantsTresUnique);
+}
+
 /*--------------------------------- Dispatch ---------------------------------*/
 
 //chargerScriptDev("libs");
@@ -15714,6 +15726,7 @@ function do_trolligion() {
 			document.body.MZ_Callback_init[iCallback]();
 		}
 	}
+	setTimeout(MZ_extern_param, 500);
 } catch(e) {
 	try {
 		window.console.log(traceStack(e, 'catch général page ' + window.location.pathname));
