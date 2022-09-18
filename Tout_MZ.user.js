@@ -5595,11 +5595,11 @@ function MZ_upgradeVueSuivants() {
 		}
 	}
 	for (oSuivant of MZ_analyse_page_suivants.suivants) {
-		if (nMaxOrdres != undefined && oSuivant.oJSON.ordres && oSuivant.oJSON.ordres.length > 0) {
+		if (nMaxOrdres != undefined) {
 			var tabTxtOrdre = [];
 			var nDisplayOrdre = 0;
 			var lastSecouerAllerChercher = undefined;
-			for (var oOrdre of oSuivant.oJSON.ordres) {
+			if (oSuivant.oJSON.ordres) for (var oOrdre of oSuivant.oJSON.ordres) {
 				tabTxtOrdre.push(oOrdre.ordre);
 				if (nMaxOrdres > 0 && nDisplayOrdre >= (nMaxOrdres - 1)) break;
 				if (nMaxOrdres < 0) {
@@ -5627,15 +5627,19 @@ function MZ_upgradeVueSuivants() {
 			eDLA.style.display = 'inline-block';
 			eOuterDiv.appendChild(eDLA);
 
-			var eA = document.createElement('a');
-			eA.id = 'MZ_suiv_ordres_' + oSuivant.oJSON.id;
-			eA.style.display = 'inline-block';
-			eA.style.cssFloat = 'right';
-			eA.style.whiteSpace = 'nowrap';
-			eA.href = '/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=' + oSuivant.oJSON.id;
-			eA.title = 'Accès direct aux ordres';
-			eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
-			eOuterDiv.appendChild(eA);
+			if (tabTxtOrdre.length > 0) {
+				var eA = document.createElement('a');
+				eA.id = 'MZ_suiv_ordres_' + oSuivant.oJSON.id;
+				eA.style.display = 'inline-block';
+				eA.style.cssFloat = 'right';
+				eA.style.whiteSpace = 'nowrap';
+				eA.href = '/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=' + oSuivant.oJSON.id;
+				eA.title = 'Accès direct aux ordres';
+				eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
+				eOuterDiv.appendChild(eA);
+			} else {
+				eOuterDiv.style.display = 'none';
+			}
 
 			oSuivant.eTrTi.cells[0].appendChild(eOuterDiv);
 		}
