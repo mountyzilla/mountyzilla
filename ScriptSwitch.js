@@ -39,6 +39,8 @@ var MZ_Switch = {
 		'Grattage': 'https://greasyfork.org/scripts/23993-grattagefd/code/GrattageFD.user.js',
 		'Messagerie': 'https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js',
 		'Telek': 'https://greasyfork.org/scripts/24709-mh-raistlin-pr%C3%A9s%C3%A9lection-t%C3%A9l%C3%A9k/code/MH%20-%20Raistlin%20-%20Pr%C3%A9s%C3%A9lection%20T%C3%A9l%C3%A9k.user.js',
+		'Aide au mélange': 'https://greasyfork.org/scripts/452606-mountyhall-assistant-mélange-magique-version-corrigée-par-hennet-law/code/[Mountyhall] Assistant Mélange Magique (Version corrigée par HennetLaw.user.js',
+		'Le Baroufleur': 'https://greasyfork.org/scripts/38749-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
 		},
 
 
@@ -52,6 +54,8 @@ var MZ_Switch = {
 		'Grattage': 'https://greasyfork.org/scripts/23993-grattagefd/code/GrattageFD.user.js',
 		'Messagerie': 'https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js',
 		'Telek': 'https://greasyfork.org/scripts/24709-mh-raistlin-pr%C3%A9s%C3%A9lection-t%C3%A9l%C3%A9k/code/MH%20-%20Raistlin%20-%20Pr%C3%A9s%C3%A9lection%20T%C3%A9l%C3%A9k.user.js',
+		'Aide au mélange': 'https://greasyfork.org/scripts/452606-mountyhall-assistant-mélange-magique-version-corrigée-par-hennet-law/code/[Mountyhall] Assistant Mélange Magique (Version corrigée par HennetLaw.user.js',
+		'Le Baroufleur': 'https://greasyfork.org/scripts/38749-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
 		},
 
 	URL_XPATH: 'https://mz.mh.raistlin.fr/mz/js/mz-xpath.js',
