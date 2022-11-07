@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.3
+// @version     1.3.1.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.4 07/11/2022",
+"   Correction appel Anatrolliseur si DLA nombre exact d'heures",
 "V1.3.1.3 20/08/2022",
 "   Pilotage externe de certaines options",
 "V1.3.1.2 18/08/2022",
@@ -13233,7 +13235,8 @@ function extractionDuree(selecteur) {
 	var s = getUniqueStringValueBySelector(selecteur);
 	if (!s) return 0;
 	var tabN = getNumbers(s);
-	if (tabN.length < 2) return 0;
+	if (tabN.length < 1) return 0;
+	if (tabN.length == 1) tabN = [tabN[0], 0];	// pas de minutes dans le texte si on a un nombre exact d'heures
 	if (s.includes('-')) {
 		return - tabN[0] * 60 - tabN[1];
 	}
