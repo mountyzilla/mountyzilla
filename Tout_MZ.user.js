@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.4
+// @version     1.3.1.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.5 16/11/2022",
+"   Correction vue externe, troll manquant",
 "V1.3.1.4 07/11/2022",
 "   Correction appel Anatrolliseur si DLA nombre exact d'heures",
 "V1.3.1.3 20/08/2022",
@@ -10680,12 +10682,18 @@ function bddTrolls(limitH, limitV) {
 	var myPosition = getPosition();
 	var txt='#DEBUT TROLLS\n'+
 		numTroll+';'+positionToString(myPosition)+'\n';
-	for(var i=1 ; i<=nbTrolls ; i++) {
+	var tabDedoubTroll = {};
+	tabDedoubTroll[numTroll] = true;
+	for(var i in tr_trolls) {
+		if (!tr_trolls[i].childNodes) continue;
+		var troll_id = getTrollID(i);
+		if (!troll_id) continue;
+		if (tabDedoubTroll[troll_id]) continue;
+		tabDedoubTroll[troll_id] = true;
 		var trollPosition = getTrollPosition(i);
 		if (MZ_deltaH(myPosition, trollPosition) > limitH) continue;
 		if (MZ_deltaV(myPosition, trollPosition) > limitV) continue;
-		txt += getTrollID(i)+';'+
-			positionToString(trollPosition)+'\n';
+		txt += troll_id + ';' + positionToString(trollPosition)+'\n';
 	}
 	return txt+'#FIN TROLLS\n';
 }
