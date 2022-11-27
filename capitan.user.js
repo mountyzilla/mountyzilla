@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.10
+// @version 8.8.11
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +33,8 @@
 ****************************************************************/
 
 /*
+Roule 27/11/2021 V8.8.11
+	Fix résultat pas remis à zéro quand on affiche une 2e fois
 Roule 03/01/2021 V8.8.10
 	Réécriture de la recherche des solutions
 Roule 26/11/2020 V8.8.09
@@ -94,7 +96,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 	window.console.log("script capitan déjà chargé");	// ça arrive dans le cas de l'affichage des détails d'une carte en popup
 } else {
 	oCAPITAN_MH_ROULE = {
-		bDebug: false,
+		bDebug: true,
 		appendButton: function(paren,value,onClick) {
 			var input = document.createElement('input');
 			input.type = 'button';
@@ -407,7 +409,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if (this.bDebug) window.console.log("CAPITAN calculeSolution2 contexte initial=" + JSON.stringify(oContexte));
 
 			// On lance le balayage récursif des possibilités
+			this.gListeSolutions = new Array();
 			this.calculeSolutionRecursifCoord(oContexte);
+			if (this.bDebug) window.console.log("CAPITAN calculeSolution2 résultat=" + JSON.stringify(this.gListeSolutions));
 		},
 
 		calculeSolutionRecursifCoord: function(oContexte) {	// balayage récursif des solutions, balayage coordonnée (x, y ou n)
