@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.11
+// @version 8.8.12
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,7 +33,7 @@
 ****************************************************************/
 
 /*
-Roule 27/11/2021 V8.8.11
+Roule 27/11/2021 V8.8.12
 	Fix résultat pas remis à zéro quand on affiche une 2e fois
 Roule 03/01/2021 V8.8.10
 	Réécriture de la recherche des solutions
@@ -96,7 +96,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 	window.console.log("script capitan déjà chargé");	// ça arrive dans le cas de l'affichage des détails d'une carte en popup
 } else {
 	oCAPITAN_MH_ROULE = {
-		bDebug: true,
+		bDebug: false,
 		appendButton: function(paren,value,onClick) {
 			var input = document.createElement('input');
 			input.type = 'button';
