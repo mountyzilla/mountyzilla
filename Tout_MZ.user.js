@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.6
+// @version     1.3.1.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.7 17/12/2022",
+"   Ajout de l'affichage des compos en tanière à l'historique d'un compo",
 "V1.3.1.6 28/11/2022",
 "   Nouvelles caractéristiques de l'équipement",
 "V1.3.1.5 16/11/2022",
@@ -765,6 +767,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 				window.console.log('[MZ' + version + '] ' + MZ_formatDateMS() + ' fin traitement retour AJAX ' + MY_XHR_Ob.trace);
 		}
 	};
+	if (MY_XHR_Ob.HTML) request.responseType = 'document';
 	request.send(MY_XHR_Ob.data);
 }
 
@@ -7310,6 +7313,7 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	var news = new Array;
+	news.push(['2022-12-17', "Ajout de l'affichage des composants de même monstre en tanière sur le détail d'un composant."]);
 	news.push(['2022-11-28', 'Mise à jour des nouvelles caractéristiques des équipements. Merci à ceux qui ont saisi les corrections. Prévenir Rouletabille si vous trouvez une erreur.']);
 	news.push(['2022-08-16', 'Enrichissement de la page des suivants (voir les options).']);
 	news.push([null, 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront peut-être. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
@@ -15661,6 +15665,223 @@ function MZ_extern_param() {
 	if (document.body.MZ_Params.MZ_SuivantsTresUnique != undefined) MY_setValue('MZ_SuivantsTresUnique', document.body.MZ_Params.MZ_SuivantsTresUnique);
 }
 
+function MZ_CompoTanieresPrepare(eTable) {
+	if (!eTable) eTable = document.getElementById('tabTresorInfo');
+	if (!eTable) {
+		if (MY_DEBUG) window.console.log('MZ_CompoTanieresPrepare erreur, impossible de trouver tabTresorInfo');
+		return;
+	}
+	var eDiv = document.getElementById('MZ_CompoTanieres');
+	if (eDiv) {
+		if (MY_DEBUG) window.console.log('MZ_CompoTanieresPrepare div MZ_CompoTanieres déjà là');
+		return;
+	}
+	var oInfo = MZ_AnalyseInfoHistoTresor(eTable);
+	if (oInfo.type != 'Composant') {
+		if (MY_DEBUG) window.console.log('MZ_CompoTanieresPrepare div MZ_CompoTanieres pas composant (' + oInfo.type + ')');
+		return;
+	}
+	if (MY_DEBUG) window.console.log('MZ_CompoTanieresPrepare création div MZ_CompoTanieres');
+	var eNew = document.createElement('table');
+	eNew.id = 'MZ_CompoTanieres';
+	eNew.className = 'mh_tdborder';
+	eNew.style.width = '98%';
+	eNew.style.margin = 'auto';
+	var eTr = document.createElement('tr');
+	var eTd = document.createElement('td');
+	eTd.className = 'mh_tdpage';
+	eTd.style.cursor = 'pointer';
+	eTd.style.color = 'blue';
+	eTd.onclick = MZ_doSearchCompoTanieres;
+	eTd.appendChild(document.createTextNode('[MZ] Voir mes compos de ' + oInfo.monstre + ' en tanière'));
+	eTr.appendChild(eTd);
+	eNew.appendChild(eTr);
+	eTable.parentNode.insertBefore(eNew, eTable.nextSibling);
+}
+
+function MZ_doSearchCompoTanieres() {
+	var eTableTaniere = document.getElementById('MZ_CompoTanieres');
+	if (!eTableTaniere) {
+		window.console.log('[MZ] MZ_doSearchCompoTanieres, erreur, pas de MZ_CompoTanieres');
+		return;
+	}
+	var eTableMH = document.getElementById('tabTresorInfo');
+	if (!eTableMH) {
+		window.console.log('[MZ] MZ_doSearchCompoTanieres, erreur, impossible de trouver tabTresorInfo');
+		return;
+	}
+	oInfo = MZ_AnalyseInfoHistoTresor(eTableMH);
+	if (oInfo.type != 'Composant') {
+		window.console.log('[MZ] MZ_doSearchCompoTanieres, erreur, pas sur un compo');
+		return;
+	}
+	FF_XMLHttpRequest({
+		method: 'GET',
+		HTML: true,
+		url: '/mountyhall/MH_Comptoirs/Comptoir_Recherche.php?as_type=Composant&as_nom_base=' + oInfo.monstre + '&as_Action=Rechercher',
+		trace: 'recherche en tanière compos ' + oInfo.monstre,
+		onload: function(responseDetails) {
+			try {
+				//window.console.log('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+				if (responseDetails.status == 0) return;
+				var oDiv = responseDetails.responseXML.getElementById('mh_objet_hidden_Composant');
+				if (!oDiv) {
+					window.console.log('[MZ] MZ_doSearchCompoTanieres réponse sans mh_objet_hidden_Composant');
+					return;
+				}
+				var oTable = oDiv.getElementsByTagName('table')[0];
+				var oCompos = {};
+				var bFound = false;
+				for (var oTr of oTable.rows) {
+					for (oTd of oTr.cells) {
+						var tabA = oTd.getElementsByTagName('a');
+						if (!tabA[0]) continue;
+						if (tabA[0].href.indexOf('TresorHistory.php') <=0) continue;
+						var m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
+						if (!m) {
+							if (MY_DEBUG) window.console.log('MZ_doSearchCompoTanieres no match ' + oTd.textContent);
+							continue;
+						}
+						var compo = m[1];
+						var monstre = m[2];
+						var qualite = m[3];
+						oCompo = oCompos[compo];
+						if (oCompo == undefined) {
+							oCompo = {};
+							oCompos[compo] = oCompo;
+						}
+						var qty = oCompo[qualite];
+						if (qty == undefined) qty = 0;
+						oCompo[qualite] = ++qty;
+						bFound = true;
+					}
+				}
+				while (eTableTaniere.rows.length > 0) eTableTaniere.deleteRow(0);
+				var eTr = document.createElement('tr');
+				var eTd = document.createElement('td');
+				eTd.className = 'mh_tdpage';
+				eTd.style.color = 'blue';
+				var sMsg = 'Composants';
+				if (!bFound) {
+					sMsg = 'Pas de compo';
+					eTd.style.color = 'red';
+				} else {
+					eTd.colSpan = 6;
+				}
+				eTd.appendChild(document.createTextNode('[MZ] ' + sMsg + ' de ' + oInfo.monstre + ' en tanière'));
+				eTr.appendChild(eTd);
+				eTableTaniere.appendChild(eTr);
+				if (!bFound) return;
+				if (MY_DEBUG) window.console.log('MZ_doSearchCompoTanieres réponse OK ' + JSON.stringify(oCompos));
+				// tri par nom de compo
+				var tabTri = [];
+				for (var compo in oCompos) tabTri.push(compo);
+				if (!tabTri.includes(oInfo.composant)) tabTri.push(oInfo.composant);
+				tabTri.sort();
+				var eTr = document.createElement('tr');
+				eTr.className = 'mh_tdtitre';
+				var tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
+				for (var qualite of tabQualite) {
+					var eTh = document.createElement('th');
+					eTh.appendChild(document.createTextNode(qualite));
+					if (qualite == '') eTh.style.width = '30%';
+					else               eTh.style.width = '14%';
+					eTh.style.border = 'solid black 1px';
+					eTr.appendChild(eTh);
+				}
+				eTableTaniere.appendChild(eTr);
+				for (var compo of tabTri) {
+					var eTr = document.createElement('tr');
+					for (var qualite of tabQualite) {
+						var eTd = document.createElement('td');
+						eTd.style.border = 'solid black 1px';
+						eTd.className  = 'mh_tdpage';
+						if (oInfo.composant == compo && oInfo.qualite == qualite) {
+							eTd.style.background = 'white';
+						} else {
+						}
+						if (qualite == '') {
+							eTd.appendChild(document.createTextNode(compo));
+						} else if (oCompos[compo] && oCompos[compo][qualite]) {
+							eTd.appendChild(document.createTextNode(oCompos[compo][qualite]));
+							eTd.style.textAlign = 'right';
+						}
+						eTr.appendChild(eTd);
+					}
+					eTableTaniere.appendChild(eTr);
+				}
+			} catch(e) {
+				window.console.log(e);
+			}
+		},
+	});
+}
+
+function MZ_AnalyseInfoHistoTresor(eTable, oRet) {
+	if (oRet == undefined) oRet = {};
+	for (var oTr of eTable.rows) {
+		if (oTr.cells[0] == undefined) {
+			// ça arrive
+			//if (MY_DEBUG) window.console.log('MZ_AnalyseInfoHistoTresor pas de oTr.cells[0] => ' + JSON.stringify(oTr));
+			continue;
+		}
+		if (oTr.cells[0].className == 'titre2') {
+			var s= oTr.cells[0].textContent;
+			var m = s.match(/\] (.*) d'une* (.+) de Qualité (.*) \[/i);
+			if (m) {
+				if (MY_DEBUG) window.console.log('MZ_AnalyseInfoHistoTresor match titre => ' + JSON.stringify(m));
+				oRet.monstre = m[2];
+				oRet.composant = m[1];
+				oRet.qualite = m[3];
+			} else {
+				if (MY_DEBUG) window.console.log('MZ_AnalyseInfoHistoTresor no match titre ' + s + ', class=' + oTr.cells[0].className);
+			}
+			continue;
+		}
+		if (oTr.cells.length < 2) {
+			for (var oT2 of oTr.cells[0].getElementsByTagName('table')) MZ_AnalyseInfoHistoTresor(oT2, oRet);	// appel récursif
+			continue;
+		}
+		var c0 = oTr.cells[0].textContent;
+		//if (MY_DEBUG) window.console.log('MZ_AnalyseInfoHistoTresor nb cell=' + oTr.cells.length + ' [' + c0 + '][' + oTr.cells[1].textContent + ']');
+		if (c0.match(/Type/i)) {
+			oRet.type = oTr.cells[1].textContent;
+			continue;
+		}
+	}
+	return oRet;
+}
+
+var MZ_hookCompoTanieresCounter;
+
+function MZ_CompoTanieresCallback() {
+	var eTable = document.getElementById('tabTresorInfo');
+	if (!eTable) {
+		if (MY_DEBUG) window.console.log('MZ_CompoTanieresCallback pas de tabTresorInfo, counter=' + MZ_hookCompoTanieresCounter);
+		if (MZ_hookCompoTanieresCounter--)
+			window.setTimeout(MZ_CompoTanieresCallback, 100);
+		else
+			MZ_hookCompoTanieresCounter = undefined;
+		return;
+	}
+	MZ_hookCompoTanieresCounter = undefined;
+	MZ_CompoTanieresPrepare(eTable);
+}
+
+function MZdo_hookCompoTanieres() {
+	if (MY_DEBUG) window.console.log('do_hookCompoTanieres');
+	var hookSetCallback = function() {
+		if (MZ_hookCompoTanieresCounter != undefined) {
+			MZ_hookCompoTanieresCounter += 50;
+			return;
+		}
+		MZ_hookCompoTanieresCounter = 50;
+		window.setTimeout(MZ_CompoTanieresCallback, 100);
+	};
+	document.body.onclick = hookSetCallback;
+	document.body.onkeypress = hookSetCallback;
+}
+
 /*--------------------------------- Dispatch ---------------------------------*/
 
 //chargerScriptDev("libs");
@@ -15749,6 +15970,13 @@ function MZ_extern_param() {
 		do_profil2();
 	} else if(isPage('View/TrolligionView.php')) {
 		do_trolligion();
+	} else if(isPage('View/TresorHistory.php')) {
+		MZ_CompoTanieresPrepare();
+	}
+	if(this.isPage("MH_Play/Play_equipement.php") 
+		|| this.isPage("MH_Play/Play_e_follo.php")
+		|| this.isPage("MH_Taniere/TanierePJ_o_Stock.php")) {
+		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
 		document.body.dataset.MZ_Etat = 1;	// indiquer aux scripts tiers qu'on a fini la première initialisation
