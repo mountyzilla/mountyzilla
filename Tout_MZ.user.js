@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.7
+// @version     1.3.1.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.8 19/12/2022",
+"   Ajout de l'affichage des compos sur l'équipement d'un suivant",
 "V1.3.1.7 17/12/2022",
 "   Ajout de l'affichage des compos en tanière à l'historique d'un compo",
 "V1.3.1.6 28/11/2022",
@@ -15973,9 +15975,10 @@ function MZdo_hookCompoTanieres() {
 	} else if(isPage('View/TresorHistory.php')) {
 		MZ_CompoTanieresPrepare();
 	}
-	if(this.isPage("MH_Play/Play_equipement.php") 
-		|| this.isPage("MH_Play/Play_e_follo.php")
-		|| this.isPage("MH_Taniere/TanierePJ_o_Stock.php")) {
+	if(this.isPage('MH_Play/Play_equipement.php') 
+		|| this.isPage('MH_Play/Play_e_follo.php')
+		|| this.isPage('MH_Follower/FO_Equipement.php')
+		|| this.isPage('MH_Taniere/TanierePJ_o_Stock.php')) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
