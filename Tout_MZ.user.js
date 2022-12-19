@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.8
+// @version     1.3.1.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,8 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.1.8 19/12/2022",
-"   Ajout de l'affichage des compos sur l'équipement d'un suivant",
+"V1.3.1.9 19/12/2022",
+"   Ajout de l'affichage des compos sur l'équipement d'un suivant et traitement de la limitation à 100 réponses",
 "V1.3.1.7 17/12/2022",
 "   Ajout de l'affichage des compos en tanière à l'historique d'un compo",
 "V1.3.1.6 28/11/2022",
@@ -15701,7 +15701,7 @@ function MZ_CompoTanieresPrepare(eTable) {
 	eTable.parentNode.insertBefore(eNew, eTable.nextSibling);
 }
 
-function MZ_doSearchCompoTanieres() {
+function MZ_doSearchCompoTanieres(event) {
 	var eTableTaniere = document.getElementById('MZ_CompoTanieres');
 	if (!eTableTaniere) {
 		window.console.log('[MZ] MZ_doSearchCompoTanieres, erreur, pas de MZ_CompoTanieres');
@@ -15717,10 +15717,12 @@ function MZ_doSearchCompoTanieres() {
 		window.console.log('[MZ] MZ_doSearchCompoTanieres, erreur, pas sur un compo');
 		return;
 	}
+	var url = '/mountyhall/MH_Comptoirs/Comptoir_Recherche.php?as_type=Composant&as_nom_base=' + oInfo.monstre + '&as_Action=Rechercher';
+	if (!event) url += '&as_composant_morceau=' + oInfo.composant;
 	FF_XMLHttpRequest({
 		method: 'GET',
 		HTML: true,
-		url: '/mountyhall/MH_Comptoirs/Comptoir_Recherche.php?as_type=Composant&as_nom_base=' + oInfo.monstre + '&as_Action=Rechercher',
+		url: url,
 		trace: 'recherche en tanière compos ' + oInfo.monstre,
 		onload: function(responseDetails) {
 			try {
@@ -15734,6 +15736,7 @@ function MZ_doSearchCompoTanieres() {
 				var oTable = oDiv.getElementsByTagName('table')[0];
 				var oCompos = {};
 				var bFound = false;
+				var nTotal = 0;
 				for (var oTr of oTable.rows) {
 					for (oTd of oTr.cells) {
 						var tabA = oTd.getElementsByTagName('a');
@@ -15755,6 +15758,7 @@ function MZ_doSearchCompoTanieres() {
 						var qty = oCompo[qualite];
 						if (qty == undefined) qty = 0;
 						oCompo[qualite] = ++qty;
+						nTotal++;
 						bFound = true;
 					}
 				}
@@ -15762,18 +15766,37 @@ function MZ_doSearchCompoTanieres() {
 				var eTr = document.createElement('tr');
 				var eTd = document.createElement('td');
 				eTd.className = 'mh_tdpage';
-				eTd.style.color = 'blue';
-				var sMsg = 'Composants';
+				var bErreur = false;
+				var color = 'blue';
 				if (!bFound) {
-					sMsg = 'Pas de compo';
-					eTd.style.color = 'red';
-				} else {
+					var sMsg = 'Pas de '
+					if (!event) sMsg += oInfo.composant;
+					else           sMsg += 'composant';
+					sMsg += ' de ' + oInfo.monstre + ' en tanière';
+					bErreur = true;
+					color = 'red';
+				} else if (nTotal < 100) {
+					if (!event) {
+						var sMsg = 'Vous avez au moins 100 composants de ' + oInfo.monstre + ' en tanière.';
+						sMsg += ' La recherche a été restreinte aux composants de type ' + oInfo.composant;
+						color = 'purple';
+					} else {
+						var sMsg = 'Composants de ' + oInfo.monstre + ' en tanière';
+					}
 					eTd.colSpan = 6;
+				} else if (!event) {
+					bErreur = true;
+					color = 'red';
+					var sMsg = 'Vous avez au moins 100 ' + oInfo.composant + ' de ' + oInfo.monstre + '. MZ met les pouces.';
+				} else {
+					MZ_doSearchCompoTanieres(false);
+					return;
 				}
-				eTd.appendChild(document.createTextNode('[MZ] ' + sMsg + ' de ' + oInfo.monstre + ' en tanière'));
+				eTd.style.color = color;
+				eTd.appendChild(document.createTextNode('[MZ] ' + sMsg));
 				eTr.appendChild(eTd);
 				eTableTaniere.appendChild(eTr);
-				if (!bFound) return;
+				if (bErreur) return;
 				if (MY_DEBUG) window.console.log('MZ_doSearchCompoTanieres réponse OK ' + JSON.stringify(oCompos));
 				// tri par nom de compo
 				var tabTri = [];
