@@ -15998,10 +15998,10 @@ function MZdo_hookCompoTanieres() {
 	} else if(isPage('View/TresorHistory.php')) {
 		MZ_CompoTanieresPrepare();
 	}
-	if(this.isPage('MH_Play/Play_equipement.php') 
-		|| this.isPage('MH_Play/Play_e_follo.php')
-		|| this.isPage('MH_Follower/FO_Equipement.php')
-		|| this.isPage('MH_Taniere/TanierePJ_o_Stock.php')) {
+	if(isPage('MH_Play/Play_equipement.php') 
+		|| isPage('MH_Play/Play_e_follo.php')
+		|| isPage('MH_Follower/FO_Equipement.php')
+		|| isPage('MH_Taniere/TanierePJ_o_Stock.php')) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
