@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.9
+// @version     1.3.1.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.10 06/02/2023",
+"   Adaptation à un changement de présentation MH (recherche de compo en tanière)",
 "V1.3.1.9 19/12/2022",
 "   Ajout de l'affichage des compos sur l'équipement d'un suivant et traitement de la limitation à 100 réponses",
 "V1.3.1.7 17/12/2022",
@@ -15850,7 +15852,7 @@ function MZ_AnalyseInfoHistoTresor(eTable, oRet) {
 			//if (MY_DEBUG) window.console.log('MZ_AnalyseInfoHistoTresor pas de oTr.cells[0] => ' + JSON.stringify(oTr));
 			continue;
 		}
-		if (oTr.cells[0].className == 'titre2') {
+		if (oTr.cells[0].className == 'titre2' || oTr.className == 'mh_tdtitre') {
 			var s= oTr.cells[0].textContent;
 			var m = s.match(/\] (.*) d'une* (.+) de Qualité (.*) \[/i);
 			if (m) {
