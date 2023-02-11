@@ -3,9 +3,8 @@
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
 // @author       Dabihul
-// @version      1.0.0.1
-// @include      */mountyhall/MH_Play/Actions/Competences/Play_a_Competence43b*
-// @grant        none
+// @version      1.0.0.3
+// @include      */mountyhall/MH_Play/Actions/Play_a_Competence.php*ai_IdComp=43*
 // ==/UserScript==
 
 //---------------------- À l'intention des programmeurs ----------------------//
@@ -41,9 +40,9 @@
 //
 //---------------------------- Variables Globales ----------------------------//
 
-var url = window.location.pathname;
-if (url.match(/Play_a_Competence43b/))
-	window.console.log("[Baroufleur] Script ON sur : %s", url);
+var BaroufleON = window.location.href.match(/Play_a_Competence.php.*ai.IdComp=43/);
+if (BaroufleON)
+	window.console.log("[Baroufleur] Script ON sur : %s", window.location.href);
 
 var
 	// Listes des Sons disponibles
@@ -57,7 +56,7 @@ var
 	ordreAlphabétiqueEffets = [],
 	
 	// Table principale de la comp'
-	tableComp,
+	divSons,
 	
 	// Nombre de PA du Baroufle
 	nombreDePAs,
@@ -233,18 +232,6 @@ Storage.prototype.getObject = function(key) {
 	return obj;
 }
 
-function epure(texte) {
-// Supprime les caractères spéciaux
-	return texte.
-		replace(/[àâä]/g, 'a').
-		replace(/Â/g, 'A').
-		replace(/ç/g, 'c').
-		replace(/[éêèë]/g, 'e').
-		replace(/[ïî]/g, 'i').
-		replace(/[ôöõ]/g, 'o').
-		replace(/[ùûü]/g, 'u');
-}
-
 function relatif(num) {
 // Force l'affichage du signe d'un relatif
 	num = Number(num);
@@ -324,7 +311,7 @@ function getSonsDisponibles() {
 // - initialise ordreAlphabétiqueSons
 // - initialise ordreAlphabétiqueEffets
 	try {
-		var selectPremierSon = document.getElementsByName("ai_N1")[0];
+		var selectPremierSon = document.getElementById("ai_Note0");
 	} catch(e) {}
 	if(!selectPremierSon || !selectPremierSon.options) {
 		window.console.error(
@@ -374,13 +361,13 @@ function getSonsDisponibles() {
 function getTableComp() {
 // Recherche la table principale de la comp'
 // Nécessite: -
-// Effectue: définit tableComp
+// Effectue: définit divSons
 	try {
-		tableComp = document.querySelector("#mhPlay form table");
+		divSons = document.getElementById('f_baroufle');
 	} catch(e) {}
-	if(!tableComp || !tableComp.rows) {
+	if(!divSons) {
 		window.console.error(
-			"[Baroufleur] Table principale non trouvée - Abandon"
+			"[Baroufleur] Liste des choix non trouvée - Abandon"
 		);
 		return false;
 	}
@@ -397,7 +384,7 @@ function effetDuSon(son, rang) {
 		texte = "",
 		effet;
 	if(nombreDePAs && rang>nombreDePAs) {
-		rang = 0;
+		rang = -1;
 	}
 	
 	for(effet in BDD_Sons[son].effet) {
@@ -406,12 +393,12 @@ function effetDuSon(son, rang) {
 		}
 		if(BDD_Sons[son].seuil) {
 			if(BDD_Sons[son].multiple) {
-				texte += effet+" +"+rang+"/"+BDD_Sons[son].seuil;
+				texte += effet+" +"+(rang+1)+"/"+BDD_Sons[son].seuil;
 			} else {
-				texte += effet+": "+rang+"/"+BDD_Sons[son].seuil;
+				texte += effet+": "+(rang+1)+"/"+BDD_Sons[son].seuil;
 			}
 		} else {
-			texte += effet+" "+relatif(BDD_Sons[son].effet[effet]*rang);
+			texte += effet+" "+relatif(BDD_Sons[son].effet[effet]*(rang+1));
 		}
 	}
 	
@@ -429,12 +416,12 @@ function initialiseListesSons() {
 // - ajoute les handlers sur les selects
 // - initialise nombreDePAs
 	var
-		i=1, j, option, son, texte, effet,
-		selects = document.getElementsByName("ai_N1");
+		i=0, j, option, son, texte, effet,
+		sel = document.getElementById("ai_Note0");
 	
-	while(selects[0]) {
-		for(j=0 ; j<selects[0].options.length ; j++) {
-			option = selects[0].options[j];
+	while(sel) {
+		for(j=0 ; j<sel.options.length ; j++) {
+			option = sel.options[j];
 			if(!option.value) {
 				// Ignorer les "Choisissez une note"
 				continue;
@@ -446,24 +433,26 @@ function initialiseListesSons() {
 				son = son.replace(/-/,"");
 			}
 			son = son.trim();
-			
+
 			// Ajouter la description
-			option.title = BDD_Sons[son].description;
+			let oSon = BDD_Sons[son];
+			if (!oSon) continue;
+			option.title = oSon.description;
 			
 			// Ajouter l'effet
 			ajouteTexte(option, " ("+effetDuSon(son, i)+")");
 		}
 		
 		// Ajout du Handler
-		selects[0].onchange = changeDeSonorite;
+		sel.onchange = changeDeSonorite;
 		
 		// Passage au select suivant
 		i++;
-		selects = document.getElementsByName("ai_N"+i);
+		sel = document.getElementById("ai_Note"+i);
 	}
 	
-	// Décompte du nombre de PAs du Baroufle (=nb de selects)
-	nombreDePAs = i-1;
+	// Décompte du nombre de PAs du Baroufle (=nb de sel)
+	nombreDePAs = i;
 }
 
 //------------------------- Gestion de l'effet total -------------------------//
@@ -472,25 +461,20 @@ function ajouteZoneTotal() {
 // Crée la zone où le total des effets est affiché.
 // Nécessite: nombreDePAs
 // Effectue: ajout du td avec l'ul 'baroufleur_effettotal'
-	var
-		tr = tableComp.rows[1],
-		td, ul;
+	var div, ul;
 	
-	// Insère l'effet total comme 3e colonne dans la table
-	tableComp.rows[0].cells[0].colSpan = 3;
-	tableComp.rows[tableComp.rows.length-1].cells[0].colSpan = 3;
-	td = tr.insertCell(2);
-	td.className = "mh_tdtitre";
-	td.rowSpan = nombreDePAs;
-	td.style.width = "25%";
-	ajouteTexte(td, "Effet total:", true);
+	// Insère l'effet total 
+	div = document.createElement('div');
+	div.className = "mh_tdtitre";
+	ajouteTexte(div, "Effet total:", true);
 	
 	// Ajoute la liste des effets totaux (vide)
 	ul = document.createElement("ul");
 	ul.id = "baroufleur_effettotal";
 	ul.style.textAlign = "left";
 	ul.style.margin = "0px";
-	td.appendChild(ul);
+	div.appendChild(ul);
+	divSons.insertBefore(div, divSons.firstChild);
 }
 
 function majEffetTotal() {
@@ -517,22 +501,22 @@ function majEffetTotal() {
 		ulTotal = document.getElementById("baroufleur_effettotal");
 	
 	// Récupération des effets des sons sélectionnés
-	for(i=1 ; i<=nombreDePAs ; i++) {
-		code = document.getElementsByName("ai_N"+i)[0].value;
-		if(code) {
-			son = objSonParCode[code];
-			for(effet in BDD_Sons[son].effet) {
-				if(objEffetsTotaux[effet]) {
-					objEffetsTotaux[effet] += BDD_Sons[son].effet[effet]*i;
-				} else {
-					objEffetsTotaux[effet] = BDD_Sons[son].effet[effet]*i;
-				}
-				if(BDD_Sons[son].seuil && !objSeuils[effet]) {
-					objSeuils[effet] = {
-						seuil: BDD_Sons[son].seuil,
-						multiple: BDD_Sons[son].multiple
-					};
-				}
+	for(i=0 ; i<nombreDePAs ; i++) {
+		code = document.getElementsByName("ai_Note"+i)[0].value;
+		if(!code) continue;
+		son = objSonParCode[code];
+		if (!son) continue;
+		for(effet in BDD_Sons[son].effet) {
+			if(objEffetsTotaux[effet]) {
+				objEffetsTotaux[effet] += BDD_Sons[son].effet[effet]*(i+1);
+			} else {
+				objEffetsTotaux[effet] = BDD_Sons[son].effet[effet]*(i+1);
+			}
+			if(BDD_Sons[son].seuil && !objSeuils[effet]) {
+				objSeuils[effet] = {
+					seuil: BDD_Sons[son].seuil,
+					multiple: BDD_Sons[son].multiple
+				};
 			}
 		}
 	}
@@ -588,7 +572,7 @@ function initialiseClavier() {
 // et lui adjoint une copie de la zone 'baroufleur_effettotal'.
 // 
 // Nécessite : 
-// - tableComp
+// - divSons
 // - nombreDePAs
 // - la mise en place préalable de la zone 'baroufleur_effettotal'
 // - la mise en place préalable du sélecteur de mélodies (insertRow)
@@ -599,13 +583,15 @@ function initialiseClavier() {
 		table, str, std, btn, i, j, son;
 	
 	// Création de la ligne contenant le clavier
-	tr = tableComp.insertRow(tableComp.rows.length-2);
+	let tableClavier = document.createElement('table');
+	tr = tableClavier.insertRow();
 	tr.id = "baroufleur_clavier";
 	tr.style.display = "none";
 	td = tr.insertCell(0);
 	td.className = "mh_tdpage";
 	td.style.textAlign = "center";
 	td.style.fontWeight = "bold";
+	td.style.width = '550px',
 	td.colSpan = 2;
 	
 	// Affichage mélodie en cours
@@ -616,8 +602,8 @@ function initialiseClavier() {
 	div = document.createElement("div");
 	div.style.fontWeight = "normal";
 	div.style.fontStyle = "italic";
-	for(i=1 ; i<=nombreDePAs ; i++) {
-		if(i>1) {
+	for(i=0 ; i<nombreDePAs ; i++) {
+		if(i>0) {
 			ajouteTexte(div," - ");
 		}
 		span = document.createElement("span");
@@ -667,6 +653,8 @@ function initialiseClavier() {
 	ul.id = "baroufleur_inactif";
 	td.appendChild(ul);
 	
+	divSons.parentNode.insertBefore(tableClavier, divSons.nextSibling);
+	
 	return tr;
 }
 
@@ -685,7 +673,7 @@ function majClavier(rangActif) {
 		i, span, select, son, btn;
 	if(!rangActif) {
 		chercheActif = true;
-		rangActif = 1;
+		rangActif = 0;
 	}
 	if(modeClavier==2) {
 		ordreDesBoutons = ordreAlphabétiqueEffets;
@@ -693,14 +681,15 @@ function majClavier(rangActif) {
 	
 	// Màj de la mélodie
 	// (et éventuelle recherche du premier son non défini)
-	for(i=1 ; i<=nombreDePAs ; i++) {
+	for(i=0 ; i<nombreDePAs ; i++) {
 		span = document.getElementById("baroufleur_son"+i);
-		select = document.getElementsByName("ai_N"+i)[0];
-		if(select.value) {
+		select = document.getElementsByName("ai_Note"+i)[0];
+		if(select.value && select.value != '0') {
 			if(chercheActif) {
 				rangActif++;
 			}
 			son = objSonParCode[select.value];
+			if (!son) continue;
 			span.innerHTML = son;
 			span.title = effetDuSon(son, i);
 		} else {
@@ -732,7 +721,7 @@ function majClavier(rangActif) {
 	}
 	
 	// Màj des infos sur la mélodie
-	if(rangActif<=nombreDePAs) {
+	if(rangActif<nombreDePAs) {
 		rang.innerHTML = "choix du "+ordinal(rangActif)+" son";
 	} else {
 		rang.innerHTML = "";
@@ -749,20 +738,16 @@ function basculeInterface() {
 		ulActive = document.getElementById("baroufleur_effettotal"),
 		ulInactive = document.getElementById("baroufleur_inactif"),
 		i;
-	
+
 	if(clavier.style.display=="none") {
 		clavier.style.display = "";
 		// Masque les lignes d'origine
-		for(i=1 ; i<=nombreDePAs ; i++) {
-			tableComp.rows[i].style.display = "none";
-		}
+		divSons.style.display = 'none';
 		majClavier();
 	} else {
 		clavier.style.display = "none";
 		// Affiche les lignes d'origine
-		for(i=1 ; i<=nombreDePAs ; i++) {
-			tableComp.rows[i].style.display = "";
-		}
+		divSons.style.display = '';
 	}
 	
 	ulActive.id = "baroufleur_inactif";
@@ -775,11 +760,13 @@ function basculeInterface() {
 function ajouteLigneMelodies() {
 // Crée la ligne avec le sélecteur / enregistreur de mélodies
 // et le sélecteur de clavier
-// Nécessite : tableComp
+// Nécessite : divSons
 	var tr, td, i, select, option, btn, input;
 	
 	// Crée la ligne des sélecteurs
-	tr = tableComp.insertRow(tableComp.rows.length-1);
+	let tableMelodies = document.createElement('table');
+	divSons.parentNode.insertBefore(tableMelodies, divSons);
+	tr = tableMelodies.insertRow();
 	tr.id = "baroufleur_ligne_selecteurs";
 	td = tr.insertCell(0);
 	td.className = "mh_tdpage";
@@ -877,8 +864,8 @@ function valideNote() {
 	var
 		son = this.son,
 		rang = this.rang,
-		select = document.getElementsByName("ai_N"+rang)[0];
-	if(rang<=nombreDePAs) {
+		select = document.getElementsByName("ai_Note"+rang)[0];
+	if(rang<nombreDePAs) {
 		select.value = objCodeDuSon[son];
 		majEffetTotal();
 		majClavier();
@@ -888,7 +875,7 @@ function valideNote() {
 function razSon() {
 // Gère les clics sur les notes de la mélodie
 	var rang = this.rang;
-	document.getElementsByName("ai_N"+rang)[0].value = "";
+	document.getElementsByName("ai_Note"+rang)[0].value = "";
 	majEffetTotal();
 	majClavier(rang);
 }
@@ -897,11 +884,11 @@ function razMelodie() {
 // Remet à zéro toute la mélodie
 	var
 		i=0,
-		selects = document.getElementsByName("ai_N1");
+		selects = document.getElementsByName("ai_Note0");
 	while(selects[0]) {
 		selects[0].value = "";
 		i++;
-		selects = document.getElementsByName("ai_N"+i);
+		selects = document.getElementsByName("ai_Note"+i);
 	}
 	majEffetTotal();
 	majClavier();
@@ -912,12 +899,12 @@ function chargeMelodie() {
 	if(!this.value) { return; }
 	var
 		melodie = this.options[this.selectedIndex].melodie,
-		selects = document.getElementsByName("ai_N1"),
-		i=1;
+		selects = document.getElementsByName("ai_Note0"),
+		i=0;
 	while(selects[0] && i<=melodie.length) {
-		selects[0].value = melodie[i-1];
+		selects[0].value = melodie[i];
 		i++;
-		selects = document.getElementsByName("ai_N"+i);
+		selects = document.getElementsByName("ai_Note"+i);
 	}
 	majEffetTotal();
 	majClavier();
@@ -935,12 +922,12 @@ function supprimeMelodie() {
 }
 
 function ajouteMelodie() {
-// Gère les clics sur le bouton d'ajout de mélodie
+// Gère les clics sur le bouton dde sauvegarde de mélodie
 	var
 		nom = document.getElementById("baroufleur_nouveau_nom").value,
-		selects = document.getElementsByName("ai_N1"),
+		selects = document.getElementsByName("ai_Note0"),
 		melodie = [],
-		i=1;
+		i=0;
 	
 	// On vérifie si le nom est fourni / existe déjà
 	if(!nom) {
@@ -956,7 +943,7 @@ function ajouteMelodie() {
 	while(selects[0]) {
 		melodie.push(selects[0].value);
 		i++;
-		selects = document.getElementsByName("ai_N"+i);
+		selects = document.getElementsByName("ai_Note"+i);
 	}
 	objMelodies[nom] = melodie;
 	
@@ -967,7 +954,7 @@ function ajouteMelodie() {
 
 //-------------------------------- Code actif --------------------------------//
 
-if (url.match(/Play_a_Competence43b/)) {
+if (BaroufleON) {
 	if(getSonsDisponibles() && getTableComp()) {
 		initialiseListesSons();
 		ajouteZoneTotal();
@@ -1021,5 +1008,5 @@ if (url.match(/Play_a_Competence43b/)) {
 	// 	ordreAlphabétiqueEffets
 	// );
 	
-	window.console.log("[Baroufleur] Script OFF sur: %s", url);
+	window.console.log("[Baroufleur] Script OFF");
 }
