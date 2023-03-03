@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.10
+// @version     1.3.1.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.11 03/03/2023",
+"   Préparation pour l'affichage des couleurs du pogo'",
 "V1.3.1.10 06/02/2023",
 "   Adaptation à un changement de présentation MH (recherche de compo en tanière)",
 "V1.3.1.9 19/12/2022",
@@ -12530,21 +12532,21 @@ function appliqueDiplo() {
 		var tr = tr_trolls[i];
 		//window.console.log('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
 		if(aAppliquer.Troll[idT]) {
-			tr.className = '';
+			tr.classList.remove('mh_tdpage');
 			var descr = aAppliquer.Troll[idT].titre;
 			if(descr) {
 				getTrollNomNode(i).title = descr
 			}
 			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
 		} else if(aAppliquer.Guilde[idG]) {
-			tr.className = '';
+			tr.classList.remove('mh_tdpage');
 			var descr = aAppliquer.Guilde[idG].titre;
 			if(descr) {
 				getTrollNomNode(i).title = descr
 			}
 			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
 		} else {
-			tr.className = 'mh_tdpage';
+			tr.classList.add('mh_tdpage');	// ne fait rien si déjà là
 			getTrollNomNode(i).title = '';
 		}
 	}
