@@ -12547,7 +12547,7 @@ function appliqueDiplo() {
 			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
 		} else {
 			tr.classList.add('mh_tdpage');	// ne fait rien si déjà là
-			getTrollNomNode(i).title = '';
+			getTrollNomNode(i).removeAttribute('title');
 		}
 	}
 
