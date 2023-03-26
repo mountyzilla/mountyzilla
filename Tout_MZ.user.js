@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.11
+// @version     1.3.1.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.12 26/03/2023",
+"   Correction attaque Rotobaffe",
 "V1.3.1.11 03/03/2023",
 "   Préparation pour l'affichage des couleurs du pogo'",
 "V1.3.1.10 06/02/2023",
@@ -14587,9 +14589,9 @@ function competences(comp,niveau) {
 			texte += aff(vdegbm) +
 			         " => <b>"+(2*(Ddeg+modD)+vdegbm) +
 			         "/"+(2*(Math.floor(1.5*Ddeg)+modD)+vdegbm)+"</b>";
-			Datt = Math.floor(0.75*Datt);
+			//Datt = Math.floor(0.75*Datt);	// il n'y a plus de baisse d'attaque
 			modA = atttour?Math.floor((Datt+atttourD)*atttour/100):0;
-			vattbm = Math.floor(0.75*vattbm);
+			//vattbm = Math.floor(0.75*vattbm);
 			Ddeg = Math.floor(0.75*Ddeg);
 			modD = degtour?Math.floor(Ddeg*degtour/100):0;
 			vdegbm = Math.floor(0.75*vdegbm);
