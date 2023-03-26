@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.12
+// @version     1.3.1.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.1.12 26/03/2023",
+"V1.3.1.13 26/03/2023",
 "   Correction attaque Rotobaffe",
 "V1.3.1.11 03/03/2023",
 "   Préparation pour l'affichage des couleurs du pogo'",
@@ -14573,30 +14573,34 @@ function competences(comp,niveau) {
 	else if(comp.indexOf("RotoBaffe")!=-1) {
 		var
 			Datt = att, vattbm = attbp+attbm,
-			Ddeg = deg, vdegbm = degbp+degbm;
-		for(var i=1 ; i<niveau+2 ; i++) {
-			texte += "<b>Attaque n°"+i+" :</b><br>" +
-			         "Attaque : <b>"+Datt+"</b> D6 ";
-			if(modA) {
-				texte += "<i>"+aff(modA)+"D6</i> ";
+			Ddeg = deg, vdegbm = degbp+degbm,
+			tabTxt = [];
+		for(var iNiveau=1, iAttaque = 1; iNiveau<=niveau ; iNiveau++) {
+			for (var i2 = 0; i2 < (iNiveau == 1 ? 2 : iNiveau); i2++, iAttaque++) {
+				texte = "<b>Attaque n°"+iAttaque+" :</b><br>" +
+						 "Attaque : <b>"+Datt+"</b> D6 ";
+				if(modA) {
+					texte += "<i>"+aff(modA)+"D6</i> ";
+				}
+				texte += aff(vattbm) +
+						 " => <b>"+(Math.round(3.5*(Datt+modA))+vattbm)+"</b><br>" +
+						 "Dégâts : <b>"+Ddeg+"</b> D3 ";
+				if(modD) {
+					texte += "<i>"+aff(modD)+"D3</i> ";
+				}
+				texte += aff(vdegbm) +
+						 " => <b>"+(2*(Ddeg+modD)+vdegbm) +
+						 "/"+(2*(Math.floor(1.5*Ddeg)+modD)+vdegbm)+"</b>";
+				tabTxt.push(texte);
 			}
-			texte += aff(vattbm) +
-			         " => <b>"+(Math.round(3.5*(Datt+modA))+vattbm)+"</b><br>" +
-			         "Dégâts : <b>"+Ddeg+"</b> D3 ";
-			if(modD) {
-				texte += "<i>"+aff(modD)+"D3</i> ";
-			}
-			texte += aff(vdegbm) +
-			         " => <b>"+(2*(Ddeg+modD)+vdegbm) +
-			         "/"+(2*(Math.floor(1.5*Ddeg)+modD)+vdegbm)+"</b>";
 			//Datt = Math.floor(0.75*Datt);	// il n'y a plus de baisse d'attaque
 			modA = atttour?Math.floor((Datt+atttourD)*atttour/100):0;
 			//vattbm = Math.floor(0.75*vattbm);
 			Ddeg = Math.floor(0.75*Ddeg);
 			modD = degtour?Math.floor(Ddeg*degtour/100):0;
 			vdegbm = Math.floor(0.75*vdegbm);
-			if(i<niveau+1) { texte += "<hr>"; }
 		}
+		texte = tabTxt.join('<hr>');
 	} else if(comp.indexOf('Shamaner')!=-1)
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
 			+'des monstres en utilisant des champignons (de 1 à 3).';
