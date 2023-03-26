@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.13
+// @version     1.3.1.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 
 try {
 var MZ_changeLog = [
-"V1.3.1.13 26/03/2023",
+"V1.3.1.14 26/03/2023",
 "   Correction attaque Rotobaffe",
 "V1.3.1.11 03/03/2023",
 "   Préparation pour l'affichage des couleurs du pogo'",
@@ -14575,8 +14575,8 @@ function competences(comp,niveau) {
 			Datt = att, vattbm = attbp+attbm,
 			Ddeg = deg, vdegbm = degbp+degbm,
 			tabTxt = [];
-		for(var iNiveau=1, iAttaque = 1; iNiveau<=niveau ; iNiveau++) {
-			for (var i2 = 0; i2 < (iNiveau == 1 ? 2 : iNiveau); i2++, iAttaque++) {
+		for(var iNiveau=0, iAttaque = 1; iNiveau<=niveau ; iNiveau++) {
+			for (var i2 = 0; i2 < (iNiveau == 0 ? 1 : iNiveau); i2++, iAttaque++) {
 				texte = "<b>Attaque n°"+iAttaque+" :</b><br>" +
 						 "Attaque : <b>"+Datt+"</b> D6 ";
 				if(modA) {
