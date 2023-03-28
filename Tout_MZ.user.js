@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.14
+// @version     1.3.1.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.15 28/03/2023",
+"   Remise en route analyse résultat CdM",
 "V1.3.1.14 26/03/2023",
 "   Correction attaque Rotobaffe",
 "V1.3.1.11 03/03/2023",
@@ -15934,11 +15936,7 @@ function MZdo_hookCompoTanieres() {
 	// Détection de la page à traiter
 	if(isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
-	} else if(isPage("MH_Play/Actions/Competences/Play_a_Competence16b")) {
-		do_cdmcomp();
-	} else if(window.location.pathname.indexOf("/mountyhall/CdM.competence")>=0) {	// test Roule 20/03/2017
-		do_cdmcomp();
-	} else if(isPage('MH_Play/Actions/Competences/Play_a_CompetenceResult.php')) {	// ajout Roule 10/03/2017 (modif MH ?)
+	} else if(isPage("MH_Play/Actions/Play_a_TalentResult")) {
 		do_cdmcomp();
 	} else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
 		do_diplo();
