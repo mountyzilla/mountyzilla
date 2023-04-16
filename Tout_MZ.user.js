@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.15
+// @version     1.3.1.16
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.16 16/04/2023",
+"   Ajustement modif MH",
 "V1.3.1.15 28/03/2023",
 "   Remise en route analyse résultat CdM",
 "V1.3.1.14 26/03/2023",
@@ -10184,35 +10186,16 @@ var menuRac, mainIco;
 
 // met à jour les carac sauvegardées (position, DLA, etc.)
 function updateData() {
-	var inputs = document.getElementsByTagName('input');
 	var divs = document.getElementsByTagName('div');
 
-	//window.console.log('inputs=' + JSON.stringify(inputs));
-	if (inputs && inputs.length > 0) {
-		// Roule, 14/03/2017, ancienne version, il n'y a plus de <input>
-		numTroll = inputs[0].value;
-		window.console.log('[MZd ' + GM_info.script.version + '] init1 numTroll ' + numTroll);
+	var eltId = document.getElementById('id');
+	var numTroll = parseInt(eltId.getAttribute('data-id'));
+	if (!isNaN(numTroll))
+	{
+		window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
 		MY_setValue('NUM_TROLL', numTroll);
-		MY_setValue('NIV_TROLL',inputs[1].value);
-		if(!MY_getValue(numTroll+'.caracs.rm')) {
-			MY_setValue(numTroll+'.caracs.rm',0);
-			// assure l'init des 4 var de libs
-		}
-		MY_setValue(numTroll+'.caracs.mm',inputs[2].value);
 	} else {
-		// onclick="EnterPJView(91305,750,550)"
-		var tabA = document.getElementsByTagName('a');
-		if (tabA.length > 0 && tabA[0].onclick !== undefined) {
-			var s = tabA[0].onclick.toString();;
-			//window.console.log('s=' + JSON.stringify(s) + ' ' + typeof(s) + ' ' + s.toString());
-			var m = s.match(/\((\d+) *,/);
-			//window.console.log('m=' + JSON.stringify(m));
-			numTroll = parseInt(m[1]);
-			window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
-			MY_setValue('NUM_TROLL', numTroll);
-		} else {
-			window.console.log('[MZd ' + GM_info.script.version + '] updateData, impossible de retrouver le numéro de Troll (tabA.length=' + tabA.length + ')');
-		}
+		window.console.log('[MZd ' + GM_info.script.version + '] updateData, impossible de retrouver le numéro de Troll, eltId=' + eltId);
 	}
 
 	var DLA = new Date(
