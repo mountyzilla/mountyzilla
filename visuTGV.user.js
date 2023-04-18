@@ -1,17 +1,27 @@
-// variables globales (c'est laid)
-let canevasTGV;
-let listeDestination=[];
-let fixToolTip=false;
-let destinationCourante = {"x":0,"y":0,"n":0};
-let maxXY = 110;
-let multiplicateur = 3;
+// ==UserScript==
+// @name Visualisation des gares TGV
+// @namespace MH
+// @include */mountyhall/MH_Lieux/Lieu_Portail.php*
+// @version 1.0
+// @description
+// @injectframes 1
+// ==/UserScript==
 
-function isPage(url) {
-        return 0 <= window.location.href.indexOf(url);
+// variables globales (c'est laid)
+let VTGV_origine;
+let VTGV_canevas;
+let VTGV_listeDestination=[];
+let VTGV_fixToolTip=false;
+let VTGV_destinationCourante = {"x":0,"y":0,"n":0};
+let VTGV_maxXY = 110;
+let VTGV_multiplicateur = 3;
+
+function VTGV_isPage(url) {
+		return 0 <= window.location.href.indexOf(url);
 }
 
-function recupListeTGV(destination = destinationCourante){
-// récupération de  liste des gares dans le tableau 
+function VTGV_recupListe(destination = VTGV_destinationCourante){
+// récupération de  liste des gares dans le tableau
 	let trList = document.getElementById("portail").getElementsByTagName("tbody")[0].getElementsByTagName('tr');
 	for (let tr of trList) {
 		var objDestination = {};
@@ -22,65 +32,69 @@ function recupListeTGV(destination = destinationCourante){
 		objDestination.prix = tr.childNodes[9].textContent;
 		//objDestination.distance = Math.max(Math.abs(objDestination.x - destination.x), Math.abs(objDestination.y - destination.y),Math.abs(objDestination.n - destination.n)) + Math.abs(objDestination.n - destination.n);
 		objDestination.urlEmbarquer = tr.childNodes[13].innerHTML;
-		listeDestination.push(objDestination);
+		VTGV_listeDestination.push(objDestination);
 	}
-	return listeDestination;
+	return VTGV_listeDestination;
 }
 
-function updateDestinationEvent(e){
-	updateDestination(true);
+function VTGV_updateDestinationEvent(e){
+	VTGV_updateDestination(true);
 }
 
-function updateDestination(refreshLimites=false){
+function VTGV_updateDestination(refreshLimites=false){
 	let destinationString = document.getElementById("destination").value;
 	if(destinationString.length > 0) {
 		let destinationArray = destinationString.match(/-?\d+/g);
-
-	       	destinationCourante.x = destinationArray[0];
-	       	destinationCourante.y = destinationArray[1];
-	       	destinationCourante.n = destinationArray[2];
-		canevasTGV.getContext('2d').clearRect(multiplicateur * (parseInt(maxXY)+1+parseInt(destinationCourante.x)), multiplicateur * (parseInt(maxXY) + 1 - parseInt(destinationCourante.y)), multiplicateur, multiplicateur);
-		for (let gare of listeDestination) {
-			gare.distance = Math.max(Math.abs(gare.x - destinationCourante.x), Math.abs(gare.y - destinationCourante.y),(Math.abs(gare.n - destinationCourante.n))) + Math.abs(gare.n - destinationCourante.n);
+		if (!destinationArray || destinationArray.length < 3) {
+			alert('Il faut donner X, Y et N comme "Destination"');
+		} else {
+			VTGV_destinationCourante.x = destinationArray[0];
+			VTGV_destinationCourante.y = destinationArray[1];
+			VTGV_destinationCourante.n = destinationArray[2];
+			VTGV_canevas.getContext('2d').clearRect(VTGV_multiplicateur * (parseInt(VTGV_maxXY)+1+parseInt(VTGV_destinationCourante.x)), VTGV_multiplicateur * (parseInt(VTGV_maxXY) + 1 - parseInt(VTGV_destinationCourante.y)), VTGV_multiplicateur, VTGV_multiplicateur);
+			for (let gare of VTGV_listeDestination) {
+				gare.distance = Math.max(Math.abs(gare.x - VTGV_destinationCourante.x), Math.abs(gare.y - VTGV_destinationCourante.y),(Math.abs(gare.n - VTGV_destinationCourante.n))) + Math.abs(gare.n - VTGV_destinationCourante.n);
+			}
+			VTGV_addGare(VTGV_destinationCourante, "green", "Triangle", false);
+			VTGV_addGare(VTGV_origine, "red", "Cercle", true);
 		}
-	        addGare(destinationCourante, "green", "Triangle", false);
-	        addGare(origine, "red", "Cercle", true);
 	}
-        if(refreshLimites) {
-		updateLimites();
+	if(refreshLimites) {
+		VTGV_updateLimites();
 	}
-	
+
 }
 
-function updateLimitesEvent(e){
-	updateLimites(true);
+function VTGV_updateLimitesEvent(e){
+	VTGV_updateLimites(true);
 }
-function updateLimites(refreshDestination=false) {
-	canevasTGV.getContext('2d').clearRect( 0 ,0 ,multiplicateur * (maxXY * 2 + 1),multiplicateur * (maxXY * 2 + 1));
+
+function VTGV_updateLimites(refreshDestination=false) {
+	VTGV_canevas.getContext('2d').clearRect( 0 ,0 ,VTGV_multiplicateur * (VTGV_maxXY * 2 + 1),VTGV_multiplicateur * (VTGV_maxXY * 2 + 1));
 	let destinationString = document.getElementById("destination").value;
-       	for (let gare of listeDestination) {
-       	        if((destinationString.length <=0 || parseInt(gare.distance,10) <= parseInt(document.getElementById("limitePA").value)) && parseInt(gare.prix)  <= parseInt(document.getElementById("limiteGG").value)) {
-			addGare(gare, "blue", "Rectangle", false);
+		for (let gare of VTGV_listeDestination) {
+				if((destinationString.length <=0 || parseInt(gare.distance,10) <= parseInt(document.getElementById("limitePA").value)) && parseInt(gare.prix)  <= parseInt(document.getElementById("limiteGG").value)) {
+			VTGV_addGare(gare, "blue", "Rectangle", false);
 		}
 		else {
-			addGare(gare, "black", "Rectangle", true);
+			VTGV_addGare(gare, "black", "Rectangle", true);
 		}
-       	}
-	addGare(origine, "red", "Cercle", true);
-        addGare(destinationCourante, "green", "Triangle", false);
+		}
+	VTGV_addGare(VTGV_origine, "red", "Cercle", true);
+		VTGV_addGare(VTGV_destinationCourante, "green", "Triangle", false);
 	if(refreshDestination) {
-		updateDestination();
+		VTGV_updateDestination();
 	}
-	majDivListeDestinationOK();
+	VTGV_majDivListeDestinationOK();
 }
 
-function majDivListeDestinationOK() {
+function VTGV_majDivListeDestinationOK() {
 	let divCible = document.getElementById("destinationCriteresOK");
 	let destinationString = document.getElementById("destination").value;
 	let cibleTexte = "";
 
 	cibleTexte = '<table border="5px solid" bordercolor="green">';
-	for (let gare of listeDestination) {
+	for (let gare of VTGV_listeDestination) {
 		if((destinationString.length <=0 || parseInt(gare.distance,10) <= parseInt(document.getElementById("limitePA").value)) && parseInt(gare.prix)  <= parseInt(document.getElementById("limiteGG").value)) {
 			cibleTexte += '<tr class="mh_tdpage"><td style="column-span:3">' + gare.nom + '</td><td>' + gare.urlEmbarquer + '</td></tr>';
 			cibleTexte += '<tr class="mh_tdpage">';
@@ -94,28 +108,28 @@ function majDivListeDestinationOK() {
 	divCible.innerHTML = cibleTexte;
 }
 
-function compareGG (gare1, gare2) {
+function VTGV_compareGG (gare1, gare2) {
 	if (parseInt(gare1.prix) < parseInt(gare2.prix)) {return -1;}
 	if (parseInt(gare1.prix) > parseInt(gare2.prix)) {return 1;}
 	return 0;
 }
 
-function comparePA (gare1, gare2) {
+function VTGV_comparePA (gare1, gare2) {
 	if (parseInt(gare1.distance) < parseInt(gare2.distance)) {return -1;}
 	if (parseInt(gare1.distance) > parseInt(gare2.distance)) {return 1;}
 	return 0;
 }
 
-function trierListe(e){
+function VTGV_trierListe(e){
 	let destinationString = document.getElementById("destination").value;
 	if(e.target.id == "triPA" && destinationString.length <= 0) { return;}
-	if(e.target.id == "triPA") {listeDestination.sort(comparePA);}
-	else if (e.target.id == "triGG") {listeDestination.sort(compareGG);}
-	majDivListeDestinationOK();
+	if(e.target.id == "triPA") {VTGV_listeDestination.sort(VTGV_comparePA);}
+	else if (e.target.id == "triGG") {VTGV_listeDestination.sort(VTGV_compareGG);}
+	VTGV_majDivListeDestinationOK();
 }
 
-function insertionTableau(){
-// insertion des différents hamps utilisés 
+function VTGV_insertionTableau(){
+// insertion des différents hamps utilisés
 // point d'insertion (juste avant le tableau)
 	let insertPoint =  document.getElementById("portail");
 
@@ -136,30 +150,30 @@ function insertionTableau(){
 
 // insertion des champs max du voyage (GG/PA)
 
-        tdLimitesLabel = trDestination.insertCell();
-        tdLimitesLabel.appendChild(document.createTextNode("Valeurs Max : "));
+		tdLimitesLabel = trDestination.insertCell();
+		tdLimitesLabel.appendChild(document.createTextNode("Valeurs Max : "));
 	tdlimitePA = trDestination.insertCell();
-	tdlimitePA.appendChild(document.createTextNode("PA Max : "));
+	tdlimitePA.appendChild(document.createTextNode("PA restant : "));
 	inputPA = document.createElement("input");
-        inputPA.type="text";
-        inputPA.id="limitePA";
-        inputPA.size=5;
-        inputPA.value=25;
-        tdlimitePA.appendChild(inputPA);
+		inputPA.type="text";
+		inputPA.id="limitePA";
+		inputPA.size=5;
+		inputPA.value=25;
+		tdlimitePA.appendChild(inputPA);
 
-	tdlimitePA.appendChild(document.createTextNode(" GG Pax : "));
+	tdlimitePA.appendChild(document.createTextNode(" GG : "));
 	inputGG = document.createElement("input");
-        inputGG.type="text";
-        inputGG.id="limiteGG";
-        inputGG.size=5;
-        inputGG.value=500;
-        tdlimitePA.appendChild(inputGG);
+		inputGG.type="text";
+		inputGG.id="limiteGG";
+		inputGG.size=5;
+		inputGG.value=500;
+		tdlimitePA.appendChild(inputGG);
 
 	tdDestinationValid = trDestination.insertCell();
 	submitDestinationInput = document.createElement("button");
 	submitDestinationInput.id="submitDestination";
 	submitDestinationInput.innerHTML="Valider";
-	submitDestinationInput.onclick=updateDestination;
+	submitDestinationInput.onclick=VTGV_updateDestination;
 	tdDestinationValid.appendChild(submitDestinationInput);
 
 	tableDestination = insertPoint.parentNode.insertBefore(tableDestination,insertPoint);
@@ -168,17 +182,17 @@ function insertionTableau(){
 
 	tdBoutonsTris = trDestination.insertCell();
 
-        let triGG = document.createElement("button");
-        triGG.id="triGG";
-        triGG.innerHTML="Trier par co&ucirc;t";
-        triGG.onclick=trierListe;
-        tdBoutonsTris.appendChild(triGG);
+		let triGG = document.createElement("button");
+		triGG.id="triGG";
+		triGG.innerHTML="Trier par co&ucirc;t";
+		triGG.onclick=VTGV_trierListe;
+		tdBoutonsTris.appendChild(triGG);
 
-        let triPA = document.createElement("button");
-        triPA.id="triPA";
-        triPA.innerHTML="Trier par PA";
-        triPA.onclick=trierListe;
-        tdBoutonsTris.appendChild(triPA);
+		let triPA = document.createElement("button");
+		triPA.id="triPA";
+		triPA.innerHTML="Trier par PA";
+		triPA.onclick=VTGV_trierListe;
+		tdBoutonsTris.appendChild(triPA);
 
 // insertion du div globale
 	let scriptDiv = document.createElement("div");
@@ -187,26 +201,26 @@ function insertionTableau(){
 
 // insertion de la zone d'affichage des infos des gares
 	let infoDiv = document.createElement("div");
-        infoDiv.id="infoDiv";
+		infoDiv.id="infoDiv";
 	infoDiv.style.display = "inline-block";
-        infoDiv.style.float="left";
-        infoDiv.style.overflow="visible";
-        infoDiv.style.margin="20px";
-        infoDiv = scriptDiv.insertBefore(infoDiv,scriptDiv.firstChild);
+		infoDiv.style.float="left";
+		infoDiv.style.overflow="visible";
+		infoDiv.style.margin="20px";
+		infoDiv = scriptDiv.insertBefore(infoDiv,scriptDiv.firstChild);
 
 // insertion du div pour les gares correspondant aux critères
 
-        let destinationCriteres = document.createElement("div");
+		let destinationCriteres = document.createElement("div");
 	destinationCriteres.id="destinationCriteresOK";
 	destinationCriteres.style.overflow="visible";
-        destinationCriteres = infoDiv.insertBefore(destinationCriteres,infoDiv.firstChild);
+		destinationCriteres = infoDiv.insertBefore(destinationCriteres,infoDiv.firstChild);
 
 // les tooltips
 
-        let toolTip = document.createElement("div");
+		let toolTip = document.createElement("div");
 	toolTip.id="gareToolTip";
 	toolTip.style.overflow="visible";
-        toolTip = infoDiv.insertBefore(toolTip,destinationCriteres);
+		toolTip = infoDiv.insertBefore(toolTip,destinationCriteres);
 
 // affichage du canevas avec la carte du hall
 	let canevasDiv = document.createElement("div");
@@ -215,44 +229,44 @@ function insertionTableau(){
 	canevasDiv.style.float = "left";
 	canevasDiv = scriptDiv.insertBefore(canevasDiv,scriptDiv.firstChild);
 
-	canevasTGV = document.createElement("canvas");
-	canevasTGV.id = "canevasTGV";
-	canevasTGV.width = multiplicateur * (maxXY * 2 + 1);
-	canevasTGV.height = multiplicateur * (maxXY * 2 + 1);
-	canevasTGV.style.border = "1px solid #000";
-	canevasTGV.style.display = "inline-block";
-	canevasTGV.style.margin = "20px";
-	canevasTGV = canevasDiv.insertBefore(canevasTGV,canevasDiv.firstChild);
-	canevasTGV.addEventListener("mousemove", gererToolTip);
-	canevasTGV.addEventListener("click", gererToolTip);
+	VTGV_canevas = document.createElement("canvas");
+	VTGV_canevas.id = "VTGV_canevas";
+	VTGV_canevas.width = VTGV_multiplicateur * (VTGV_maxXY * 2 + 1);
+	VTGV_canevas.height = VTGV_multiplicateur * (VTGV_maxXY * 2 + 1);
+	VTGV_canevas.style.border = "1px solid #000";
+	VTGV_canevas.style.display = "inline-block";
+	VTGV_canevas.style.margin = "20px";
+	VTGV_canevas = canevasDiv.insertBefore(VTGV_canevas,canevasDiv.firstChild);
+	VTGV_canevas.addEventListener("mousemove", VTGV_gererToolTip);
+	VTGV_canevas.addEventListener("click", VTGV_gererToolTip);
 }
 
-function addGare(objetGare, couleurPoint, formePoint, rempli){
-	contextTGV = canevasTGV.getContext('2d');
+function VTGV_addGare(objetGare, couleurPoint, formePoint, rempli){
+	let contextTGV = VTGV_canevas.getContext('2d');
 	contextTGV.fillStyle = couleurPoint;
 	contextTGV.strokeStyle = couleurPoint;
 	contextTGV.lineWidth = 1;
 
 	contextTGV.beginPath();
 	if(formePoint == "Rectangle" && rempli ){
-	        contextTGV.rect(multiplicateur * (parseInt(maxXY)+1+parseInt(objetGare.x)), multiplicateur * (parseInt(maxXY) + 1 - parseInt(objetGare.y)), multiplicateur, multiplicateur);
+		contextTGV.rect(VTGV_multiplicateur * (parseInt(VTGV_maxXY)+1+parseInt(objetGare.x)), VTGV_multiplicateur * (parseInt(VTGV_maxXY) + 1 - parseInt(objetGare.y)), VTGV_multiplicateur, VTGV_multiplicateur);
 	}
 	else if (formePoint == "Rectangle" && !rempli) {
-	        contextTGV.strokeRect(multiplicateur * (parseInt(maxXY)+1+parseInt(objetGare.x)), multiplicateur * (parseInt(maxXY) + 1 - parseInt(objetGare.y)), multiplicateur, multiplicateur);
+		contextTGV.strokeRect(VTGV_multiplicateur * (parseInt(VTGV_maxXY)+1+parseInt(objetGare.x)), VTGV_multiplicateur * (parseInt(VTGV_maxXY) + 1 - parseInt(objetGare.y)), VTGV_multiplicateur, VTGV_multiplicateur);
 	}
 	else if (formePoint == "Cercle") {
-		centreX = multiplicateur * (parseInt(maxXY,10) + 1 + parseInt(objetGare.x,10)) + multiplicateur / 2;
-		centreY = multiplicateur * (parseInt(maxXY,10) + 1 - parseInt(objetGare.y,10)) + multiplicateur / 2;
-		contextTGV.arc(centreX, centreY, multiplicateur/2, 0, 2 * Math.PI);	
+		centreX = VTGV_multiplicateur * (parseInt(VTGV_maxXY,10) + 1 + parseInt(objetGare.x,10)) + VTGV_multiplicateur / 2;
+		centreY = VTGV_multiplicateur * (parseInt(VTGV_maxXY,10) + 1 - parseInt(objetGare.y,10)) + VTGV_multiplicateur / 2;
+		contextTGV.arc(centreX, centreY, VTGV_multiplicateur/2, 0, 2 * Math.PI);
 	}
 	else if (formePoint == "Triangle") {
-                xPoint1 = multiplicateur * (  parseInt(maxXY,10) + parseInt(objetGare.x,10) + 0 ) + 1 ;
-                yPoint1 = multiplicateur * (  parseInt(maxXY,10) - parseInt(objetGare.y,10) + 2 ) + 1 ;
-                xPoint2 = multiplicateur * (  parseInt(maxXY,10) + parseInt(objetGare.x,10) + 2 ) + 1 ;
-                yPoint2 = multiplicateur * (  parseInt(maxXY,10) - parseInt(objetGare.y,10) + 2 ) + 1 ;
-                xPoint3 = multiplicateur * (  parseInt(maxXY,10) + parseInt(objetGare.x,10) + 1 ) + 1 ;
-                yPoint3 = multiplicateur * (  parseInt(maxXY,10) - parseInt(objetGare.y,10) + 0 ) + 1 ;
-                contextTGV.moveTo(xPoint1,yPoint1);
+		xPoint1 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) + parseInt(objetGare.x,10) + 0 ) + 1 ;
+		yPoint1 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) - parseInt(objetGare.y,10) + 2 ) + 1 ;
+		xPoint2 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) + parseInt(objetGare.x,10) + 2 ) + 1 ;
+		yPoint2 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) - parseInt(objetGare.y,10) + 2 ) + 1 ;
+		xPoint3 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) + parseInt(objetGare.x,10) + 1 ) + 1 ;
+		yPoint3 = VTGV_multiplicateur * (  parseInt(VTGV_maxXY,10) - parseInt(objetGare.y,10) + 0 ) + 1 ;
+		contextTGV.moveTo(xPoint1,yPoint1);
 		contextTGV.lineTo(xPoint2,yPoint2);
 		contextTGV.lineTo(xPoint3,yPoint3);
 		contextTGV.closePath();
@@ -263,16 +277,16 @@ function addGare(objetGare, couleurPoint, formePoint, rempli){
 	}
 }
 
-function gererToolTip(e) {
+function VTGV_gererToolTip(e) {
 	let toolTip = document.getElementById("gareToolTip");
 	let eventType = e.type;
 
-	if(eventType=="click" && toolTip.innerHTML != "" && !fixToolTip) {fixToolTip = true; return;}
-	else if (eventType=="click" && toolTip.innerHTML != "" && fixToolTip) {toolTip.innerHTML = "";fixToolTip = false; return;}
-	else if(eventType=="mousemove" &&  !fixToolTip ) {
-		let coordonnesCanevas = canevasTGV.getBoundingClientRect();
-		let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/multiplicateur - parseInt(maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/multiplicateur - parseInt(maxXY) -2 ))};
-		listeGares = recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
+	if(eventType=="click" && toolTip.innerHTML != "" && !VTGV_fixToolTip) {VTGV_fixToolTip = true; return;}
+	else if (eventType=="click" && toolTip.innerHTML != "" && VTGV_fixToolTip) {toolTip.innerHTML = "";VTGV_fixToolTip = false; return;}
+	else if(eventType=="mousemove" &&  !VTGV_fixToolTip ) {
+		let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
+		let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -2 ))};
+		listeGares = VTGV_recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
 		if(listeGares.length > 0) {
 			let tooTipText = "";
 			tooTipText = '<table border="5px solid" bordercolor="red">';
@@ -283,36 +297,34 @@ function gererToolTip(e) {
 				if(gare.hasOwnProperty('distance')) { tooTipText += ' (dist : ' + gare.distance + ' pa)</td>'};
 				tooTipText += '<td>Prix = ' + gare.prix + '</td>';
 				tooTipText += '</tr>';
-				
+
 			}
 			tooTipText += "</table>";
 			toolTip.innerHTML = tooTipText;
 		}
 		else {
-        	        toolTip.innerHTML = "";
+			toolTip.innerHTML = "";
 		}
 	}
 }
-  
-function recupGareParCoordonneesXY(x,y){
+
+function VTGV_recupGareParCoordonneesXY(x,y){
 	let listeGares = [];
-	 for (let destination of listeDestination) {
+	 for (let destination of VTGV_listeDestination) {
 		if (destination.x == x && destination.y == y) listeGares.push(destination);
-	}	
+	}
 	return listeGares;
 }
 
-if(isPage("mountyhall/MH_Lieux/Lieu_Portail.php")){
-	trollCourant = localStorage.getItem("NUM_TROLL");
+if(VTGV_isPage("mountyhall/MH_Lieux/Lieu_Portail.php")){
+	let trollCourant = localStorage.getItem("NUM_TROLL");
 	let clePositionX = trollCourant+".position.X";
 	let clePositionY = trollCourant+".position.Y";
-	origine = {"x":localStorage.getItem(clePositionX), "y":localStorage.getItem(clePositionY), "n" : localStorage.getItem(trollCourant+".position.N")};
+	VTGV_origine = {"x":localStorage.getItem(clePositionX), "y":localStorage.getItem(clePositionY), "n" : localStorage.getItem(trollCourant+".position.N")};
 
-	recupListeTGV();
-	insertionTableau();
-	listeDestination.sort(compareGG);	
-	updateDestination(true);
-	
+	VTGV_recupListe();
+	VTGV_insertionTableau();
+	VTGV_listeDestination.sort(VTGV_compareGG);
+	VTGV_updateDestination(true);
+
 }
-
-
