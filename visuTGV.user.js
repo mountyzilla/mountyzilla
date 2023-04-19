@@ -3,7 +3,7 @@
 // @namespace MH
 // @include */mountyhall/MH_Lieux/Lieu_Portail.php*
 // @version 1.0
-// @description
+// @description Visualisation des gares TGV sous MountyHall
 // @injectframes 1
 // ==/UserScript==
 

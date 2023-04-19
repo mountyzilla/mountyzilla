@@ -23,14 +23,6 @@
 try {
 
 var MZ_Switch = {
-	ChangeLog: [
-		"V1.1.3 20/01/2020 Poissotron actif par défaut sur mhp.mh",
-		"V1.1.2 15/12/2019 ajout du Poissotron V2",
-		"V1.1.1 11/07/2018 retour MZ sur greasyfork qui est plus réactif",
-		"V1.1 19/03/2018 disable ou delete des scripts persos",
-		"V1.0 20/10/2017 multiscript",
-		],
-
 	listeScript: {
 		'Mountyzilla': 'https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js',
 		'Poissotron': 'https://mz.mh.raistlin.fr/poissotron/js/poissotron.user.js',
@@ -40,13 +32,13 @@ var MZ_Switch = {
 		'Messagerie': 'https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js',
 		'Telek': 'https://greasyfork.org/scripts/24709-mh-raistlin-pr%C3%A9s%C3%A9lection-t%C3%A9l%C3%A9k/code/MH%20-%20Raistlin%20-%20Pr%C3%A9s%C3%A9lection%20T%C3%A9l%C3%A9k.user.js',
 		'Aide au mélange': 'https://greasyfork.org/scripts/452606-mountyhall-assistant-mélange-magique-version-corrigée-par-hennet-law/code/[Mountyhall] Assistant Mélange Magique (Version corrigée par HennetLaw.user.js',
-		'Le Baroufleur': 'https://greasyfork.org/scripts/38749-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
+		'Le Baroufleur': 'https://greasyfork.org/scripts/449670-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
+		'Visu TGV': 'https://greasyfork.org/scripts/464314-visualisation-des-gares-tgv/code/Visualisation%20des%20gares%20TGV.user.js',
 		},
 
 
 // pour les tests, utiliser https://mzdev.mh.raistlin.fr
 	listeScriptDEV: {
-		//'Mountyzilla': 'https://cdn.rawgit.com/AlainArachnid/mountyzilla/MZ-extern/Tout_MZ.user.js',
 		'Mountyzilla': 'https://mz.mh.raistlin.fr/mzdev/js/Tout_MZ.user.js',
 		'Poissotron': 'https://mz.mh.raistlin.fr/poissotron/js/poissotron.user.js',
 		'Trajet_canvas': 'https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js',
@@ -55,7 +47,8 @@ var MZ_Switch = {
 		'Messagerie': 'https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js',
 		'Telek': 'https://greasyfork.org/scripts/24709-mh-raistlin-pr%C3%A9s%C3%A9lection-t%C3%A9l%C3%A9k/code/MH%20-%20Raistlin%20-%20Pr%C3%A9s%C3%A9lection%20T%C3%A9l%C3%A9k.user.js',
 		'Aide au mélange': 'https://greasyfork.org/scripts/452606-mountyhall-assistant-mélange-magique-version-corrigée-par-hennet-law/code/[Mountyhall] Assistant Mélange Magique (Version corrigée par HennetLaw.user.js',
-		'Le Baroufleur': 'https://greasyfork.org/scripts/38749-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
+		'Le Baroufleur': 'https://greasyfork.org/scripts/449670-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
+		'Visu TGV': 'https://greasyfork.org/scripts/464314-visualisation-des-gares-tgv/code/Visualisation%20des%20gares%20TGV.user.js',
 		},
 
 	URL_XPATH: 'https://mz.mh.raistlin.fr/mz/js/mz-xpath.js',
@@ -110,6 +103,8 @@ var MZ_Switch = {
 		if (activ == undefined) {
 			if (k == 'Mountyzilla') {
 				activ = true;	// Mountyzilla actif par défaut
+			} else if (k == 'Visu TGV') {
+				activ = true;	// Visu TGV actif par défaut
 			} else if (k == 'Poissotron') {
 				activ = window.location.href.includes('mhp.mh');	// Le poissotron est actif par défaut sur mhp.mh....
 				//window.console.log('Poissotron href=' + window.location.href + ', activ=' + activ);
