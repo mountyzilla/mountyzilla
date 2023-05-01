@@ -12,7 +12,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.12
+// @version 8.8.13
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +33,8 @@
 ****************************************************************/
 
 /*
+Roule 01/05/2023 V8.8.13
+	Adaptation modif de présentation MH
 Roule 27/11/2021 V8.8.12
 	Fix résultat pas remis à zéro quand on affiche une 2e fois
 Roule 03/01/2021 V8.8.10
@@ -643,7 +645,10 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		getIDCarte: function() {
-			var infoObjet = document.evaluate("//td[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
+			var infoObjet = document.evaluate("//h2[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
+				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			// si échec, essayer avec l'ancienne méthode
+			if (!infoObjet) infoObjet = document.evaluate("//td[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 			// si échec, essayer avec l'ancienne méthode
 			if (!infoObjet) infoObjet = document.evaluate("//div[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
@@ -674,6 +679,15 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				this.CAPITAN_setValue("capitan."+idCarte+".position", originalPos)
 			} else if (idCarte > 0) {
 				var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			} else {
+				var parentElt = document.body;
+				var modalElt = document.evaluate("//div[@class = 'modal']",
+					document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+				if (modalElt && !modalElt.errorIDDone) {
+					modalElt.appendChild(document.createTextNode("Erreur à la récupération de l'ID de la carte"));
+					modalElt.errorIDDone = true;
+				}
+				return;
 			}
 			if (this.bDebug) window.console.log('CAPITAN analyseObject: this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', originalPos=' + originalPos);
 			if(!originalPos || originalPos == null)
