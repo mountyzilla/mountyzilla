@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.17
+// @version     1.3.1.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.18 18/06/2023",
+"   modif ID HTML titre2",
 "V1.3.1.17 18/04/2023",
 "   Fix le N de sortie de TP",
 "V1.3.1.16 16/04/2023",
