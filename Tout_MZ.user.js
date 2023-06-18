@@ -4778,7 +4778,7 @@ function toggleBMList() {
 function setDisplayBM() {
 	if(!listeBM) return;
 
-	var titre = document.getElementById('titre2');
+	var titre = document.getElementById('MHTitreH2');
 	if(titre) {
 		titre.style.cursor = 'pointer';
 		titre.onclick = toggleBMList;
@@ -5046,7 +5046,7 @@ function initialiseMouches() {
 
 function setDisplayMouches() {
 // Initialise l'affichage / l'effacement du détail des mouches
-	var titre = document.getElementById('titre2');
+	var titre = document.getElementById('MHTitreH2');
 	if(titre) {
 		titre.style.cursor = 'pointer';
 		titre.onclick = toggleMouches;
@@ -5317,8 +5317,8 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 			// façon blindée de tester la variable MY_DEBUG
 			if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('start MZ_analyse_page_ordre_suivant.init');
 			try {
-				var eTitle = document.getElementById('titre2');
-				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'titre2'
+				var eTitle = document.getElementById('MHTitreH2');
+				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'MHTitreH2'
 				//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('eTitle.nextSibling=' + eTitle.parentNode);
 				var lignes = eTitle.parentNode.getElementsByTagName('tr');
 				for(var i=0 ; i<lignes.length ; i++) {
@@ -11044,15 +11044,15 @@ function set2DViewSystem() {
 	var center;
 	try {
 		// Roule 09/03/2019, encore un changement MH, je fais suivre comme je peux
-		center = document.getElementById('titre2');
+		center = document.getElementById('MHTitreH2');
 		// version initiale "pré-Roule"
 		if (!center) center = document.evaluate(
-			"//h2[@id='titre2']/following-sibling::center",
+			"//h2[@id='MHTitreH2']/following-sibling::center",
 			document, null, 9, null
 		).singleNodeValue;
 		// Roule 09/12/2016 J'ai remplacé following-sibling::center par following-sibling::div suite à une modification MH
 		if (!center) center = document.evaluate(
-			"//h2[@id='titre2']/following-sibling::div",
+			"//h2[@id='MHTitreH2']/following-sibling::div",
 			document, null, 9, null
 		).singleNodeValue;
 
@@ -11100,7 +11100,7 @@ function set2DViewSystem() {
 		td = appendTd(tr);
 		td.style.fontSize = '0px'; // gère le bug de l'extra character
 		td.appendChild(form);
-		if (center.id == 'titre2') {	// 09/03/2019 nouvelle méthode
+		if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
 			var eDiv = document.createElement('div');
 			eDiv.appendChild(table);
 			eDiv.style.witdth = '100%';

@@ -2606,8 +2606,8 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 			// façon blindée de tester la variable MY_DEBUG
 			if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('start MZ_analyse_page_ordre_suivant.init');
 			try {
-				var eTitle = document.getElementById('titre2');
-				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'titre2'
+				var eTitle = document.getElementById('MHTitreH2');
+				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'MHTitreH2'
 				//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('eTitle.nextSibling=' + eTitle.parentNode);
 				var lignes = eTitle.parentNode.getElementsByTagName('tr');
 				for(var i=0 ; i<lignes.length ; i++) {
