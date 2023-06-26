@@ -282,7 +282,7 @@ function VTGV_gererToolTip(e) {
 	let eventType = e.type;
 	let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
 	let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -2 ))};
-	listeGares = recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
+	listeGares = VTGV_recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
 
 	document.getElementById("canevasDiv").title = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y ;
 
