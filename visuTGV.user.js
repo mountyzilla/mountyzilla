@@ -280,7 +280,7 @@ function VTGV_addGare(objetGare, couleurPoint, formePoint, rempli){
 function VTGV_gererToolTip(e) {
 	let toolTip = document.getElementById("gareToolTip");
 	let eventType = e.type;
-	let coordonnesCanevas = canevasTGV.getBoundingClientRect();
+	let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
 	let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/multiplicateur - parseInt(maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/multiplicateur - parseInt(maxXY) -2 ))};
 	listeGares = recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
 
