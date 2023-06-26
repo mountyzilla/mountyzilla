@@ -281,8 +281,20 @@ function VTGV_gererToolTip(e) {
 	let toolTip = document.getElementById("gareToolTip");
 	let eventType = e.type;
 
-	if(eventType=="click" && toolTip.innerHTML != "" && !VTGV_fixToolTip) {VTGV_fixToolTip = true; return;}
-	else if (eventType=="click" && toolTip.innerHTML != "" && VTGV_fixToolTip) {toolTip.innerHTML = "";VTGV_fixToolTip = false; return;}
+	if(eventType=="click") {
+		if(listeGares.length == 0 ) {
+			document.getElementById("destination").value = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y + " | N = -50" ;
+			document.getElementById("submitDestination").click();
+		}
+		if( toolTip.innerHTML != "" && !VTGV_fixToolTip) {
+			VTGV_fixToolTip = true; return;
+		}
+		else {
+			if (toolTip.innerHTML != "" && VTGV_fixToolTip) {
+				toolTip.innerHTML = "";VTGV_fixToolTip = false; return;
+			}
+		}
+	}
 	else if(eventType=="mousemove" &&  !VTGV_fixToolTip ) {
 		let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
 		let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -2 ))};
