@@ -2,7 +2,7 @@
 // @name Visualisation des gares TGV
 // @namespace MH
 // @include */mountyhall/MH_Lieux/Lieu_Portail.php*
-// @version 1.4
+// @version 1.6
 // @description Visualisation des gares TGV sous MountyHall
 // @injectframes 1
 // ==/UserScript==
@@ -288,7 +288,7 @@ function VTGV_gererToolTip(e) {
 
 	if(eventType=="click") {
 		if(listeGares.length == 0 ) {
-			document.getElementById("destination").value = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y + " | N = -50" ;
+			document.getElementById("destination").value = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y + " | N = " + VTGV_destinationCourante.n ;
 			document.getElementById("submitDestination").click();
 		}
 		if( toolTip.innerHTML != "" && !VTGV_fixToolTip) {
