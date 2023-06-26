@@ -2,7 +2,7 @@
 // @name Visualisation des gares TGV
 // @namespace MH
 // @include */mountyhall/MH_Lieux/Lieu_Portail.php*
-// @version 1.0
+// @version 1.1
 // @description Visualisation des gares TGV sous MountyHall
 // @injectframes 1
 // ==/UserScript==
@@ -280,6 +280,11 @@ function VTGV_addGare(objetGare, couleurPoint, formePoint, rempli){
 function VTGV_gererToolTip(e) {
 	let toolTip = document.getElementById("gareToolTip");
 	let eventType = e.type;
+	let coordonnesCanevas = canevasTGV.getBoundingClientRect();
+	let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/multiplicateur - parseInt(maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/multiplicateur - parseInt(maxXY) -2 ))};
+	listeGares = recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
+
+	document.getElementById("canevasDiv").title = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y ;
 
 	if(eventType=="click") {
 		if(listeGares.length == 0 ) {
@@ -296,9 +301,6 @@ function VTGV_gererToolTip(e) {
 		}
 	}
 	else if(eventType=="mousemove" &&  !VTGV_fixToolTip ) {
-		let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
-		let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/VTGV_multiplicateur - parseInt(VTGV_maxXY) -2 ))};
-		listeGares = VTGV_recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
 		if(listeGares.length > 0) {
 			let tooTipText = "";
 			tooTipText = '<table border="5px solid" bordercolor="red">';
