@@ -2,7 +2,7 @@
 // @name Visualisation des gares TGV
 // @namespace MH
 // @include */mountyhall/MH_Lieux/Lieu_Portail.php*
-// @version 1.2
+// @version 1.3
 // @description Visualisation des gares TGV sous MountyHall
 // @injectframes 1
 // ==/UserScript==
@@ -281,7 +281,7 @@ function VTGV_gererToolTip(e) {
 	let toolTip = document.getElementById("gareToolTip");
 	let eventType = e.type;
 	let coordonnesCanevas = VTGV_canevas.getBoundingClientRect();
-	let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/multiplicateur - parseInt(maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/multiplicateur - parseInt(maxXY) -2 ))};
+	let coordonneesObjet = {"x" : Math.floor((e.clientX - coordonnesCanevas.left)/VTGV_multiplicateur - parseInt(maxXY) -1), "y" : Math.floor(-((e.clientY - coordonnesCanevas.top)/VTGV_multiplicateur - parseInt(maxXY) -2 ))};
 	listeGares = recupGareParCoordonneesXY(coordonneesObjet.x,coordonneesObjet.y);
 
 	document.getElementById("canevasDiv").title = "X = " + coordonneesObjet.x + " | Y = " + coordonneesObjet.y ;
