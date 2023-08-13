@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.22
+// @version 2.23
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -1797,7 +1797,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				var dessin = dessine_copie();
 				dessin.style.marginLeft = "4px";
 				addEvent(dessin, "click", copier_depart, true);
-				MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
+				if (MZ_analyse_page_ordre_suivant.result.eltPos) MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
+				else window.console.log('MZ_analyse_page_ordre_suivant.ini_trajet, pas de result.eltPos'); 
+					
 			}
 
 			charge_trajet();	// chargement de certaines (!) variables globales à partir du LocalStorage
@@ -1816,6 +1818,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				} else {
 					point = thisOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
 					if(point) {	// si le suivant suit le Troll, on peut dessiner sa trajectoire
+						//MZ_analyse_page_ordre_suivant.result.eltPos('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
 						//window.console.log('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
 						if(soi && soi[3] == point[1]) {
 							arret.push([parseInt(point[2]), nb_ini]);
@@ -2725,5 +2728,5 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 }
 catch (e) { // ajout par Vapulabehemot (82169) le 30/08/2013
 	window.alert('trajet_canvas.user.js : ' + e.message);
-	window.console.log(e);
+	window.console.log('line ' + e.lineNumber + '\n' + e);
 }

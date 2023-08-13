@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.18
+// @version     1.3.1.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.19 13/08/2023",
+"   NOM_TROLL en LocalStorage",
 "V1.3.1.18 18/06/2023",
 "   modif ID HTML titre2",
 "V1.3.1.17 18/04/2023",
@@ -10196,10 +10198,17 @@ function updateData() {
 	var numTroll = parseInt(eltId.getAttribute('data-id'));
 	if (!isNaN(numTroll))
 	{
-		window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
+		//window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
 		MY_setValue('NUM_TROLL', numTroll);
 	} else {
 		window.console.log('[MZd ' + GM_info.script.version + '] updateData, impossible de retrouver le numéro de Troll, eltId=' + eltId);
+	}
+	var eltSpan = eltId.getElementsByTagName('span');
+	if (eltSpan[0])
+	{
+		var nomTroll = eltSpan[0].innerText;
+		//window.console.log('[MZd ' + GM_info.script.version + '] init2 nomTroll ' + nomTroll);
+		MY_setValue('NOM_TROLL', nomTroll);
 	}
 
 	var DLA = new Date(
