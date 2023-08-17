@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.19
+// @version     1.3.1.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.20 17/08/2023",
+"   NOM_TROLL en LocalStorage",
 "V1.3.1.19 13/08/2023",
 "   NOM_TROLL en LocalStorage",
 "V1.3.1.18 18/06/2023",
@@ -5738,7 +5740,36 @@ function traiteMonstre() {
 			"//div[@class='titre2' and contains(text(),'(')]",
 			document, null, 9, null
 		).singleNodeValue;
-		var texte = nodeTitre.firstChild.nodeValue;
+		if (nodeTitre != null) {
+			var texte = nodeTitre.firstChild.nodeValue;
+		} else {
+			tabEventDescription = document.getElementsByClassName('mh_monstres');
+			if (tabEventDescription[0] != undefined)
+			{
+				let eltNom = tabEventDescription[0];
+				var texte = eltNom.textContent;
+				//window.console.log('traiteMonstre, nom sans id=' + texte);
+				// find next textElement
+				let eCurrent = eltNom;
+				while (eCurrent = eCurrent.parentNode)
+				{
+					//window.console.log('traiteMonstre, eCurrent.nodeName=' + eCurrent.nodeName);
+					let eSibling = eCurrent.nextSibling;
+					if (!eSibling) {
+						//window.console.log('traiteMonstre, pas de sibling');
+						continue;
+					}
+					//window.console.log('traiteMonstre, eSibling.nodeName=' + eSibling.nodeName + ', texte=' + eSibling.textContent);
+					if (eSibling.nodeType != 3) continue;
+					texte += ' ' + eSibling.textContent.replace(/[ .]/g, '');
+					break;
+				}
+			} else {
+				window.console.log('traiteMonstre, impossible de trouver le nom du monstre');
+				return;
+			}
+		}
+		//window.console.log('traiteMonstre, nom=' + texte);
 	} catch(e) {
 		window.console.log(traceStack(e, 'traiteMonstre'));
 		return;
