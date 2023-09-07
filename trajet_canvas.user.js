@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.23
+// @version 2.24
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -311,7 +311,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function set_opt(ref,val) {
 			document.getElementById(ref).value = val;
 		}
-		function inserer_tableau(tablo,rg,element) {
+		function inserer_tableau(tablo,rg,elt) {
 			tablo.splice(rg, 0, elt);
 		}
 		function effacer_tableau(tablo,rg) {
@@ -432,57 +432,57 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		////////////////////////////////////////////////////////////
 		function charge_trajet() {
-			if(MY_getValue("TRAJET_"+num_gow)) {
-				param = MY_getValue("TRAJET_"+num_gow).split("/");
-				if(param[0] == "zoom") {
-					zoom = parseInt(param[1]);
-					TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
-					//window.console.log('charge_trajet ' + num_gow + ' ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
-					typ_gow = parseInt(param[3]);
-					if (typ_gow == 2) typ_gow = 3;
-					dla = parseInt(param[5]);
-					var coord = param[7].split(",");
-					etapes_ini = new Array();
-					if(coord.length > 1) {
-						nb_ini = Math.floor(coord.length/3);
-						for(var i = 0; i<nb_ini; i++) {
-							etapes_ini.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2]), coord[3*i].match(/^\d+e$/g) !== null]);
-						}
-					}
-					//if (num_gow == 567387) window.console.log('etapes_ini=' + JSON.stringify(etapes_ini));
-					etapes = new Array();
-					coord = param[9].split(",");
-					if(coord.length > 1) {
-						nb_coord = Math.floor(coord.length/3);
-						for(var i = 0; i<nb_coord; i++) {
-							etapes.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2])]);
-						}
-					}
-					else {
-						choix_ini = true;
-					}
-					//if (num_gow == 567387) window.console.log('etapes=' + JSON.stringify(etapes));
-					if(param.length > 10) {
-						param = param[11].split(",");
-						if(param.length > 1) {
-							nb_a = Math.floor(param.length/2);
-							for(var i=0; i<nb_a; i++) {
-								arret.push([parseInt(param[2*i]), parseInt(param[2*i+1])]);
-							}
-						}
-						else {
-							arret = [[-1, parseInt(param[0])]];
-						}
-					}
-					else {
-						arret = [[-1, etapes.length]];
-					}
-					//if (num_gow == 567387) window.console.log('arret=' + JSON.stringify(arret));
+			let data_gowap = MY_getValue("TRAJET_"+num_gow);
+			if(!data_gowap) return;
+			let param = data_gowap.split("/");
+			//window.console.log('charge_trajet TRAJET_' + num_gow + '=' + MY_getValue("TRAJET_"+num_gow) + ', on va splitter sur /');
+			if(param[0] != "zoom") return;
+			zoom = parseInt(param[1]);
+			TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
+			//window.console.log('charge_trajet ' + num_gow + ' ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
+			typ_gow = parseInt(param[3]);
+			if (typ_gow == 2) typ_gow = 3;
+			dla = parseInt(param[5]);
+			var coord = param[7].split(",");
+			etapes_ini = new Array();
+			if(coord.length > 1) {
+				nb_ini = Math.floor(coord.length/3);
+				for(var i = 0; i<nb_ini; i++) {
+					etapes_ini.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2]), coord[3*i].match(/^\d+e$/g) !== null]);
 				}
 			}
+			//if (num_gow == 567387) window.console.log('etapes_ini=' + JSON.stringify(etapes_ini));
+			etapes = new Array();
+			coord = param[9].split(",");
+			if(coord.length > 1) {
+				nb_coord = Math.floor(coord.length/3);
+				for(var i = 0; i<nb_coord; i++) {
+					etapes.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2])]);
+				}
+			}
+			else {
+				choix_ini = true;
+			}
+			//if (num_gow == 567387) window.console.log('etapes=' + JSON.stringify(etapes));
+			if(param.length > 10) {
+				param = param[11].split(",");
+				if(param.length > 1) {
+					nb_a = Math.floor(param.length/2);
+					for(var i=0; i<nb_a; i++) {
+						arret.push([parseInt(param[2*i]), parseInt(param[2*i+1])]);
+					}
+				}
+				else {
+					arret = [[-1, parseInt(param[0])]];
+				}
+			}
+			else {
+				arret = [[-1, etapes.length]];
+			}
+			//if (num_gow == 567387) window.console.log('arret=' + JSON.stringify(arret));
 		}
 		function sauve_trajet() {
-			param = "zoom/"+zoom+"/typ_gow/"+typ_gow+"/dla/"+dla+"/t_enreg/";
+			let param = "zoom/"+zoom+"/typ_gow/"+typ_gow+"/dla/"+dla+"/t_enreg/";
 			for(var i = 0; i<etapes_ini.length; i++) {
 				param += etapes_ini[i][0]+(etapes_ini[i][3]? "e":"")+","+etapes_ini[i][1]+","+etapes_ini[i][2]+",";
 			}
@@ -494,6 +494,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in arret) {
 				param += arret[i][0]+","+arret[i][1]+",";
 			}
+			//window.console.log('sauve_trajet ' + num_gow + ' ' + param);
 			MY_setValue("TRAJET_"+num_gow,param);
 		}
 		function charge_opt_position() {
@@ -559,7 +560,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			dessin = dessine_plus();
 			addEvent(dessin, "click", inserer_fav, true);
 			nvdiv.appendChild(dessin);
-			dessin = dessin = creer_icone(21, 21, "G\u00e9rer les destinations favorites", ini_gestion);
+			dessin = dessin = creer_icone(21, 21, "Gérer les destinations favorites", ini_gestion);
 			if (dessin.getContext){
 				var ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(50,50,50)";
@@ -575,7 +576,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			cadre_liste.appendChild(bloc("inserer_etape"));
 
-			aj = bouton("aj_etape", "Ajouter une \u00e9tape ");
+			aj = bouton("aj_etape", "Ajouter une étape ");
 			addEvent(aj, "click", alterne_ajout, true);
 			cadre_liste.appendChild(aj);
 			if(nb_ini > 0) {
@@ -983,7 +984,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
-					desc.appendChild(document.createTextNode(" Trous de M\u00e9t\u00e9orite : n=-1 -> n="+position_trous[i][4]));
+					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
 					desc.appendChild(document.createElement("br"));
 					break;
 				}
@@ -1093,7 +1094,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
-					desc.appendChild(document.createTextNode(" Trous de M\u00e9t\u00e9orite : n=-1 -> n="+position_trous[i][4]));
+					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
 					desc.appendChild(document.createElement("br"));
 					break;
 				}
@@ -1138,7 +1139,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
-					desc.appendChild(document.createTextNode(" Trous de M\u00e9t\u00e9orite : n=-1 -> n="+position_trous[i][4]));
+					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
 					desc.appendChild(document.createElement("br"));
 					break;
 				}
@@ -1179,7 +1180,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
-					desc.appendChild(document.createTextNode(" Trous de M\u00e9t\u00e9orite : n=-1 -> n="+position_trous[i][4]));
+					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
 					desc.appendChild(document.createElement("br"));
 					break;
 				}
@@ -1219,7 +1220,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			dist = Math.max(Math.abs(posx-ref[0]), Math.abs(posy-ref[1]))
 			n_inter = (noeuds[num][2] > ref[2])? Math.min(noeuds[num][2],ref[2]+dist):Math.max(noeuds[num][2],ref[2]-dist);
-			texte += " -> Etape n\u00b0"+(num+1)+", distance : "+dist+" (total : "+(distances[num][0] + dist)+")";
+			texte += " -> Etape n°"+(num+1)+", distance : "+dist+" (total : "+(distances[num][0] + dist)+")";
 			document.getElementById("bulle_haut_gow").innerHTML += ", n = "+ n_inter;
 			document.getElementById("etape_"+num).className = "etape_surlignee";
 
@@ -1227,14 +1228,14 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function pile_etape(num) {
 			document.getElementById("bulle_haut_gow").innerHTML += ", n = "+etapes[num][2];
-			texte = "Etape n\u00b0"+(num+1)+", distance : "+(distances[num+1][0]-distances[num][0])+" (total : "+distances[num+1][0]+")";
+			texte = "Etape n°"+(num+1)+", distance : "+(distances[num+1][0]-distances[num][0])+" (total : "+distances[num+1][0]+")";
 			document.getElementById("etape_"+num).className = "etape_surlignee";
 
 			return texte;
 		}
 		function pile_etape_ini(num) {
 			document.getElementById("bulle_haut_gow").innerHTML += ", n = "+etapes_tt[num][2];
-			texte = "Etape n\u00b0"+(num+1)+" ("+["D\u00e9placement","Ebrouissage","Filature"][etapes_tt[num][3]]+"), distance : "+(distances[num+1][0]-distances[num][0])+" (total : "+distances[num+1][0]+")";
+			texte = "Etape n°"+(num+1)+" ("+["Déplacement","Ebrouissage","Filature"][etapes_tt[num][3]]+"), distance : "+(distances[num+1][0]-distances[num][0])+" (total : "+distances[num+1][0]+")";
 			document.getElementById("etape_"+num).className = "etape_surlignee";
 			return texte;
 		}
@@ -1289,7 +1290,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function aj_depart() {
 			nvdiv = bloc("depart");
-			nvdiv.appendChild(document.createTextNode("D\u00e9part"));
+			nvdiv.appendChild(document.createTextNode("Départ"));
 			nvdiv.className = "etape";
 			nvdiv.id = "etape_depart";
 			nvdiv.appendChild(document.createElement("br"))
@@ -1301,9 +1302,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function aj_liste(rg, pt) {
 			nvdiv = bloc("etape_"+rg);
 			nvdiv.className = "etape";
-			nvdiv.appendChild(document.createTextNode("Etape n\u00b0"+(rg+1)+(choix_ini? " ("+["D\u00e9placement","Ebrouissage","Filature"][pt[3]]+")":"")));
+			nvdiv.appendChild(document.createTextNode("Etape n°"+(rg+1)+(choix_ini? " ("+["Déplacement","Ebrouissage","Filature"][pt[3]]+")":"")));
 			if(!choix_ini) {
-				dessin = dessin = creer_icone(12, 12, "Supprimer l'\u00e9tape", effacer_noeud);
+				dessin = dessin = creer_icone(12, 12, "Supprimer l'étape", effacer_noeud);
 				dessin.id = "efface_"+rg
 				if (dessin.getContext){
 					var ctx = dessin.getContext('2d');
@@ -1506,9 +1507,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			inserer = document.getElementById("inserer_etape");
 			inserer.innerHTML = "";
 			if(nb_ajout > 0) {
-				etik = ["D\u00e9part -> Etape n\u00b01"]; val = [0];
+				etik = ["Départ -> Etape n°1"]; val = [0];
 				for (var i = 1; i<nb_ajout; i++) {
-					etik.push("Etape n\u00b0"+i+" -> "+(i+1));
+					etik.push("Etape n°"+i+" -> "+(i+1));
 					val.push(i);
 				}
 
@@ -1528,7 +1529,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				addEvent(entree, "mouseout", efface_surligne, true);
 				inserer.appendChild(entree);
 
-				aj = bouton("ins", "Ins\u00e9rer une \u00e9tape ");
+				aj = bouton("ins", "Insérer une étape ");
 				addEvent(aj, "click", inserer_milieu, true);
 				inserer.appendChild(aj);
 			}
@@ -1661,7 +1662,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					}
 				}
 				else {
-					document.getElementById("danger_"+i).style.visibility = "hidden";
+					let elt = document.getElementById("danger_"+i);
+					if (elt) elt.style.visibility = "hidden";
+					else window.console.log("calc_dist, pas d'élément danger_" + i);
 				}
 
 				if (document.getElementById("dist_"+i)) {
@@ -1669,13 +1672,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					nb_dla = Math.ceil(parseFloat(d)/parseFloat(typ_gow));
 					if(i==0) {
 						text_dist = "Distance : "+d+", DLA : "+nb_dla;
-						if(dla) { text_dist += ", dur\u00e9e : "+format_tps(parseFloat(nb_dla)*dla); }
+						if(dla) { text_dist += ", durée : "+format_tps(parseFloat(nb_dla)*dla); }
 						document.getElementById("dist_"+i).innerHTML = text_dist;
 						distances[i+1] = ([d+distances[i][0], nb_dla+distances[i][1]]);
 					}
 					else {
 						text_dist = "Distance : "+d+" / total : "+(d+distances[i][0])+", DLA : "+nb_dla+" / "+(nb_dla+distances[i][1]);
-						if(dla) { text_dist += ", dur\u00e9e : "+format_tps(parseFloat(nb_dla)*dla)+" / "+format_tps(parseFloat(nb_dla+distances[i][1])*dla); }
+						if(dla) { text_dist += ", durée : "+format_tps(parseFloat(nb_dla)*dla)+" / "+format_tps(parseFloat(nb_dla+distances[i][1])*dla); }
 						document.getElementById("dist_"+i).innerHTML = text_dist;
 						distances[i+1] = ([d+distances[i][0], nb_dla+distances[i][1]]);
 					}
@@ -1718,80 +1721,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return (jours? jours+"jr ":"")+heures+"h "+minutes+"mn";
 		}
 		function ini_trajet() {
-/* à supprimer, réécriture avec utilisation de MZ_analyse_page_ordre_suivant
-			var ind_a = -1;
-			//var pos = document.getElementsByTagName('p')[0].getElementsByTagName('td')[0].innerHTML.match(/X = (-?\d+) \| Y = (-?\d+) \| N = (-?\d+)/);
-			var eTitre = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('th')[0];
-			var texteTitre = eTitre.innerHTML;
-			// Roule 05/11/2016 protection contre le golems qui provoquent une erreur
-			if (texteTitre.match(/Golem/i)) return;
-			//var noeud = document.getElementsByTagName('p')[2];
-			//var noeud = document.evaluate("//tr/td/text()[contains(.,'X = ')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.parentNode; // correction par Vapulabehemot (82169) le 30/08/2013
-			//var noeud = document.getElementsByTagName('form')[0];	// Roule 03/10/2019
-			var tabDiv = eTitre.getElementsByTagName('div');		// Roule 04/10/2019
-			for (var i = 0; i < tabDiv.length; i++) {
-				var pos = tabDiv[i].innerText.match(/X[ \n]*= (-?\d+) \| Y[ \n]*= (-?\d+) \| N[ \n]*= (-?\d+)/); // correction par Vapulabehemot (82169) le 10/07/2015, ajout \n Rouletabille 12/11/2018
-				if (!pos) continue;
-				var noeud = tabDiv[i];
-				break;
-			}
-			if (!pos) {
-				window.console.log("trajet_canvas : pas de position\n" + texteTitre);
-				return;
-			}
-
-			depart = [parseInt(pos[1]),parseInt(pos[2]),parseInt(pos[3])];
-			expreg = /(.*) .*X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/;
-			expreg2 = /Suivre\u00a0(.+) \(\d+\) \u00e0 une distance de (\d+) case/;
-			//lignes = document.getElementsByTagName('p')[0].getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-			lignes = document.getElementById('mhPlay').getElementsByTagName('table')[1].getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // correction par Vapulabehemot (82169) le 10/07/2015
-
-			if(cadrable) {
-				var dessin = dessine_copie();
-				dessin.style.marginLeft = "4px";
-				addEvent(dessin, "click", copier_depart, true);
-				noeud.appendChild(dessin);
-				MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
-				//noeud.parentNode.insertBefore(dessin, noeud);
-			}
-
-			charge_trajet(); introspection();
-			// soi = [-53, 18, -245, "feldspath"];
-
-			etapes_ini = new Array(); arret = new Array(); nb_ini = 0;
-			for(var i=0;i<lignes.length;i++) {
-				//if(lignes[i].className == "mh_tdpage_fo") {
-				if(lignes[i].className == "mh_tdpage_fo" && lignes[i].innerHTML.toString().indexOf('Aucun Ordre') == -1) { // correction par Vapulabehemot (82169) le 14/01/2015
-					// Rouletabille 09/05/2019 on n'a plus qu'un TD, les autres colonnes ont été transformées en TH
-					var tabTD = lignes[i].getElementsByTagName('td');
-					for (var j=0; j < tabTD.length; j++) {
-						ordre = tabTD[j].firstChild.nodeValue;
-						point = ordre.match(expreg);
-						if(point) {
-							etapes_ini.push([parseInt(point[2]),  parseInt(point[3]),  parseInt(point[4]), (point[1] != "D\u00e9placement")]);
-							nb_ini++;
-						}
-						else if(ordre.match(/Arr\u00eat/)) {
-							//arret.push([-1, nb_ini]); ind_a = nb_ini;
-							if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
-						}
-						else {
-							point = ordre.match(expreg2);
-							if(point) {
-								if(soi && soi[3] == point[1]) {
-									arret.push([parseInt(point[2]), nb_ini]);
-								}
-								else {
-									arret.push([-1, nb_ini]);
-								}
-								ind_a = nb_ini;
-							}
-						}
-					}
-				}
-			}
-			if(ind_a != nb_ini) arret.push([-1, nb_ini]);
-*/
 			depart = [MZ_analyse_page_ordre_suivant.result.x, MZ_analyse_page_ordre_suivant.result.y, MZ_analyse_page_ordre_suivant.result.n];	// variable globale "depart"
 			if(cadrable) {	// placer le petit double rectangle cliquable permettant de copier la loc vers la frame du bas
 				var dessin = dessine_copie();
@@ -1845,11 +1774,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function introspection() {	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
 			if(window.parent && window.parent.parent && window.parent.parent.frames.length > 1) {
-				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X=(-?\d+)\|Y=(-?\d+)\|N=(-?\d+)/);
+				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X=(-?\d+) *\|Y=(-?\d+) *\|N=(-?\d+)/);
 				if(pos) {
 					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].firstElementChild.innerHTML];
 				} else {
-					window.console.log('introspection: Impossible de trouver la position courrante');
+					window.console.log('introspection: Impossible de trouver la position courante, xyn=' + window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent);
 				}
 			}
 		}
@@ -1986,9 +1915,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				trajet.appendChild(dessin);
 
 				var div_gliss = creer_glissiere("gow", zoom);
-				div_gliss.appendChild(aj_opt("opt_enreg", "Trajets enregistr\u00e9s", t_enreg));
+				div_gliss.appendChild(aj_opt("opt_enreg", "Trajets enregistrés", t_enreg));
 				addEvent(div_gliss.lastChild.firstChild, "click", alterne_trajet, true);
-				div_gliss.appendChild(aj_opt("opt_prev", "Trajets pr\u00e9visionnels", t_prev));
+				div_gliss.appendChild(aj_opt("opt_prev", "Trajets prévisionnels", t_prev));
 				addEvent(div_gliss.lastChild.firstChild, "click", alterne_trajet, true);
 				trajet.appendChild(div_gliss);
 
@@ -2661,12 +2590,179 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 	MZ_analyse_page_ordre_suivant.init();
 }
 
+var MZ_analyse_page_suivants;
+if (isPage("MH_Play/Play_e_follo")) {
+	if (MZ_analyse_page_suivants === undefined) {
+		// Roule 26/07/2021
+		// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
+		// rend un object, par exemple
+		MZ_analyse_page_suivants = {
+			suivants: [],	// objet de type oMZ_TrSuivant
+			eTabSuivant: undefined,
+			init: function() {
+				this.eTabSuivant = document.getElementById('suivants');
+				if (!this.eTabSuivant) {
+					window.console.log("MZ_analyse_page_suivants : pas d'élément 'suivants' dans la page");
+					return;
+				}
+				for (let eTr of this.eTabSuivant.rows) {
+					let oSuivant = new this.oMZ_TrSuivant(eTr);
+					if (oSuivant.oJSON) {
+						this.suivants.push(oSuivant);
+					} else {
+						//window.console.log('MZ_analyse_page_suivants ignore tr ' + eTr.innerHTML);
+					}
+				}
+			},
+			oMZ_TrSuivant: function(eTr) {	// ceci est un objet
+				// .eTrTi   : le TR HTML de titre
+				// .eTrTr   : le TR HTML des trésors
+				// .oJSON : l'objet reçu en JSON dans le data-json
+				// .nom   : le nom complet
+				// .categories : tableau d'objets de type oMz_categorieTresorSuivant
+				// .bVide : true si le suivant est vide
+				// .loc : objet avec x, y, n
+				this.eTrTi = eTr;
+				this.eTrTr = MZ_getTrTresorSuivant(eTr);
+				for (var eDiv of this.eTrTi.cells[0].getElementsByTagName('div')) {
+					var sTextDiv = eDiv.textContent.trim();
+					if (eDiv.classList.contains('mh_titre3')) {
+						this.nom = sTextDiv;
+						if (this.loc) break;
+					}
+					var m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
+					if (m && m.length >= 5) {
+						this.loc = new Object();
+						this.loc.x = parseInt(m[2], 10);
+						this.loc.y = parseInt(m[3], 10);
+						this.loc.n = parseInt(m[4], 10);
+						if (this.nom) break;
+					}
+				}
+
+				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
+					this.eTableCategorie = eTable;
+					this.eDivTresors = eDiv;
+					this.eTableTresors = eDiv.children[0];
+				};
+
+				// lecture des infos des trésors et valorisation de this.categories
+				this.initTresors = function() {
+					var eTd = this.eTrTr.cells[0];
+					if (!eTd) return;
+					var eContenu = eTd.children[0];
+					if (!eContenu || eContenu.tagName == "DIV") {	// no equipement
+						this.bVide = true;
+						return;
+					}
+					// énumération des catégories. 2 éléments pour chaque
+					this.categories = [];
+					for (var i = 0, l = eTd.children.length; i < l; i ++) {
+						var eTable = eTd.children[i];
+						var sTag = eTable.tagName;
+						if (sTag == 'SCRIPT') continue;	// c'est le cas pour le premier suivant qui porte du matos
+						if (sTag == 'STYLE') continue;	// ça pourrait bien se produire aussi...
+						if (sTag != 'TABLE') {	// ce n'est pas normal
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément de type non attendu : ' + sTag);
+							continue;
+						}
+						// le suivant doit être une DIV
+						if (++i >= l) {
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ", pas d'élément suivant");
+							continue;
+						}
+						var eDiv = eTd.children[i];
+						if (eDiv.tagName != 'DIV') {
+							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément suivant de type non attendu : ' + eDiv.tagName);
+							continue;
+						}
+						var oCategorie = new this.oMZ_categorieSuivant(this, eTable, eDiv);
+						//window.console.log('oMZ_TrSuivant.initTresors oCategorie=' + oCategorie);
+						this.categories.push(oCategorie);
+					}
+				}
+
+				for (let eTd of eTr.cells) {
+					if (eTd.hasAttribute('data-json')) {
+						//window.console.log('oMZ_TrSuivant json=' + eTd.getAttribute('data-json'));
+						this.oJSON = JSON.parse(eTd.getAttribute('data-json'));
+						break;
+					}
+					for (let eDiv of eTd.getElementsByTagName('div')) {
+						if (eDiv.hasAttribute('data-json')) {
+							//window.console.log('oMZ_TrSuivant json=' + eDiv.getAttribute('data-json'));
+							this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
+						}
+					}
+					if (this.oJSON) break;
+				}
+			},
+			autoTest: function() {
+				window.console.log('MZ_analyse_page_suivants.autoTest : nb suivants=' + this.suivants.length)
+				for (let oSuivant of this.suivants) window.console.log(JSON.stringify(oSuivant));
+			},
+		}
+		MZ_analyse_page_suivants.init();
+	}
+	//MZ_analyse_page_suivants.autoTest();
+}
+
+		if (MZ_analyse_page_suivants) {
+			introspection();	// charger soi
+			for (oSuivant of MZ_analyse_page_suivants.suivants) {
+				if (!oSuivant.oJSON.ordres) continue;
+				zoom = undefined;
+				TC_coeff = undefined;
+				typ_gow = undefined;
+				dla = undefined;
+				num_gow = oSuivant.oJSON.id;
+				charge_trajet();
+				etapes_ini = new Array();
+				arret = new Array();
+				let nb_ini = 0;
+				let ind_a = null;
+				for (let oOrdre of oSuivant.oJSON.ordres) {
+					let m = oOrdre.ordre.match(/X=\s*(-*\d+)[\s\|]*Y=\s*(-*\d+)[\s\|]*N=\s*(-*\d+)/);
+					//window.console.log('analyse ordres suivant ' + oSuivant.oJSON.id + ', ' + oOrdre.ordre + ' ' + JSON.stringify(m));
+					if (m && m.length == 4) {
+						oOrdre.x = +m[1];
+						oOrdre.y = +m[2];
+						oOrdre.n = +m[3];
+					}
+					if (oOrdre.x !== undefined) {	// c'est un déplacement (ou ébrouage)
+						etapes_ini.push([oOrdre.x, oOrdre.y, oOrdre.n, !oOrdre.ordre.match(/Déplacement/i)]);
+						nb_ini++;
+					} else if(oOrdre.ordre.match(/Arrêt/)) {
+						//arret.push([-1, nb_ini]); ind_a = nb_ini;
+						if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
+					} else {
+						point = oOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
+						if(point) {	// si le suivant suit le Troll, on peut dessiner sa trajectoire
+							//MZ_analyse_page_ordre_suivant.result.eltPos('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
+							//window.console.log('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
+							if(soi && soi[3] == point[1]) {
+								arret.push([parseInt(point[2]), nb_ini]);
+							} else {
+								arret.push([-1, nb_ini]);
+							}
+							ind_a = nb_ini;
+						}
+					}
+				}
+				if(ind_a != nb_ini) arret.push([-1, nb_ini]);
+				//window.console.log('analyse ordres suivant ' + oSuivant.oJSON.id + ', etapes_ini' + JSON.stringify(etapes_ini));
+				//window.console.log('analyse ordres suivant ' + oSuivant.oJSON.id + ', arret' + JSON.stringify(arret));
+				sauve_trajet();
+			}
+		}
+
 		if(page == "trajet") {
 			var ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
 			var noeud_courant = 0;
 			var aj_noeud = false, choix_ini = false;
-			//num_gow = location.href.split("=")[1];
-			num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
+			let m = window.self.location.href.match(/ai_IdFollower=(\d+)/);
+			num_gow = +m[1];
+			//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
 			haut = document;
 			ini_trajet();
 		}
@@ -2698,8 +2794,9 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 				}
 			}
 			if (cadre_dla) {
-				//num_gow = location.href.split("=")[1];
-				num_gow = window.self.location.href.split("=")[1]; // correction par Vapulabehemot (82169) le 14/01/2015
+				let m = window.self.location.href.match(/ai_IdFollower=(\d+)/);
+				num_gow = +m[1];
+				//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
 				charge_trajet();
 				// Roule 07/09/2019 adaptation nouvelle présentation
 				//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
