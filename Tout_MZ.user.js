@@ -5399,6 +5399,15 @@ if (isPage("MH_Play/Play_e_follo")) {
 					}
 				}
 			},
+			oMZ_getTrTresorSuivant: function (eTrTitre) {
+				let eTr2 = eTrTitre.nextElementSibling;
+				if (!eTr2) return;
+				if (eTr2.tagName != 'TR') return;
+				let eTd = eTr2.cells[0];
+				if (!eTd) return;
+				if (!eTd.classList.contains('mh_tdpage')) return;
+				return eTr2;
+			},
 			oMZ_TrSuivant: function(eTr) {	// ceci est un objet
 				// .eTrTi   : le TR HTML de titre
 				// .eTrTr   : le TR HTML des trésors
@@ -5408,7 +5417,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 				// .bVide : true si le suivant est vide
 				// .loc : objet avec x, y, n
 				this.eTrTi = eTr;
-				this.eTrTr = MZ_getTrTresorSuivant(eTr);
+				this.eTrTr = MZ_analyse_page_suivants.oMZ_getTrTresorSuivant(eTr);
 				for (var eDiv of this.eTrTi.cells[0].getElementsByTagName('div')) {
 					var sTextDiv = eDiv.textContent.trim();
 					if (eDiv.classList.contains('mh_titre3')) {
@@ -5490,16 +5499,6 @@ if (isPage("MH_Play/Play_e_follo")) {
 		MZ_analyse_page_suivants.init();
 	}
 	//MZ_analyse_page_suivants.autoTest();
-}
-
-function MZ_getTrTresorSuivant(eTrTitre) {
-	var eTr2 = eTrTitre.nextElementSibling;
-	if (!eTr2) return;
-	if (eTr2.tagName != 'TR') return;
-	var eTd = eTr2.cells[0];
-	if (!eTd) return;
-	if (!eTd.classList.contains('mh_tdpage')) return;
-	return eTr2;
 }
 
 // version Roule' janvier 2017
