@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.21
+// @version     1.3.1.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -5361,7 +5361,12 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 							if (tabmatch) {
 								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
 							} else {
-								this.result.ordres.push({ordre: etd.textContent.trim()});
+								tabmatch = etd.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
+								if (tabmatch) {
+									this.result.ordres.push({ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2])});
+								} else {
+									this.result.ordres.push({ordre: etd.textContent.trim()});
+								}
 							}
 						}
 					}

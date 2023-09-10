@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.25
+// @version 2.26
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -438,6 +438,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			//window.console.log('charge_trajet TRAJET_' + num_gow + '=' + MY_getValue("TRAJET_"+num_gow) + ', on va splitter sur /');
 			if(param[0] != "zoom") return;
 			zoom = parseInt(param[1]);
+			if (isNaN(zoom)) zoom = 100;
 			TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 			//window.console.log('charge_trajet ' + num_gow + ' ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
 			typ_gow = parseInt(param[3]);
@@ -924,7 +925,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(glissable) {
 				xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
 				zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
-				
+
 				trace_glissiere();
 				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
 				TC_coeff = zoom/50.0;
@@ -2576,7 +2577,12 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 							if (tabmatch) {
 								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
 							} else {
-								this.result.ordres.push({ordre: etd.textContent.trim()});
+								tabmatch = etd.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
+								if (tabmatch) {
+									this.result.ordres.push({ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2])});
+								} else {
+									this.result.ordres.push({ordre: etd.textContent.trim()});
+								}
 							}
 						}
 					}
