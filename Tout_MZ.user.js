@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.22
+// @version     1.3.1.23
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.23 21/10/2023",
+"   Fix vue externe avec emoticone dans un nom de Gowap",
 "V1.3.1.20 17/08/2023",
 "   NOM_TROLL en LocalStorage",
 "V1.3.1.19 13/08/2023",
@@ -10660,7 +10662,7 @@ function bddMonstres(start,stop, limitH, limitV) {
 		if (MZ_deltaV(myPosition, monstrePosition) > limitV) continue;
 		if (!isMonstreVisible(i)) continue;
 		txt += getMonstreID(i)+';'+
-			getMonstreNom(i)+';'+
+			getMonstreNom(i).replace(';', ',').replace(/[\u2000-\uFFFF]/ug, '?')+';'+
 			positionToString(monstrePosition)+'\n';
 	}
 	return txt ? '#DEBUT MONSTRES\n'+txt+'#FIN MONSTRES\n' : '';
