@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.25
+// @version     1.3.1.26
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -5444,9 +5444,17 @@ if (isPage("MH_Play/Play_e_follo")) {
 				}
 
 				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
+					this.oMZ_tresor = function(row) {	// objet
+						this.id = parseInt(row.id.substring(3, 999));
+					};
+
 					this.eTableCategorie = eTable;
 					this.eDivTresors = eDiv;
 					this.eTableTresors = eDiv.children[0];
+					this.tresors = [];
+					if (this.eTableTresors.nodeName == 'TABLE') for (let row of this.eTableTresors.rows) {
+						this.tresors.push(new this.oMZ_tresor(row));
+					}
 				};
 
 				// lecture des infos des trésors et valorisation de this.categories

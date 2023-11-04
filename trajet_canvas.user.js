@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.27
+// @version 2.28
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -2656,9 +2656,17 @@ if (isPage("MH_Play/Play_e_follo")) {
 				}
 
 				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
+					this.oMZ_tresor = function(row) {	// objet
+						this.id = parseInt(row.id.substring(3, 999));
+					};
+
 					this.eTableCategorie = eTable;
 					this.eDivTresors = eDiv;
 					this.eTableTresors = eDiv.children[0];
+					this.tresors = [];
+					if (this.eTableTresors.nodeName == 'TABLE') for (let row of this.eTableTresors.rows) {
+						this.tresors.push(new this.oMZ_tresor(row));
+					}
 				};
 
 				// lecture des infos des trésors et valorisation de this.categories
