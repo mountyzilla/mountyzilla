@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.23
+// @version     1.3.1.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.24 04/11/2023",
+"   Fix effet armure de pierre",
 "V1.3.1.23 21/10/2023",
 "   Fix vue externe avec emoticone dans un nom de Gowap",
 "V1.3.1.20 17/08/2023",
@@ -7897,7 +7899,7 @@ var mh_caracs = {
 'armure de peaux':
 ['armure',0,0,0,0,-3,9,0,0,0,70,140,0,0,0,0.00,45.00,45.00],
 'armure de pierre':
-['armure',0,0,0,0,-6,12,0,3,0,75,150,0,0,0,0.00,75.00,75.00],
+['armure',0,0,0,0,-6,12,0,0,3,75,150,0,0,0,0.00,75.00,75.00],
 'armure de plates':
 ['armure',0,0,0,0,-2,10,0,0,0,50,100,0,0,0,0.00,62.50,62.50],
 'baton lesté':
