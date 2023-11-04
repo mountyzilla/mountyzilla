@@ -8,7 +8,7 @@
 // @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.26
+// @version 2.27
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -1775,7 +1775,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function introspection() {	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
 			if(window.parent && window.parent.parent && window.parent.parent.frames.length > 1) {
-				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X=(-?\d+) *\|Y=(-?\d+) *\|N=(-?\d+)/);
+				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X *= *(-?\d+) *\| *Y *= *(-?\d+) *\| *N *= *(-?\d+)/);
 				if(pos) {
 					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].firstElementChild.innerHTML];
 				} else {

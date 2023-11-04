@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.24
+// @version     1.3.1.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -8870,7 +8870,7 @@ function insertOptionTable(insertPt) {
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
 	appendCheckBox(td, 'sciz_cb_view_user', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER')));
-	appendText(td, ' S\'afficher soit même');
+	appendText(td, ' S\'afficher soi-même');
 	// Traps checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
