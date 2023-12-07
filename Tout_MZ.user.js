@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.26
+// @version     1.3.1.27
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.27 07/12/2023",
+"   Adaptation don de PX",
 "V1.3.1.24 04/11/2023",
 "   Fix effet armure de pierre",
 "V1.3.1.23 21/10/2023",
@@ -12430,7 +12432,7 @@ function effectueEnvoi() {
 	if (errID) window.alert('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
 	var PXchecked = document.getElementById('radioPX').checked;
 	if(PXchecked) {
-		window.open('./Actions/Play_a_DonPX.php?cat=8&dest='+str,'Contenu');
+		window.open('./Actions/Play_a_Action.php?type=A&id=9&dest='+str,'Contenu');
 	} else {
 		window.open('../Messagerie/MH_Messagerie.php?cat=3&dest='+str,'Contenu');
 	}
