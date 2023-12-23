@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.27
+// @version     1.3.1.28
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -16054,7 +16054,8 @@ function MZdo_hookCompoTanieres() {
 	if(isPage('MH_Play/Play_equipement.php') 
 		|| isPage('MH_Play/Play_e_follo.php')
 		|| isPage('MH_Follower/FO_Equipement.php')
-		|| isPage('MH_Taniere/TanierePJ_o_Stock.php')) {
+		|| isPage('MH_Taniere/TanierePJ_o_Stock.php')
+		|| isPage('MH_Comptoirs/Comptoir_Recherche.php')) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
