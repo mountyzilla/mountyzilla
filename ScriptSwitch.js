@@ -24,16 +24,16 @@ try {
 
 var MZ_Switch = {
 	listeScript: {
-		'Mountyzilla': 'https://greasyfork.org/scripts/23602-tout-mz/code/Tout_MZ.user.js',
+		'Mountyzilla': 'https://update.greasyfork.org/scripts/23602/Tout_MZ.user.js',
 		'Poissotron': 'https://mz.mh.raistlin.fr/poissotron/js/poissotron.user.js',
-		'Trajet_canvas': 'https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js',
-		'Capitan': 'https://greasyfork.org/scripts/23991-capitan/code/Capitan.user.js',
-		'Grattage': 'https://greasyfork.org/scripts/23993-grattagefd/code/GrattageFD.user.js',
-		'Messagerie': 'https://greasyfork.org/scripts/23992-messagerie/code/Messagerie.user.js',
-		'Telek': 'https://greasyfork.org/scripts/24709-mh-raistlin-pr%C3%A9s%C3%A9lection-t%C3%A9l%C3%A9k/code/MH%20-%20Raistlin%20-%20Pr%C3%A9s%C3%A9lection%20T%C3%A9l%C3%A9k.user.js',
-		'Aide au mélange': 'https://greasyfork.org/scripts/452606-mountyhall-assistant-mélange-magique-version-corrigée-par-hennet-law/code/[Mountyhall] Assistant Mélange Magique (Version corrigée par HennetLaw.user.js',
-		'Le Baroufleur': 'https://greasyfork.org/scripts/449670-mountyhall-le-baroufleur/code/[Mountyhall] Le Baroufleur.user.js',
-		'Visu TGV': 'https://greasyfork.org/scripts/464314-visualisation-des-gares-tgv/code/Visualisation%20des%20gares%20TGV.user.js',
+		'Trajet_canvas': 'https://update.greasyfork.org/scripts/23887/Trajet%20des%20gowap%20MkII.user.js',
+		'Capitan': 'https://update.greasyfork.org/scripts/23991/Capitan.user.js',
+		'Grattage': 'https://update.greasyfork.org/scripts/23993/GrattageFD.user.js',
+		'Messagerie': 'https://update.greasyfork.org/scripts/23992/Messagerie.user.js',
+		'Telek': 'https://update.greasyfork.org/scripts/24709/MH%20-%20Raistlin%20-%20Pr%C3%83%C2%A9s%C3%83%C2%A9lection%20T%C3%83%C2%A9l%C3%83%C2%A9k.user.js',
+		'Aide au mélange': 'https://update.greasyfork.org/scripts/452606/%5BMountyhall%5D%20Assistant%20M%C3%83%C2%A9lange%20Magique%20(Version%20corrig%C3%83%C2%A9e%20par%20HennetLaw%20puis%20par%20Lokidor.user.js',
+		'Le Baroufleur': 'https://update.greasyfork.org/scripts/449670/%5BMountyhall%5D%20Le%20Baroufleur.user.js',
+		'Visu TGV': 'https://update.greasyfork.org/scripts/464314/Visualisation%20des%20gares%20TGV.user.js',
 		},
 
 
