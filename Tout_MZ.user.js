@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.28
+// @version     1.3.1.29
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -15664,16 +15664,13 @@ function export_trolligion_analyse(oTroll, eChild1) {
 					case 'img':	// ignore
 						break;
 					case 'div':	// barre de vie
-						if (eChild2.children[0]  && eChild2.children[0].tagName.toLowerCase() == 'div') {
-							eChild3 = eChild2.children[0];
-							if (eChild3.children[0] && eChild3.children[0].tagName.toLowerCase() == 'div') {
-								var eChild4 = eChild3.children[0];
-								if (eChild4.style && eChild4.style.width) oTroll.ferveur = eChild4.style.width;
-								break;
-							}
+						if (eChild2.style && eChild2.style.width) {
+							oTroll.ferveur = eChild2.style.width;
+							break;
 						}
 						//window.console.log(eChild2.innerHTML);
 						export_trolligion_analyse(oTroll, eChild2);
+						//window.console.log('[MZ ' + GM_info.script.version + '] troll ' + JSON.stringify(oTroll));
 						break;
 					default:
 						window.console.log('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
