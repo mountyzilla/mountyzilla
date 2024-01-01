@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.29
+// @version     1.3.1.30
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -7384,6 +7384,9 @@ function traiterNouvelles() {
 	news.push(['2022-11-28', 'Mise à jour des nouvelles caractéristiques des équipements. Merci à ceux qui ont saisi les corrections. Prévenir Rouletabille si vous trouvez une erreur.']);
 	news.push(['2022-08-16', 'Enrichissement de la page des suivants (voir les options).']);
 	news.push([null, 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront peut-être. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
+	let d2 = new Date();
+	if (d2.getMonth() == 0 && d2.getDate() < 10)
+		news.push([new Date(d2.getFullYear(), 0, 1), 'MZ vous souhaite bonne chasse pour ' + d2.getFullYear()]);
 	afficherNouvelles(news);
 }
 
