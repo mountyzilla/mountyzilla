@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.30
+// @version     1.3.1.31
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13223,7 +13223,7 @@ var
 	posX, posY, posN,
 		// caracs physiques
 	vue, vuebp, vuebm, vuetotale,
-	pvbase, pvbp, pvbm, pvtotal, pvcourant, pvmax,
+	pvbase, pvbpm, pvtotal, pvcourant, pvmax,
 	reg, regbp, regbm, regmoy,
 	att, attbp, attbm, attmoy, atttourD, atttour, attmoytour,
 	esq, esqbp, esqbm, esqmoy, esqtourD, esqmoytour,
@@ -13467,11 +13467,10 @@ function extractionDonnees() {
 	);
 	    // PV
 	pvbase = getUniqueIntValueBySelector('#carac #pv');
-	pvbp = getUniqueIntValueBySelector('#carac #pv_p');
-	pvbm = getUniqueIntValueBySelector('#carac #pv_m');
+	pvbpm = getUniqueIntValueBySelector('#carac #pv_p_m');
 	pvtotal = getUniqueIntValueBySelector('#carac #pv_tot');
 	pvmax = getUniqueIntValueBySelector('#pv_max');
-	debugMZ("PV: " + pvbase + " + (" + pvbp + ") + (" + pvbm + ") = " + pvtotal);
+	debugMZ("PV: " + pvbase + " + (" + pvbpm + ") = " + pvtotal);
 	    // Regeneration
 	reg = getUniqueIntValueBySelector('#carac #reg');
 	regbp = getUniqueIntValueBySelector('#carac #reg_p');
@@ -13548,7 +13547,7 @@ function extractionDonnees() {
 	+"outils_anatrolliseur.php?anatrolliseur=v8"
 	+"|r="+race.toLowerCase()
 	+"|dla="+amelio_dtb(dtb)
-	+"|pv="+amelio_pv+","+pvbp+","+pvbm
+	+"|pv="+amelio_pv+","+pvbpm+",0"
 	+"|vue="+amelio_vue+","+vuebp+","+vuebm
 	+"|att="+amelio_att+","+attbp+","+attbm
 	+"|esq="+amelio_esq+","+esqbp+","+esqbm
