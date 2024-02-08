@@ -9,10 +9,11 @@
 // @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
 // @include */mountyhall/MH_Play/Play_equipement.php*
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
+// @include */mountyhall/MH_Play/Actions/Play_a_ActionResult.php*
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.13
+// @version 8.8.14
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -33,6 +34,8 @@
 ****************************************************************/
 
 /*
+Roule 06/02/2024 V8.8.14
+	Remise en route
 Roule 01/05/2023 V8.8.13
 	Adaptation modif de présentation MH
 Roule 27/11/2021 V8.8.12
@@ -78,11 +81,6 @@ Roule 08 à 10/08/2016
 	Ajout liste des essais et possibilité d'en supprimer
 	Ajout lien vers Psyko Chasseurs
 	Adaptation aux IDs dans la page de résultat d'une recherche de cachette (et plus besoin de stocker le numéro de carte)
-*/
-
-/* À faire
-	Hera 23/08/2017
-		FAIT les chiffres sont bons mais ça inverse + et - en x/y (quand ce n'est pas ++/--) 		toutes les cachettes qui comportent un +/- sont inversées. donc récurent
 */
 
 /* 05/08/2018 passage en objet
@@ -473,9 +471,20 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		afficheInfoCarte: function(idCarte) {
 			var originalPosText = this.CAPITAN_getValue("capitan."+idCarte+".position");
-			var originalPos = originalPosText.split(";");
-			if(originalPos.length!=3)
+			if (originalPosText === undefined) {
+				let msg = "La recherche a été enregistrée. Mais vous n'avez pas encore affiché le détail de la carte "
+					+ idCarte + " et le « script du Capitan » ne connait pas la position de la mort du Capitan. Il ne peut pas vous en dire plus. Allez dans «  EQUIPEMENT » et affichez cette carte.";
+				this.afficheMsg(msg, 'red');
+				window.console.log('afficheInfoCarte_log: ' + msg);
 				return;
+			}
+			var originalPos = originalPosText.split(";");
+			if(originalPos.length!=3) {
+				msg = 'Text non reconnu : ' + originalPosText;
+				this.afficheMsg(msg, 'red');
+				window.console.log('afficheInfoCarte_log: ' + msg);
+				return;
+			}
 			this.oMort = new this.oEssai(originalPosText);
 			this.gEssais = new Array();
 			var i = 0;
@@ -489,11 +498,11 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") !=null)
 			{
 				var signes = this.CAPITAN_getValue("capitan."+idCarte+".this.signe").split(";");
-				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte signes=' + JSON.stringify(signes));
+				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte_log signes=' + JSON.stringify(signes));
 			}
 			else
 			{
-				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte pas de signe ' + originalPos[0] + ',' + originalPos[1] + ',' + originalPos[2]);
+				if (this.bDebug) window.console.log('CAPITAN afficheInfoCarte_log pas de signe ' + originalPos[0] + ',' + originalPos[1] + ',' + originalPos[2]);
 			}
 			this.calculeSolution2();
 			return this.generateTable(this.gListeSolutions, signes);
@@ -533,7 +542,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
 			var repartition = this.getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
 			var size = repartition.length;
-			if (this.bDebug) window.console.log('newRecherche: this.newRecherche, repartition=' + JSON.stringify(repartition));
+			if (this.bDebug) window.console.log('newRecherche_log: this.newRecherche_log, repartition=' + JSON.stringify(repartition));
 
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
@@ -719,6 +728,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var table = this.afficheInfoCarte(idCarte);
 			var p = document.createElement('p');
 			p.id = 'spacerMZCapitan';
+			//window.console.log('analyseObject_log: table=' + JSON.stringify(table));
 			p.appendChild(table);
 			parentElt.appendChild(p);
 
@@ -746,6 +756,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				table = this.prevRecherche(idCarte);
 				var p = document.createElement('p');
+				p.id = 'MZ_capitan_p_liste_memo';
 				p.appendChild(table);
 				parentElt.appendChild(p);
 				// Roule 08/08/2016 bloc préparant les infos pour l'outil Mamoune (Psyko-Chasseurs)
@@ -777,6 +788,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			}
 		},
 
+		afficheMsg: function(msg, color) {
+			let p = document.createElement('p');
+			if (color) p.style.color = color;
+			p.appendChild(document.createTextNode('MZ Capitan : ' + msg));
+			document.getElementById('msgDiv').appendChild(p);
+		},
+
 		// Roule 08/08/2016
 		blocMamoune: function(idCarte, currentPos) {
 			var table = document.createElement('table');
@@ -791,7 +809,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var tr = this.appendTr(thead, 'mh_tdtitre');
 			var td = this.appendTdText(tr, "Outil du cercle des Psyko-Chasseurs", true);
 			td.setAttribute('align', 'center');
-			td.setAttribute('title', 'sélectionnez (triple-clic), copiez et collez dans l\'outil des Psyko-Chasseurs');
+			//td.setAttribute('title', 'sélectionnez (triple-clic), copiez et collez dans l\'outil des Psyko-Chasseurs');
 			table.appendChild(thead);
 
 			var tbody = document.createElement('tbody');
@@ -850,6 +868,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.appendChild(thead);
 
 			var tbody = document.createElement('tbody');
+			tbody.id = 'MZ_capitan_tbody_liste_memo';
 			table.appendChild(tbody);
 
 			for (var i = 0; i < this.gEssais.length; i++) {
@@ -873,19 +892,30 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		delRecherche: function(e) {	// ATTENTION, cette fonction ne tourne pas dans le contexte de l'objet ("this" pointe vers le bouton)
-			var idEssaiDel = e.target.idEssai;
-			var idCarte = e.target.idCarte;
+			let idEssaiDel = e.target.idEssai;
+			let idCarte = e.target.idCarte;
 			if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
-			for (var i = 0; i < oCAPITAN_MH_ROULE.gEssais.length; i++) {
-				if (i == oCAPITAN_MH_ROULE.gEssais.length - 1) {
-					window.console.log("CAPITAN delRecherche: capitan."+idCarte+".essai."+i)
-					oCAPITAN_MH_ROULE.CAPITAN_deleteValue("capitan."+idCarte+".essai."+i);
-				} else if (i >= idEssaiDel) {
-					window.console.log("CAPITAN delRecherche: set capitan."+idCarte+".essai."+(i)+'+++'+oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
-					oCAPITAN_MH_ROULE.CAPITAN_setValue("capitan."+idCarte+".essai."+(i),oCAPITAN_MH_ROULE.gEssais[i+1][0]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][1]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][2]+";"+oCAPITAN_MH_ROULE.gEssais[i+1][3]);
-				}
+			oCAPITAN_MH_ROULE.gEssais.splice(idEssaiDel, 1);
+			if (oCAPITAN_MH_ROULE.bDebug) window.console.log('delRecherche_log ' + JSON.stringify(oCAPITAN_MH_ROULE.gEssais));
+			let lg = oCAPITAN_MH_ROULE.gEssais.length;
+			for (let i = 0; i < lg; i++) {
+				let clef = "capitan." + idCarte + ".essai." + i;
+				let oEssai = oCAPITAN_MH_ROULE.gEssais[i];
+				let v = oEssai.x + ';' + oEssai.y + ';' + oEssai.n + ';' + oEssai.c;
+				if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche_log: set ' + clef + '=' + v);
+				oCAPITAN_MH_ROULE.CAPITAN_setValue(clef, v);
 			}
-			window.location.replace(window.location);
+			for (let i = 0; i < 10; i++) {	// pour être sûr, on  supprime les 10 suivantes
+				let clef = "capitan." + idCarte + ".essai." + (i + lg);
+				if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche_log: remove ' + clef);
+				oCAPITAN_MH_ROULE.CAPITAN_deleteValue(clef);
+			}
+			let eP = document.getElementById('MZ_capitan_p_liste_memo');
+			while (eP.lastChild) eP.removeChild(eP.lastChild);
+			let eTable = oCAPITAN_MH_ROULE.prevRecherche(idCarte);
+			eP.appendChild(eTable);
+			let tbody = document.getElementById('MZ_capitan_tbody_liste_memo');
+			tbody.style.display = '';	// show
 		},
 
 		createNewRecherche: function(parentElt) {
@@ -1216,12 +1246,16 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var idCarte = this.getIntegerByID('carte', 'numéro de carte');
 			if (idCarte === undefined) return;
 			var x = this.getIntegerByID('x', 'x');
+			if (this.bDebug) window.console.log("infoRecherche_log: X=" + x);
 			if (x === undefined) return;	// ne pas utiliser «!» car x peut être «0» !
 			var y = this.getIntegerByID('y', 'y');
+			if (this.bDebug) window.console.log("infoRecherche_log: Y=" + y);
 			if (y === undefined) return;
 			var n = this.getIntegerByID('n', 'n');
+			if (this.bDebug) window.console.log("infoRecherche_log: N=" + n);
 			if (n === undefined) return;
-			var nb = this.getIntegerByID('nb', 'le nombre de chiffres bien placés');
+			var nb = this.getIntegerByID('nb', 'Vous avez retrouvé');
+			if (this.bDebug) window.console.log("infoRecherche_log: nb=" + nb);
 			if (nb === undefined) return;
 
 			var i = 0;
@@ -1233,7 +1267,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
-				var msg = document.getElementById("msgEffet").textContent;
+				var msg = document.getElementById("msgDiv").textContent;
 
 				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
 				if(!msg.match(/es dans le bon Xcoin/))
@@ -1246,6 +1280,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			var table = this.afficheInfoCarte(idCarte);
 
+			if (!table) return;
 			form = document.getElementsByTagName('FORM')[0];
 			var p = document.createElement('p');
 			p.appendChild(table);
@@ -1364,7 +1399,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				this.CAPITAN_horsGM = true;
 				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
 			}
-			window.console.log('CAPITAN init: horsGM=' + this.CAPITAN_horsGM);
+			if (this.bDebug) window.console.log('CAPITAN init: horsGM=' + this.CAPITAN_horsGM);
 			if (this.CAPITAN_horsGM) {	// remplacer GM_xxxValue
 				this.CAPITAN_getValue = function(key) {
 					return window.localStorage[key];
@@ -1373,6 +1408,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					window.localStorage.removeItem(key);
 				}
 				this.CAPITAN_setValue = function(key, val) {
+					//if (this.bDebug) window.console.log('CAPITAN_setValue_log: ' + key + '=>' + val);
 					window.localStorage[key] = val;
 				}
 			} else {
@@ -1384,7 +1420,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				this.analyseObject();
 			}
-			else if(this.isPage("MH_Play/Actions/Play_a_TrouverCachette2.php"))
+			else if(this.isPage("MH_Play/Actions/Play_a_ActionResult.php") || this.isPage("MH_Play/Actions/Play_a_TrouverCachette2.php"))
 			{
 				this.infoRecherche();
 			}

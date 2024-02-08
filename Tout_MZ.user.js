@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.31
+// @version     1.3.1.32
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -10244,48 +10244,60 @@ var menuRac, mainIco;
 
 // met à jour les carac sauvegardées (position, DLA, etc.)
 function updateData() {
-	var divs = document.getElementsByTagName('div');
-
 	var eltId = document.getElementById('id');
 	var numTroll = parseInt(eltId.getAttribute('data-id'));
 	if (!isNaN(numTroll))
 	{
-		//window.console.log('[MZd ' + GM_info.script.version + '] init2 numTroll ' + numTroll);
 		MY_setValue('NUM_TROLL', numTroll);
+		if (MY_DEBUG) window.console.log('[MZ] updateData_log: numTroll=' + numTroll);
 	} else {
-		window.console.log('[MZd ' + GM_info.script.version + '] updateData, impossible de retrouver le numéro de Troll, eltId=' + eltId);
+		window.console.log('[MZd ' + GM_info.script.version + '] updateData_log, impossible de retrouver le numéro de Troll, eltId=' + eltId);
 	}
 	var eltSpan = eltId.getElementsByTagName('span');
 	if (eltSpan[0])
 	{
 		var nomTroll = eltSpan[0].innerText;
-		//window.console.log('[MZd ' + GM_info.script.version + '] init2 nomTroll ' + nomTroll);
 		MY_setValue('NOM_TROLL', nomTroll);
+		if (MY_DEBUG) window.console.log('[MZ] updateData_log: nomTroll=' + nomTroll);
+	} else {
+		window.console.log('[MZ] erreur updateData_log: nomTroll inconnu, pas de span');
 	}
 
-	var DLA = new Date(
-		StringToDate(divs[1].firstChild.nodeValue.slice(5))
-	);
+	let eltDLA_xyn = document.getElementById('DLA_xyn');
+	if (!eltDLA_xyn) {
+		window.console.log('[MZ] erreur updateData_log: position et DLA inconnus, pas de DLA_xyn');
+		return;
+	}
+	let txt_dla_xyn = eltDLA_xyn.innerText;
+	let m = txt_dla_xyn.match(/DLA:* *(.*)[ \n\r]*X *= *(-*\d+)[ \|]*Y *= *(-*\d+)[ \|]*N *= *(-*\d+)/);
+	if (!m) {
+		window.console.log("[MZ] erreur updateData_log: position et DLA inconnus, échec de l'analyse de " + txt_dla_xyn);
+		return;
+	}
+	let DLA = new Date(StringToDate(m[1]))
 	if(MY_getValue(numTroll+'.DLA.encours')) {
 		var DLAstockee = new Date(
 			StringToDate(MY_getValue(numTroll+'.DLA.encours'))
 		);
 		if(DLA>DLAstockee) {
 			MY_setValue(numTroll+'.DLA.ancienne',DateToString(DLAstockee));
+			if (MY_DEBUG) window.console.log('[MZ] updateData_log: DLA précédente=' + DateToString(DLAstockee));
 			// Pose un pb en cas de décalage de DLA
 		}
 	}
 	MY_setValue(numTroll+'.DLA.encours',DateToString(DLA));
+	if (MY_DEBUG) window.console.log('[MZ] updateData_log: DLA =' + DateToString(DLA));
 
-	try {
-		var listePos = divs[1].childNodes[2].nodeValue.split('=');
-		MY_setValue(numTroll+'.position.X',parseInt(listePos[1]));
-		MY_setValue(numTroll+'.position.Y',parseInt(listePos[2]));
-		MY_setValue(numTroll+'.position.N',parseInt(listePos[3]));
-	} catch(e) {
-		window.console.log('[MZ] erreur {' + e + '} à la récupération des coord. div[1] contient ' + divs[1].outerHTML.replace(/</g, '‹') + ', div[0] contient ' + divs[0].outerHTML.replace(/</g, '‹'));
+	let x = parseInt(m[2]);
+	let y = parseInt(m[3]);
+	let n = parseInt(m[4]);
+	if (isNaN(x) || isNaN(y) || isNaN(n)) {
+		window.console.log('[MZ] erreur updateData_log, à la récupération de la position, analyse=' + JSON.stringify(m));
+	} else {
+		MY_setValue(numTroll+'.position.X',x);
+		MY_setValue(numTroll+'.position.Y',y);
+		MY_setValue(numTroll+'.position.N',n);
 	}
-	if (MY_DEBUG) window.console.log('numTroll=' + numTroll + ',DLA =' + DLA + ', x= ' + parseInt(listePos[1]) + ', y= ' + parseInt(listePos[2]) + ', n= ' + parseInt(listePos[3]));
 }
 
 // ajoute les raccourcis (paramétrables dans Options/Pack Graphique)
@@ -10529,9 +10541,16 @@ function savePosition() {
 	// Stocke la position (à jour) de la vue pour les autres scripts
 	// DEBUG: Lesquels et pourquoi?
 	var pos = getPosition();
-	MY_setValue(numTroll+'.position.X',pos[0]);
-	MY_setValue(numTroll+'.position.Y',pos[1]);
-	MY_setValue(numTroll+'.position.N',pos[2]);
+	x = pos[0];
+	y = pos[1];
+	n = pos[2];
+	if (isNaN(x) || isNaN(y) || isNaN(n)) {
+		window.console.log('[MZ] erreur savePosition_log, pos=' + JSON.stringfy(pos));
+	} else {
+		MY_setValue(numTroll+'.position.X',x);
+		MY_setValue(numTroll+'.position.Y',y);
+		MY_setValue(numTroll+'.position.N',n);
+	}
 }
 
 
