@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.32
+// @version     1.3.1.33
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -3475,6 +3475,7 @@ function analyseTactique(donneesMonstre,nom) {
 	var degbmm = parseInt(MY_getValue(numTroll+".caracs.degats.bmm"), 10);
 	var vue = parseInt(MY_getValue(numTroll+".caracs.vue"), 10);
 	var pv = parseInt(MY_getValue(numTroll+".caracs.pv"), 10);
+	var pvbase = parseInt(MY_getValue(numTroll+".caracs.pv.base"), 10);
 	var esq = parseInt(Math.max(MY_getValue(numTroll+".caracs.esquive"), 10)-parseInt(MY_getValue(numTroll+".caracs.esquive.nbattaques"),0), 10);
 	var esqbonus = parseInt(MY_getValue(numTroll+".caracs.esquive.bm"), 10);
 	var arm = parseInt(MY_getValue(numTroll+".caracs.armure"), 10);
@@ -3696,7 +3697,7 @@ function analyseTactique(donneesMonstre,nom) {
 		chanceDEsquiveParfaite = 0;
 		chanceDeTouche = Math.round(100*pour/100);
 		chanceDeCritique = Math.round(0*pour/100);
-		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(1+deg/2+pv/20)*2+degbmm,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(1+deg/2+pv/20)*1.5)*2+degbmm,1)))/100;
+		degats = Math.round(coeffSeuil*((chanceDeTouche-chanceDeCritique)*Math.max(Math.floor(1+deg/2+pvbase/20)*2,1)+chanceDeCritique*Math.max(Math.floor(Math.floor(1+deg/2+pvbase/20)*1.5)*2,1)))/100;
 		//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 		listeAttaques.push(new Array("Explosion",chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,'',pasDeSR?modificateurMagie:''));
 	}
@@ -14886,9 +14887,9 @@ function sortileges(sort) {
 	}
 	else if(sort.indexOf('explosion')!=-1){
 		texte = 'Dégâts : <b>'
-			+Math.floor( 1+(deg+Math.floor(pvtotal/10))/2 )+'</b> D3 '
-			+' => <b>'+2*Math.floor(1+(deg+Math.floor(pvtotal/10))/2)
-			+' ('+resiste(1+(deg+Math.floor(pvtotal/10))/2 )+')</b>';
+			+Math.floor( 1+(deg+Math.floor(pvbase/10))/2 )+'</b> D3 '
+			+' => <b>'+2*Math.floor(1+(deg+Math.floor(pvbase/10))/2)
+			+' ('+resiste(1+(deg+Math.floor(pvbase/10))/2 )+')</b>';
 	}
 	else if(sort.indexOf('faiblesse passagere')!=-1){
 		if(pvcourant<=0)
