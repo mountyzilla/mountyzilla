@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.14
+// @version 8.8.15
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -1380,7 +1380,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_getValue == undefined) {
@@ -1389,7 +1389,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				GM_getValue('x');	// provoque une exception hors GM
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_deleteValue == undefined) {
@@ -1397,9 +1397,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
-			if (this.bDebug) window.console.log('CAPITAN init: horsGM=' + this.CAPITAN_horsGM);
+			if (this.bDebug) window.console.log('CAPITAN init_log: horsGM=' + this.CAPITAN_horsGM);
 			if (this.CAPITAN_horsGM) {	// remplacer GM_xxxValue
 				this.CAPITAN_getValue = function(key) {
 					return window.localStorage[key];
@@ -1422,6 +1422,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			}
 			else if(this.isPage("MH_Play/Actions/Play_a_ActionResult.php") || this.isPage("MH_Play/Actions/Play_a_TrouverCachette2.php"))
 			{
+				// uniquement si l'id du body est p_trouverunecachette
+				if (document.body.id != 'p_trouverunecachette') return;
 				this.infoRecherche();
 			}
 			else if(this.isPage("MH_Play/Play_equipement.php") || this.isPage("MH_Taniere/TanierePJ_o_Stock.php"))
