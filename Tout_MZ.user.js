@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.34
+// @version     1.3.1.35
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -15807,38 +15807,41 @@ function MZ_doSearchCompoTanieres(event) {
 			try {
 				//window.console.log('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 				if (responseDetails.status == 0) return;
-				var oDiv = responseDetails.responseXML.getElementById('mh_objet_hidden_Composant');
-				if (!oDiv) {
-					window.console.log('[MZ] MZ_doSearchCompoTanieres réponse sans mh_objet_hidden_Composant');
+				let eDivRecherches = responseDetails.responseXML.getElementById('recherches');
+				if (!eDivRecherches) {
+					window.console.log('[MZ] MZ_doSearchCompoTanieres réponse sans DIV recherches');
 					return;
 				}
-				var oTable = oDiv.getElementsByTagName('table')[0];
-				var oCompos = {};
-				var bFound = false;
-				var nTotal = 0;
-				for (var oTr of oTable.rows) {
-					for (oTd of oTr.cells) {
-						var tabA = oTd.getElementsByTagName('a');
-						if (!tabA[0]) continue;
-						if (tabA[0].href.indexOf('TresorHistory.php') <=0) continue;
-						var m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
-						if (!m) {
-							if (MY_DEBUG) window.console.log('MZ_doSearchCompoTanieres no match ' + oTd.textContent);
-							continue;
+				let oCompos = {};
+				let bFound = false;
+				let nTotal = 0;
+				for (let eDiv of eDivRecherches.children) {
+					if (eDiv.tagName != 'DIV') continue;
+					var oTable = eDiv.getElementsByTagName('table')[0];
+					for (var oTr of oTable.rows) {
+						for (oTd of oTr.cells) {
+							var tabA = oTd.getElementsByTagName('a');
+							if (!tabA[0]) continue;
+							if (tabA[0].href.indexOf('TresorHistory.php') <=0) continue;
+							var m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
+							if (!m) {
+								if (MY_DEBUG) window.console.log('MZ_doSearchCompoTanieres no match ' + oTd.textContent);
+								continue;
+							}
+							var compo = m[1];
+							var monstre = m[2];
+							var qualite = m[3];
+							oCompo = oCompos[compo];
+							if (oCompo == undefined) {
+								oCompo = {};
+								oCompos[compo] = oCompo;
+							}
+							var qty = oCompo[qualite];
+							if (qty == undefined) qty = 0;
+							oCompo[qualite] = ++qty;
+							nTotal++;
+							bFound = true;
 						}
-						var compo = m[1];
-						var monstre = m[2];
-						var qualite = m[3];
-						oCompo = oCompos[compo];
-						if (oCompo == undefined) {
-							oCompo = {};
-							oCompos[compo] = oCompo;
-						}
-						var qty = oCompo[qualite];
-						if (qty == undefined) qty = 0;
-						oCompo[qualite] = ++qty;
-						nTotal++;
-						bFound = true;
 					}
 				}
 				while (eTableTaniere.rows.length > 0) eTableTaniere.deleteRow(0);
