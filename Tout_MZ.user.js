@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.33
+// @version     1.3.1.34
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -4912,7 +4912,7 @@ function traiteMalus() {
 				if(carac=='ATT' || carac=='DEG' || carac=='Armure') {
 					var type = uniListe[nb]['type'];
 					if(!effetsCeTour[carac])
-						effetsCeTour[carac] = {'Physique':0, 'Magie':0};
+						effetsCeTour[carac] = {'Physique':0, 'Magique':0};
 					var thisBm;
 					if(nom=='pasdedecumul')
 						thisBm = bm;
@@ -4950,8 +4950,8 @@ function traiteMalus() {
 				case 'DEG':
 				case 'Armure':
 					var phy = effetsCeTour[carac]['Physique'];
-					var mag = effetsCeTour[carac]['Magie'];
-					texteD += (phy || mag)? ' | '+carac+' : '+aff(phy)+'/'+aff(mag) : '';
+					var mag = effetsCeTour[carac]['Magique'];
+					texteD += (phy || mag)? ' | '+carac+' : '+aff(phy)+'\\'+aff(mag) : '';
 					texteS += (phy+mag) ? ' | '+carac+' : '+aff(phy+mag) : '';
 					break;
 				case 'TOUR':
@@ -5099,7 +5099,7 @@ function toggleMouches() {
 function traiteMouches() {
 // Traitement complet: présence et effets des mouches
 	var listeTypes = {}, effetsActifs = {};
-	//if (MY_DEBUG) window.console.log('traiteMouches, tr_mouches.length=' + tr_mouches.snapshotLength);
+	if (MY_DEBUG) window.console.log('traiteMouches, tr_mouches.length=' + tr_mouches.snapshotLength);
 
 	for(var i=0 ; i<tr_mouches.snapshotLength ; i++) {
 		var tr = tr_mouches.snapshotItem(i);
@@ -5138,7 +5138,10 @@ function traiteMouches() {
 
 	// Extraction Effet total et affichage des différences à la normale
 	var tfoot = document.getElementsByTagName('tfoot')[0];
-	if(!tfoot) { return; }
+	if(!tfoot) {
+		if (MY_DEBUG) window.console.log('traiteMouches, pas de tfoot');
+		return;
+	}
 	var nodeTotal = document.evaluate(
 		".//b[contains(./text(),'Effet total')]",
 		tfoot, null, 9, null
