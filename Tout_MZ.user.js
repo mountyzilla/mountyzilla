@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.35
+// @version     1.3.1.36
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -15818,6 +15818,7 @@ function MZ_doSearchCompoTanieres(event) {
 				for (let eDiv of eDivRecherches.children) {
 					if (eDiv.tagName != 'DIV') continue;
 					var oTable = eDiv.getElementsByTagName('table')[0];
+					if (!oTable) continue;
 					for (var oTr of oTable.rows) {
 						for (oTd of oTr.cells) {
 							var tabA = oTd.getElementsByTagName('a');
