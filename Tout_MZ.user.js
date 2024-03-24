@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.36
+// @version     1.3.1.37
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -16005,7 +16005,13 @@ function MZdo_hookCompoTanieres() {
 */
 
 	// Détection de la page à traiter
-	if(isPage("Messagerie/ViewMessageBot")) {
+	if(isPage("MH_Play/Actions/Play_a_ActionResult")) {
+		window.console.log('Play_a_ActionResult id=' + document.body.id);
+		switch(document.body.id) {
+			case 'p_comptenceconnaissancedesmonstres':
+				do_cdmcomp();
+		}
+	} else if(isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
 	} else if(isPage("MH_Play/Actions/Play_a_TalentResult")) {
 		do_cdmcomp();
