@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.37
+// @version     1.3.1.38
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -14988,9 +14988,9 @@ function sortileges(sort) {
 			perteSacro = function(sac) {
 				return " (-"+(sac+2*(1+Math.floor(sac/5)))+" PV)";
 			},
-			sac = Math.floor((pvcourant-1)/2),
-			pvdispoSansMalusTemps =
-				pvcourant-pvtotal-Math.ceil((bmt+pdm)*pvtotal/250);
+			sac = Math.floor((pvcourant-1)/2);
+		var bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
+		var pvdispoSansMalusTemps = pvcourant-pvtotal-Math.ceil(bmPVHorsBlessure*pvtotal/250);
 
 		texte = "Portée horizontale : <b>" +
 		        Math.min(1,vuetotale)+"</b> case<br>" +
@@ -15972,7 +15972,7 @@ function MZdo_hookCompoTanieres() {
 
 	// Détection de la page à traiter
 	if(isPage("MH_Play/Actions/Play_a_ActionResult")) {
-		window.console.log('Play_a_ActionResult id=' + document.body.id);
+		if (MY_DEBUG) window.console.log('Play_a_ActionResult id=' + document.body.id);
 		switch(document.body.id) {
 			case 'p_comptenceconnaissancedesmonstres':
 				do_cdmcomp();
