@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.38
+// @version     1.3.1.39
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -486,7 +486,7 @@ var MZ_changeLog = [
 		FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
 	80117 - Héra
 *		Il semble que l'icône de LdP n'apparait que pour les Tom
-*		l'infobulle de sacrifice donne des info erronées maintenant (dues aux changement d'affichage des gains/bm de temps probablement). pour moi, ça me dit "vous ne pouvez pas compenser de blessures dues à un sacrifice" alors que clairement, je peux
+		FAIT l'infobulle de sacrifice donne des info erronées maintenant (dues aux changement d'affichage des gains/bm de temps probablement). pour moi, ça me dit "vous ne pouvez pas compenser de blessures dues à un sacrifice" alors que clairement, je peux
 		Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
 		FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
 		FAIT Possibilité de plusieurs systèmes Bricol'troll
@@ -4226,7 +4226,7 @@ function prochainMundi() {
 function dispatch() {
 	if(isPage('MH_Play/Play_action')) {
 		prochainMundi();
-	} else if(isPage('MH_Play/Actions/Play_a_Decaler.php')) {
+	} else if(isPage('MH_Play/Play_a_Decaler.php')) {
 		var oldDLA;
 		changeActionDecalage();
 	} else if(isPage('MH_Play/Actions')) {
@@ -7117,7 +7117,7 @@ function changeButtonValidate() {
 
 function do_move() {
 	// Roule', vérification du risque de tomber dans un trou déplacée dans do_lieuTeleport pour le cas des TP
-	//if(isPage('MH_Play/Actions/Play_a_Move.php')) {
+	//if(isPage('MH_Play/Play_a_Move.php')) {
 		changeValidation();
 	//}
 	//else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
@@ -15971,7 +15971,7 @@ function MZdo_hookCompoTanieres() {
 */
 
 	// Détection de la page à traiter
-	if(isPage("MH_Play/Actions/Play_a_ActionResult")) {
+	if(isPage("MH_Play/Play_a_ActionResult")) {
 		if (MY_DEBUG) window.console.log('Play_a_ActionResult id=' + document.body.id);
 		switch(document.body.id) {
 			case 'p_comptenceconnaissancedesmonstres':
@@ -15979,7 +15979,7 @@ function MZdo_hookCompoTanieres() {
 		}
 	} else if(isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
-	} else if(isPage("MH_Play/Actions/Play_a_TalentResult")) {
+	} else if(isPage("MH_Play/Play_a_TalentResult")) {
 		do_cdmcomp();
 	} else if(isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
 		do_diplo();
@@ -16006,7 +16006,7 @@ function MZdo_hookCompoTanieres() {
 	} else if(isPage("MH_Play/Play_evenement")) {
 		/* SCIZ */
 		do_scizOverwriteEvents();
-	} else if(isPage("MH_Play/Actions/Play_a_Move")) {
+	} else if(isPage("MH_Play/Play_a_Move")) {
 		do_move();
 	} else if(isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
@@ -16034,7 +16034,7 @@ function MZdo_hookCompoTanieres() {
 		do_enchant();
 	} else if(isPage("MH_Lieux/Lieu_Enchanteur")) {
 		do_pre_enchant();
-	} else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {
+	} else if(isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {	// 25/03/2024 MH_Play/Actions n'existe plus. À surveiller...
 		do_actions();
 	} else if(isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
 		do_mission_liste();
