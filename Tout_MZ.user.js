@@ -2616,48 +2616,18 @@ function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
 	return oRet;
 }
 
-/* tentative via jQuery abandonnée
-function insertButtonCdmSmartphone_to_delete(nextName,onClick,texte) {
-	if (window.jQuery == undefined) return;
-	//window.console.log('jQuery OK');
-	var eInput = $('[name="' + nextName + '"]');
-	if (!eInput) return;
-	//window.console.log('eInput OK');
-	var eDiv = eInput.closest("div");
-	if (!eDiv) return;
-	//window.console.log('eDiv OK');
-	var newDiv = eDiv.clone();
-	var newSpan = newDiv.children('span');
-	newSpan.children(':first-child').text(texte);
-	var newInput = newDiv.children('input');
-	newInput.removeAttr('onclick');
-	newInput.click(onClick);
-	newInput.val(texte);
-	newInput.removeAttr("type").attr("type", "button");
-	var eForm = eDiv.parent();
-	window.console.log("insertButtonCdmSmartphone tag newdiv=" + newDiv.prop('tagName') + ', parent tag=' + eForm.prop('tagName'));
-	eForm.prepend(newDiv);
-	return true;
-}
-
 function insertButtonCdmSmartphone(nextName,onClick,texte) {
 	var tabInput = document.getElementsByName(nextName);
 	if (!tabInput) return;
 	var eInput = tabInput[0];
 	if (!eInput) return;
-	//window.console.log('eInput OK');
 	var eDiv = eInput.parentNode;
 	if (!eDiv) return;
-	window.console.log('eDiv.outerHTML=' + eDiv.outerHTML);
 	var eNewDiv = eDiv.cloneNode(true);
-	window.console.log('eNewDiv.outerHTML=' + eNewDiv.outerHTML);
 	var tabNewSpan = eNewDiv.getElementsByTagName('span');
-	if (!tabNewSpan) return;
-	window.console.log('tabNewSpan lg=' + tabNewSpan.length);
-	if (tabNewSpan.length == 0) return;
-	tabNewSpan.forEach(function(pSpan) {
+	if (!tabNewSpan || tabNewSpan.length == 0) return;
+	Array.from(tabNewSpan).forEach(function(pSpan) {
 		if (pSpan.getElementsByTagName('span').length > 0) return;
-		window.console.log('newSpan old text=' + pSpan.innerText);
 		while (pSpan.firstChild) pSpan.removeChild(pSpan.firstChild);	// vider
 		pSpan.appendChild(document.createTextNode(texte));
 	});
@@ -2665,20 +2635,16 @@ function insertButtonCdmSmartphone(nextName,onClick,texte) {
 	if (!tabNewInput) return;
 	var eNewInput = tabNewInput[0];
 	if (!eNewInput) return;
-	eNewInput.removeAttr('onclick');
-	eNewInput.onClick = onClick;
+	eNewInput.onclick = onClick;
 	eNewInput.value = texte;
 	eNewInput.type = "button";
-	var eForm = eDiv.parentNode;
-	window.console.log("insertButtonCdmSmartphone tag eNewDiv=" + eNewDiv.nodeName + ', parent tag=' + eForm.nodeName);
-	eForm.insertBefore(eNewDiv, eForm.firstChild);
+	insertBefore(eDiv,eNewDiv);
 	return true;
 }
-*/
 
 function insertButtonCdm(nextName,onClick,texte) {
 	if (texte==null) texte = 'Participer au bestiaire';
-	//if (insertButtonCdmSmartphone(nextName,onClick,texte)) return;
+	if (insertButtonCdmSmartphone(nextName,onClick,texte)) return;
 
 	var nextNode = document.getElementsByName(nextName)[0];
 	var espace = document.createTextNode('\t');
