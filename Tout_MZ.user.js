@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.39
+// @version     1.3.1.40
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.40 26/03/2024",
+"   Affichage des fatigues optimales dans le profil",
 "V1.3.1.27 07/12/2023",
 "   Adaptation don de PX",
 "V1.3.1.24 04/11/2023",
@@ -13789,7 +13791,6 @@ function setInfosExp() {
     tdMort.parentElement.title = 'Rapport décès/meurtres: ' + Math.floor((nbmorts / nbmeurtres) * 100) / 100;
 }
 
-
 /*-[functions]----------- Fonctions speciales Kastars ------------------------*/
 
 function minParPVsac(fat,bm) {
@@ -14104,6 +14105,12 @@ function refreshAccel() {
 			' avant de réactiver.'
 		);
 	}
+}
+
+function setInfosFatiguesOptimiales()
+{
+  var thFatigue = document.querySelector('#fatigue').parentElement.parentElement;
+  thFatigue.title = "Fat. optimale : 29 / 23 / 18 / 14 / 11 / 8 / 6 / 4";
 }
 
 
@@ -15098,6 +15105,7 @@ function do_profil2()
 		setInfosEtatLieux();
 		setInfosEtatPV();
 		setInfosExp();
+		setInfosFatiguesOptimiales();
 
 		creerBulleVide();
 		traitementTalents();
