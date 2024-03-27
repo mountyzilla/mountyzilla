@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.40
+// @version     1.3.1.41
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 try {
 var MZ_changeLog = [
+"V1.3.1.41 27/03/2024",
+"   Meilleur affichage des trolls hors-vue (interface tactique)",
 "V1.3.1.40 26/03/2024",
 "   Affichage des fatigues optimales dans le profil",
 "V1.3.1.27 07/12/2023",
@@ -1067,7 +1069,7 @@ function appendTextbox(paren,type,nam,size,maxlength,value, sId) {
 	paren.appendChild(input);
 	return input;
 	}
-	
+
 function appendTextboxBlock(paren,type,nam,text,size,maxlength,value, sId, bTextRight) {
 	var label = document.createElement('label');
 	label.style.display = 'inline-block';
@@ -1090,7 +1092,7 @@ function appendCheckBox(paren,nam,checked,onClick) {
 	paren.appendChild(input);
 	return input;
 	}
-	
+
 function appendCheckBoxBlock(paren, nam, text, checked, onClick) {
 	var label = document.createElement('label');
 	label.style.display = 'inline-block';
@@ -12934,7 +12936,6 @@ function putInfosTrolls(infosTrolls, itName) {
 			}
 		}
 
-
 		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
 		//corrigeBricolTrolls(infosTrolls);
 
@@ -12945,16 +12946,14 @@ function putInfosTrolls(infosTrolls, itName) {
 
 		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
 		var str = MY_getValue(numTroll+'.INFOSIT');
-		var bAjoutTrollInvi = false;
+		var affhv = false;
 		if (str) {
 			var arr = str.split('$');
-			bAjoutTrollInvi = arr[4]>0;
+			affhv = arr[4]>0;
 		}
 
-
 		var tBody = tr_trolls[0].parentNode;
-		if (tr_trolls[1] !== undefined)
-			tBody = tr_trolls[1].parentNode;
+		if (tr_trolls[1] !== undefined) tBody = tr_trolls[1].parentNode;
 
 		//window.console.log('nb Troll IT : ' + IDs.length);
 		var pos = getPosition();
@@ -12970,6 +12969,7 @@ function putInfosTrolls(infosTrolls, itName) {
 				//window.console.log('[MZ] putInfosTrolls, le Troll ' + idTroll + ' est déjà dans la table HTML');
 				tr = MZ_tabTrTrollById[idTroll];
 			} else {
+				if (!affhv) continue;
 				//window.console.log('[MZ] putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
 				var distance = Math.max(Math.abs(pos[0]-infos.x), Math.abs(pos[1]-infos.y), Math.abs(pos[2]-infos.n));
 				// trouver où insérer ce Troll
@@ -12987,9 +12987,10 @@ function putInfosTrolls(infosTrolls, itName) {
 					tr = appendTr(tBody,'mh_tdpage');
 				}
 				tr.style.color = 'orange';
+				var desktopView = document.getElementsByClassName('ui-mobile').length == 0
 				var td = appendTd(tr);	// distance
 				appendText(td, distance);
-				td = appendTd(tr);	// actions
+				if (desktopView) td = appendTd(tr);	// actions
 				td = appendTd(tr);	// ID
 				appendText(td, idTroll);
 				td = appendTd(tr);	// Nom
@@ -12999,11 +13000,20 @@ function putInfosTrolls(infosTrolls, itName) {
 				td = appendTd(tr);	// PA
 				td = appendTd(tr);	// Guilde
 				if (infos.guilde !== undefined) appendText(td, infos.guilde);
-				td = appendTd(tr);	// Niveau
-				if (infos.niveau !== undefined) appendText(td, infos.niveau);
-				td.align = 'center';
-				td = appendTd(tr);	// Race
-				if (infos.race) appendText(td, infos.race);
+				if (desktopView) {
+					td = appendTd(tr);	// Niveau
+					if (infos.niveau !== undefined) appendText(td, infos.niveau);
+					td.align = 'center';
+					td = appendTd(tr);	// Race
+					if (infos.race) appendText(td, infos.race);
+				} else {
+					td = appendTd(tr);	// Race + Niveau
+					let lettreRace = {"Kastar":"K", "Durakuir":"D", "Skrim":"S", "Tomawak":"T", "Darkling":"G", " Nkrwapu":"N"};
+					let td_niv = "";
+					if (infos.race) td_niv = `${lettreRace[infos.race]}`;
+					if (infos.niveau !== undefined) td_niv = `${td_niv} ${infos.niveau}`;
+					appendText(td, td_niv);
+				}
 				td = appendTd(tr);	// X
 				td.align = 'center';
 				if (infos.x !== undefined) appendText(td, infos.x);
@@ -13913,7 +13923,7 @@ function setAccel() {
 		} else {
 			listeBmFat = [30,30,15];
 		}
-		
+
 	}
 	if(overDLA) {
 		// Si on est en over-DLA, on decale les bm d'un tour
