@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.41
+// @version     1.3.1.42
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -12369,21 +12369,23 @@ function prepareEnvoi() {
 	if(!btnEnvoi) { return; }
 	var tdEnvoi = btnEnvoi.parentNode;
 	appendText(tdEnvoi,' ');
-	var span = document.createElement('span');
-	span.style.whiteSpace = 'nowrap';
+	let label = document.createElement('label');
+	label.style.whiteSpace = 'nowrap';
 	var radioElt = document.createElement('input');
 	radioElt.type = 'radio';
 	radioElt.name = 'envoiPXMP';
 	radioElt.id = 'radioPX';
-	span.appendChild(radioElt);
-	appendText(span,' des PX ');
+	label.appendChild(radioElt);
+	appendText(label,'des PX ');
+	tdEnvoi.appendChild(label);
+	label = document.createElement('label');
 	radioElt = document.createElement('input');
 	radioElt.type = 'radio';
 	radioElt.name = 'envoiPXMP';
 	radioElt.checked = true;
-	span.appendChild(radioElt);
-	appendText(span,' un MP');
-	tdEnvoi.appendChild(span);
+	label.appendChild(radioElt);
+	appendText(label,'un MP');
+	tdEnvoi.appendChild(label);
 
 	/* Insertion du bouton Annuler */
 	insertButton(btnEnvoi,'Annuler',annuleEnvoi);
@@ -12428,7 +12430,7 @@ function effectueEnvoi() {
 	if (errID) window.alert('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
 	var PXchecked = document.getElementById('radioPX').checked;
 	if(PXchecked) {
-		window.open('./Actions/Play_a_Action.php?type=A&id=9&dest='+str,'Contenu');
+		window.open('./Play_a_Action.php?type=A&id=9&dest='+str,'Contenu');
 	} else {
 		window.open('../Messagerie/MH_Messagerie.php?cat=3&dest='+str,'Contenu');
 	}
