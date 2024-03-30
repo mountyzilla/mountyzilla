@@ -16,7 +16,7 @@
 
 // vérif UTF-8 ş
 
-/*******************************************************************************
+/** *****************************************************************************
 *  This file is part of Mountyzilla.                                           *
 *                                                                              *
 *  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -458,7 +458,7 @@ let MZ_changeLog = [
 	"V1.1 : regroupement en un gros paquet sale",
 ];
 
-/**********************************************************
+/** ********************************************************
 	À faire / propositions d'évolutions
 
 	H2P 08/07/2020
@@ -506,7 +506,7 @@ let MZ_changeLog = [
 		MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
 **********************************************************/
 
-/**********************************************************
+/** ********************************************************
 Doc État et Callback pour l'utilisation par les scripts tiers
 	MZ met à jour la propriété document.body.dataset.MZ_Etat
 		1 à la fin de l'initialisation (tout le code MZ s'est déroulé mais il peut y avoir des appels AJAX en cours)
@@ -527,7 +527,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 try {
-	/**********************************************************
+	/** ********************************************************
 	**** Début de zone à déplacer dans une bibli commune ******
 	**********************************************************/
 
@@ -552,7 +552,7 @@ try {
 	let URL_troogle = 'http://troogle.iktomi.eu/entities/';
 
 	// URLs de test HTTPS
-	let URL_CertifRaistlin1 = URL_MZ.replace(/http:\/\//, 'https://') + '/img/1.gif';	// s'adapte si mode IP
+	let URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
 	let URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
 
 	// ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
@@ -578,36 +578,40 @@ try {
 
 	// Roule 23/12/2016 mode dev
 	let isDEV = false;
-	if (window.localStorage.getItem('MZ_dev')
-		|| window.location.href.indexOf('rouletabille.mh.free.fr') > 0
-		|| window.location.href.indexOf('mzdev.mh') >= 0) {
+	if (window.localStorage.getItem('MZ_dev') ||
+		window.location.href.indexOf('rouletabille.mh.free.fr') > 0 ||
+		window.location.href.indexOf('mzdev.mh') >= 0) {
 		URL_MZ = URL_MZ.replace(/$/, 'dev');
 		isDEV = true;
 	}
 
 	// Images (pas de souci CORS)
-	let URL_MZimg = URL_MZ + '/img/';
+	let URL_MZimg = `${URL_MZ}/img/`;
 	// URLs externes ajax (CORS OK)
-	let URL_MZinfoMonstre = URL_MZ + '/monstres_0.9_FF.php';
-	let URL_MZgetCaracMonstre = URL_MZ + '/getCaracMonstre.php';
-	let URL_pageDispatcherV2 = URL_MZ + '/cdmdispatcherV2.php';
+	let URL_MZinfoMonstre = `${URL_MZ}/monstres_0.9_FF.php`;
+	let URL_MZgetCaracMonstre = `${URL_MZ}/getCaracMonstre.php`;
+	let URL_pageDispatcherV2 = `${URL_MZ}/cdmdispatcherV2.php`;
 
 	// liens externes déduits
-	let URL_bricol_mountyhall = URL_bricol + 'mountyhall/';
+	let URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
 	let MHicons = '/mountyhall/Images/Icones/';
 
 	/** x~x Logging/debugging MZ ------------------------------------------- */
 	let MY_DEBUG = false, MY_LOG = true;
 
 	function logMZ(obj, version = '') {
-		if (!MY_LOG) { return; }
+		if (!MY_LOG) {
+			return;
+		}
 		let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
 		let lv = version != '' ? `|${version}` : '';
 		window.console.log(`[MZ${lv}] ${msg}`);
 	}
 
 	function debugMZ(obj, version = '') {
-		if (!MY_DEBUG) { return; }
+		if (!MY_DEBUG) {
+			return;
+		}
 		let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
 		let lv = version != '' ? `|${version}` : '';
 		window.console.log(`[MZ_DEBUG${lv}] ${msg}`);
@@ -616,29 +620,35 @@ try {
 
 	function traceStack(e, sModule) {
 		let version = '';
-		if (GM_info && GM_info.script && GM_info.script.version) { version = `${GM_info.script.version}`; }
+		if (GM_info && GM_info.script && GM_info.script.version) {
+			version = `${GM_info.script.version}`;
+		}
 		let sRet = `[MZ_TRACE|${version}]`;
-		if (sModule) { sRet += ` \{${sModule}\}`; }
+		if (sModule) {
+			sRet = `${sRet} \{${sModule}\}`;
+		}
 		try {
-			if (e.message) { sRet += ` ${e.message}`; }
+			if (e.message) {
+				sRet = `${sRet} ${e.message}`;
+			}
 		} catch (e2) {
-			sRet += ' <exception acces message>'; //+ e2.message;
+			sRet = `${sRet} <exception acces message>`; // + e2.message;
 		}
 		try {
 			if (e.stack) {
 				let sStack = e.stack;
 				// enlever les infos confidentielles
-				sRet += "\n" + sStack.replace(/file\:\/\/.*gm_scripts/ig, '...');
+				sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
 			}
 		} catch (e2) {
-			sRet += ' <exception acces stack>'; // + e2.message;
+			sRet = `${sRet} <exception acces stack>`; // + e2.message;
 		}
 		return sRet;
 	}
 
 	/** x~x Compatibilité Greasemonkey/ViolentMonkey ----------------------- */
 	try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
-		let horsGM = (GM_getValue === undefined);
+		let horsGM = GM_getValue === undefined;
 		logMZ('Fonctionnement dans Greasemonkey');
 	} catch (_e) {
 		logMZ('Fonctionnement hors Greasemonkey');
@@ -656,7 +666,7 @@ try {
 	function MY_getValue(key) {
 		let v = window.localStorage.getItem(key);
 		let vGM = GM_getValue(key);
-		if ((vGM == null) || (v != null && v != vGM)) {
+		if (vGM == null || v != null && v != vGM) {
 			GM_setValue(key, v);
 		} else if (v == null && vGM != null) {
 			v = vGM;
@@ -670,8 +680,11 @@ try {
 	}
 	function MY_setValue(key, val) {
 		// conversion des booléens en 0 ou 1 à cause du localStorage infoutu de gérer les booléens
-		if (val === true) { val = 1; }
-		else if (val === false) { val = 0; }
+		if (val === true) {
+			val = 1;
+		} else if (val === false) {
+			val = 0;
+		}
 		try {
 			GM_setValue(key, val);
 		} catch (e) {
@@ -684,14 +697,22 @@ try {
 		}
 	}
 	function MZ_setOrRemoveValue(key, val) {
-		if (val === true) { val = 'true'; }
-		else if (val === false || val === undefined || val === '') { val = null; }
-		if (val === null) { MY_removeValue(key); }
-		else { MY_setValue(key, val); }
+		if (val === true) {
+			val = 'true';
+		} else if (val === false || val === undefined || val === '') {
+			val = null;
+		}
+		if (val === null) {
+			MY_removeValue(key);
+		} else {
+			MY_setValue(key, val);
+		}
 	}
 	function MZ_getValueBoolean(key) {
 		let val = MY_getValue(key);
-		if (val == 'true' || val == 1) { return true; }
+		if (val == 'true' || val == 1) {
+			return true;
+		}
 		return false;
 	}
 
@@ -702,10 +723,12 @@ try {
 	// Roule 16/06/2017 on ne peut pas prendre le dernier niveau vu ! on a peut-être changé de Troll
 	let nivTroll; // = MY_getValue('NIV_TROLL');
 	// Roule 20/04/2017 le niveau n'est plus dans la frame de gauche, on récupère dans <numtroll>.niveau
-	if (nivTroll == undefined) { nivTroll = MY_getValue(numTroll + '.niveau'); }
+	if (nivTroll == undefined) {
+		nivTroll = MY_getValue(`${numTroll}.niveau`);
+	}
 	// utilisés dans actions et vue (calculs SR) :
-	let mmTroll = MY_getValue(numTroll + '.caracs.mm');
-	let rmTroll = MY_getValue(numTroll + '.caracs.rm');
+	let mmTroll = MY_getValue(`${numTroll}.caracs.mm`);
+	let rmTroll = MY_getValue(`${numTroll}.caracs.rm`);
 	let currentURL = window.location.href;
 
 	/** x~x Durée script --------------------------------------------------- */
@@ -714,24 +737,31 @@ try {
 
 	function start_script(nbJours_exp) {
 		debugMZ(`Script début sur ${window.location.pathname}`, GM_info.script.version);
-		if (date_debut) { return; }
+		if (date_debut) {
+			return;
+		}
 		date_debut = new Date();
 		// Créé la variable expdate si demandé
-		if (!nbJours_exp) { return; }
+		if (!nbJours_exp) {
+			return;
+		}
 		let expdate = new Date();
 		expdate.setTime(expdate.getTime() + nbJours_exp * jour_en_ms);
 	}
 
 	function displayScriptTime(duree, texte) {
 		let footerNode = document.getElementById('footer2');
-		if (!footerNode) { return; }
+		if (!footerNode) {
+			return;
+		}
 		let node;
 		try {
 			node = document.evaluate(".//text()[contains(.,'Page générée en')]/../br", footerNode, null, 9, null).singleNodeValue;
+		} catch (e) {
+			return;
 		}
-		catch (e) { return; }
 		if (duree) {
-			insertText(node, ` - [${texte} en ${(duree / 1000)} sec.]`);
+			insertText(node, ` - [${texte} en ${duree / 1000} sec.]`);
 			return;
 		}
 		insertText(node, ` - [Script MZ exécuté en ${(new Date().getTime() - date_debut.getTime()) / 1000} sec.]`);
@@ -747,12 +777,16 @@ try {
 		}
 		request.onreadystatechange = function () {
 			// logMZ(`XMLHttp.readystatechange url=${MY_XHR_Ob.url}, readyState='${request.readyState}, readyState='${request.error}, status='${request.status}`)
-			if (request.readyState != 4) { return; }
-			if (request.error) {
-				if (MY_XHR_Ob.onerror) { MY_XHR_Ob.onerror(request); }
+			if (request.readyState != 4) {
 				return;
 			}
-			if ((request.status == 0)) {
+			if (request.error) {
+				if (MY_XHR_Ob.onerror) {
+					MY_XHR_Ob.onerror(request);
+				}
+				return;
+			}
+			if (request.status == 0) {
 				logMZ(`XMLHttp.status=0 au retour de ${MY_XHR_Ob.url}, réponse=${request.responseText}`);
 				if (isDEV) {
 					let grandCadre = createOrGetGrandCadre();
@@ -763,16 +797,21 @@ try {
 					sousCadre.style.border = 'solid 1px black';
 					grandCadre.appendChild(sousCadre);
 				}
-				if (MY_XHR_Ob.onerror) { MY_XHR_Ob.onerror(request); }
+				if (MY_XHR_Ob.onerror) {
+					MY_XHR_Ob.onerror(request);
+				}
 				// showHttpsErrorContenuMixte();
 				return;
 			}
 			if (MY_XHR_Ob.onload) {
 				let version = '';
 				if (MY_XHR_Ob.trace) {
-					if (GM_info && GM_info.script && GM_info.script.version) { version = `${GM_info.script.version}`; }
+					if (GM_info && GM_info.script && GM_info.script.version) {
+						version = `${GM_info.script.version}`;
+					}
 					logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`, version);
 				}
+
 				/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
 				MY_XHR_Ob.onload(request);
 				if (MY_XHR_Ob.trace) {
@@ -780,14 +819,18 @@ try {
 				}
 			}
 		};
-		if (MY_XHR_Ob.HTML) { request.responseType = 'document'; }
+		if (MY_XHR_Ob.HTML) {
+			request.responseType = 'document';
+		}
 		request.send(MY_XHR_Ob.data);
 	}
 
 	// rend une chaine affichant date et heure et milliseconds (maintenant si le paramètre est absent)
 	function MZ_formatDateMS(d = new Date(), avec_ms = true) {
 		let date_fmt = d.toLocaleString('fr-FR');
-		if (avec_ms) { date_fmt += `.${d.getMilliseconds()}`; }
+		if (avec_ms) {
+			date_fmt = `${date_fmt}.${d.getMilliseconds()}`;
+		}
 		return date_fmt;
 	}
 
@@ -848,7 +891,9 @@ try {
 	function avertissement(txt, duree, bBloque) {
 		let d = duree ? ` pour (${duree} ms)` : '';
 		logMZ(`Avertissement: ${txt}${d}`);
-		if (!duree) { duree = 15000; };
+		if (!duree) {
+			duree = 15000;
+		}
 		let div = document.createElement('div');
 		// On numérote les avertissements pour destruction sélective
 		let num = document.getElementsByName('avertissement').length;
@@ -857,8 +902,8 @@ try {
 		div.setAttribute('name', 'avertissement');
 		div.className = 'mh_textbox ui-content';
 		div.style.position = 'fixed';
-		div.style.top = (10 + 45 * num) + 'px';
-		div.style.left = (10 + 0 * num) + 'px';
+		div.style.top = `${10 + 45 * num}px`;
+		div.style.left = `${10 + 0 * num}px`;
 		div.style.border = '4px solid red';
 		div.style.borderRadius = '4px';
 		div.style.backgroundColor = 'rgb(229, 222, 203)';
@@ -866,7 +911,11 @@ try {
 		div.style.cursor = 'pointer';
 		div.style.fontSize = 'large';
 		div.innerHTML = txt;
-		if (!bBloque) { div.onclick = function () { tueAvertissement(this.num); }; }
+		if (!bBloque) {
+			div.onclick = function () {
+				tueAvertissement(this.num);
+			};
+		}
 
 		// un croix en haut à droite pour signifier à l'utilisateur qu'il peut cliquer pour fermer ce popup
 		let divcroix = document.createElement('div');
@@ -882,7 +931,9 @@ try {
 
 		document.body.appendChild(div);
 		// Destruction automatique de l'avertissement après "un certain temps"
-		window.setTimeout(function () { tueAvertissement(num); }, duree);
+		window.setTimeout(() => {
+			tueAvertissement(num);
+		}, duree);
 	}
 
 	function tueAvertissement(num) {
@@ -902,21 +953,27 @@ try {
 
 	function appendTr(tbody, cls_name) {
 		let tr = document.createElement('tr');
-		if (cls_name) { tr.className = cls_name; }
+		if (cls_name) {
+			tr.className = cls_name;
+		}
 		tbody.appendChild(tr);
 		return tr;
 	}
 
 	function insertTr(node, cls_name) {
 		let tr = document.createElement('tr');
-		if (cls_name) { tr.className = cls_name; }
+		if (cls_name) {
+			tr.className = cls_name;
+		}
 		insertBefore(node, tr);
 		return tr;
 	}
 
 	function appendTd(tr) {
 		let td = document.createElement('td');
-		if (tr) { tr.appendChild(td); }
+		if (tr) {
+			tr.appendChild(td);
+		}
 		return td;
 	}
 
@@ -942,21 +999,31 @@ try {
 	function appendTdCenter(tr, colspan) {
 		let td = appendTd(tr);
 		td.align = 'center'; // WARNING - Obsolete
-		if (colspan) { td.colSpan = colspan; }
+		if (colspan) {
+			td.colSpan = colspan;
+		}
 		return td;
 	}
 
 	function insertTdElement(node, child) {
 		let td = insertTd(node);
-		if (child) { td.appendChild(child); }
+		if (child) {
+			td.appendChild(child);
+		}
 		return td;
 	}
 
 	function appendA(node, href, cssClass, text) {
 		let a = document.createElement('a');
-		if (href) { a.href = href; }
-		if (cssClass) { a.className = cssClass; }
-		if (text) { a.appendChild(document.createTextNode(text)); }
+		if (href) {
+			a.href = href;
+		}
+		if (cssClass) {
+			a.className = cssClass;
+		}
+		if (text) {
+			a.appendChild(document.createTextNode(text));
+		}
 		node.appendChild(a);
 	}
 
@@ -982,16 +1049,22 @@ try {
 
 	function appendThText(tr, text, bold) {
 		let th = document.createElement('th');
-		if (tr) { tr.appendChild(th); }
+		if (tr) {
+			tr.appendChild(th);
+		}
 		th.appendChild(document.createTextNode(text));
-		if (bold) { th.style.fontWeight = 'bold'; }
+		if (bold) {
+			th.style.fontWeight = 'bold';
+		}
 		return th;
 	}
 
 	function appendTdText(tr, text, bold) {
 		let td = appendTd(tr);
 		td.appendChild(document.createTextNode(text));
-		if (bold) { td.style.fontWeight = 'bold'; }
+		if (bold) {
+			td.style.fontWeight = 'bold';
+		}
 		return td;
 	}
 
@@ -1031,7 +1104,9 @@ try {
 		input.id = sId === undefined ? name : sId;
 		input.size = size;
 		input.maxLength = maxlength;
-		if (value) { input.value = value; }
+		if (value) {
+			input.value = value;
+		}
 		node.appendChild(input);
 		return input;
 	}
@@ -1040,10 +1115,14 @@ try {
 		let label = document.createElement('label');
 		label.style.display = 'inline-block';
 		label.style.marginRight = '10px';
-		if (!bTextRight) { label.appendChild(document.createTextNode(text)); }
+		if (!bTextRight) {
+			label.appendChild(document.createTextNode(text));
+		}
 		let i = appendTextbox(label, type, name, size, maxlength, value, sId);
 		i.style.marginRight = '5px';
-		if (bTextRight) { label.appendChild(document.createTextNode(text)); }
+		if (bTextRight) {
+			label.appendChild(document.createTextNode(text));
+		}
 		node.appendChild(label);
 		return label;
 	}
@@ -1053,8 +1132,12 @@ try {
 		input.type = 'checkbox';
 		input.name = name;
 		input.id = name;
-		if (checked) { input.checked = true; }
-		if (onClick) { input.onclick = onClick; }
+		if (checked) {
+			input.checked = true;
+		}
+		if (onClick) {
+			input.onclick = onClick;
+		}
 		node.appendChild(input);
 		return input;
 	}
@@ -1067,8 +1150,12 @@ try {
 		input.type = 'checkbox';
 		input.name = name;
 		input.id = name;
-		if (checked) { input.checked = true; }
-		if (onClick) { input.onclick = onClick; }
+		if (checked) {
+			input.checked = true;
+		}
+		if (onClick) {
+			input.onclick = onClick;
+		}
 		input.style.marginRight = '5px;';
 		label.appendChild(input);
 		label.appendChild(document.createTextNode(text));
@@ -1113,8 +1200,12 @@ try {
 		input.type = 'button';
 		input.className = 'mh_form_submit';
 		input.value = value;
-		input.onmouseover = function () { this.style.cursor = 'pointer'; };
-		if (onClick) { input.onclick = onClick; }
+		input.onmouseover = function () {
+			this.style.cursor = 'pointer';
+		};
+		if (onClick) {
+			input.onclick = onClick;
+		}
 		node.appendChild(input);
 		return input;
 	}
@@ -1124,7 +1215,9 @@ try {
 		input.type = 'button';
 		input.className = 'mh_form_submit';
 		input.value = value;
-		input.onmouseover = function () { this.style.cursor = 'pointer'; };
+		input.onmouseover = function () {
+			this.style.cursor = 'pointer';
+		};
 		input.onclick = onClick;
 		insertBefore(node, input);
 		return input;
@@ -1135,8 +1228,12 @@ try {
 		input.type = 'submit';
 		input.className = 'mh_form_submit';
 		input.value = value;
-		input.onmouseover = function () { this.style.cursor = 'pointer'; };
-		if (onClick) { input.onclick = onClick; }
+		input.onmouseover = function () {
+			this.style.cursor = 'pointer';
+		};
+		if (onClick) {
+			input.onclick = onClick;
+		}
 		node.appendChild(input);
 		return input;
 	}
@@ -1146,7 +1243,9 @@ try {
 		img.src = url;
 		img.title = title;
 		img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
-		if (style) { img.style = style; }
+		if (style) {
+			img.style = style;
+		}
 		return img;
 	}
 
@@ -1154,7 +1253,9 @@ try {
 		let img = document.createElement('img');
 		img.src = url;
 		img.alt = alt;
-		if (title) { img.title = title; }
+		if (title) {
+			img.title = title;
+		}
 		img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
 		return img;
 	}
@@ -1186,21 +1287,28 @@ try {
 	function getMyID(elt) {
 		let parent = elt.parentNode;
 		for (let i = 0; i < parent.childNodes.length; i++) {
-			if (elt == parent.childNodes[i]) { return i; }
+			if (elt == parent.childNodes[i]) {
+				return i;
+			}
 		}
 		return -1;
 	}
 
 	function insertAfter(elt, newElt) {
 		let id = getMyID(elt);
-		if (id == -1) { return; }
-		if (id < elt.parentNode.childNodes.length - 1) { insertBefore(elt.nextSibling, newElt); }
-		else { elt.parentNode.appendChild(newElt); }
+		if (id == -1) {
+			return;
+		}
+		if (id < elt.parentNode.childNodes.length - 1) {
+			insertBefore(elt.nextSibling, newElt);
+		} else {
+			elt.parentNode.appendChild(newElt);
+		}
 	}
 
 	/** x~x Fonctions de mise en forme du texte ---------------------------- */
 	function aff(nb) {
-		return (nb >= 0) ? '+' + nb : nb;
+		return nb >= 0 ? `+${nb}` : nb;
 	}
 
 	function getNumber(str) {
@@ -1210,7 +1318,9 @@ try {
 
 	function getNumbers(str) {
 		let nbrs = str.match(/\d+/g);
-		if (!nbrs) { return []; }
+		if (!nbrs) {
+			return [];
+		}
 		for (let i = 0; i < nbrs.length; i++) {
 			nbrs[i] = Number(nbrs[i]);
 		}
@@ -1219,7 +1329,9 @@ try {
 
 	function getIntegers(str) {
 		let nbrs = str.match(/-?\d+/g);
-		if (!nbrs) { return []; }
+		if (!nbrs) {
+			return [];
+		}
 		for (let i = 0; i < nbrs.length; i++) {
 			nbrs[i] = Number(nbrs[i]);
 		}
@@ -1273,7 +1385,7 @@ try {
 
 	/** x~x Gestion/transformation des Dates ------------------------------- */
 	function addZero(i) {
-		return (i < 10) ? '0' + i : i;
+		return i < 10 ? `0${i}` : i;
 	}
 
 	// WARNING - remplacé par MZ_formatDateMS()
@@ -1303,24 +1415,23 @@ try {
 		return new Date(t[0], t[1] - 1, t[2], t[3], t[4], t[5]);
 	}
 
-	let mz_ie = (window.attachEvent) ? true : false;
+	let mz_ie = Boolean(window.attachEvent);
 	if (typeof addEvent !== 'function') {
 		if (mz_ie) {
 			function addEvent(obj, typ, fn, sens) {
-				obj['e' + typ + fn] = fn; obj[typ + fn] = function () {
-					obj['e' + typ + fn](window.event);
+				obj[`e${typ}${fn}`] = fn; obj[typ + fn] = function () {
+					obj[`e${typ}${fn}`](window.event);
 				};
-				obj.attachEvent('on' + typ, obj[typ + fn]);
+				obj.attachEvent(`on${typ}`, obj[typ + fn]);
 			}
-		}
-		else {
+		} else {
 			function addEvent(obj, typ, fn, sens) {
 				obj.addEventListener(typ, fn, sens);
 			}
 		}
 	}
 
-	/**********************
+	/** ********************
 	* glissière en mode objet
 	* Roule 29/12/2016 à partir du code des trajets gowap doCallback_glissiere et Vapulabehemot
 	* Une glissière est un curseur permettant, par exemple de changer le zoom des cartes
@@ -1383,13 +1494,15 @@ try {
 			bulle_pourcent.appendChild(bulle_pourcent_text);
 			document.body.appendChild(bulle_pourcent);
 
-			this.getElt = function () { return div_gliss; };
+			this.getElt = function () {
+				return div_gliss;
+			};
 
-			////////////////////////////////////
+			// //////////////////////////////////
 			// dessine et redessine le curseur
-			////////////////////////////////////
+			// //////////////////////////////////
 			let dessine_glissiere = function (val) {
-				let pos_0_100 = ((val - valMin) * 100) / (valMax - valMin);
+				let pos_0_100 = (val - valMin) * 100 / (valMax - valMin);
 				let ctx = dessin.getContext('2d');
 				ctx.clearRect(0, 0, 104, 12);
 				ctx.fillStyle = 'rgb(0,0,0)';
@@ -1401,34 +1514,40 @@ try {
 				ctx.fillRect(pos_0_100, 0, 5, 12);
 				ctx.fillStyle = 'rgb(200,200,200)';
 				ctx.fillRect(pos_0_100 + 1, 1, 3, 10);
-				pourcent_text.nodeValue = val + '%';
+				pourcent_text.nodeValue = `${val}%`;
 				previousVal = parseInt(val);
 			};
 
-			////////////////////////////////////
+			// //////////////////////////////////
 			// action sur mousedown et mousemove
 			//		stocker la nouvelle valeur
 			//		redessiner
 			//		afficher la nouvelle valeur
 			//		action selon ce qui a été demandé
-			////////////////////////////////////
+			// //////////////////////////////////
 			let doCallback_glissiere = function (evt) {
 				try {
 					let xsouris = evt.offsetX ? evt.offsetX : evt.layerX;
 					let xpos = evt.offsetX ? evt.clientX : evt.pageX;
 					let ypos = evt.offsetX ? evt.clientY + document.body.scrollTop : evt.pageY;
-					if (evt.type === 'mousedown') { mouseDown = true; }
-					let val = Math.floor(Math.min(valMax, Math.max(valMin, ((xsouris - 1) * (valMax - valMin) / 100) + valMin)));
-					dessin.style.cursor = (val <= (previousVal + flouPourCurseurDoubleFleche) && val >= (previousVal - flouPourCurseurDoubleFleche)) ? 'e-resize' : 'pointer';
+					if (evt.type === 'mousedown') {
+						mouseDown = true;
+					}
+					let val = Math.floor(Math.min(valMax, Math.max(valMin, (xsouris - 1) * (valMax - valMin) / 100 + valMin)));
+					dessin.style.cursor = val <= previousVal + flouPourCurseurDoubleFleche && val >= previousVal - flouPourCurseurDoubleFleche ? 'e-resize' : 'pointer';
 					//		afficher la nouvelle valeur dans la bulle
-					bulle_pourcent_text.nodeValue = val + '%';
-					bulle_pourcent.style.top = (ypos + 3) + 'px';
-					bulle_pourcent.style.left = (xpos + 16) + 'px';
+					bulle_pourcent_text.nodeValue = `${val}%`;
+					bulle_pourcent.style.top = `${ypos + 3}px`;
+					bulle_pourcent.style.left = `${xpos + 16}px`;
 					if (evt.buttons === undefined) {
 						// mode utilisant les evt mouseup/down (mauvaise méthode, utilisé si on ne peut pas faire autrement)
-						if (!mouseDown) { return; }	// simple survol, on ne fait rien de plus
+						if (!mouseDown) {
+							return;
+						}	// simple survol, on ne fait rien de plus
 					} else {
-						if (!(evt.buttons & 1)) { return; }	// simple survol, on ne fait rien de plus
+						if (!(evt.buttons & 1)) {
+							return;
+						}	// simple survol, on ne fait rien de plus
 					}
 					//		stocker la nouvelle valeur
 					MY_setValue(`MZ_glissiere_${ref}`, val);
@@ -1436,7 +1555,9 @@ try {
 					dessine_glissiere(val);
 					//		action selon ce qui a été demandé
 					// for(let key in evt) logMZ(`evt key ${key} => ${evt[key]}`);
-					if ((!bDynamic) && (evt.type !== 'mousedown')) { return; }
+					if (!bDynamic && evt.type !== 'mousedown') {
+						return;
+					}
 					let elt;
 					if (typeof paramTarget === 'object') {
 						elt = paramTarget;
@@ -1446,32 +1567,46 @@ try {
 						paramTarget(val);
 						return;
 					}
-					if (elt && elt.setZoom != undefined) { elt.setZoom(val); }
-				} catch (e) { logMZ(traceStack(e, 'glissiere_MZ.doCallback')); }
+					if (elt && elt.setZoom != undefined) {
+						elt.setZoom(val);
+					}
+				} catch (e) {
+					logMZ(traceStack(e, 'glissiere_MZ.doCallback'));
+				}
 			};
 
-			////////////////////////////////////
+			// //////////////////////////////////
 			// event mousedown et mousemove : redessiner et callback
-			////////////////////////////////////
+			// //////////////////////////////////
 			addEvent(dessin, 'mousedown', doCallback_glissiere, true);
 			addEvent(dessin, 'mousemove', doCallback_glissiere, true);
-			////////////////////////////////////
+			// //////////////////////////////////
 			// event mouseup : mémoriser mouseup (utile seulement si le navigateur ne supporte pas evt.buttons
-			////////////////////////////////////
-			addEvent(dessin, 'mouseup', function () { mouseDown = false; }, true);
-			////////////////////////////////////
+			// //////////////////////////////////
+			addEvent(dessin, 'mouseup', () => {
+				mouseDown = false;
+			}, true);
+			// //////////////////////////////////
 			// event mouseout & mouseover : afficher/cacher la bulle
-			////////////////////////////////////
-			addEvent(dessin, 'mouseout', function () { bulle_pourcent.style.visibility = 'hidden'; }, true);
-			addEvent(dessin, 'mouseover', function () { bulle_pourcent.style.visibility = 'visible'; }, true);
+			// //////////////////////////////////
+			addEvent(dessin, 'mouseout', () => {
+				bulle_pourcent.style.visibility = 'hidden';
+			}, true);
+			addEvent(dessin, 'mouseover', () => {
+				bulle_pourcent.style.visibility = 'visible';
+			}, true);
 
-			////////////////////////////////////
+			// //////////////////////////////////
 			// dessiner la première fois
-			////////////////////////////////////
+			// //////////////////////////////////
 			let val_init = MY_getValue(`MZ_glissiere_${ref}`);
-			if (val_init === undefined) { val_init = valDef; }
+			if (val_init === undefined) {
+				val_init = valDef;
+			}
 			dessine_glissiere(val_init);
-		} catch (e) { logMZ(traceStack(e, 'glissiere_MZ')); }
+		} catch (e) {
+			logMZ(traceStack(e, 'glissiere_MZ'));
+		}
 	}
 
 	// calcul du point intermédiaire de déplacement gowap (x et y uniquement)
@@ -1479,20 +1614,23 @@ try {
 	// rend un objet avec x et y (rend undefined si le trajet est direct)
 	function pointIntermediaireMonstre2D(locDepart, locArrivee) {
 		let deltaX = locArrivee.x - locDepart.x;
-		if (deltaX == 0) { return; } // pas de point intermédiaire
+		if (deltaX == 0) {
+			return;
+		} // pas de point intermédiaire
 		let deltaY = locArrivee.y - locDepart.y;
-		if (deltaY == 0) { return; } // pas de point intermédiaire
+		if (deltaY == 0) {
+			return;
+		} // pas de point intermédiaire
 		let absDeltaX = Math.abs(deltaX), absDeltaY = Math.abs(deltaY);
 		if (absDeltaX > absDeltaY) {
 			return { x: locDepart.x + Math.sign(deltaX) * Math.sign(deltaY) * deltaY, y: locArrivee.y };
 		} else if (absDeltaY > absDeltaX) {
 			return { x: locArrivee.x, y: locDepart.y + Math.sign(deltaX) * Math.sign(deltaY) * deltaX };
-		} else {
-			return;	// égalité, pas de point intermédiaire
 		}
+		return;	// égalité, pas de point intermédiaire
 	}
 
-	/**********************
+	/** ********************
 	* carte en mode objet
 	* Roule 14/01/2017 à partir du code des trajets gowap de Vapulabehemot
 	*
@@ -1550,13 +1688,20 @@ try {
 			let couleur_depl_collision_trou = 'rgba(150,0,0, 0.5)';
 			let couleur_trou = 'rgb(200,0,0)';
 
-			let coord_x = function (val) { return decalh + coeff * (val + 100); };
-			let coord_y = function (val) { return decalv + coeff * (100 - val); };
+			let coord_x = function (val) {
+				return decalh + coeff * (val + 100);
+			};
+			let coord_y = function (val) {
+				return decalv + coeff * (100 - val);
+			};
 
 			let ctx = dessin.getContext('2d');
 			let coeff = MY_getValue(`MZ_glissiere_${ref}`);	// ce qui a été sauvé précédement par la glissiere
-			if (coeff) { coeff /= 50; }
-			else { coeff = 2; }
+			if (coeff) {
+				coeff = coeff / 50;
+			} else {
+				coeff = 2;
+			}
 			let decalv = 30, decalh = 30;
 
 			let detecteCollisionTrou = function (pos0, pos1) {	// fonction volée à feldspath et Vapulabehemot, merci à eux (voir calc_inter dans Trajet_Gowap)
@@ -1596,7 +1741,7 @@ try {
 				dessin.width = 200 * coeff + 2 * decalh;
 				dessin.height = 200 * coeff + 2 * decalv;
 
-				//repere
+				// repere
 				ctx.beginPath();
 				ctx.moveTo(coord_x(0), coord_y(100));
 				ctx.lineTo(coord_x(0), coord_y(-100));
@@ -1605,7 +1750,7 @@ try {
 				ctx.stroke();
 				ctx.strokeRect(coord_x(-100), coord_y(100), coord_x(100) - coord_x(-100), coord_y(-100) - coord_y(100));
 
-				//trous
+				// trous
 				ctx.fillStyle = couleur_trou;
 				for (let i in position_trous_MZ) {
 					ctx.beginPath();
@@ -1662,13 +1807,17 @@ try {
 						if (pointIntermediaire === undefined) {
 							if (detecteCollisionTrou(pointPrecedent, tabDeplOneSuivant[i])) {
 								ctx.strokeStyle = couleur_depl_collision_trou;
-							} else { ctx.strokeStyle = couleur_depl_normal; }
+							} else {
+								ctx.strokeStyle = couleur_depl_normal;
+							}
 							ctx.lineTo(coord_x(tabDeplOneSuivant[i].x), coord_y(tabDeplOneSuivant[i].y));
 						} else {
-							if (detecteCollisionTrou(pointPrecedent, pointIntermediaire)
-								|| detecteCollisionTrou(pointIntermediaire, tabDeplOneSuivant[i])) {
+							if (detecteCollisionTrou(pointPrecedent, pointIntermediaire) ||
+								detecteCollisionTrou(pointIntermediaire, tabDeplOneSuivant[i])) {
 								ctx.strokeStyle = couleur_depl_collision_trou;
-							} else { ctx.strokeStyle = couleur_depl_normal; }
+							} else {
+								ctx.strokeStyle = couleur_depl_normal;
+							}
 							ctx.lineTo(coord_x(pointIntermediaire.x), coord_y(pointIntermediaire.y));
 							ctx.lineTo(coord_x(tabDeplOneSuivant[i].x), coord_y(tabDeplOneSuivant[i].y));
 						}
@@ -1696,8 +1845,8 @@ try {
 			let gliss = new glissiere_MZ(ref, 'Zoom\u00A0:', this, true, 100, 50, 200);
 			let eGliss = gliss.getElt();
 			eGliss.style.position = 'absolute';
-			eGliss.style.top = (coeff * 2) + 'px';
-			eGliss.style.left = decalh + 'px';
+			eGliss.style.top = `${coeff * 2}px`;
+			eGliss.style.left = `${decalh}px`;
 			dessin.style.position = 'relative';
 			div2_carte.style.position = 'relative';
 			eGliss.style.zIndex = 9000;
@@ -1730,8 +1879,8 @@ try {
 				let ysouris = evt.offsetX ? evt.offsetY : evt.layerY;
 				let xpos = evt.offsetX ? evt.clientX : evt.pageX;
 				let ypos = evt.offsetX ? evt.clientY + document.body.scrollTop : evt.pageY;
-				let xUser = Math.round(((xsouris - decalh) / coeff) - 100); // l'inverse de decalh+coeff*(val+100);
-				let yUser = Math.round(100 - ((ysouris - decalv) / coeff)); // l'inverse de decalv+coeff*(100-val);
+				let xUser = Math.round((xsouris - decalh) / coeff - 100); // l'inverse de decalh+coeff*(val+100);
+				let yUser = Math.round(100 - (ysouris - decalv) / coeff); // l'inverse de decalv+coeff*(100-val);
 				bulleHaut.firstChild.nodeValue = `x=${xUser}, y=${yUser}`;
 				let tabHTMLbas = []; // message pour les trous
 				for (let i in position_trous_MZ) {
@@ -1749,21 +1898,28 @@ try {
 					}
 				}
 				bulleBas.innerHTML = tabHTMLbas.join('<br />');
-				bulle.style.top = (ysouris + 8) + 'px';
-				bulle.style.left = (xsouris + 16) + 'px';
+				bulle.style.top = `${ysouris + 8}px`;
+				bulle.style.left = `${xsouris + 16}px`;
 			};
 			addEvent(dessin, 'mousemove', affichePosition, true);
-			addEvent(dessin, 'mouseout', function () { bulle.style.visibility = 'hidden'; }, true);
-			addEvent(dessin, 'mouseover', function () { bulle.style.visibility = 'visible'; }, true);
+			addEvent(dessin, 'mouseout', () => {
+				bulle.style.visibility = 'hidden';
+			}, true);
+			addEvent(dessin, 'mouseover', () => {
+				bulle.style.visibility = 'visible';
+			}, true);
 
 			dessine_carte(); // dessin initial
 
-			this.getElt = function () { return div1_carte; };
-
-		} catch (e) { logMZ(traceStack(e, 'carte_MZ')); }
+			this.getElt = function () {
+				return div1_carte;
+			};
+		} catch (e) {
+			logMZ(traceStack(e, 'carte_MZ'));
+		}
 	}
 
-	/**********************
+	/** ********************
 	* analyse de la vue pour produire un objet
 	* Raistlin 25/09/2020, intégré par Roule
 	*
@@ -1772,12 +1928,12 @@ try {
 
 	let MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
 		sectionList: {
-			"Monstre": "VueMONSTRE",
-			"Troll": "VueTROLL",
-			"Tresor": "VueTRESOR",
-			"Champignon": "VueCHAMPIGNON",
-			"Lieu": "VueLIEU",
-			"Cenotaphe": "VueCADAVRE"
+			Monstre: "VueMONSTRE",
+			Troll: "VueTROLL",
+			Tresor: "VueTRESOR",
+			Champignon: "VueCHAMPIGNON",
+			Lieu: "VueLIEU",
+			Cenotaphe: "VueCADAVRE"
 		},
 		columnTranslation: {
 			"Dist.": "distance",
@@ -1796,7 +1952,9 @@ try {
 		getSectionVueColsHeader: function (section) {
 			let colList = [];
 			for (let col of document.getElementById(section).childNodes[0].childNodes[0].childNodes) {
-				if (typeof col.innerText !== 'undefined') { colList.push(col.innerText); }
+				if (typeof col.innerText !== 'undefined') {
+					colList.push(col.innerText);
+				}
 			}
 			return colList;
 		},
@@ -1823,14 +1981,16 @@ try {
 					let oElement = {};
 					for (let col in sectionColList) {
 						let colTranslated = this.columnTranslation[sectionColList[col]];
-						if (!colTranslated) { continue; }
+						if (!colTranslated) {
+							continue;
+						}
 						oElement[colTranslated] = sectionLineList[line][col];
 					}
 					oSection.push(oElement);
 				}
 				this.oVue[section] = oSection;
 			}
-			this.oVue['caseOrigine'] = { 'x': MY_getValue(`${numTroll}.position.X`), 'y': MY_getValue(`${numTroll}.position.Y`), 'n': MY_getValue(`${numTroll}.position.N`) };
+			this.oVue.caseOrigine = { x: MY_getValue(`${numTroll}.position.X`), y: MY_getValue(`${numTroll}.position.Y`), n: MY_getValue(`${numTroll}.position.N`) };
 		},
 
 		messageHandler: function (event) {
@@ -1853,12 +2013,14 @@ try {
 	};
 
 
-	/**********************************************************
+	/** ********************************************************
 	**** Fin de zone à déplacer dans une bibli commune ********
 	**********************************************************/
 
 	/* DEBUG: NETTOYAGE TAGS */
-	if (MY_getValue(`${numTroll}.TAGSURL`)) { MY_removeValue(`${numTroll}.TAGSURL`); }
+	if (MY_getValue(`${numTroll}.TAGSURL`)) {
+		MY_removeValue(`${numTroll}.TAGSURL`);
+	}
 
 	// Alerte si mode dev
 	if (isDEV) {
@@ -1891,17 +2053,21 @@ try {
 	}
 
 	function getPXKill(niv) {
-		if (nivTroll == undefined) { return '? (visitez le profil privé)'; }
+		if (nivTroll == undefined) {
+			return '? (visitez le profil privé)';
+		}
 		return Math.max(0, 10 + 3 * niv - 2 * nivTroll);
 	}
 
 	function getPXDeath(niv) {
-		if (nivTroll == undefined) { return '? (visitez le profil privé)'; }
+		if (nivTroll == undefined) {
+			return '? (visitez le profil privé)';
+		}
 		return Math.max(0, 10 + 3 * nivTroll - 2 * niv);
 	}
 
 	function analysePX(niv) {
-		niv = niv + '';
+		niv = `${niv}`;
 		let i = niv.indexOf('+');
 		if (i != -1) { // si niv = 'XX+' ??
 			return ` \u2192 \u2265 <b>${getPXKill(niv.slice(0, i))}</b> PX`; // \u2192 = '→'
@@ -1909,7 +2075,9 @@ try {
 		i = niv.slice(1).indexOf('-'); // si niv = 'XX-YY' ??
 		if (i != -1) {
 			let max = getPXKill(niv.slice(i + 2));
-			if (max == 0) { return ' \u2192 <b>0</b> PX'; } // \u2192 = '→'
+			if (max == 0) {
+				return ' \u2192 <b>0</b> PX';
+			} // \u2192 = '→'
 			return ` \u2192 <b>${getPXKill(niv.slice(0, i + 1))}</b> \u2264 PX \u2264 <b>${max}</b>`;
 		}
 		i = niv.indexOf('='); // ???
@@ -1923,7 +2091,7 @@ try {
 	function analysePXTroll(niv) {
 		let lv = isLetter(niv[0]) ? niv.substring(1) : niv;
 		let str = analysePX(lv);
-		str += `<br/>Vous lui rapportez <b>${getPXDeath(lv)}</b> PX.`;
+		str = `${str}<br/>Vous lui rapportez <b>${getPXDeath(lv)}</b> PX.`;
 		return str;
 	}
 
@@ -2119,7 +2287,7 @@ try {
 	// }
 
 	let tabEM = {
-		//Monstre: [Compo exact, Sort, Position, Localisation]
+		// Monstre: [Compo exact, Sort, Position, Localisation]
 		// AA
 		'Basilisk': ["Œil d'un ", "Analyse Anatomique", 3, "Tête"],
 		// AE
@@ -2248,18 +2416,28 @@ try {
 	// }
 
 	function addInfoEM(node, mob, compo, qualite, localisation) {
-		if (!tabEM[mob]) { return; }
+		if (!tabEM[mob]) {
+			return;
+		}
 		let title = 'Composant variable', texte = 'Variable', bold = false;
 		if (tabEM[mob].length > 1) {
 			let pc = 5 * (numQualite[qualite] - tabEM[mob][2]);
-			if (tabEM[mob][0].indexOf(compo) == -1) { pc -= 20; }
-			if (localisation.indexOf(tabEM[mob][3]) == -1) { pc -= 5; }
-			if (pc < -20) { return; }
-			if (pc >= 0) { bold = true; }
-			texte = aff(pc) + '%';
-			title = texte + " pour l'écriture de " + tabEM[mob][1];
+			if (tabEM[mob][0].indexOf(compo) == -1) {
+				pc = pc - 20;
+			}
+			if (localisation.indexOf(tabEM[mob][3]) == -1) {
+				pc = pc - 5;
+			}
+			if (pc < -20) {
+				return;
+			}
+			if (pc >= 0) {
+				bold = true;
+			}
+			texte = `${aff(pc)}%`;
+			title = `${texte} pour l'écriture de ${tabEM[mob][1]}`;
 		}
-		let urlImg = URL_MZimg + 'Competences/ecritureMagique.png';
+		let urlImg = `${URL_MZimg}Competences/ecritureMagique.png`;
 		let span = createImageSpan(urlImg, 'EM:', title, ` [${texte}]`, bold);
 		node.appendChild(span);
 	}
@@ -2274,7 +2452,9 @@ try {
 			let compo = trim(str.slice(0, str.indexOf(" d'un")));
 			let mob = trim(str.slice(str.indexOf("d'un") + 5));
 			// Si non-EM on stoppe le traitement
-			if (!tabEM[mob]) { continue; }
+			if (!tabEM[mob]) {
+				continue;
+			}
 			str = trCompos.snapshotItem(i).childNodes[9].textContent;
 			let qualite = trim(str.slice(str.indexOf('Qualit') + 9));
 			let localisation = trim(str.slice(0, str.indexOf(' |')));
@@ -2288,14 +2468,20 @@ try {
 	}
 
 	function getEM(nom) {
-		if (nom.indexOf('[') != -1) { nom = trim(nom.substring(0, nom.indexOf('['))); }
-		if (tabEM[nom]) { return nom; }
+		if (nom.indexOf('[') != -1) {
+			nom = trim(nom.substring(0, nom.indexOf('[')));
+		}
+		if (tabEM[nom]) {
+			return nom;
+		}
 		return '';
 	}
 
 	// DEBUG ex-fonction composantEM
 	function compoMobEM(mob) {
-		if (!tabEM[mob]) { return ''; }
+		if (!tabEM[mob]) {
+			return '';
+		}
 		if (tabEM[mob].length == 1) {
 			return `Divers composants ${tabEM[mob][0]} ${mob} (Composant Variable)`;
 		}
@@ -2304,14 +2490,24 @@ try {
 
 	// DEBUG ex-fonction compoEM
 	function titreCompoEM(mob, compo, localisation, qualite) {
-		if (!tabEM[mob]) { return ''; }
-		if (tabEM[mob].length == 1) { return 'Composant variable'; }
+		if (!tabEM[mob]) {
+			return '';
+		}
+		if (tabEM[mob].length == 1) {
+			return 'Composant variable';
+		}
 
 		let pc = 5 * (tabEM[mob][2] - numQualite[qualite]);
-		if (compo.indexOf(tabEM[mob][0]) == -1) { pc -= 20; }
-		if (localisation.indexOf(tabEM[mob][3]) == -1) { pc -= 5; }
+		if (compo.indexOf(tabEM[mob][0]) == -1) {
+			pc = pc - 20;
+		}
+		if (localisation.indexOf(tabEM[mob][3]) == -1) {
+			pc = pc - 5;
+		}
 
-		if (pc >= -20) { return `${pc}% pour l'écriture de ${tabEM[mob][2]}`; }
+		if (pc >= -20) {
+			return `${pc}% pour l'écriture de ${tabEM[mob][2]}`;
+		}
 		return '';
 	}
 
@@ -2327,11 +2523,12 @@ try {
 
 	/** x~x Stockage des Talents ------------------------------------------- */
 	let arrayTalents = {
+
 		/* Compétences */
 		'Acceleration du Metabolisme': 'AM',
 		'Attaque Precise': 'AP',
 		'Balayage': 'Balayage',
-		//'Balluchonnage':'Ballu',
+		// 'Balluchonnage':'Ballu',
 		'Baroufle': 'Baroufle',
 		'Bidouille': 'Bidouille',
 		'Botte Secrete': 'BS',
@@ -2374,7 +2571,7 @@ try {
 		'Shamaner': 'Shamaner',
 		"S'interposer": 'SInterposer',
 		'Tailler': 'Tailler',
-		//'Vol':'Vol',
+		// 'Vol':'Vol',
 		/* Sortilèges */
 		'Analyse Anatomique': 'AA',
 		'Armure Etheree': 'AE',
@@ -2407,18 +2604,24 @@ try {
 		'Vision lointaine': 'VL',
 		'Voir le Cache': 'VlC',
 		'Vue Troublee': 'VT'
-		//'':''
+		// '':''
 	};
 
 	// DEBUG - Pour rétrocompatibilité
-	function getSortComp(nom, niveau) { return getTalent(nom, niveau); }
+	function getSortComp(nom, niveau) {
+		return getTalent(nom, niveau);
+	}
 
 	function getTalent(nom, niveau = '') {
-		if (nom === true) { return true; }
+		if (nom === true) {
+			return true;
+		}
 		let nomEnBase = arrayTalents[epure(nom)];
-		if (!nomEnBase) { nomEnBase = nom; }
-		if (MY_getValue(numTroll + '.talent.' + nomEnBase + niveau)) {
-			return Number(MY_getValue(numTroll + '.talent.' + nomEnBase + niveau));
+		if (!nomEnBase) {
+			nomEnBase = nom;
+		}
+		if (MY_getValue(`${numTroll}.talent.${nomEnBase}${niveau}`)) {
+			return Number(MY_getValue(`${numTroll}.talent.${nomEnBase}${niveau}`));
 		}
 		return 0;
 	}
@@ -2426,13 +2629,13 @@ try {
 	function removeAllTalents() {
 		for (let talent in arrayTalents) {
 			let nomEnBase = arrayTalents[talent];
-			if (MY_getValue(numTroll + '.talent.' + nomEnBase)) {
-				MY_removeValue(numTroll + '.talent.' + nomEnBase);
+			if (MY_getValue(`${numTroll}.talent.${nomEnBase}`)) {
+				MY_removeValue(`${numTroll}.talent.${nomEnBase}`);
 				continue;
 			}
 			let niveau = 1;
-			while (MY_getValue(numTroll + '.talent.' + nomEnBase + niveau)) {
-				MY_removeValue(numTroll + '.talent.' + nomEnBase + niveau);
+			while (MY_getValue(`${numTroll}.talent.${nomEnBase}${niveau}`)) {
+				MY_removeValue(`${numTroll}.talent.${nomEnBase}${niveau}`);
 				niveau++;
 			}
 		}
@@ -2440,17 +2643,19 @@ try {
 
 	function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 		try {	// Roule 07/06/2017 protection, ça plante si on est dans une callback de XMLHTTPREQUEST
-			let att = MY_getValue(numTroll + '.caracs.attaque');
-			let attbmp = MY_getValue(numTroll + '.caracs.attaque.bmp');
-			let attbmm = MY_getValue(numTroll + '.caracs.attaque.bmm');
-			let mm = MY_getValue(numTroll + '.caracs.mm');
-			let deg = MY_getValue(numTroll + '.caracs.degats');
-			let degbmp = MY_getValue(numTroll + '.caracs.degats.bmp');
-			let degbmm = MY_getValue(numTroll + '.caracs.degats.bmm');
-			let vue = parseInt(MY_getValue(numTroll + '.caracs.vue'));
-			let bmvue = parseInt(MY_getValue(numTroll + '.caracs.vue.bm'));
-			if (att == null || attbmp == null || attbmm == null || mm == null || deg == null
-				|| degbmp == null || degbmm == null || vue == null || bmvue == null) { return false; }
+			let att = MY_getValue(`${numTroll}.caracs.attaque`);
+			let attbmp = MY_getValue(`${numTroll}.caracs.attaque.bmp`);
+			let attbmm = MY_getValue(`${numTroll}.caracs.attaque.bmm`);
+			let mm = MY_getValue(`${numTroll}.caracs.mm`);
+			let deg = MY_getValue(`${numTroll}.caracs.degats`);
+			let degbmp = MY_getValue(`${numTroll}.caracs.degats.bmp`);
+			let degbmm = MY_getValue(`${numTroll}.caracs.degats.bmm`);
+			let vue = parseInt(MY_getValue(`${numTroll}.caracs.vue`));
+			let bmvue = parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`));
+			if (att == null || attbmp == null || attbmm == null || mm == null || deg == null ||
+				degbmp == null || degbmm == null || vue == null || bmvue == null) {
+				return false;
+			}
 			return true;
 		} catch (e) {
 			return false;
@@ -2460,7 +2665,9 @@ try {
 	/** x~x Gestion des CDMs ----------------------------------------------- */
 	function getPVsRestants(pv, bless, vue) {
 		bless = Number(bless.match(/\d+/)[0]);
-		if (bless == 0) { return null; }
+		if (bless == 0) {
+			return null;
+		}
 		let pvminmax = pv.match(/\d+/g);
 		let oMinMaxPV = { min: pvminmax[0], max: pvminmax[1] };
 		let oMinMaxPVRestant = MZ_getPVsRestants(oMinMaxPV, bless);
@@ -2480,30 +2687,50 @@ try {
 	}
 
 	function MZ_getPVsRestants(oMinMaxPV, bless) {	// rend un objet minmax
-		if (bless == 95) { return { "min": 1, "max": Math.floor(oMinMaxPV.max / 20) }; }
-		if (bless == 5) { return { "min": Math.floor(oMinMaxPV.min * 19 / 20), "max": oMinMaxPV.max }; }
-		return { "min": Math.ceil(oMinMaxPV.min * (95 - bless) / 100), "max": Math.floor(oMinMaxPV.max * (105 - bless) / 100) };
+		if (bless == 95) {
+			return { min: 1, max: Math.floor(oMinMaxPV.max / 20) };
+		}
+		if (bless == 5) {
+			return { min: Math.floor(oMinMaxPV.min * 19 / 20), max: oMinMaxPV.max };
+		}
+		return { min: Math.ceil(oMinMaxPV.min * (95 - bless) / 100), max: Math.floor(oMinMaxPV.max * (105 - bless) / 100) };
 	}
 
 	function insertButtonCdmSmartphone(nextName, onClick, texte) {
 		let tabInput = document.getElementsByName(nextName);
-		if (!tabInput) { return; }
+		if (!tabInput) {
+			return;
+		}
 		let eInput = tabInput[0];
-		if (!eInput) { return; }
+		if (!eInput) {
+			return;
+		}
 		let eDiv = eInput.parentNode;
-		if (!eDiv) { return; }
+		if (!eDiv) {
+			return;
+		}
 		let eNewDiv = eDiv.cloneNode(true);
 		let tabNewSpan = eNewDiv.getElementsByTagName('span');
-		if (!tabNewSpan || tabNewSpan.length == 0) { return; }
-		Array.from(tabNewSpan).forEach(function (pSpan) {
-			if (pSpan.getElementsByTagName('span').length > 0) { return; }
-			while (pSpan.firstChild) { pSpan.removeChild(pSpan.firstChild); }	// vider
+		if (!tabNewSpan || tabNewSpan.length == 0) {
+			return;
+		}
+		Array.from(tabNewSpan).forEach((pSpan) => {
+			if (pSpan.getElementsByTagName('span').length > 0) {
+				return;
+			}
+			while (pSpan.firstChild) {
+				pSpan.removeChild(pSpan.firstChild);
+			}	// vider
 			pSpan.appendChild(document.createTextNode(texte));
 		});
 		let tabNewInput = eNewDiv.getElementsByTagName('input');
-		if (!tabNewInput) { return; }
+		if (!tabNewInput) {
+			return;
+		}
 		let eNewInput = tabNewInput[0];
-		if (!eNewInput) { return; }
+		if (!eNewInput) {
+			return;
+		}
 		eNewInput.onclick = onClick;
 		eNewInput.value = texte;
 		eNewInput.type = "button";
@@ -2512,8 +2739,12 @@ try {
 	}
 
 	function insertButtonCdm(nextName, onClick, texte) {
-		if (texte == null) { texte = 'Participer au bestiaire'; }
-		if (insertButtonCdmSmartphone(nextName, onClick, texte)) { return; }
+		if (texte == null) {
+			texte = 'Participer au bestiaire';
+		}
+		if (insertButtonCdmSmartphone(nextName, onClick, texte)) {
+			return;
+		}
 
 		let nextNode = document.getElementsByName(nextName)[0];
 		let espace = document.createTextNode('\t');
@@ -2523,8 +2754,12 @@ try {
 		button.type = 'button';
 		button.className = 'mh_form_submit';
 		button.value = texte;
-		button.onmouseover = function () { this.style.cursor = 'pointer'; };
-		if (onClick) { button.onclick = onClick; }
+		button.onmouseover = function () {
+			this.style.cursor = 'pointer';
+		};
+		if (onClick) {
+			button.onclick = onClick;
+		}
 		insertBefore(espace, button);
 		return button;
 	}
@@ -2540,7 +2775,7 @@ try {
 
 			let thead = document.createElement('thead');
 			let tr = appendTr(thead, 'mh_tdtitre');
-			let td = appendTdText(tr, 'CDM de ' + nom + ' (N° ' + id + ')', false);
+			let td = appendTdText(tr, `CDM de ${nom} (N° ${id})`, false);
 			td.style.fontWeight = 'bold';
 			if (closeFunct) {
 				td.colSpan = 2;
@@ -2562,13 +2797,17 @@ try {
 			// calcul des PX gagnés
 			let ominmaxPX = {};
 			if (donneesMonstre.niv) {
-				if (donneesMonstre.niv.min) { ominmaxPX.min = getPXKill(donneesMonstre.niv.min); }
-				if (donneesMonstre.niv.max) { ominmaxPX.max = getPXKill(donneesMonstre.niv.max); }
+				if (donneesMonstre.niv.min) {
+					ominmaxPX.min = getPXKill(donneesMonstre.niv.min);
+				}
+				if (donneesMonstre.niv.max) {
+					ominmaxPX.max = getPXKill(donneesMonstre.niv.max);
+				}
 			}
 
 			MZ_tab_carac_add_tr_minmax2(tbody, 'Niveau', donneesMonstre.niv, 'PX', ominmaxPX);
 			MZ_tab_carac_add_tr_texte(tbody, 'Famille', donneesMonstre.fam, '');
-			//MZ_tab_carac_add_tr_texte(tbody, 'Génération', donneesMonstre.gen == 23 ? '2 ou 3' : donneesMonstre.gen, '');	// remplacé par une icône
+			// MZ_tab_carac_add_tr_texte(tbody, 'Génération', donneesMonstre.gen == 23 ? '2 ou 3' : donneesMonstre.gen, '');	// remplacé par une icône
 			MZ_tab_carac_add_tr_texte(tbody, 'Blessure', MZ_tab_carac_mkBlessureTexte(donneesMonstre), '');
 			MZ_tab_carac_add_tr_minmax(tbody, 'Points de Vie', donneesMonstre.pv, 'PV');
 			MZ_tab_carac_add_tr_minmax(tbody, 'Attaque', donneesMonstre.att, 'D6');
@@ -2584,24 +2823,28 @@ try {
 			MZ_tab_carac_add_tr_minmax(tbody, 'Durée du tour', donneesMonstre.duree, ' heures');
 			MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre);
 			MZ_tab_carac_add_tr_autres(tbody, donneesMonstre, id, nom);
+
 			/* à supprimer, remplacé par un "title" sur le 3e td de "autres"
 			let msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
 			if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
 			*/
 			return table;
+		} catch (e) {
+			avertissement(`Erreur createCDMTable() :\n${e}`);
 		}
-		catch (e) { avertissement(`Erreur createCDMTable() :\n${e}`); }
 	}
 
 	function MZ_tab_carac_mkBlessureTexte(donneesMonstre) {
-		if (donneesMonstre.bless === undefined) { return; }
+		if (donneesMonstre.bless === undefined) {
+			return;
+		}
 		let texte = `${donneesMonstre.bless}%`;
 		if (donneesMonstre.bless > 0 && donneesMonstre.pv && donneesMonstre.pv.min && donneesMonstre.pv.max) {
 			let ominmax = MZ_getPVsRestants(donneesMonstre.pv, donneesMonstre.bless);
-			texte += ` (${ominmax.min}-${ominmax.max})`;
+			texte = `${texte} (${ominmax.min}-${ominmax.max})`;
 		}
 		if (donneesMonstre.timegmt) {
-			texte += ` le ${MZ_formatDateMS(new Date(donneesMonstre.timegmt * 1000), false)}`;
+			texte = `${texte} le ${MZ_formatDateMS(new Date(donneesMonstre.timegmt * 1000), false)}`;
 		}
 		return texte;
 	}
@@ -2617,8 +2860,10 @@ try {
 	// }
 
 	function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre) {
-		if (!donneesMonstre.pouv) { return; }
-		let td = MZ_tab_carac_add_tr_texte(tbody, 'Pouvoir', donneesMonstre.pouv + ' ', '', 0);
+		if (!donneesMonstre.pouv) {
+			return;
+		}
+		let td = MZ_tab_carac_add_tr_texte(tbody, 'Pouvoir', `${donneesMonstre.pouv} `, '', 0);
 		let tabImg = [];
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.portpouv, {
 			'de zone': ["zone.gif", "Pouvoir de zone"],
@@ -2638,37 +2883,37 @@ try {
 			'~': ['cac.gif', 'Corps à corps']
 		});	// si absent
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.nb_att, {
-			'1': ['1.gif', '1 attaque par tour'],
-			'2': ['2.gif', '2 attaques par tour'],
-			'3': ['3.gif', '3 attaques par tour'],
-			'4': ['4.gif', '4 attaques par tour'],
-			'5': ['5.gif', '5 attaques par tour'],
-			'6': ['6.gif', '6 attaques par tour'],
-			'999': ['plus.gif', "Beaucoup d'attaques par tour"]
+			1: ['1.gif', '1 attaque par tour'],
+			2: ['2.gif', '2 attaques par tour'],
+			3: ['3.gif', '3 attaques par tour'],
+			4: ['4.gif', '4 attaques par tour'],
+			5: ['5.gif', '5 attaques par tour'],
+			6: ['6.gif', '6 attaques par tour'],
+			999: ['plus.gif', "Beaucoup d'attaques par tour"]
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.attm, {
-			'1': ['magic-wand.png', 'Attaque magique']
+			1: ['magic-wand.png', 'Attaque magique']
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vole, {
-			'1': ['levite.png', 'Lévite']
+			1: ['levite.png', 'Lévite']
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vit, {
-			'lente': ['lent.gif', 'Lent à se déplacer'],
-			'normale': ['normal.gif', 'Vitesse normale de déplacement'],
-			'rapide': ['rapide.gif', 'Déplacement rapide']
+			lente: ['lent.gif', 'Lent à se déplacer'],
+			normale: ['normal.gif', 'Vitesse normale de déplacement'],
+			rapide: ['rapide.gif', 'Déplacement rapide']
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.charg, {
 			'vide': [null, null],
 			'~': ['charge2.gif', `Possède de l'équipement (${donneesMonstre.charg})`]
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.vlc, {
-			'1': ['oeil.gif', 'Voit le caché']
+			1: ['oeil.gif', 'Voit le caché']
 		});
 		MZ_tab_carac_add_tr_one_img(tabImg, donneesMonstre.gen, {
-			'1': ['Phoenix1.png', 'Phœnix de première génération'],
-			'2': ['Phoenix2.png', 'Phœnix de deuxième génération'],
-			'3': ['Phoenix3.png', 'Phœnix de troisième génération'],
-			'23': ['Phoenix23.png', 'Phœnix de deuxième ou troisième génération'],
+			1: ['Phoenix1.png', 'Phœnix de première génération'],
+			2: ['Phoenix2.png', 'Phœnix de deuxième génération'],
+			3: ['Phoenix3.png', 'Phœnix de troisième génération'],
+			23: ['Phoenix23.png', 'Phœnix de deuxième ou troisième génération'],
 		});
 
 		let tr = appendTr(table, 'mh_tdpage');
@@ -2682,10 +2927,14 @@ try {
 			let thisImg = tabImg[iImg];
 			td.appendChild(createImage(URL_MZimg + thisImg[0], thisImg[1]));
 		}
-		if (donneesMonstre.esq != undefined) { td.appendChild(MZ_Tactique.createImage(id, nom)); }
+		if (donneesMonstre.esq != undefined) {
+			td.appendChild(MZ_Tactique.createImage(id, nom));
+		}
 
 		let txt = String.fromCharCode(160);	// blanc insécable
-		if (donneesMonstre.nCdM) { txt = donneesMonstre.nCdM; }
+		if (donneesMonstre.nCdM) {
+			txt = donneesMonstre.nCdM;
+		}
 		let td2 = appendTdText(tr, txt);
 		td2.title = MZ_carac_build_nb_cmd_msg(donneesMonstre);
 		td2.style.width = '1%';
@@ -2699,12 +2948,16 @@ try {
 	}
 
 	function MZ_tab_carac_add_tr_one_img(tabImg, val, listCas) {
-		if (val == undefined) { return; }
+		if (val == undefined) {
+			return;
+		}
 		// logMZ('MZ_tab_carac_add_tr_one_img: val=' + val);
-		let lVal = (val + '').toLowerCase();	// astuce : transformer le nombre en string (beurk !)
+		let lVal = `${val}`.toLowerCase();	// astuce : transformer le nombre en string (beurk !)
 		if (listCas[lVal]) {
 			let t = listCas[lVal];
-			if (t[0] == null) { return; }
+			if (t[0] == null) {
+				return;
+			}
 			tabImg.push(t);
 		} else if (listCas['~']) {
 			tabImg.push(listCas['~']);
@@ -2712,7 +2965,9 @@ try {
 	}
 
 	function MZ_tab_carac_add_tr_texte(table, titre, msg, unit) {
-		if (!msg) { return; }
+		if (!msg) {
+			return;
+		}
 		let tr = appendTr(table, 'mh_tdpage');
 
 		let td = appendTdText(tr, titre, true);
@@ -2720,7 +2975,9 @@ try {
 		td.width = MZ_EtatCdMs.tdWitdh;
 
 		let texte = msg;
-		if (unit) { texte += ' ' + unit; }
+		if (unit) {
+			texte = `${texte} ${unit}`;
+		}
 		td = appendTdText(tr, texte);
 		td.colSpan = 2;
 		td.className = 'mh_tdpage';
@@ -2728,8 +2985,12 @@ try {
 	}
 
 	function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
-		if (!ominmax) { return; }
-		if (!(ominmax.min || ominmax.max)) { return; }
+		if (!ominmax) {
+			return;
+		}
+		if (!(ominmax.min || ominmax.max)) {
+			return;
+		}
 
 		let tr = appendTr(table, 'mh_tdpage');
 		let td = appendTdText(tr, titre, true);
@@ -2737,7 +2998,7 @@ try {
 		td.width = MZ_EtatCdMs.tdWitdh;
 
 		let texte = '';
-		if ((!ominmax.min) || ominmax.min == 0) {
+		if (!ominmax.min || ominmax.min == 0) {
 			texte = `\u2A7D${ominmax.max}\u00A0${unit}`; // <= (mais plus beau)
 		} else if (!ominmax.max) {
 			texte = `\u2A7E${ominmax.min}\u00A0${unit}`;	// >=
@@ -2746,10 +3007,10 @@ try {
 				texte = `${ominmax.min}-${ominmax.max}\u00A0→\u00A0`;
 				if (ominmax.min > ominmax.max) {
 					td.style.color = 'red';
-					unit += ' *** erreur ***';
+					unit = `${unit} *** erreur ***`;
 				}
 			}
-			texte += `${((ominmax.min + ominmax.max) / 2)}\u00A0${unit}`;
+			texte = `${texte}${(ominmax.min + ominmax.max) / 2}\u00A0${unit}`;
 		}
 		td = appendTdText(tr, texte);
 		let texte2 = '';
@@ -2775,8 +3036,12 @@ try {
 	}
 
 	function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
-		if (!ominmax) { return; }
-		if (!(ominmax.min || ominmax.max)) { return; }
+		if (!ominmax) {
+			return;
+		}
+		if (!(ominmax.min || ominmax.max)) {
+			return;
+		}
 
 		let tr = appendTr(table, 'mh_tdpage');
 		let td = appendTdText(tr, titre, true);
@@ -2784,42 +3049,38 @@ try {
 		td.width = MZ_EtatCdMs.tdWitdh;
 
 		let texte = '';
-		if ((!ominmax.min) || ominmax.min == 0) {
+		if (!ominmax.min || ominmax.min == 0) {
 			texte = `\u2A7D${ominmax.max}`;
 		} else if (!ominmax.max) {
 			texte = `\u2A7E${ominmax.min}`;
-		} else {
-			if (ominmax.min != ominmax.max) {
-				texte = `${ominmax.min}-${ominmax.max}`;
-				if (ominmax.min > ominmax.max) {
-					td.style.color = 'red';
-					texte += ' *** erreur ***';
-				}
-			} else {
-				texte = ominmax.min;
+		} else if (ominmax.min != ominmax.max) {
+			texte = `${ominmax.min}-${ominmax.max}`;
+			if (ominmax.min > ominmax.max) {
+				td.style.color = 'red';
+				texte = `${texte} *** erreur ***`;
 			}
+		} else {
+			texte = ominmax.min;
 		}
 
 		if (ominmaxUnit.min === undefined) {
 			if (ominmaxUnit.max === undefined) {
 				// ignore (ne devrait pas arriver)
 			} else {
-				texte += ` \u2192 ${unit}\u2A7D${ominmaxUnit.max}`;
+				texte = `${texte} \u2192 ${unit}\u2A7D${ominmaxUnit.max}`;
 			}
+		} else if (ominmaxUnit.max === undefined) {
+			texte = `${texte} \u2192 ${unit}\u2A7E${ominmaxUnit.min}`;
+		} else if (ominmaxUnit.min != ominmaxUnit.max) {
+			texte = `${texte} \u2192 ${ominmaxUnit.min}\u2A7D${unit}\u2A7D${ominmaxUnit.max}`;
+			if (ominmaxUnit.min > ominmaxUnit.max) {
+				td.style.color = 'red';
+				texte = `${texte} *** erreur ***`;
+			}
+		} else if (isNaN(ominmaxUnit.min)) {
+			texte = `${texte} \u2192 ${ominmaxUnit.min}`;
 		} else {
-			if (ominmaxUnit.max === undefined) {
-				texte += ` \u2192 ${unit}\u2A7E${ominmaxUnit.min}`;
-			} else if (ominmaxUnit.min != ominmaxUnit.max) {
-				texte += ` \u2192 ${ominmaxUnit.min}\u2A7D${unit}\u2A7D${ominmaxUnit.max}`;
-				if (ominmaxUnit.min > ominmaxUnit.max) {
-					td.style.color = 'red';
-					texte += ' *** erreur ***';
-				}
-			} else if (isNaN(ominmaxUnit.min)) {
-				texte += ` \u2192 ${ominmaxUnit.min}`;
-			} else {
-				texte += ` \u2192 ${ominmaxUnit.max}\u00A0${unit}`;
-			}
+			texte = `${texte} \u2192 ${ominmaxUnit.max}\u00A0${unit}`;
 		}
 
 		td = appendTdText(tr, texte);
@@ -2838,16 +3099,18 @@ try {
 		listeMonstreEnchantement = new Array();
 		listeInfoEnchantement = new Array();
 		listeEquipementEnchantement = new Array();
-		let liste = MY_getValue(numTroll + '.enchantement.liste').split(';');
+		let liste = MY_getValue(`${numTroll}.enchantement.liste`).split(';');
 		for (let i = 0; i < liste.length; i++) {
-			let idEquipement = liste[i] * 1;
+			let idEquipement = Number(liste[i]);
 			let nomEquipement = MY_getValue(`${numTroll}.enchantement.${idEquipement}.objet`);
 			let infoEnchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`);
-			if (nomEquipement == null || infoEnchanteur == null) { continue; }
+			if (nomEquipement == null || infoEnchanteur == null) {
+				continue;
+			}
 			infoEnchanteur = infoEnchanteur.split(';');
 			let texteGlobal = '';
 			for (let j = 0; j < 3; j++) {
-				let k = numTroll + '.enchantement.' + idEquipement + '.composant.' + j;
+				let k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
 				let v = MY_getValue(k);
 				let infoComposant = MY_getValue().split(';');
 				if (infoComposant.length < 5) {	// protection Roule 25/08/2017
@@ -2862,14 +3125,14 @@ try {
 				array[3] = getQualite(infoComposant[3]);
 				let texte = infoComposant[4].replace("Ril", "Œil");
 				for (let k = 5; k < infoComposant.length; k++) {
-					texte += ";" + infoComposant[k].replace("Ril", "Œil");
+					texte = `${texte};${infoComposant[k].replace("Ril", "Œil")}`;
 				}
-				texteGlobal += texte + '\n';
-				texte += ` pour l'enchantement d'un(e) ${nomEquipement} chez l'enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`;
+				texteGlobal = `${texteGlobal}${texte}\n`;
+				texte = `${texte} pour l'enchantement d'un(e) ${nomEquipement} chez l'enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`;
 				array[4] = texte;
 				listeInfoEnchantement.push(array);
 			}
-			texteGlobal += `chez l'enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`;
+			texteGlobal = `${texteGlobal}chez l'enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`;
 			listeEquipementEnchantement[idEquipement] = texteGlobal;
 		}
 	}
@@ -2878,7 +3141,7 @@ try {
 		let monstreEnchant = '';
 		for (let j in listeInfoEnchantement) {
 			let monstre = listeInfoEnchantement[j][2].toLowerCase();
-			if ((nom + ' ').toLowerCase().indexOf(monstre + ' ') >= 0) {
+			if (`${nom} `.toLowerCase().indexOf(`${monstre} `) >= 0) {
 				monstreEnchant = monstre;
 				break; // ça permet d'arreter de chercher dans le tableau des EM -> on gagne du temps
 			}
@@ -2888,20 +3151,25 @@ try {
 
 	function getInfoEnchantementFromMonstre(nom) {
 		try {
-			if (!listeMonstreEnchantement) { computeCompoEnchantement(); }
+			if (!listeMonstreEnchantement) {
+				computeCompoEnchantement();
+			}
 			let infosEnchant = '';
 			for (let j in listeInfoEnchantement) {
 				let monstre = listeInfoEnchantement[j][2].toLowerCase();
-				if ((nom + ' ').toLowerCase().indexOf(monstre + ' ') < 0) { continue; }
+				if (`${nom} `.toLowerCase().indexOf(`${monstre} `) < 0) {
+					continue;
+				}
 				if (infosEnchant == '') {
 					infosEnchant = listeInfoEnchantement[j][4];
 				} else {
-					infosEnchant += '\n' + listeInfoEnchantement[j][4];
+					infosEnchant = `${infosEnchant}\n${listeInfoEnchantement[j][4]}`;
 				}
 			}
 			return trim(infosEnchant);
+		} catch (e) {
+			avertissement(`Erreur getInfoEnchantementFromMonstre() :\n${e}`);
 		}
-		catch (e) { avertissement(`Erreur getInfoEnchantementFromMonstre() :\n${e}`); }
 	}
 
 	function composantEnchant(Monstre, composant, localisation, qualite) {
@@ -2920,10 +3188,14 @@ try {
 
 	function insertEnchantInfos(tbody) {
 		try {
-			if (!listeMonstreEnchantement) { computeCompoEnchantement(); }
+			if (!listeMonstreEnchantement) {
+				computeCompoEnchantement();
+			}
 			let nodes = document.evaluate("descendant::img[@alt = 'Composant - Spécial']", tbody, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			if (nodes.snapshotLength == 0) { return false; }
-			let urlImg = URL_MZimg + 'enchant.png';
+			if (nodes.snapshotLength == 0) {
+				return false;
+			}
+			let urlImg = `${URL_MZimg}enchant.png`;
 			for (let i = 0; i < nodes.snapshotLength; i++) {
 				let link = nodes.snapshotItem(i).nextSibling.nextSibling;
 				let nomCompoTotal = link.firstChild.nodeValue.replace(/\240/g, ' ');
@@ -2933,51 +3205,65 @@ try {
 				let nomMonstre = nomCompoTotal.substring(0, nomCompoTotal.indexOf(" de Qualité"));
 				let qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité") + 11, nomCompoTotal.indexOf(' ['));
 				let localisation = nomCompoTotal.substring(nomCompoTotal.indexOf('[') + 1, nomCompoTotal.indexOf(']'));
-				if (isEnchant(nomMonstre).length <= 0) { continue; }
+				if (isEnchant(nomMonstre).length <= 0) {
+					continue;
+				}
 				let infos = composantEnchant(nomMonstre, nomCompo, localisation, getQualite(qualite));
-				if (infos.length <= 0) { continue; }
+				if (infos.length <= 0) {
+					continue;
+				}
 				if (link.parentNode == link.nextSibling.parentNode) {
 					link.parentNode.insertBefore(createImage(urlImg, infos), link.nextSibling);
 				} else {
 					link.parentNode.appendChild(createImage(urlImg, infos));
 				}
 			}
+		} catch (e) {
+			avertissement(`Erreur insertEnchantInfos() :\n${e}`);
 		}
-		catch (e) { avertissement(`Erreur insertEnchantInfos() :\n${e}`); }
 	}
 
 	function computeEnchantementEquipement(fontionTexte, formateTexte) {
 		try {
-			if (!listeMonstreEnchantement) { computeCompoEnchantement(); }
+			if (!listeMonstreEnchantement) {
+				computeCompoEnchantement();
+			}
 			let nodes = document.evaluate("//a[@class='AllLinks' and contains(@href,'TresorHistory.php')]", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			if (nodes.snapshotLength == 0) { return false; }
-			let urlImg = URL_MZimg + 'enchant.png';
+			if (nodes.snapshotLength == 0) {
+				return false;
+			}
+			let urlImg = `${URL_MZimg}enchant.png`;
 			for (let i = 0; i < nodes.snapshotLength; i++) {
 				let link = nodes.snapshotItem(i);
 				let idEquipement = link.getAttribute('href');
 				idEquipement = idEquipement.substring(idEquipement.indexOf('ai_IDTresor=') + 12);
 				idEquipement = parseInt(idEquipement.substring(0, idEquipement.indexOf("'")));
 				let nomEquipement = trim(link.firstChild.nodeValue);
-				let enchanteur = MY_getValue(numTroll + '.enchantement.' + idEquipement + '.enchanteur');
-				if (!enchanteur || enchanteur == '') { continue; }
+				let enchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`);
+				if (!enchanteur || enchanteur == '') {
+					continue;
+				}
 				let infos = listeEquipementEnchantement[idEquipement];
 				infos = formateTexte(infos);
-				if (infos.length <= 0) { continue; }
+				if (infos.length <= 0) {
+					continue;
+				}
 				if (link.parentNode == link.nextSibling.parentNode) {
 					link.parentNode.insertBefore(fontionTexte(urlImg, infos), link.nextSibling);
 				} else {
 					link.parentNode.appendChild(fontionTexte(urlImg, infos));
 				}
-				MY_setValue(numTroll + '.enchantement.' + idEquipement + '.objet', nomEquipement + ' (' + idEquipement + ')');
+				MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, `${nomEquipement} (${idEquipement})`);
 			}
+		} catch (e) {
+			avertissement(`Erreur computeEnchantementEquipement() :\n${e}`);
 		}
-		catch (e) { avertissement(`Erreur computeEnchantementEquipement() :\n${e}`); }
 	}
 
 	/** x~x Analyse Tactique ----------------------------------------------- */
 	if (typeof isPage != "function") {
 		function isPage(url) {
-			return window.location.pathname.indexOf("/mountyhall/" + url) == 0;
+			return window.location.pathname.indexOf(`/mountyhall/${url}`) == 0;
 		}
 	}
 	// Cette section est commune à InfoMonstre et Vue
@@ -3000,7 +3286,9 @@ try {
 		},
 
 		// Masquage du popup tactique
-		hidePopup: function () { MZ_Tactique.popup.style.display = 'none'; },
+		hidePopup: function () {
+			MZ_Tactique.popup.style.display = 'none';
+		},
 
 		initPopup: function () {
 			/** @mandatory Initialisation du popup tactique */
@@ -3023,25 +3311,33 @@ try {
 				id = this.id;
 				nom = this.nom;
 				let texte = getAnalyseTactique(id, nom);
-				if (texte == undefined || texte == '') { return; }
+				if (texte == undefined || texte == '') {
+					return;
+				}
 				MZ_Tactique.popup.innerHTML = texte;
 				// roule 16/03/2016 déclage horizontal différent suivant la page qu'on traite
 				if (isPage('View/MonsterView')) {
-					MZ_Tactique.popup.style.left = Math.min(evt.pageX - 120, window.innerWidth - 300) + 'px';
+					MZ_Tactique.popup.style.left = `${Math.min(evt.pageX - 120, window.innerWidth - 300)}px`;
 				} else {
-					MZ_Tactique.popup.style.left = Math.min(evt.pageX + 15, window.innerWidth - 400) + 'px';
+					MZ_Tactique.popup.style.left = `${Math.min(evt.pageX + 15, window.innerWidth - 400)}px`;
 				}
-				MZ_Tactique.popup.style.top = evt.pageY + 15 + 'px';
+				MZ_Tactique.popup.style.top = `${evt.pageY + 15}px`;
 				MZ_Tactique.popup.style.display = 'block';
-			} catch (e) { logMZ(`showPopup() exception pour id=${id}, nom=${nom}:\n${e}`); }
+			} catch (e) {
+				logMZ(`showPopup() exception pour id=${id}, nom=${nom}:\n${e}`);
+			}
 		}
 	};
 
 	let c = new Array(); // Les % de toucher
 	// coefficients binomiaux
 	function cnp(n, k) {
-		if (c[n] != null && c[n][k] != null) { return c[n][k]; };
-		if (c[n] == null) { c[n] = new Array(); };
+		if (c[n] != null && c[n][k] != null) {
+			return c[n][k];
+		}
+		if (c[n] == null) {
+			c[n] = new Array();
+		}
 		if (k == 0) {
 			c[n][k] = 1;
 			return 1;
@@ -3054,34 +3350,50 @@ try {
 
 	// by Dab, à comparer
 	function binom(n, p) {
-		if (p < 0 || p > n) { return 0; }
+		if (p < 0 || p > n) {
+			return 0;
+		}
 
 		if (c[n]) {
-			if (c[n][p]) { return c[n][p]; }
-			else {
-				c[n] = [1];
-				c[n][n] = 1;
-				if (p == 0 || p == n) { return 1; }
+			if (c[n][p]) {
+				return c[n][p];
+			}
+
+			c[n] = [1];
+			c[n][n] = 1;
+			if (p == 0 || p == n) {
+				return 1;
 			}
 		}
 
-		if (2 * p > n) { c[n][p] = binom(n, n - p); }
-		else { c[n][p] = binom(n - 1, p - 1) + binom(n - 1, p); } // k(k-1)/2 additions
+		if (2 * p > n) {
+			c[n][p] = binom(n, n - p);
+		} else {
+			c[n][p] = binom(n - 1, p - 1) + binom(n - 1, p);
+		} // k(k-1)/2 additions
 
 		return c[n][p];
 	}
 
 	let coeff = new Array();
 	function coef(n, p) {
-		if (n == 0 && p == 0) { return 1; }
-		if (p > n * 3.5) { p = 7 * n - p; }
+		if (n == 0 && p == 0) {
+			return 1;
+		}
+		if (p > n * 3.5) {
+			p = 7 * n - p;
+		}
 		// roule désactive cache
-		if (coeff[n] != null && coeff[n][p] != null) { return coeff[n][p]; }
-		if (coeff[n] == null) { coeff[n] = new Array(); }
+		if (coeff[n] != null && coeff[n][p] != null) {
+			return coeff[n][p];
+		}
+		if (coeff[n] == null) {
+			coeff[n] = new Array();
+		}
 		let kmax = Math.floor((p - n) / 6);
 		let x = 0;
 		for (let k = 0; k <= kmax; k++) {
-			x += (1 - 2 * (k % 2)) * cnp(n, k) * cnp(p - 6 * k - 1, n - 1);
+			x = x + (1 - 2 * (k % 2)) * cnp(n, k) * cnp(p - 6 * k - 1, n - 1);
 		}
 		coeff[n][p] = x;
 		// logMZ('cnk(' + n + ',' + p + ')=' + x); // Roule debug
@@ -3095,8 +3407,11 @@ try {
 		for (let dd = d; dd <= 6 * d; dd++) {
 			let cd = coef(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
-				if (2 * Math.max(aa + ba, 0) < Math.max(dd + bd, 0)) { win += cd * coef(a, aa); }
-				else { los += cd * coef(a, aa); }
+				if (2 * Math.max(aa + ba, 0) < Math.max(dd + bd, 0)) {
+					win = win + cd * coef(a, aa);
+				} else {
+					los = los + cd * coef(a, aa);
+				}
 			}
 		}
 		// logMZ('chanceEsquiveParfaite, att=' + a + ', esq=' + d + ', ba=' + ba + ', bd=' + bd + ', win=' + win + ', los=' + los); // roule debug
@@ -3105,13 +3420,20 @@ try {
 
 	function chanceTouche(a, d, ba = 0, bd = 0) {
 		let win = 0, los = 0;
-		if (a + ba > 6 * d + bd) { return 100; }
-		if (6 * a + ba < d + bd) { return 0; }
+		if (a + ba > 6 * d + bd) {
+			return 100;
+		}
+		if (6 * a + ba < d + bd) {
+			return 0;
+		}
 		for (let dd = d; dd <= 6 * d; dd++) {
 			let cd = coef(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
-				if (Math.max(aa + ba, 0) > Math.max(dd + bd, 0)) { win += cd * coef(a, aa); }
-				else { los += cd * coef(a, aa); }
+				if (Math.max(aa + ba, 0) > Math.max(dd + bd, 0)) {
+					win = win + cd * coef(a, aa);
+				} else {
+					los = los + cd * coef(a, aa);
+				}
 			}
 		}
 		return Math.round(100 * win / (win + los));
@@ -3119,24 +3441,33 @@ try {
 
 	function chanceCritique(a, d, ba = 0, bd = 0) {
 		let win = 0, los = 0;
-		if (a + ba > 2 * (6 * d + bd)) { return 100; }
-		if (6 * a + ba < 2 * (d + bd)) { return 0; }
+		if (a + ba > 2 * (6 * d + bd)) {
+			return 100;
+		}
+		if (6 * a + ba < 2 * (d + bd)) {
+			return 0;
+		}
 		for (let dd = d; dd <= 6 * d; dd++) {
 			let cd = coef(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
-				if (Math.max(aa + ba, 0) > 2 * Math.max(dd + bd, 0)) { win += cd * coef(a, aa); }
-				else { los += cd * coef(a, aa); }
+				if (Math.max(aa + ba, 0) > 2 * Math.max(dd + bd, 0)) {
+					win = win + cd * coef(a, aa);
+				} else {
+					los = los + cd * coef(a, aa);
+				}
 			}
 		}
 		return Math.round(100 * win / (win + los));
 	}
 
-	/***********************************************
+	/** *********************************************
 	Analyse tactique
 	***********************************************/
 
 	function getTexteAnalyse(modificateur, chiffre) {
-		if (chiffre == 0) { return chiffre; }
+		if (chiffre == 0) {
+			return chiffre;
+		}
 		return modificateur + chiffre;
 	}
 
@@ -3144,10 +3475,14 @@ try {
 	function getAnalyseTactique(id, nom) {
 		let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
 		let needAutres = false;
-		if (donneesMonstre == null) { return; }
+		if (donneesMonstre == null) {
+			return;
+		}
 		let array = analyseTactique(donneesMonstre, nom);	// rend tableau de tableaux avec  NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure
 		// logMZ('getAnalyseTactique ' + JSON.stringify(array));
-		if (array == null) { return ""; }
+		if (array == null) {
+			return "";
+		}
 		let str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203)'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
 		let i;
 		for (i = 0; i < array.length; i++) {
@@ -3156,41 +3491,47 @@ try {
 				break;
 			}
 			if (i == 1 && array[i][4] > 0) {	// l'attaque normale du Trõll sur le monstre fait des dégâts => gras
-				str += "<tr class=mh_tdpage><td><b>" + array[i][0] + "</b></td><td><b>" + getTexteAnalyse(array[i][5], array[i][1]) + "%</b></td><td><b>" + getTexteAnalyse(array[i][5], array[i][2]) + "%</b></td><td><b>" + getTexteAnalyse(array[i][5], array[i][3]) + "%</b></td><td><b>" + getTexteAnalyse(array[i][6], array[i][4]) + "</b></td></tr>";
+				str = `${str}<tr class=mh_tdpage><td><b>${array[i][0]}</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][1])}%</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][2])}%</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][3])}%</b></td><td><b>${getTexteAnalyse(array[i][6], array[i][4])}</b></td></tr>`;
 			} else if (i == 0) {	// attaque du monstre sur le Trõll => italique
-				str += "<tr class=mh_tdpage><td><i>" + array[i][0] + "</i></td><td><i>" + getTexteAnalyse(array[i][5], array[i][1]) + "%</i></td><td><i>" + getTexteAnalyse(array[i][5], array[i][2]) + "%</i></td><td><i>" + getTexteAnalyse(array[i][5], array[i][3]) + "%<i></td><td><b><i>" + getTexteAnalyse(array[i][6], array[i][4]) + "<i></b></td></tr>";
+				str = `${str}<tr class=mh_tdpage><td><i>${array[i][0]}</i></td><td><i>${getTexteAnalyse(array[i][5], array[i][1])}%</i></td><td><i>${getTexteAnalyse(array[i][5], array[i][2])}%</i></td><td><i>${getTexteAnalyse(array[i][5], array[i][3])}%<i></td><td><b><i>${getTexteAnalyse(array[i][6], array[i][4])}<i></b></td></tr>`;
 			} else {	// autre, pas de décoration
-				str += "<tr class=mh_tdpage><td>" + array[i][0] + "</td><td>" + getTexteAnalyse(array[i][5], array[i][1]) + "%</td><td>" + getTexteAnalyse(array[i][5], array[i][2]) + "%</td><td>" + getTexteAnalyse(array[i][5], array[i][3]) + "%</td><td><b>" + getTexteAnalyse(array[i][6], array[i][4]) + "</b></td></tr>";
+				str = `${str}<tr class=mh_tdpage><td>${array[i][0]}</td><td>${getTexteAnalyse(array[i][5], array[i][1])}%</td><td>${getTexteAnalyse(array[i][5], array[i][2])}%</td><td>${getTexteAnalyse(array[i][5], array[i][3])}%</td><td><b>${getTexteAnalyse(array[i][6], array[i][4])}</b></td></tr>`;
 			}
 		}
 		if (needAutres) {
 			if (i == array.length - 1) {
-				str += "<tr class=mh_tdpage><td>" + array[i][0] + "</td><td>" + getTexteAnalyse(array[i][5], array[i][1]) + "%</td><td>" + getTexteAnalyse(array[i][5], array[i][2]) + "%</td><td>" + getTexteAnalyse(array[i][5], array[i][3]) + "%</td><td><b>" + getTexteAnalyse(array[i][6], array[i][4]) + "</b></td></tr>";
+				str = `${str}<tr class=mh_tdpage><td>${array[i][0]}</td><td>${getTexteAnalyse(array[i][5], array[i][1])}%</td><td>${getTexteAnalyse(array[i][5], array[i][2])}%</td><td>${getTexteAnalyse(array[i][5], array[i][3])}%</td><td><b>${getTexteAnalyse(array[i][6], array[i][4])}</b></td></tr>`;
 			} else if (i == 1) {
-				str += "<tr class=mh_tdpage><td><b>Toutes attaques</b></td><td>100%</td><td>0%</td><td>0%</td><td>0</td></tr>";
+				str = `${str}<tr class=mh_tdpage><td><b>Toutes attaques</b></td><td>100%</td><td>0%</td><td>0%</td><td>0</td></tr>`;
 			} else {
-				str += "<tr class=mh_tdpage><td>Autres attaques</td><td>100%</td><td>0%</td><td>0%</td><td>0</td></tr>";
+				str = `${str}<tr class=mh_tdpage><td>Autres attaques</td><td>100%</td><td>0%</td><td>0%</td><td>0</td></tr>`;
 			}
 		}
 		let txtCdM = MZ_carac_build_nb_cmd_msg(donneesMonstre);
-		if (txtCdM) { str += '<tr class="mh_tdpage"><td colspan="5" style="font-style: italic;">' + txtCdM + '</td></tr>'; }
-		return str + "</table>";
+		if (txtCdM) {
+			str = `${str}<tr class="mh_tdpage"><td colspan="5" style="font-style: italic;">${txtCdM}</td></tr>`;
+		}
+		return `${str}</table>`;
 	}
 
 	function MZ_carac_build_nb_cmd_msg(donneesMonstre) {
-		if (!donneesMonstre) { return; }
-		if (!donneesMonstre.Mode) { return; }
+		if (!donneesMonstre) {
+			return;
+		}
+		if (!donneesMonstre.Mode) {
+			return;
+		}
 		switch (donneesMonstre.Mode) {
 			case 'cdm':
-				return 'fondé sur ' + (+donneesMonstre.nCdM) + ' CdM' + (donneesMonstre.nCdM > 1 ? 's' : '') + ' de ce monstre à cet âge';
+				return `fondé sur ${Number(donneesMonstre.nCdM)} CdM${donneesMonstre.nCdM > 1 ? 's' : ''} de ce monstre à cet âge`;
 			case 'stat':
-				return 'fondé sur les statistiques de ' + (+donneesMonstre.nCdM) + ' CdM' + (donneesMonstre.nCdM > 1 ? 's' : '') + ' de ce type de monstre (même type, même âge, même template)';
+				return `fondé sur les statistiques de ${Number(donneesMonstre.nCdM)} CdM${donneesMonstre.nCdM > 1 ? 's' : ''} de ce type de monstre (même type, même âge, même template)`;
 			case 'statV1':
 				return 'fondé sur les statistiques anciennes (MZ V1)';
 			case 'nom':
 				return 'fondé sur le nom du monstre, pas de CdM';
 		}
-		return 'Mode ' + donneesMonstre.Mode;
+		return `Mode ${donneesMonstre.Mode}`;
 	}
 
 	// rend un tableau (un par attaque du Trõll ou du monstre) de tableaux contenant:
@@ -3199,22 +3540,22 @@ try {
 		try {
 			let listeAttaques = [];
 			// Roule 16/03/2016 ajout des ParseInt car je récupérais parfois une chaine non numérique :(
-			let att = parseInt(MY_getValue(numTroll + ".caracs.attaque"), 10);
-			let reg = parseInt(MY_getValue(numTroll + ".caracs.regeneration"), 10);
-			let attbmp = parseInt(MY_getValue(numTroll + ".caracs.attaque.bmp"), 10);
-			let attbmm = parseInt(MY_getValue(numTroll + ".caracs.attaque.bmm"), 10);
-			let mm = parseInt(MY_getValue(numTroll + ".caracs.mm"), 10);
-			let deg = parseInt(MY_getValue(numTroll + ".caracs.degats"), 10);
-			let degbmp = parseInt(MY_getValue(numTroll + ".caracs.degats.bmp"), 10);
-			let degbmm = parseInt(MY_getValue(numTroll + ".caracs.degats.bmm"), 10);
-			let vue = parseInt(MY_getValue(numTroll + ".caracs.vue"), 10);
-			let pv = parseInt(MY_getValue(numTroll + ".caracs.pv"), 10);
-			let pvbase = parseInt(MY_getValue(numTroll + ".caracs.pv.base"), 10);
-			let esq = parseInt(Math.max(MY_getValue(numTroll + ".caracs.esquive"), 10) - parseInt(MY_getValue(numTroll + ".caracs.esquive.nbattaques"), 0), 10);
-			let esqbonus = parseInt(MY_getValue(numTroll + ".caracs.esquive.bm"), 10);
-			let arm = parseInt(MY_getValue(numTroll + ".caracs.armure"), 10);
-			let armbmp = parseInt(MY_getValue(numTroll + ".caracs.armure.bmp"), 10);
-			let armbmm = parseInt(MY_getValue(numTroll + ".caracs.armure.bmm"), 10);
+			let att = parseInt(MY_getValue(`${numTroll}.caracs.attaque`), 10);
+			let reg = parseInt(MY_getValue(`${numTroll}.caracs.regeneration`), 10);
+			let attbmp = parseInt(MY_getValue(`${numTroll}.caracs.attaque.bmp`), 10);
+			let attbmm = parseInt(MY_getValue(`${numTroll}.caracs.attaque.bmm`), 10);
+			let mm = parseInt(MY_getValue(`${numTroll}.caracs.mm`), 10);
+			let deg = parseInt(MY_getValue(`${numTroll}.caracs.degats`), 10);
+			let degbmp = parseInt(MY_getValue(`${numTroll}.caracs.degats.bmp`), 10);
+			let degbmm = parseInt(MY_getValue(`${numTroll}.caracs.degats.bmm`), 10);
+			let vue = parseInt(MY_getValue(`${numTroll}.caracs.vue`), 10);
+			let pv = parseInt(MY_getValue(`${numTroll}.caracs.pv`), 10);
+			let pvbase = parseInt(MY_getValue(`${numTroll}.caracs.pv.base`), 10);
+			let esq = parseInt(Math.max(MY_getValue(`${numTroll}.caracs.esquive`), 10) - parseInt(MY_getValue(`${numTroll}.caracs.esquive.nbattaques`), 0), 10);
+			let esqbonus = parseInt(MY_getValue(`${numTroll}.caracs.esquive.bm`), 10);
+			let arm = parseInt(MY_getValue(`${numTroll}.caracs.armure`), 10);
+			let armbmp = parseInt(MY_getValue(`${numTroll}.caracs.armure.bmp`), 10);
+			let armbmm = parseInt(MY_getValue(`${numTroll}.caracs.armure.bmm`), 10);
 			let modificateurEsquive = '';
 			let modificateurArmure = '';
 			let modificateurMagie = '';
@@ -3222,7 +3563,9 @@ try {
 			let modificateurArmureM = '';
 			let pasDeSR = false;
 			let esqM = 0, attM = 0, armM_mag = 0, armM_phy = 0, armM_tot = 0, degM = 0;
-			if (donneesMonstre == null || att == null || attbmp == null || attbmm == null || mm == null || deg == null || degbmp == null || degbmm == null || vue == null || pv == null || esq == null || arm == null) { return null; }
+			if (donneesMonstre == null || att == null || attbmp == null || attbmm == null || mm == null || deg == null || degbmp == null || degbmm == null || vue == null || pv == null || esq == null || arm == null) {
+				return null;
+			}
 
 			debugMZ(`analyseTactique nom=${nom} ${JSON.stringify(donneesMonstre)}`);
 			let coeffSeuil = 0.95;
@@ -3234,7 +3577,7 @@ try {
 				try {
 					esqM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
-					debugMZ('analyseTactique, exception calcul esqM ' + e.message);
+					debugMZ(`analyseTactique, exception calcul esqM ${e.message}`);
 					esqM = Math.ceil(parseInt(td.firstChild.nodeValue));
 					modificateurEsquive = '<';
 					modificateurArmure = '<';
@@ -3246,7 +3589,7 @@ try {
 				try {
 					attM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
-					debugMZ('analyseTactique, exeception calcul attM ' + e.message);
+					debugMZ(`analyseTactique, exeception calcul attM ${e.message}`);
 					attM = Math.ceil(parseInt(td.firstChild.nodeValue));
 					modificateurEsquiveM = '>';
 					modificateurArmureM = '>';
@@ -3257,7 +3600,7 @@ try {
 				try {
 					degM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
-					debugMZ('analyseTactique, exeception calcul degM ' + e.message);
+					debugMZ(`analyseTactique, exeception calcul degM ${e.message}`);
 					degM = Math.ceil(parseInt(td.firstChild.nodeValue));
 					modificateurArmureM = '>';
 				}
@@ -3267,7 +3610,7 @@ try {
 					armM_tot = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 					armM_mag = armM_tot;	// compatibilité avec ancien calcul
 				} catch (e) {
-					debugMZ('analyseTactique, exeception calcul armM ' + e.message);
+					debugMZ(`analyseTactique, exeception calcul armM ${e.message}`);
 					armM_tot = Math.ceil(parseInt(td.firstChild.nodeValue));
 					armM_mag = armM_tot;
 					modificateurArmure = '<';
@@ -3277,16 +3620,16 @@ try {
 					td.innerHTML = bbcode(donneesMonstre[9]);
 					// debugMZ('analyseTactique, calcul SR, donnessMonstre=' + donneesMonstre[9] + ', bbcode=' + bbcode(donneesMonstre[9]));
 					let rm = parseInt(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-					let v = (rm / mm);
-					let seuil = (rm < mm ? Math.max(10, Math.floor(v * 50)) : Math.min(90, Math.floor(100 - 50 / v)));
+					let v = rm / mm;
+					let seuil = rm < mm ? Math.max(10, Math.floor(v * 50)) : Math.min(90, Math.floor(100 - 50 / v));
 					coeffSeuil = (200 - seuil) / 200;
 				} catch (e) {
-					debugMZ('analyseTactique, exeception calcul SR ' + e.message);
+					debugMZ(`analyseTactique, exeception calcul SR ${e.message}`);
 					modificateurMagie = '<';
 					pasDeSR = true;
 				}
 			} else {
-				//calcul de modificateurEsquive, modificateurArmure, modificateurMagie, modificateurEsquiveM, modificateurArmureM, pasDeSR, esqM, attM, armM_mag, armM_tot, degM;
+				// calcul de modificateurEsquive, modificateurArmure, modificateurMagie, modificateurEsquiveM, modificateurArmureM, pasDeSR, esqM, attM, armM_mag, armM_tot, degM;
 				if (donneesMonstre.esq) {
 					if (donneesMonstre.esq.min && donneesMonstre.esq.max) {
 						esqM = Math.ceil((donneesMonstre.esq.min + donneesMonstre.esq.max) / 2);
@@ -3349,8 +3692,8 @@ try {
 				if (donneesMonstre.RM) {
 					if (donneesMonstre.RM.min && donneesMonstre.RM.max) {
 						let rmM = Math.ceil((donneesMonstre.RM.min + donneesMonstre.RM.max) / 2);
-						let v = (rmM / mm);
-						let seuil = (rmM < mm ? Math.max(10, Math.floor(v * 50)) : Math.min(90, Math.floor(100 - 50 / v)));
+						let v = rmM / mm;
+						let seuil = rmM < mm ? Math.max(10, Math.floor(v * 50)) : Math.min(90, Math.floor(100 - 50 / v));
 						coeffSeuil = (200 - seuil) / 200;
 					} else if (donneesMonstre.deg.max) {
 						// gath: vide ici, rien a faire ?
@@ -3359,7 +3702,7 @@ try {
 					pasDeSR = true;
 				}
 			}
-			debugMZ('modificateurEsquive=' + modificateurEsquive + ', modificateurArmure=' + modificateurArmure + ', modificateurMagie=' + modificateurMagie + ', modificateurEsquiveM=' + modificateurEsquiveM + ', modificateurArmureM=' + modificateurArmureM + ', pasDeSR=' + pasDeSR + ', esqM=' + esqM + ', attM=' + attM + ', armM_tot=' + armM_tot + ', armM_mag=' + armM_mag + ', degM=' + degM + ', coeffSeuil=' + coeffSeuil);
+			debugMZ(`modificateurEsquive=${modificateurEsquive}, modificateurArmure=${modificateurArmure}, modificateurMagie=${modificateurMagie}, modificateurEsquiveM=${modificateurEsquiveM}, modificateurArmureM=${modificateurArmureM}, pasDeSR=${pasDeSR}, esqM=${esqM}, attM=${attM}, armM_tot=${armM_tot}, armM_mag=${armM_mag}, degM=${degM}, coeffSeuil=${coeffSeuil}`);
 
 			let chanceDEsquiveParfaite = chanceEsquiveParfaite(att, esqM, attbmp + attbmm, 0);
 			let chanceDeTouche = chanceTouche(att, esqM, attbmp + attbmm, 0);
@@ -3367,8 +3710,8 @@ try {
 			// roule debug
 			// logMZ('Attaque normale troll sur monstre, att=' + att + ', esqM=' + esqM + ', attbmp=' + attbmp + ', attbmm=' + attbmm
 			//	+ ', chanceDEsquiveParfaite=' + chanceDEsquiveParfaite + ', chanceDeTouche=' + chanceDeTouche + ', chanceDeCritique=' + chanceDeCritique);
-			let degats = (((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmp + degbmm - armM_tot, 1)) / 100);
-			//str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);
+			let degats = ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmp + degbmm - armM_tot, 1)) / 100;
+			// str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);
 			listeAttaques.push(new Array("Attaque normale", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
 			if (getSortComp("Vampirisme") > 0) {
 				let pour = getSortComp("Vampirisme");
@@ -3376,7 +3719,7 @@ try {
 				chanceDeTouche = Math.round(chanceTouche(Math.floor(deg * 2 / 3), esqM, attbmm, 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(Math.floor(deg * 2 / 3), esqM, attbmm, 0) * pour / 100);
 				degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm - armM_mag, 1))) / 100;
-				//str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				// str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Vampirisme", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
 			}
 			if (getSortComp("Siphon des âmes") > 0) {
@@ -3384,7 +3727,7 @@ try {
 				chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att, esqM, attbmm, 0) * pour / 100);
 				chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm, 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm, 0) * pour / 100);
-				degats = (((chanceDeTouche - chanceDeCritique) * Math.max(reg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(reg * 1.5) * 2 + degbmm - armM_mag, 1)) / 100);
+				degats = ((chanceDeTouche - chanceDeCritique) * Math.max(reg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(reg * 1.5) * 2 + degbmm - armM_mag, 1)) / 100;
 				listeAttaques.push(new Array("Siphon des âmes", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
 			}
 			if (getSortComp("Botte Secrète") > 0) {
@@ -3392,8 +3735,8 @@ try {
 				chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(Math.floor(2 * att / 3), esqM, Math.floor((attbmp + attbmm) / 2), 0) * pour / 100);
 				chanceDeTouche = Math.round(chanceTouche(Math.floor(2 * att / 3), esqM, Math.floor((attbmp + attbmm) / 2), 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(Math.floor(2 * att / 3), esqM, Math.floor((attbmp + attbmm) / 2), 0) * pour / 100);
-				degats = Math.round(((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(deg / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5 / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1))) / 100;
-				//str += "\nBotte Secrète : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(deg / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5 / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1)) / 100;
+				// str += "\nBotte Secrète : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Botte Secrète", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
 			}
 			if (getSortComp("Rafale Psychique") > 0) {
@@ -3402,7 +3745,7 @@ try {
 				chanceDeTouche = Math.round(100 * pour / 100);
 				chanceDeCritique = Math.round(0 * pour / 100);
 				degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm - armM_mag, 1))) / 100;
-				//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				// str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Rafale Psychique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : ''));
 			}
 			if (getSortComp("Explosion") > 0) {
@@ -3411,7 +3754,7 @@ try {
 				chanceDeTouche = Math.round(100 * pour / 100);
 				chanceDeCritique = Math.round(0 * pour / 100);
 				degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(1 + deg / 2 + pvbase / 20) * 2, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(1 + deg / 2 + pvbase / 20) * 1.5) * 2, 1))) / 100;
-				//str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				// str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Explosion", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : ''));
 			}
 			if (getSortComp("Projectile Magique") > 0) {
@@ -3421,20 +3764,20 @@ try {
 				chanceDeCritique = Math.round(chanceCritique(vue, esqM, attbmm, 0) * pour / 100);
 				// distance troll - monstre
 				degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(vue / 2) * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(vue / 2) * 1.5) * 2 + degbmm - armM_mag, 1))) / 100;
-				//str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				// str += "\nProjectile Magique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				if (donneesMonstre.index !== undefined && MZ_EtatCdMs.tr_monstres !== undefined && MZ_EtatCdMs.tr_monstres[donneesMonstre.index] !== undefined) {
 					let dist = getMonstreDistance(donneesMonstre.index);
 					// if (isDEV) log:W('Dist pour PM=' + dist);
-					let vue_bm = parseInt(MY_getValue(numTroll + ".caracs.vue.bm"), 10);
+					let vue_bm = parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`), 10);
 					let portee = getPortee(vue + vue_bm);
 					if (dist <= portee) {
 						degats = Math.round((degats + 2 * (portee - dist)) * 100) / 100;
 					} else {
-						degats += ' (plus bonus de portée)';
+						degats = `${degats} (plus bonus de portée)`;
 					}
-					debugMZ('analyseTactique, iTR= ' + donneesMonstre.index + ', dist=' + dist + ', porteePM=' + portee);
+					debugMZ(`analyseTactique, iTR= ${donneesMonstre.index}, dist=${dist}, porteePM=${portee}`);
 				} else {
-					degats += ' (plus bonus de portée)';
+					degats = `${degats} (plus bonus de portée)`;
 				}
 				listeAttaques.push(new Array("Projectile Magique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
 			}
@@ -3443,8 +3786,8 @@ try {
 				chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att, esqM, attbmm + attbmp, 0) * pour / 100);
 				chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm + attbmp, 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm + attbmp, 0) * pour / 100);
-				degats = Math.round(((chanceDeTouche - chanceDeCritique) * 2 * Math.max((deg * 2 + degbmp + degbmm - armM_tot), 1) + chanceDeCritique * 2 * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1))) / 100;
-				//str += "\nFrénésie : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				degats = Math.round((chanceDeTouche - chanceDeCritique) * 2 * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * 2 * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
+				// str += "\nFrénésie : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Frénésie", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
 			}
 			if (getSortComp("Charger") > 0) {
@@ -3452,8 +3795,8 @@ try {
 				chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att, esqM, attbmm + attbmp, 0) * pour / 100);
 				chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm + attbmp, 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm + attbmp, 0) * pour / 100);
-				degats = Math.round(((chanceDeTouche - chanceDeCritique) * Math.max((deg * 2 + degbmp + degbmm - armM_tot), 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1))) / 100;
-				//str += "\nCharge : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
+				// str += "\nCharge : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Charger", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
 			}
 			if (getSortComp("Griffe du Sorcier") > 0) {
@@ -3462,7 +3805,7 @@ try {
 				chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm, 0) * pour / 100);
 				chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm, 0) * pour / 100);
 				degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(deg / 2) * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(deg / 2) * 1.5) * 2 + degbmm, 1))) / 100;
-				//str += "\nGriffe du Sorcier : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
+				// str += "\nGriffe du Sorcier : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
 				listeAttaques.push(new Array("Griffe du Sorcier", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
 			}
 			if (getSortComp("Attaque Précise", 1) > 0) {
@@ -3478,15 +3821,15 @@ try {
 						let chanceDEsquiveParfaiteNiveau = chanceEsquiveParfaite(Math.min(att + 3 * niveau, Math.floor(att * 1.5)), esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
 						let chanceDeToucheNiveau = chanceTouche(Math.min(att + 3 * niveau, Math.floor(att * 1.5)), esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
 						let chanceDeCritiqueNiveau = chanceCritique(Math.min(att + 3 * niveau, Math.floor(att * 1.5)), esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
-						chanceDEsquiveParfaite += chanceDEsquiveParfaiteNiveau;
-						chanceDeTouche += chanceDeToucheNiveau;
-						chanceDeCritique += chanceDeCritiqueNiveau;
-						degats += (((chanceDeToucheNiveau - chanceDeCritiqueNiveau) * Math.max((deg * 2 + degbmp + degbmm - armM_tot), 1) + chanceDeCritiqueNiveau * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100);
+						chanceDEsquiveParfaite = chanceDEsquiveParfaite + chanceDEsquiveParfaiteNiveau;
+						chanceDeTouche = chanceDeTouche + chanceDeToucheNiveau;
+						chanceDeCritique = chanceDeCritique + chanceDeCritiqueNiveau;
+						degats = degats + ((chanceDeToucheNiveau - chanceDeCritiqueNiveau) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritiqueNiveau * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
 						oldPour = pour;
 					}
 					niveau--;
 				}
-				//str += "\nAttaque Précise : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
+				// str += "\nAttaque Précise : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
 				listeAttaques.push(new Array("Attaque Précise", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
 			}
 			if (getSortComp("Coup de Butoir", 1) > 0) {
@@ -3502,18 +3845,22 @@ try {
 						let chanceDEsquiveParfaiteNiveau = chanceEsquiveParfaite(att, esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
 						let chanceDeToucheNiveau = chanceTouche(att, esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
 						let chanceDeCritiqueNiveau = chanceCritique(att, esqM, attbmm + attbmp, 0) * (pour - oldPour) / 100;
-						chanceDEsquiveParfaite += chanceDEsquiveParfaiteNiveau;
-						chanceDeTouche += chanceDeToucheNiveau;
-						chanceDeCritique += chanceDeCritiqueNiveau;
-						degats += (((chanceDeToucheNiveau - chanceDeCritiqueNiveau) * Math.max((Math.min(Math.floor(deg * 1.5), deg + 3 * niveau) * 2 + degbmp + degbmm - armM_tot), 1) + chanceDeCritiqueNiveau * Math.max(Math.floor(Math.min(Math.floor(deg * 1.5), deg + 3 * niveau) * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100);
+						chanceDEsquiveParfaite = chanceDEsquiveParfaite + chanceDEsquiveParfaiteNiveau;
+						chanceDeTouche = chanceDeTouche + chanceDeToucheNiveau;
+						chanceDeCritique = chanceDeCritique + chanceDeCritiqueNiveau;
+						degats = degats + ((chanceDeToucheNiveau - chanceDeCritiqueNiveau) * Math.max(Math.min(Math.floor(deg * 1.5), deg + 3 * niveau) * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritiqueNiveau * Math.max(Math.floor(Math.min(Math.floor(deg * 1.5), deg + 3 * niveau) * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
 						oldPour = pour;
 					}
 					niveau--;
 				}
-				//str += "\nCoup de Butoir : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
+				// str += "\nCoup de Butoir : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
 				listeAttaques.push(new Array("Coup de Butoir", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
 			}
-			listeAttaques.sort(function (a, b) { let diff = parseInt(100 * b[4]) - parseInt(100 * a[4]); if (diff == 0) { return parseInt(b[1]) - parseInt(a[1]); } return diff; });
+			listeAttaques.sort((a, b) => {
+				let diff = parseInt(100 * b[4]) - parseInt(100 * a[4]); if (diff == 0) {
+					return parseInt(b[1]) - parseInt(a[1]);
+				} return diff;
+			});
 			if (nom.toLowerCase().indexOf("mégacéphale") == -1) {
 				chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(attM, esq, 0, esqbonus));
 				chanceDeTouche = Math.round(chanceTouche(attM, esq, 0, esqbonus));
@@ -3523,13 +3870,15 @@ try {
 				chanceDeTouche = 100;
 				chanceDeCritique = 0;
 			}
-			degats = Math.round(((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(degM) * 2 - arm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(degM) * 1.5) * 2 - arm * 2 - armbmm - armbmp, 1))) / 100;
+			degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(degM) * 2 - arm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(degM) * 1.5) * 2 - arm * 2 - armbmm - armbmp, 1)) / 100;
 
 			listeAttaques.unshift(new Array("Monstre", Math.round(chanceDEsquiveParfaite * 100) / 100, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
 			return listeAttaques;
 		} catch (e) {
 			let msgid = '';
-			try { msgid = ', monstre ' + donneesMonstre.id; } catch (e2) { }
+			try {
+				msgid = `, monstre ${donneesMonstre.id}`;
+			} catch (e2) { }
 			logMZ(traceStack(e, `analyseTactique(${msgid})`));
 			avertissement(`Erreur analyseTactique() :\n${e}`);
 		}
@@ -3551,29 +3900,33 @@ try {
 			titresMimis = document.evaluate(
 				"//b[@class='mh_titre3']/a[contains(@href,'Mission_')]", document, null, 7, null
 			);
-			obMissions = JSON.parse(MY_getValue(numTroll + '.MISSIONS'));
+			obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
 		} catch (e) {
 			logMZ(traceStack(e, 'mission_liste initialisation'));
 			return;
 		}
 
 		let enCours = {};
-		debugMZ('MZ checkLesMimis nb=' + titresMimis.snapshotLength);
+		debugMZ(`MZ checkLesMimis nb=${titresMimis.snapshotLength}`);
 		for (let i = 0; i < titresMimis.snapshotLength; i++) {
-			debugMZ('MZ checkLesMimis text=' + titresMimis.snapshotItem(i).textContent);
+			debugMZ(`MZ checkLesMimis text=${titresMimis.snapshotItem(i).textContent}`);
 			let num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
 			enCours[num] = true;
 		}
 
 		for (let numMimi in obMissions) {
-			if (!enCours[numMimi]) { delete obMissions[numMimi]; }
+			if (!enCours[numMimi]) {
+				delete obMissions[numMimi];
+			}
 		}
-		MY_setValue(numTroll + '.MISSIONS', JSON.stringify(obMissions));
+		MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 	}
 
-	function do_mission_liste() { checkLesMimis(); }
+	function do_mission_liste() {
+		checkLesMimis();
+	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -3601,7 +3954,9 @@ try {
 
 	function getLevel() {
 		let divList = document.getElementsByTagName('div');
-		if (divList.length <= 2) { return; }
+		if (divList.length <= 2) {
+			return;
+		}
 
 		// On essaie de voir si cette action était une attaque
 		let pList = document.getElementsByTagName('p');
@@ -3611,15 +3966,21 @@ try {
 		for (let i = 0; i < pList.length; i++) {
 			if (pList[i].firstChild) {
 				nomM = pList[i].firstChild.nodeValue;
-				if (nomM && nomM.indexOf('Vous avez attaqué un') == 0) { numAtt++; }
+				if (nomM && nomM.indexOf('Vous avez attaqué un') == 0) {
+					numAtt++;
+				}
 			}
 		}
 
-		if (nomM == '') { return; }
+		if (nomM == '') {
+			return;
+		}
 
 		// Si c'est une attaque normale, un seul PX
 		let comPX = 1;
-		if (divList[2].firstChild.nodeValue.indexOf('Attaque Normale') == -1 && numAtt != 2) { comPX++; }
+		if (divList[2].firstChild.nodeValue.indexOf('Attaque Normale') == -1 && numAtt != 2) {
+			comPX++;
+		}
 
 		// Extraction des infos du monstre attaqué
 		let idM, male;
@@ -3632,33 +3993,43 @@ try {
 			idM = nomM.substring(nomM.indexOf('(') + 1, nomM.indexOf(')'));
 			nomM = nomM.slice(21, nomM.indexOf('(') - 1);
 		}
-		if (idM == '') { return; }
+		if (idM == '') {
+			return;
+		}
 
 		let bList = document.getElementsByTagName('b');
 		let niveau = '';
 		for (let i = 0; i < bList.length; i++) {
 			let b = bList[i];
-			if (b.childNodes[0].nodeValue != "TUÉ") { continue; }
+			if (b.childNodes[0].nodeValue != "TUÉ") {
+				continue;
+			}
 			let nbPX = "";
 			for (i++; i < bList.length; i++) {
 				// Si plusieurs monstres ont été tués (par ex. explo), on ne peut pas déduire leurs niveaux
-				if (bList[i].childNodes[0].nodeValue == "TUÉ") { return; }
+				if (bList[i].childNodes[0].nodeValue == "TUÉ") {
+					return;
+				}
 				if (bList[i].childNodes[0].nodeValue.indexOf("PX") != -1) {
 					nbPX = bList[i].childNodes[0].nodeValue;
 					break;
 				}
 			}
-			if (nbPX == '') { return; }
+			if (nbPX == '') {
+				return;
+			}
 			// Si on arrive ici c'est qu'on a trouvé un (et un seul) monstre tué et les PX gagnés
 			nbPX = parseInt(nbPX.slice(0, nbPX.indexOf("P") - 1));
-			if (!nbPX) { nbPX = 0; }
-			let chaine = (male ? "Il" : "Elle") + " était de niveau ";
-			niveau = (nbPX * 1 + 2 * nivTroll - 10 - comPX) / 3;
+			if (!nbPX) {
+				nbPX = 0;
+			}
+			let chaine = `${male ? "Il" : "Elle"} était de niveau `;
+			niveau = (Number(nbPX) + 2 * nivTroll - 10 - comPX) / 3;
 			if (comPX > nbPX) {
-				chaine += "inférieur ou égal à " + Math.floor(niveau) + ".";
+				chaine = `${chaine}inférieur ou égal à ${Math.floor(niveau)}.`;
 				niveau = "";
 			} else if (Math.floor(niveau) == niveau) {
-				chaine += niveau + ".";
+				chaine = `${chaine}${niveau}.`;
 			} else {
 				chaine = "Mountyzilla n'est pas arrivé à calculer le niveau du monstre.";
 				niveau = "";
@@ -3669,10 +4040,9 @@ try {
 
 		if (niveau != '') {
 			let button = insertButtonCdm('as_Action');
-			button.setAttribute("onClick", "window.open('" + URL_pageNiv + "?id=" + (idM * 1) + "&monstre="
-				+ escape(nomM) + "&niveau=" + escape(niveau)
-				+ "', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); "
-				+ "this.value = 'Merci de votre participation'; this.disabled = true;");
+			button.setAttribute("onClick", `window.open('${URL_pageNiv}?id=${Number(idM)}&monstre=${escape(nomM)}&niveau=${escape(niveau)
+				}', 'popupCdm', 'width=400, height=240, toolbar=no, status=no, location=no, resizable=yes'); ` +
+				`this.value = 'Merci de votre participation'; this.disabled = true;`);
 		}
 	}
 
@@ -3693,13 +4063,19 @@ try {
 
 	function getMM(sr) {
 		if (rmTroll <= 0) {
-			return 'Inconnue (quelle idée d\'avoir une RM valant' + rmTroll + ' !)';
+			return `Inconnue (quelle idée d'avoir une RM valant${rmTroll} !)`;
 		}
 		let nsr = Number(sr.match(/\d+/)[0]);
-		if (nsr == 10) { return '\u2265 ' + 5 * rmTroll; }
-		if (nsr <= 50) { return Math.round(50 * rmTroll / nsr); }
-		if (nsr < 90) { return Math.round((100 - nsr) * rmTroll / 50); }
-		return '\u2264 ' + Math.round(rmTroll / 5);
+		if (nsr == 10) {
+			return `\u2265 ${5 * rmTroll}`;
+		}
+		if (nsr <= 50) {
+			return Math.round(50 * rmTroll / nsr);
+		}
+		if (nsr < 90) {
+			return Math.round((100 - nsr) * rmTroll / 50);
+		}
+		return `\u2264 ${Math.round(rmTroll / 5)}`;
 	}
 
 	function traiteMM() {
@@ -3714,7 +4090,9 @@ try {
 			node = document.evaluate(
 				"//p/text()[contains(., 'Seuil de Résistance')]", document, null, 9, null
 			).singleNodeValue;
-			if (!node) { return; }
+			if (!node) {
+				return;
+			}
 			mm = getMM(node.nodeValue);
 			node = node.nextSibling.nextSibling;
 		}
@@ -3723,20 +4101,28 @@ try {
 
 	function getRM(sr) {
 		if (mmTroll <= 0) {
-			return 'Inconnue (quelle idée d\'avoir une MM valant' + mmTroll + ' !)';
+			return `Inconnue (quelle idée d'avoir une MM valant${mmTroll} !)`;
 		}
 		let nsr = Number(sr.match(/\d+/)[0]);
-		if (nsr == 10) { return '\u2264 ' + Math.round(mmTroll / 5); }
-		if (nsr <= 50) { return Math.round(nsr * mmTroll / 50); }
-		if (nsr < 90) { return Math.round(50 * mmTroll / (100 - nsr)); }
-		return '\u2265 ' + 5 * mmTroll;
+		if (nsr == 10) {
+			return `\u2264 ${Math.round(mmTroll / 5)}`;
+		}
+		if (nsr <= 50) {
+			return Math.round(nsr * mmTroll / 50);
+		}
+		if (nsr < 90) {
+			return Math.round(50 * mmTroll / (100 - nsr));
+		}
+		return `\u2265 ${5 * mmTroll}`;
 	}
 
 	function traiteRM() {
 		let nodes = document.evaluate(
 			"//b[contains(preceding::text()[1],'Seuil de Résistance')]/text()[1]", document, null, 7, null
 		);
-		if (nodes.snapshotLength == 0) { return; }
+		if (nodes.snapshotLength == 0) {
+			return;
+		}
 
 		for (let i = 0; i < nodes.snapshotLength; i++) {
 			let node = nodes.snapshotItem(i);
@@ -3748,7 +4134,7 @@ try {
 
 	/** x~x Stats IdT par Raistlin ----------------------------------------- */
 
-	/*function getIdt() {
+	/* function getIdt() {
 		if(MY_getValue("SEND_IDT") == "non")
 			return false;
 
@@ -3788,24 +4174,30 @@ try {
 	function confirmeDecalage() {
 		// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
 		let nbMinutes = document.getElementById('ai_NbMinutes').value;
-		if (!nbMinutes || isNaN(nbMinutes) || nbMinutes < 1) { return false; }
+		if (!nbMinutes || isNaN(nbMinutes) || nbMinutes < 1) {
+			return false;
+		}
 
 		let newDLA = new Date(oldDLA);
 		newDLA.setMinutes(newDLA.getMinutes() + Number(nbMinutes));
 		return window.confirm(
-			'Votre DLA sera décalée au : ' + MZ_formatDateMS(newDLA, false)
-			+ '\nConfirmez-vous ce décalage ?'
+			`Votre DLA sera décalée au : ${MZ_formatDateMS(newDLA, false)
+			}\nConfirmez-vous ce décalage ?`
 		);
 	}
 
 	function newsubmitDLA(evt) {
 		evt.stopPropagation();
 		evt.preventDefault();
-		if (confirmeDecalage()) { this.submit(); }
+		if (confirmeDecalage()) {
+			this.submit();
+		}
 	}
 
 	function changeActionDecalage() {
-		if (MY_getValue('CONFIRMEDECALAGE') != 'true') { return; }
+		if (MY_getValue('CONFIRMEDECALAGE') != 'true') {
+			return;
+		}
 		try {
 			// On récupère le contenu du script JS MH de calcul du décalage
 			let scriptTxt = document.evaluate(
@@ -3832,7 +4224,9 @@ try {
 	}
 
 	/** x~x Compte à rebours de DLA ---------------------------------------- */
-	function DMYHMSToDate(t) { return new Date(t.replace(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/, "$2/$1/$3 $4:$5:$6")); }
+	function DMYHMSToDate(t) {
+		return new Date(t.replace(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/, "$2/$1/$3 $4:$5:$6"));
+	}
 
 	function DateDiff(d1, d2) {
 		let diff = {},
@@ -3843,29 +4237,33 @@ try {
 		diff.hour = tmp % 24; tmp = Math.floor((tmp - diff.hour) / 24);
 		diff.day = tmp;
 
-		return (diff.day > 5) ? "> 5j" : [
-			diff.day > 0 ? diff.day + "j" : null,
-			diff.hour > 0 ? diff.hour + "h" : null,
-			diff.min > 0 ? diff.min + "m" : null,
-			diff.sec > 0 ? diff.sec + "s" : null
-		].filter(function (o) { return o; }).join(" ");
+		return diff.day > 5 ? "> 5j" : [
+			diff.day > 0 ? `${diff.day}j` : null,
+			diff.hour > 0 ? `${diff.hour}h` : null,
+			diff.min > 0 ? `${diff.min}m` : null,
+			diff.sec > 0 ? `${diff.sec}s` : null
+		].filter((o) => {
+			return o;
+		}).join(" ");
 	}
 
 	function initCompteAreboursDLA() {
-		if (MY_getValue('COMPTEAREBOURSDLA') != 'true') { return; }
+		if (MY_getValue('COMPTEAREBOURSDLA') != 'true') {
+			return;
+		}
 		let div = document.evaluate(
 			"//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
 		).singleNodeValue;
 		let br = div.getElementsByTagName('br')[0];
 		// logMZ('initCompteAreboursDLA' + div.innerHTML);
 
-		let dla = DMYHMSToDate(/DLA:\s+([^<]+)</.exec(div.innerHTML)[1]),
+		let dla = DMYHMSToDate((/DLA:\s+([^<]+)</).exec(div.innerHTML)[1]),
 			cnt = document.createElement('div');
 
 		div.insertBefore(cnt, br);
 		div.removeChild(br);
 
-		let timer = setInterval(function () {
+		let timer = setInterval(() => {
 			let diff = DateDiff(new Date(), dla);
 			if (diff.length <= 0) {
 				diff = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#AEFFAE'>Vous pouvez réactiver!</a>";
@@ -3882,7 +4280,9 @@ try {
 			node = document.evaluate(
 				"//div[@class='dateAction']/b", document, null, 9, null
 			).singleNodeValue;
-			if (!node) { logMZ('skip mundi'); return; }
+			if (!node) {
+				logMZ('skip mundi'); return;
+			}
 		} catch (e) {
 			logMZ(traceStack(e, 'prochainMundi Date introuvable'));
 			return;
@@ -3890,10 +4290,15 @@ try {
 
 		let longueurMois = node.textContent.indexOf('Saison du Hum') == -1 ? 28 : 14;
 		let jour = longueurMois + 1 - getNumber(node.textContent);
-		if (node.textContent.indexOf('Mundidey') != -1) { jour = longueurMois; }
+		if (node.textContent.indexOf('Mundidey') != -1) {
+			jour = longueurMois;
+		}
 		let txt = '[Prochain Mundidey ';
-		if (jour > 1) { txt += 'dans ' + jour + ' jours]'; }
-		else { txt += 'demain]'; }
+		if (jour > 1) {
+			txt = `${txt}dans ${jour} jours]`;
+		} else {
+			txt = `${txt}demain]`;
+		}
 		insertText(node.parentNode.nextSibling, txt, true);
 	}
 
@@ -3912,9 +4317,9 @@ try {
 			} else if (document.evaluate(
 				"//tr/td/descendant::p/text()[contains(., 'identification a donné')]", document, null, 2, null
 			).stringValue) {
-				//getIdt();
+				// getIdt();
 				traiteRM();
-			} /*else {
+			} /* else {
 			// Est censé se lancer sur quoi *précisément* ?
 			traiteRM();
 			getLevel();
@@ -3944,7 +4349,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -3968,39 +4373,53 @@ try {
 	let combobox = null;
 
 	function changeObject() {
-		if (!combobox) { return; }
+		if (!combobox) {
+			return;
+		}
 		let id = combobox.options[combobox.selectedIndex].value;
 		let texte = combobox.options[combobox.selectedIndex].firstChild.nodeValue;
 		if (!id || id == "") {
-			MY_removeValue(numTroll + ".enchantement.lastEquipement");
+			MY_removeValue(`${numTroll}.enchantement.lastEquipement`);
 			return;
 		}
-		MY_setValue(numTroll + ".enchantement.lastEquipement", id + ";" + texte);
+		MY_setValue(`${numTroll}.enchantement.lastEquipement`, `${id};${texte}`);
 	}
 
 	function treatePreEnchantement() {
 		let input = document.evaluate("//input[@name='ai_IDLI']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		if (!input || input.getAttribute("type") == "hidden") { return false; }
-		MY_setValue(numTroll + ".enchantement.lastEnchanteur", input.getAttribute("value"));
+		if (!input || input.getAttribute("type") == "hidden") {
+			return false;
+		}
+		MY_setValue(`${numTroll}.enchantement.lastEnchanteur`, input.getAttribute("value"));
 		combobox = document.evaluate("//select[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		if (!combobox) { return true; }
+		if (!combobox) {
+			return true;
+		}
 		combobox.addEventListener('change', changeObject, true);
 		return true;
 	}
 
 	function treateEnchantement_pre() {
 		let input = document.evaluate("//input[@name='ai_IDTE']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		if (!input || input.getAttribute("type") != "hidden") { return false; }
+		if (!input || input.getAttribute("type") != "hidden") {
+			return false;
+		}
 		let idEquipement = input.getAttribute("value");
-		let nomEquipement = "Equipement inconnu (" + idEquipement + ")";
-		let enchanteur = MY_getValue(numTroll + ".enchantement." + idEquipement + ".enchanteur");
-		if (enchanteur && enchanteur != null) { return true; }
+		let nomEquipement = `Equipement inconnu (${idEquipement})`;
+		let enchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`);
+		if (enchanteur && enchanteur != null) {
+			return true;
+		}
 		input = document.evaluate("//input[@name='ai_IDLI']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-		if (!input || input.getAttribute("type") != "hidden") { return false; }
+		if (!input || input.getAttribute("type") != "hidden") {
+			return false;
+		}
 		let idEnchanteur = input.getAttribute("value");
 
 		let nodes = document.evaluate("//p/img[@src='../Images/greenball.gif']/following-sibling::text()", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		if (nodes.snapshotLength != 3) { return; }
+		if (nodes.snapshotLength != 3) {
+			return;
+		}
 		for (let i = 0; i < 3; i++) {
 			let texte = trim(nodes.snapshotItem(i).nodeValue);
 			texte = texte.replace(" d'une ", " d'un ");
@@ -4009,22 +4428,27 @@ try {
 			let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
 			let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
 			// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
-			MY_setValue(numTroll + ".enchantement." + idEquipement + ".composant." + i, compo + ";" + localisation + ";" + monstre.replace(/ Géante?/, "") + ";" + qualite + ";" + trim(nodes.snapshotItem(i).nodeValue));
+			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 		}
-		MY_setValue(numTroll + ".enchantement." + idEquipement + ".enchanteur", idEnchanteur + ";" + MY_getValue(numTroll + ".position.X") + ";" + MY_getValue(numTroll + ".position.Y") + ";" + MY_getValue(numTroll + ".position.N"));
-		MY_setValue(numTroll + ".enchantement." + idEquipement + ".objet", nomEquipement);
-		let liste = MY_getValue(numTroll + ".enchantement.liste");
-		if (!liste || liste == "") { MY_setValue(numTroll + ".enchantement.liste", idEquipement); }
-		else { MY_setValue(numTroll + ".enchantement.liste", liste + ";" + idEquipement); }
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${idEnchanteur};${MY_getValue(`${numTroll}.position.X`)};${MY_getValue(`${numTroll}.position.Y`)};${MY_getValue(`${numTroll}.position.N`)}`);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
+		let liste = MY_getValue(`${numTroll}.enchantement.liste`);
+		if (!liste || liste == "") {
+			MY_setValue(`${numTroll}.enchantement.liste`, idEquipement);
+		} else {
+			MY_setValue(`${numTroll}.enchantement.liste`, `${liste};${idEquipement}`);
+		}
 	}
 
 	function do_pre_enchant() {
 		start_script(60);
-		if (!treatePreEnchantement()) { treateEnchantement_pre(); }
+		if (!treatePreEnchantement()) {
+			treateEnchantement_pre();
+		}
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -4046,19 +4470,25 @@ try {
 	/* 2013-08-19 : correction auto syntaxe alert */
 
 	function treateEnchantement() {
-		let idEnchanteur = MY_getValue(numTroll + ".enchantement.lastEnchanteur");
-		let infoEquipement = MY_getValue(numTroll + ".enchantement.lastEquipement");
-		if (!idEnchanteur || idEnchanteur == "" || !infoEquipement || infoEquipement == "") { return; }
+		let idEnchanteur = MY_getValue(`${numTroll}.enchantement.lastEnchanteur`);
+		let infoEquipement = MY_getValue(`${numTroll}.enchantement.lastEquipement`);
+		if (!idEnchanteur || idEnchanteur == "" || !infoEquipement || infoEquipement == "") {
+			return;
+		}
 		let tab = infoEquipement.split(";");
-		if (tab.length < 2) { return; }
+		if (tab.length < 2) {
+			return;
+		}
 		let idEquipement = tab[0];
 		let nomEquipement = tab[1];
 		for (let i = 2; i < tab.length; i++) {
-			nomEquipement += ";" + tab[i];
+			nomEquipement = `${nomEquipement};${tab[i]}`;
 		}
 
 		let nodes = document.evaluate("//p/img[@src='../Images/greenball.gif']/following-sibling::text()", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		if (nodes.snapshotLength != 3) { return; }
+		if (nodes.snapshotLength != 3) {
+			return;
+		}
 		for (let i = 0; i < 3; i++) {
 			let texte = trim(nodes.snapshotItem(i).nodeValue);
 			texte = texte.replace(" d'une ", " d'un ");
@@ -4068,25 +4498,28 @@ try {
 			let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
 			let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
 			// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
-			MY_setValue(numTroll + ".enchantement." + idEquipement + ".composant." + i, compo + ";" + localisation + ";" + monstre.replace(/ Géante?/, "") + ";" + qualite + ";" + trim(nodes.snapshotItem(i).nodeValue));
+			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 		}
-		MY_setValue(numTroll + ".enchantement." + idEquipement + ".enchanteur", idEnchanteur + ";" + MY_getValue(numTroll + ".position.X") + ";" + MY_getValue(numTroll + ".position.Y") + ";" + MY_getValue(numTroll + ".position.N"));
-		MY_setValue(numTroll + ".enchantement." + idEquipement + ".objet", nomEquipement);
-		let liste = MY_getValue(numTroll + ".enchantement.liste");
-		if (!liste || liste == "") { MY_setValue(numTroll + ".enchantement.liste", idEquipement); }
-		else { MY_setValue(numTroll + ".enchantement.liste", liste + ";" + idEquipement); }
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${idEnchanteur};${MY_getValue(`${numTroll}.position.X`)};${MY_getValue(`${numTroll}.position.Y`)};${MY_getValue(`${numTroll}.position.N`)}`);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
+		let liste = MY_getValue(`${numTroll}.enchantement.liste`);
+		if (!liste || liste == "") {
+			MY_setValue(`${numTroll}.enchantement.liste`, idEquipement);
+		} else {
+			MY_setValue(`${numTroll}.enchantement.liste`, `${liste};${idEquipement}`);
+		}
 	}
 
 	function do_enchant() {
 		start_script(60);
 
 		treateEnchantement();
-		MY_removeValue(numTroll + ".enchantement.lastEquipement");
-		MY_removeValue(numTroll + ".enchantement.lastEnchanteur");
+		MY_removeValue(`${numTroll}.enchantement.lastEquipement`);
+		MY_removeValue(`${numTroll}.enchantement.lastEnchanteur`);
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -4108,7 +4541,7 @@ try {
 	// Script désactivé en attendant la màj vers le nouveau système de missions.
 	function do_myevent() { }
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -4140,13 +4573,22 @@ try {
 	/** x~x Utilitaires ---------------------------------------------------- */
 	function decumul(bmt, nbr) {
 		let bmr;
-		if (!nbr || nbr < 2) { bmr = bmt; }
-		else if (nbr == 2) { bmr = parseInt(0.67 * bmt); }
-		else if (nbr == 3) { bmr = parseInt(0.40 * bmt); }
-		else if (nbr == 4) { bmr = parseInt(0.25 * bmt); }
-		else if (nbr == 5) { bmr = parseInt(0.15 * bmt); }
-		else { bmr = parseInt(0.1 * bmt); }
-		if (bmt < 0) { return Math.min(-1, bmr); }
+		if (!nbr || nbr < 2) {
+			bmr = bmt;
+		} else if (nbr == 2) {
+			bmr = parseInt(0.67 * bmt);
+		} else if (nbr == 3) {
+			bmr = parseInt(0.40 * bmt);
+		} else if (nbr == 4) {
+			bmr = parseInt(0.25 * bmt);
+		} else if (nbr == 5) {
+			bmr = parseInt(0.15 * bmt);
+		} else {
+			bmr = parseInt(0.1 * bmt);
+		}
+		if (bmt < 0) {
+			return Math.min(-1, bmr);
+		}
 		return Math.max(1, bmr);
 	}
 
@@ -4156,7 +4598,9 @@ try {
 			case 'ATT':
 				return -1;
 			case 'ESQ':
-				if (b == 'ATT') { return 1; }
+				if (b == 'ATT') {
+					return 1;
+				}
 				return -1;
 			case 'DEG':
 				switch (b) {
@@ -4387,7 +4831,9 @@ try {
 	}
 
 	function setDisplayBM() {
-		if (!listeBM) { return; }
+		if (!listeBM) {
+			return;
+		}
 
 		let titre = document.getElementById('MHTitreH2');
 		if (titre) {
@@ -4424,7 +4870,9 @@ try {
 		}
 
 		/* Suppression des BM de fatigue stockés */
-		if (MY_getValue(numTroll + '.bm.fatigue')) { MY_removeValue(numTroll + '.bm.fatigue'); }
+		if (MY_getValue(`${numTroll}.bm.fatigue`)) {
+			MY_removeValue(`${numTroll}.bm.fatigue`);
+		}
 
 		/* Extraction des données */
 		let uniListe = [], listeDurees = {}, listeDecumuls = {};
@@ -4456,34 +4904,48 @@ try {
 			*/
 			let nom = tr.childNodes[1].textContent + phymag;
 			// !! Amnésie = Capa, mais pas décumulée
-			if (nom.indexOf('Amnésie') != -1) { nom = 'pasdedecumul'; }
+			if (nom.indexOf('Amnésie') != -1) {
+				nom = 'pasdedecumul';
+			}
 
 			uniListe[nb] = {
-				'duree': duree,
-				'nom': nom, // permet de gérer le non décumul des sorts à double composante
-				'caracs': {}
+				duree: duree,
+				nom: nom, // permet de gérer le non décumul des sorts à double composante
+				caracs: {}
 			};
 			for (let i = 0; i < effetsT.length; i++) {
-				if (effetsT[i].indexOf(':') == -1) { continue; }
+				if (effetsT[i].indexOf(':') == -1) {
+					continue;
+				}
 				// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
 				// nom = 'pasdedecumul' si pas de décumul
 				let carac = trim(effetsT[i].substring(0, effetsT[i].indexOf(':')));
-				if (carac == 'ATT' || carac == 'DEG' || carac == 'Armure') { uniListe[nb]['type'] = phymag; }
+				if (carac == 'ATT' || carac == 'DEG' || carac == 'Armure') {
+					uniListe[nb].type = phymag;
+				}
 				let tmatch = effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et exceptionnellement un autre numérique précédé d'un antislash
 				let bm;
-				if (tmatch[2] == undefined) { bm = Number(tmatch[1]); }	// cas DEG : -6
-				else { bm = Number(tmatch[3]); }	// cas DEG : +0\-5
-				uniListe[nb]['caracs'][carac] = bm;
-				debugMZ('[MZ debug] effetsT[' + i + ']=' + effetsT[i] + ', uniListe[' + nb + '][\'caracs\'][' + carac + '] = ' + bm + ', durée=' + duree + ' tmatch=' + JSON.stringify(tmatch));
+				if (tmatch[2] == undefined) {
+					bm = Number(tmatch[1]);
+				}	// cas DEG : -6
+				else {
+					bm = Number(tmatch[3]);
+				}	// cas DEG : +0\-5
+				uniListe[nb].caracs[carac] = bm;
+				debugMZ(`[MZ debug] effetsT[${i}]=${effetsT[i]}, uniListe[${nb}]['caracs'][${carac}] = ${bm}, durée=${duree} tmatch=${JSON.stringify(tmatch)}`);
 				listeDurees[duree] = true;
 			}
 		}	// fin boucle sur les lignes de bonus/malus
 
 		/* Gestion des décumuls et cumuls des durées */
 		let toursGeres = [];
-		for (let d in listeDurees) { toursGeres.push(d); }
-		toursGeres.sort(function (a, b) { return b - a; });
-		debugMZ('[MZ debug] toursGeres=' + JSON.stringify(toursGeres) + "\nuniListe=" + JSON.stringify(uniListe));
+		for (let d in listeDurees) {
+			toursGeres.push(d);
+		}
+		toursGeres.sort((a, b) => {
+			return b - a;
+		});
+		debugMZ(`[MZ debug] toursGeres=${JSON.stringify(toursGeres)}\nuniListe=${JSON.stringify(uniListe)}`);
 		let strfat = ''; // pour sauvegarder les bm de fatigue
 		// Pour affichage & adpatation à footable.js (statique)
 		let thead = document.getElementsByTagName('thead')[0];
@@ -4496,30 +4958,46 @@ try {
 			let tour = toursGeres[i];
 			let effetsCeTour = {}, decumulsCeTour = {};
 			for (let nb = 1; nb < uniListe.length; nb++) {
-				if (uniListe[nb]['duree'] < toursGeres[i]) { continue; } // si durée pvr < durée analysée, on passe
-				let nom = uniListe[nb]['nom'];
+				if (uniListe[nb].duree < toursGeres[i]) {
+					continue;
+				} // si durée pvr < durée analysée, on passe
+				let nom = uniListe[nb].nom;
 				if (nom != 'pasdedecumul') {
-					if (decumulsCeTour[nom] == null) { decumulsCeTour[nom] = 0; }
+					if (decumulsCeTour[nom] == null) {
+						decumulsCeTour[nom] = 0;
+					}
 					decumulsCeTour[nom]++;
 				}
-				for (let carac in uniListe[nb]['caracs']) {
-					let bm = uniListe[nb]['caracs'][carac];
+				for (let carac in uniListe[nb].caracs) {
+					let bm = uniListe[nb].caracs[carac];
 					if (carac == 'ATT' || carac == 'DEG' || carac == 'Armure') {
-						let type = uniListe[nb]['type'];
-						if (!effetsCeTour[carac]) { effetsCeTour[carac] = { 'Physique': 0, 'Magique': 0 }; }
+						let type = uniListe[nb].type;
+						if (!effetsCeTour[carac]) {
+							effetsCeTour[carac] = { Physique: 0, Magique: 0 };
+						}
 						let thisBm;
-						if (nom == 'pasdedecumul') { thisBm = bm; }
-						else { thisBm = decumul(bm, decumulsCeTour[nom]); }
+						if (nom == 'pasdedecumul') {
+							thisBm = bm;
+						} else {
+							thisBm = decumul(bm, decumulsCeTour[nom]);
+						}
 						effetsCeTour[carac][type] += thisBm;
-						debugMZ('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', type=' + type + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac][type]);
+						debugMZ(`calcul décumul tour=${tour}, nom=${nom}, carac=${carac}, bm=${bm}, type=${type}, decumulsCeTour[nom]=${decumulsCeTour[nom]} : ${thisBm} => ${effetsCeTour[carac][type]}`);
 					} else {
-						if (!effetsCeTour[carac]) { effetsCeTour[carac] = 0; }
+						if (!effetsCeTour[carac]) {
+							effetsCeTour[carac] = 0;
+						}
 						let thisBm;
-						if (nom == 'pasdedecumul' || carac == 'Fatigue') { thisBm = bm; }
-						else if (carac == 'TOUR') { thisBm = decumul(2 * bm, decumulsCeTour[nom]) / 2; } // les durees se comptent en demi-minutes dans MH
-						else { thisBm = decumul(bm, decumulsCeTour[nom]); }
+						if (nom == 'pasdedecumul' || carac == 'Fatigue') {
+							thisBm = bm;
+						} else if (carac == 'TOUR') {
+							thisBm = decumul(2 * bm, decumulsCeTour[nom]) / 2;
+						} // les durees se comptent en demi-minutes dans MH
+						else {
+							thisBm = decumul(bm, decumulsCeTour[nom]);
+						}
 						effetsCeTour[carac] += thisBm;
-						debugMZ('calcul décumul tour=' + tour + ', nom=' + nom + ', carac=' + carac + ', bm=' + bm + ', decumulsCeTour[nom]=' + decumulsCeTour[nom] + ' : ' + thisBm + ' => ' + effetsCeTour[carac]);
+						debugMZ(`calcul décumul tour=${tour}, nom=${nom}, carac=${carac}, bm=${bm}, decumulsCeTour[nom]=${decumulsCeTour[nom]} : ${thisBm} => ${effetsCeTour[carac]}`);
 					}
 				}	// fin boucle sur les caractéristiques
 			}	// fin boucle sur les bonus/malus
@@ -4534,22 +5012,22 @@ try {
 
 			for (let j = 0; j < caracGerees.length; j++) {
 				let carac = caracGerees[j], str = '';
-				debugMZ('MZ traiteMalus, j=' + j + ', carac=' + carac + ', effetsCeTour=' + effetsCeTour[carac] + ', toursGeres=' + toursGeres[i]);
+				debugMZ(`MZ traiteMalus, j=${j}, carac=${carac}, effetsCeTour=${effetsCeTour[carac]}, toursGeres=${toursGeres[i]}`);
 
 				switch (carac) {
 					case 'ATT':
 					case 'DEG':
 					case 'Armure':
-						let phy = effetsCeTour[carac]['Physique'];
-						let mag = effetsCeTour[carac]['Magique'];
-						texteD += (phy || mag) ? ' | ' + carac + ' : ' + aff(phy) + '\\' + aff(mag) : '';
-						texteS += (phy + mag) ? ' | ' + carac + ' : ' + aff(phy + mag) : '';
+						let phy = effetsCeTour[carac].Physique;
+						let mag = effetsCeTour[carac].Magique;
+						texteD = texteD + (phy || mag ? ` | ${carac} : ${aff(phy)}\\${aff(mag)}` : '');
+						texteS = texteS + (phy + mag ? ` | ${carac} : ${aff(phy + mag)}` : '');
 						break;
 					case 'TOUR':
-						str = effetsCeTour[carac] ? ' | TOUR : ' + aff(effetsCeTour[carac]) + ' min' : '';
+						str = effetsCeTour[carac] ? ` | TOUR : ${aff(effetsCeTour[carac])} min` : '';
 						break;
 					case 'Fatigue':
-						strfat += toursGeres[i] + '-' + effetsCeTour[carac] + ';';
+						strfat = `${strfat}${toursGeres[i]}-${effetsCeTour[carac]};`;
 					case 'PV':
 					case 'PVMax':
 					case 'ESQ':
@@ -4557,33 +5035,41 @@ try {
 					case 'Vue':
 					case 'VUE':
 					case 'Voir le Caché':
-						str = effetsCeTour[carac] ? ' | ' + carac + ' : ' + aff(effetsCeTour[carac]) : '';
+						str = effetsCeTour[carac] ? ` | ${carac} : ${aff(effetsCeTour[carac])}` : '';
 						break;
 					default:
-						str = effetsCeTour[carac] ? ' | ' + carac + ' : ' + aff(effetsCeTour[carac]) + ' %' : '';
+						str = effetsCeTour[carac] ? ` | ${carac} : ${aff(effetsCeTour[carac])} %` : '';
 				}
 				if (str) {
-					texteD += str;
-					texteS += str;
+					texteD = texteD + str;
+					texteS = texteS + str;
 				}
-				debugMZ('MZ traiteMalus, j=' + j + ', strfat=' + strfat);
+				debugMZ(`MZ traiteMalus, j=${j}, strfat=${strfat}`);
 			}	// fin boucle sur les caractéristiques
 
 			/* Affichage */
 			// Si rien à afficher on passe
-			if (!texteD) { continue; }
+			if (!texteD) {
+				continue;
+			}
 			// Si BMM+BMP=0
 			texteS = texteS ? texteS.substring(3) : 'Aucun effet';
 			let tr = insertTr(tfoot.childNodes[2], 'mh_tdpage BilanDetail');
-			if (MY_getValue('BMDETAIL') == 'false') { tr.style.display = 'none'; }
+			if (MY_getValue('BMDETAIL') == 'false') {
+				tr.style.display = 'none';
+			}
 			let td = appendTdText(tr, texteD.substring(3));
 			td.colSpan = 4 - nbHidden;
-			let txttour = toursGeres[i] + ' Tour';
-			if (toursGeres[i] > 1) { txttour += 's'; }
+			let txttour = `${toursGeres[i]} Tour`;
+			if (toursGeres[i] > 1) {
+				txttour = `${txttour}s`;
+			}
 			appendTdText(tr, txttour);
 
 			tr = insertTr(tfoot.childNodes[2], 'mh_tdpage BilanSomme');
-			if (MY_getValue('BMDETAIL') != 'false') { tr.style.display = 'none'; }
+			if (MY_getValue('BMDETAIL') != 'false') {
+				tr.style.display = 'none';
+			}
 			td = appendTdText(tr, texteS);
 			td.colSpan = 4 - nbHidden;
 			appendTdText(tr, txttour);
@@ -4594,7 +5080,9 @@ try {
 		tfoot.onclick = toggleDetailsBM;
 
 		/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
-		if (strfat) { MY_setValue(numTroll + '.bm.fatigue', strfat); }
+		if (strfat) {
+			MY_setValue(`${numTroll}.bm.fatigue`, strfat);
+		}
 	}
 
 	function do_malus() {
@@ -4603,11 +5091,12 @@ try {
 			traiteMalus();
 			setDisplayBM();
 			displayScriptTime();
+		} catch (e) {
+			avertissement(e);
 		}
-		catch (e) { avertissement(e); };
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -4638,7 +5127,9 @@ try {
 			logMZ(traceStack(e, 'mouches'));
 			return;
 		}
-		if (mainTab === void (0) || tr_mouches.snapshotLength == 0) { return; }
+		if (mainTab === void 0 || tr_mouches.snapshotLength == 0) {
+			return;
+		}
 
 		setDisplayMouches();
 		traiteMouches();
@@ -4686,7 +5177,7 @@ try {
 	function traiteMouches() {
 		// Traitement complet: présence et effets des mouches
 		let listeTypes = {}, effetsActifs = {};
-		debugMZ('traiteMouches, tr_mouches.length=' + tr_mouches.snapshotLength);
+		debugMZ(`traiteMouches, tr_mouches.length=${tr_mouches.snapshotLength}`);
 
 		for (let i = 0; i < tr_mouches.snapshotLength; i++) {
 			let tr = tr_mouches.snapshotItem(i);
@@ -4696,7 +5187,9 @@ try {
 				'./img', tr.cells[6], null, 9, null
 			).singleNodeValue.alt;
 			// debugMZ('traiteMouches, i=' + i + ', etat=' + etat + ', type=' + trim(tr.cells[3].textContent));
-			if (etat != 'La Mouche est là') { continue; }
+			if (etat != 'La Mouche est là') {
+				continue;
+			}
 			// Extraction du type de mouche
 			let type = trim(tr.cells[3].textContent);
 			if (!listeTypes[type]) {
@@ -4708,13 +5201,15 @@ try {
 
 			// La mouche a-t-elle un effet?
 			let effet = trim(tr.cells[2].textContent);
-			if (etat != 'La Mouche est là' || !effet) { continue; }
+			if (etat != 'La Mouche est là' || !effet) {
+				continue;
+			}
 			// Si oui, extraction des effets (multiples pour pogées)
 			let caracs = effet.split(' | ');
 			for (let j = 0; j < caracs.length; j++) {
 				let carac = caracs[j].substring(0, caracs[j].indexOf(':') - 1);
 				let valeur = Number(caracs[j].match(/-?\d+/)[0]);
-				if (effetsActifs[carac] === void (0)) {
+				if (effetsActifs[carac] === void 0) {
 					effetsActifs[carac] = valeur;
 				} else {
 					effetsActifs[carac] += valeur;
@@ -4734,17 +5229,21 @@ try {
 		let effetsTheoriques = nodeTotal.nodeValue.split('|');
 		let texte = ' ';
 		for (let i = 0; i < effetsTheoriques.length; i++) {
-			if (texte.length > 1) { texte += ' | '; }
+			if (texte.length > 1) {
+				texte = `${texte} | `;
+			}
 			let carac = trim(
 				effetsTheoriques[i].substring(0, effetsTheoriques[i].indexOf(':') - 1)
 			);
 			let valeur = effetsTheoriques[i].match(/-?\d+/)[0];
-			if (effetsActifs[carac] !== void (0) && effetsActifs[carac] == valeur) {
-				texte += effetsTheoriques[i];
+			if (effetsActifs[carac] !== void 0 && effetsActifs[carac] == valeur) {
+				texte = texte + effetsTheoriques[i];
 			} else {
-				texte += '<b>' + carac + ' : ' + aff(effetsActifs[carac]);
-				if (carac == 'TOUR') { texte += ' min'; }
-				texte += '</b>';
+				texte = `${texte}<b>${carac} : ${aff(effetsActifs[carac])}`;
+				if (carac == 'TOUR') {
+					texte = `${texte} min`;
+				}
+				texte = `${texte}</b>`;
 			}
 		}
 		let span = document.createElement('span');
@@ -4758,17 +5257,19 @@ try {
 			// let mots = node.nodeValue.split(' ');
 			// let type = mots.pop();
 			let tMatch = node.nodeValue.match(/([0-9]+) .*à *([^ ]+)/);
-			if (!tMatch) { continue; }
+			if (!tMatch) {
+				continue;
+			}
 			let nMouche = tMatch[1];
 			let type = tMatch[2];
-			debugMZ('traiteMouches, texte=' + node.nodeValue + ', tMatch=' + JSON.stringify(tMatch) + ', type=' + type);
+			debugMZ(`traiteMouches, texte=${node.nodeValue}, tMatch=${JSON.stringify(tMatch)}, type=${type}`);
 			if (!listeTypes[type]) {
-				node.nodeValue += ' (0 présente)';
+				node.nodeValue = `${node.nodeValue} (0 présente)`;
 			} else if (nMouche != listeTypes[type]) {
 				if (listeTypes[type] == 1) {
-					node.nodeValue += ' (1 présente)';
+					node.nodeValue = `${node.nodeValue} (1 présente)`;
 				} else {
-					node.nodeValue += ' (' + listeTypes[type] + ' présentes)';
+					node.nodeValue = `${node.nodeValue} (${listeTypes[type]} présentes)`;
 				}
 			}
 		}
@@ -4780,7 +5281,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -4813,8 +5314,8 @@ try {
 	function showPopupEquipgowap(evt) {
 		let texte = this.getAttribute("texteinfo");
 		popup.innerHTML = texte;
-		popup.style.left = evt.pageX + 15 + 'px';
-		popup.style.top = evt.pageY + 'px';
+		popup.style.left = `${evt.pageX + 15}px`;
+		popup.style.top = `${evt.pageY}px`;
 		popup.style.visibility = "visible";
 	}
 
@@ -4853,28 +5354,33 @@ try {
 			// let id_gowap = currentURL.substring(currentURL.indexOf("?ai_IdFollower=") + 15) * 1;
 			// insertButtonComboDB(tbody, 'gowap', id_gowap,'mh_tdpage_fo');
 			// if (MY_getValue("NOINFOEM") != "true") { insertEMInfos(tbody); }
-			if (MY_getValue(numTroll + ".enchantement.liste") && MY_getValue(numTroll + ".enchantement.liste") != "") {
+			if (MY_getValue(`${numTroll}.enchantement.liste`) && MY_getValue(`${numTroll}.enchantement.liste`) != "") {
 				insertEnchantInfos(tbody);
 			}
 		}
 	}
 
 	function treateChampi() {
-		if (MY_getValue("NOINFOEM") == "true") { return false; }
+		if (MY_getValue("NOINFOEM") == "true") {
+			return false;
+		}
 		let nodes = document.evaluate(
 			"//img[@alt = 'Champignon - Spécial']/../a/text()", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
 		);
-		if (nodes.snapshotLength == 0) { return false; }
+		if (nodes.snapshotLength == 0) {
+			return false;
+		}
 
 		for (let i = 0; i < nodes.snapshotLength; i++) {
 			let node = nodes.snapshotItem(i);
 			let texte = trim(node.nodeValue.replace(/\240/g, " "));
-			if (texte.indexOf("*") != -1) { texte = texte.substring(0, texte.lastIndexOf(" ")); }
+			if (texte.indexOf("*") != -1) {
+				texte = texte.substring(0, texte.lastIndexOf(" "));
+			}
 			let nomChampi = texte.substring(0, texte.lastIndexOf(" "));
 			if (moisChampi[nomChampi]) {
-				appendText(node.parentNode.parentNode, " [Mois " + moisChampi[nomChampi] + "]");
+				appendText(node.parentNode.parentNode, ` [Mois ${moisChampi[nomChampi]}]`);
 			}
-
 		}
 	}
 
@@ -4883,7 +5389,7 @@ try {
 
 		treateGowaps();
 		treateChampi();
-		if (MY_getValue(numTroll + ".enchantement.liste") && MY_getValue(numTroll + ".enchantement.liste") != "") {
+		if (MY_getValue(`${numTroll}.enchantement.liste`) && MY_getValue(`${numTroll}.enchantement.liste`) != "") {
 			initPopupEquipgowap();
 			computeEnchantementEquipement(createPopupImage, formateTexte);
 		}
@@ -4891,11 +5397,11 @@ try {
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*   This file is part of zoryazilla & mountyzilla, published under GNU License   *
 	*********************************************************************************/
 
-	/** x~x Ordres Gowap ----------------------------------------------- */
+	/** x~x Ordres Gowap --------------------------------------------------- */
 
 	let MZ_analyse_page_ordre_suivant;
 	if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
@@ -4903,8 +5409,8 @@ try {
 		// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
 		// rend un object, par exemple
 		MZ_analyse_page_ordre_suivant = {
-			'result': { ordres: [] },
-			'init': function () {
+			result: { ordres: [] },
+			init: function () {
 				// façon blindée de tester la variable MY_DEBUG
 				debugMZ('start MZ_analyse_page_ordre_suivant.init');
 				try {
@@ -4916,8 +5422,8 @@ try {
 						// debugMZ('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
 						// debugMZ('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
 						let etd = lignes[i].getElementsByTagName('td')[0];
-						if (lignes[i].className == 'mh_tdtitre_fo'
-							|| (etd && etd.className == 'mh_tdtitre_fo')) {
+						if (lignes[i].className == 'mh_tdtitre_fo' ||
+							etd && etd.className == 'mh_tdtitre_fo') {
 							let tds = lignes[i].getElementsByTagName('div');
 							for (let j = 0; j < tds.length; j++) {
 								// debugMZ('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
@@ -4940,7 +5446,7 @@ try {
 							}
 						} else if (lignes[i].className == 'mh_tdpage_fo') {
 							if (etd !== undefined) {	// undefined dans le cas des Golems
-								debugMZ('MZ_analyse_page_ordre_suivant td[0]=' + etd.textContent);
+								debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${etd.textContent}`);
 								let tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
 								if (tabmatch) {
 									this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
@@ -4955,9 +5461,9 @@ try {
 							}
 						}
 					}
-					debugMZ('fin MZ_analyse_page_ordre_suivant ' + JSON.stringify(this.result));
+					debugMZ(`fin MZ_analyse_page_ordre_suivant ${JSON.stringify(this.result)}`);
 				} catch (e) {
-					logMZ('Exception dans MZ_analyse_page_ordre_suivant.init ' + e);
+					logMZ(`Exception dans MZ_analyse_page_ordre_suivant.init ${e}`);
 				}
 			}
 		};
@@ -4990,11 +5496,19 @@ try {
 				},
 				oMZ_getTrTresorSuivant: function (eTrTitre) {
 					let eTr2 = eTrTitre.nextElementSibling;
-					if (!eTr2) { return; }
-					if (eTr2.tagName != 'TR') { return; }
+					if (!eTr2) {
+						return;
+					}
+					if (eTr2.tagName != 'TR') {
+						return;
+					}
 					let eTd = eTr2.cells[0];
-					if (!eTd) { return; }
-					if (!eTd.classList.contains('mh_tdpage')) { return; }
+					if (!eTd) {
+						return;
+					}
+					if (!eTd.classList.contains('mh_tdpage')) {
+						return;
+					}
 					return eTr2;
 				},
 				oMZ_TrSuivant: function (eTr) {	// ceci est un objet
@@ -5011,7 +5525,9 @@ try {
 						let sTextDiv = eDiv.textContent.trim();
 						if (eDiv.classList.contains('mh_titre3')) {
 							this.nom = sTextDiv;
-							if (this.loc) { break; }
+							if (this.loc) {
+								break;
+							}
 						}
 						let m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
 						if (m && m.length >= 5) {
@@ -5019,7 +5535,9 @@ try {
 							this.loc.x = parseInt(m[2], 10);
 							this.loc.y = parseInt(m[3], 10);
 							this.loc.n = parseInt(m[4], 10);
-							if (this.nom) { break; }
+							if (this.nom) {
+								break;
+							}
 						}
 					}
 
@@ -5042,7 +5560,9 @@ try {
 					// lecture des infos des trésors et valorisation de this.categories
 					this.initTresors = function () {
 						let eTd = this.eTrTr.cells[0];
-						if (!eTd) { return; }
+						if (!eTd) {
+							return;
+						}
 						let eContenu = eTd.children[0];
 						if (!eContenu || eContenu.tagName == "DIV") {	// no equipement
 							this.bVide = true;
@@ -5053,20 +5573,24 @@ try {
 						for (let i = 0, l = eTd.children.length; i < l; i++) {
 							let eTable = eTd.children[i];
 							let sTag = eTable.tagName;
-							if (sTag == 'SCRIPT') { continue; }	// c'est le cas pour le premier suivant qui porte du matos
-							if (sTag == 'STYLE') { continue; }	// ça pourrait bien se produire aussi...
+							if (sTag == 'SCRIPT') {
+								continue;
+							}	// c'est le cas pour le premier suivant qui porte du matos
+							if (sTag == 'STYLE') {
+								continue;
+							}	// ça pourrait bien se produire aussi...
 							if (sTag != 'TABLE') {	// ce n'est pas normal
-								logMZ('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément de type non attendu : ' + sTag);
+								logMZ(`oMZ_TrSuivant.initTresors id=${this.oJSON.id}, élément de type non attendu : ${sTag}`);
 								continue;
 							}
 							// le suivant doit être une DIV
 							if (++i >= l) {
-								logMZ('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ", pas d'élément suivant");
+								logMZ(`oMZ_TrSuivant.initTresors id=${this.oJSON.id}, pas d'élément suivant`);
 								continue;
 							}
 							let eDiv = eTd.children[i];
 							if (eDiv.tagName != 'DIV') {
-								logMZ('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément suivant de type non attendu : ' + eDiv.tagName);
+								logMZ(`oMZ_TrSuivant.initTresors id=${this.oJSON.id}, élément suivant de type non attendu : ${eDiv.tagName}`);
 								continue;
 							}
 							let oCategorie = new this.oMZ_categorieSuivant(this, eTable, eDiv);
@@ -5087,11 +5611,13 @@ try {
 								this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
 							}
 						}
-						if (this.oJSON) { break; }
+						if (this.oJSON) {
+							break;
+						}
 					}
 				},
 				autoTest: function () {
-					logMZ('MZ_analyse_page_suivants.autoTest : nb suivants=' + this.suivants.length);
+					logMZ(`MZ_analyse_page_suivants.autoTest : nb suivants=${this.suivants.length}`);
 					for (let oSuivant of this.suivants) {
 						logMZ(JSON.stringify(oSuivant));
 					}
@@ -5122,22 +5648,33 @@ try {
 		eCarte.style.marginTop = '2px';
 		let footer = document.getElementById('footer1');
 		// Lieu_Teleport.php n'a pas de footer1 :(
-		if (!footer) { footer = document.getElementById('footer2'); }
-		if (footer) { footer.parentNode.insertBefore(eCarte, footer); }
-		else { document.body.appendChild(eCarte); }
+		if (!footer) {
+			footer = document.getElementById('footer2');
+		}
+		if (footer) {
+			footer.parentNode.insertBefore(eCarte, footer);
+		} else {
+			document.body.appendChild(eCarte);
+		}
 	}
 
 	function MZ_setCarteTousGogoHTML5() {
 		// partie récupérée de "trajet gowaps" de feldspath et Vapulabehemot
 		let ligne, tabForm = document.getElementsByTagName("form");
-		if (tabForm.length < 0) { ligne = [0].getElementsByTagName("tbody")[0].childNodes; }	// ancienne version
-		else { ligne = document.getElementById("mhPlay").getElementsByTagName("tbody")[0].childNodes; }
+		if (tabForm.length < 0) {
+			ligne = [0].getElementsByTagName("tbody")[0].childNodes;
+		}	// ancienne version
+		else {
+			ligne = document.getElementById("mhPlay").getElementsByTagName("tbody")[0].childNodes;
+		}
 		let suivants = [];
 		for (let i = 0; i < ligne.length; i++) {
-			if (ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) { continue; }
+			if (ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) {
+				continue;
+			}
 			let cas = ligne[i].getElementsByTagName("td")[0];
-			//if (cas.className == "mh_tdtitre") {
-			if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
+			// if (cas.className == "mh_tdtitre") {
+			if (cas.className == "mh_tdtitre_fo") { // correction par Vapulabehemot (82169) le 10/07/2015
 				let oGogo = {};
 				oGogo.id = parseInt(cas.getElementsByTagName('a')[0].href.split("=")[1]);
 				oGogo.nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
@@ -5148,7 +5685,9 @@ try {
 				suivants.push([oGogo]);	// un suivant ayant un trajet d'une seule étape
 			}
 		}
-		if (suivants.length == 0) { return; }
+		if (suivants.length == 0) {
+			return;
+		}
 		MZ_showCarteBottom(suivants);	// L'arg est un tableau de tableaux d'objets
 	}
 
@@ -5164,15 +5703,20 @@ try {
 			let gliss = new glissiere_MZ('test', 'Test glissière', 'xxx', false, 100, 50, 250);
 			let footer = document.getElementById('footer1');
 			footer.parentNode.insertBefore(gliss.getElt(), footer);
-		} catch (e) { logMZ(traceStack(e, 'testeGlissiere')); };
+		} catch (e) {
+			logMZ(traceStack(e, 'testeGlissiere'));
+		}
 	}
 
 	function MZ_testsUnitairesCalculIntermediaire(x0, y0, x1, y1) {
 		if (x0 !== undefined) {
 			// ouais, récursif une fois
 			let PtInterm = pointIntermediaireMonstre2D({ x: x0, y: y0 }, { x: x1, y: y1 });
-			if (PtInterm === undefined) { logMZ('pt interm(' + x0 + ',' + y0 + ')(' + x1 + ',' + y1 + ') => rien'); }
-			else { logMZ('pt interm(' + x0 + ',' + y0 + ')(' + x1 + ',' + y1 + ') => (' + PtInterm.x + ',' + PtInterm.y + ')'); }
+			if (PtInterm === undefined) {
+				logMZ(`pt interm(${x0},${y0})(${x1},${y1}) => rien`);
+			} else {
+				logMZ(`pt interm(${x0},${y0})(${x1},${y1}) => (${PtInterm.x},${PtInterm.y})`);
+			}
 			return;
 		}
 		// MZ_testsUnitairesCalculIntermediaire(10, 10, 100, 100);
@@ -5201,7 +5745,9 @@ try {
 	}
 
 	function do_listegowap() {
-		if (MY_getValue('MZ_upgradeVueSuivants') !== undefined) { MZ_upgradeVueSuivants(); }
+		if (MY_getValue('MZ_upgradeVueSuivants') !== undefined) {
+			MZ_upgradeVueSuivants();
+		}
 		MZ_setCarteTousGogoHTML5();
 	}
 
@@ -5229,12 +5775,22 @@ try {
 				if (oSuivant.oJSON.ordres) {
 					for (let oOrdre of oSuivant.oJSON.ordres) {
 						tabTxtOrdre.push(oOrdre.ordre);
-						if (nMaxOrdres > 0 && nDisplayOrdre >= (nMaxOrdres - 1)) { break; }
+						if (nMaxOrdres > 0 && nDisplayOrdre >= nMaxOrdres - 1) {
+							break;
+						}
 						if (nMaxOrdres < 0) {
-							if (oOrdre.ordre.indexOf('rrêt') >= 0) { break; }
-							if (oOrdre.ordre.indexOf('ller chercher') >= 0) { lastSecouerAllerChercher = nDisplayOrdre; }
-							if (oOrdre.ordre.indexOf('secouer') >= 0) { lastSecouerAllerChercher = nDisplayOrdre; }
-							if (oOrdre.ordre.indexOf('uivre') >= 0) { break; }
+							if (oOrdre.ordre.indexOf('rrêt') >= 0) {
+								break;
+							}
+							if (oOrdre.ordre.indexOf('ller chercher') >= 0) {
+								lastSecouerAllerChercher = nDisplayOrdre;
+							}
+							if (oOrdre.ordre.indexOf('secouer') >= 0) {
+								lastSecouerAllerChercher = nDisplayOrdre;
+							}
+							if (oOrdre.ordre.indexOf('uivre') >= 0) {
+								break;
+							}
 						}
 						nDisplayOrdre++;
 					}
@@ -5243,26 +5799,26 @@ try {
 					tabTxtOrdre = tabTxtOrdre.slice(0, lastSecouerAllerChercher + 1);
 				}
 				let eOuterDiv = document.createElement('div');
-				eOuterDiv.id = 'MZ_suiv_outer_' + oSuivant.oJSON.id;
+				eOuterDiv.id = `MZ_suiv_outer_${oSuivant.oJSON.id}`;
 				eOuterDiv.style.width = "100%";
 				eOuterDiv.style.fontSize = '12px';
 				eOuterDiv.style.display = 'inline-block';
 
 				let eDLA = document.createElement('div');
-				eDLA.id = 'MZ_suiv_dla_' + oSuivant.oJSON.id;
+				eDLA.id = `MZ_suiv_dla_${oSuivant.oJSON.id}`;
 				eDLA.style.whiteSpace = 'nowrap';
 				let d = new Date(oSuivant.oJSON.dla);
-				eDLA.appendChild(document.createTextNode('DLA : ' + MZ_formatDateMS(d, false)));
+				eDLA.appendChild(document.createTextNode(`DLA : ${MZ_formatDateMS(d, false)}`));
 				eDLA.style.display = 'inline-block';
 				eOuterDiv.appendChild(eDLA);
 
 				if (tabTxtOrdre.length > 0) {
 					let eA = document.createElement('a');
-					eA.id = 'MZ_suiv_ordres_' + oSuivant.oJSON.id;
+					eA.id = `MZ_suiv_ordres_${oSuivant.oJSON.id}`;
 					eA.style.display = 'inline-block';
 					eA.style.cssFloat = 'right';
 					eA.style.whiteSpace = 'nowrap';
-					eA.href = '/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=' + oSuivant.oJSON.id;
+					eA.href = `/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=${oSuivant.oJSON.id}`;
 					eA.title = 'Accès direct aux ordres';
 					eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
 					eOuterDiv.appendChild(eA);
@@ -5272,16 +5828,24 @@ try {
 
 				oSuivant.eTrTi.cells[0].appendChild(eOuterDiv);
 			}
-			if (!bVueCompressee && !bTresorUnique) { continue; }
-			oSuivant.initTresors();
-			if (oSuivant.bVide) {	// no equipement
-				if (bVueCompressee) { oSuivant.eTrTr.style.display = 'none'; }
+			if (!bVueCompressee && !bTresorUnique) {
 				continue;
 			}
-			if (!bTresorUnique) { continue; }	// la suite ne concerne que l'affichage des trésors uniques
+			oSuivant.initTresors();
+			if (oSuivant.bVide) {	// no equipement
+				if (bVueCompressee) {
+					oSuivant.eTrTr.style.display = 'none';
+				}
+				continue;
+			}
+			if (!bTresorUnique) {
+				continue;
+			}	// la suite ne concerne que l'affichage des trésors uniques
 
 			for (let oCategorie of oSuivant.categories) {
-				if (oCategorie.eTableTresors.rows.length != 1) { continue; }
+				if (oCategorie.eTableTresors.rows.length != 1) {
+					continue;
+				}
 				oCategorie.eTableCategorie.style.display = 'none';
 				oCategorie.eDivTresors.style.display = '';
 				// copy weight from category to single trésor
@@ -5292,7 +5856,7 @@ try {
 					e.innerHTML = s;
 					oCategorie.eTableTresors.rows[0].cells[3].style.whiteSpace = 'nowrap';
 				} catch (e) {
-					logMZ('Erreur dans copie poids ' + e);
+					logMZ(`Erreur dans copie poids ${e}`);
 				}
 			}
 		}
@@ -5309,7 +5873,7 @@ try {
 		MZ_setCarteTP();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -5327,27 +5891,26 @@ try {
 	*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 	*******************************************************************************/
 
-	/** x~x Infomonstre ----------------------------------------------- */
+	/** x~x Infomonstre ---------------------------------------------------- */
 
 	// DEBUG
-	var nomMonstre = '';
-	var idMonstre = -1;
-	//var tbody;
-	// var popup; // NOTE Linter : already defined
+	let nomMonstre = '', idMonstre = -1;
+	// let tbody;
+	// let popup; // NOTE Linter : already defined
 
 	function traiteMonstre() {
+		let texte;
 		try {
-			var nodeTitre = document.evaluate(
-				"//div[@class='titre2' and contains(text(),'(')]",
-				document, null, 9, null
+			let nodeTitre = document.evaluate(
+				"//div[@class='titre2' and contains(text(),'(')]", document, null, 9, null
 			).singleNodeValue;
 			if (nodeTitre != null) {
-				var texte = nodeTitre.firstChild.nodeValue;
+				texte = nodeTitre.firstChild.nodeValue;
 			} else {
 				tabEventDescription = document.getElementsByClassName('mh_monstres');
 				if (tabEventDescription[0] != undefined) {
 					let eltNom = tabEventDescription[0];
-					var texte = eltNom.textContent;
+					texte = eltNom.textContent;
 					// logMZ('traiteMonstre, nom sans id=' + texte);
 					// find next textElement
 					let eCurrent = eltNom;
@@ -5359,8 +5922,10 @@ try {
 							continue;
 						}
 						// logMZ('traiteMonstre, eSibling.nodeName=' + eSibling.nodeName + ', texte=' + eSibling.textContent);
-						if (eSibling.nodeType != 3) continue;
-						texte += ' ' + eSibling.textContent.replace(/[ .]/g, '');
+						if (eSibling.nodeType != 3) {
+							continue;
+						}
+						texte = `${texte} ${eSibling.textContent.replace(/[ .]/g, '')}`;
 						break;
 					}
 				} else {
@@ -5379,41 +5944,43 @@ try {
 			nomMonstre = nomMonstre.slice(0, nomMonstre.indexOf(']') + 1);
 		}
 		idMonstre = texte.match(/[^\]]\].*\((\d+)\)/)[1];
-		var tReq = [{ 'index': 1, 'id': +idMonstre, 'nom': nomMonstre }];	// "+" pour forcer du numérique
+		let tReq = [{ index: 1, id: Number(idMonstre), nom: nomMonstre }];	// "+" pour forcer du numérique
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: URL_MZgetCaracMonstre,
-			headers: {
-				'Content-type': 'application/x-www-form-urlencoded'
-			},
-			data: 'l=' + JSON.stringify(tReq),
+			headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+			data: `l=${JSON.stringify(tReq)}`,
 			trace: 'demande niveaux monstres V2, MonsterView',
 			onload: function (responseDetails) {
 				try {
 					// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-					if (responseDetails.status == 0) return;
+					if (responseDetails.status == 0) {
+						return;
+					}
 					// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-					var texte = responseDetails.responseText;
-					var infosRet = JSON.parse(texte);
-					if (infosRet.length == 0) return;
-					var info = infosRet[0];
+					let texte = responseDetails.responseText;
+					let infosRet = JSON.parse(texte);
+					if (infosRet.length == 0) {
+						return;
+					}
+					let info = infosRet[0];
 					// QUESTION Quelle est l'utilité de ceci?
 					// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
 					MZ_EtatCdMs.listeCDM[idMonstre] = info;
+					let nodeInsert;
 					try {
-						var nodeInsert = document.evaluate(
-							"//div[@class = 'titre3']",
-							document, null, 9, null
+						nodeInsert = document.evaluate(
+							"//div[@class = 'titre3']", document, null, 9, null
 						).singleNodeValue;
 					} catch (e) {
 						logMZ(traceStack(e, 'recherche node pour info CdM'));
 						return;
 					}
-					var table = createCDMTable(idMonstre, nomMonstre, info);
+					let table = createCDMTable(idMonstre, nomMonstre, info);
 					table.align = 'center';
-					var tbody = table.childNodes[1];
-					var thead = table.childNodes[0];
-					var tdEntete = thead.firstChild.firstChild;
+					let tbody = table.childNodes[1];
+					let thead = table.childNodes[0];
+					let tdEntete = thead.firstChild.firstChild;
 					tdEntete.onclick = toggleTableau;
 					tdEntete.style.cursor = 'pointer';
 					thead.firstChild.style = 'mh_tdpage';
@@ -5428,7 +5995,7 @@ try {
 	}
 
 	function toggleTableau() {	// click sur un td de thead
-		var tbody = this.parentNode.parentNode.parentNode.childNodes[1];
+		let tbody = this.parentNode.parentNode.parentNode.childNodes[1];
 		tbody.style.display = tbody.style.display == 'none' ? '' : 'none';
 	}
 
@@ -5439,25 +6006,20 @@ try {
 			traiteMonstre();
 		} catch (e) {
 			logMZ(traceStack(e, 'do_infomonstre'));
-			avertissement('Erreur infoMonstre:\n' + e);
+			avertissement(`Erreur do_infomonstre() :\n${e}`);
 		}
 		displayScriptTime();
 	}
 
-	/***
-	 *** SCIZ
-	 ***/
+	/** x~x SCIZ ----------------------------------------------------------- */
 
-	var scizSetup = {
-		// Maximum interval (seconds) for matching some events
-		eventsMaxMatchingInterval: 5000,
-		// Maximum number of treasures to enhanced in the view
-		viewMaxEnhancedTreasure: 100,
-		// Maximum number of treasures to enhanced in the view
-		viewMaxEnhancedMushroom: 100
+	let scizSetup = {
+		eventsMaxMatchingInterval: 5000, // Maximum interval (seconds) for matching some events
+		viewMaxEnhancedTreasure: 100, // Maximum number of treasures to enhanced in the view
+		viewMaxEnhancedMushroom: 100 // Maximum number of treasures to enhanced in the view
 	};
 
-	var scizGlobal = {
+	let scizGlobal = {
 		events: [],
 		trolls: [],
 		treasures: [],
@@ -5469,7 +6031,7 @@ try {
 
 	function scizAddCSS() {
 		// SCIZ style
-		var scizStyle = `
+		let scizStyle = `
 		.sciz-progress-bar-wrapper {
 			width: 75px;
 			margin-right: 5px;
@@ -5495,9 +6057,9 @@ try {
 			border-left: 1px solid black;
 			white-space: pre-wrap;
 		}
-	`;
+		`;
 		// Actually add the SCIZ style
-		var scizStyleSheet = document.createElement('style');
+		let scizStyleSheet = document.createElement('style');
 		scizStyleSheet.type = 'text/css';
 		if (scizStyleSheet.styleSheet) {
 			scizStyleSheet.styleSheet.cssText = scizStyle;
@@ -5508,91 +6070,99 @@ try {
 	}
 
 	function scizCreateHoverable(height, display, callbackOnHover) {
-		var img = document.createElement('img');
+		let img = document.createElement('img');
 		img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
 		img.alt = 'SCIZ logo';
-		img.style = 'height: ' + height + 'px; cursor: pointer;';
+		img.style = `height: ${height}px; cursor: pointer;`;
 		img.onmouseover = callbackOnHover;
-		var div = document.createElement('div');
-		div.style = 'text-align: center;display: ' + display;
+		let div = document.createElement('div');
+		div.style = `text-align: center;display: ${display}`;
 		div.appendChild(img);
 		return div;
-	};
+	}
 
 	function scizCreateClickable(height, display, callbackOnClick) {
-		var img = document.createElement('img');
+		let img = document.createElement('img');
 		img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
 		img.alt = 'SCIZ logo';
-		img.style = 'height: ' + height + 'px; cursor: pointer;';
+		img.style = `height: ${height}px; cursor: pointer;`;
 		img.onclick = callbackOnClick;
-		var div = document.createElement('div');
-		div.style = 'text-align: center;display: ' + display;
+		let div = document.createElement('div');
+		div.style = `text-align: center;display: ${display}`;
 		div.appendChild(img);
 		return div;
-	};
+	}
 
 	function scizCreateIcon(height, display, icon) {
-		var img = document.createElement('img');
-		img.src = 'https://www.sciz.fr/static/' + icon;
+		let img = document.createElement('img');
+		img.src = `https://www.sciz.fr/static/${icon}`;
 		img.alt = 'SCIZ icon';
-		img.style = 'height: ' + height + 'px;';
-		var div = document.createElement('div');
-		div.style = 'text-align: center;display: ' + display;
+		img.style = `height: ${height}px;`;
+		let div = document.createElement('div');
+		div.style = `text-align: center;display: ${display}`;
 		div.appendChild(img);
 		return div;
-	};
+	}
 
 	/* SCIZ - View */
 
 	function scizPrettyPrintTroll(t) {
-		var res = '<div style="float:right;margin-right:10px">';
+		let res = '<div style="float:right;margin-right:10px">';
 		// Life progress bar
-		var pbPercent = (t.pdv !== null && t.pdv_max !== null) ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
-		var pbColor = (pbPercent === -1) ? '#424242' : ((pbPercent < 40) ? '#ff5252' : ((pbPercent < 80) ? '#fb8c00' : '#4caf50'));
-		t.pdv_max = (t.pdv_max === null) ? '?' : t.pdv_max;
-		res += '<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ' + pbColor + ';;width: ' + pbPercent + '%;"></span></div></div>';
-		res += '' + t.pdv + ' / ' + t.pdv_max;
-		// DLA
-		res += '<div class="sciz-troll-view-block">DLA ' + t.dla + '</div>';
-		// PA
-		res += '<div class="sciz-troll-view-block"><= ' + t.pa + ' PA</div>';
-		// Fatigue
-		res += '<div class="sciz-troll-view-block">Fatigue ' + ('  ' + t.fatigue).slice(-3) + '</div>';
-		// Concentration
-		res += '<div class="sciz-troll-view-block">Conc ' + (' ' + t.concentration).slice(-2) + '%</div>';
-		res += '</div>';
+		let pbPercent = t.pdv !== null && t.pdv_max !== null ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
+		let pbColor = pbPercent === -1 ? '#424242' : pbPercent < 40 ? '#ff5252' : pbPercent < 80 ? '#fb8c00' : '#4caf50';
+		t.pdv_max = t.pdv_max === null ? '?' : t.pdv_max;
+		res = `${res}<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ${pbColor};;width: ${pbPercent}%;"></span></div></div>`;
+		res = `${res}${t.pdv} / ${t.pdv_max}`;
+		res = `${res}<div class="sciz-troll-view-block">DLA ${t.dla}</div>`; // DLA
+		res = `${res}<div class="sciz-troll-view-block"><= ${t.pa} PA</div>`; // PA
+		res = `${res}<div class="sciz-troll-view-block">Fatigue ${`  ${t.fatigue}`.slice(-3)}</div>`; // Fatigue
+		res = `${res}<div class="sciz-troll-view-block">Conc ${` ${t.concentration}`.slice(-2)}%</div>`; // Concentration
+		res = `${res}</div>`;
 		return res;
 	}
 
 	function scizPrettyPrintTreasure(t) {
-		var res = '';
-		res += /* t.type + ' - ' + */ t.nom;
-		if (t.templates) { res += ' <b>' + t.templates + '</b>' };
-		if (t.mithril) { res += ' <b>en Mithril</b>' };
-		if (t.effet) { res += ' (' + t.effet + ')' };
+		let res = '';
+		res = res + /* t.type + ' - ' + */ t.nom;
+		if (t.templates) {
+			res = `${res} <b>${t.templates}</b>`;
+		}
+		if (t.mithril) {
+			res = `${res} <b>en Mithril</b>`;
+		}
+		if (t.effet) {
+			res = `${res} (${t.effet})`;
+		}
 		return res;
 	}
 
 	function scizPrettyPrintTrap(t) {
-		var res = '<span style="color:#990000">';
-		res += 'Piège à ' + t.type + ' ';
-		if (t.mm) { res += '(MM ' + t.mm + ') ' };
-		if (t.creation_datetime) { res += ' - ' + t.creation_datetime + ' ' };
-		res += '</span>';
+		let res = '<span style="color:#990000">';
+		res = `${res}Piège à ${t.type} `;
+		if (t.mm) {
+			res = `${res}(MM ${t.mm}) `;
+		}
+		if (t.creation_datetime) {
+			res = `${res} - ${t.creation_datetime} `;
+		}
+		res = `${res}</span>`;
 		return res;
 	}
 
 	function scizPrettyPrintMushroom(m) {
-		var res = '';
-		res += m.nom;
-		if (m.qualite) { res += ' <b>' + m.qualite + '</b>' };
+		let res = '';
+		res = res + m.nom;
+		if (m.qualite) {
+			res = `${res} <b>${m.qualite}</b>`;
+		}
 		return res;
 	}
 
 	function scizPrettyPrintPortal(p) {
-		var res = '';
-		var html_nom = '<a href="javascript:EPV(' + p.owner_id + ')" class="mh_trolls_1">' + p.owner_nom + '</a>'
-		res += 'Portail de Téléportaion de ' + html_nom + ' vers X = ' + p.pos_x_dst + ' | Y = ' + p.pos_y_dst + ' | N = ' + p.pos_n_dst;
+		let res = '';
+		let html_nom = `<a href="javascript:EPV(${p.owner_id})" class="mh_trolls_1">${p.owner_nom}</a>`;
+		res = `${res}Portail de Téléportaion de ${html_nom} vers X = ${p.pos_x_dst} | Y = ${p.pos_y_dst} | N = ${p.pos_n_dst}`;
 		return res;
 	}
 
@@ -5600,39 +6170,41 @@ try {
 		scizGlobal.treasures = [];
 
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(numTroll + '.SCIZJWT');
-		if (jwt === null || jwt === undefined || jwt.trim() === '') { return; }
+		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		if (jwt === null || jwt === undefined || jwt.trim() === '') {
+			return;
+		}
 
 		// Add our CSS
 		scizAddCSS();
 
 		// Retrieve position and view
-		var pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
-		var posX = parseInt(pos[1]);
-		var posY = parseInt(pos[2]);
-		var posN = parseInt(pos[3]);
-		var viewH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
-		var viewV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
+		let pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
+		let posX = parseInt(pos[1]);
+		let posY = parseInt(pos[2]);
+		let posN = parseInt(pos[3]);
+		let viewH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
+		let viewV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
 
 		/* SCIZ View - TROLLS */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
 		if (cbx !== '0') {
 			// Retrieve trolls
-			var xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
-			var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+			let xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
+			let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 			while (xPathTroll = xPathTrolls.iterateNext()) {
 				scizGlobal.trolls.push({
-					'id': parseInt(xPathTroll.children[2].innerHTML),
-					'name': xPathTroll.children[3].innerHTML,
-					'sciz_desc': null,
-					'node': xPathTroll,
-					'displayed': false,
-					'caracs': null,
+					id: parseInt(xPathTroll.children[2].innerHTML),
+					name: xPathTroll.children[3].innerHTML,
+					sciz_desc: null,
+					node: xPathTroll,
+					displayed: false,
+					caracs: null,
 				});
 			}
 
 			// Call SCIZ
-			var sciz_url = 'https://www.sciz.fr/api/hook/trolls';
+			let sciz_url = 'https://www.sciz.fr/api/hook/trolls';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -5644,15 +6216,15 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var trolls = JSON.parse(responseDetails.responseText);
+						let trolls = JSON.parse(responseDetails.responseText);
 						if (trolls.trolls.length < 1) {
 							// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 							return;
 						}
 						// Look for trolls to enhanced
-						trolls.trolls.forEach(t => {
+						trolls.trolls.forEach((t) => {
 							for (i = 0; i < scizGlobal.trolls.length; i++) {
-								var found = false;
+								let found = false;
 								if (scizGlobal.trolls[i].id === t.id) {
 									// PrettyPrint
 									scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML + scizPrettyPrintTroll(t);
@@ -5664,39 +6236,41 @@ try {
 							}
 							if (!found) {
 								// Special case of itself
-								var is_self = false;
+								let is_self = false;
 								if (parseInt(numTroll) === t.id) {
 									is_self = true;
 									t.pos_x = posX;
 									t.pos_y = posY;
 									t.pos_n = posN;
 									// Don't display the user itself if he does not want to
-									cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER');
+									cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`);
 									if (cbx === '0') {
 										return;
 									}
 								}
 								// Find the right index
-								var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
-								var xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+								let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+								let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 								while (xPathTroll = xPathTrolls.iterateNext()) {
-									if (is_self) break;
+									if (is_self) {
+										break;
+									}
 									if (parseInt(xPathTroll.children[0].innerHTML) > distance) {
 										break;
 									}
 								}
 								// Create the troll
-								var template = document.createElement('template');
-								var html_nom = '<a href="javascript:EPV(' + t.id + ')" class="mh_trolls_1">' + t.nom + '</a>';
+								let template = document.createElement('template');
+								let html_nom = `<a href="javascript:EPV(${t.id})" class="mh_trolls_1">${t.nom}</a>`;
 								if (!is_self) {
-									html_nom = html_nom + ' (HORS VUE)';
+									html_nom = `${html_nom} (HORS VUE)`;
 								}
-								var html_guilde = '<a href="javascript:EAV(' + t.guilde_id + ',750,550)" class="mh_links">' + t.guilde_nom + '</a>';
-								template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td title="">' + html_nom + '</td><td>' + html_guilde + '</td><td>' + t.niv + '</td><td>' + t.race + '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
-								var troll = template.content.firstChild;
+								let html_guilde = `<a href="javascript:EAV(${t.guilde_id},750,550)" class="mh_links">${t.guilde_nom}</a>`;
+								template.innerHTML = `<tr class="mh_tdpage"><td>${distance}</td><td></td><td>${t.id}</td><td title="">${html_nom}</td><td>${html_guilde}</td><td>${t.niv}</td><td>${t.race}</td><td>${t.pos_x}</td><td>${t.pos_y}</td><td>${t.pos_n}</td></tr>`;
+								let troll = template.content.firstChild;
 								// Add the troll
 								scizGlobal.trolls.push({
-									'id': t.id, 'name': html_nom, 'sciz_desc': html_nom + scizPrettyPrintTroll(t), 'node': troll, 'displayed': false, 'caracs': t.caracs
+									id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), node: troll, displayed: false, caracs: t.caracs
 								});
 								if (xPathTroll !== null) {
 									xPathTroll.parentNode.insertBefore(troll, xPathTroll);
@@ -5716,22 +6290,24 @@ try {
 		}
 
 		/* SCIZ View - TREASURES */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`);
 		if (cbx !== '0') {
 			// Retrieve treasures
-			var ids = [];
-			var xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-			var xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+			let ids = [];
+			let xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+			let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
 			while (xPathTreasure = xPathTreasures.iterateNext()) {
 				scizGlobal.treasures.push({
-					'id': parseInt(xPathTreasure.children[2].innerHTML),
-					'type': xPathTreasure.children[3].innerHTML,
-					'sciz_desc': null,
-					'buried': xPathTreasure.children[3].innerHTML.includes('Enterré'),
-					'node': xPathTreasure,
+					id: parseInt(xPathTreasure.children[2].innerHTML),
+					type: xPathTreasure.children[3].innerHTML,
+					sciz_desc: null,
+					buried: xPathTreasure.children[3].innerHTML.includes('Enterré'),
+					node: xPathTreasure,
 				});
-				ids.push(xPathTreasure.children[2].innerHTML)
-				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) { break; }
+				ids.push(xPathTreasure.children[2].innerHTML);
+				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
+					break;
+				}
 			}
 
 			// Call SCIZ
@@ -5740,7 +6316,7 @@ try {
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'ids': ids }),
+				data: JSON.stringify({ ids: ids }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -5748,13 +6324,13 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var treasures = JSON.parse(responseDetails.responseText);
+						let treasures = JSON.parse(responseDetails.responseText);
 						if (treasures.treasures.length < 1) {
 							// logMZ('DEBUG - MZ/SCIZ - Aucun trésor trouvé dans la base SCIZ...');
 							return;
 						}
 						// Look for treasures to enhanced
-						treasures.treasures.forEach(t => {
+						treasures.treasures.forEach((t) => {
 							for (i = 0; i < scizGlobal.treasures.length; i++) {
 								if (scizGlobal.treasures[i].id === t.id) {
 									// PrettyPrint
@@ -5779,21 +6355,23 @@ try {
 
 
 		/* SCIZ View - MUSHROOMS */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
 		if (cbx !== '0') {
 			// Retrieve mushrooms
 			ids = [];
-			var xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
-			var xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
+			let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
+			let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
 			while (xPathMushroom = xPathMushrooms.iterateNext()) {
 				scizGlobal.mushrooms.push({
-					'id': parseInt(xPathMushroom.children[2].innerHTML),
-					'type': xPathMushroom.children[3].innerHTML,
-					'sciz_desc': null,
-					'node': xPathMushroom,
+					id: parseInt(xPathMushroom.children[2].innerHTML),
+					type: xPathMushroom.children[3].innerHTML,
+					sciz_desc: null,
+					node: xPathMushroom,
 				});
 				ids.push(xPathMushroom.children[2].innerHTML);
-				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) { break; }
+				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
+					break;
+				}
 			}
 
 			// Call SCIZ
@@ -5802,7 +6380,7 @@ try {
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'ids': ids }),
+				data: JSON.stringify({ ids: ids }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -5810,13 +6388,13 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var mushrooms = JSON.parse(responseDetails.responseText);
+						let mushrooms = JSON.parse(responseDetails.responseText);
 						if (mushrooms.mushrooms.length < 1) {
 							// logMZ('DEBUG - MZ/SCIZ - Aucun champignon trouvé dans la base SCIZ...');
 							return;
 						}
 						// Look for mushrooms to enhanced
-						mushrooms.mushrooms.forEach(m => {
+						mushrooms.mushrooms.forEach((m) => {
 							for (i = 0; i < scizGlobal.mushrooms.length; i++) {
 								if (scizGlobal.mushrooms[i].id === m.id) {
 									// PrettyPrint
@@ -5838,23 +6416,23 @@ try {
 		}
 
 		/* SCIZ View - BESTIAIRE */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`);
 		if (cbx !== '0') {
 			// Retrieve monsters
-			var mobs = [];
-			var xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
-			var xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
+			let mobs = [];
+			let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
+			let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
 			while (xPathMonster = xPathMonsters.iterateNext()) {
-				var mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
+				let mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
 				scizGlobal.monsters.push({
-					'id': parseInt(xPathMonster.children[2].innerHTML),
-					'name': mob[1],
-					'age': mob[2],
-					'sciz_desc': null,
-					'icon': null,
-					'node': xPathMonster
+					id: parseInt(xPathMonster.children[2].innerHTML),
+					name: mob[1],
+					age: mob[2],
+					sciz_desc: null,
+					icon: null,
+					node: xPathMonster
 				});
-				mobs.push({ 'name': mob[1], 'age': mob[2] });
+				mobs.push({ name: mob[1], age: mob[2] });
 			}
 			// Check the list against the SCIZ bestiaire
 			sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
@@ -5862,7 +6440,7 @@ try {
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'mobs': mobs }),
+				data: JSON.stringify({ mobs: mobs }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -5870,11 +6448,13 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var mobs = JSON.parse(responseDetails.responseText);
+						let mobs = JSON.parse(responseDetails.responseText);
 						// Add the SCIZ icons
-						scizGlobal.monsters.forEach(m => {
-							if (mobs.bestiaire.includes(m.name + ' ' + m.age)) {
-								var icon = scizCreateHoverable('15', 'inline', function () { do_scizBestiaire(m); });
+						scizGlobal.monsters.forEach((m) => {
+							if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
+								let icon = scizCreateHoverable('15', 'inline', () => {
+									do_scizBestiaire(m);
+								});
 								m.icon = icon;
 								m.node.children[4].appendChild(icon);
 							}
@@ -5885,27 +6465,26 @@ try {
 					}
 				}
 			});
-
 		}
 
 		/* SCIZ View - TRAPS */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`);
 		if (cbx !== '0') {
 			// Retrieve traps
 			ids = [];
 			var xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
 			var xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 			while (xPathPlace = xPathPlaces.iterateNext()) {
-				var trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
+				let trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
 				if (trap === null) {
-					continue
+					continue;
 				}
 				scizGlobal.traps.push({
-					'id': parseInt(xPathPlace.children[2].innerHTML),
-					'type': xPathPlace.children[3].innerHTML,
-					'hidden': xPathPlace.children[3].innerHTML.includes('Caché'),
-					'sciz_desc': null,
-					'node': xPathPlace
+					id: parseInt(xPathPlace.children[2].innerHTML),
+					type: xPathPlace.children[3].innerHTML,
+					hidden: xPathPlace.children[3].innerHTML.includes('Caché'),
+					sciz_desc: null,
+					node: xPathPlace
 				});
 				ids.push(xPathPlace.children[2].innerHTML);
 			}
@@ -5916,7 +6495,7 @@ try {
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'pos_x': posX, 'pos_y': posY, 'pos_n': posN, 'view_h': viewH, 'view_v': viewV }),
+				data: JSON.stringify({ pos_x: posX, pos_y: posY, pos_n: posN, view_h: viewH, view_v: viewV }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -5924,13 +6503,13 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var traps = JSON.parse(responseDetails.responseText);
+						let traps = JSON.parse(responseDetails.responseText);
 						if (traps.traps.length < 1) {
 							return;
 						}
 						// Look for traps to enhanced
-						traps.traps.forEach(t => {
-							var found = false;
+						traps.traps.forEach((t) => {
+							let found = false;
 							for (i = 0; i < scizGlobal.traps.length; i++) {
 								if (scizGlobal.traps[i].id === t.id) {
 									// PrettyPrint
@@ -5943,21 +6522,21 @@ try {
 							}
 							if (!found) {
 								// Find the right index
-								var distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
-								var xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+								let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+								let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 								while (xPathPlace = xPathPlaces.iterateNext()) {
 									if (parseInt(xPathPlace.children[0].innerHTML) > distance) {
 										break;
 									}
 								}
 								// Create the trap
-								var template = document.createElement('template');
-								template.innerHTML = '<tr class="mh_tdpage"><td>' + distance + '</td><td></td><td>' + t.id + '</td><td>Piège à ' + t.type
-									+ '</td><td>' + t.pos_x + '</td><td>' + t.pos_y + '</td><td>' + t.pos_n + '</td></tr>';
-								var trap = template.content.firstChild;
+								let template = document.createElement('template');
+								template.innerHTML = `<tr class="mh_tdpage"><td>${distance}</td><td></td><td>${t.id}</td><td>Piège à ${t.type
+									}</td><td>${t.pos_x}</td><td>${t.pos_y}</td><td>${t.pos_n}</td></tr>`;
+								let trap = template.content.firstChild;
 								// Add the hidden trap
 								scizGlobal.traps.push({
-									'id': t.id, 'type': 'Piège à ' + t.type, 'hidden': true, 'sciz_desc': scizPrettyPrintTrap(t), 'node': trap
+									id: t.id, type: `Piège à ${t.type}`, hidden: true, sciz_desc: scizPrettyPrintTrap(t), node: trap
 								});
 								if (xPathPlace !== null) {
 									xPathPlace.parentNode.insertBefore(trap, xPathPlace);
@@ -5977,22 +6556,22 @@ try {
 		}
 
 		/* SCIZ View - PORTALS */
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_VIEW_PORTALS');
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`);
 		if (cbx !== '0') {
 			// Retrieve portals
 			ids = [];
 			xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
 			xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 			while (xPathPlace = xPathPlaces.iterateNext()) {
-				var portal = xPathPlace.children[3].innerHTML.match(/Portail/);
+				let portal = xPathPlace.children[3].innerHTML.match(/Portail/);
 				if (portal === null) {
-					continue
+					continue;
 				}
 				scizGlobal.portals.push({
-					'id': parseInt(xPathPlace.children[2].innerHTML),
-					'type': xPathPlace.children[3].innerHTML,
-					'sciz_desc': null,
-					'node': xPathPlace
+					id: parseInt(xPathPlace.children[2].innerHTML),
+					type: xPathPlace.children[3].innerHTML,
+					sciz_desc: null,
+					node: xPathPlace
 				});
 				ids.push(xPathPlace.children[2].innerHTML);
 			}
@@ -6002,7 +6581,7 @@ try {
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'ids': ids }),
+				data: JSON.stringify({ ids: ids }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -6010,13 +6589,13 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						var portals = JSON.parse(responseDetails.responseText);
+						let portals = JSON.parse(responseDetails.responseText);
 						if (portals.portals.length < 1) {
 							// logMZ('DEBUG - MZ/SCIZ - Aucun portail trouvé dans la base SCIZ...');
 							return;
 						}
 						// Look for treasures to enhanced
-						portals.portals.forEach(t => {
+						portals.portals.forEach((t) => {
 							for (i = 0; i < scizGlobal.portals.length; i++) {
 								if (scizGlobal.portals[i].id === t.id) {
 									// PrettyPrint
@@ -6039,7 +6618,7 @@ try {
 	function do_scizSwitchTrolls() {
 		scizGlobal.trolls.forEach((t) => {
 			if (t.sciz_desc !== null) {
-				var icon = scizCreateClickable('15', 'inline', do_scizSwitchTrolls);
+				let icon = scizCreateClickable('15', 'inline', do_scizSwitchTrolls);
 				t.displayed = !t.displayed;
 				// Do the switch
 				if (t.displayed) {
@@ -6060,8 +6639,8 @@ try {
 		scizGlobal.treasures.forEach((t) => {
 			if (t.sciz_desc !== null) {
 				// Do the switch
-				var currentDesc = t.node.children[3].firstChild.textContent;
-				t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
+				let currentDesc = t.node.children[3].firstChild.textContent;
+				t.node.children[3].innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
 				if (t.buried) {
 					t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
 				}
@@ -6075,8 +6654,8 @@ try {
 		scizGlobal.mushrooms.forEach((m) => {
 			if (m.sciz_desc !== null) {
 				// Do the switch
-				var currentDesc = m.node.children[3].firstChild.textContent;
-				m.node.children[3].innerHTML = (currentDesc === m.type) ? ((m.sciz_desc !== null) ? m.sciz_desc : m.type) : m.type;
+				let currentDesc = m.node.children[3].firstChild.textContent;
+				m.node.children[3].innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 				// Add the SCIZ switcher
 				m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchMushrooms));
 			}
@@ -6087,8 +6666,8 @@ try {
 		scizGlobal.traps.forEach((t) => {
 			if (t.sciz_desc !== null) {
 				// Do the switch
-				var currentDesc = t.node.children[3].firstChild.textContent;
-				t.node.children[3].innerHTML = (currentDesc === t.type) ? ((t.sciz_desc !== null) ? t.sciz_desc : t.type) : t.type;
+				let currentDesc = t.node.children[3].firstChild.textContent;
+				t.node.children[3].innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
 				if (t.hidden) {
 					t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Caché]" title="Caché" width="15" height="15">';
 				}
@@ -6102,8 +6681,8 @@ try {
 		scizGlobal.portals.forEach((m) => {
 			if (m.sciz_desc !== null) {
 				// Do the switch
-				var currentDesc = m.node.children[3].firstChild.textContent;
-				m.node.children[3].innerHTML = (currentDesc === m.type) ? ((m.sciz_desc !== null) ? m.sciz_desc : m.type) : m.type;
+				let currentDesc = m.node.children[3].firstChild.textContent;
+				m.node.children[3].innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 				// Add the SCIZ switcher
 				m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchPortals));
 			}
@@ -6112,17 +6691,19 @@ try {
 
 	function do_scizBestiaire(monster) {
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(numTroll + '.SCIZJWT');
-		if (jwt === null || jwt === undefined || jwt.trim() === '') { return; }
+		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		if (jwt === null || jwt === undefined || jwt.trim() === '') {
+			return;
+		}
 		// Don't do anything if we already called the bestiary for this monster
 		if (monster.sciz_desc === null) {
 			// Call SCIZ
-			var sciz_url = 'https://www.sciz.fr/api/bestiaire';
+			let sciz_url = 'https://www.sciz.fr/api/bestiaire';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
 				headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
-				data: JSON.stringify({ 'name': monster.name, 'age': monster.age }),
+				data: JSON.stringify({ name: monster.name, age: monster.age }),
 				onload: function (responseDetails) {
 					try {
 						if (responseDetails.status !== 200) {
@@ -6133,7 +6714,7 @@ try {
 						monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
 						// Add the tooltip (kind of)
 						if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
-							var abbr = document.createElement('abbr');
+							let abbr = document.createElement('abbr');
 							abbr.title = monster.sciz_desc.replace(/Blason.*/, '');
 							monster.icon.parentNode.replaceChild(abbr, monster.icon);
 							abbr.appendChild(monster.icon);
@@ -6152,17 +6733,17 @@ try {
 	function scizPrettyPrintEvent(e) {
 		e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, ''); // Delete date
 		e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-		var beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
-		beings.forEach(b => {
+		let beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
+		beings.forEach((b) => {
 			if (b[0] && b[1]) {
 				b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 				if (b[0].toString().length > 6) {
 					// Mob
 					b[1] = b[1].replace(/^une?\s/g, '');
-					e.message = e.message.replace(new RegExp('(' + b[1] + ')', 'gi'), '<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=' + b[0] + '" rel="modal:open" class="mh_monstres">\$1</a></b>');
+					e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="mh_monstres">\$1</a></b>`);
 				} else {
 					// Troll
-					e.message = e.message.replace(new RegExp('(' + b[1] + ')', 'gi'), '<b><a href="javascript:EPV(\'' + b[0] + '\')" class="mh_trolls_1">\$1</a></b>');
+					e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:EPV('${b[0]}')" class="mh_trolls_1">\$1</a></b>`);
 				}
 			}
 		});
@@ -6171,40 +6752,46 @@ try {
 
 	function do_scizOverwriteEvents() {
 		scizGlobal.events = [];
-		var eventTableNode = null;
+		let eventTableNode = null;
 
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(numTroll + '.SCIZJWT');
-		cbx = MY_getValue(numTroll + '.SCIZ_CB_EVENTS');
-		if (jwt === null || jwt === undefined || jwt.trim() === '' || cbx === '0') { return; }
+		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		cbx = MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`);
+		if (jwt === null || jwt === undefined || jwt.trim() === '' || cbx === '0') {
+			return;
+		}
 
 		// Retrieve being ID
-		var url = new URL(window.location.href);
-		var id = url.searchParams.get('ai_IDPJ');
-		id = (!id) ? numTroll : id;
+		let url = new URL(window.location.href);
+		let id = url.searchParams.get('ai_IDPJ');
+		id = !id ? numTroll : id;
 
 		// Check for advanced profil
-		var advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
-		var xPathQuery = (advanced) ? "//*/table[@id='events']/tbody/tr" : "//*/tr[contains(@class, 'mh_tdpage')]";
+		let advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
+		let xPathQuery = advanced ? "//*/table[@id='events']/tbody/tr" : "//*/tr[contains(@class, 'mh_tdpage')]";
 
 		// Retrieve local events
-		var xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
+		let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 		while (xPathEvent = xPathEvents.iterateNext()) {
 			scizGlobal.events.push({
-				'time': Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
-				'type': xPathEvent.children[1].innerHTML,
-				'desc': xPathEvent.children[2].innerHTML,
-				'sciz_type': null,
-				'sciz_desc': null,
-				'node': xPathEvent,
+				time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
+				type: xPathEvent.children[1].innerHTML,
+				desc: xPathEvent.children[2].innerHTML,
+				sciz_type: null,
+				sciz_desc: null,
+				node: xPathEvent,
 			});
 			if (eventTableNode === null) {
 				eventTableNode = xPathEvent.parentNode.parentNode;
 			}
 		}
 
-		var startTime = Math.min.apply(Math, scizGlobal.events.map(function (e) { return e.time; })) - scizSetup.eventsMaxMatchingInterval;
-		var endTime = Math.max.apply(Math, scizGlobal.events.map(function (e) { return e.time; })) + scizSetup.eventsMaxMatchingInterval;
+		let startTime = Math.min.apply(Math, scizGlobal.events.map((e) => {
+			return e.time;
+		})) - scizSetup.eventsMaxMatchingInterval;
+		let endTime = Math.max.apply(Math, scizGlobal.events.map((e) => {
+			return e.time;
+		})) + scizSetup.eventsMaxMatchingInterval;
 
 		// Check if events have been found in the page
 		if (scizGlobal.events.length < 1) {
@@ -6213,13 +6800,13 @@ try {
 		}
 
 		// Call SCIZ
-		var sciz_url = 'https://www.sciz.fr/api/hook/events/' + id + '/' + startTime + '/' + endTime;
-		var eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
-		sciz_url += (eventType !== null && eventType !== '') ? '/' + eventType.split(' ')[0] : '' // Only the first word used for filtering ("MORT par monstre" => "MORT");
+		let sciz_url = `https://www.sciz.fr/api/hook/events/${id}/${startTime}/${endTime}`;
+		let eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
+		sciz_url = sciz_url + (eventType !== null && eventType !== '' ? `/${eventType.split(' ')[0]}` : ''); // Only the first word used for filtering ("MORT par monstre" => "MORT");
 		FF_XMLHttpRequest({
 			method: 'GET',
 			url: sciz_url,
-			headers: { 'Authorization': jwt },
+			headers: { Authorization: jwt },
 			// trace: 'Appel à SCIZ pour l'entité ' + id,
 			onload: function (responseDetails) {
 				try {
@@ -6228,23 +6815,23 @@ try {
 						logMZ(responseDetails);
 						return;
 					}
-					var events = JSON.parse(responseDetails.responseText);
+					let events = JSON.parse(responseDetails.responseText);
 					if (events.events.length < 1) {
 						// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
 						return;
 					}
 					// Read if switch to SCIZ view or not
-					var bViewSCIZ = (MY_getValue('SCIZ_view') !== 'no');
+					let bViewSCIZ = MY_getValue('SCIZ_view') !== 'no';
 					// Look for events to overwrite (based on timestamps)
-					events.events.forEach(e => {
+					events.events.forEach((e) => {
 						if (e.message.includes(id)) { // Exclude any event we were not looking for...
-							var t = Date.parse(StringToDate(e.time));
+							let t = Date.parse(StringToDate(e.time));
 							// Look for the best event matching and not already replaced
-							var i = -1;
-							var lastDelta = Infinity;
+							let i = -1;
+							let lastDelta = Infinity;
 							for (j = 0; j < scizGlobal.events.length; j++) {
 								if (scizGlobal.events[j].sciz_desc === null) {
-									var delta = Math.abs(t - scizGlobal.events[j].time);
+									let delta = Math.abs(t - scizGlobal.events[j].time);
 									if (delta <= scizSetup.eventsMaxMatchingInterval && delta < lastDelta) {
 										lastDelta = delta;
 										i = j;
@@ -6255,7 +6842,7 @@ try {
 								// PrettyPrint
 								e = scizPrettyPrintEvent(e);
 								// Store the SCIZ event and icon
-								var div = scizCreateIcon('25', 'block', e.icon);
+								let div = scizCreateIcon('25', 'block', e.icon);
 								scizGlobal.events[i].sciz_type = div.outerHTML;
 								scizGlobal.events[i].sciz_desc = e.message;
 								// Actual display overwrite
@@ -6270,7 +6857,7 @@ try {
 					});
 					// Add the switch button
 					if (eventTableNode !== null) {
-						var div = scizCreateClickable('50', 'block', do_scizSwitchEvents);
+						let div = scizCreateClickable('50', 'block', do_scizSwitchEvents);
 						eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
 					}
 				} catch (e) {
@@ -6282,23 +6869,26 @@ try {
 	}
 
 	function do_scizSwitchEvents() {
-		var bMaskSCIZ = false;
+		let bMaskSCIZ = false;
 		scizGlobal.events.forEach((e) => {
-			var currentType = e.node.children[1].innerHTML;
+			let currentType = e.node.children[1].innerHTML;
 			if (currentType === e.type) {
-				e.node.children[1].innerHTML = (e.sciz_type !== null) ? e.sciz_type : e.type;
+				e.node.children[1].innerHTML = e.sciz_type !== null ? e.sciz_type : e.type;
 			} else {
 				e.node.children[1].innerHTML = e.type;
 				bMaskSCIZ = true;
 			}
-			var currentDesc = e.node.children[2].innerHTML;
-			e.node.children[2].innerHTML = (currentDesc === e.desc) ? ((e.sciz_desc !== null) ? e.sciz_desc : e.desc) : e.desc;
+			let currentDesc = e.node.children[2].innerHTML;
+			e.node.children[2].innerHTML = currentDesc === e.desc ? e.sciz_desc !== null ? e.sciz_desc : e.desc : e.desc;
 		});
-		if (bMaskSCIZ) MY_setValue('SCIZ_view', 'no');
-		else MY_removeValue('SCIZ_view');
+		if (bMaskSCIZ) {
+			MY_setValue('SCIZ_view', 'no');
+		} else {
+			MY_removeValue('SCIZ_view');
+		}
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -6325,42 +6915,46 @@ try {
 	 * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
 	 */
 	function isArray(a) {
-		return (!!a) && (a.constructor === Array);
+		return Boolean(a) && a.constructor === Array;
 	}
 
 	function saveMission(num, obEtape) {
-		var obMissions;
-		if (MY_getValue(numTroll + '.MISSIONS')) {
+		let obMissions;
+		if (MY_getValue(`${numTroll}.MISSIONS`)) {
 			try {
 				// logMZ('JSON MISSION (before) = ' + MY_getValue(numTroll+'.MISSIONS'));
-				obMissions = JSON.parse(MY_getValue(numTroll + '.MISSIONS'));
+				obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
 			} catch (e) {
 				logMZ(traceStack(e, 'Mission parsage'));
 				return;
 			}
 		}
-		if (isArray(obMissions)) obMissions = new Object();	// corrige certains cas issus d'anciennes versions MZ
-		if (obMissions == undefined) obMissions = new Object();	// protection
+		if (isArray(obMissions)) {
+			obMissions = new Object();
+		}	// corrige certains cas issus d'anciennes versions MZ
+		if (obMissions == undefined) {
+			obMissions = new Object();
+		}	// protection
 		// logMZ('saveMission, obEtape=' + obEtape);	// debug roule
 		if (obEtape) {
 			obMissions[num] = obEtape;
 		} else if (obMissions[num]) {
 			delete obMissions[num];
 		}
-		MY_setValue(numTroll + '.MISSIONS', JSON.stringify(obMissions));
+		MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 		// logMZ('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
 	}
 
 	function addtroogle(tdLibelle, sRestrict) {
-		var img = document.createElement('img');
-		img.src = URL_MZimg + 'troogle.ico';
+		let img = document.createElement('img');
+		img.src = `${URL_MZimg}troogle.ico`;
 		img.alt = 'Troogle logo';
-		var a = document.createElement('a');
-		var url = URL_troogle + '?utf8=' + encodeURIComponent('✓');	// hé oui, ce source est unicode
-		url += '&entity_search[search]=' + encodeURIComponent(sRestrict);
-		url += '&entity_search[position_x]=' + MY_getValue(numTroll + ".position.X");
-		url += '&entity_search[position_y]=' + MY_getValue(numTroll + ".position.Y");
-		url += '&entity_search[position_z]=' + MY_getValue(numTroll + ".position.N");
+		let a = document.createElement('a');
+		let url = `${URL_troogle}?utf8=${encodeURIComponent('✓')}`;	// hé oui, ce source est unicode
+		url = `${url}&entity_search[search]=${encodeURIComponent(sRestrict)}`;
+		url = `${url}&entity_search[position_x]=${MY_getValue(`${numTroll}.position.X`)}`;
+		url = `${url}&entity_search[position_y]=${MY_getValue(`${numTroll}.position.Y`)}`;
+		url = `${url}&entity_search[position_z]=${MY_getValue(`${numTroll}.position.N`)}`;
 		a.href = url;
 		a.title = 'Chercher sur Troogle';
 		a.target = 'troogle';
@@ -6371,9 +6965,9 @@ try {
 
 	function traiteMission() {
 		try {
-			var titreMission = document.getElementsByClassName('titre2')[0];
+			let titreMission = document.getElementsByClassName('titre2')[0];
 			var numMission = titreMission.textContent.match(/\d+/)[0];
-			var missionForm = document.getElementsByName('ActionForm')[0];
+			let missionForm = document.getElementsByName('ActionForm')[0];
 			var tdLibelle = document.evaluate(
 				"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]",
 				missionForm, null, 9, null).singleNodeValue;
@@ -6381,7 +6975,9 @@ try {
 			logMZ(traceStack(e, 'récupération mission'));
 			return;
 		}
-		if (!numMission) { debugMZ('traiteMission pas de numMission, titreMission='.titreMission.outerHTML.replace(/</g, '‹')); return; }
+		if (!numMission) {
+			debugMZ('traiteMission pas de numMission, titreMission='.titreMission.outerHTML.replace(/</g, '‹')); return;
+		}
 		try {
 			if (!tdLibelle) {
 				// S'il n'y a plus d'étape en cours (=mission finie), on supprime
@@ -6390,12 +6986,13 @@ try {
 				return;
 			}
 
-			var libelle = trim(tdLibelle.textContent.replace(/\n/g, ''));
-			var siMundidey = libelle.indexOf('Mundidey') != -1;
+			let libelle = trim(tdLibelle.textContent.replace(/\n/g, ''));
+			let siMundidey = libelle.indexOf('Mundidey') != -1;
 			// debug Roule'
 			if (MY_DEBUG) {
-				for (var i = 0; i < tdLibelle.childNodes.length; i++)
-					logMZ('traiteMission, tdLibelle.childNodes[' + i + ']=' + tdLibelle.childNodes[i].textContent);
+				for (let i = 0; i < tdLibelle.childNodes.length; i++) {
+					logMZ(`traiteMission, tdLibelle.childNodes[${i}]=${tdLibelle.childNodes[i].textContent}`);
+				}
 			}
 			if (libelle.indexOf('niveau égal à') != -1) {
 				var nbKills = 1, niveau, mod;
@@ -6409,14 +7006,14 @@ try {
 					var m = libelle.match(/niveau égal à *(\d+) * au moins/);
 					if (m) {
 						niveau = Number(m[1]);
-						mod = 'plus'
+						mod = 'plus';
 					} else {
 						var m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
 						if (m) {
 							niveau = Number(m[1]);
 							mod = Number(m[2]);
 						} else {
-							logMZ('[MZ ' + GM_info.script.version + '] traiteMission, échec analyse de ' + libelle);
+							logMZ(`[MZ ${GM_info.script.version}] traiteMission, échec analyse de ${libelle}`);
 							return;
 						}
 					}
@@ -6425,7 +7022,7 @@ try {
 					// à supprimer un jour peut-être
 					if (tdLibelle.firstChild.nodeValue.indexOf('niveau égal à') == -1) {
 						// Étape de kill multiple de niveau donné
-						//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+						// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 						if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
 							mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
 							niveau = Number(mod[0]);
@@ -6450,7 +7047,7 @@ try {
 				// }
 				// debug Roule'
 				if (MY_DEBUG) {
-					logMZ('traiteMission, save niveau=' + niveau + ', mod=' + mod + ', siMundidey=' + siMundidey + ', libelle=' + libelle);
+					logMZ(`traiteMission, save niveau=${niveau}, mod=${mod}, siMundidey=${siMundidey}, libelle=${libelle}`);
 				}
 				saveMission(numMission, {
 					type: 'Niveau',
@@ -6459,15 +7056,16 @@ try {
 					mundidey: siMundidey,
 					libelle: libelle
 				});
-				if (mod == 'plus')
-					addtroogle(tdLibelle, '@monstre level:' + niveau + '..' + (niveau + 99));
-				else
-					addtroogle(tdLibelle, '@monstre level:' + (niveau - mod) + '..' + (niveau + mod));
+				if (mod == 'plus') {
+					addtroogle(tdLibelle, `@monstre level:${niveau}..${niveau + 99}`);
+				} else {
+					addtroogle(tdLibelle, `@monstre level:${niveau - mod}..${niveau + mod}`);
+				}
 			} else if (libelle.indexOf('de la race') != -1) {
 				var nbKills = 1, race;
 				if (tdLibelle.firstChild.nodeValue.indexOf('de la race') == -1) {
 					// Étape de kill multiple de race donnée
-					//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+					// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 					race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
 				} else {
 					// Étape de kill unique de race donnée
@@ -6481,12 +7079,12 @@ try {
 					mundidey: siMundidey,
 					libelle: libelle
 				});
-				addtroogle(tdLibelle, '@monstre ' + race);
+				addtroogle(tdLibelle, `@monstre ${race}`);
 			} else if (libelle.indexOf('de la famille') != -1) {
 				var nbKills = 1, famille;
 				if (tdLibelle.firstChild.nodeValue.indexOf('de la famille') == -1) {
 					// Étape de kill multiple de famille donnée
-					//nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
+					// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
 					famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
 				} else {
 					// Étape de kill unique de famille donnée
@@ -6500,10 +7098,10 @@ try {
 					mundidey: siMundidey,
 					libelle: libelle
 				});
-				//Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
-				addtroogle(tdLibelle, '@monstre:' + famille.toLowerCase().replace(/é/g, 'e').replace(/ï/g, 'i'));
+				// Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
+				addtroogle(tdLibelle, `@monstre:${famille.toLowerCase().replace(/é/g, 'e').replace(/ï/g, 'i')}`);
 			} else if (libelle.indexOf('capacité spéciale') != -1) {
-				var pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
+				let pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
 				debugMZ('traiteMission étape capacité spéciale');
 				pouvoir = removeEnclosingSimpleCote(pouvoir);	// Roule 29/03/2019 Maintenant, on a des '
 				saveMission(numMission, {
@@ -6533,7 +7131,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -6553,7 +7151,7 @@ try {
 
 	// x~x move
 
-	/*-[variables+function]- Données sur les trous de météorites -----------------*/
+	/* -[variables+function]- Données sur les trous de météorites -----------------*/
 
 	var petitsTrous = {
 		'-52;57': true,
@@ -6587,13 +7185,13 @@ try {
 	var rayonCarmine = 8.7;
 
 	function isTrou(x, y, n) {
-		if (petitsTrous[x + ';' + y]) {
+		if (petitsTrous[`${x};${y}`]) {
 			return n < 0 && n > -60;
 		}
-		if (grosTrous[x + ';' + y]
-			|| grosTrous[x - 1 + ';' + y]
-			|| grosTrous[x + ';' + y + 1]
-			|| grosTrous[x - 1 + ';' + y + 1]) {
+		if (grosTrous[`${x};${y}`] ||
+			grosTrous[`${x - 1};${y}`] ||
+			grosTrous[`${x};${y}${1}`] ||
+			grosTrous[`${x - 1};${y}${1}`]) {
 			return n < 0 && n > -70;
 		}
 		if (Math.sqrt(
@@ -6604,34 +7202,34 @@ try {
 		return false;
 	}
 
-	/*-[functions]----------------- Gestion des DEs ------------------------------ */
+	/* -[functions]----------------- Gestion des DEs ------------------------------ */
 
 	function validateDestination() {
-		var x = Number(document.getElementsByName('ai_XDepart')[0].value);
-		var y = Number(document.getElementsByName('ai_YDepart')[0].value);
-		var n = Number(document.getElementsByName('ai_NDepart')[0].value);
-		var form = document.getElementsByName('ActionForm')[0];
+		let x = Number(document.getElementsByName('ai_XDepart')[0].value);
+		let y = Number(document.getElementsByName('ai_YDepart')[0].value);
+		let n = Number(document.getElementsByName('ai_NDepart')[0].value);
+		let form = document.getElementsByName('ActionForm')[0];
 		if (form) {
 			for (var i = 0; i < document.getElementsByName('ai_DeplX').length; i++) {
 				if (document.getElementsByName('ai_DeplX')[i].checked) {
-					x += Number(document.getElementsByName('ai_DeplX')[i].value);
+					x = x + Number(document.getElementsByName('ai_DeplX')[i].value);
 				}
 			}
 			for (var i = 0; i < document.getElementsByName('ai_DeplY').length; i++) {
 				if (document.getElementsByName('ai_DeplY')[i].checked) {
-					y += Number(document.getElementsByName('ai_DeplY')[i].value);
+					y = y + Number(document.getElementsByName('ai_DeplY')[i].value);
 				}
 			}
 			for (var i = 0; i < document.getElementsByName('ai_DeplN').length; i++) {
 				if (document.getElementsByName('ai_DeplN')[i].checked) {
-					n += Number(document.getElementsByName('ai_DeplN')[i].value);
+					n = n + Number(document.getElementsByName('ai_DeplN')[i].value);
 				}
 			}
 			if (isTrou(x, y, n)) {
 				return window.confirm(
-					'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
-					+ 'Vous allez tomber dans un trou de météorite.\n'
-					+ 'Êtes vous sûr de vouloir effectuer ce déplacement ?'
+					'La voix de  mini TilK (n°36216) résonne dans votre tête :\n' +
+					'Vous allez tomber dans un trou de météorite.\n' +
+					'Êtes vous sûr de vouloir effectuer ce déplacement ?'
 				);
 			}
 		}
@@ -6647,30 +7245,30 @@ try {
 	}
 
 	function changeValidation() {
-		var form = document.getElementsByName('ActionForm')[0];
+		let form = document.getElementsByName('ActionForm')[0];
 		if (form) {
 			form.addEventListener('submit', newsubmitDE, true);
 		}
 	}
 
 
-	/*-[functions]----------------- Gestion des TPs ------------------------------ */
+	/* -[functions]----------------- Gestion des TPs ------------------------------ */
 
 	function validateTPDestination() {
 		try {
-			var text = document.getElementsByTagName('B')[0];
-			var a = text.firstChild.nodeValue.split('|');
-			var pos_x = a[0].substring(4, a[0].length - 1) * 1;
-			var pos_y = a[1].substring(5, a[1].length - 1) * 1;
-			var pos_n = a[2].substring(5, a[2].length) * 1;
+			let text = document.getElementsByTagName('B')[0];
+			let a = text.firstChild.nodeValue.split('|');
+			let pos_x = Number(a[0].substring(4, a[0].length - 1));
+			let pos_y = Number(a[1].substring(5, a[1].length - 1));
+			let pos_n = Number(a[2].substring(5, a[2].length));
 
-			var nbtrous = 0;
-			for (var signX = -1; signX <= 1; signX += 2) {
-				for (var x = 0; x <= 2; x++) {
-					for (var signY = -1; signY <= 1; signY += 2) {
-						for (var y = 0; y <= 2; y++) {
-							for (var signN = -1; signN <= 1; signN += 2) {
-								for (var n = 0; n <= 1; n++) {
+			let nbtrous = 0;
+			for (let signX = -1; signX <= 1; signX = signX + 2) {
+				for (let x = 0; x <= 2; x++) {
+					for (let signY = -1; signY <= 1; signY = signY + 2) {
+						for (let y = 0; y <= 2; y++) {
+							for (let signN = -1; signN <= 1; signN = signN + 2) {
+								for (let n = 0; n <= 1; n++) {
 									if (isTrou(
 										pos_x + signX * x, pos_y + signY * y, Math.min(-1, pos_n + signN * n)
 									)) {
@@ -6684,24 +7282,22 @@ try {
 			}
 			if (nbtrous > 0 && nbtrous < 72) {
 				return window.confirm(
-					'La voix de  mini TilK (n°36216) résonne dans votre tête :\n'
-					+ 'Vous avez ' + Math.floor((100 * nbtrous) / 144)
-					+ '% de risque de tomber dans un trou de météorite.\n'
-					+ 'Êtes-vous sûr de vouloir prendre ce portail ?'
+					`${'La voix de  mini TilK (n°36216) résonne dans votre tête :\n' +
+					'Vous avez '}${Math.floor(100 * nbtrous / 144)
+					}% de risque de tomber dans un trou de météorite.\n` +
+					`Êtes-vous sûr de vouloir prendre ce portail ?`
 				);
-			}
-			else if (nbtrous >= 72) {
+			} else if (nbtrous >= 72) {
 				return window.confirm(
-					'La voix de  mini TilK (n°36216) tonne dans votre tête :\n'
-					+ 'Malheureux, vous avez ' + Math.floor((100 * nbtrous) / 144)
-					+ '% de risque de tomber dans un trou de météorite !\n'
-					+ 'Êtes-vous bien certain de vouloir prendre ce portail ?'
+					`${'La voix de  mini TilK (n°36216) tonne dans votre tête :\n' +
+					'Malheureux, vous avez '}${Math.floor(100 * nbtrous / 144)
+					}% de risque de tomber dans un trou de météorite !\n` +
+					`Êtes-vous bien certain de vouloir prendre ce portail ?`
 				);
 			}
 			return true;
-		}
-		catch (e) {
-			avertissement(e)
+		} catch (e) {
+			avertissement(e);
 		}
 	}
 
@@ -6714,7 +7310,7 @@ try {
 	}
 
 	function changeButtonValidate() {
-		var form = document.getElementsByName('Formulaire')[0];
+		let form = document.getElementsByName('Formulaire')[0];
 		if (form) {
 			if (!form.getAttribute('onsubmit')) {
 				form.setAttribute('onsubmit', 'return true;');
@@ -6724,19 +7320,19 @@ try {
 	}
 
 
-	/*-[functions]---------------- Partie Principale ----------------------------- */
+	/* -[functions]---------------- Partie Principale ----------------------------- */
 
 	function do_move() {
 		// Roule', vérification du risque de tomber dans un trou déplacée dans do_lieuTeleport pour le cas des TP
-		//if(isPage('MH_Play/Play_a_Move.php')) {
+		// if(isPage('MH_Play/Play_a_Move.php')) {
 		changeValidation();
-		//}
-		//else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
+		// }
+		// else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
 		//	changeButtonValidate();
-		//}
+		// }
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	* This file is part of Mountyzilla (http://mountyzilla.tilk.info/)             *
 	* Mountyzilla is free software; provided under the GNU General Public License  *
 	*******************************************************************************/
@@ -6747,16 +7343,16 @@ try {
 	var nbItems = 5;
 	var maxCarDescription = 300;
 
-	/*-[functions]------------------- Utilitaires -------------------------------- */
+	/* -[functions]------------------- Utilitaires -------------------------------- */
 
 	// Ne semble avoir strictement aucun effet:
 	String.prototype.epureDescription = function () {
 		return this.replace(/\\(.)/g, "$1");
-	}
+	};
 
 	function appendTitledTable(node, titre, description) {
 		// Crée les tables contenant les infos (avec titre)
-		var table = document.createElement('table');
+		let table = document.createElement('table');
 		table.border = 0;
 		table.className = 'mh_tdborder';
 		table.cellSpacing = 1;
@@ -6764,11 +7360,11 @@ try {
 		table.style.maxWidth = '98%';
 		table.style.marginLeft = 'auto';
 		table.style.marginRight = 'auto';
-		var tbody = document.createElement('tbody');
+		let tbody = document.createElement('tbody');
 		table.appendChild(tbody);
-		var tr = appendTr(tbody, 'mh_tdtitre');
-		var td = appendTdCenter(tr, 2);
-		var span = document.createElement('span');
+		let tr = appendTr(tbody, 'mh_tdtitre');
+		let td = appendTdCenter(tr, 2);
+		let span = document.createElement('span');
 		appendText(span, titre, true);
 		if (description) {
 			span.title = description;
@@ -6785,31 +7381,34 @@ try {
 				url: paramURL,
 				onload: function (responseDetails) {
 					// logMZ('testCertif(' + paramURL + '), callback, status=' + responseDetails.status);
-					if (responseDetails.status == 0) callbackOnError();	// FAIL si status == 0
+					if (responseDetails.status == 0) {
+						callbackOnError();
+					}	// FAIL si status == 0
 				}
 			});
 		} catch (e) {
-			logMZ('[MZ] erreur testCertif(' + paramURL + ')' + traceStack(e, 'testCertif'));
+			logMZ(`[MZ] erreur testCertif(${paramURL})${traceStack(e, 'testCertif')}`);
 			callbackOnError();
 		}
 	}
 
 	function createOrGetGrandCadre() {
-		var grandCadre = document.getElementById('grandCadre');
-		if (grandCadre) return grandCadre;
+		let grandCadre = document.getElementById('grandCadre');
+		if (grandCadre) {
+			return grandCadre;
+		}
 		try {
 			var rappels = document.evaluate(
 				"//p[contains(a/text(),'messagerie')]",
 				document, null, 9, null).singleNodeValue;
-		}
-		catch (e) {
+		} catch (e) {
 			avertissement('Tu es en HTTPS. Pour bénéficier de MoutyZilla, tu devrais débloquer le contenu mixte');
 			grandCadre = document.createElement('div');
 			return grandCadre;
 		}
 		grandCadre = document.createElement('div');
 		grandCadre.id = 'grandCadre';
-		var sousCadre = document.createElement('div');
+		let sousCadre = document.createElement('div');
 		sousCadre.innerHTML = 'Tu es en <span style="color:blue">HTTPS</span>.';
 		sousCadre.style.textAlign = 'center';
 		sousCadre.style.fontSize = 'xx-large';
@@ -6823,16 +7422,15 @@ try {
 
 	function showHttpsErrorCadre1() {
 		logMZ('[MZ] showHttpsErrorCadre1');
-		var grandCadre = createOrGetGrandCadre();
-		var sousCadre = document.createElement('div');
-		sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat1 de Raistlin.</b>'
-			+ '<br />Cela empêchera Moutyzilla de fonctionner'
-			+ '<br /><a style="color:blue;font-size: inherits;" href="'
-			+ URL_CertifRaistlin1
-			+ '" target="raistlin">clique ici</a>'
-			+ '<br />puis « Avancé » ... « Ajouter une exception » ...'
-			+ ' « Confirmer l\'exception de sécurité »'
-			+ '<br /><i>Il suffit de faire ceci une seule fois jusqu\'à ce que Raistlin change son certificat</i>';
+		let grandCadre = createOrGetGrandCadre();
+		let sousCadre = document.createElement('div');
+		sousCadre.innerHTML = `${'<b>Tu n\'as pas accepté le certificat1 de Raistlin.</b>' +
+			'<br />Cela empêchera Moutyzilla de fonctionner' +
+			'<br /><a style="color:blue;font-size: inherits;" href="'}${URL_CertifRaistlin1
+			}" target="raistlin">clique ici</a>` +
+			`<br />puis « Avancé » ... « Ajouter une exception » ...` +
+			` « Confirmer l'exception de sécurité »` +
+			`<br /><i>Il suffit de faire ceci une seule fois jusqu'à ce que Raistlin change son certificat</i>`;
 		sousCadre.style.width = 'auto';
 		sousCadre.style.fontSize = 'large';
 		sousCadre.style.border = 'solid 1px black';
@@ -6842,17 +7440,16 @@ try {
 
 	function showHttpsErrorCadre2() {
 		logMZ('[MZ] showHttpsErrorCadre2');
-		var grandCadre = createOrGetGrandCadre();
-		var sousCadre = document.createElement('div');
-		sousCadre.innerHTML = '<b>Tu n\'as pas accepté le certificat2 de Raistlin.</b>'
-			+ '<br />Cela empêchera le fonctionnement de l\'affichage des Potrõlls dans la vue<br />'
-			+ '<a style="color:blue;font-size: inherits;" href="'
-			+ URL_CertifRaistlin2
-			+ '" target="raistlin">clique ici</a>'
-			+ '<br />puis « Avancé » ... « Ajouter une exception » ...'
-			+ ' « Confirmer l\'exception de sécurité »'
-			+ '<br />(Ignorer ensuite le message sur l\'erreur de mot de passe)'
-			+ '<br /><i>Il suffit de faire ceci une seule fois jusqu\'à ce que Raistlin change son certificat</i>';
+		let grandCadre = createOrGetGrandCadre();
+		let sousCadre = document.createElement('div');
+		sousCadre.innerHTML = `${'<b>Tu n\'as pas accepté le certificat2 de Raistlin.</b>' +
+			'<br />Cela empêchera le fonctionnement de l\'affichage des Potrõlls dans la vue<br />' +
+			'<a style="color:blue;font-size: inherits;" href="'}${URL_CertifRaistlin2
+			}" target="raistlin">clique ici</a>` +
+			`<br />puis « Avancé » ... « Ajouter une exception » ...` +
+			` « Confirmer l'exception de sécurité »` +
+			`<br />(Ignorer ensuite le message sur l'erreur de mot de passe)` +
+			`<br /><i>Il suffit de faire ceci une seule fois jusqu'à ce que Raistlin change son certificat</i>`;
 		sousCadre.style.width = 'auto';
 		sousCadre.style.fontSize = 'large';
 		sousCadre.style.border = 'solid 1px black';
@@ -6862,23 +7459,23 @@ try {
 
 	function showHttpsErrorContenuMixte() {
 		logMZ('[MZ] showHttpsErrorContenuMixte');
-		var grandCadre = createOrGetGrandCadre();
-		var sousCadre = document.createElement('div');
-		sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />'
-			+ 'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)'
-			+ '<ul>'
-			+ '<li>Interface Bricol\'Troll</li>'
-			+ '<li>Nouveautés de Mountyzilla</li>'
-			+ '</ul>'
-			+ 'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />'
-			+ '<i>Il faudra malheureusement le faire à chaque nouvelle connexion</i>';
+		let grandCadre = createOrGetGrandCadre();
+		let sousCadre = document.createElement('div');
+		sousCadre.innerHTML = '<b>Tu n\'as pas autorisé le contenu mixte.</b><br />' +
+			'Cela interdit le fonctionnement des <b>services suivants</b> de Mountyzilla (le reste, dont l\'enrichissement de la vue, fonctionne à condition d\'accepter les certificats)' +
+			'<ul>' +
+			'<li>Interface Bricol\'Troll</li>' +
+			'<li>Nouveautés de Mountyzilla</li>' +
+			'</ul>' +
+			'Pour autoriser le contenu mixte, regarde <a href="https://support.mozilla.org/fr/kb/blocage-du-contenu-mixte-avec-firefox#w_daebloquer-le-contenu-mixte" target="_blank">cette page</a><br />' +
+			'<i>Il faudra malheureusement le faire à chaque nouvelle connexion</i>';
 		sousCadre.style.width = 'auto';
 		sousCadre.style.fontSize = 'large';
 		sousCadre.style.border = 'solid 1px black';
 		grandCadre.appendChild(sousCadre);
 	}
 
-	/*-[functions]------------------- Jubilaires --------------------------------- */
+	/* -[functions]------------------- Jubilaires --------------------------------- */
 
 	function traiterJubilaires() {
 		// à faire
@@ -6894,25 +7491,24 @@ try {
 					'Accept': 'application/xml,text/xml',
 				},
 				onload: function (responseDetails) {
-					if ((responseDetails.status == 0) && isHTTPS) {
-						logMZ('status=0 à l\'appel jubilaires, réponse=' + responseDetails.responseText);
-						//showHttpsErrorContenuMixte();
+					if (responseDetails.status == 0 && isHTTPS) {
+						logMZ(`status=0 à l'appel jubilaires, réponse=${responseDetails.responseText}`);
+						// showHttpsErrorContenuMixte();
 						return;
 					}
-					var listeTrolls = responseDetails.responseText.split('\n');
+					let listeTrolls = responseDetails.responseText.split('\n');
 					if (!listeTrolls || listeTrolls.length == 0) {
 						return;
 					}
 					afficherJubilaires(listeTrolls);
 				},
 			});
-		}
-		catch (e) {
+		} catch (e) {
 			if (isHTTPS) {
 				logMZ(traceStack(e, 'appel jubilaires'));
 				showHttpsErrorContenuMixte();
 			} else {
-				avertissement('Erreur Jubilaires:\n' + e);
+				avertissement(`Erreur Jubilaires:\n${e}`);
 			}
 		}
 	}
@@ -6922,91 +7518,98 @@ try {
 			var rappels = document.evaluate(
 				"//p[contains(a/text(),'messagerie')]",
 				document, null, 9, null).singleNodeValue;
-		}
-		catch (e) {
+		} catch (e) {
 			return;
 		}
-		var p = document.createElement('p');
-		var tbody = appendTitledTable(p,
+		let p = document.createElement('p');
+		let tbody = appendTitledTable(p,
 			"Les Trõlls qui fêtent leur anniversaire aujourd'hui:",
 			'Envoyez leur un message ou un cadeau !'
 		);
 		tr = appendTr(tbody, 'mh_tdpage');
 		td = appendTdCenter(tr);
-		var small = document.createElement('small');
+		let small = document.createElement('small');
 		td.appendChild(small);
-		var first = true;
-		for (var i = 0; i < listeTrolls.length; i++) {
-			var infos = listeTrolls[i].split(';');
+		let first = true;
+		for (let i = 0; i < listeTrolls.length; i++) {
+			let infos = listeTrolls[i].split(';');
 			if (infos.length != 3 || infos[2] === '0') {
 				continue;
 			}
 			if (first) {
 				first = false;
-			}
-			else {
+			} else {
 				appendText(small, ', ');
 			}
-			var a = document.createElement('a');
-			a.href = 'javascript:EPV(' + infos[0] + ')';
+			let a = document.createElement('a');
+			a.href = `javascript:EPV(${infos[0]})`;
 			appendText(a, infos[1]);
 			small.appendChild(a);
-			appendText(small, ' (' + infos[2] + (infos[2] === '1' ? ' an)' : ' ans)'));
+			appendText(small, ` (${infos[2]}${infos[2] === '1' ? ' an)' : ' ans)'}`);
 		}
 		insertBefore(rappels, p);
 	}
 
 
-	/*-[functions]--------------------- News MZ ---------------------------------- */
+	/* -[functions]--------------------- News MZ ---------------------------------- */
 
 	function traiterNouvelles() {
-		var news = new Array;
+		let news = new Array();
 		news.push(['2022-12-17', "Ajout de l'affichage des composants de même monstre en tanière sur le détail d'un composant."]);
 		news.push(['2022-11-28', 'Mise à jour des nouvelles caractéristiques des équipements. Merci à ceux qui ont saisi les corrections. Prévenir Rouletabille si vous trouvez une erreur.']);
 		news.push(['2022-08-16', 'Enrichissement de la page des suivants (voir les options).']);
 		news.push([null, 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront peut-être. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
 		let d2 = new Date();
-		if (d2.getMonth() == 0 && d2.getDate() < 10)
-			news.push([new Date(d2.getFullYear(), 0, 1), 'MZ vous souhaite bonne chasse pour ' + d2.getFullYear()]);
+		if (d2.getMonth() == 0 && d2.getDate() < 10) {
+			news.push([new Date(d2.getFullYear(), 0, 1), `MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
+		}
 		afficherNouvelles(news);
 	}
 
 	function afficherNouvelles(items) {
-		var footer = document.getElementById('footer1');
+		let footer = document.getElementById('footer1');
 		if (!footer) {
-			logMZ('[MZ ' + GM_info.script.version + '] afficherNouvelles, impossible de retrouver le footer par getElementById(\'footer1\')');
+			logMZ(`[MZ ${GM_info.script.version}] afficherNouvelles, impossible de retrouver le footer par getElementById('footer1')`);
 			return;
 		}
 		var p = document.createElement('p');
 		var tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
-		var div = document.createElement('div');
+		let div = document.createElement('div');
 		div.style.position = 'absolute';
 		div.style.right = 0;
 		div.style.top = 0;
 		div.style.paddingRight = '3px';
 		div.style.whiteSpace = 'nowrap';
-		appendText(div, '(version ' + GM_info.script.version + ')');
+		appendText(div, `(version ${GM_info.script.version})`);
 		tbody.rows[0].cells[0].style.position = 'relative';
 		tbody.rows[0].cells[0].appendChild(div);
 		for (var i = 0; i < items.length; i++) {
-			var color = undefined;
-			var d = undefined;
+			let color = undefined;
+			let d = undefined;
 			if (items[i][0] != null) {
 				d = new Date(items[i][0]);
 				// plus vieux que 2 mois => ne pas afficher
-				var d2 = new Date();
+				let d2 = new Date();
 				d2.setMonth(d2.getMonth() - 3);
-				if (d < d2) continue;
+				if (d < d2) {
+					continue;
+				}
 				// afficher en rouge si moins de 15 jours
 				d2 = new Date();
 				d2.setDate(d2.getDate() - 15);
-				if (d > d2) color = 'red';
+				if (d > d2) {
+					color = 'red';
+				}
 			}
-			var tr = appendTr(tbody, 'mh_tdpage');
-			if (color) tr.style.color = color;
-			var td = appendTdCenter(tr);
+			let tr = appendTr(tbody, 'mh_tdpage');
+			if (color) {
+				tr.style.color = color;
+			}
+			let td = appendTdCenter(tr);
 			td.style.verticalAlign = 'top'; // semble sans effet
-			if (d) td.appendChild(document.createTextNode(d.toLocaleDateString('fr-FR')));
+			if (d) {
+				td.appendChild(document.createTextNode(d.toLocaleDateString('fr-FR')));
+			}
 			td = appendTd(tr);
 			td.appendChild(document.createTextNode(items[i][1]));
 		}
@@ -7020,10 +7623,10 @@ try {
 			try {
 				tbody.rows[0].cells[0].onclick = undefined;
 				tbody.rows[0].cells[0].style.cursor = '';
-				var tr = appendTr(tbody, 'mh_tdpage');
-				var td = appendTd(tr);
+				let tr = appendTr(tbody, 'mh_tdpage');
+				let td = appendTd(tr);
 				td.colSpan = 2;
-				var pre = document.createElement('pre');
+				let pre = document.createElement('pre');
 				appendText(pre, MZ_changeLog.join("\n"));
 				td.appendChild(pre);
 			} catch (e) {
@@ -7035,16 +7638,16 @@ try {
 		if (isDEV) {	// Roule 02/02/2017 copie de la conf vers https
 			if (false) {	// essai avorté via sessionStorage (ne fonctionne pas)
 				if (isHTTPS) {
-					logMZ('[MZ test] sessionStorage.getItem(xxx)=' + window.sessionStorage.getItem('xxx'));
-					logMZ('[MZ test] window.parent.xxx=' + window.parent.xxx);
+					logMZ(`[MZ test] sessionStorage.getItem(xxx)=${window.sessionStorage.getItem('xxx')}`);
+					logMZ(`[MZ test] window.parent.xxx=${window.parent.xxx}`);
 				} else {
 					logMZ('[MZ test] début switch to https');
 					window.sessionStorage.setItem('xxx', "test session trans https");
 					window.parent.xxx = "autre test";
 					var url = document.location.href;
-					logMZ('[MZ test] url=' + url);
-					url = url.replace(/http:\/\//i, 'https://')
-					logMZ('[MZ test] switched url=' + url);
+					logMZ(`[MZ test] url=${url}`);
+					url = url.replace(/http:\/\//i, 'https://');
+					logMZ(`[MZ test] switched url=${url}`);
 					document.location.href = url;
 				}
 			}
@@ -7055,27 +7658,27 @@ try {
 					// logMZ('[MZ test] window.document.xxx=' + window.document.xxx);
 					// logMZ('[MZ test] window.parent.xxx=' + window.parent.xxx);
 					var txt = window.name;
-					var tabtxt = txt.split(/µ/);
+					let tabtxt = txt.split(/µ/);
 					for (var i = 0; i < tabtxt.length; i++) {
-						logMZ('[MZ test]config https ' + tabtxt[i]);
+						logMZ(`[MZ test]config https ${tabtxt[i]}`);
 					}
 				} else {
 					var txt = '';
 					for (var i = 0, len = localStorage.length; i < len; ++i) {
-						var k = localStorage.key(i);
-						//if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
-						txt += k + "£" + localStorage.getItem(k) + "µ";
+						let k = localStorage.key(i);
+						// if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
+						txt = `${txt}${k}£${localStorage.getItem(k)}µ`;
 					}
-					var iframe = document.createElement('iframe');
+					let iframe = document.createElement('iframe');
 					var url = document.location.href;
 					// logMZ('[MZ test] url=' + url);
-					url = url.replace(/http:\/\//i, 'https://')
+					url = url.replace(/http:\/\//i, 'https://');
 					// logMZ('[MZ test] switched url=' + url);
-					//iframe.xxx = "truc en plume";
+					// iframe.xxx = "truc en plume";
 					iframe.name = txt;
-					//window.xxx = "machin";
+					// window.xxx = "machin";
 					iframe.src = url;
-					//iframe.document.xxx = "truc en plume";
+					// iframe.document.xxx = "truc en plume";
 					document.body.appendChild(iframe);
 					iframe.style.display = 'none';
 				}
@@ -7084,7 +7687,7 @@ try {
 	}
 
 
-	/*---------------------------------- Main ------------------------------------ */
+	/* ---------------------------------- Main ------------------------------------ */
 
 	function do_news() {
 		start_script();
@@ -7106,7 +7709,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -7132,16 +7735,16 @@ try {
 		popup = document.createElement('div');
 		popup.setAttribute('id', 'popup');
 		popup.setAttribute('class', 'mh_textbox');
-		popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;'
-			+ 'display: inline; z-index: 3; max-width: 400px;');
+		popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;' +
+			'display: inline; z-index: 3; max-width: 400px;');
 		document.body.appendChild(popup);
 	}
 
 	function showPopup(evt) {
-		var texte = this.getAttribute("texteinfo");
+		let texte = this.getAttribute("texteinfo");
 		popup.innerHTML = texte;
-		popup.style.left = evt.pageX + 15 + 'px';
-		popup.style.top = evt.pageY + 'px';
+		popup.style.left = `${evt.pageX + 15}px`;
+		popup.style.top = `${evt.pageY}px`;
 		popup.style.visibility = "visible";
 	}
 
@@ -7151,7 +7754,7 @@ try {
 	// }
 
 	function createPopupImage_tabcompo(url, text) {
-		var img = document.createElement('img');
+		let img = document.createElement('img');
 		img.setAttribute('src', url);
 		img.setAttribute('align', 'ABSMIDDLE');
 		img.setAttribute("texteinfo", text);
@@ -7175,239 +7778,260 @@ try {
 	}
 
 	function traiteMinerai_tabcompo() {
-		if (currentURL.indexOf("as_type=Divers") == -1) return;
+		if (currentURL.indexOf("as_type=Divers") == -1) {
+			return;
+		}
 		try {
-			var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'"
-				+ " and contains(./tr/th/text(),'Minerai')]",
+			var node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'" +
+				" and contains(./tr/th/text(),'Minerai')]",
 				document, null, 9, null).singleNodeValue;
 			node = node.nextSibling.nextSibling;
+		} catch (e) {
+			return;
 		}
-		catch (e) { return; }
 
-		var trlist = document.evaluate('./tr', node, null, 7, null);
-		for (var i = 0; i < trlist.snapshotLength; i++) {
+		let trlist = document.evaluate('./tr', node, null, 7, null);
+		for (let i = 0; i < trlist.snapshotLength; i++) {
 			var node = trlist.snapshotItem(i);
-			var nature = node.childNodes[5].textContent;
-			var caracs = node.childNodes[7].textContent;
-			var taille = caracs.match(/\d+/)[0];
-			var coef = 1;
-			if (caracs.indexOf('Moyen') != -1) coef = 2;
-			else if (caracs.indexOf('Normale') != -1) coef = 3;
-			else if (caracs.indexOf('Bonne') != -1) coef = 4;
-			else if (caracs.indexOf('Exceptionnelle') != -1) coef = 5;
+			let nature = node.childNodes[5].textContent;
+			let caracs = node.childNodes[7].textContent;
+			let taille = caracs.match(/\d+/)[0];
+			let coef = 1;
+			if (caracs.indexOf('Moyen') != -1) {
+				coef = 2;
+			} else if (caracs.indexOf('Normale') != -1) {
+				coef = 3;
+			} else if (caracs.indexOf('Bonne') != -1) {
+				coef = 4;
+			} else if (caracs.indexOf('Exceptionnelle') != -1) {
+				coef = 5;
+			}
 			if (nature.indexOf('Mithril') != -1) {
 				coef = 0.2 * coef;
-				appendText(node.childNodes[7], ' | UM: ' + arrondi(taille * coef));
-			}
-			else {
+				appendText(node.childNodes[7], ` | UM: ${arrondi(taille * coef)}`);
+			} else {
 				coef = 0.75 * coef + 1.25;
-				if (nature.indexOf('Taill') != -1) coef = 1.15 * coef;
-				appendText(node.childNodes[7], ' | Carats: ' + arrondi(taille * coef));
+				if (nature.indexOf('Taill') != -1) {
+					coef = 1.15 * coef;
+				}
+				appendText(node.childNodes[7], ` | Carats: ${arrondi(taille * coef)}`);
 			}
 		}
 	}
 
 	// Roule' 06/01/2017 ne fonctionne plus, la récupération des nodes ne donne rien
 	function treateComposants() {
-		if (currentURL.indexOf("as_type=Compo") == -1) return;
-		//On récupère les composants
-		var nodes = document.evaluate(
-			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
-			+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-			+ "and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) "
-			+ "and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		if (currentURL.indexOf("as_type=Compo") == -1) {
+			return;
+		}
+		// On récupère les composants
+		let nodes = document.evaluate(
+			"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]" +
+			"/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') " +
+			"and (contains(td[3]/text()[2],'Tous les trolls') or contains(td[3]/text()[1],'Tous les trolls') ) " +
+			"and td[1]/img/@alt = 'Identifié']", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0) {
 			// logMZ('[MZ] treateComposants DOWN');
 			return;
 		}
 		// logMZ('[MZ] treateComposants nbnodes=' + nodes.snapshotLength);
 
-		var texte = "";
-		for (var i = 0; i < nodes.snapshotLength; i++) {
-			var n1 = nodes.snapshotItem(i).childNodes[1];
-			var n3 = nodes.snapshotItem(i).childNodes[3];
-			var debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
-			var prix = n3.childNodes[0].nodeValue;
-			if (!prix)
-				prix = n3.childNodes[3].getAttribute('value') + " GG'";
-			texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
-				+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
-				+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";"
-				+ prix.replace(/\n/g, '') + "\n";
+		let texte = "";
+		for (let i = 0; i < nodes.snapshotLength; i++) {
+			let n1 = nodes.snapshotItem(i).childNodes[1];
+			let n3 = nodes.snapshotItem(i).childNodes[3];
+			let debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
+			let prix = n3.childNodes[0].nodeValue;
+			if (!prix) {
+				prix = `${n3.childNodes[3].getAttribute('value')} GG'`;
+			}
+			texte = `${texte}${debut.substring(debut.indexOf('[') + 1, debut.indexOf(']'))};${n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+				}${n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '')};${prix.replace(/\n/g, '')}\n`;
 		}
 
-		var c = document.evaluate("//div[@class = 'titre2']/text()",
+		let c = document.evaluate("//div[@class = 'titre2']/text()",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		var id_taniere = c.snapshotItem(0).nodeValue;
+		let id_taniere = c.snapshotItem(0).nodeValue;
 		id_taniere = id_taniere.substring(id_taniere.lastIndexOf('(') + 1, id_taniere.lastIndexOf(')'));
 
-		var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
+		let form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
 			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"));
 		if (form) {
-			if (document.getElementsByTagName('form').length > 0)
+			if (document.getElementsByTagName('form').length > 0) {
 				insertBefore(document.getElementsByTagName('form')[0].nextSibling, form);
-			else {
-				var thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			} else {
+				let thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				insertBefore(thisP, form);
 			}
 		}
 	}
 
 	function treateAllComposants() {
-		if (currentURL.indexOf("as_type=Compo") == -1) return;
+		if (currentURL.indexOf("as_type=Compo") == -1) {
+			return;
+		}
 
-		//On récupère les composants
-		var categ = document.evaluate("count(//table/descendant::text()[contains(.,'Sans catégorie')])",
+		// On récupère les composants
+		let categ = document.evaluate("count(//table/descendant::text()[contains(.,'Sans catégorie')])",
 			document, null, 0, null).numberValue;
-		var c = (categ == 0 ? 3 : 4);
-		var nodes = document.evaluate("//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') "
-			+ "or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']"
-			+ "/descendant::tr[contains(td[1]/a/b/text(),']') and ("
-			+ "td[" + c + "]/text()[1] = '\u0040-\u0040' "
-			+ "or contains(td[" + c + "]/text()[2],'Tous les trolls') "
-			+ "or contains(td[" + c + "]/text()[1],'Tous les trolls') "
-			+ "or (count(td[" + c + "]/text()) = 1 and td[" + c + "]/text()[1]='n°') ) "
-			+ "and td[1]/img/@alt = 'Identifié']",
+		var c = categ == 0 ? 3 : 4;
+		let nodes = document.evaluate(`${"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') " +
+			"or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]/following::table[@width = '100%']" +
+			"/descendant::tr[contains(td[1]/a/b/text(),']') and (" +
+			"td["}${c}]/text()[1] = '\u0040-\u0040' ` +
+			`or contains(td[${c}]/text()[2],'Tous les trolls') ` +
+			`or contains(td[${c}]/text()[1],'Tous les trolls') ` +
+			`or (count(td[${c}]/text()) = 1 and td[${c}]/text()[1]='n°') ) ` +
+			`and td[1]/img/@alt = 'Identifié']`,
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		if (nodes.snapshotLength == 0) {
 			//		 avertissement('treateAllComposants DOWN');
 			return;
 		}
 
-		var texte = "";
-		for (var i = 0; i < nodes.snapshotLength; i++) {
-			var n1 = nodes.snapshotItem(i).childNodes[1];
-			var n3 = nodes.snapshotItem(i).childNodes[3];
-			var debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
-			var prix = n3.childNodes[0].nodeValue;
+		let texte = "";
+		for (let i = 0; i < nodes.snapshotLength; i++) {
+			let n1 = nodes.snapshotItem(i).childNodes[1];
+			let n3 = nodes.snapshotItem(i).childNodes[3];
+			let debut = n1.childNodes[2].nodeValue.replace(/\n/g, '');
+			let prix = n3.childNodes[0].nodeValue;
 			if (!prix) {
-				if (n3.childNodes[3].getAttribute('value') && n3.childNodes[3].getAttribute('value') != "")
-					prix = n3.childNodes[3].getAttribute('value') + " GG'";
-			}
-			else {
+				if (n3.childNodes[3].getAttribute('value') && n3.childNodes[3].getAttribute('value') != "") {
+					prix = `${n3.childNodes[3].getAttribute('value')} GG'`;
+				}
+			} else {
 				prix = prix.replace(/[\240 ]/g, "");
-				if (prix == "-")
+				if (prix == "-") {
 					prix = null;
+				}
 			}
-			if (prix)
-				texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
-					+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
-					+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";"
-					+ prix.replace(/\n/g, '') + "\n";
-			else
-				texte += debut.substring(debut.indexOf('[') + 1, debut.indexOf(']')) + ";"
-					+ n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
-					+ n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '') + ";pas défini\n";
+			if (prix) {
+				texte = `${texte}${debut.substring(debut.indexOf('[') + 1, debut.indexOf(']'))};${n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+					}${n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '')};${prix.replace(/\n/g, '')}\n`;
+			} else {
+				texte = `${texte}${debut.substring(debut.indexOf('[') + 1, debut.indexOf(']'))};${n1.childNodes[3].firstChild.nodeValue.replace(/\n/g, '')
+					}${n1.childNodes[3].childNodes[1].firstChild.nodeValue.replace(/\n/g, '')};pas défini\n`;
+			}
 		}
 
 		var c = document.evaluate("//div[@class = 'titre2']/text()",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		var id_taniere = c.snapshotItem(0).nodeValue;
+		let id_taniere = c.snapshotItem(0).nodeValue;
 		id_taniere = id_taniere.substring(id_taniere.indexOf('(') + 1, id_taniere.indexOf(')'));
 
-		var form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
+		let form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
 			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"), "Vendre tous les composants non réservés sur le Troc de l\'Hydre");
 		if (form) {
-			if (document.getElementsByTagName('form').length > 0)
+			if (document.getElementsByTagName('form').length > 0) {
 				insertBefore(document.getElementsByTagName('form')[0].nextSibling, form);
-			else {
-				var thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			} else {
+				let thisP = document.evaluate("//p/table/descendant::text()[contains(.,'Heure Serveur')]/../../../../..", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				insertBefore(thisP, form);
 			}
 		}
 	}
 
 	function treateEM() {
-		if (1) return;	// Roule' 06/01/2017 ne fonctionne plus depuis.... longtemps
-		if (currentURL.indexOf("as_type=Compo") == -1)
+		if (1) {
+			return;
+		}	// Roule' 06/01/2017 ne fonctionne plus depuis.... longtemps
+		if (currentURL.indexOf("as_type=Compo") == -1) {
 			return false;
-		var urlImg = URL_MZimg + "Competences/ecritureMagique.png";
-		var nodes = document.evaluate("//tr[@class='mh_tdpage']"
+		}
+		let urlImg = `${URL_MZimg}Competences/ecritureMagique.png`;
+		let nodes = document.evaluate("//tr[@class='mh_tdpage']"
 			, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		if (nodes.snapshotLength == 0)
+		if (nodes.snapshotLength == 0) {
 			return false;
-		for (var i = 0; i < nodes.snapshotLength; i++) {
-			var desc = nodes.snapshotItem(i).getElementsByTagName('td');
-			var link = desc[2].firstChild;
-			var nomCompoTotal = desc[2].textContent;
-			var nomCompo = nomCompoTotal.substring(0, nomCompoTotal.indexOf(" d'un"));
+		}
+		for (let i = 0; i < nodes.snapshotLength; i++) {
+			let desc = nodes.snapshotItem(i).getElementsByTagName('td');
+			let link = desc[2].firstChild;
+			let nomCompoTotal = desc[2].textContent;
+			let nomCompo = nomCompoTotal.substring(0, nomCompoTotal.indexOf(" d'un"));
 			nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"), nomCompoTotal.length);
-			var nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ") + 1, nomCompoTotal.length - 1));
-			var locqual = desc[3].textContent;
-			var qualite = trim(locqual.substring(locqual.indexOf("Qualité:") + 9));
-			var localisation = trim(locqual.substring(0, locqual.indexOf("|") - 1));
+			let nomMonstre = trim(nomCompoTotal.substring(nomCompoTotal.indexOf(" ") + 1, nomCompoTotal.length - 1));
+			let locqual = desc[3].textContent;
+			let qualite = trim(locqual.substring(locqual.indexOf("Qualité:") + 9));
+			let localisation = trim(locqual.substring(0, locqual.indexOf("|") - 1));
 			if (isEM(nomMonstre).length > 0) {
-				var infos = composantEM(nomMonstre, trim(nomCompo), localisation, getQualite(qualite));
+				let infos = composantEM(nomMonstre, trim(nomCompo), localisation, getQualite(qualite));
 				if (infos.length > 0) {
-					var shortDescr = "Variable";
-					var bold = 0;
+					let shortDescr = "Variable";
+					let bold = 0;
 					if (infos != "Composant variable") {
 						shortDescr = infos.substring(0, infos.indexOf(" "));
-						if (parseInt(shortDescr) >= 0)
+						if (parseInt(shortDescr) >= 0) {
 							bold = 1;
+						}
 					}
 					link.parentNode.appendChild(createImage(urlImg, infos));
-					appendText(link.parentNode, " [" + shortDescr + "]", bold);
+					appendText(link.parentNode, ` [${shortDescr}]`, bold);
 				}
 			}
-
 		}
 	}
 
 	function treateChampi_tabcompo() {
-		if (currentURL.indexOf('as_type=Champi') == -1)
+		if (currentURL.indexOf('as_type=Champi') == -1) {
 			return false;
-		var nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
+		}
+		let nodes = document.evaluate("//img[@alt = 'Identifié']/../a/text()[1]",
 			document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		if (nodes.snapshotLength == 0)
+		if (nodes.snapshotLength == 0) {
 			return false;
+		}
 
-		for (var i = 0; i < nodes.snapshotLength; i++) {
-			var node = nodes.snapshotItem(i);
-			var nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
-			if (moisChampi[nomChampi])
-				appendText(node.parentNode.parentNode, ' [Mois ' + moisChampi[nomChampi] + ']');
+		for (let i = 0; i < nodes.snapshotLength; i++) {
+			let node = nodes.snapshotItem(i);
+			let nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
+			if (moisChampi[nomChampi]) {
+				appendText(node.parentNode.parentNode, ` [Mois ${moisChampi[nomChampi]}]`);
+			}
 		}
 	}
 
 	function treateEnchant() {
-		if (currentURL.indexOf("as_type=Compo") == -1)
+		if (currentURL.indexOf("as_type=Compo") == -1) {
 			return false;
+		}
 		try {
-			if (!listeMonstreEnchantement)
+			if (!listeMonstreEnchantement) {
 				computeCompoEnchantement();
-			var nodes = document.evaluate(
-				"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]"
-				+ "/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') "
-				+ "and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			if (nodes.snapshotLength == 0)
+			}
+			let nodes = document.evaluate(
+				"//a[starts-with(@href,'TanierePJ_o_Stock.php?IDLieu=') or starts-with(@href,'Comptoir_o_Stock.php?IDLieu=')]" +
+				"/following::table[@width = '100%']/descendant::tr[contains(td[1]/a/b/text(),']') " +
+				"and td[1]/img/@alt = 'Identifié']/td[1]/a", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			if (nodes.snapshotLength == 0) {
 				return false;
-			var urlImg = URL_MZimg + "enchant.png";
-			for (var i = 0; i < nodes.snapshotLength; i++) {
-				var link = nodes.snapshotItem(i);
-				var nomCompoTotal = link.firstChild.nodeValue;
-				var nomCompo = nomCompoTotal.substring(0, nomCompoTotal.indexOf(" d'un"));
+			}
+			let urlImg = `${URL_MZimg}enchant.png`;
+			for (let i = 0; i < nodes.snapshotLength; i++) {
+				let link = nodes.snapshotItem(i);
+				let nomCompoTotal = link.firstChild.nodeValue;
+				let nomCompo = nomCompoTotal.substring(0, nomCompoTotal.indexOf(" d'un"));
 				nomCompoTotal = nomCompoTotal.substring(nomCompoTotal.indexOf("d'un"), nomCompoTotal.length);
-				var nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ") + 1, nomCompoTotal.length);
+				let nomMonstre = nomCompoTotal.substring(nomCompoTotal.indexOf(" ") + 1, nomCompoTotal.length);
 				nomCompoTotal = link.childNodes[1].childNodes[0].nodeValue;
-				var qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité") + 11, nomCompoTotal.indexOf(" ["));
-				var localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[") + 1, nomCompoTotal.indexOf("]"));
+				let qualite = nomCompoTotal.substring(nomCompoTotal.indexOf("de Qualité") + 11, nomCompoTotal.indexOf(" ["));
+				let localisation = nomCompoTotal.substring(nomCompoTotal.indexOf("[") + 1, nomCompoTotal.indexOf("]"));
 				if (isEnchant(nomMonstre).length > 0) {
-					var infos = composantEnchant(nomMonstre, nomCompo, localisation, getQualite(qualite));
+					let infos = composantEnchant(nomMonstre, nomCompo, localisation, getQualite(qualite));
 					if (infos.length > 0) {
 						link.parentNode.appendChild(createImage(urlImg, infos));
 					}
 				}
 			}
-		}
-		catch (e) {
+		} catch (e) {
 			avertissement(e);
 		}
 	}
 
 	function treateEquipEnchant() {
-		if (currentURL.indexOf('as_type=Arme') == -1 && currentURL.indexOf('as_type=Armure') == -1)
+		if (currentURL.indexOf('as_type=Arme') == -1 && currentURL.indexOf('as_type=Armure') == -1) {
 			return false;
+		}
 		initPopupTabcompo();
 		computeEnchantementEquipement(createPopupImage_tabcompo, formateTexte_tabcompo);
 	}
@@ -7422,7 +8046,7 @@ try {
 			treateChampi_tabcompo();
 			treateEM();
 		}
-		if (MY_getValue(numTroll + '.enchantement.liste') && MY_getValue(numTroll + '.enchantement.liste') != '') {
+		if (MY_getValue(`${numTroll}.enchantement.liste`) && MY_getValue(`${numTroll}.enchantement.liste`) != '') {
 			treateEnchant();
 			treateEquipEnchant();
 		}
@@ -7430,7 +8054,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -7720,7 +8344,7 @@ try {
 
 	function addArray(arr1, arr2) {
 		// Somme matricielle
-		var res = clone(arr1);
+		let res = clone(arr1);
 		for (i = res.length - 1; i >= 0; i--) {
 			res[i] += arr2[i];
 		}
@@ -7729,14 +8353,16 @@ try {
 
 	function getTemplates(nomItem) {
 		// Déstructure le nom de l'item en array [nom, template1, ...]
-		var tempFound = true;
-		var str = nomItem.trim();
-		var arr = [];
+		let tempFound = true;
+		let str = nomItem.trim();
+		let arr = [];
 		while (tempFound) {
 			tempFound = false;
-			for (var temp in mh_templates) {
+			for (let temp in mh_templates) {
 				// on teste la fin du nom contre chaque template
-				if (str.slice(-temp.length) != temp) { continue; }
+				if (str.slice(-temp.length) != temp) {
+					continue;
+				}
 				tempFound = true;
 				str = str.slice(0, -temp.length - 1);
 				arr.unshift(temp);
@@ -7757,14 +8383,11 @@ try {
 			if (arrayCaracs[0] < 0) {
 				arrayCaracs[0] = Math.ceil(arrayCaracs[0] / 2);
 			}
+		} else if (arrayCaracs[4] < 0) {
+			arrayCaracs[4] = Math.ceil(arrayCaracs[4] / 2);
 		}
-		else {
-			if (arrayCaracs[4] < 0) {
-				arrayCaracs[4] = Math.ceil(arrayCaracs[4] / 2);
-			}
-		}
-		arrayCaracs[15] /= 2;
-		arrayCaracs[16] /= 2;
+		arrayCaracs[15] = arrayCaracs[15] / 2;
+		arrayCaracs[16] = arrayCaracs[16] / 2;
 		return arrayCaracs;
 	}
 
@@ -7772,12 +8395,11 @@ try {
 		// Ajoute l'effet des pseudo-templates sur les caracs
 		// S'applique APRÈS le mithril
 		// WARNING - Cette formule n'a rien d'officiel, gare !
-		var coef = 0;
-		if (/^lég[e,è]re?$/.test(template)) {
+		let coef = 0;
+		if ((/^lég[e,è]re?$/).test(template)) {
 			coef = -1;
-		}
-		else if (/^renforcée?$/.test(template)
-			|| template === 'robuste') {
+		} else if ((/^renforcée?$/).test(template) ||
+			template === 'robuste') {
 			coef = 1;
 		}
 		if (coef) {
@@ -7790,28 +8412,28 @@ try {
 
 	function getCaracs(item) {
 		// Calcule les caractéristiques de l'item
-		var templates = getTemplates(item);
+		let templates = getTemplates(item);
 		if (!mh_caracs[templates[0]]) {
 			// Si l'item est inconnu
 			return [];
 		}
-		var caracs = clone(mh_caracs[templates[0]]);
-		var typeItem = caracs[0];
+		let caracs = clone(mh_caracs[templates[0]]);
+		let typeItem = caracs[0];
 		caracs.shift();
 		templates.shift();
 		if (templates[templates.length - 1] == 'en Mithril') {
 			caracs = addMithril(caracs, typeItem);
 			templates.pop();
 		}
-		if (/^acérée?$/.test(templates[0])
-			|| /^équilibrée?$/.test(templates[0])
-			|| /^lég[e,è]re?$/.test(templates[0])
-			|| /^renforcée?$/.test(templates[0])
-			|| templates[0] == 'robuste') {
+		if ((/^acérée?$/).test(templates[0]) ||
+			(/^équilibrée?$/).test(templates[0]) ||
+			(/^lég[e,è]re?$/).test(templates[0]) ||
+			(/^renforcée?$/).test(templates[0]) ||
+			templates[0] == 'robuste') {
 			caracs = addRenfort(caracs, templates[0]);
 			templates.shift();
 		}
-		for (var i = templates.length - 1; i >= 0; i--) {
+		for (let i = templates.length - 1; i >= 0; i--) {
 			caracs = addArray(caracs, mh_templates[templates[i]]);
 		}
 		return caracs;
@@ -7819,52 +8441,60 @@ try {
 
 	function getLine(tab) {
 		// Préparation de la ligne à afficher lors d'un mouseover
-		var str = '';
+		let str = '';
 		if (tab[0] != 0 || tab[1] != 0) {
-			str += '<b>Att : </b>' + aff(tab[0]);
-			if (tab[1] != 0) { str += '/' + aff(tab[1]); }
-			str += ' | ';
+			str = `${str}<b>Att : </b>${aff(tab[0])}`;
+			if (tab[1] != 0) {
+				str = `${str}/${aff(tab[1])}`;
+			}
+			str = `${str} | `;
 		}
 		if (tab[4] != 0) {
-			str += '<b>Esq : </b>' + aff(tab[4]) + ' | ';
+			str = `${str}<b>Esq : </b>${aff(tab[4])} | `;
 		}
 		if (tab[2] != 0 || tab[3] != 0) {
-			str += '<b>Deg : </b>' + aff(tab[2]);
-			if (tab[3] != 0) { str += '/' + aff(tab[3]); }
-			str += ' | ';
+			str = `${str}<b>Deg : </b>${aff(tab[2])}`;
+			if (tab[3] != 0) {
+				str = `${str}/${aff(tab[3])}`;
+			}
+			str = `${str} | `;
 		}
 		if (tab[8] != 0) {
-			str += '<b>Reg : </b>' + aff(tab[8]) + ' | ';
+			str = `${str}<b>Reg : </b>${aff(tab[8])} | `;
 		}
 		if (tab[7] != 0) {
-			str += '<b>Vue : </b>' + aff(tab[7]) + ' | ';
+			str = `${str}<b>Vue : </b>${aff(tab[7])} | `;
 		}
 		if (tab[5] != 0 || tab[6] != 0) {
-			str += '<b>Arm : </b>' + aff(tab[5]);
-			if (tab[6] != 0) { str += '/' + aff(tab[6]); }
-			str += ' | ';
+			str = `${str}<b>Arm : </b>${aff(tab[5])}`;
+			if (tab[6] != 0) {
+				str = `${str}/${aff(tab[6])}`;
+			}
+			str = `${str} | `;
 		}
 		if (tab[9] != 0 || tab[10] != 0) {
-			str += '<b>RM : </b>' + aff(tab[9]) + '%';
+			str = `${str}<b>RM : </b>${aff(tab[9])}%`;
 			if (tab[9] != tab[10]) {
-				str += '/' + aff(tab[10]) + '%';
+				str = `${str}/${aff(tab[10])}%`;
 			}
-			str += ' | ';
+			str = `${str} | `;
 		}
 		if (tab[11] != 0 || tab[12] != 0) {
-			str += '<b>MM : </b>' + aff(tab[11]) + '%';
-			if (tab[11] != tab[12]) { str += '/' + aff(tab[12]) + '%'; }
-			str += ' | ';
+			str = `${str}<b>MM : </b>${aff(tab[11])}%`;
+			if (tab[11] != tab[12]) {
+				str = `${str}/${aff(tab[12])}%`;
+			}
+			str = `${str} | `;
 		}
 		if (tab[13] != 0) {
-			str += '<b>PV : </b>' + aff(tab[13]) + ' | ';
+			str = `${str}<b>PV : </b>${aff(tab[13])} | `;
 		}
 		if (tab[14] != 0) {
-			str += '<b>DLA : </b>' + aff(tab[14]) + ' min | ';
+			str = `${str}<b>DLA : </b>${aff(tab[14])} min | `;
 		}
-		str += '<b>Poids : </b>' + tab[15] + ' min';
+		str = `${str}<b>Poids : </b>${tab[15]} min`;
 		if (tab[15] != tab[16]) {
-			str += ' / ' + tab[16] + ' min';
+			str = `${str} / ${tab[16]} min`;
 		}
 		return str;
 	}
@@ -7874,11 +8504,11 @@ try {
 		DivInfo.id = 'infosVue';
 		DivInfo.className = 'mh_textbox';
 		DivInfo.style =
-			'position: absolute;'
-			+ 'border: 1px solid #000000;'
-			+ 'visibility:hidden;'
-			+ 'display:inline;'
-			+ 'z-index:99;';
+			'position: absolute;' +
+			'border: 1px solid #000000;' +
+			'visibility:hidden;' +
+			'display:inline;' +
+			'z-index:99;';
 		document.body.appendChild(DivInfo);
 		document.onmousemove = getXY;
 		document.onclick = changeFreezeStatus;
@@ -7886,50 +8516,60 @@ try {
 
 	function getXY(evt) {
 		if (!freezed && DivInfo.style.visibility == 'visible') {
-			DivInfo.style.left = evt.pageX + 'px';
-			DivInfo.style.top = evt.pageY + 10 + 'px';
+			DivInfo.style.left = `${evt.pageX}px`;
+			DivInfo.style.top = `${evt.pageY + 10}px`;
 		}
 	}
 
 	function changeFreezeStatus() {
 		if (DivInfo.style.visibility == 'visible') {
 			freezed = !freezed;
-			if (!freezed) { hideInfos(); }
+			if (!freezed) {
+				hideInfos();
+			}
 		}
 	}
 
 	function showInfos() {
-		if (freezed) { return; }
-		var currentInfos = this.infos;
+		if (freezed) {
+			return;
+		}
+		let currentInfos = this.infos;
 		DivInfo.innerHTML = currentInfos;
 		DivInfo.style.visibility = 'visible';
-		var compStyles = window.getComputedStyle(DivInfo);
-		if (compStyles.getPropertyValue('background-color') == 'rgba(0, 0, 0, 0)') DivInfo.style.backgroundColor = 'rgb(255, 255, 238)';
+		let compStyles = window.getComputedStyle(DivInfo);
+		if (compStyles.getPropertyValue('background-color') == 'rgba(0, 0, 0, 0)') {
+			DivInfo.style.backgroundColor = 'rgb(255, 255, 238)';
+		}
 	}
 
 	function hideInfos() {
-		if (!freezed) { DivInfo.style.visibility = 'hidden'; }
+		if (!freezed) {
+			DivInfo.style.visibility = 'hidden';
+		}
 	}
 
 	function treateEquipement() {
 		// Extrait les données du matos et réinjecte les infos déduites
-		if (MY_getValue('INFOCARAC') == 'false') { return; }
+		if (MY_getValue('INFOCARAC') == 'false') {
+			return;
+		}
 
-		var faireLigne = false;
-		var caracs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		let faireLigne = false;
+		let caracs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		var nodes = document.evaluate(
-			"//td/b[text()='Equipement Utilisé']/../../"
-			+ "td[2]/img[contains(@src,bullet)]",
+			"//td/b[text()='Equipement Utilisé']/../../" +
+			"td[2]/img[contains(@src,bullet)]",
 			document, null, 7, null);
 		if (nodes.snapshotLength > 0) {
 			// Si CSS de base
 			for (var i = 0; i < nodes.snapshotLength; i++) {
 				var node = nodes.snapshotItem(i);
-				var next = node.nextSibling;
-				var nnext = next.nextSibling;
+				let next = node.nextSibling;
+				let nnext = next.nextSibling;
 				var nom = next.nodeValue.toLowerCase();
 				if (nnext.childNodes.length == 1) {
-					nom += nnext.firstChild.nodeValue;
+					nom = nom + nnext.firstChild.nodeValue;
 				}
 				nom = nom.trim();
 				// gestion winpostrophe
@@ -7941,7 +8581,7 @@ try {
 				if (arr.length > 0) {
 					faireLigne = true;
 					caracs = addArray(caracs, arr);
-					var span = document.createElement('span');
+					let span = document.createElement('span');
 					span.appendChild(next);
 					span.appendChild(nnext);
 					span.infos = getLine(arr);
@@ -7958,8 +8598,7 @@ try {
 				node.onmouseover = showInfos;
 				node.onmouseout = hideInfos;
 			}
-		}
-		else {
+		} else {
 			// Si CSS avancée
 			nodes = document.evaluate("//dd[@class='equipement']/ul/li",
 				document, null, 7, null);
@@ -7968,7 +8607,7 @@ try {
 					var node = nodes.snapshotItem(i);
 					var nom = node.firstChild.nodeValue.toLowerCase();
 					if (node.childNodes.length > 1 && node.childNodes[1].firstChild) {
-						nom += node.childNodes[1].firstChild.nodeValue;
+						nom = nom + node.childNodes[1].firstChild.nodeValue;
 					}
 					nom = nom.trim();
 					// gestion winpostrophe
@@ -7999,7 +8638,7 @@ try {
 		toolTipInit();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -8024,78 +8663,80 @@ try {
 	 */
 
 
-	/*-[functions]------------- Fonctions de sauvegarde -------------------------- */
+	/* -[functions]------------- Fonctions de sauvegarde -------------------------- */
 
 	function saveITData() {
-		var IT = document.getElementById('itSelect').value;
+		let IT = document.getElementById('itSelect').value;
 		if (IT == 'bricol') {
-			var nBricol = 1;
-			for (var iBricol = 0; ; iBricol++) {
+			let nBricol = 1;
+			for (let iBricol = 0; ; iBricol++) {
 				var extClef = nBricol == 1 ? '' : nBricol;
-				var eltSystem = document.getElementById('urlbricol' + iBricol);
-				if (eltSystem == undefined) break;
-				var system = eltSystem.value;
+				let eltSystem = document.getElementById(`urlbricol${iBricol}`);
+				if (eltSystem == undefined) {
+					break;
+				}
+				let system = eltSystem.value;
 				// logMZ("[MZ] saveITData system=" + system);
-				var login = document.getElementById('loginbricol' + iBricol).value;
-				var pass = document.getElementById('passbricol' + iBricol).value;
-				var affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
+				let login = document.getElementById(`loginbricol${iBricol}`).value;
+				let pass = document.getElementById(`passbricol${iBricol}`).value;
+				let affhv = document.getElementById('affhvbricol').checked ? 1 : 0;
 				if (system && login) {
 					if (pass) {
-						var v = 'bricol$' + system + '$' + login + '$' + hex_md5(pass) + '$' + affhv;
-						MY_setValue(numTroll + '.INFOSIT' + extClef, v);
+						let v = `bricol$${system}$${login}$${hex_md5(pass)}$${affhv}`;
+						MY_setValue(`${numTroll}.INFOSIT${extClef}`, v);
 						// logMZ('v=' + v);
 					} else {
 						// vérif que rien n'a changé
-						var str = MY_getValue(numTroll + '.INFOSIT' + extClef);
+						let str = MY_getValue(`${numTroll}.INFOSIT${extClef}`);
 						if (str) {
-							var arr = str.split('$');
+							let arr = str.split('$');
 							if (system != arr[1] || login != arr[2] || affhv != arr[4]) {
-								alert('Attention, système tactique Bricol\'Trolls ' + system + ' sans mot de passe => non modifié');
+								alert(`Attention, système tactique Bricol'Trolls ${system} sans mot de passe => non modifié`);
 							}
 						}
 					}
 					nBricol++;
 				}
 			}
-			logMZ("[MZ] saveITData remove " + numTroll + '.INFOSIT' + extClef);
-			MY_removeValue(numTroll + '.INFOSIT' + extClef);
-		}
-		else {
-			MY_removeValue(numTroll + '.INFOSIT');
+			logMZ(`[MZ] saveITData remove ${numTroll}.INFOSIT${extClef}`);
+			MY_removeValue(`${numTroll}.INFOSIT${extClef}`);
+		} else {
+			MY_removeValue(`${numTroll}.INFOSIT`);
 		}
 	}
 
 	function saveLinks() {
-		var numLinks = document.getElementById('linksBody').childNodes.length;
-		var data = [[]];
+		let numLinks = document.getElementById('linksBody').childNodes.length;
+		let data = [[]];
+
 		/* Récupération et tri des liens */
 		for (var i = 1; i <= numLinks; i++) {
-			MY_removeValue('URL' + i);
-			MY_removeValue('URL' + i + '.nom');
-			MY_removeValue('URL' + i + '.ico');
-			var url = document.getElementById('url' + i).value;
-			var nom = document.getElementById('nom' + i).value;
-			var ico = document.getElementById('ico' + i).value;
+			MY_removeValue(`URL${i}`);
+			MY_removeValue(`URL${i}.nom`);
+			MY_removeValue(`URL${i}.ico`);
+			let url = document.getElementById(`url${i}`).value;
+			let nom = document.getElementById(`nom${i}`).value;
+			let ico = document.getElementById(`ico${i}`).value;
 			if (url && (nom || ico)) {
 				data.push([url, nom ? nom : '', ico ? ico : '']);
 			}
 		}
+
 		/* Sauvegarde */
 		for (var i = 1; i < data.length; i++) {
-			MY_setValue('URL' + i, data[i][0]);
-			MY_setValue('URL' + i + '.nom', data[i][1]);
-			MY_setValue('URL' + i + '.ico', data[i][2]);
+			MY_setValue(`URL${i}`, data[i][0]);
+			MY_setValue(`URL${i}.nom`, data[i][1]);
+			MY_setValue(`URL${i}.ico`, data[i][2]);
 		}
 	}
 
 	function saveAll() {
 		try {
-			var urlIco = document.getElementById('icoMenuIco').value;
+			let urlIco = document.getElementById('icoMenuIco').value;
 			if (urlIco) {
-				MY_setValue(numTroll + '.ICOMENU', urlIco);
-			}
-			else {
-				MY_removeValue(numTroll + '.ICOMENU', urlIco);
+				MY_setValue(`${numTroll}.ICOMENU`, urlIco);
+			} else {
+				MY_removeValue(`${numTroll}.ICOMENU`, urlIco);
 				document.getElementById('icoMenuIco').value = '';
 			}
 			saveLinks();
@@ -8103,12 +8744,11 @@ try {
 
 			MZ_setOrRemoveValue('VUEEXT', document.getElementById('vueext').value);
 
-			var maxcdm = parseInt(document.getElementById('maxcdm').value);
+			let maxcdm = parseInt(document.getElementById('maxcdm').value);
 			if (maxcdm) {
-				MZ_setOrRemoveValue(numTroll + '.MAXCDM', maxcdm);
-			}
-			else {
-				MY_removeValue(numTroll + '.MAXCDM');
+				MZ_setOrRemoveValue(`${numTroll}.MAXCDM`, maxcdm);
+			} else {
+				MY_removeValue(`${numTroll}.MAXCDM`);
 				document.getElementById('maxcdm').value = '';
 			}
 
@@ -8116,12 +8756,12 @@ try {
 
 			// Pourquoi Tilk stockait-il tout en str ?
 			// -> parce que les booléens c'est foireux (vérifié)
-			MZ_setOrRemoveValue(numTroll + '.USECSS', document.getElementById('usecss').checked);
+			MZ_setOrRemoveValue(`${numTroll}.USECSS`, document.getElementById('usecss').checked);
 			MZ_setOrRemoveValue('INFOCARAC', document.getElementById('infocarac').checked);
-			//MY_setValue(numTroll+'.SEND_IDT', document.getElementById('send_idt').checked);
+			// MY_setValue(numTroll+'.SEND_IDT', document.getElementById('send_idt').checked);
 			// Fonctionnalité désactivée
 
-			MZ_setOrRemoveValue(numTroll + '.AUTOCDM', document.getElementById('autoCdM').checked);
+			MZ_setOrRemoveValue(`${numTroll}.AUTOCDM`, document.getElementById('autoCdM').checked);
 			// MY_setValue('VUECARAC',	// Roule 12/12/2019 ça ne fait plus rien
 			// document.getElementById('vueCarac').checked ? 'true' : 'false');
 			MZ_setOrRemoveValue('CONFIRMEDECALAGE', document.getElementById('confirmeDecalage').checked);
@@ -8133,35 +8773,35 @@ try {
 			MZ_setOrRemoveValue('MZ_SuivantsTresUnique', document.getElementById('MZ_SuivantsTresUnique').checked);
 
 			/* SCIZ */
-			var sciz_jwt = document.getElementById('sciz_jwt').value;
+			let sciz_jwt = document.getElementById('sciz_jwt').value;
 			if (sciz_jwt !== null && sciz_jwt !== undefined) {
 				sciz_jwt = sciz_jwt.replace(new RegExp('[^a-zA-Z0-9\._\-]', 'g'), '');
-				MY_setValue(numTroll + '.SCIZJWT', sciz_jwt);
+				MY_setValue(`${numTroll}.SCIZJWT`, sciz_jwt);
 			}
-			var sciz_cb_events = document.getElementById('sciz_cb_events').checked;
-			sciz_cb_events = (sciz_cb_events !== null) ? sciz_cb_events : true;
-			MY_setValue(numTroll + '.SCIZ_CB_EVENTS', sciz_cb_events);
-			var sciz_cb_view_treasures = document.getElementById('sciz_cb_view_treasures').checked;
-			sciz_cb_view_treasures = (sciz_cb_view_treasures !== null) ? sciz_cb_view_treasures : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_TREASURES', sciz_cb_view_treasures);
-			var sciz_cb_view_mushrooms = document.getElementById('sciz_cb_view_mushrooms').checked;
-			sciz_cb_view_mushrooms = (sciz_cb_view_mushrooms !== null) ? sciz_cb_view_mushrooms : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS', sciz_cb_view_mushrooms);
-			var sciz_cb_bestiaire = document.getElementById('sciz_cb_bestiaire').checked;
-			sciz_cb_bestiaire = (sciz_cb_bestiaire !== null) ? sciz_cb_bestiaire : true;
-			MY_setValue(numTroll + '.SCIZ_CB_BESTIAIRE', sciz_cb_bestiaire);
-			var sciz_cb_view_trolls = document.getElementById('sciz_cb_view_trolls').checked;
-			sciz_cb_view_trolls = (sciz_cb_view_trolls !== null) ? sciz_cb_view_trolls : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_TROLLS', sciz_cb_view_trolls);
-			var sciz_cb_view_user = document.getElementById('sciz_cb_view_user').checked;
-			sciz_cb_view_user = (sciz_cb_view_user !== null) ? sciz_cb_view_user : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_USER', sciz_cb_view_user);
-			var sciz_cb_view_traps = document.getElementById('sciz_cb_view_traps').checked;
-			sciz_cb_view_traps = (sciz_cb_view_traps !== null) ? sciz_cb_view_traps : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_TRAPS', sciz_cb_view_traps);
-			var sciz_cb_view_portals = document.getElementById('sciz_cb_view_portals').checked;
-			sciz_cb_view_portals = (sciz_cb_view_portals !== null) ? sciz_cb_view_portals : true;
-			MY_setValue(numTroll + '.SCIZ_CB_VIEW_PORTALS', sciz_cb_view_portals);
+			let sciz_cb_events = document.getElementById('sciz_cb_events').checked;
+			sciz_cb_events = sciz_cb_events !== null ? sciz_cb_events : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_EVENTS`, sciz_cb_events);
+			let sciz_cb_view_treasures = document.getElementById('sciz_cb_view_treasures').checked;
+			sciz_cb_view_treasures = sciz_cb_view_treasures !== null ? sciz_cb_view_treasures : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`, sciz_cb_view_treasures);
+			let sciz_cb_view_mushrooms = document.getElementById('sciz_cb_view_mushrooms').checked;
+			sciz_cb_view_mushrooms = sciz_cb_view_mushrooms !== null ? sciz_cb_view_mushrooms : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`, sciz_cb_view_mushrooms);
+			let sciz_cb_bestiaire = document.getElementById('sciz_cb_bestiaire').checked;
+			sciz_cb_bestiaire = sciz_cb_bestiaire !== null ? sciz_cb_bestiaire : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_BESTIAIRE`, sciz_cb_bestiaire);
+			let sciz_cb_view_trolls = document.getElementById('sciz_cb_view_trolls').checked;
+			sciz_cb_view_trolls = sciz_cb_view_trolls !== null ? sciz_cb_view_trolls : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`, sciz_cb_view_trolls);
+			let sciz_cb_view_user = document.getElementById('sciz_cb_view_user').checked;
+			sciz_cb_view_user = sciz_cb_view_user !== null ? sciz_cb_view_user : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_USER`, sciz_cb_view_user);
+			let sciz_cb_view_traps = document.getElementById('sciz_cb_view_traps').checked;
+			sciz_cb_view_traps = sciz_cb_view_traps !== null ? sciz_cb_view_traps : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`, sciz_cb_view_traps);
+			let sciz_cb_view_portals = document.getElementById('sciz_cb_view_portals').checked;
+			sciz_cb_view_portals = sciz_cb_view_portals !== null ? sciz_cb_view_portals : true;
+			MY_setValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`, sciz_cb_view_portals);
 			saveITData();
 		} catch (e) {
 			var bouton = document.getElementById('saveAll');
@@ -8171,25 +8811,25 @@ try {
 		}
 
 		var bouton = document.getElementById('saveAll');
-		bouton.value = (bouton.value == 'Sauvegardé !') ?
+		bouton.value = bouton.value == 'Sauvegardé !' ?
 			'Re-sauvegardé !' : 'Sauvegardé !';
 	}
 
 
-	/*-[functions]----------------- EventListeners ------------------------------- */
+	/* -[functions]----------------- EventListeners ------------------------------- */
 
 	function addBricolIT(sSystem, sLogin, nAffhv, bFirst, bLast) {
-		var itBody = document.getElementById('itBody');
-		var nTr = itBody.rows.length;
+		let itBody = document.getElementById('itBody');
+		let nTr = itBody.rows.length;
 		// enlever tous les "+" des lignes précédentes
-		for (var iTr = 0; iTr < nTr; iTr++) {
+		for (let iTr = 0; iTr < nTr; iTr++) {
 			var td = itBody.rows[iTr].cells[0];
 			td.innerHTML = '';
 			td.title = '';
 			td.style.cursor = 'default';
 		}
 		// ajouter une ligne
-		var tr = appendTr(itBody, 'mh_tdpage')
+		let tr = appendTr(itBody, 'mh_tdpage');
 		var td = appendTd(tr);
 		if (bLast) {
 			td.style.whiteSpace = 'nowrap';
@@ -8198,36 +8838,36 @@ try {
 			td.title = 'Cliquer ici pour ajouter un autre système Bricol\'Troll';
 			td.onclick = function (e) {
 				addBricolIT(undefined, undefined, undefined, false, true);
-			}
+			};
 		}
 		var td = appendTd(tr);
 		td.style.whiteSpace = 'nowrap';
 		appendText(td, 'Nom du système : ');
-		appendTextbox(td, 'text', 'urlbricol', 20, 50, sSystem, 'urlbricol' + nTr);
+		appendTextbox(td, 'text', 'urlbricol', 20, 50, sSystem, `urlbricol${nTr}`);
 		td = appendTd(tr);
 		td.style.whiteSpace = 'nowrap';
 		appendText(td, 'Login du compte : ');
-		appendTextbox(td, 'text', 'loginbricol', 20, 50, sLogin, 'loginbricol' + nTr);
+		appendTextbox(td, 'text', 'loginbricol', 20, 50, sLogin, `loginbricol${nTr}`);
 		td = appendTd(tr);
 		td.style.whiteSpace = 'nowrap';
 		appendText(td, 'Mot de passe du compte : ');
-		appendTextbox(td, 'password', 'passbricol', 20, 50, undefined, 'passbricol' + nTr);
+		appendTextbox(td, 'password', 'passbricol', 20, 50, undefined, `passbricol${nTr}`);
 		td = appendTd(tr);
 		if (bFirst) {
 			td.style.whiteSpace = 'nowrap';
 			appendText(td, 'Affichage des Trõlls hors vue : ');
-			appendCheckBox(td, 'affhvbricol', (nAffhv > 0));
+			appendCheckBox(td, 'affhvbricol', nAffhv > 0);
 		}
 	}
 
 	function onChangeIT() {
-		var IT = document.getElementById('itSelect').value;
-		var itBody = document.getElementById('itBody');
+		let IT = document.getElementById('itSelect').value;
+		let itBody = document.getElementById('itBody');
 		itBody.innerHTML = '';
-		var tabStr = new Array();
+		let tabStr = new Array();
 		if (IT == 'bricol') {
 			for (var iBricol = 1; ; iBricol++) {
-				var str = MY_getValue(numTroll + '.INFOSIT' + (iBricol == 1 ? '' : iBricol));
+				let str = MY_getValue(`${numTroll}.INFOSIT${iBricol == 1 ? '' : iBricol}`);
 				// logMZ('onChangeIT str=' + str);
 				if (str) {
 					tabStr.push(str);
@@ -8236,14 +8876,14 @@ try {
 				}
 			}
 			if (tabStr.length == 0) {
-				addBricolIT('', '', 0, true, true)
+				addBricolIT('', '', 0, true, true);
 			} else {
 				for (var iBricol = 0; iBricol < tabStr.length; iBricol++) {
-					var arr = tabStr[iBricol].split('$');
-					var system = arr[1];
-					var login = arr[2];
-					var affhv = arr[4];
-					addBricolIT(system, login, affhv, iBricol == 0, iBricol == (tabStr.length - 1));
+					let arr = tabStr[iBricol].split('$');
+					let system = arr[1];
+					let login = arr[2];
+					let affhv = arr[4];
+					addBricolIT(system, login, affhv, iBricol == 0, iBricol == tabStr.length - 1);
 				}
 			}
 		}
@@ -8251,52 +8891,58 @@ try {
 
 	function refreshLinks() {
 		document.getElementById('linksBody').innerHTML = '';
-		var anotherURL = MY_getValue('URL1');
-		if (!anotherURL) { addLinkField(); }
-		var i = 1;
+		let anotherURL = MY_getValue('URL1');
+		if (!anotherURL) {
+			addLinkField();
+		}
+		let i = 1;
 		while (anotherURL && i < 99) {
 			addLinkField(i, anotherURL,
-				MY_getValue('URL' + i + '.nom'), MY_getValue('URL' + i + '.ico'));
+				MY_getValue(`URL${i}.nom`), MY_getValue(`URL${i}.ico`));
 			i++;
-			anotherURL = MY_getValue('URL' + i);
+			anotherURL = MY_getValue(`URL${i}`);
 		}
 	}
 
 	function addLinkField(i, url, nom, ico) {
-		var linksBody = document.getElementById('linksBody');
-		if (!(i > 0)) { i = linksBody.childNodes.length + 1; }
-		var tr = appendTr(linksBody);
-		var td = appendTdCenter(tr);
-		appendText(td, 'Lien ' + i + ' : ');
-		appendTextbox(td, 'text', 'url' + i, 40, 150, url);
+		let linksBody = document.getElementById('linksBody');
+		if (!(i > 0)) {
+			i = linksBody.childNodes.length + 1;
+		}
+		let tr = appendTr(linksBody);
+		let td = appendTdCenter(tr);
+		appendText(td, `Lien ${i} : `);
+		appendTextbox(td, 'text', `url${i}`, 40, 150, url);
 		td = appendTdCenter(tr);
 		appendText(td, 'Nom : ');
-		appendTextbox(td, 'text', 'nom' + i, 20, 150, nom);
+		appendTextbox(td, 'text', `nom${i}`, 20, 150, nom);
 		td = appendTdCenter(tr);
 		appendText(td, 'Icône : ');
-		appendTextbox(td, 'text', 'ico' + i, 40, 150, ico);
+		appendTextbox(td, 'text', `ico${i}`, 40, 150, ico);
 	}
 
 	function removeLinkField() {
-		var linksBody = document.getElementById('linksBody');
-		var i = linksBody.childNodes.length;
-		MY_removeValue('URL' + i);
-		MY_removeValue('URL' + i + '.nom');
-		MY_removeValue('URL' + i + '.ico');
+		let linksBody = document.getElementById('linksBody');
+		let i = linksBody.childNodes.length;
+		MY_removeValue(`URL${i}`);
+		MY_removeValue(`URL${i}.nom`);
+		MY_removeValue(`URL${i}.ico`);
 		linksBody.removeChild(linksBody.lastChild);
-		if (linksBody.childNodes.length == 0) { addLinkField(); }
+		if (linksBody.childNodes.length == 0) {
+			addLinkField();
+		}
 	}
 
 	function resetMainIco() {
 		document.getElementById('icoMenuIco').value =
-			URL_MZimg + 'mz_logo_small.png';
+			`${URL_MZimg}mz_logo_small.png`;
 	}
 
 
-	/*-[functions]-------------- Fonctions d'insertion --------------------------- */
+	/* -[functions]-------------- Fonctions d'insertion --------------------------- */
 
 	function insertTitle(next, txt) {
-		var div = document.createElement('div');
+		let div = document.createElement('div');
 		div.className = 'titre2';
 		appendText(div, txt);
 		insertBefore(next, div);
@@ -8304,45 +8950,45 @@ try {
 	}
 
 	function insertMainTable(next) {
-		var table = document.createElement('table');
+		let table = document.createElement('table');
 		table.width = '98%';
 		table.border = 0;
 		table.align = 'center';
 		table.cellPadding = 2;
 		table.cellSpacing = 1;
 		table.className = 'mh_tdborder';
-		var tbody = document.createElement('tbody');
+		let tbody = document.createElement('tbody');
 		table.appendChild(tbody);
 		insertBefore(next, table);
 		return tbody;
 	}
 
 	function appendSubTable(node) {
-		var table = document.createElement('table');
+		let table = document.createElement('table');
 		table.width = '100%';
-		var tbody = document.createElement('tbody');
+		let tbody = document.createElement('tbody');
 		table.appendChild(tbody);
 		node.appendChild(table);
 		return tbody;
 	}
 
 	function insertOptionTable(insertPt) {
-		var mainBody = insertMainTable(insertPt);
+		let mainBody = insertMainTable(insertPt);
 
 		/* Liens dans le Menu */
-		var tr = appendTr(mainBody, 'mh_tdtitre');
-		var td = appendTdText(tr, 'Hyperliens ajoutés dans le Menu :', true);
+		let tr = appendTr(mainBody, 'mh_tdtitre');
+		let td = appendTdText(tr, 'Hyperliens ajoutés dans le Menu :', true);
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 		appendText(td, 'Icône du Menu: ');
-		var url = MY_getValue(numTroll + '.ICOMENU');
-		if ((!url) || (url.indexOf('mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small') > 0)) {
-			url = URL_MZimg + 'mz_logo_small.png';
+		let url = MY_getValue(`${numTroll}.ICOMENU`);
+		if (!url || url.indexOf('mountyzilla.tilk.info/scripts_0.9/images/MY_logo_small') > 0) {
+			url = `${URL_MZimg}mz_logo_small.png`;
 		}
 		appendTextbox(td, 'text', 'icoMenuIco', 50, 200, url);
 		appendButton(td, 'Réinitialiser', resetMainIco);
 
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
-		var tbody = appendSubTable(td);
+		let tbody = appendSubTable(td);
 		tbody.id = 'linksBody';
 		refreshLinks();
 
@@ -8358,17 +9004,17 @@ try {
 
 		tr = appendTr(tbody);
 		td = appendTdText(tr, 'Vue externe : ');
-		var select = document.createElement('select');
+		let select = document.createElement('select');
 		select.id = 'vueext';
 		td.appendChild(select);
-		var listeVues2D = [
+		let listeVues2D = [
 			'Bricol\' Vue',
 			'Vue du CCM',
 			'Vue Gloumfs 2D',
 			'Vue Gloumfs 3D',
 			'Grouky Vue!'
 		];
-		for (var i = 0; i < listeVues2D.length; i++) {
+		for (let i = 0; i < listeVues2D.length; i++) {
 			appendOption(select, listeVues2D[i], listeVues2D[i]);
 		}
 		if (MY_getValue('VUEEXT')) {
@@ -8381,10 +9027,10 @@ try {
 
 		tr = appendTr(tbody);
 		td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
-		appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(numTroll + '.MAXCDM'));
+		appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(`${numTroll}.MAXCDM`));
 
 		td = appendTd(tr);
-		appendCheckBox(td, 'usecss', MY_getValue(numTroll + '.USECSS') == 'true');
+		appendCheckBox(td, 'usecss', MY_getValue(`${numTroll}.USECSS`) == 'true');
 		appendText(td, ' Utiliser la CSS pour les couleurs de la diplomatie');
 
 		/* Interface Tactique */
@@ -8401,7 +9047,7 @@ try {
 		tbody = appendSubTable(td);
 		tbody.id = 'itBody';
 		select.onchange = onChangeIT;
-		var str = MY_getValue(numTroll + '.INFOSIT');
+		let str = MY_getValue(`${numTroll}.INFOSIT`);
 		if (str) {
 			select.value = str.slice(0, str.indexOf('$'));
 			onChangeIT();
@@ -8413,49 +9059,49 @@ try {
 		appendText(td, 'SCIZ :', true);
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 		td = appendTdText(td, 'JWT : ');
-		appendTextbox(td, 'text', 'sciz_jwt', 150, 500, MY_getValue(numTroll + '.SCIZJWT'));
+		appendTextbox(td, 'text', 'sciz_jwt', 150, 500, MY_getValue(`${numTroll}.SCIZJWT`));
 		// Event checkbox
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 		tbody = appendSubTable(td);
-		tr = appendTr(tbody)
+		tr = appendTr(tbody);
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_EVENTS')));
+		appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`)));
 		appendText(td, ' Surcharger les événements');
 		// Bestiaire checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_bestiaire', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_BESTIAIRE')));
+		appendCheckBox(td, 'sciz_cb_bestiaire', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`)));
 		appendText(td, ' Afficher les données du bestiaire');
 		// Treasures checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_treasures', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TREASURES')));
+		appendCheckBox(td, 'sciz_cb_view_treasures', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`)));
 		appendText(td, ' Afficher les trésors identifiés');
 		// Mushrooms checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_mushrooms', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_MUSHROOMS')));
+		appendCheckBox(td, 'sciz_cb_view_mushrooms', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`)));
 		appendText(td, ' Afficher les champignons identifiés');
 		// Trolls data checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TROLLS')));
+		appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`)));
 		appendText(td, ' Afficher les données des trolls');
 		// User data checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_user', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_USER')));
+		appendCheckBox(td, 'sciz_cb_view_user', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`)));
 		appendText(td, ' S\'afficher soi-même');
 		// Traps checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_traps', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_TRAPS')));
+		appendCheckBox(td, 'sciz_cb_view_traps', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`)));
 		appendText(td, ' Afficher les pièges');
 		// Portals checkbox
 		td = appendTd(tr);
 		td.setAttribute('align', 'center');
-		appendCheckBox(td, 'sciz_cb_view_portals', [null, '1'].includes(MY_getValue(numTroll + '.SCIZ_CB_VIEW_PORTALS')));
+		appendCheckBox(td, 'sciz_cb_view_portals', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`)));
 		appendText(td, ' Afficher les destinations de portails');
 
 		/* Options diverses */
@@ -8464,12 +9110,12 @@ try {
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 		appendCheckBoxBlock(td, 'infocarac', 'Afficher les caractéristiques des équipements des autres Trõlls', MY_getValue('INFOCARAC') != 'false');
 
-		/*td = appendTd(appendTr(mainBody,'mh_tdpage'));
+		/* td = appendTd(appendTr(mainBody,'mh_tdpage'));
 		appendCheckBox(td,'send_idt',MY_getValue(numTroll+'.SEND_IDT') != 'non')
 		appendText(td,' Envoyer les objets identifiés au système de stats');*/
 
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
-		appendCheckBoxBlock(td, 'autoCdM', 'Envoyer automatiquement les CdM vers la base MountyZilla', MY_getValue(numTroll + '.AUTOCDM') == 'true');
+		appendCheckBoxBlock(td, 'autoCdM', 'Envoyer automatiquement les CdM vers la base MountyZilla', MY_getValue(`${numTroll}.AUTOCDM`) == 'true');
 
 		// td = appendTd(appendTr(mainBody,'mh_tdpage'));	// Roule 12/12/2019 ça ne fait plus rien
 		// appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
@@ -8481,7 +9127,7 @@ try {
 
 		td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 		appendText(td, 'Page des suivants : ');
-		var e = appendTextboxBlock(td, 'text', 'MZ_SuivantsOrdres', 'Ordres', 3, 3, MY_getValue('MZ_SuivantsOrdres'), undefined, true);
+		let e = appendTextboxBlock(td, 'text', 'MZ_SuivantsOrdres', 'Ordres', 3, 3, MY_getValue('MZ_SuivantsOrdres'), undefined, true);
 		e.setAttribute('Title', "Permet de voir les ordres des Gowaps dans la page des suivants\n" +
 			"Vide : pas d'affichage\n" +
 			"0 : tous les ordres\n" +
@@ -8499,13 +9145,13 @@ try {
 	}
 
 	function insertCreditsTable(insertPt) {
-		var tbody = insertMainTable(insertPt);
+		let tbody = insertMainTable(insertPt);
 
-		var td = appendTdText(appendTr(tbody, 'mh_tdtitre'),
-			'Depuis son origine, nombreux sont ceux qui ont contribué à faire '
-			+ 'de MountyZilla ce qu\'il est aujourd\'hui. Merci à eux !');
+		let td = appendTdText(appendTr(tbody, 'mh_tdtitre'),
+			'Depuis son origine, nombreux sont ceux qui ont contribué à faire ' +
+			'de MountyZilla ce qu\'il est aujourd\'hui. Merci à eux !');
 
-		var ul = document.createElement('ul');
+		let ul = document.createElement('ul');
 		td.appendChild(ul);
 		appendLi(ul, 'Tilk (36216), puis Dabihul (79738) pour avoir créé puis maintenu à bout de bras MZ pendant des années');
 		appendLi(ul, 'Fine fille (6465) pour les popup javascript');
@@ -8533,25 +9179,27 @@ try {
 	/* [functions]                     Obsolètes                                  */
 	function deleteEnchantement() {
 		try {
-			var idEquipement = this.getAttribute('name');
-			MY_removeValue(numTroll + ".enchantement." + idEquipement + ".objet");
-			MY_removeValue(numTroll + ".enchantement." + idEquipement + ".enchanteur");
-			MY_removeValue(numTroll + ".enchantement." + idEquipement + ".composant.0");
-			MY_removeValue(numTroll + ".enchantement." + idEquipement + ".composant.1");
-			MY_removeValue(numTroll + ".enchantement." + idEquipement + ".composant.2");
-			var listeEquipement = MY_getValue(numTroll + ".enchantement.liste").split(";");
-			var string = "";
+			let idEquipement = this.getAttribute('name');
+			MY_removeValue(`${numTroll}.enchantement.${idEquipement}.objet`);
+			MY_removeValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`);
+			MY_removeValue(`${numTroll}.enchantement.${idEquipement}.composant.0`);
+			MY_removeValue(`${numTroll}.enchantement.${idEquipement}.composant.1`);
+			MY_removeValue(`${numTroll}.enchantement.${idEquipement}.composant.2`);
+			let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
+			let string = "";
 			for (var i = 0; i < listeEquipement.length; i++) {
-				if (listeEquipement[i] != idEquipement)
-					if (string == "")
+				if (listeEquipement[i] != idEquipement) {
+					if (string == "") {
 						string = listeEquipement[i];
-					else
-						string += ";" + listeEquipement[i];
+					} else {
+						string = `${string};${listeEquipement[i]}`;
+					}
+				}
 			}
 			if (string == "") {
-				MY_removeValue(numTroll + ".enchantement.liste");
-				var table = this.parentNode.parentNode.parentNode.parentNode;
-				var parent = table.parentNode;
+				MY_removeValue(`${numTroll}.enchantement.liste`);
+				let table = this.parentNode.parentNode.parentNode.parentNode;
+				let parent = table.parentNode;
 				for (var i = 0; i < parent.childNodes.length; i++) {
 					if (parent.childNodes[i] == table) {
 						parent.removeChild(parent.childNodes[i - 1]);
@@ -8560,54 +9208,60 @@ try {
 						break;
 					}
 				}
-			}
-			else {
-				MY_getValue(numTroll + ".enchantement.liste", string);
+			} else {
+				MY_getValue(`${numTroll}.enchantement.liste`, string);
 				this.parentNode.parentNode.parentNode
 					.removeChild(this.parentNode.parentNode);
 			}
-		}
-		catch (e) {
+		} catch (e) {
 			avertissement(e);
 		}
 	}
+
 	/* [functions]                     fin Obsolètes                                  */
 
-	/*-[functions]---------------- Partie principale ----------------------------- */
+	/* -[functions]---------------- Partie principale ----------------------------- */
 
 	function do_option() {
 		start_script(712);
-		var insertPoint = document.getElementById('footer1');
-		if (!insertPoint) insertPoint = document.getElementById('footer');	// mode smartphone
+		let insertPoint = document.getElementById('footer1');
+		if (!insertPoint) {
+			insertPoint = document.getElementById('footer');
+		}	// mode smartphone
 		insertBefore(insertPoint, document.createElement('p'));
 		var ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
 		ti.onclick = function (e) {
-			var evt = e || window.event;
+			let evt = e || window.event;
 			if (evt.shiftKey) {
-				var txt = '';
+				let txt = '';
 				for (var i = 0, len = localStorage.length; i < len; ++i) {
 					var k = localStorage.key(i);
-					if (k.match(/INFOSIT/i)) continue;	// masquer le mdp Bricol'Troll
-					txt += k + "\t" + localStorage.getItem(k) + "\n";
+					if (k.match(/INFOSIT/i)) {
+						continue;
+					}	// masquer le mdp Bricol'Troll
+					txt = `${txt}${k}\t${localStorage.getItem(k)}\n`;
 				}
 				copyTextToClipboard(txt);
 				avertissement('La configuration MZ a été copiée dans le presse-papier (sauf le mot de passe Bricol\'Trõll)');
 			} else if (evt.ctrlKey) {
-				var tabK = [];
-				var sMatch = numTroll + '.';
-				var lMatch = sMatch.length;
+				let tabK = [];
+				let sMatch = `${numTroll}.`;
+				let lMatch = sMatch.length;
 				for (var i = 0, len = localStorage.length; i < len; ++i) {
 					var k = localStorage.key(i);
-					if (k.substring(0, lMatch) == sMatch) tabK.push(k);
+					if (k.substring(0, lMatch) == sMatch) {
+						tabK.push(k);
+					}
 				}
 				for (var i = 0; i < tabK.length; ++i) {
 					MY_removeValue(tabK[i]);
 				}
-				avertissement(tabK.length + ' informations locales du Trõll ' + numTroll + ' ont été effacées-' + sMatch + '-' + lMatch);
+				avertissement(`${tabK.length} informations locales du Trõll ${numTroll} ont été effacées-${sMatch}-${lMatch}`);
 			}
-		}
-		ti.title = 'Version ' + GM_info.script.version;
+		};
+		ti.title = `Version ${GM_info.script.version}`;
 		insertOptionTable(insertPoint);
+
 		/* insertion enchantements ici
 		if(...)
 		insertEnchantementTable();
@@ -8615,9 +9269,11 @@ try {
 		insertBefore(insertPoint, document.createElement('p'));
 		var ti = insertTitle(insertPoint, 'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
 		ti.onclick = function (e) {
-			var evt = e || window.event;
-			if (!evt.shiftKey) return;
-			var oldDev = MY_getValue('MZ_dev');
+			let evt = e || window.event;
+			if (!evt.shiftKey) {
+				return;
+			}
+			let oldDev = MY_getValue('MZ_dev');
 			if (oldDev) {
 				MY_removeValue('MZ_dev');
 			} else {
@@ -8625,13 +9281,13 @@ try {
 				MY_setValue('MZ_dev', 1);
 			}
 			document.location.href = document.location.href;
-		}
+		};
 		insertCreditsTable(insertPoint);
 		insertBefore(insertPoint, document.createElement('p'));
 
 		/* [zone]                     Obsolète ??                                  */
-		if (MY_getValue(numTroll + ".enchantement.liste")
-			&& MY_getValue(numTroll + ".enchantement.liste") != "") {
+		if (MY_getValue(`${numTroll}.enchantement.liste`) &&
+			MY_getValue(`${numTroll}.enchantement.liste`) != "") {
 			insertTitle(insertPoint, 'Les Enchantements en cours');
 			table = document.createElement('table');
 			table.setAttribute('width', '98%');
@@ -8650,46 +9306,44 @@ try {
 			appendTdText(tr, 'Enchanteur', 1);
 			appendTdText(tr, 'Action', 1);
 
-			var listeEquipement = MY_getValue(numTroll + ".enchantement.liste").split(";");
-			for (var i = 0; i < listeEquipement.length; i++) {
+			let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
+			for (let i = 0; i < listeEquipement.length; i++) {
 				try {
-					var idEquipement = listeEquipement[i];
-					var nomEquipement = MY_getValue(numTroll + ".enchantement."
-						+ idEquipement + ".objet");
-					var infoEnchanteur = MY_getValue(numTroll + ".enchantement."
-						+ idEquipement + ".enchanteur").split(";");
-					var ul = document.createElement('UL');
-					for (var j = 0; j < 3; j++) {
-						var k = numTroll + '.enchantement.' + idEquipement + '.composant.' + j;
-						var v = MY_getValue(k);
+					let idEquipement = listeEquipement[i];
+					let nomEquipement = MY_getValue(`${numTroll}.enchantement.${idEquipement}.objet`);
+					let infoEnchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`).split(";");
+					let ul = document.createElement('UL');
+					for (let j = 0; j < 3; j++) {
+						var k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
+						let v = MY_getValue(k);
 						if (v == null) { 	// protection Roule 26/08/2017
-							logMZ('[MZ] err infoComposant k=' + k + ', v is null');
+							logMZ(`[MZ] err infoComposant k=${k}, v is null`);
 							continue;
 						}
-						var infoComposant = v.split(';');
+						let infoComposant = v.split(';');
 						if (infoComposant.length < 5) {	// protection Roule 25/08/2017
-							logMZ('[MZ] err infoComposant k=' + k + ', v=' + v);
+							logMZ(`[MZ] err infoComposant k=${k}, v=${v}`);
 							continue;
 						}
-						var texte = infoComposant[4].replace("Ril ", "Œil ");
+						let texte = infoComposant[4].replace("Ril ", "Œil ");
 						for (var k = 5; k < infoComposant.length; k++) {
-							texte += ";" + infoComposant[k].replace("Ril ", "Œil ");
+							texte = `${texte};${infoComposant[k].replace("Ril ", "Œil ")}`;
 						}
 						li = appendLi(ul, texte);
-						var string = '<form action="' + URL_troc_mh + '" method="post" TARGET = "_blank">';
-						string += '<input type="hidden" name="monster" value="' + infoComposant[2] + '" />';
-						string += '<input type="hidden" name="part" value="' + infoComposant[0] + '" />';
-						string += '<input type="hidden" name="qualite" value="' + (getQualite(infoComposant[3]) + 1) + '" />';
-						string += '<input type="hidden" name="q" value="min" />';
-						string += '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Rechercher sur le Troc de l\'Hydre" />';
-						string += ' &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" onClick="javascript:window.open(&quot;' + URL_cyclotrolls + 'wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22' + infoComposant[2] + '%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>';
+						let string = `<form action="${URL_troc_mh}" method="post" TARGET = "_blank">`;
+						string = `${string}<input type="hidden" name="monster" value="${infoComposant[2]}" />`;
+						string = `${string}<input type="hidden" name="part" value="${infoComposant[0]}" />`;
+						string = `${string}<input type="hidden" name="qualite" value="${getQualite(infoComposant[3]) + 1}" />`;
+						string = `${string}<input type="hidden" name="q" value="min" />`;
+						string = `${string}<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" name="enter" value="Rechercher sur le Troc de l'Hydre" />`;
+						string = `${string} &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" onClick="javascript:window.open(&quot;${URL_cyclotrolls}wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22${infoComposant[2]}%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>`;
 
-						string += '</form>';
+						string = `${string}</form>`;
 						//				string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
 						//				string+= '<input type="hidden" name="wiki" value="TroOGle" />';
 						//				string+= '<input type="hidden" name="trooglephr" value="base:monstres tag:nom &quot;'+infoComposant[2]+'&quot;" />';
 						//				string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grâce à Troogle" /></form>';
-						li.innerHTML += string;
+						li.innerHTML = li.innerHTML + string;
 					}
 					tr = appendTr(tbody, 'mh_tdpage');
 
@@ -8701,7 +9355,7 @@ try {
 					tr.appendChild(td);
 					td.setAttribute('valign', 'center');
 
-					td = appendTdText(tr, "Enchanteur n°" + infoEnchanteur[0] + " (" + infoEnchanteur[1] + "|" + infoEnchanteur[2] + "|" + infoEnchanteur[3] + ")");
+					td = appendTdText(tr, `Enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`);
 					td.setAttribute('valign', 'center');
 
 					td = document.createElement('td');
@@ -8709,20 +9363,20 @@ try {
 					input.setAttribute('name', idEquipement);
 					tr.appendChild(td);
 					td.setAttribute('valign', 'center');
-				}
-				catch (e) {
+				} catch (e) {
 				}
 			}
 			insertBefore(insertPoint, table);
 			insertBefore(insertPoint, document.createElement('p'));
 		}
+
 		/* [zone]                     fin Obsolète ??                                  */
 
 
 		displayScriptTime();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -8754,20 +9408,25 @@ try {
 
 	function traiteChampis() {
 		try {
-			var tr = document.getElementById('mh_objet_hidden_Champignon');
+			let tr = document.getElementById('mh_objet_hidden_Champignon');
 			var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		} catch (e) {
+			return;
 		}
-		catch (e) { return; }
-		if (trlist.length <= 0) return;
-		for (var i = 0; i < trlist.snapshotLength; i++) {
-			var node = trlist.snapshotItem(i).childNodes[7];
-			var str = node.textContent.trim();
-			var type = str.slice(0, str.lastIndexOf(' '));
-			var mundi = mundiChampi[type];
-			if (!mundi) continue;
-			var urlImg = URL_MZimg
-				+ 'Competences/ecritureMagique.png';
-			var img = createAltImage(urlImg, 'EM', 'Mundidey ' + mundi);
+		if (trlist.length <= 0) {
+			return;
+		}
+		for (let i = 0; i < trlist.snapshotLength; i++) {
+			let node = trlist.snapshotItem(i).childNodes[7];
+			let str = node.textContent.trim();
+			let type = str.slice(0, str.lastIndexOf(' '));
+			let mundi = mundiChampi[type];
+			if (!mundi) {
+				continue;
+			}
+			let urlImg = `${URL_MZimg
+				}Competences/ecritureMagique.png`;
+			let img = createAltImage(urlImg, 'EM', `Mundidey ${mundi}`);
 			appendText(node, ' ');
 			node.appendChild(img);
 		}
@@ -8775,69 +9434,79 @@ try {
 
 	function traiteCompos() {
 		try {
-			var tr = document.getElementById('mh_objet_hidden_Composant');
+			let tr = document.getElementById('mh_objet_hidden_Composant');
 			var tbody = document.evaluate("./td/table/tbody",
 				tr, null, 9, null).singleNodeValue;
+		} catch (e) {
+			return;
 		}
-		catch (e) { return; }
 		insererInfosEM(tbody);
 	}
 
 	function traiteMinerai() {
 		try {
-			var tr = document.getElementById('mh_objet_hidden_Minerai');
+			let tr = document.getElementById('mh_objet_hidden_Minerai');
 			var trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+		} catch (e) {
+			return;
 		}
-		catch (e) { return; }
-		if (trlist.length <= 0) return;
-		var totaux = {};
-		var str;
-		for (var i = 0; i < trlist.snapshotLength; i++) {
-			var node = trlist.snapshotItem(i);
+		if (trlist.length <= 0) {
+			return;
+		}
+		let totaux = {};
+		let str;
+		for (let i = 0; i < trlist.snapshotLength; i++) {
+			let node = trlist.snapshotItem(i);
 			var nature = node.childNodes[7].textContent,
 				caracs = node.childNodes[9].textContent;
-			var taille = Number(caracs.match(/\d+/)[0]);
-			var coef = 1;
-			if (caracs.indexOf('Moyen') != -1) coef = 2;
-			else if (caracs.indexOf('Normale') != -1) coef = 3;
-			else if (caracs.indexOf('Bonne') != -1) coef = 4;
-			else if (caracs.indexOf('Exceptionnelle') != -1) coef = 5;
+			let taille = Number(caracs.match(/\d+/)[0]);
+			let coef = 1;
+			if (caracs.indexOf('Moyen') != -1) {
+				coef = 2;
+			} else if (caracs.indexOf('Normale') != -1) {
+				coef = 3;
+			} else if (caracs.indexOf('Bonne') != -1) {
+				coef = 4;
+			} else if (caracs.indexOf('Exceptionnelle') != -1) {
+				coef = 5;
+			}
 			if (nature.indexOf('Mithril') != -1) {
 				coef = 0.2 * coef;
 				str = ' | UM: ';
-			}
-			else {
+			} else {
 				coef = 0.75 * coef + 1.25;
-				if (nature.indexOf('Taill') != -1) coef = 1.15 * coef;
+				if (nature.indexOf('Taill') != -1) {
+					coef = 1.15 * coef;
+				}
 				str = ' | Carats: ';
 			}
-			var carats = Math.round(taille * coef)
+			let carats = Math.round(taille * coef);
 			appendText(node.childNodes[9], str + carats);
 			if (!totaux[nature]) {
 				totaux[nature] = [taille, carats];
-			}
-			else {
+			} else {
 				totaux[nature][0] += taille;
 				totaux[nature][1] += carats;
 			}
 		}
 		str = 'Total : ';
 		for (var nature in totaux) {
-			if (str.length > 8) str += ', ';
-			if (nature.indexOf('Mithril') != -1) {
-				str += nature + totaux[nature][1] + ' UM';
+			if (str.length > 8) {
+				str = `${str}, `;
 			}
-			else {
-				str += nature + totaux[nature][0] + 'U/'
-					+ totaux[nature][1] + 'c';
+			if (nature.indexOf('Mithril') != -1) {
+				str = `${str}${nature + totaux[nature][1]} UM`;
+			} else {
+				str = `${str}${nature + totaux[nature][0]}U/${totaux[nature][1]}c`;
 			}
 		}
-		/*var node = document.getElementById('mh_plus_Minerai');
+
+		/* var node = document.getElementById('mh_plus_Minerai');
 		var titre = document.evaluate("./td[contains(./b/text(),'Minerai')]",
 			node.parentNode.parentNode.parentNode, null, 9, null).singleNodeValue;
 		if(!titre) return;*/
 		// Il faut préalablement injecter du CSS pour ne pas hériter de 'mh_titre3'
-		var td = appendTdText(trlist.snapshotItem(0).parentNode, '(' + str + ')');
+		let td = appendTdText(trlist.snapshotItem(0).parentNode, `(${str})`);
 		td.colSpan = 7;
 	}
 
@@ -8851,7 +9520,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -8912,35 +9581,35 @@ try {
 		  > description
 	*/
 
-	/*-[functions]-------------- Fonctions utilitaires --------------------------- */
+	/* -[functions]-------------- Fonctions utilitaires --------------------------- */
 
 	function couleurAleatoire() {
-		var alph = '0123456789ABCDEF'.split('');
-		var clr = '#';
-		for (var i = 0; i < 6; i++) {
-			clr += alph[Math.floor(16 * Math.random())];
+		let alph = '0123456789ABCDEF'.split('');
+		let clr = '#';
+		for (let i = 0; i < 6; i++) {
+			clr = clr + alph[Math.floor(16 * Math.random())];
 		}
 		return clr;
 	}
 
 	function isCouleur(str) {
-		return /^#[0-9A-F]{6}$/i.test(str);
+		return (/^#[0-9A-F]{6}$/i).test(str);
 	}
 
-	/*-[functions]---------------- Analyse de la page ---------------------------- */
+	/* -[functions]---------------- Analyse de la page ---------------------------- */
 
 	function appendChoixCouleur(node, id) {
-		var span = document.createElement('span');
-		span.id = 'span' + id;
+		let span = document.createElement('span');
+		span.id = `span${id}`;
 		if (isDetailOn) {
 			span.style.display = 'none';
 		}
-		var couleur = id == 'AllAmis' ? '#AAFFAA' : '#FFAAAA';
+		let couleur = id == 'AllAmis' ? '#AAFFAA' : '#FFAAAA';
 		if (diploGuilde[id]) {
 			couleur = diploGuilde[id];
 		}
 		appendText(span, ' - Couleur HTML: ');
-		var input = appendTextbox(span, 'text', id, 7, 7, couleur);
+		let input = appendTextbox(span, 'text', id, 7, 7, couleur);
 		input.onkeyup = previewCouleur;
 		input.onchange = previewCouleur;
 		input.onkeyup();
@@ -8948,18 +9617,18 @@ try {
 	}
 
 	function insertChoixCouleur(node, id) {
-		var span = document.createElement('span');
-		span.id = 'span' + id;
+		let span = document.createElement('span');
+		span.id = `span${id}`;
 		// La couleur détaillée passera à une valeur aléatoire
 		// si toggle vers isDetailOn
-		var couleur = couleurAleatoire();
+		let couleur = couleurAleatoire();
 		if (!isDetailOn) {
 			span.style.display = 'none';
 		} else if (diploGuilde[id]) {
 			couleur = diploGuilde[id].couleur;
 		}
 		appendText(span, ' - Couleur HTML: ');
-		var input = appendTextbox(span, 'text', id, 7, 7, couleur);
+		let input = appendTextbox(span, 'text', id, 7, 7, couleur);
 		input.onkeyup = previewCouleur;
 		input.onchange = previewCouleur;
 		input.onkeyup();
@@ -8968,57 +9637,57 @@ try {
 
 	function setChoixCouleurs() {
 		try {
-			//var form = document.getElementsByName('ActionForm')[0];
-			var form = document.getElementById('mhPlay');
+			// var form = document.getElementsByName('ActionForm')[0];
+			let form = document.getElementById('mhPlay');
 			var nodesAE = document.evaluate(
-				//"./table/tbody/tr/td[@class='mh_tdtitre']",
+				// "./table/tbody/tr/td[@class='mh_tdtitre']",
 				"./table/tbody/tr/th[@class='mh_tdtitre']",
-				//"./table/tbody/tr[@class='mh_tdtitre']/th",
+				// "./table/tbody/tr[@class='mh_tdtitre']/th",
 				form, null, 7, null
 			);
 			var nodes = document.evaluate(
-				//"./table/tbody/tr/td[not(@class='mh_tdtitre')]",
+				// "./table/tbody/tr/td[not(@class='mh_tdtitre')]",
 				"./table/tbody/tr[not(@class='mh_tdtitre')]/td",
 				form, null, 7, null
 			);
 		} catch (e) {
 			logMZ(traceStack(e, 'Diplomatie Structure de la page non reconnue'));
 			return false;
-		};
+		}
 		nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
 		appendChoixCouleur(nodesAE.snapshotItem(0), 'AllAmis');
 		appendChoixCouleur(nodesAE.snapshotItem(1), 'AllEnnemis');
-		for (var i = 0; i < 5; i++) {
-			nodes.snapshotItem(i).id = 'tdAmis' + i;
-			insertChoixCouleur(nodes.snapshotItem(i).childNodes[1], 'Amis' + i);
-			nodes.snapshotItem(i + 5).id = 'tdEnnemis' + i;
-			insertChoixCouleur(nodes.snapshotItem(i + 5).childNodes[1], 'Ennemis' + i);
+		for (let i = 0; i < 5; i++) {
+			nodes.snapshotItem(i).id = `tdAmis${i}`;
+			insertChoixCouleur(nodes.snapshotItem(i).childNodes[1], `Amis${i}`);
+			nodes.snapshotItem(i + 5).id = `tdEnnemis${i}`;
+			insertChoixCouleur(nodes.snapshotItem(i + 5).childNodes[1], `Ennemis${i}`);
 		}
 		return true;
 	}
 
 	function fetchDiploGuilde() {
 		try {
-			for (var AE in { Amis: 0, Ennemis: 0 }) {
-				for (var i = 0; i < 5; i++) {
+			for (let AE in { Amis: 0, Ennemis: 0 }) {
+				for (let i = 0; i < 5; i++) {
 					/* Récup des A/E de rang i */
-					var td = document.getElementById('td' + AE + i);
-					var ligne = td.getElementsByTagName('table')[0].rows;
-					var titre = trim(td.firstChild.textContent);
+					let td = document.getElementById(`td${AE}${i}`);
+					let ligne = td.getElementsByTagName('table')[0].rows;
+					let titre = trim(td.firstChild.textContent);
 					// On laisse la gestion des couleurs à setChoixCouleurs:
-					var couleur = document.getElementById(AE + i).value;
+					let couleur = document.getElementById(AE + i).value;
 					diploGuilde[AE + i] = {
 						Troll: '',
 						Guilde: '',
 						titre: titre,
 						couleur: couleur
 					};
-					for (var j = 1; j < ligne.length; j++) {
-						var str = trim(ligne[j].cells[0].textContent);
-						var idx = str.lastIndexOf('(');
-						var num = str.slice(idx + 1, -1);
-						var type = trim(ligne[j].cells[1].textContent);
-						diploGuilde[AE + i][type] += num + ';';
+					for (let j = 1; j < ligne.length; j++) {
+						let str = trim(ligne[j].cells[0].textContent);
+						let idx = str.lastIndexOf('(');
+						let num = str.slice(idx + 1, -1);
+						let type = trim(ligne[j].cells[1].textContent);
+						diploGuilde[AE + i][type] += `${num};`;
 					}
 				}
 			}
@@ -9030,16 +9699,16 @@ try {
 	}
 
 
-	/*-[functions]--------------------- Handlers --------------------------------- */
+	/* -[functions]--------------------- Handlers --------------------------------- */
 
 	function toggleDetails() {
 		isDetailOn = !isDetailOn;
-		for (var AE in { Amis: 0, Ennemis: 0 }) {
-			document.getElementById('spanAll' + AE).style.display =
-				(isDetailOn ? 'none' : '');
-			for (var i = 0; i < 5; i++) {
-				document.getElementById('span' + AE + i).style.display =
-					(isDetailOn ? '' : 'none');
+		for (let AE in { Amis: 0, Ennemis: 0 }) {
+			document.getElementById(`spanAll${AE}`).style.display =
+				isDetailOn ? 'none' : '';
+			for (let i = 0; i < 5; i++) {
+				document.getElementById(`span${AE}${i}`).style.display =
+					isDetailOn ? '' : 'none';
 			}
 		}
 	}
@@ -9047,11 +9716,11 @@ try {
 	function toggleMythiques() {
 		isMythiquesOn = !isMythiquesOn;
 		document.getElementById('spanMythiques').style.display =
-			(isMythiquesOn ? '' : 'none');
+			isMythiquesOn ? '' : 'none';
 	}
 
 	function previewCouleur() {
-		var value = this.value;
+		let value = this.value;
 		if (isCouleur(value)) {
 			this.style.backgroundColor = value;
 			this.title = '';
@@ -9062,52 +9731,56 @@ try {
 	}
 
 	function appendMenuType(node, duType) {
-		var select = document.createElement('select');
+		let select = document.createElement('select');
 		select.className = 'SelectboxV2';
-		var type = ['Guilde', 'Troll', 'Monstre'];
-		for (var i = 0; i < 3; i++) {
+		let type = ['Guilde', 'Troll', 'Monstre'];
+		for (let i = 0; i < 3; i++) {
 			appendOption(select, type[i], type[i]);
-			if (type[i] == duType) { select.selectedIndex = i; }
+			if (type[i] == duType) {
+				select.selectedIndex = i;
+			}
 		}
 		node.appendChild(select);
 	}
 
 	function ajouteChamp(type, num, couleur, descr) {
-		var champs = document.getElementById('diploPerso');
-		var nb = champs.rows.length;
-		var tr = champs.insertRow(-1);
-		var td = appendTd(tr);
+		let champs = document.getElementById('diploPerso');
+		let nb = champs.rows.length;
+		let tr = champs.insertRow(-1);
+		let td = appendTd(tr);
 		appendMenuType(td, type);
 		td = appendTd(tr);
 		appendText(td, ' n°');
-		appendTextbox(td, 'text', 'num' + nb, 6, 15, num);
+		appendTextbox(td, 'text', `num${nb}`, 6, 15, num);
 		td = appendTd(tr);
 		appendText(td, ' couleur HTML:');
-		var input = appendTextbox(td, 'text', 'couleur' + nb, 7, 7, couleur);
+		let input = appendTextbox(td, 'text', `couleur${nb}`, 7, 7, couleur);
 		input.onkeyup = previewCouleur;
 		input.onchange = previewCouleur;
 		input.onkeyup();
 		td = appendTd(tr);
 		appendText(td, ' Description:');
-		appendTextbox(td, 'text', 'descr' + nb, 30, 150, descr);
+		appendTextbox(td, 'text', `descr${nb}`, 30, 150, descr);
 		td = appendTd(tr);
-		var span = document.createElement('span');
+		let span = document.createElement('span');
 		appendText(span, '[ok!]', true);
 		span.style.visibility = 'hidden';
 		td.appendChild(span);
 		td = appendTd(tr);
-		var bouton = appendButton(td, 'Suppr.', retireCeChamp);
+		let bouton = appendButton(td, 'Suppr.', retireCeChamp);
 	}
 
 	function retireCeChamp() {
-		var thisTr = this.parentNode.parentNode;
+		let thisTr = this.parentNode.parentNode;
 		thisTr.parentNode.removeChild(thisTr);
-		var champs = document.getElementById('diploPerso');
-		if (champs.rows.length == 0) { ajouteChamp(); }
+		let champs = document.getElementById('diploPerso');
+		if (champs.rows.length == 0) {
+			ajouteChamp();
+		}
 	}
 
 	function valideChamp(champ) {
-		var isValide = /^\d+$/.test(champ.cells[1].childNodes[1].value) &&
+		let isValide = (/^\d+$/).test(champ.cells[1].childNodes[1].value) &&
 			isCouleur(champ.cells[2].childNodes[1].value);
 		if (isValide) {
 			champ.cells[4].firstChild.style.visibility = 'visible';
@@ -9121,8 +9794,8 @@ try {
 		/* Diplo de guilde */
 		diploGuilde.isOn =
 			document.getElementById('isGuildeOn').checked ? 'true' : 'false';
-		diploGuilde.isDetailOn = (isDetailOn ? 'true' : 'false');
-		var numGuilde = Number(document.getElementById('numGuilde').value);
+		diploGuilde.isDetailOn = isDetailOn ? 'true' : 'false';
+		let numGuilde = Number(document.getElementById('numGuilde').value);
 		var couleur = document.getElementById('couleurGuilde').value;
 		if (numGuilde) {
 			diploGuilde.guilde = {
@@ -9132,20 +9805,20 @@ try {
 		} else {
 			delete diploGuilde.guilde;
 		}
-		for (var AE in { Amis: 0, Ennemis: 0 }) {
-			diploGuilde['All' + AE] = document.getElementById('All' + AE).value;
+		for (let AE in { Amis: 0, Ennemis: 0 }) {
+			diploGuilde[`All${AE}`] = document.getElementById(`All${AE}`).value;
 			for (var i = 0; i < 5; i++) {
 				if (isDetailOn) {
 					diploGuilde[AE + i].couleur = document.getElementById(AE + i).value;
 				} else {
-					diploGuilde[AE + i].couleur = diploGuilde['All' + AE];
+					diploGuilde[AE + i].couleur = diploGuilde[`All${AE}`];
 				}
 			}
 		}
-		MY_setValue(numTroll + '.diplo.guilde', JSON.stringify(diploGuilde));
+		MY_setValue(`${numTroll}.diplo.guilde`, JSON.stringify(diploGuilde));
 
 		/* Diplo personnelle (ex-fonction saveChamps) */
-		var champs = document.getElementById('diploPerso');
+		let champs = document.getElementById('diploPerso');
 		diploPerso = {
 			isOn: document.getElementById('isPersoOn').checked ? 'true' : 'false',
 			Guilde: {},
@@ -9158,10 +9831,10 @@ try {
 		}
 		for (var i = 0; i < champs.rows.length; i++) {
 			if (valideChamp(champs.rows[i])) {
-				var type = champs.rows[i].cells[0].firstChild.value;
-				var num = champs.rows[i].cells[1].childNodes[1].value;
+				let type = champs.rows[i].cells[0].firstChild.value;
+				let num = champs.rows[i].cells[1].childNodes[1].value;
 				var couleur = champs.rows[i].cells[2].childNodes[1].value;
-				var descr = champs.rows[i].cells[3].childNodes[1].value;
+				let descr = champs.rows[i].cells[3].childNodes[1].value;
 				diploPerso[type][num] = {
 					couleur: couleur
 				};
@@ -9170,20 +9843,20 @@ try {
 				}
 			}
 		}
-		MY_setValue(numTroll + '.diplo.perso', JSON.stringify(diploPerso));
+		MY_setValue(`${numTroll}.diplo.perso`, JSON.stringify(diploPerso));
 
 		avertissement('Données sauvegardées');
 	}
 
 
-	/*-[functions]------------- Modifications de la page ------------------------- */
+	/* -[functions]------------- Modifications de la page ------------------------- */
 
 	function creeTablePrincipale() {
-		var insertPt = document.getElementById('insertPt');
+		let insertPt = document.getElementById('insertPt');
 
 		/* Titre + bouton de Sauvegarde */
-		var tr = insertTr(insertPt, 'mh_tdtitre');
-		var td = appendTdText(tr, '[Mountyzilla] Options de Diplomatie ', true);
+		let tr = insertTr(insertPt, 'mh_tdtitre');
+		let td = appendTdText(tr, '[Mountyzilla] Options de Diplomatie ', true);
 		appendButton(td, 'Sauvegarder', sauvegarderTout);
 
 		/* Options fixes */
@@ -9203,12 +9876,12 @@ try {
 		// Diplo Mythiques
 		appendCheckBox(td, 'isMythiquesOn', isMythiquesOn, toggleMythiques);
 		appendText(td, 'Ajouter les monstres Mythiques à la Diplomatie');
-		var span = document.createElement('span');
+		let span = document.createElement('span');
 		span.id = 'spanMythiques';
 		if (!isMythiquesOn) {
 			span.style.display = 'none';
 		}
-		var couleur = '#FFAAAA';
+		let couleur = '#FFAAAA';
 		if (diploPerso.mythiques) {
 			couleur = diploPerso.mythiques;
 		}
@@ -9223,11 +9896,11 @@ try {
 		appendCheckBox(td, 'isPersoOn', diploPerso.isOn != 'false');
 		appendText(td, 'Afficher la diplomatie personnelle dans la Vue:');
 		appendBr(td);
-		var table = document.createElement('table');
-		table.id = 'diploPerso'
+		let table = document.createElement('table');
+		table.id = 'diploPerso';
 		td.appendChild(table);
-		for (var type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
-			for (var num in diploPerso[type]) {
+		for (let type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
+			for (let num in diploPerso[type]) {
 				ajouteChamp(
 					type,
 					num,
@@ -9239,13 +9912,13 @@ try {
 		if (table.rows.length == 0) {
 			ajouteChamp();
 		}
-		appendButton(td, 'Ajouter', ajouteChamp)
+		appendButton(td, 'Ajouter', ajouteChamp);
 		// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
 		appendText(td, ' ');
 		appendButton(td,
 			'Exemples de couleur',
-			function () {
-				var fenetre = window.open(
+			() => {
+				let fenetre = window.open(
 					'/mountyhall/MH_Play/Options/Play_o_Color.php',
 					'Divers',
 					'width=500,height=550,toolbar=0,location=0,directories=0,' +
@@ -9274,16 +9947,15 @@ try {
 	}
 
 
-	/*-[functions]----------------------- Main ----------------------------------- */
+	/* -[functions]----------------------- Main ----------------------------------- */
 
 	function initDiplo(sType) {
-		var sDiplo = MY_getValue(numTroll + '.diplo.' + sType)
-		//console.log('sDiplo' + sType + '=' + sDiplo);
-		if (sDiplo && (sDiplo != 'null')) {	// le stockage JSON nous donne parfois 'null'
+		let sDiplo = MY_getValue(`${numTroll}.diplo.${sType}`);
+		// console.log('sDiplo' + sType + '=' + sDiplo);
+		if (sDiplo && sDiplo != 'null') {	// le stockage JSON nous donne parfois 'null'
 			return JSON.parse(sDiplo);
-		} else {
-			return {};
 		}
+		return {};
 	}
 	var diploGuilde = initDiplo('guilde');
 	var diploPerso = initDiplo('perso');
@@ -9296,7 +9968,7 @@ try {
 		}
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*   This file is part of Mountyzilla.                                          *
 	*                                                                              *
 	*   Mountyzilla is free software; you can redistribute it and/or modify        *
@@ -9316,11 +9988,11 @@ try {
 
 	// x~x cdmcomp
 
-	//var cdm = '';	// Roule 11/03/2017 une variable globale de moins \o/
+	// var cdm = '';	// Roule 11/03/2017 une variable globale de moins \o/
 
 	function getNonNegInts(str) {
-		var nbrs = str.match(/\d+/g);
-		for (var i = 0; i < nbrs.length; i++) {
+		let nbrs = str.match(/\d+/g);
+		for (let i = 0; i < nbrs.length; i++) {
 			nbrs[i] = Number(nbrs[i]);
 		}
 		return nbrs;
@@ -9330,25 +10002,30 @@ try {
 		// envoi au serveur (PHP) d'un objet avec
 		//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
 		//	tstamp:	l'horodatage
-		var oContexteCdM = MZ_analyseCdM('msgEffet', true);	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
+		let oContexteCdM = MZ_analyseCdM('msgEffet', true);	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
 		oContexteCdM.nameBut = 'as_Action';	// nom du bouton avant lequel insérer le bouton ou les textes
 		if (!oContexteCdM.ok) {
-			if (!oContexteCdM.error) oContexteCdM = MZ_analyseCdM('msgDiv', true);
+			if (!oContexteCdM.error) {
+				oContexteCdM = MZ_analyseCdM('msgDiv', true);
+			}
 			if (!oContexteCdM.ok) {
 				if (oContexteCdM.error) {
-					logMZ('MZ_comp_traiteCdMcomp, ' + oContexteCdM.error);
-					MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+					logMZ(`MZ_comp_traiteCdMcomp, ${oContexteCdM.error}`);
+					MZ_comp_addMessage(oContexteCdM, `Erreur MZ, ${oContexteCdM.error}`);
 				}
 				return;
 			}
 		}
-		debugMZ('oData=' + JSON.stringify(oContexteCdM.oData));
+		debugMZ(`oData=${JSON.stringify(oContexteCdM.oData)}`);
 
 		MZ_comp_addPvRestant(oContexteCdM);
 
-		var etimestamp = document.getElementById('hserveur');
-		if (etimestamp != undefined) { var tstamp = etimestamp.innerText || etimestamp.textContent; }
+		let etimestamp = document.getElementById('hserveur');
+		if (etimestamp != undefined) {
+			var tstamp = etimestamp.innerText || etimestamp.textContent;
+		}
 		if (tstamp == undefined) {
+
 			/* dans le cas de la comp, le serveur se repliera sur la date/heure courante
 			logMZ('MZ_comp_traiteCdMcomp, pas de date/heure');
 			MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
@@ -9359,7 +10036,7 @@ try {
 		}
 
 		// Envoi auto ou insertion bouton envoi (suivant option)
-		if (MY_getValue(numTroll + '.AUTOCDM') == 'true') {
+		if (MY_getValue(`${numTroll}.AUTOCDM`) == 'true') {
 			oContexteCdM.sendInfoCDM();
 			MZ_comp_addMessage(oContexteCdM, 'CdM envoyée vers la base MountyZilla !');
 		} else {
@@ -9368,23 +10045,25 @@ try {
 	}
 
 	function MZ_comp_addMessage(oContexteCdM, msg) {
-		var eBefore = document.getElementsByName(oContexteCdM.nameBut)[0].parentNode;
+		let eBefore = document.getElementsByName(oContexteCdM.nameBut)[0].parentNode;
 		if (!eBefore) {
-			logMZ('MZ_comp_addMessage, pas de ' + oContexteCdM.nameBut);
+			logMZ(`MZ_comp_addMessage, pas de ${oContexteCdM.nameBut}`);
 			return;
 		}
-		var p = document.createElement('p');
+		let p = document.createElement('p');
 		p.style.color = 'green';
 		appendText(p, msg);
 		insertBefore(eBefore, p);
 	}
 
 	function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
-		var eltCdM = document.getElementById(idHTMLCdM);
-		var oRet = {};
+		let eltCdM = document.getElementById(idHTMLCdM);
+		let oRet = {};
 		if (!eltCdM) {
 			oRet.ok = false;
-			if (!bIgnoreEltAbsent) oRet.error = 'Pas d\'elt ' + idHTMLCdM;
+			if (!bIgnoreEltAbsent) {
+				oRet.error = `Pas d'elt ${idHTMLCdM}`;
+			}
 			return oRet;
 		}
 
@@ -9395,10 +10074,10 @@ try {
 		// txtPv : le texte donnant les PV
 		// ok : 1 si on a bien reconnu une CdM
 		// oData : les data à envoyer en JSON au serveur MZ
-		oRet.oData = {}
+		oRet.oData = {};
 		oRet.oData.tabCdM = new Array();
-		for (var iElt = 0; iElt < eltCdM.childNodes.length; iElt++) { //eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
-			var eHTML = eltCdM.childNodes[iElt];
+		for (let iElt = 0; iElt < eltCdM.childNodes.length; iElt++) { // eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
+			let eHTML = eltCdM.childNodes[iElt];
 			var s = undefined;
 			switch (eHTML.nodeName) {
 				case '#text':
@@ -9406,21 +10085,27 @@ try {
 				// suite : même code que <B> ou <p>
 				case 'P':
 				case 'B':
-					if (s === undefined) s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
+					if (s === undefined) {
+						s = eHTML.innerText || eHTML.textContent;
+					}	// récupération du contenu texte d'un élément HTML
 					s = s.trim();
 					if (s != '') {
-						if (s.match(/aux *alentours* *de/i)) oRet.txtHeure = s;
-						if (s.match(/Connaissance *des* *Monstres/i)) oRet.ok = true;
+						if (s.match(/aux *alentours* *de/i)) {
+							oRet.txtHeure = s;
+						}
+						if (s.match(/Connaissance *des* *Monstres/i)) {
+							oRet.ok = true;
+						}
 						oRet.oData.tabCdM.push(s);
 					}
 					break;
 				case 'TABLE':
 					var s = 'table';
-					for (var iTr = 0; iTr < eHTML.rows.length; iTr++) {	// eTr of eHTML.rows) {
-						var eTr = eHTML.rows[iTr];
-						var tabTd = new Array();
-						for (var iTd = 0; iTd < eTr.cells.length; iTd++) {	//eTd of eTr.cells) {
-							var eTd = eTr.cells[iTd];
+					for (let iTr = 0; iTr < eHTML.rows.length; iTr++) {	// eTr of eHTML.rows) {
+						let eTr = eHTML.rows[iTr];
+						let tabTd = new Array();
+						for (let iTd = 0; iTd < eTr.cells.length; iTd++) {	// eTd of eTr.cells) {
+							let eTd = eTr.cells[iTd];
 							var s = eTd.innerText || eTd.textContent;	// récupération du contenu texte d'un élément HTML
 							s = s.trim();
 							tabTd.push(s);
@@ -9428,9 +10113,9 @@ try {
 						if (tabTd.length >= 2) {
 							if (tabTd[0].match(/Blessure/i)) {
 								oRet.trBlessure = eTr;
-								oRet.txtBlessure = tabTd[1]
+								oRet.txtBlessure = tabTd[1];
 							} else if (tabTd[0].match(/Points* *de *Vie/i)) {
-								oRet.txtPv = tabTd[1]
+								oRet.txtPv = tabTd[1];
 							}
 						}
 						oRet.oData.tabCdM.push(tabTd);
@@ -9440,8 +10125,10 @@ try {
 					break;	// ignore
 				default:
 					var s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
-					if (s != '') oRet.oData.tabCdM.push(s);
-					logMZ('[MZ ' + GM_info.script.version + '] MZ_analyseCdM, type d\'élément non traité : ' + eHTML.nodeName + ' ' + s);
+					if (s != '') {
+						oRet.oData.tabCdM.push(s);
+					}
+					logMZ(`[MZ ${GM_info.script.version}] MZ_analyseCdM, type d'élément non traité : ${eHTML.nodeName} ${s}`);
 					break;
 			}
 		}
@@ -9451,12 +10138,12 @@ try {
 		// fonction définie ici pour avoir vue sur la variable tabCdM
 		oRet.sendInfoCDM = function () {
 			MY_setValue('CDMID', 1 + parseInt(MY_getValue('CDMID')));
-			var buttonCDM = this;
-			var texte = '';
+			let buttonCDM = this;
+			let texte = '';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: URL_pageDispatcherV2,
-				data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oRet.oData)),
+				data: `cdm_json=${encodeURIComponent(JSON.stringify(oRet.oData))}`,
 				headers: {
 					'Content-type': 'application/x-www-form-urlencoded',
 				},
@@ -9468,36 +10155,46 @@ try {
 					if (buttonCDM.parentNode && buttonCDM.parentNode.firstChild && buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
 						buttonCDM.parentNode.firstChild.innerHTML = texte;
 					}
-					if (!isDEV) buttonCDM.disabled = true;
+					if (!isDEV) {
+						buttonCDM.disabled = true;
+					}
 				},
 				onerror: function (responseDetails) {
-					var msgError = 'inconnue';
-					if (responseDetails.status == 0) msgError = ' HTTPS ou CORS'
-					if (responseDetails.error) msgError = responseDetails.error;
-					msgError = 'Erreur MZ ' + msgError;
+					let msgError = 'inconnue';
+					if (responseDetails.status == 0) {
+						msgError = ' HTTPS ou CORS';
+					}
+					if (responseDetails.error) {
+						msgError = responseDetails.error;
+					}
+					msgError = `Erreur MZ ${msgError}`;
 					buttonCDM.value = msgError;
 					if (buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
 						buttonCDM.parentNode.firstChild.innerHTML = msgError;
 					}
 				},
 			});
-		}
+		};
 		return oRet;
 	}
 
 	function MZ_comp_addPvRestant(oContexteCdM) {
 		// Insertion de l'estimation des PV restants
-		debugMZ('txtBlessure=' + oContexteCdM.txtBlessure + ', txtPv=' + oContexteCdM.txtPv);
-		if (oContexteCdM.txtBlessure === undefined || oContexteCdM.txtPv === undefined) return;
-		var pv = getPVsRestants(oContexteCdM.txtPv, oContexteCdM.txtBlessure);
-		debugMZ('pv=' + pv);
-		if (!pv) return;	// pv null si le monstre n'est pas blessé
-		var tr = document.createElement('tr');
+		debugMZ(`txtBlessure=${oContexteCdM.txtBlessure}, txtPv=${oContexteCdM.txtPv}`);
+		if (oContexteCdM.txtBlessure === undefined || oContexteCdM.txtPv === undefined) {
+			return;
+		}
+		let pv = getPVsRestants(oContexteCdM.txtPv, oContexteCdM.txtBlessure);
+		debugMZ(`pv=${pv}`);
+		if (!pv) {
+			return;
+		}	// pv null si le monstre n'est pas blessé
+		let tr = document.createElement('tr');
 		oContexteCdM.trBlessure.parentNode.insertBefore(tr, oContexteCdM.trBlessure.nextSibling);
-		var th = appendThText(tr, pv[0], false);
+		let th = appendThText(tr, pv[0], false);
 		th.className = oContexteCdM.trBlessure.cells[0].className;
-		var td = appendTdText(tr, pv[1], false);
-		var eSpan = document.createElement('span');
+		let td = appendTdText(tr, pv[1], false);
+		let eSpan = document.createElement('span');
 		appendText(eSpan, ' (Calculé par Mountyzilla)');
 		eSpan.style.fontSize = "small";
 		eSpan.style.fontStyle = "italic";
@@ -9510,7 +10207,7 @@ try {
 		displayScriptTime();
 	}
 
-	/*********************************************************************************
+	/** *******************************************************************************
 	*    This file is part of Mountyzilla.                                           *
 	*                                                                                *
 	*    Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -9536,7 +10233,7 @@ try {
 
 	var buttonCDM;
 
-	/*******************************************************************************************
+	/** *****************************************************************************************
 	CDM :
 	Vous avez RÉUSSI à utiliser cette compétence au niveau 5 : jet de 34 sur 95 %.
 
@@ -9578,16 +10275,18 @@ try {
 	*******************************************************************************************/
 
 	function getNNInt(str) {
-		var nbrs = str.match(/\d+/g);
-		for (var i = 0; i < nbrs.length; i++)
+		let nbrs = str.match(/\d+/g);
+		for (let i = 0; i < nbrs.length; i++) {
 			nbrs[i] = parseInt(nbrs[i]);
+		}
 		return nbrs;
 	}
 
 	// envoi d'une CdM issue d'un message du BOT
 	function sendCDM() {
-		var td = document.evaluate("//td/text()[contains(.,'CONNAISSANCE DES MONSTRES')]/..",
+		let td = document.evaluate("//td/text()[contains(.,'CONNAISSANCE DES MONSTRES')]/..",
 			document, null, 9, null).singleNodeValue;
+
 		/* ancienne version à supprimer
 		cdm = td.innerHTML;
 		cdm = cdm.replace(/.* MONSTRES sur une? ([^(]+) \(([0-9]+)\)(.*partie des : )([^<]+)<br>/,
@@ -9615,34 +10314,40 @@ try {
 		cdm = cdm.replace(/<br>/g,'\n');
 		*/
 
-		var tdTxt = td.innerText || td.textContent;	// récupération du contenu texte d'un élément HTML
+		let tdTxt = td.innerText || td.textContent;	// récupération du contenu texte d'un élément HTML
 		// logMZ(tdTxt);
-		var oData = {};
+		let oData = {};
 		oData.tabCdM = tdTxt.split(/\n/);
 		// nettoyage entête : enlève le premier élément tant que
 		//	- suite de *
 		//	- "MOUNTYHALL - La Terre des Trõlls"
 		//	- ligne vide (la première expression régulière matche les lignes vides)
-		while (oData.tabCdM[0].match(/^=*$/) || oData.tabCdM[0].match(/^MOUNTYHALL/i)) oData.tabCdM.shift();
+		while (oData.tabCdM[0].match(/^=*$/) || oData.tabCdM[0].match(/^MOUNTYHALL/i)) {
+			oData.tabCdM.shift();
+		}
 		// nettoyage entête : enlève tout ce qui suit une ligne composée uniquement d'étoiles suivie de '^Vous avez configuré' + les lignes vides au dessus
-		var iLigneNonVide;
-		for (var i = 0; i < oData.tabCdM.length; i++) {
+		let iLigneNonVide;
+		for (let i = 0; i < oData.tabCdM.length; i++) {
 			if (oData.tabCdM[i].match(/^\*+$/) && oData.tabCdM[i + 1].match(/^Vous avez configuré/i)) {
-				if (iLigneNonVide === undefined)
+				if (iLigneNonVide === undefined) {
 					oData.tabCdM.splice(i);
-				else
+				} else {
 					oData.tabCdM.splice(iLigneNonVide + 1);
+				}
 				break;
 			}
-			if (!oData.tabCdM[i].match(/^$/)) iLigneNonVide = i;
+			if (!oData.tabCdM[i].match(/^$/)) {
+				iLigneNonVide = i;
+			}
 		}
 		// logMZ(JSON.stringify(oData));
 
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: URL_pageDispatcherV2,
-			data: 'cdm_json=' + encodeURIComponent(JSON.stringify(oData)),
+			data: `cdm_json=${encodeURIComponent(JSON.stringify(oData))}`,
 			headers: {
+
 				/* inutile, à supprimer
 				'User-agent': 'Mozilla/4.0 (compatible) Greasemonkey',
 				'Accept': 'application/atom+xml,application/xml,text/xml',
@@ -9658,36 +10363,40 @@ try {
 	}
 
 	function MZ_traiteCdMmsg() {
-		var oContexteCdM = MZ_analyseCdM('messageContent');	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
+		let oContexteCdM = MZ_analyseCdM('messageContent');	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
 		oContexteCdM.nameBut = 'bForward';	// nom du bouton avant lequel insérer le bouton ou les textes
 		if (!oContexteCdM.ok) {
 			if (oContexteCdM.error) {
-				logMZ('MZ_traiteCdMmsg, ' + oContexteCdM.error);
-				MZ_comp_addMessage(oContexteCdM, 'Erreur MZ, ' + oContexteCdM.error);
+				logMZ(`MZ_traiteCdMmsg, ${oContexteCdM.error}`);
+				MZ_comp_addMessage(oContexteCdM, `Erreur MZ, ${oContexteCdM.error}`);
 			}
 			return;
 		}
-		debugMZ('oContexteCdM=' + JSON.stringify(oContexteCdM));
+		debugMZ(`oContexteCdM=${JSON.stringify(oContexteCdM)}`);
 
 		MZ_comp_addPvRestant(oContexteCdM);
 
 		if (oContexteCdM.txtHeure) {
 			var txtHeure = oContexteCdM.txtHeure;
 		} else {
-			var etimestamp = document.getElementById('messageDateHeure');
-			if (etimestamp) var txtHeure = etimestamp.innerText || etimestamp.textContent;
+			let etimestamp = document.getElementById('messageDateHeure');
+			if (etimestamp) {
+				var txtHeure = etimestamp.innerText || etimestamp.textContent;
+			}
 		}
 		if (txtHeure) {
-			var m = txtHeure.match(/\d+\/\d+\/\d+ +\d+:\d+:\d+/);
-			if (m) var tstamp = m[0];
+			let m = txtHeure.match(/\d+\/\d+\/\d+ +\d+:\d+:\d+/);
+			if (m) {
+				var tstamp = m[0];
+			}
 		}
 		if (tstamp == undefined) {
 			logMZ('MZ_traiteCdMmsg, pas de date/heure');
 			MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 			return;
-		} else {
-
 		}
+
+
 		oContexteCdM.oData.tstamp = tstamp.trim();
 		oContexteCdM.oData.bMsgBot = 1;
 
@@ -9717,7 +10426,7 @@ try {
 		*/
 	}
 
-	/*function traitePouvoir() {
+	/* function traitePouvoir() {
 		// Teste si ce message du bot est un message de CdM
 		// le test "capa" évite les pouvoirs type Chonchon (pas de SR)
 		var td = document.evaluate("//td/text()[contains(.,'POUVOIR')]/../text()[contains(.,'capacité spéciale')]/..",
@@ -9766,9 +10475,9 @@ try {
 	function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du bot
 		MZ_traiteCdMmsg();
 	}
-	//traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
+	// traitePouvoir(); méthode d'envoi obsolète et gestion inconnue niveau DB
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -9793,19 +10502,19 @@ try {
 
 	// met à jour les carac sauvegardées (position, DLA, etc.)
 	function updateData() {
-		var eltId = document.getElementById('id');
-		var numTroll = parseInt(eltId.getAttribute('data-id'));
+		let eltId = document.getElementById('id');
+		let numTroll = parseInt(eltId.getAttribute('data-id'));
 		if (!isNaN(numTroll)) {
 			MY_setValue('NUM_TROLL', numTroll);
-			debugMZ('[MZ] updateData_log: numTroll=' + numTroll);
+			debugMZ(`[MZ] updateData_log: numTroll=${numTroll}`);
 		} else {
-			logMZ('[MZd ' + GM_info.script.version + '] updateData_log, impossible de retrouver le numéro de Troll, eltId=' + eltId);
+			logMZ(`[MZd ${GM_info.script.version}] updateData_log, impossible de retrouver le numéro de Troll, eltId=${eltId}`);
 		}
-		var eltSpan = eltId.getElementsByTagName('span');
+		let eltSpan = eltId.getElementsByTagName('span');
 		if (eltSpan[0]) {
-			var nomTroll = eltSpan[0].innerText;
+			let nomTroll = eltSpan[0].innerText;
 			MY_setValue('NOM_TROLL', nomTroll);
-			debugMZ('[MZ] updateData_log: nomTroll=' + nomTroll);
+			debugMZ(`[MZ] updateData_log: nomTroll=${nomTroll}`);
 		} else {
 			logMZ('[MZ] erreur updateData_log: nomTroll inconnu, pas de span');
 		}
@@ -9818,46 +10527,48 @@ try {
 		let txt_dla_xyn = eltDLA_xyn.innerText;
 		let m = txt_dla_xyn.match(/DLA:* *(.*)[ \n\r]*X *= *(-*\d+)[ \|]*Y *= *(-*\d+)[ \|]*N *= *(-*\d+)/);
 		if (!m) {
-			logMZ("[MZ] erreur updateData_log: position et DLA inconnus, échec de l'analyse de " + txt_dla_xyn);
+			logMZ(`[MZ] erreur updateData_log: position et DLA inconnus, échec de l'analyse de ${txt_dla_xyn}`);
 			return;
 		}
-		let DLA = new Date(StringToDate(m[1]))
-		if (MY_getValue(numTroll + '.DLA.encours')) {
-			var DLAstockee = new Date(
-				StringToDate(MY_getValue(numTroll + '.DLA.encours'))
+		let DLA = new Date(StringToDate(m[1]));
+		if (MY_getValue(`${numTroll}.DLA.encours`)) {
+			let DLAstockee = new Date(
+				StringToDate(MY_getValue(`${numTroll}.DLA.encours`))
 			);
 			if (DLA > DLAstockee) {
-				MY_setValue(numTroll + '.DLA.ancienne', MZ_formatDateMS(DLAstockee, false));
-				debugMZ('[MZ] updateData_log: DLA précédente=' + MZ_formatDateMS(DLAstockee, false));
+				MY_setValue(`${numTroll}.DLA.ancienne`, MZ_formatDateMS(DLAstockee, false));
+				debugMZ(`[MZ] updateData_log: DLA précédente=${MZ_formatDateMS(DLAstockee, false)}`);
 				// Pose un pb en cas de décalage de DLA
 			}
 		}
-		MY_setValue(numTroll + '.DLA.encours', MZ_formatDateMS(DLA, false));
-		debugMZ('[MZ] updateData_log: DLA =' + MZ_formatDateMS(DLA, false));
+		MY_setValue(`${numTroll}.DLA.encours`, MZ_formatDateMS(DLA, false));
+		debugMZ(`[MZ] updateData_log: DLA =${MZ_formatDateMS(DLA, false)}`);
 
 		let x = parseInt(m[2]);
 		let y = parseInt(m[3]);
 		let n = parseInt(m[4]);
 		if (isNaN(x) || isNaN(y) || isNaN(n)) {
-			logMZ('[MZ] erreur updateData_log, à la récupération de la position, analyse=' + JSON.stringify(m));
+			logMZ(`[MZ] erreur updateData_log, à la récupération de la position, analyse=${JSON.stringify(m)}`);
 		} else {
-			MY_setValue(numTroll + '.position.X', x);
-			MY_setValue(numTroll + '.position.Y', y);
-			MY_setValue(numTroll + '.position.N', n);
+			MY_setValue(`${numTroll}.position.X`, x);
+			MY_setValue(`${numTroll}.position.Y`, y);
+			MY_setValue(`${numTroll}.position.N`, n);
 		}
 	}
 
 	// ajoute les raccourcis (paramétrables dans Options/Pack Graphique)
 	function initRaccourcis() {
-		var anotherURL = MY_getValue('URL1');
-		if (!anotherURL) { return; }
+		let anotherURL = MY_getValue('URL1');
+		if (!anotherURL) {
+			return;
+		}
 
 		/* Création de l'icône faisant apparaître le menu */
 		mainIco = document.createElement('img');
-		var urlIco = MY_getValue(numTroll + '.ICOMENU');
+		let urlIco = MY_getValue(`${numTroll}.ICOMENU`);
 		if (!urlIco) {
 			urlIco =
-				URL_MZimg + 'mz_logo_small.png';
+				`${URL_MZimg}mz_logo_small.png`;
 		}
 		mainIco.src = urlIco;
 		mainIco.alt = 'MZ';
@@ -9876,26 +10587,25 @@ try {
 			'visibility: hidden;';
 		document.body.appendChild(menuRac);
 		document.addEventListener('mousemove', cacheMenu, false);
-		var i = 1;
+		let i = 1;
 		while (anotherURL) {
-			var a = document.createElement('a');
-			var url = MY_getValue('URL' + i);
-			var nom = MY_getValue('URL' + i + '.nom');
-			var ico = MY_getValue('URL' + i + '.ico');
+			let a = document.createElement('a');
+			let url = MY_getValue(`URL${i}`);
+			let nom = MY_getValue(`URL${i}.nom`);
+			let ico = MY_getValue(`URL${i}.ico`);
 			a.href = url;
 			a.target = '_blank';
 			if (ico) {
-				var txt = nom ? nom : '';
-				var img = createImage(ico, txt);
+				let txt = nom ? nom : '';
+				let img = createImage(ico, txt);
 				a.appendChild(img);
-			}
-			else {
-				appendText(a, '[' + nom + ']');
+			} else {
+				appendText(a, `[${nom}]`);
 			}
 			menuRac.appendChild(a);
 			appendBr(menuRac);
 			i++;
-			anotherURL = MY_getValue('URL' + i);
+			anotherURL = MY_getValue(`URL${i}`);
 		}
 	}
 
@@ -9904,14 +10614,16 @@ try {
 	}
 
 	function cacheMenu(e) {
-		if (menuRac.style.visibility == 'hidden') { return; }
+		if (menuRac.style.visibility == 'hidden') {
+			return;
+		}
 		// Position souris
-		var ptX = e.clientX;
-		var ptY = e.clientY;
+		let ptX = e.clientX;
+		let ptY = e.clientY;
 		// On recalcule en live les BoundingBox pour mainIco et menuRac
 		// Moins optimal, mais évite des erreurs (d'originie inconnue)
-		var menuRect = menuRac.getBoundingClientRect();
-		var icoRect = mainIco.getBoundingClientRect();
+		let menuRect = menuRac.getBoundingClientRect();
+		let icoRect = mainIco.getBoundingClientRect();
 		if ((ptX > icoRect.width || ptY > icoRect.height) &&
 			(ptX < 10 || ptX > 10 + menuRect.width || ptY < 10 || ptY > 10 + menuRect.height)) {
 			menuRac.style.visibility = 'hidden';
@@ -9920,11 +10632,13 @@ try {
 
 	// ajout de l'icône, branchée sur un refresh
 	function initUpdateCoordGauche() {
-		var div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		let div = document.evaluate("//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		// logMZ('initUpdateCoordGauche ' + div.innerHTML);
-		if (!div) return;
-		var img = document.createElement('img');
-		img.src = URL_MZimg + 'recycl.png'
+		if (!div) {
+			return;
+		}
+		let img = document.createElement('img');
+		img.src = `${URL_MZimg}recycl.png`;
 		img.onclick = function (evt) {
 			document.location.href = document.location.href;
 		};
@@ -9938,14 +10652,14 @@ try {
 
 	// ajout sur les raccoucis des mêmes popup que dans le profil
 	function MZ_initPopupFrameGauche() {
-		var eListeFavoris = document.getElementById('listeFavori');
+		let eListeFavoris = document.getElementById('listeFavori');
 		if (!eListeFavoris) {
 			logMZ('MZ **erreur** pas de listeFavori dans la frame de gauche');
 			return;
 		}
-		var tabA = eListeFavoris.getElementsByTagName('A');
-		for (var i = 0; i < tabA.length; i++) {
-			var a = tabA[i];
+		let tabA = eListeFavoris.getElementsByTagName('A');
+		for (let i = 0; i < tabA.length; i++) {
+			let a = tabA[i];
 			setInfos(a, epure(trim(a.textContent)), '*', 1);
 		}
 	}
@@ -9960,10 +10674,10 @@ try {
 		// Ajout bouton de mise à jour coordonnées
 		initUpdateCoordGauche();
 		// Ajout popup sur les raccourcis des actions
-		//MZ_initPopupFrameGauche();
+		// MZ_initPopupFrameGauche();
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -9988,7 +10702,7 @@ try {
 	 * prévoir fix ("delete infos")
 	 */
 
-	/*--------------------------- Variables Globales ----------------------------- */
+	/* --------------------------- Variables Globales ----------------------------- */
 
 	// Position actuelle
 	var currentPosition = [0, 0, 0];
@@ -10017,8 +10731,8 @@ try {
 	var isEngagesComputed = false;
 	var cursorOnLink = false; // DEBUG: wtf ?
 
-	var needComputeEnchantement = MY_getValue(numTroll + '.enchantement.liste')
-		&& MY_getValue(numTroll + '.enchantement.liste') != '';
+	var needComputeEnchantement = MY_getValue(`${numTroll}.enchantement.liste`) &&
+		MY_getValue(`${numTroll}.enchantement.liste`) != '';
 
 	// Checkboxes de filtrage
 	var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
@@ -10028,12 +10742,12 @@ try {
 
 	/* Acquisition & Stockage des données de DB */
 	var typesAFetcher = {
-		'monstres': 1,
-		'trolls': 1,
-		'tresors': 1,
-		'champignons': 1,
-		'lieux': 1
-	}
+		monstres: 1,
+		trolls: 1,
+		tresors: 1,
+		champignons: 1,
+		lieux: 1
+	};
 
 	var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
 		nbMonstres: 0,
@@ -10060,17 +10774,17 @@ try {
 		nbChampignons = 0, nbLieux = 0;
 
 	function fetchData(type) {
-		var node;
+		let node;
 		try {
-			node = document.getElementById('mh_vue_hidden_' + type);
-			VueContext['tr_' + type] = node.getElementsByTagName('tr');
-			VueContext['nb' + type[0].toUpperCase() + type.slice(1)] = VueContext['tr_' + type].length - 1;
+			node = document.getElementById(`mh_vue_hidden_${type}`);
+			VueContext[`tr_${type}`] = node.getElementsByTagName('tr');
+			VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
 		} catch (e) {
-			window.console.warn('[MZ Vue] Erreur acquisition type ' + type, e);
+			window.console.warn(`[MZ Vue] Erreur acquisition type ${type}`, e);
 		}
 	}
 
-	/*-[functions]-------------- Fonctions utilitaires --------------------------- */
+	/* -[functions]-------------- Fonctions utilitaires --------------------------- */
 
 	function positionToString(arr) {
 		return arr.join(';');
@@ -10087,21 +10801,21 @@ try {
 	function savePosition() {
 		// Stocke la position (à jour) de la vue pour les autres scripts
 		// DEBUG: Lesquels et pourquoi?
-		var pos = getPosition();
+		let pos = getPosition();
 		x = pos[0];
 		y = pos[1];
 		n = pos[2];
 		if (isNaN(x) || isNaN(y) || isNaN(n)) {
-			logMZ('[MZ] erreur savePosition_log, pos=' + JSON.stringfy(pos));
+			logMZ(`[MZ] erreur savePosition_log, pos=${JSON.stringfy(pos)}`);
 		} else {
-			MY_setValue(numTroll + '.position.X', x);
-			MY_setValue(numTroll + '.position.Y', y);
-			MY_setValue(numTroll + '.position.N', n);
+			MY_setValue(`${numTroll}.position.X`, x);
+			MY_setValue(`${numTroll}.position.Y`, y);
+			MY_setValue(`${numTroll}.position.N`, n);
 		}
 	}
 
 
-	/*-[functions]--- Fonctions de récupération de données (DOM) -----------------*/
+	/* -[functions]--- Fonctions de récupération de données (DOM) -----------------*/
 	/* INFOS :
 	 * les champs-titres (table>tbody>tr>td>table>tbody>tr>td>a)
 	 * sont identifiables via leur Name
@@ -10122,18 +10836,18 @@ try {
 
 	function getVue() {
 		// Retourne [vueHpure, vueVpure]
-		var vues = getPorteVue();
+		let vues = getPorteVue();
 		return [vues[0], vues[1]];
 	}
 
 	// Roule 11/03/2016
 	/* [functions] Récup données monstres, trolls, etc. */
 	function getXxxDistance(xxx, i) {
-		return MZ_getDistanceAvecSplit(VueContext['tr_' + xxx.toLowerCase()][i].cells[0].textContent);
+		return MZ_getDistanceAvecSplit(VueContext[`tr_${xxx.toLowerCase()}`][i].cells[0].textContent);
 	}
 	function getXxxPosition(xxx, i) {
-		var tds = VueContext['tr_' + xxx.toLowerCase()][i].childNodes;
-		var l = tds.length;
+		let tds = VueContext[`tr_${xxx.toLowerCase()}`][i].childNodes;
+		let l = tds.length;
 		return [
 			parseInt(tds[l - 3].textContent),
 			parseInt(tds[l - 2].textContent),
@@ -10145,10 +10859,14 @@ try {
 	/* [functions] Récup données monstres */
 	function getMonstreDistance(i) {
 		// debugMZ('getMonstreDistance, i=' + i + ', tr=' + MZ_EtatCdMs.tr_monstres[i].innerHTML);
-		var s = MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellDist].textContent;
-		if (s.indexOf('|') < 0) return parseInt(s);
-		var m = s.match(/(\d+)[^\d]+(\d+)/);
-		if (!(m && m.length >= 3)) return 0;
+		let s = MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellDist].textContent;
+		if (s.indexOf('|') < 0) {
+			return parseInt(s);
+		}
+		let m = s.match(/(\d+)[^\d]+(\d+)/);
+		if (!(m && m.length >= 3)) {
+			return 0;
+		}
 		return Math.max(m[1], m[2]);
 	}
 
@@ -10165,26 +10883,36 @@ try {
 	}
 
 	function isMonstreLevelOutLimit(i, limitMin, limitMax) {
-		if (!MZ_EtatCdMs.isCDMsRetrieved) return false;
-		var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-		if (!donneesMonstre) return false;
-		var niv = donneesMonstre.niv;
-		if (niv == undefined) return false;
-		if (limitMin > 0 && niv.max && niv.max < limitMin) return true;
-		if (limitMax > 0 && niv.min && niv.min > limitMax) return true;
+		if (!MZ_EtatCdMs.isCDMsRetrieved) {
+			return false;
+		}
+		let donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
+		if (!donneesMonstre) {
+			return false;
+		}
+		let niv = donneesMonstre.niv;
+		if (niv == undefined) {
+			return false;
+		}
+		if (limitMin > 0 && niv.max && niv.max < limitMin) {
+			return true;
+		}
+		if (limitMax > 0 && niv.min && niv.min > limitMax) {
+			return true;
+		}
 		return false;
 	}
 
 	function getMonstreNomNode(i) {
 		try {
-			var td = document.evaluate(
+			let td = document.evaluate(
 				"./td/a[starts-with(@href, 'javascript:EMV')]/..",
 				MZ_EtatCdMs.tr_monstres[i], null, 9, null
 			).singleNodeValue;
 			return td;
 		} catch (e) {
-			avertissement('[getMonstreNomNode] Impossible de trouver le monstre ' + i);
-			logMZ(traceStack(e, 'getMonstreNomNode Impossible de trouver le monstre' + i));
+			avertissement(`[getMonstreNomNode] Impossible de trouver le monstre ${i}`);
+			logMZ(traceStack(e, `getMonstreNomNode Impossible de trouver le monstre${i}`));
 		}
 	}
 
@@ -10194,19 +10922,19 @@ try {
 
 	function getMonstreNomByTR(tr) {
 		try {
-			var nom = document.evaluate(
+			let nom = document.evaluate(
 				"./td/a[starts-with(@href, 'javascript:EMV')]/text()",
 				tr, null, 2, null
 			).stringValue;
 			return nom;
 		} catch (e) {
-			avertissement('[getMonstreNom] Impossible de trouver le monstre ' + i);
-			logMZ(traceStack(e, 'getMonstreNom Impossible de trouver le monstre ' + i));
+			avertissement(`[getMonstreNom] Impossible de trouver le monstre ${i}`);
+			logMZ(traceStack(e, `getMonstreNom Impossible de trouver le monstre ${i}`));
 		}
 	}
 
 	function getMonstrePosition(i) {
-		var tds = MZ_EtatCdMs.tr_monstres[i].childNodes;
+		let tds = MZ_EtatCdMs.tr_monstres[i].childNodes;
 		return [
 			parseInt(tds[MZ_EtatCdMs.indexCellX].textContent),
 			parseInt(tds[MZ_EtatCdMs.indexCellY].textContent),
@@ -10215,38 +10943,47 @@ try {
 	}
 
 	function isMonstreVisible(i) {
-		var tr = MZ_EtatCdMs.tr_monstres[i];
+		let tr = MZ_EtatCdMs.tr_monstres[i];
 		// logMZ('isMonstreVisible(' + i + '), display=' + tr.style.display);
 		return tr.style.display !== 'none';
 	}
 
 	function appendMonstres(txt) {
-		for (var i = 1; i <= MZ_EtatCdMs.nbMonstres; i++)
-			txt += getMonstreID(i) + ';' + getMonstreNom(i) + ';' + positionToString(getMonstrePosition(i)) + '\n';
+		for (let i = 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
+			txt = `${txt}${getMonstreID(i)};${getMonstreNom(i)};${positionToString(getMonstrePosition(i))}\n`;
+		}
 		return txt;
 	}
 
 	function getMonstres() {
-		var vue = getVue();
-		return appendMonstres(positionToString(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+		let vue = getVue();
+		return appendMonstres(`${positionToString(getPosition())};${vue[0]};${vue[1]}\n`);
 	}
 
 	function bddMonstres(start, stop, limitH, limitV) {
-		if (!start) { var start = 1; }
-		if (!stop) { var stop = MZ_EtatCdMs.nbMonstres; }
-		stop = Math.min(MZ_EtatCdMs.nbMonstres, stop);
-		var txt = '';
-		var myPosition = getPosition();
-		for (var i = start; i <= stop; i++) {
-			var monstrePosition = getMonstrePosition(i);
-			if (MZ_deltaH(myPosition, monstrePosition) > limitH) continue;
-			if (MZ_deltaV(myPosition, monstrePosition) > limitV) continue;
-			if (!isMonstreVisible(i)) continue;
-			txt += getMonstreID(i) + ';' +
-				getMonstreNom(i).replace(';', ',').replace(/[\u2000-\uFFFF]/ug, '?') + ';' +
-				positionToString(monstrePosition) + '\n';
+		if (!start) {
+			var start = 1;
 		}
-		return txt ? '#DEBUT MONSTRES\n' + txt + '#FIN MONSTRES\n' : '';
+		if (!stop) {
+			var stop = MZ_EtatCdMs.nbMonstres;
+		}
+		stop = Math.min(MZ_EtatCdMs.nbMonstres, stop);
+		let txt = '';
+		let myPosition = getPosition();
+		for (let i = start; i <= stop; i++) {
+			let monstrePosition = getMonstrePosition(i);
+			if (MZ_deltaH(myPosition, monstrePosition) > limitH) {
+				continue;
+			}
+			if (MZ_deltaV(myPosition, monstrePosition) > limitV) {
+				continue;
+			}
+			if (!isMonstreVisible(i)) {
+				continue;
+			}
+			txt = `${txt}${getMonstreID(i)};${getMonstreNom(i).replace(';', ',').replace(/[\u2000-\uFFFF]/ug, '?')};${positionToString(monstrePosition)}\n`;
+		}
+		return txt ? `#DEBUT MONSTRES\n${txt}#FIN MONSTRES\n` : '';
 	}
 
 	/* [functions] Récup données Trolls */
@@ -10264,47 +11001,66 @@ try {
 	var MZ_cache_col_TrollNIV;
 
 	function MZ_find_col_titre(trs, titre) {
-		var l = titre.length;
-		for (var i = 0; i < trs[0].cells.length; i++)
-			if (trs[0].cells[i].textContent.toLowerCase().substr(0, l) == titre) return i;
-		logMZ('MZ : impossible de trouver la colonne de titre ' + titre + ' dans ' + trs[0].textContent);
+		let l = titre.length;
+		for (let i = 0; i < trs[0].cells.length; i++) {
+			if (trs[0].cells[i].textContent.toLowerCase().substr(0, l) == titre) {
+				return i;
+			}
+		}
+		logMZ(`MZ : impossible de trouver la colonne de titre ${titre} dans ${trs[0].textContent}`);
 		return 0;
 	}
 
 	function getTrollID(i) {
-		if (MZ_cache_col_TrollID === undefined) MZ_cache_col_TrollID = MZ_find_col_titre(tr_trolls, 'réf');
+		if (MZ_cache_col_TrollID === undefined) {
+			MZ_cache_col_TrollID = MZ_find_col_titre(tr_trolls, 'réf');
+		}
 		// Roule 08/03/2017 protection
-		var iTroll = parseInt(tr_trolls[i].cells[MZ_cache_col_TrollID].textContent)
-		if (isNaN(iTroll)) return;
-		if (iTroll == 0) return;
+		let iTroll = parseInt(tr_trolls[i].cells[MZ_cache_col_TrollID].textContent);
+		if (isNaN(iTroll)) {
+			return;
+		}
+		if (iTroll == 0) {
+			return;
+		}
 		return iTroll;
 	}
 
 	function getTrollNomNode(i) {
-		if (MZ_cache_col_TrollNOM === undefined) MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
+		if (MZ_cache_col_TrollNOM === undefined) {
+			MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
+		}
 		return tr_trolls[i].cells[MZ_cache_col_TrollNOM];
 	}
 
 	function getTrollNivNode(i) {
-		if (MZ_cache_col_TrollNIV === undefined) MZ_cache_col_TrollNIV = MZ_find_col_titre(tr_trolls, 'niv');
+		if (MZ_cache_col_TrollNIV === undefined) {
+			MZ_cache_col_TrollNIV = MZ_find_col_titre(tr_trolls, 'niv');
+		}
 		return tr_trolls[i].cells[MZ_cache_col_TrollNIV];
 	}
 
 	function getTrollGuilde(i) {
-		if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		if (MZ_cache_col_TrollGUILDE === undefined) {
+			MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		}
 		return trim(tr_trolls[i].cells[MZ_cache_col_TrollGUILDE].textContent);
 	}
 
 	function getTrollGuildeID(i) {
-		if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		if (MZ_cache_col_TrollGUILDE === undefined) {
+			MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		}
 		if (tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length > 0) {
-			var href;
+			let href;
 			try {
-				if ((!tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild) || (!tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute)) return -1;	// Roule 21/12/2016 protection conte le "bug Marsak"
+				if (!tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild || !tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute) {
+					return -1;
+				}	// Roule 21/12/2016 protection conte le "bug Marsak"
 				href = tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute('href');
 			} catch (e) {	// debug pb remonté par Marsak
 				logMZ(traceStack(e, 'getTrollGuildeID')
-					, 'nb child=' + tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length
+					, `nb child=${tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length}`
 					, tr_trolls[i].innerHTML.replace(/</g, '‹'));
 				return -1;
 			}
@@ -10314,8 +11070,8 @@ try {
 	}
 
 	function getTrollPosition(i) {
-		var tds = tr_trolls[i].childNodes;
-		var l = tds.length;
+		let tds = tr_trolls[i].childNodes;
+		let l = tds.length;
 		return [
 			parseInt(tds[l - 3].textContent),
 			parseInt(tds[l - 2].textContent),
@@ -10324,23 +11080,32 @@ try {
 	}
 
 	function bddTrolls(limitH, limitV) {
-		var myPosition = getPosition();
-		var txt = '#DEBUT TROLLS\n' +
-			numTroll + ';' + positionToString(myPosition) + '\n';
-		var tabDedoubTroll = {};
+		let myPosition = getPosition();
+		let txt = `#DEBUT TROLLS\n${numTroll};${positionToString(myPosition)}\n`;
+		let tabDedoubTroll = {};
 		tabDedoubTroll[numTroll] = true;
-		for (var i in tr_trolls) {
-			if (!tr_trolls[i].childNodes) continue;
-			var troll_id = getTrollID(i);
-			if (!troll_id) continue;
-			if (tabDedoubTroll[troll_id]) continue;
+		for (let i in tr_trolls) {
+			if (!tr_trolls[i].childNodes) {
+				continue;
+			}
+			let troll_id = getTrollID(i);
+			if (!troll_id) {
+				continue;
+			}
+			if (tabDedoubTroll[troll_id]) {
+				continue;
+			}
 			tabDedoubTroll[troll_id] = true;
-			var trollPosition = getTrollPosition(i);
-			if (MZ_deltaH(myPosition, trollPosition) > limitH) continue;
-			if (MZ_deltaV(myPosition, trollPosition) > limitV) continue;
-			txt += troll_id + ';' + positionToString(trollPosition) + '\n';
+			let trollPosition = getTrollPosition(i);
+			if (MZ_deltaH(myPosition, trollPosition) > limitH) {
+				continue;
+			}
+			if (MZ_deltaV(myPosition, trollPosition) > limitV) {
+				continue;
+			}
+			txt = `${txt}${troll_id};${positionToString(trollPosition)}\n`;
 		}
-		return txt + '#FIN TROLLS\n';
+		return `${txt}#FIN TROLLS\n`;
 	}
 
 	/* [functions] Récup données Trésors */
@@ -10350,30 +11115,34 @@ try {
 
 	function MZ_getDistanceAvecSplit(cellTxt) {
 		cellTxt = cellTxt.replace('\u2007', ' ').replace('\u2212', '-');
-		var txtSplitted = cellTxt.split('|');
-		if (txtSplitted.length == 1) txtSplitted = cellTxt.split('/');
-		if (txtSplitted.length == 1) return parseInt(txtSplitted[0], 10);
-		var dH = Math.abs(txtSplitted[0]);
-		var dV = Math.abs(txtSplitted[1]);
+		let txtSplitted = cellTxt.split('|');
+		if (txtSplitted.length == 1) {
+			txtSplitted = cellTxt.split('/');
+		}
+		if (txtSplitted.length == 1) {
+			return parseInt(txtSplitted[0], 10);
+		}
+		let dH = Math.abs(txtSplitted[0]);
+		let dV = Math.abs(txtSplitted[1]);
 		return Math.max(dH, dV);
 	}
 
 	function getTresorID(i) {
-		var tds = tr_tresors[i].childNodes;
-		var l = tds.length;
+		let tds = tr_tresors[i].childNodes;
+		let l = tds.length;
 		return trim(tr_tresors[i].cells[l - 5].textContent);
 	}
 
 	function getTresorNom(i) {
-		var tds = tr_tresors[i].childNodes;
-		var l = tds.length;
+		let tds = tr_tresors[i].childNodes;
+		let l = tds.length;
 		// Utilisation de textContent pour régler le "bug de Pollux"
 		return trim(tr_tresors[i].cells[l - 4].textContent);
 	}
 
 	function getTresorPosition(i) {
-		var tds = tr_tresors[i].childNodes;
-		var l = tds.length;
+		let tds = tr_tresors[i].childNodes;
+		let l = tds.length;
 		return [
 			parseInt(tds[l - 3].textContent),
 			parseInt(tds[l - 2].textContent),
@@ -10383,24 +11152,32 @@ try {
 
 	function bddTresors(dmin, start, stop, limitH, limitV) {
 		// On retire les trésors proches (dmin) pour Troogle à cause de leur description
-		if (!dmin) { var dmin = 0; }
-		if (!start) { var start = 1; }
-		if (!stop) { var stop = nbTresors; }
+		if (!dmin) {
+			var dmin = 0;
+		}
+		if (!start) {
+			var start = 1;
+		}
+		if (!stop) {
+			var stop = nbTresors;
+		}
 		stop = Math.min(nbTresors, stop);
-		var myPosition = getPosition();
-		var txt = '';
-		for (var i = start; i <= stop; i++) {
-			var tresorPosition = getTresorPosition(i);
+		let myPosition = getPosition();
+		let txt = '';
+		for (let i = start; i <= stop; i++) {
+			let tresorPosition = getTresorPosition(i);
 			// debugMZ('bddTresors, i=' + i + ', ' + getTresorID(i)+';'+ getTresorNom(i)+';'+ positionToString(tresorPosition) + ', dmin=' + dmin + ', start=' + start + ', stop=' + stop + ', limitH=' + limitH + ', limitV=' + limitV + ', MZ_deltaH=' + MZ_deltaH(myPosition, tresorPosition) + ', MZ_deltaV=' + MZ_deltaV(myPosition, tresorPosition) + ', distance=' + getTresorDistance(i));
-			if (MZ_deltaH(myPosition, tresorPosition) > limitH) continue;
-			if (MZ_deltaV(myPosition, tresorPosition) > limitV) continue;
+			if (MZ_deltaH(myPosition, tresorPosition) > limitH) {
+				continue;
+			}
+			if (MZ_deltaV(myPosition, tresorPosition) > limitV) {
+				continue;
+			}
 			if (getTresorDistance(i) >= dmin) {
-				txt += getTresorID(i) + ';' +
-					getTresorNom(i) + ';' +
-					positionToString(tresorPosition) + '\n';
+				txt = `${txt}${getTresorID(i)};${getTresorNom(i)};${positionToString(tresorPosition)}\n`;
 			}
 		}
-		return txt ? '#DEBUT TRESORS\n' + txt + '#FIN TRESORS\n' : '';
+		return txt ? `#DEBUT TRESORS\n${txt}#FIN TRESORS\n` : '';
 	}
 
 	/* [functions] Récup données Champignons */
@@ -10410,8 +11187,8 @@ try {
 	}
 
 	function getChampignonPosition(i) {
-		var tds = tr_champignons[i].childNodes;
-		var l = tds.length;
+		let tds = tr_champignons[i].childNodes;
+		let l = tds.length;
 		return [
 			parseInt(tds[l - 3].textContent),
 			parseInt(tds[l - 2].textContent),
@@ -10420,17 +11197,20 @@ try {
 	}
 
 	function bddChampignons(limitH, limitV) {
-		var myPosition = getPosition();
-		var txt = '';
-		for (var i = 1; i <= nbChampignons; i++) {
-			var champignonPosition = getChampignonPosition(i);
-			if (MZ_deltaH(myPosition, champignonPosition) > limitH) continue;
-			if (MZ_deltaV(myPosition, champignonPosition) > limitV) continue;
-			txt += ';' + // Les champis n'ont pas de Référence
-				getChampignonNom(i) + ';' +
-				positionToString(champignonPosition) + '\n';
+		let myPosition = getPosition();
+		let txt = '';
+		for (let i = 1; i <= nbChampignons; i++) {
+			let champignonPosition = getChampignonPosition(i);
+			if (MZ_deltaH(myPosition, champignonPosition) > limitH) {
+				continue;
+			}
+			if (MZ_deltaV(myPosition, champignonPosition) > limitV) {
+				continue;
+			}
+			txt = `${txt};${ // Les champis n'ont pas de Référence
+				getChampignonNom(i)};${positionToString(champignonPosition)}\n`;
 		}
-		return txt ? '#DEBUT CHAMPIGNONS\n' + txt + '#FIN CHAMPIGNONS\n' : '';
+		return txt ? `#DEBUT CHAMPIGNONS\n${txt}#FIN CHAMPIGNONS\n` : '';
 	}
 
 	/* [functions] Récup données Lieux */
@@ -10448,8 +11228,8 @@ try {
 	}
 
 	function getLieuPosition(i) {
-		var tds = tr_lieux[i].childNodes;
-		var l = tds.length;
+		let tds = tr_lieux[i].childNodes;
+		let l = tds.length;
 		return [
 			parseInt(tds[l - 3].textContent),
 			parseInt(tds[l - 2].textContent),
@@ -10458,71 +11238,82 @@ try {
 	}
 
 	function appendLieux(txt) {
-		for (var i = 1; i < nbLieux + 1; i++) {
-			var tds = x_lieux[i].childNodes;
-			txt += tds[1].firstChild.nodeValue + ";" + getLieuNom(i) + ";" + tds[3].firstChild.nodeValue + ";"
-				+ tds[4].firstChild.nodeValue + ";" + tds[5].firstChild.nodeValue + "\n";
+		for (let i = 1; i < nbLieux + 1; i++) {
+			let tds = x_lieux[i].childNodes;
+			txt = `${txt}${tds[1].firstChild.nodeValue};${getLieuNom(i)};${tds[3].firstChild.nodeValue};${tds[4].firstChild.nodeValue};${tds[5].firstChild.nodeValue}\n`;
 		}
 		return txt;
 	}
 
 	function getLieux() {
-		var vue = getVue();
-		return appendLieux(positionToString(getPosition()) + ";" + vue[0] + ";" + vue[1] + "\n");
+		let vue = getVue();
+		return appendLieux(`${positionToString(getPosition())};${vue[0]};${vue[1]}\n`);
 	}
 
 	function bddLieux(start, stop, limitH, limitV) {
-		if (!start) { var start = 1; }
-		if (!stop) { var stop = nbLieux; }
-		stop = Math.min(nbLieux, stop);
-		var myPosition = getPosition();
-		var txt = '';
-		for (var i = start; i <= stop; i++) {
-			var lieuPosition = getLieuPosition(i);
-			if (MZ_deltaH(myPosition, lieuPosition) > limitH) continue;
-			if (MZ_deltaV(myPosition, lieuPosition) > limitV) continue;
-			txt += getLieuID(i) + ';' +
-				epure(getLieuNom(i)) + ';' +
-				positionToString(lieuPosition) + '\n';
+		if (!start) {
+			var start = 1;
 		}
-		return txt ? '#DEBUT LIEUX\n' + txt + '#FIN LIEUX\n' : '';
+		if (!stop) {
+			var stop = nbLieux;
+		}
+		stop = Math.min(nbLieux, stop);
+		let myPosition = getPosition();
+		let txt = '';
+		for (let i = start; i <= stop; i++) {
+			let lieuPosition = getLieuPosition(i);
+			if (MZ_deltaH(myPosition, lieuPosition) > limitH) {
+				continue;
+			}
+			if (MZ_deltaV(myPosition, lieuPosition) > limitV) {
+				continue;
+			}
+			txt = `${txt}${getLieuID(i)};${epure(getLieuNom(i))};${positionToString(lieuPosition)}\n`;
+		}
+		return txt ? `#DEBUT LIEUX\n${txt}#FIN LIEUX\n` : '';
 	}
 
 
-	/*-[functions]--------- Gestion Préférences Utilisateur ---------------------- */
+	/* -[functions]--------- Gestion Préférences Utilisateur ---------------------- */
 
 	function saveCheckBox(chkbox, pref) {
 		// Enregistre et retourne l'état d'une CheckBox
-		var etat = chkbox.checked;
+		let etat = chkbox.checked;
 		MY_setValue(pref, etat ? 'true' : 'false');
 		return etat;
 	}
 
 	function recallCheckBox(chkbox, pref) {
 		// Restitue l'état d'une CheckBox
-		chkbox.checked = (MY_getValue(pref) == 'true');
+		chkbox.checked = MY_getValue(pref) == 'true';
 	}
 
 	function saveComboBox(cbb, pref) {
-		if (!cbb) return;
+		if (!cbb) {
+			return;
+		}
 		// Enregistre et retourne l'état d'une ComboBox
-		var opt = cbb.options[cbb.selectedIndex];
-		if (!opt) return;
-		var etat = cbb.options[cbb.selectedIndex].value;
+		let opt = cbb.options[cbb.selectedIndex];
+		if (!opt) {
+			return;
+		}
+		let etat = cbb.options[cbb.selectedIndex].value;
 		MY_setValue(pref, etat);
 		return etat;
 	}
 
 	function recallComboBox(cbb, pref) {
 		// Restitue l'état d'une ComboBox
-		var nb = MY_getValue(pref);
-		if (nb && cbb) cbb.value = nb;
+		let nb = MY_getValue(pref);
+		if (nb && cbb) {
+			cbb.value = nb;
+		}
 		return nb;
 	}
 
 	function synchroniseFiltres() {
 		// Récupération de toutes les options de la vue
-		var wasActive =
+		let wasActive =
 			Number(recallComboBox(comboBoxNiveauMin, 'NIVEAUMINMONSTRE')) +
 			Number(recallComboBox(comboBoxNiveauMax, 'NIVEAUMAXMONSTRE')) +
 			(recallComboBox(comboBoxFamille, 'FAMILLEMONSTRE') == 0 ? 0 : 1);	// Roule 30/01/2020 on obtient du non numérique si il y a filtre par famille
@@ -10538,25 +11329,34 @@ try {
 		recallCheckBox(checkBoxGG, 'NOGG');
 		recallCheckBox(checkBoxCompos, 'NOCOMP');
 		recallCheckBox(checkBoxBidouilles, 'NOBID');
-		recallCheckBox(checkBoxDiplo, numTroll + '.diplo.off');
+		recallCheckBox(checkBoxDiplo, `${numTroll}.diplo.off`);
 		recallCheckBox(checkBoxTrou, 'NOTROU');
 		recallCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
 		recallCheckBox(checkBoxTactique, 'NOTACTIQUE');
-		if (MY_getValue('NOINFOEM') != 'true')
+		if (MY_getValue('NOINFOEM') != 'true') {
 			recallCheckBox(checkBoxEM, 'NOEM');
+		}
 	}
 
 
-	/*-[functions]-------- Initialisation: Ajout des Boutons --------------------- */
+	/* -[functions]-------- Initialisation: Ajout des Boutons --------------------- */
 
 	function getVueScript() {
 		try {
-			var eLimitH = document.getElementById('MZvueExtMaxH');
-			if (eLimitH) var limitH = eLimitH.value;
-			if (limitH != '') limitH = parseInt(limitH);
-			var eLimitV = document.getElementById('MZvueExtMaxV');
-			if (eLimitV) var limitV = eLimitV.value;
-			if (limitV != '') limitV = parseInt(limitV);
+			let eLimitH = document.getElementById('MZvueExtMaxH');
+			if (eLimitH) {
+				var limitH = eLimitH.value;
+			}
+			if (limitH != '') {
+				limitH = parseInt(limitH);
+			}
+			let eLimitV = document.getElementById('MZvueExtMaxV');
+			if (eLimitV) {
+				var limitV = eLimitV.value;
+			}
+			if (limitV != '') {
+				limitV = parseInt(limitV);
+			}
 			if (limitH == '' || limitH == 0) {
 				MY_removeValue('MZ_VueExtMaxH');
 				var porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
@@ -10571,32 +11371,31 @@ try {
 			} else {
 				MY_setValue('MZ_VueExtMaxV', limitV);
 			}
-			var txt = bddTrolls(limitH, limitV) +
+			let txt = `${bddTrolls(limitH, limitV) +
 				bddMonstres(null, null, limitH, limitV) +
 				bddChampignons(limitH, limitV) +
 				bddTresors(null, null, null, limitH, limitV) +
-				bddLieux(null, null, limitH, limitV) +
-				'#DEBUT ORIGINE\n' +
-				porteeVueExt + ';' + positionToString(getPosition()) +
-				'\n#FIN ORIGINE\n';
-			debugMZ('MZ getVueScript nbTrolls=' + nbTrolls + ', txt=' + txt);
-			logMZ('[MZd ' + GM_info.script.version + '] fin getVueScript');
+				bddLieux(null, null, limitH, limitV)
+				}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
+				}\n#FIN ORIGINE\n`;
+			debugMZ(`MZ getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
+			logMZ(`[MZd ${GM_info.script.version}] fin getVueScript`);
 			return txt;
 		} catch (e) {
 			avertissement("[getVueScript] Erreur d'export vers Vue externe");
-			logMZ(traceStack(e, 'getVueScript'))
+			logMZ(traceStack(e, 'getVueScript'));
 		}
 	}
 
 	/* [functions] Menu Vue 2D */
 	var vue2Ddata = {
 		'Bricol\' Vue': {
-			url: URL_bricol_mountyhall + 'vue_form.php',
+			url: `${URL_bricol_mountyhall}vue_form.php`,
 			paramid: 'vue',
 			func: getVueScript,
 			extra_params: {
-				'mode': 'vue_SP_Vue2',
-				'screen_width': window.screen.width
+				mode: 'vue_SP_Vue2',
+				screen_width: window.screen.width
 			}
 		},
 		'Vue du CCM': {
@@ -10604,7 +11403,7 @@ try {
 			paramid: 'vue',
 			func: getVueScript,
 			extra_params: {
-				'id': numTroll + ';' + positionToString(getPosition())
+				id: `${numTroll};${positionToString(getPosition())}`
 			}
 		},
 		'Vue Gloumfs 2D': {
@@ -10624,15 +11423,18 @@ try {
 			paramid: 'vue',
 			func: getVueScript,
 			extra_params: {
-				'type_vue': 'V5b1'
+				type_vue: 'V5b1'
 			}
 		},
 		'Cube': {
 			noform: true,
-			func: function () { MZ_AnalyseVue.openVueExterne(URL_MZ + '/' + URL_vue_cube) },
+			func: function () {
+				MZ_AnalyseVue.openVueExterne(`${URL_MZ}/${URL_vue_cube}`);
+			},
 			extra_params: {},
 		},
-		/*'DEBUG': {
+
+		/* 'DEBUG': {
 			url: 'http://weblocal/testeur.php',
 			paramid: 'vue',
 			func: getVueScript,
@@ -10642,24 +11444,26 @@ try {
 
 	function refresh2DViewButton() {
 		// = EventListener menu+bouton vue 2D
-		var vueext = document.getElementById('selectVue2D').value;
+		let vueext = document.getElementById('selectVue2D').value;
 		MY_setValue('VUEEXT', vueext);
-		var oParamVue = vue2Ddata[vueext];
-		var form = document.getElementById('viewForm');
+		let oParamVue = vue2Ddata[vueext];
+		let form = document.getElementById('viewForm');
 		form.innerHTML = '';
 		form.method = 'post';
 		form.action = oParamVue.url;
 		form.target = '_blank';
-		if (oParamVue.paramid) appendHidden(form, oParamVue.paramid, '');
-		for (var key in oParamVue.extra_params) {
+		if (oParamVue.paramid) {
+			appendHidden(form, oParamVue.paramid, '');
+		}
+		for (let key in oParamVue.extra_params) {
 			appendHidden(form, key, oParamVue.extra_params[key]);
 		}
 		if (oParamVue.noform) {
 			appendButton(form, 'Voir', oParamVue.func);
 		} else {
 			appendSubmit(form, 'Voir',
-				function () {
-					logMZ('[MZd ' + GM_info.script.version + '] click voir vue externe');
+				() => {
+					logMZ(`[MZd ${GM_info.script.version}] click voir vue externe`);
 					document.getElementsByName(oParamVue.paramid)[0].value =
 						oParamVue.func();
 				}
@@ -10670,21 +11474,24 @@ try {
 	function set2DViewSystem() {
 		// Initialise le système de vue 2D
 		// Recherche du point d'insertion
-		var center;
+		let center;
 		try {
 			// Roule 09/03/2019, encore un changement MH, je fais suivre comme je peux
 			center = document.getElementById('MHTitreH2');
 			// version initiale "pré-Roule"
-			if (!center) center = document.evaluate(
-				"//h2[@id='MHTitreH2']/following-sibling::center",
-				document, null, 9, null
-			).singleNodeValue;
+			if (!center) {
+				center = document.evaluate(
+					"//h2[@id='MHTitreH2']/following-sibling::center",
+					document, null, 9, null
+				).singleNodeValue;
+			}
 			// Roule 09/12/2016 J'ai remplacé following-sibling::center par following-sibling::div suite à une modification MH
-			if (!center) center = document.evaluate(
-				"//h2[@id='MHTitreH2']/following-sibling::div",
-				document, null, 9, null
-			).singleNodeValue;
-
+			if (!center) {
+				center = document.evaluate(
+					"//h2[@id='MHTitreH2']/following-sibling::div",
+					document, null, 9, null
+				).singleNodeValue;
+			}
 		} catch (e) {
 			avertissement("Erreur d'initialisation du système de vue 2D");
 			logMZ(traceStack(e, 'set2DViewSystem'));
@@ -10692,7 +11499,7 @@ try {
 		}
 
 		// Récupération de la dernière vue utilisée
-		var vueext = MY_getValue('VUEEXT');
+		let vueext = MY_getValue('VUEEXT');
 		if (!vueext || !vue2Ddata[vueext]) {
 			// sinon, la vue Bricol'Trolls est employée par défaut
 			vueext = 'Bricol\' Vue';
@@ -10704,20 +11511,20 @@ try {
 			selectVue2D.id = 'selectVue2D';
 			selectVue2D.className = 'SelectboxV2';
 			// logMZ('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
-			for (var view in vue2Ddata) {
+			for (let view in vue2Ddata) {
 				appendOption(selectVue2D, view, view);
 			}
 			selectVue2D.value = vueext;
 			selectVue2D.onchange = refresh2DViewButton;
 
 			// Création du formulaire d'envoi (vide, le submit est géré via handler)
-			var form = document.createElement('form');
+			let form = document.createElement('form');
 			form.id = 'viewForm';
 
 			// Insertion du système de vue
-			var table = document.createElement('table');
-			var tr = appendTr(table);
-			var td = appendTd(tr);
+			let table = document.createElement('table');
+			let tr = appendTr(table);
+			let td = appendTd(tr);
 			td.appendChild(selectVue2D);
 			appendTdText(tr, 'Limiter à ').style.whiteSpace = 'nowrap';
 			td = appendTd(tr);
@@ -10730,7 +11537,7 @@ try {
 			td.style.fontSize = '0px'; // gère le bug de l'extra character
 			td.appendChild(form);
 			if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
-				var eDiv = document.createElement('div');
+				let eDiv = document.createElement('div');
 				eDiv.appendChild(table);
 				eDiv.style.witdth = '100%';
 				eDiv.style.textAlign = 'center';
@@ -10744,7 +11551,7 @@ try {
 
 			// Appelle le handler pour initialiser le bouton de submit
 			refresh2DViewButton();
-			logMZ('[MZd ' + GM_info.script.version + '] fin préparation des vues externes');
+			logMZ(`[MZd ${GM_info.script.version}] fin préparation des vues externes`);
 		} catch (e) {
 			avertissement("Erreur de traitement du système de vue externe");
 			logMZ(traceStack(e, 'set2DViewSystem'));
@@ -10754,7 +11561,7 @@ try {
 	/* [functions] Tableau d'Infos */
 	function initialiseInfos() {
 		// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
-		var
+		let
 			infoTab = document.getElementById('infoTab'),
 			tbody = infoTab.tBodies[0],
 			thead = infoTab.createTHead(),
@@ -10764,13 +11571,13 @@ try {
 
 		// Récupération de la position du joueur
 		try {
-			var strPos = document.evaluate(
+			let strPos = document.evaluate(
 				".//b/text()[contains(.,'X = ') or contains(.,'X\u00A0=\u00A0')]",	// &nbsp; en vue smartphone
 				infoTab, null, 9, null
 			).singleNodeValue.nodeValue;
 			// ***INIT GLOBALE*** currentPosition
 			currentPosition = getIntegers(strPos);
-			debugMZ("retrievePosition(): " + currentPosition);
+			debugMZ(`retrievePosition(): ${currentPosition}`);
 		} catch (e) {
 			// Si on ne trouve pas le "X ="
 			logMZ(traceStack(e, 'Vue Position joueur non trouvée'));
@@ -10778,14 +11585,14 @@ try {
 
 		// Récupération des portées (max et limitée) de la vue
 		try {
-			var
+			let
 				nodes = document.evaluate(
 					".//b/text()[contains(.,'horizontalement') " +
 					"or contains(.,'verticalement')]",
 					infoTab, null, 7, null
 				);
-			var array = [];
-			for (var i = 0; i < 4 && i < nodes.snapshotLength; i++) {
+			let array = [];
+			for (let i = 0; i < 4 && i < nodes.snapshotLength; i++) {
 				array.push(parseInt(nodes.snapshotItem(i).nodeValue));
 			}
 			// ***INIT GLOBALE*** porteeVue
@@ -10801,9 +11608,12 @@ try {
 		infoTab.id = 'infoTab'; // Pour scripts externes
 		tbody.id = 'corpsInfoTab';
 		tbody.rows[0].cells[0].colSpan = 2;
-		if (tbody.rows.length > 1) tbody.rows[1].cells[0].colSpan = 2;
+		if (tbody.rows.length > 1) {
+			tbody.rows[1].cells[0].colSpan = 2;
+		}
 		td.colSpan = 3;
 		td.style.cursor = 'pointer';
+
 		/* quel intérêt de changer de className ? et ça fait bouger toute la frame d'un pixel ou deux, c'est désagréable
 		td.onmouseover = function() {
 			this.style.cursor = 'pointer';
@@ -10821,11 +11631,11 @@ try {
 		span.style.display = 'none';
 		appendText(
 			span,
-			' => Position : X = ' + currentPosition[0] +
-			', Y = ' + currentPosition[1] +
-			', N = ' + currentPosition[2] +
-			' --- Vue : ' + porteeVue[0] + '/' + porteeVue[1] +
-			' (' + porteeVue[2] + '/' + porteeVue[3] + ')',
+			` => Position : X = ${currentPosition[0]
+			}, Y = ${currentPosition[1]
+			}, N = ${currentPosition[2]
+			} --- Vue : ${porteeVue[0]}/${porteeVue[1]
+			} (${porteeVue[2]}/${porteeVue[3]})`,
 			true
 		);
 		td.appendChild(span);
@@ -10888,7 +11698,7 @@ try {
 	}
 
 	function toggleTableauInfos(firstRun) {
-		var
+		let
 			msg = document.getElementById('msgInfoTab'),
 			corps = document.getElementById('corpsInfoTab'),
 			infoplie = parseInt(MY_getValue('INFOPLIE'));	// 27/032016 Roule, pb sur récupération booléen, force numérique
@@ -10913,22 +11723,24 @@ try {
 		try {
 			var tdTitre = document.getElementById(ref.toLowerCase()).closest('td');
 		} catch (e) {
-			window.console.warn('[prepareFiltrage] Référence filtrage ' + ref + ' non trouvée', e);
+			window.console.warn(`[prepareFiltrage] Référence filtrage ${ref} non trouvée`, e);
 			return false;
 		}
-		if (width) { tdTitre.width = width + 'px'; }
+		if (width) {
+			tdTitre.width = `${width}px`;
+		}
 		// Ajout du tr de Filtrage (masqué)
-		var tbody = tdTitre.parentNode.parentNode;
-		var tr = appendTr(tbody, 'mh_tdpage');
+		let tbody = tdTitre.parentNode.parentNode;
+		let tr = appendTr(tbody, 'mh_tdpage');
 		tr.style.display = 'none';
-		tr.id = 'trFiltre' + ref;
-		var td = appendTd(tr);
+		tr.id = `trFiltre${ref}`;
+		let td = appendTd(tr);
 		td.colSpan = 5;
 		// Ajout du bouton de gestion de Filtrage
-		var tdBtn = insertAfterTd(tdTitre);
-		tdBtn.id = 'tdInsert' + ref;
-		var btn = appendButton(tdBtn, 'Filtrer');
-		btn.id = 'btnFiltre' + ref;
+		let tdBtn = insertAfterTd(tdTitre);
+		tdBtn.id = `tdInsert${ref}`;
+		let btn = appendButton(tdBtn, 'Filtrer');
+		btn.id = `btnFiltre${ref}`;
 		btn.onclick = function () {
 			debutFiltrage(ref);
 		};
@@ -10937,9 +11749,11 @@ try {
 
 	function debutFiltrage(ref) {
 		// = Handler de début de filtrage (filtre 'ref')
-		var e = document.getElementById('trFiltre' + ref);
-		if (e) e.style.display = '';
-		var btn = document.getElementById('btnFiltre' + ref);
+		let e = document.getElementById(`trFiltre${ref}`);
+		if (e) {
+			e.style.display = '';
+		}
+		let btn = document.getElementById(`btnFiltre${ref}`);
 		if (btn) {
 			btn.value = 'Annuler Filtre';
 			btn.onclick = function () {
@@ -10951,14 +11765,15 @@ try {
 	function finFiltrage(ref) {
 		// = Handler de fin de filtrage (filtre 'ref')
 		/* On réassigne le bouton 'Filtrer' */
-		document.getElementById('trFiltre' + ref).style.display = 'none';
-		var btn = document.getElementById('btnFiltre' + ref);
+		document.getElementById(`trFiltre${ref}`).style.display = 'none';
+		let btn = document.getElementById(`btnFiltre${ref}`);
 		btn.value = 'Filtrer';
 		btn.onclick = function () {
 			debutFiltrage(ref);
 		};
+
 		/* Réinitialisation filtres */
-		document.getElementById('str' + ref).value = '';
+		document.getElementById(`str${ref}`).value = '';
 		switch (ref) {
 			case 'Monstres':
 				document.getElementById('nivMinMonstres').value = 0;
@@ -10968,10 +11783,11 @@ try {
 			case 'Trolls':
 				document.getElementById('strGuildes').value = '';
 		}
+
 		/* Nettoyage (=lance le filtre) */
 		// Ici this = MZ.global = sandBox de travail de MZ
 		// Roule 11/03/2016, ne fonctionne plus, il faut traiter les cas
-		//this['filtre'+ref]();
+		// this['filtre'+ref]();
 		switch (ref) {
 			case 'Monstres':
 				filtreMonstres();
@@ -10986,39 +11802,40 @@ try {
 				filtreLieux();
 				break;
 			default:
-				logMZ('cas incongru dans finFiltrage : ' + ref);
+				logMZ(`cas incongru dans finFiltrage : ${ref}`);
 				break;
 		}
 	}
 
 	function ajoutFiltreStr(td, nomBouton, id, onClick) {
-		var bouton = appendButton(td, nomBouton, onClick);
+		let bouton = appendButton(td, nomBouton, onClick);
 		appendText(td, '\u00a0');
-		var textbox = appendTextbox(td, 'text', id, 15, 30);
+		let textbox = appendTextbox(td, 'text', id, 15, 30);
 		textbox.onkeypress = function (event) {
 			try {
 				if (event.keyCode == 13) {
 					event.preventDefault();
 					bouton.click();
 				}
-			}
-			catch (e) {
-				avertissement(e)
+			} catch (e) {
+				avertissement(e);
 			}
 		};
 	}
 
 	function ajoutFiltreMenu(tr, id, onChange, liste) {
-		var select = document.createElement('select');
+		let select = document.createElement('select');
 		select.id = id;
 		select.onchange = onChange;
 		appendOption(select, 0, 'Aucun');
 		if (liste == undefined) {
-			for (var i = 1; i <= 60; i++) {
+			for (let i = 1; i <= 60; i++) {
 				appendOption(select, i, i);
 			}
 		} else {
-			liste.forEach(function (f) { appendOption(select, f, f); });
+			liste.forEach((f) => {
+				appendOption(select, f, f);
+			});
 		}
 		tr.appendChild(select);
 		return select;
@@ -11026,7 +11843,7 @@ try {
 
 	function ajoutDesFiltres() {
 		/* Monstres */
-		var td = prepareFiltrage('Monstres', 130);
+		let td = prepareFiltrage('Monstres', 130);
 		if (td) {
 			ajoutFiltreStr(td, 'Nom du monstre:', 'strMonstres', filtreMonstres);
 			appendText(td, '\u00a0\u00a0\u00a0');
@@ -11039,6 +11856,7 @@ try {
 			appendText(td, 'Famille: ');
 			comboBoxFamille = ajoutFiltreMenu(td, 'FamilleMonstres', filtreMonstres, ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant']);
 		}
+
 		/* Trõlls */
 		td = prepareFiltrage('Trolls', 50);
 		if (td) {
@@ -11046,11 +11864,13 @@ try {
 			appendText(td, '\u00a0\u00a0\u00a0');
 			ajoutFiltreStr(td, 'Nom de guilde:', 'strGuildes', filtreTrolls);
 		}
+
 		/* Trésors */
 		td = prepareFiltrage('Tresors', 55);
 		if (td) {
 			ajoutFiltreStr(td, 'Nom du trésor:', 'strTresors', filtreTresors);
 		}
+
 		/* Lieux */
 		td = prepareFiltrage('Lieux', 40);
 		if (td) {
@@ -11058,17 +11878,17 @@ try {
 		}
 	}
 
-	/*-[functions]--------------- Fonctions Monstres ----------------------------- */
+	/* -[functions]--------------- Fonctions Monstres ----------------------------- */
 
 	function MZ_insertStyleNth(eStyle, newCol, newStyle, maxCol) {	// DOMElement du style, numéro de colonne insérée, Style supplémentaire, nombre max de col (pas grave si c'est beaucoup plus grand)
 		// cette fonction patche la série de styles en "déplaçant" les colonnes qui suivent celle insérée
-		var sStyle = eStyle.innerHTML;
-		for (var i = maxCol; i >= newCol; i--) {	// on déplace à partir de la fin
+		let sStyle = eStyle.innerHTML;
+		for (let i = maxCol; i >= newCol; i--) {	// on déplace à partir de la fin
 			// Roule : j'avais utilisé string.replaceAll() mais ce n'est pas supporté par Firefox ESR
-			var rNeedle = new RegExp('\\(' + (i + 1) + '\\)', "g");	// les styles "nth" comptent à partir de "1"
-			sStyle = sStyle.replace(rNeedle, '(' + (i + 2) + ')');
+			let rNeedle = new RegExp(`\\(${i + 1}\\)`, "g");	// les styles "nth" comptent à partir de "1"
+			sStyle = sStyle.replace(rNeedle, `(${i + 2})`);
 		}
-		sStyle += newStyle;
+		sStyle = sStyle + newStyle;
 		eStyle.innerHTML = sStyle;
 	}
 
@@ -11077,11 +11897,11 @@ try {
 		// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
 
 		MZ_EtatCdMs.indexCellNivMZ = MZ_EtatCdMs.indexCellID + 1;	// la colonne des niveaux sera insérée après la colonne des ID
-		MZ_EtatCdMs.indexCellX += 1;	// et ça décale les colonnes suivantes
-		MZ_EtatCdMs.indexCellY += 1;
-		MZ_EtatCdMs.indexCellN += 1;
-		var td = insertThText(getMonstreLevelNode(0), 'Niv.', false);
-		//td.width = 25;
+		MZ_EtatCdMs.indexCellX = MZ_EtatCdMs.indexCellX + 1;	// et ça décale les colonnes suivantes
+		MZ_EtatCdMs.indexCellY = MZ_EtatCdMs.indexCellY + 1;
+		MZ_EtatCdMs.indexCellN = MZ_EtatCdMs.indexCellN + 1;
+		let td = insertThText(getMonstreLevelNode(0), 'Niv.', false);
+		// td.width = 25;
 
 		/* plus de colgroup le 08/07/2020. Mais comme ça pourrait revenir, je laisse le bout de code en commentaire (Roule)
 		var eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
@@ -11089,35 +11909,35 @@ try {
 		eCol.style.width= '35px';
 		insertBefore(eColGroup.children[3],eCol);
 		*/
-		var monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
-		var styleColNivMZ = '.mh_tdborder.footable#VueMONSTRE th:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') {width:35px; text-align:center;}';
-		styleColNivMZ += '.mh_tdborder.footable#VueMONSTRE td:nth-child(' + (MZ_EtatCdMs.indexCellNivMZ + 1) + ') {font-weight:bold;text-align:center;}';
+		let monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
+		let styleColNivMZ = `.mh_tdborder.footable#VueMONSTRE th:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {width:35px; text-align:center;}`;
+		styleColNivMZ = `${styleColNivMZ}.mh_tdborder.footable#VueMONSTRE td:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {font-weight:bold;text-align:center;}`;
 		MZ_insertStyleNth(monsterStyle, MZ_EtatCdMs.indexCellNivMZ, styleColNivMZ, MZ_EtatCdMs.indexCellN);
 
 		td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
-		for (var i = 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
+		for (let i = 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
 			// logMZ('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
 			td = insertTdText(getMonstreLevelNode(i), '-');
 		}
 	}
 
 	function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue et au click/unclick de la checkbox NOCDM
-		var eltMZ_TITRE_NIVEAU_MONSTRE = document.getElementById('MZ_TITRE_NIVEAU_MONSTRE');	// test si la colonne a déjà été ajoutée
+		let eltMZ_TITRE_NIVEAU_MONSTRE = document.getElementById('MZ_TITRE_NIVEAU_MONSTRE');	// test si la colonne a déjà été ajoutée
 		if (saveCheckBox(checkBoxLevels, 'NOLEVEL')) {
-			if (!eltMZ_TITRE_NIVEAU_MONSTRE) return;	// rien à faire si la colonne n'existe pas. C'est le cas à l'ouverture de la page avec NOCMD coché
+			if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
+				return;
+			}	// rien à faire si la colonne n'existe pas. C'est le cas à l'ouverture de la page avec NOCMD coché
 			// cacher tous les td
 			for (var i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
 				getMonstreLevelNode(i).style.display = 'none';
 			}
+		} else if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
+			insertLevelColumn();
+			retrieveCDMs();
 		} else {
-			if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
-				insertLevelColumn();
-				retrieveCDMs();
-			} else {
-				// afficher tous les td
-				for (var i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
-					getMonstreLevelNode(i).style.display = '';
-				}
+			// afficher tous les td
+			for (var i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
+				getMonstreLevelNode(i).style.display = '';
 			}
 		}
 	}
@@ -11126,14 +11946,14 @@ try {
 	function basculeCDM(nom, id) {
 		// = Bascule l'affichage des popups CdM
 		if (MZ_EtatCdMs.listeCDM[id]) {
-			if (!document.getElementById('popupCDM' + id)) {
+			if (!document.getElementById(`popupCDM${id}`)) {
 				afficherCDM(nom, id);
 			} else {
-				cacherPopupCDM('popupCDM' + id);
+				cacherPopupCDM(`popupCDM${id}`);
 			}
 		} else {
 			// DEBUG: prévoir un "else" ou désactiver l'effet onmouseover si pas de CdM
-			logMZ("pas de CdM pour id=" + id + ', nom=' + nom);
+			logMZ(`pas de CdM pour id=${id}, nom=${nom}`);
 		}
 	}
 
@@ -11143,7 +11963,7 @@ try {
 	}
 
 	function removeTableFromClickEvent() {	// "this" est supposé être un <td> ou <th> d'une <table>
-		var table = this.parentNode.parentNode.parentNode;	// <tr><tbody/thead/tfoot><table>
+		let table = this.parentNode.parentNode.parentNode;	// <tr><tbody/thead/tfoot><table>
 		table.parentNode.removeChild(table);
 	}
 
@@ -11168,12 +11988,15 @@ try {
 	}
 
 	function drag(evt) {
-		if (winCurr == null) { return; }
+		if (winCurr == null) {
+			return;
+		}
 		evt = evt || window.event;
-		winCurr.style.left = (evt.pageX - offsetX) + 'px';
-		winCurr.style.top = (evt.pageY - offsetY) + 'px';
+		winCurr.style.left = `${evt.pageX - offsetX}px`;
+		winCurr.style.top = `${evt.pageY - offsetY}px`;
 		return false;
 	}
+
 	/* FIN DEBUG */
 	if (!isPage("MH_Play/Play_equipement")) {
 		// Conflit overlib/Tout_MZ:
@@ -11183,14 +12006,17 @@ try {
 
 	function afficherCDM(nom, id) {
 		// Crée la table de CdM du mob n° id
-		var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+		let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+
 		/* Début création table */
-		var table = createCDMTable(id, nom, donneesMonstre, removeTableFromClickEvent);
+		let table = createCDMTable(id, nom, donneesMonstre, removeTableFromClickEvent);
+
 		/* Ajout du titre avec gestion Drag & Drop */
-		var tr = table.firstChild;
+		let tr = table.firstChild;
 		tr.style.cursor = 'move';
 		tr.onmousedown = startDrag;
 		tr.onmouseup = stopDrag;
+
 		/* à supprimer, remplacé par un "x" sur l'entête
 		// Ajout du bouton "Fermer"
 		tr = appendTr(table.childNodes[1], 'mh_tdtitre');
@@ -11210,30 +12036,31 @@ try {
 		td.colSpan = 2;
 		td.style = 'text-align:center;';
 		*/
-		table.id = 'popupCDM' + id;
+		table.id = `popupCDM${id}`;
 		table.style.position = 'fixed';
 		table.style.backgroundColor = 'rgb(229, 222, 203)';
 		table.style.zIndex = 1;
-		//var topY = +(300+(30*MZ_EtatCdMs.yIndexCDM))%(30*Math.floor((window.innerHeight-400)/30));
-		table.style.left = +(window.innerWidth - 365) + 'px';
+		// var topY = +(300+(30*MZ_EtatCdMs.yIndexCDM))%(30*Math.floor((window.innerHeight-400)/30));
+		table.style.left = `${Number(window.innerWidth - 365)}px`;
 		table.style.width = '300px';
+
 		/* Fin création table & Affichage */
 		document.body.appendChild(table);
-		var topY = 90 + (30 * MZ_EtatCdMs.yIndexCDM);
+		let topY = 90 + 30 * MZ_EtatCdMs.yIndexCDM;
 		// logMZ('topY=' + topY + ', offsetHeight=' + table.offsetHeight + ', innerHeight=' + window.innerHeight);
-		if ((topY + table.offsetHeight) > window.innerHeight) {
+		if (topY + table.offsetHeight > window.innerHeight) {
 			MZ_EtatCdMs.yIndexCDM = 0;	// on se repositionne en haut s'il n'y a pas assez de place
 			topY = 90;
 		} else {
 			MZ_EtatCdMs.yIndexCDM++;	// décalage pour la fois suivante
 		}
-		table.style.top = topY + 'px';
+		table.style.top = `${topY}px`;
 	}
 
 	/* [functions] Gestion de l'AFFICHAGE des Infos de combat */
 	function showPopupError(sHTML) {
-		logMZ('[MZ] affichage PopupError ' + sHTML);
-		var divpopup = document.createElement('div');
+		logMZ(`[MZ] affichage PopupError ${sHTML}`);
+		let divpopup = document.createElement('div');
 		divpopup.id = 'divpopup';
 		divpopup.style =
 			'position: fixed;' +
@@ -11244,7 +12071,7 @@ try {
 			'font-size: xx-large;' +
 			'z-index: 200;';
 		divpopup.innerHTML = sHTML;
-		var divcroix = document.createElement('div');
+		let divcroix = document.createElement('div');
 		divcroix.style =
 			'position: absolute;' +
 			'top: 0;right: 0;' +
@@ -11253,7 +12080,9 @@ try {
 			'cursor: pointer;' +
 			'z-index: 201;';
 		divcroix.innerHTML = "X";
-		divcroix.onclick = function () { document.getElementById('divpopup').style.display = 'none'; };
+		divcroix.onclick = function () {
+			document.getElementById('divpopup').style.display = 'none';
+		};
 		document.body.appendChild(divpopup);
 		divpopup.appendChild(divcroix);
 	}
@@ -11261,27 +12090,33 @@ try {
 	function retrieveCDMs() {
 		// Récupère les CdM disponibles dans la BDD
 		// Lancé uniquement sur toggleLevelColumn
-		if (checkBoxLevels.checked) return;
-		if (MZ_EtatCdMs.nbMonstres < 1) return;
+		if (checkBoxLevels.checked) {
+			return;
+		}
+		if (MZ_EtatCdMs.nbMonstres < 1) {
+			return;
+		}
 
-		var tReq = [];
-		var nbReq = 0;
-		var prevLastIndexDone = MZ_EtatCdMs.lastIndexDone;
+		let tReq = [];
+		let nbReq = 0;
+		let prevLastIndexDone = MZ_EtatCdMs.lastIndexDone;
 		for (var i = prevLastIndexDone + 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
-			//tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
+			// tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
 			// ne pas demander pour les Gowaps
-			var nom = getMonstreNom(i);
+			let nom = getMonstreNom(i);
 			if (nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
 				getMonstreLevelNode(i).innerHTML = '';
 				continue;
 			}
-			tReq.push({ 'index': i, 'id': getMonstreID(i), 'nom': nom });
+			tReq.push({ index: i, id: getMonstreID(i), nom: nom });
 			nbReq++;
-			if (nbReq >= 500) break;	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
+			if (nbReq >= 500) {
+				break;
+			}	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 		}
 		MZ_EtatCdMs.lastIndexDone = i;
-		var startAjaxCdM = new Date();
-		logMZ('[MZ] ' + MZ_formatDateMS() + ' lancement AJAX ' + nbReq + ' demandes niveaux monstres V2');
+		let startAjaxCdM = new Date();
+		logMZ(`[MZ] ${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
 
 		FF_XMLHttpRequest({
 			method: 'POST',
@@ -11289,38 +12124,44 @@ try {
 			headers: {
 				'Content-type': 'application/x-www-form-urlencoded'
 			},
-			//data: 'l=' + tReq.join("\n"),
-			data: 'l=' + JSON.stringify(tReq),
+			// data: 'l=' + tReq.join("\n"),
+			data: `l=${JSON.stringify(tReq)}`,
 			trace: 'demande niveaux monstres V2',
 			onload: function (responseDetails) {
 				try {
 					// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-					if (responseDetails.status == 0) return;
+					if (responseDetails.status == 0) {
+						return;
+					}
 					// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
 					var texte = responseDetails.responseText;
-					var infos = JSON.parse(texte);
+					let infos = JSON.parse(texte);
 					displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
-					if (infos.length == 0) return;
+					if (infos.length == 0) {
+						return;
+					}
 
 					// ajouter les styles CSS pour les popup
-					var mystyle = document.createElement('style');
+					let mystyle = document.createElement('style');
 					mystyle.type = 'text/css';
-					var sCSS = '.MZtooltip {position: relative;color:red;text-align:center;}\n';
-					sCSS += '.MZtooltip .MZtooltiptext {visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white}\n';
-					sCSS += '.MZtooltip:hover .MZtooltiptext {visibility: visible;}\n';
+					let sCSS = '.MZtooltip {position: relative;color:red;text-align:center;}\n';
+					sCSS = `${sCSS}.MZtooltip .MZtooltiptext {visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white}\n`;
+					sCSS = `${sCSS}.MZtooltip:hover .MZtooltiptext {visibility: visible;}\n`;
 					mystyle.innerHTML = sCSS;
 					document.getElementsByTagName('head')[0].appendChild(mystyle);
 
 					// if (MY_DEBUG) {
 					// for (var i = 0; i < 20; i++) logMZ('infos[' + i + ']=' + JSON.stringify(infos[i]));
 					// }
-					var begin2, end2, index;
-					for (var j = 0; j < infos.length; j++) {
-						var info = infos[j];
-						if (info.index == undefined) continue;
-						var eTdLevel = getMonstreLevelNode(info.index)
+					let begin2, end2, index;
+					for (let j = 0; j < infos.length; j++) {
+						let info = infos[j];
+						if (info.index == undefined) {
+							continue;
+						}
+						let eTdLevel = getMonstreLevelNode(info.index);
 						this.className = 'mh_tdpage';
-						var myColor = undefined;
+						let myColor = undefined;
 						if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
 							eTdLevel.className = "MZtooltip";
 							eTdLevel.style.color = "black";
@@ -11328,10 +12169,10 @@ try {
 						} else if (!(info && info.esq)) {
 							// debugMZ("pas d'esquive id=" + info.id + ", index=" + info.index);
 							eTdLevel.className = "MZtooltip";
-							eTdLevel.innerHTML = mkMinMaxHTML(info.niv) + '<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>';
+							eTdLevel.innerHTML = `${mkMinMaxHTML(info.niv)}<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>`;
 						} else {
 							eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
-							//info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
+							// info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
 							myColor = MZ_CdMColorFromMode(info);
 							eTdLevel.style.cursor = 'pointer';
 							eTdLevel.onclick = function () {
@@ -11342,7 +12183,10 @@ try {
 							};
 						}
 						MZ_EtatCdMs.listeCDM[info.id] = info;
-						if (myColor) eTdLevel.style.color = myColor;
+						if (myColor) {
+							eTdLevel.style.color = myColor;
+						}
+
 						/* Roule' à étudier plus tard, cette différence de style selon la diplo...
 												eTdLevel.onmouseover = function() {
 													this.className = 'mh_tdtitre';
@@ -11356,29 +12200,31 @@ try {
 												};
 						*/
 					}
-					debugMZ('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant computeMission');
+					debugMZ(`[MZd] ${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
 					computeMission(prevLastIndexDone + 1, MZ_EtatCdMs.nbMonstres);
-					debugMZ('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres avant filtreMonstres');
+					debugMZ(`[MZd] ${MZ_formatDateMS()} ajax niv monstres avant filtreMonstres`);
 					filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
-					debugMZ('[MZd] ' + MZ_formatDateMS() + ' ajax niv monstres fin');
+					debugMZ(`[MZd] ${MZ_formatDateMS()} ajax niv monstres fin`);
 					document.body.dataset.MZ_Etat = 2;	// indiquer aux scripts tiers qu'on a récupéré les carac
 					if (document.body.MZ_Callback_fin_vue !== undefined) {
-						for (var iCallback = 0; iCallback < document.body.MZ_Callback_fin_vue.length; iCallback++) {
+						for (let iCallback = 0; iCallback < document.body.MZ_Callback_fin_vue.length; iCallback++) {
 							document.body.MZ_Callback_fin_vue[iCallback]();
 						}
 					}
 				} catch (e) {
-					logMZ(traceStack(e, 'retrieveCDMs') + '\n' + URL_MZgetCaracMonstre + '\n' + texte);
+					logMZ(`${traceStack(e, 'retrieveCDMs')}\n${URL_MZgetCaracMonstre}\n${texte}`);
 				}
 				// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
 				MZ_EtatCdMs.isCDMsRetrieved = true;
 				// afficher/supprimer le bouton pour demander la suite
-				var eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
-				logMZ('[MZ] lastIndexDone=' + MZ_EtatCdMs.lastIndexDone + ', nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', eltBoutonSuite=' + eltBoutonSuite);
+				let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
+				logMZ(`[MZ] lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
 				if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
 					if (eltBoutonSuite) {
-						while (eltBoutonSuite.firstChild) eltBoutonSuite.removeChild(eltBoutonSuite.firstChild);	// vider
-						appendText(eltBoutonSuite, 'en cours ' + MZ_EtatCdMs.lastIndexDone + "/" + MZ_EtatCdMs.nbMonstres);
+						while (eltBoutonSuite.firstChild) {
+							eltBoutonSuite.removeChild(eltBoutonSuite.firstChild);
+						}	// vider
+						appendText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
 						retrieveCDMs();	// lancer la suite
 					} else {
 						eltBoutonSuite = document.createElement('div');
@@ -11387,7 +12233,7 @@ try {
 						eltBoutonSuite.style.border = '1px solid black';
 						eltBoutonSuite.style.top = '10px';
 						eltBoutonSuite.style.right = '10px';
-						//eltBoutonSuite.style.backgroundColor = 'white';
+						// eltBoutonSuite.style.backgroundColor = 'white';
 						eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
 						eltBoutonSuite.style.color = 'black';
 						eltBoutonSuite.style.fontSize = 'large';
@@ -11395,23 +12241,23 @@ try {
 						eltBoutonSuite.style.borderRadius = '10px';
 						eltBoutonSuite.style.cursor = 'pointer';
 						eltBoutonSuite.style.zIndex = '500';
-						appendText(eltBoutonSuite, nbReq + ' CdM(s) récupérées');
+						appendText(eltBoutonSuite, `${nbReq} CdM(s) récupérées`);
 						appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
 						appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
 						appendBr(eltBoutonSuite);
-						appendText(eltBoutonSuite, 'des ' + MZ_EtatCdMs.nbMonstres + ' monstres');
+						appendText(eltBoutonSuite, `des ${MZ_EtatCdMs.nbMonstres} monstres`);
 						eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
 						eltBoutonSuite.onclick = MZ_SuiteCdMs;
 						document.body.appendChild(eltBoutonSuite);
 					}
-				} else {
-					if (eltBoutonSuite) eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
+				} else if (eltBoutonSuite) {
+					eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
 				}
 			},
 		});
-		//str = '';
-		//begin = i+1;
-		debugMZ('[MZd] ' + MZ_formatDateMS() + ' requête ajax partie pour ' + tReq.length + ' monstres');
+		// str = '';
+		// begin = i+1;
+		debugMZ(`[MZd] ${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
 	}
 
 	function MZ_CdMColorFromMode(info) {
@@ -11426,13 +12272,15 @@ try {
 	}
 
 	function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
-		var evt = e || window.event;
+		let evt = e || window.event;
 		if (evt.shiftKey) {
 			this.parentNode.removeChild(this);
 			return;
 		}
-		while (this.firstChild) this.removeChild(this.firstChild);	// vider
-		appendText(this, 'en cours ' + MZ_EtatCdMs.lastIndexDone + "/" + MZ_EtatCdMs.nbMonstres);
+		while (this.firstChild) {
+			this.removeChild(this.firstChild);
+		}	// vider
+		appendText(this, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
 		this.title = 'Shift-Click pour faire disparaitre ce bouton';
 		this.style.cursor = '';	// default
 		this.onclick = MZ_SupprBoutonCdMs;
@@ -11440,52 +12288,57 @@ try {
 	}
 
 	function MZ_SupprBoutonCdMs(e) {
-		var evt = e || window.event;
+		let evt = e || window.event;
 		if (evt.shiftKey) {
 			this.parentNode.removeChild(this);
 		}
 	}
 
 	function mkMinMaxHTML(oMM) {
-		if (oMM == undefined) return '';
+		if (oMM == undefined) {
+			return '';
+		}
 		if (oMM.min == undefined) {
 			if (oMM.max == undefined) {
 				return;
-			} else {
-				return "\u2A7D" + oMM.max;	// U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
 			}
-		} else {
-			if (oMM.max == undefined) {
-				return "\u2A7E" + oMM.min;	// U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
-			} else if (oMM.min == oMM.max) {
-				return oMM.min;
-			} else if (oMM.min < oMM.max) {
-				return oMM.min + '-' + oMM.max;
-			} else {
-				return '<span style="color:red">' + oMM.min + '-' + oMM.max + '</span>';
-			}
+			return `\u2A7D${oMM.max}`;	// U+2A7D "LESS-THAN OR SLANTED EQUAL TO"
 		}
+		if (oMM.max == undefined) {
+			return `\u2A7E${oMM.min}`;	// U+2A7E "GREATER-THAN OR SLANTED EQUAL TO"
+		} else if (oMM.min == oMM.max) {
+			return oMM.min;
+		} else if (oMM.min < oMM.max) {
+			return `${oMM.min}-${oMM.max}`;
+		}
+		return `<span style="color:red">${oMM.min}-${oMM.max}</span>`;
 	}
 
 	function computeMission(begin, end) {
 		// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance
-		//+++logMZ('computeMission, begin=' + begin + ', end=' + end);
+		// +++logMZ('computeMission, begin=' + begin + ', end=' + end);
 		computeVLC(begin, end);
-		//+++logMZ('computeMission, après computeVLC');
-		if (!begin) begin = 1;
-		if (!end) end = MZ_EtatCdMs.nbMonstres;
-		var str = MY_getValue(numTroll + '.MISSIONS');
-		if (!str) { return; }
+		// +++logMZ('computeMission, après computeVLC');
+		if (!begin) {
+			begin = 1;
+		}
+		if (!end) {
+			end = MZ_EtatCdMs.nbMonstres;
+		}
+		let str = MY_getValue(`${numTroll}.MISSIONS`);
+		if (!str) {
+			return;
+		}
 
-		var urlImg = URL_MZimg + 'mission.png';
-		var obMissions = JSON.parse(str);
+		let urlImg = `${URL_MZimg}mission.png`;
+		let obMissions = JSON.parse(str);
 
-		for (var i = end; i >= begin; i--) {
-			var mess = '';
-			var bPeutEtreIcone = false;
-			for (var num in obMissions) {
-				var mobMission = false;
-				var mobMissionPeutEtre = undefined;
+		for (let i = end; i >= begin; i--) {
+			let mess = '';
+			let bPeutEtreIcone = false;
+			for (let num in obMissions) {
+				let mobMission = false;
+				let mobMissionPeutEtre = undefined;
 				switch (obMissions[num].type) {
 					case 'Race':
 						var race = epure(obMissions[num].race.toLowerCase());
@@ -11499,8 +12352,8 @@ try {
 								} else if (nom.indexOf('parasitus') != -1) {
 									if (nom.match(/^crasc parasitus \[/ui)) {
 										// on ne peut pas savoir
-										mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n'
-											+ 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+										mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+											'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
 									} else {
 										// c'est un monstre de la race des Crasc Parasitus
 										mobMission = false;
@@ -11511,8 +12364,8 @@ try {
 							} else if (race == 'crasc parasitus') {
 								if (nom.match(/^crasc parasitus \[/ui)) {
 									// on ne peut pas savoir
-									mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n'
-										+ 'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+									mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+										'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
 								} else {
 									// c'est un monstre de la race des Crasc Parasitus
 									mobMission = true;
@@ -11549,8 +12402,8 @@ try {
 					case 'Niveau':
 						var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 						if (donneesMonstre) {
-							var nivMimi = Number(obMissions[num].niveau);
-							var mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
+							let nivMimi = Number(obMissions[num].niveau);
+							let mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
 							if (isNaN(mod)) {
 								var minMimi = nivMimi;
 								var maxMimi = nivMimi + 999999;
@@ -11564,7 +12417,9 @@ try {
 										mobMission = true;
 									} else if (!(donneesMonstre.niv.max < minMimi || donneesMonstre.niv.min > maxMimi)) {
 										mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-										if (isDEV) mobMissionPeutEtre += '\nMonstre=(' + donneesMonstre.niv.min + ', ' + donneesMonstre.niv.max + '), mimi=(' + minMimi + ', ' + maxMimi + ')'
+										if (isDEV) {
+											mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${donneesMonstre.niv.min}, ${donneesMonstre.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
+										}
 									}
 								} else if (donneesMonstre.niv.max) {
 									if (donneesMonstre.niv.max >= minMimi) {
@@ -11581,8 +12436,8 @@ try {
 					case 'Famille':
 						var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 						if (donneesMonstre && donneesMonstre.fam) {
-							var familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
-							var familleMob = epure(donneesMonstre.fam.toLowerCase());
+							let familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
+							let familleMob = epure(donneesMonstre.fam.toLowerCase());
 							if (familleMob.indexOf(familleMimi) != -1) {
 								mobMission = true;
 							}
@@ -11591,29 +12446,29 @@ try {
 					case 'Pouvoir':
 						var donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
 						if (donneesMonstre && donneesMonstre.pouv) {
-							var pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
-							var pvrMob = epure(donneesMonstre.pouv.toLowerCase());
+							let pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
+							let pvrMob = epure(donneesMonstre.pouv.toLowerCase());
 							if (pvrMob.indexOf(pvrMimi) != -1) {
 								mobMission = true;
 							}
 						}
 				}
 				if (mobMission) {
-					mess += mess ? '\n\n' : '';
-					mess += 'Mission ' + num + ' :\n' + obMissions[num].libelle;
+					mess = mess + (mess ? '\n\n' : '');
+					mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
 				} else if (mobMissionPeutEtre !== undefined) {
-					mess += mess ? '\n\n' : '';
-					mess += mobMissionPeutEtre + '\n';
+					mess = mess + (mess ? '\n\n' : '');
+					mess = `${mess}${mobMissionPeutEtre}\n`;
 					bPeutEtreIcone = true;
-					mess += 'Mission ' + num + ' :\n' + obMissions[num].libelle;
+					mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
 				}
 			}
 			if (mess) {
-				var td = getMonstreNomNode(i);
+				let td = getMonstreNomNode(i);
 				appendText(td, ' ');
 				var myURL;
 				if (bPeutEtreIcone) {
-					myURL = URL_MZimg + 'missionX.png';
+					myURL = `${URL_MZimg}missionX.png`;
 				} else {
 					myURL = urlImg;
 				}
@@ -11624,19 +12479,25 @@ try {
 
 	function computeVLC(begin, end) {
 		// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeMission
-		//+++logMZ('computeVLC, begin=' + begin + ', end=' + end);
+		// +++logMZ('computeVLC, begin=' + begin + ', end=' + end);
 		computeTactique(begin, end);
-		//+++logMZ('computeVLC, après computeTactique');
-		if (!begin) begin = 1;
-		if (!end) end = MZ_EtatCdMs.nbMonstres;
-		var cache = getSortComp("Invisibilité") > 0 || getSortComp("Camouflage") > 0;
-		if (!cache)
+		// +++logMZ('computeVLC, après computeTactique');
+		if (!begin) {
+			begin = 1;
+		}
+		if (!end) {
+			end = MZ_EtatCdMs.nbMonstres;
+		}
+		let cache = getSortComp("Invisibilité") > 0 || getSortComp("Camouflage") > 0;
+		if (!cache) {
 			return false;
-		var urlImg = URL_MZimg + "oeil.png";
-		for (var i = end; i >= begin; i--) {
-			var id = getMonstreID(i);
-			var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
-			var vlc = false;
+		}
+		let urlImg = `${URL_MZimg}oeil.png`;
+		for (let i = end; i >= begin; i--) {
+			let id = getMonstreID(i);
+			let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+			let vlc = false;
+
 			/* ancien mode à supprimer
 			if(donneesMonstre && donneesMonstre.length>12)
 			{
@@ -11645,7 +12506,7 @@ try {
 			// */
 			// nouveau mode
 			if (donneesMonstre && donneesMonstre.vlc) {
-				//if (donneesMonstre) logMZ('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
+				// if (donneesMonstre) logMZ('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
 				var td = getMonstreNomNode(i);
 				td.appendChild(document.createTextNode(" "));
 				td.appendChild(createImage(urlImg, "Voit le caché"));
@@ -11653,25 +12514,25 @@ try {
 			if (donneesMonstre && donneesMonstre.gen) {
 				switch (donneesMonstre.gen) {
 					case 1:
-						var imgPh = URL_MZimg + "Phoenix1.png";
+						var imgPh = `${URL_MZimg}Phoenix1.png`;
 						var txtPh = 'Phœnix de première génération';
 						break;
 					case 2:
-						var imgPh = URL_MZimg + "Phoenix2.png";
+						var imgPh = `${URL_MZimg}Phoenix2.png`;
 						var txtPh = 'Phœnix de deuxième génération';
 						break;
 					case 3:
-						var imgPh = URL_MZimg + "Phoenix3.png";
+						var imgPh = `${URL_MZimg}Phoenix3.png`;
 						var txtPh = 'Phœnix de troisième génération';
 						break;
 					case 23:
-						var imgPh = URL_MZimg + "Phoenix23.png";
+						var imgPh = `${URL_MZimg}Phoenix23.png`;
 						var txtPh = 'Phœnix de deuxième ou troisième génération';
 						break;
 				}
 				var td = getMonstreNomNode(i);
 				td.appendChild(document.createTextNode(" "));
-				var img = td.appendChild(createImage(imgPh, txtPh));
+				let img = td.appendChild(createImage(imgPh, txtPh));
 				img.style.height = '15px';
 				img.style.width = 'auto';
 			}
@@ -11690,93 +12551,108 @@ try {
 	function computeTactique(begin, end) {
 		// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeVLC
 		try {
-			if (!begin) begin = 1;
-			if (!end) end = MZ_EtatCdMs.nbMonstres;
-			//+++logMZ('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);
-			var noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
-			//+++logMZ('computeTactique, noTactique=' + noTactique);
-			if (noTactique || !isProfilActif()) return;
-			//+++logMZ('computeTactique, après isProfilActif');
+			if (!begin) {
+				begin = 1;
+			}
+			if (!end) {
+				end = MZ_EtatCdMs.nbMonstres;
+			}
+			// +++logMZ('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);
+			let noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
+			// +++logMZ('computeTactique, noTactique=' + noTactique);
+			if (noTactique || !isProfilActif()) {
+				return;
+			}
+			// +++logMZ('computeTactique, après isProfilActif');
 
 			for (var j = end; j >= begin; j--) {
-				var id = getMonstreID(j);
-				var nom = getMonstreNom(j);
-				var donneesMonstre = MZ_EtatCdMs.listeCDM[id];
-				var bShowTactique = false;
-				//if (isDEV) {
-				if (donneesMonstre && donneesMonstre.esq) bShowTactique = true;
+				let id = getMonstreID(j);
+				let nom = getMonstreNom(j);
+				let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+				let bShowTactique = false;
+				// if (isDEV) {
+				if (donneesMonstre && donneesMonstre.esq) {
+					bShowTactique = true;
+				}
 				// } else {
 				// if(donneesMonstre && nom.indexOf('Gowap')==-1) bShowTactique = true;
 				// }
 				if (bShowTactique) {
-					var td = getMonstreNomNode(j);
+					let td = getMonstreNomNode(j);
 					appendText(td, ' ');
 					td.appendChild(MZ_Tactique.createImage(id, nom));
 				}
 			}
-		}
-		catch (e) {
-			logMZ(traceStack(e, 'computeTactique') + '\nmob num : ' + j);
+		} catch (e) {
+			logMZ(`${traceStack(e, 'computeTactique')}\nmob num : ${j}`);
 		}
 		filtreMonstres();
 	}
 
 	function updateTactique() {
 		// = Handler checkBox noTactique
-		var noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
-		//+++logMZ('updateTactique, noTactique=' + noTactique);
-		if (!MZ_EtatCdMs.isCDMsRetrieved) return;
-		//+++logMZ('updateTactique, isCDMsRetrieved=' + MZ_EtatCdMs.isCDMsRetrieved);
+		let noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
+		// +++logMZ('updateTactique, noTactique=' + noTactique);
+		if (!MZ_EtatCdMs.isCDMsRetrieved) {
+			return;
+		}
+		// +++logMZ('updateTactique, isCDMsRetrieved=' + MZ_EtatCdMs.isCDMsRetrieved);
 
 		if (noTactique) {
-			for (var i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
-				var tr = getMonstreNomNode(i);
-				var img = document.evaluate("img[@src='" + URL_MZimg + "calc2.png']",
+			for (let i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
+				let tr = getMonstreNomNode(i);
+				let img = document.evaluate(`img[@src='${URL_MZimg}calc2.png']`,
 					tr, null, 9, null).singleNodeValue;
 				if (img) {
 					img.parentNode.removeChild(img.previousSibling);
 					img.parentNode.removeChild(img);
 				}
 			}
-		}
-		else
+		} else {
 			computeTactique();
+		}
 	}
 
 	function filtreMonstres() {
 		// = Handler universel pour les fonctions liées aux monstres
-		var urlImg = URL_MZimg + 'Competences/ecritureMagique.png',
-			urlEnchantImg = URL_MZimg + 'enchant.png';
+		let urlImg = `${URL_MZimg}Competences/ecritureMagique.png`,
+			urlEnchantImg = `${URL_MZimg}enchant.png`;
 
 		/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
-		var useCss = MY_getValue(numTroll + '.USECSS') == 'true';
-		var noGowapsS = saveCheckBox(checkBoxGowapsS, 'NOGOWAPS');
-		var noGowapsA = saveCheckBox(checkBoxGowapsA, 'NOGOWAPA');
-		var noEngages = saveCheckBox(checkBoxEngages, 'NOENGAGE');
-		var nivMin = saveComboBox(comboBoxNiveauMin, 'NIVEAUMINMONSTRE');
-		var nivMax = saveComboBox(comboBoxNiveauMax, 'NIVEAUMAXMONSTRE');
-		var famille = saveComboBox(comboBoxFamille, 'FAMILLEMONSTRE');
+		let useCss = MY_getValue(`${numTroll}.USECSS`) == 'true';
+		let noGowapsS = saveCheckBox(checkBoxGowapsS, 'NOGOWAPS');
+		let noGowapsA = saveCheckBox(checkBoxGowapsA, 'NOGOWAPA');
+		let noEngages = saveCheckBox(checkBoxEngages, 'NOENGAGE');
+		let nivMin = saveComboBox(comboBoxNiveauMin, 'NIVEAUMINMONSTRE');
+		let nivMax = saveComboBox(comboBoxNiveauMax, 'NIVEAUMAXMONSTRE');
+		let famille = saveComboBox(comboBoxFamille, 'FAMILLEMONSTRE');
 		// old/new : détermine s'il faut ou non nettoyer les tr
-		var oldNOEM = true, noEM = true;
+		let oldNOEM = true, noEM = true;
 		if (MY_getValue('NOINFOEM') != 'true') {
 			noEM = saveCheckBox(checkBoxEM, 'NOEM');
 		}
 		// Filtrage par nom
-		var eMonstre = document.getElementById('strMonstres');
-		if (!eMonstre) return;	// cas smartphone
-		var strMonstre = eMonstre.value.toLowerCase();
+		let eMonstre = document.getElementById('strMonstres');
+		if (!eMonstre) {
+			return;
+		}	// cas smartphone
+		let strMonstre = eMonstre.value.toLowerCase();
 		// Génère la liste des mobs engagés (si filtrés)
 		if (noEngages && !isEngagesComputed) {
 			for (var i = nbTrolls; i > 0; i--) {
 				var pos = getTrollPosition(i);
-				if (!listeEngages[pos[0]]) { listeEngages[pos[0]] = {}; }
-				if (!listeEngages[pos[0]][pos[1]]) { listeEngages[pos[0]][pos[1]] = {}; }
+				if (!listeEngages[pos[0]]) {
+					listeEngages[pos[0]] = {};
+				}
+				if (!listeEngages[pos[0]][pos[1]]) {
+					listeEngages[pos[0]][pos[1]] = {};
+				}
 				listeEngages[pos[0]][pos[1]][pos[2]] = 1;
 			}
 			isEngagesComputed = true;
 		}
 
-		/*** FILTRAGE ***/
+		/** * FILTRAGE ***/
 		/* À computer :
 		 * - EM (nom suffit)
 		 * - Enchant (nom suffit)
@@ -11787,7 +12663,7 @@ try {
 		 */
 		for (var i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
 			var pos = getMonstrePosition(i);
-			var nom = getMonstreNom(i).toLowerCase();
+			let nom = getMonstreNom(i).toLowerCase();
 			if (noEM != oldNOEM) {
 				if (noEM) {
 					// Si noEM passe de false à true, on nettoie les td "Nom"
@@ -11798,9 +12674,9 @@ try {
 					}
 				} else {
 					var tr = getMonstreNomNode(i);
-					var TypeMonstre = getEM(nom);
+					let TypeMonstre = getEM(nom);
 					if (TypeMonstre != '') {
-						var infosCompo = compoMobEM(TypeMonstre);
+						let infosCompo = compoMobEM(TypeMonstre);
 						if (infosCompo.length > 0) {
 							tr.appendChild(document.createTextNode(' '));
 							tr.appendChild(createImage(urlImg, infosCompo));
@@ -11808,48 +12684,45 @@ try {
 					}
 				}
 			}
-			if (needComputeEnchantement || (noEM != oldNOEM && noEM)) {
-				var texte = getInfoEnchantementFromMonstre(nom);
+			if (needComputeEnchantement || noEM != oldNOEM && noEM) {
+				let texte = getInfoEnchantementFromMonstre(nom);
 				if (texte != '') {
-					var td = getMonstreNomNode(i);
+					let td = getMonstreNomNode(i);
 					td.appendChild(document.createTextNode(' '));
 					td.appendChild(createImage(urlEnchantImg, texte));
 				}
 			}
 
-			var dataV2 = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-			MZ_EtatCdMs.tr_monstres[i].style.display = (
+			let dataV2 = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
+			MZ_EtatCdMs.tr_monstres[i].style.display =
 				noGowapsS &&
-				nom.indexOf('gowap sauvage') != -1 &&
-				getMonstreDistance(i) > 1
-			) || (
+					nom.indexOf('gowap sauvage') != -1 &&
+					getMonstreDistance(i) > 1 ||
 					noGowapsA &&
 					nom.indexOf('gowap apprivoisé') != -1 &&
-					getMonstreDistance(i) > 1
-				) || (
+					getMonstreDistance(i) > 1 ||
 					noEngages &&
 					getMonstreDistance(i) != 0 &&
 					listeEngages[pos[0]] &&
 					listeEngages[pos[0]][pos[1]] &&
-					listeEngages[pos[0]][pos[1]][pos[2]]
-				) || (
+					listeEngages[pos[0]][pos[1]][pos[2]] ||
 					strMonstre != '' &&
-					nom.indexOf(strMonstre) == -1
-				) || (
+					nom.indexOf(strMonstre) == -1 ||
 					isMonstreLevelOutLimit(i, nivMin, nivMax) &&
 					getMonstreDistance(i) > 1 &&
-					nom.toLowerCase().indexOf("kilamo") == -1
-				) || (
+					nom.toLowerCase().indexOf("kilamo") == -1 ||
 					famille != '0' &&
 					dataV2 &&
 					dataV2.fam &&
-					dataV2.fam != famille
-				) ? 'none' : '';
+					dataV2.fam != famille ?
+					'none' : '';
 		}
 
 		if (MY_getValue('NOINFOEM') != 'true') {
 			if (noEM != oldNOEM) {
-				if (noEM && MZ_EtatCdMs.isCDMsRetrieved) computeMission();
+				if (noEM && MZ_EtatCdMs.isCDMsRetrieved) {
+					computeMission();
+				}
 			}
 			oldNOEM = noEM;
 		}
@@ -11858,23 +12731,21 @@ try {
 	}
 
 
-	/*-[functions]---------------- Fonctions Trõlls ------------------------------ */
+	/* -[functions]---------------- Fonctions Trõlls ------------------------------ */
 
 	function filtreTrolls() {
-		var noIntangibles = saveCheckBox(checkBoxIntangibles, 'NOINT');
-		var strTroll = document.getElementById('strTrolls').value.toLowerCase();
-		var strGuilde = document.getElementById('strGuildes').value.toLowerCase();
-		for (var i = 1; i <= nbTrolls; i++) {
-			tr_trolls[i].style.display = (
+		let noIntangibles = saveCheckBox(checkBoxIntangibles, 'NOINT');
+		let strTroll = document.getElementById('strTrolls').value.toLowerCase();
+		let strGuilde = document.getElementById('strGuildes').value.toLowerCase();
+		for (let i = 1; i <= nbTrolls; i++) {
+			tr_trolls[i].style.display =
 				noIntangibles &&
-				getTrollNomNode(i).firstChild.className == 'mh_trolls_0'
-			) || (
+					getTrollNomNode(i).firstChild.className == 'mh_trolls_0' ||
 					strTroll != '' &&
-					getTrollNomNode(i).textContent.toLowerCase().indexOf(strTroll) == -1
-				) || (
+					getTrollNomNode(i).textContent.toLowerCase().indexOf(strTroll) == -1 ||
 					strGuilde != '' &&
-					getTrollGuilde(i).toLowerCase().indexOf(strGuilde) == -1
-				) ? 'none' : '';
+					getTrollGuilde(i).toLowerCase().indexOf(strGuilde) == -1 ?
+					'none' : '';
 		}
 	}
 
@@ -11893,8 +12764,8 @@ try {
 			'z-index: 2;';
 		document.body.appendChild(bulle);
 
-		for (var i = nbTrolls; i > 0; i--) {
-			var td_niv = getTrollNivNode(i);
+		for (let i = nbTrolls; i > 0; i--) {
+			let td_niv = getTrollNivNode(i);
 			td_niv.onmouseover = showPXTroll;
 			td_niv.onmouseout = hidePXTroll;
 		}
@@ -11902,11 +12773,13 @@ try {
 
 	function showPXTroll(evt) {
 		let lvl = this.firstChild.nodeValue;
-		bulle.innerHTML = 'Niveau ' + lvl + analysePXTroll(lvl);
-		bulle.style.left = evt.pageX + 15 + 'px';
-		bulle.style.top = evt.pageY + 'px';
+		bulle.innerHTML = `Niveau ${lvl}${analysePXTroll(lvl)}`;
+		bulle.style.left = `${evt.pageX + 15}px`;
+		bulle.style.top = `${evt.pageY}px`;
 		bulle.style.visibility = 'visible';
-		if (!isDesktopView()) { bulle.style.backgroundColor = 'rgb(229, 222, 203)'; }
+		if (!isDesktopView()) {
+			bulle.style.backgroundColor = 'rgb(229, 222, 203)';
+		}
 	}
 
 	function hidePXTroll() {
@@ -11917,12 +12790,14 @@ try {
 	function putBoutonPXMP() {
 		// Bouton d'initialisation du mode Envoi
 		// WARNING - Nécessite que le Filtre Trõll ait été mis en place
-		var td = document.getElementById('tdInsertTrolls');
-		if (!td) { return; }
+		let td = document.getElementById('tdInsertTrolls');
+		if (!td) {
+			return;
+		}
 		td.width = 100;
 		td = insertAfterTd(td);
 		td.style.verticalAlign = 'top';
-		var bouton = appendButton(td, 'Envoyer...', prepareEnvoi);
+		let bouton = appendButton(td, 'Envoyer...', prepareEnvoi);
 		bouton.id = 'btnEnvoi';
 	}
 
@@ -11930,21 +12805,23 @@ try {
 		// = 1er Handler du bouton d'envoi
 
 		/* Ajout de la colonne des CheckBoxes */
-		var td = insertTdText(getTrollNomNode(0), '');
+		let td = insertTdText(getTrollNomNode(0), '');
 		td.width = 5;
-		for (var i = nbTrolls; i > 0; i--) {
+		for (let i = nbTrolls; i > 0; i--) {
 			td = insertTd(getTrollNomNode(i));
-			appendCheckBox(td, 'envoi' + i);
+			appendCheckBox(td, `envoi${i}`);
 		}
 
 		/* Ajout du radio de choix PX ou MP */
-		var btnEnvoi = document.getElementById('btnEnvoi');
-		if (!btnEnvoi) { return; }
-		var tdEnvoi = btnEnvoi.parentNode;
+		let btnEnvoi = document.getElementById('btnEnvoi');
+		if (!btnEnvoi) {
+			return;
+		}
+		let tdEnvoi = btnEnvoi.parentNode;
 		appendText(tdEnvoi, ' ');
 		let label = document.createElement('label');
 		label.style.whiteSpace = 'nowrap';
-		var radioElt = document.createElement('input');
+		let radioElt = document.createElement('input');
 		radioElt.type = 'radio';
 		radioElt.name = 'envoiPXMP';
 		radioElt.id = 'radioPX';
@@ -11970,115 +12847,120 @@ try {
 	function annuleEnvoi() {
 		// = Handler bouton Annuler
 		/* Nettoyage du td du bouton Envoi */
-		var btnEnvoi = document.getElementById('btnEnvoi');
-		var tdEnvoi = btnEnvoi.parentNode;
+		let btnEnvoi = document.getElementById('btnEnvoi');
+		let tdEnvoi = btnEnvoi.parentNode;
 		while (tdEnvoi.firstChild) {
 			tdEnvoi.removeChild(tdEnvoi.firstChild);
 		}
+
 		/* Retour à l'effet de base du bouton Envoi */
 		btnEnvoi.onclick = prepareEnvoi;
 		tdEnvoi.appendChild(btnEnvoi);
+
 		/* Suppression CheckBoxes */
-		for (var i = nbTrolls; i >= 0; i--) {
-			var td = getTrollNomNode(i);
+		for (let i = nbTrolls; i >= 0; i--) {
+			let td = getTrollNomNode(i);
 			td.parentNode.removeChild(td);
 		}
 	}
 
 	function effectueEnvoi() {
 		// = 2e Handler du bouton d'envoi (charge un nouveau frame)
-		var str = '';
-		var errID = false;
-		for (var i = nbTrolls; i > 0; i--) {
-			var chb = document.getElementById('envoi' + i);
+		let str = '';
+		let errID = false;
+		for (let i = nbTrolls; i > 0; i--) {
+			let chb = document.getElementById(`envoi${i}`);
 			if (chb.checked) {
-				var idTroll = getTrollID(i);
+				let idTroll = getTrollID(i);
 				if (idTroll == undefined) {
 					errID = true;
 				} else {
-					str += (str ? ',' : '') + idTroll;
+					str = str + ((str ? ',' : '') + idTroll);
 				}
 			}
 		}
-		if (errID) avertissement('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
-		var PXchecked = document.getElementById('radioPX').checked;
+		if (errID) {
+			avertissement('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
+		}
+		let PXchecked = document.getElementById('radioPX').checked;
 		if (PXchecked) {
-			window.open('./Play_a_Action.php?type=A&id=9&dest=' + str, 'Contenu');
+			window.open(`./Play_a_Action.php?type=A&id=9&dest=${str}`, 'Contenu');
 		} else {
-			window.open('../Messagerie/MH_Messagerie.php?cat=3&dest=' + str, 'Contenu');
+			window.open(`../Messagerie/MH_Messagerie.php?cat=3&dest=${str}`, 'Contenu');
 		}
 	}
 
-	/*-[functions]---------------- Fonctions Trésors ----------------------------- */
+	/* -[functions]---------------- Fonctions Trésors ----------------------------- */
 
 	function filtreTresors() {
 		// += Handler checkboxes : gg, compos, bidouilles, non libres
-		var noGG = saveCheckBox(checkBoxGG, 'NOGG');
-		var noCompos = saveCheckBox(checkBoxCompos, 'NOCOMP');
-		var noBidouilles = saveCheckBox(checkBoxBidouilles, 'NOBID');
-		var noEngages = saveCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
+		let noGG = saveCheckBox(checkBoxGG, 'NOGG');
+		let noCompos = saveCheckBox(checkBoxCompos, 'NOCOMP');
+		let noBidouilles = saveCheckBox(checkBoxBidouilles, 'NOBID');
+		let noEngages = saveCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
 		if (noEngages && !isEngagesComputed) {
 			for (var i = nbTrolls; i > 0; i--) {
 				var pos = getTrollPosition(i);
-				if (!listeEngages[pos[2]]) listeEngages[pos[2]] = [];
-				if (!listeEngages[pos[2]][pos[1]]) listeEngages[pos[2]][pos[1]] = [];
+				if (!listeEngages[pos[2]]) {
+					listeEngages[pos[2]] = [];
+				}
+				if (!listeEngages[pos[2]][pos[1]]) {
+					listeEngages[pos[2]][pos[1]] = [];
+				}
 				listeEngages[pos[2]][pos[1]][pos[0]] = 1;
 			}
 			isEngagesComputed = true;
 		}
-		var strTresor = document.getElementById('strTresors').value.toLowerCase();
+		let strTresor = document.getElementById('strTresors').value.toLowerCase();
 		for (var i = nbTresors; i > 0; i--) {
-			var nom = getTresorNom(i);
+			let nom = getTresorNom(i);
 			var pos = getTresorPosition(i);
-			tr_tresors[i].style.display = (
+			tr_tresors[i].style.display =
 				noGG &&
-				nom.indexOf('Gigots de Gob') != -1
-			) || (
+					nom.indexOf('Gigots de Gob') != -1 ||
 					noCompos &&
-					nom.indexOf('Composant') != -1
-				) || (
+					nom.indexOf('Composant') != -1 ||
 					noEngages &&
 					listeEngages[pos[2]] &&
 					listeEngages[pos[2]][pos[1]] &&
 					listeEngages[pos[2]][pos[1]][pos[0]] &&
-					getTresorDistance(i) > 0
-				) || (
+					getTresorDistance(i) > 0 ||
 					strTresor != '' &&
-					nom.toLowerCase().indexOf(strTresor) == -1
-				) || (
+					nom.toLowerCase().indexOf(strTresor) == -1 ||
 					noBidouilles &&
-					nom.indexOf('Bidouille') != -1
-				) ? 'none' : '';
+					nom.indexOf('Bidouille') != -1 ?
+					'none' : '';
 		}
 	}
 
 
-	/*-[functions]----------------- Fonctions Lieux ------------------------------ */
+	/* -[functions]----------------- Fonctions Lieux ------------------------------ */
 
 	function filtreLieux() {
 		// += Handler checkbox trous
-		var noTrou = saveCheckBox(checkBoxTrou, 'NOTROU');
-		var strLieu = document.getElementById('strLieux').value.toLowerCase();
-		for (var i = nbLieux; i > 0; i--) {
-			tr_lieux[i].style.display = (
+		let noTrou = saveCheckBox(checkBoxTrou, 'NOTROU');
+		let strLieu = document.getElementById('strLieux').value.toLowerCase();
+		for (let i = nbLieux; i > 0; i--) {
+			tr_lieux[i].style.display =
 				strLieu &&
-				getLieuNom(i).toLowerCase().indexOf(strLieu) == -1
-			) || (
+					getLieuNom(i).toLowerCase().indexOf(strLieu) == -1 ||
 					noTrou &&
 					getLieuNom(i).toLowerCase().indexOf("trou de météorite") != -1 &&
-					getLieuDistance(i) > 1
-				) ? 'none' : '';
+					getLieuDistance(i) > 1 ?
+					'none' : '';
 		}
 	}
 
 
-	/*-[functions]-------------------- Diplomatie -------------------------------- */
+	/* -[functions]-------------------- Diplomatie -------------------------------- */
 
 	function refreshDiplo() {
-		MY_setValue(numTroll + '.diplo.off',
+		MY_setValue(`${numTroll}.diplo.off`,
 			checkBoxDiplo.checked ? 'true' : 'false'
 		);
-		if (isDiploRaw) { computeDiplo(); }
+		if (isDiploRaw) {
+			computeDiplo();
+		}
 		appliqueDiplo();
 	}
 
@@ -12089,8 +12971,8 @@ try {
 		//  guilde cible < troll cible
 
 		/* Diplo de Guilde */
-		var diploGuilde = MY_getValue(numTroll + '.diplo.guilde') ?
-			JSON.parse(MY_getValue(numTroll + '.diplo.guilde')) : {};
+		let diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`) ?
+			JSON.parse(MY_getValue(`${numTroll}.diplo.guilde`)) : {};
 		if (diploGuilde && diploGuilde.isOn == 'true') {
 			// Guilde perso
 			if (diploGuilde.guilde) {
@@ -12100,12 +12982,12 @@ try {
 				};
 			}
 			// Guildes/Trolls A/E
-			for (var AE in { Amis: 0, Ennemis: 0 }) {
-				for (var i = 0; i < 5; i++) {
+			for (let AE in { Amis: 0, Ennemis: 0 }) {
+				for (let i = 0; i < 5; i++) {
 					if (diploGuilde[AE + i]) {
 						for (var type in { Guilde: 0, Troll: 0 }) {
-							var liste = diploGuilde[AE + i][type].split(';');
-							for (var j = liste.length - 2; j >= 0; j--) {
+							let liste = diploGuilde[AE + i][type].split(';');
+							for (let j = liste.length - 2; j >= 0; j--) {
 								Diplo[type][liste[j]] = {
 									couleur: diploGuilde[AE + i].couleur,
 									titre: diploGuilde[AE + i].titre
@@ -12118,10 +13000,10 @@ try {
 		}
 
 		/* Diplo Perso */
-		//var diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
+		// var diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
 		if (diploPerso && diploPerso.isOn == 'true') {
 			for (var type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
-				for (var id in diploPerso[type]) {
+				for (let id in diploPerso[type]) {
 					Diplo[type][id] = diploPerso[type][id];
 				}
 			}
@@ -12134,7 +13016,7 @@ try {
 	}
 
 	function appliqueDiplo() {
-		var aAppliquer = Diplo;
+		let aAppliquer = Diplo;
 		if (checkBoxDiplo.checked) {
 			// Pour retour à l'affichage basique sur désactivation de la diplo
 			aAppliquer = {
@@ -12147,22 +13029,22 @@ try {
 		/* On applique "aAppliquer" */
 		// Diplo Trõlls
 		for (var i = nbTrolls; i > 0; i--) {
-			var idG = getTrollGuildeID(i);
-			var idT = getTrollID(i);
+			let idG = getTrollGuildeID(i);
+			let idT = getTrollID(i);
 			var tr = tr_trolls[i];
 			// logMZ('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
 			if (aAppliquer.Troll[idT]) {
 				tr.classList.remove('mh_tdpage');
 				var descr = aAppliquer.Troll[idT].titre;
 				if (descr) {
-					getTrollNomNode(i).title = descr
+					getTrollNomNode(i).title = descr;
 				}
 				tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
 			} else if (aAppliquer.Guilde[idG]) {
 				tr.classList.remove('mh_tdpage');
 				var descr = aAppliquer.Guilde[idG].titre;
 				if (descr) {
-					getTrollNomNode(i).title = descr
+					getTrollNomNode(i).title = descr;
 				}
 				tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
 			} else {
@@ -12173,8 +13055,8 @@ try {
 
 		// Diplo Monstres
 		for (var i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
-			var id = getMonstreID(i);
-			var nom = getMonstreNom(i).toLowerCase();
+			let id = getMonstreID(i);
+			let nom = getMonstreNom(i).toLowerCase();
 			var tr = MZ_EtatCdMs.tr_monstres[i];
 			if (aAppliquer.Monstre[id]) {
 				tr.className = '';
@@ -12202,53 +13084,52 @@ try {
 	}
 
 
-	/*-[functions]---------------- Actions à distance ---------------------------- */
+	/* -[functions]---------------- Actions à distance ---------------------------- */
 
 	function computeActionDistante(dmin, dmax, keltypes, oussa, urlIcon, message) {
-		var
+		let
 			monN = parseInt(getPosition()[2]),
 			isLdP = oussa == 'self';
 
-		for (var type in keltypes) {
+		for (let type in keltypes) {
 			if (MY_DEBUG) {
 				logMZ(
-					'MZ computeActionDistante(' + dmin + ', ' + dmax + ', ' +
-					oussa + ', ' + urlIcon + ', ' + message + ') type=' + type
+					`MZ computeActionDistante(${dmin}, ${dmax}, ${oussa}, ${urlIcon}, ${message}) type=${type}`
 				);
 			}
 			alt = oussa == 'self' ? type.slice(0, -1) : oussa;
-			for (var i = VueContext['nb' + type]; i > 0; i--) {
-				var tr = VueContext['tr_' + type.toLowerCase()][i];
+			for (let i = VueContext[`nb${type}`]; i > 0; i--) {
+				let tr = VueContext[`tr_${type.toLowerCase()}`][i];
 				// Roule 11/03/2016, on passe par les nouvelles fonctions getXxxPosition et getXxxDistance
-				//var sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
-				//var d = this['get'+type.slice(0,-1)+'Distance'](i);
-				var sonN = getXxxPosition(type, i)[2];
-				var d = getXxxDistance(type, i);
-				var thismessage = message;
+				// var sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
+				// var d = this['get'+type.slice(0,-1)+'Distance'](i);
+				let sonN = getXxxPosition(type, i)[2];
+				let d = getXxxDistance(type, i);
+				let thismessage = message;
 				if (isLdP) {
-					var chanceToucher = getTalent("Lancer de Potions") + Math.min(10,
+					let chanceToucher = getTalent("Lancer de Potions") + Math.min(10,
 						10 - 10 * d +
-						parseInt(MY_getValue(numTroll + ".caracs.vue")) +
-						parseInt(MY_getValue(numTroll + ".caracs.vue.bm"))
+						parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+						parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
 					);
-					thismessage += ' (' + chanceToucher + '%)';
+					thismessage = `${thismessage} (${chanceToucher}%)`;
 				}
 
 				if (sonN == monN && d >= dmin && d <= dmax) {
-					var iconeAction = document.evaluate(
-						"./descendant::img[@alt='" + alt + "']",
+					let iconeAction = document.evaluate(
+						`./descendant::img[@alt='${alt}']`,
 						tr, null, 9, null
 					).singleNodeValue;
 					if (iconeAction) {
 						if (iconeAction.title) {
-							iconeAction.title += "\n" + thismessage;
+							iconeAction.title = `${iconeAction.title}\n${thismessage}`;
 						} else {
 							iconeAction.title = thismessage;
 						}
 						iconeAction.src = urlIcon;
 					} else {
-						var tdAction = tr.getElementsByTagName('td')[1];
-						var icon = document.createElement('img');
+						let tdAction = tr.getElementsByTagName('td')[1];
+						let icon = document.createElement('img');
 						icon.src = urlIcon;
 						icon.height = 20;
 						icon.alt = alt;
@@ -12263,12 +13144,12 @@ try {
 	function computeCharge() {
 		computeActionDistante(1,
 			getPortee(
-				Math.ceil(MY_getValue(numTroll + ".caracs.pv") / 10) +
-				MY_getValue(numTroll + ".caracs.regeneration")
+				Math.ceil(MY_getValue(`${numTroll}.caracs.pv`) / 10) +
+				MY_getValue(`${numTroll}.caracs.regeneration`)
 			),
-			{ 'Monstres': 1, 'Trolls': 1 },
+			{ Monstres: 1, Trolls: 1 },
 			'Attaquer',
-			MHicons + 'E_Metal09.png',
+			`${MHicons}E_Metal09.png`,
 			'Cible à portée de Charge'
 		);
 	}
@@ -12276,12 +13157,12 @@ try {
 	function computeProjo() {
 		computeActionDistante(0,
 			getPortee(
-				parseInt(MY_getValue(numTroll + ".caracs.vue")) +
-				parseInt(MY_getValue(numTroll + ".caracs.vue.bm"))
+				parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+				parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
 			),
-			{ 'Monstres': 1, 'Trolls': 1 },
+			{ Monstres: 1, Trolls: 1 },
 			'Attaquer',
-			MHicons + 'S_Fire05.png',
+			`${MHicons}S_Fire05.png`,
 			'Cible à portée de Projo'
 		);
 	}
@@ -12289,12 +13170,12 @@ try {
 	function computeTelek() {
 		computeActionDistante(0,
 			Math.floor((
-				parseInt(MY_getValue(numTroll + ".caracs.vue")) +
-				parseInt(MY_getValue(numTroll + ".caracs.vue.bm"))
+				parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+				parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
 			) / 2),
-			{ 'Tresors': 1 },
+			{ Tresors: 1 },
 			'Telek',
-			MHicons + 'S_Magic04.png',
+			`${MHicons}S_Magic04.png`,
 			'Trésor à portée de Télékinésie'
 		);
 	}
@@ -12302,34 +13183,38 @@ try {
 	function computeLdP() {
 		computeActionDistante(0,
 			2 + Math.floor((
-				parseInt(MY_getValue(numTroll + ".caracs.vue")) +
-				parseInt(MY_getValue(numTroll + ".caracs.vue.bm"))
+				parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+				parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
 			) / 5),
-			{ 'Monstres': 1, 'Trolls': 1 },
+			{ Monstres: 1, Trolls: 1 },
 			'self',
-			MHicons + 'P_Red01.png',
+			`${MHicons}P_Red01.png`,
 			'Cible à portée de Lancer de Potions'
 		);
 	}
 
 
-	/*-[functions]--------------- Systèmes Tactiques ----------------------------- */
+	/* -[functions]--------------- Systèmes Tactiques ----------------------------- */
 
 	function putScriptExterne(sInfo) {
-		for (var iBricol = 1; ; iBricol++) {
-			var extClef = iBricol == 1 ? '' : iBricol;
-			var sInfo = MY_getValue(numTroll + '.INFOSIT' + extClef);
-			if (!sInfo) break;
+		for (let iBricol = 1; ; iBricol++) {
+			let extClef = iBricol == 1 ? '' : iBricol;
+			var sInfo = MY_getValue(`${numTroll}.INFOSIT${extClef}`);
+			if (!sInfo) {
+				break;
+			}
 			putScriptExterneOneIT(sInfo);
 		}
 	}
 
 	function putScriptExterneOneIT(sInfo) {
-		if (!sInfo || sInfo == '') return;
+		if (!sInfo || sInfo == '') {
+			return;
+		}
 
-		var nomit = sInfo.slice(0, sInfo.indexOf('$'));
+		let nomit = sInfo.slice(0, sInfo.indexOf('$'));
 		if (nomit == 'bricol') {
-			var data = sInfo.split('$');
+			let data = sInfo.split('$');
 			try {
 				// Roule' 07/11/2016. Travail avec Ratibus, remplacement du script par l'envoi de JSON
 				// appendNewScript(URL_bricol+data[1]
@@ -12338,9 +13223,9 @@ try {
 				// );
 				FF_XMLHttpRequest({
 					method: 'GET',
-					url: URL_bricol + data[1]
-						+ '/mz_json.php?login=' + encodeURIComponent(data[2])
-						+ '&password=' + data[3],
+					url: `${URL_bricol + data[1]
+						}/mz_json.php?login=${encodeURIComponent(data[2])
+						}&password=${data[3]}`,
 					trace: 'bricolTroll',
 					onload: function (responseDetails) {
 						try {
@@ -12353,22 +13238,22 @@ try {
 								}
 								return;
 							}
-							var ratibusData;
+							let ratibusData;
 							try {
 								ratibusData = JSON.parse(responseDetails.responseText);
 							} catch (e) { }
 							if (ratibusData === undefined) {
-								avertissement('<br />Erreur à l\'appel de l\'interface Bricol\'Troll. Code HTTP=' + responseDetails.status + '. Pas de JSON');
+								avertissement(`<br />Erreur à l'appel de l'interface Bricol'Troll. Code HTTP=${responseDetails.status}. Pas de JSON`);
 								return;
 							}
 							if (ratibusData.error) {
-								avertissement('<br />Bricol\'Troll (' + data[1] + ') a répondu :<br />' + ratibusData.error);
+								avertissement(`<br />Bricol'Troll (${data[1]}) a répondu :<br />${ratibusData.error}`);
 							} else {
 								putInfosTrolls(ratibusData.data.trolls, data[1]);
 							}
 						} catch (e) {
 							logMZ(traceStack(e, 'retour bricol\'troll'));
-							avertissement('<br />Erreur dans la réponse de Bricol\'Troll<br />' + e + '<br />' + responseDetails.responseText);
+							avertissement(`<br />Erreur dans la réponse de Bricol'Troll<br />${e}<br />${responseDetails.responseText}`);
 						}
 					}
 				});
@@ -12377,7 +13262,7 @@ try {
 					avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
 				} else {
 					logMZ(traceStack(e, 'appel bricol\'troll'));
-					avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<br />' + e);
+					avertissement(`<br />Erreur générale avec l'interface Bricol'Troll<br />${e}`);
 				}
 			}
 		}
@@ -12403,17 +13288,17 @@ try {
 
 	// Roule 07/11/2016 ATTENTION, il faudrait modifier ici (remplacer [0] par .pa, etc.)
 	function corrigeBricolTrolls(infosTrolls) {
-		for (var i in infosTrolls) {
-			var pv = infosTrolls[i][0];
-			var pvmax = infosTrolls[i][1];
-			var pvmem = MY_getValue(i + '.caracs.pv.max');
+		for (let i in infosTrolls) {
+			let pv = infosTrolls[i][0];
+			let pvmax = infosTrolls[i][1];
+			let pvmem = MY_getValue(`${i}.caracs.pv.max`);
 			if (pvmem && pvmem > pvmax) {
 				infosTrolls[i][1] = pvmem;
 				pvmax = pvmem;
 			}
 			if (pv > pvmax) {
-				var newpvmax = 5 * Math.ceil(pv / 5);
-				MY_setValue(i + '.caracs.pv.max', newpvmax);
+				let newpvmax = 5 * Math.ceil(pv / 5);
+				MY_setValue(`${i}.caracs.pv.max`, newpvmax);
 				infosTrolls[i][1] = newpvmax;
 			}
 		}
@@ -12422,8 +13307,9 @@ try {
 	// insère 2 TD avant nextTD avec les infos venant de l'IT
 	function addTdInfosTroll(infos, TR, itName) {
 		/* cadre barre PV */
-		var tab = document.createElement('div');
-		tab.title = infos.pv + '/' + infos.pv_max + ' PV le ' + SQLDateToFrenchTime(infos.updated_at);
+		let tab = document.createElement('div');
+		tab.title = `${infos.pv}/${infos.pv_max} PV le ${SQLDateToFrenchTime(infos.updated_at)}`;
+
 		/* barre PV */
 		/* Roule' : sans aucune honte, j'ai copié la méthode de Bricol'Troll
 		<div class="vieContainer"><div style="background-color: #77EE77; width: 90%">&nbsp;</div></div>
@@ -12439,13 +13325,13 @@ try {
 		tab.style.height = '10px';
 		tab.style.border = '1px solid #000';
 		tab.style.textAlign = 'left';
-		var div2 = document.createElement('div');
-		var pourcentVie = Math.floor((100 * infos.pv) / infos.pv_max);
-		var dateLimite = new Date();
+		let div2 = document.createElement('div');
+		let pourcentVie = Math.floor(100 * infos.pv / infos.pv_max);
+		let dateLimite = new Date();
 		dateLimite.setDate(dateLimite.getDate() - 7);
 		if (infos.oUpdatedAt < dateLimite) {
 			div2.style.backgroundColor = '#888888';	// infos de plus de 7 jours => grisé
-			tab.title += "\nLes informations sont trop vieilles pour être fiables";
+			tab.title = `${tab.title}\nLes informations sont trop vieilles pour être fiables`;
 		} else if (pourcentVie > 66) {
 			div2.style.backgroundColor = '#77EE77';
 		} else if (pourcentVie > 33) {
@@ -12453,9 +13339,10 @@ try {
 		} else {
 			div2.style.backgroundColor = '#FF0000';
 		}
-		div2.style.width = pourcentVie + '%';
+		div2.style.width = `${pourcentVie}%`;
 		div2.style.height = '10px';
 		tab.appendChild(div2);
+
 		/* ancienne méthode par img, à supprimer
 		var img = document.createElement('img');
 		img.src = '../Images/Interface/milieu.gif';
@@ -12464,32 +13351,41 @@ try {
 		tab.appendChild(img);
 		*/
 
-		if (MZ_cache_col_TrollNOM === undefined) MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
-		var tdNom = TR.childNodes[MZ_cache_col_TrollNOM]
-		if (infos.camoufle) tdNom.appendChild(createImage(URL_MZimg + "warning.gif", "Camouflé", "padding-left:2px"));
-		if (infos.invisible) tdNom.appendChild(createImage(URL_MZimg + "warning.gif", "Invisible", "padding-left:2px"));
+		if (MZ_cache_col_TrollNOM === undefined) {
+			MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
+		}
+		let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
+		if (infos.camoufle) {
+			tdNom.appendChild(createImage(`${URL_MZimg}warning.gif`, "Camouflé", "padding-left:2px"));
+		}
+		if (infos.invisible) {
+			tdNom.appendChild(createImage(`${URL_MZimg}warning.gif`, "Invisible", "padding-left:2px"));
+		}
 
 		/* lien vers l'IT */
-		var lien = document.createElement('a');
-		//var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-		lien.href = URL_bricol + itName + '/index.php';
+		let lien = document.createElement('a');
+		// var nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
+		lien.href = `${URL_bricol + itName}/index.php`;
 		lien.target = '_blank';
 		lien.appendChild(tab);
-		if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		if (MZ_cache_col_TrollGUILDE === undefined) {
+			MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+		}
 		// logMZ('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
-		//var tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
-		//insertTdElement(tdGuilde,lien);
+		// var tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
+		// insertTdElement(tdGuilde,lien);
 		TR.childNodes[MZ_cache_col_TrollGUILDE].appendChild(lien);
+
 		/* PAs dispos */
-		var span = document.createElement('span');
-		span.title = 'DLA : ' + SQLDateToFrenchTime(infos.dla);
-		appendText(span, infos.pa + ' PA');
+		let span = document.createElement('span');
+		span.title = `DLA : ${SQLDateToFrenchTime(infos.dla)}`;
+		appendText(span, `${infos.pa} PA`);
 		// logMZ('dla=' + infos.dla + ', SQLDateToObject(infos.dla)=' + SQLDateToObject(infos.dla) + ', now=' + Date.now());
 		if (infos.pa > 0 || SQLDateToObject(infos.dla) < Date.now()) {
 			// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
 			span.style.backgroundColor = 'B8EEB8';
 		}
-		//insertTdElement(tdGuilde, span);
+		// insertTdElement(tdGuilde, span);
 		TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
 	}
 
@@ -12497,9 +13393,11 @@ try {
 	function putInfosTrolls(infosTrolls, itName) {
 		try {
 			if (MZ_tabTrTrollById === undefined) {
-				MZ_tabTrTrollById = new Array;
+				MZ_tabTrTrollById = new Array();
 				// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
-				if (MZ_cache_col_TrollGUILDE === undefined) MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+				if (MZ_cache_col_TrollGUILDE === undefined) {
+					MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+				}
 				var td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PA', true);
 				td.width = 40;
 				td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PV', true);
@@ -12512,92 +13410,118 @@ try {
 			}
 
 			// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
-			//corrigeBricolTrolls(infosTrolls);
+			// corrigeBricolTrolls(infosTrolls);
 
 			// supression des infos trop vieilles (un mois)
 			// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
-			var dateLimite = new Date();
+			let dateLimite = new Date();
 			dateLimite.setMonth(dateLimite.getMonth() - 1);
 
 			// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
-			var str = MY_getValue(numTroll + '.INFOSIT');
-			var affhv = false;
+			let str = MY_getValue(`${numTroll}.INFOSIT`);
+			let affhv = false;
 			if (str) {
-				var arr = str.split('$');
+				let arr = str.split('$');
 				affhv = arr[4] > 0;
 			}
 
-			var tBody = tr_trolls[0].parentNode;
-			if (tr_trolls[1] !== undefined) tBody = tr_trolls[1].parentNode;
+			let tBody = tr_trolls[0].parentNode;
+			if (tr_trolls[1] !== undefined) {
+				tBody = tr_trolls[1].parentNode;
+			}
 
 			// logMZ('nb Troll IT : ' + IDs.length);
-			var pos = getPosition();
+			let pos = getPosition();
 
 			// mise à jour des infos dans le HTML (et ajout de ligne si nécessaire)
-			for (var idTroll in infosTrolls) {
-				var infos = infosTrolls[idTroll];
+			for (let idTroll in infosTrolls) {
+				let infos = infosTrolls[idTroll];
 				infos.oUpdatedAt = SQLDateToObject(infos.updated_at);	// trop vieux
-				if (infos.oUpdatedAt < dateLimite) continue;	// infos trop vieilles
-				if (idTroll == numTroll) continue;	// pas nous-même
+				if (infos.oUpdatedAt < dateLimite) {
+					continue;
+				}	// infos trop vieilles
+				if (idTroll == numTroll) {
+					continue;
+				}	// pas nous-même
 				var tr;
 				if (idTroll in MZ_tabTrTrollById) {
 					// logMZ('[MZ] putInfosTrolls, le Troll ' + idTroll + ' est déjà dans la table HTML');
 					tr = MZ_tabTrTrollById[idTroll];
 				} else {
-					if (!affhv) continue;
+					if (!affhv) {
+						continue;
+					}
 					// logMZ('[MZ] putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
-					var distance = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
+					let distance = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
 					// trouver où insérer ce Troll
-					var next = undefined;
-					for (var j = 0; j < tr_trolls.length; j++) {
-						var thisDist = parseInt(tr_trolls[j].cells[0].textContent);
+					let next = undefined;
+					for (let j = 0; j < tr_trolls.length; j++) {
+						let thisDist = parseInt(tr_trolls[j].cells[0].textContent);
 						if (thisDist > distance) {
-							next = tr_trolls[j]
+							next = tr_trolls[j];
 							break;
 						}
 					}
 					if (next !== undefined) {
-						tr = insertTr(next, 'mh_tdpage')
+						tr = insertTr(next, 'mh_tdpage');
 					} else {
 						tr = appendTr(tBody, 'mh_tdpage');
 					}
 					tr.style.color = 'orange';
-					var desktopView = document.getElementsByClassName('ui-mobile').length == 0
+					let desktopView = document.getElementsByClassName('ui-mobile').length == 0;
 					var td = appendTd(tr);	// distance
 					appendText(td, distance);
-					if (desktopView) td = appendTd(tr);	// actions
+					if (desktopView) {
+						td = appendTd(tr);
+					}	// actions
 					td = appendTd(tr);	// ID
 					appendText(td, idTroll);
 					td = appendTd(tr);	// Nom
 					// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
-					appendA(td, 'javascript:EPV(' + idTroll + ')', 'mh_trolls_1', infos.nom);
+					appendA(td, `javascript:EPV(${idTroll})`, 'mh_trolls_1', infos.nom);
 					td = appendTd(tr);	// PV
 					td = appendTd(tr);	// PA
 					td = appendTd(tr);	// Guilde
-					if (infos.guilde !== undefined) appendText(td, infos.guilde);
+					if (infos.guilde !== undefined) {
+						appendText(td, infos.guilde);
+					}
 					if (desktopView) {
 						td = appendTd(tr);	// Niveau
-						if (infos.niveau !== undefined) appendText(td, infos.niveau);
+						if (infos.niveau !== undefined) {
+							appendText(td, infos.niveau);
+						}
 						td.align = 'center';
 						td = appendTd(tr);	// Race
-						if (infos.race) appendText(td, infos.race);
+						if (infos.race) {
+							appendText(td, infos.race);
+						}
 					} else {
 						td = appendTd(tr);	// Race + Niveau
 						let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
 						let td_niv = "";
-						if (infos.race) td_niv = `${lettreRace[infos.race]}`;
-						if (infos.niveau !== undefined) td_niv = `${td_niv} ${infos.niveau}`;
+						if (infos.race) {
+							td_niv = `${lettreRace[infos.race]}`;
+						}
+						if (infos.niveau !== undefined) {
+							td_niv = `${td_niv} ${infos.niveau}`;
+						}
 						appendText(td, td_niv);
 					}
 					td = appendTd(tr);	// X
 					td.align = 'center';
-					if (infos.x !== undefined) appendText(td, infos.x);
+					if (infos.x !== undefined) {
+						appendText(td, infos.x);
+					}
 					td = appendTd(tr);	// Y
 					td.align = 'center';
-					if (infos.y !== undefined) appendText(td, infos.y);
+					if (infos.y !== undefined) {
+						appendText(td, infos.y);
+					}
 					td = appendTd(tr);	// N
 					td.align = 'center';
-					if (infos.n !== undefined) appendText(td, infos.n);
+					if (infos.n !== undefined) {
+						appendText(td, infos.n);
+					}
 					MZ_tabTrTrollById[idTroll] = tr;
 				}
 				if (!tr.done) {
@@ -12623,18 +13547,18 @@ try {
 	}
 
 	function inversionCoord() {
-		var maPos = getPosition();
-		var listeOffsets = {
-			'monstres': checkBoxLevels.checked ? 4 : 3,
-			'trolls': 6,
+		let maPos = getPosition();
+		let listeOffsets = {
+			monstres: checkBoxLevels.checked ? 4 : 3,
+			trolls: 6,
 		};
-		for (var type in listeOffsets) {
-			var trList = VueContext['tr_' + type];
-			var offset = listeOffsets[type];
-			for (var i = trList.length - 1; i > 0; i--) {
-				var oldX = parseInt(trList[i].cells[offset].textContent);
-				var oldY = parseInt(trList[i].cells[offset + 1].textContent);
-				var oldN = parseInt(trList[i].cells[offset + 2].textContent);
+		for (let type in listeOffsets) {
+			let trList = VueContext[`tr_${type}`];
+			let offset = listeOffsets[type];
+			for (let i = trList.length - 1; i > 0; i--) {
+				let oldX = parseInt(trList[i].cells[offset].textContent);
+				let oldY = parseInt(trList[i].cells[offset + 1].textContent);
+				let oldN = parseInt(trList[i].cells[offset + 2].textContent);
 				trList[i].cells[offset].innerHTML = oldY;
 				trList[i].cells[offset + 1].innerHTML = oldX;
 				trList[i].cells[0].innerHTML = calculeDistance(maPos, [oldY, oldX, oldN]);
@@ -12645,7 +13569,7 @@ try {
 
 	/*                             Partie principale                              */
 	function do_vue() {
-		for (var type in typesAFetcher) {
+		for (let type in typesAFetcher) {
 			fetchData(type);
 		}
 
@@ -12653,15 +13577,28 @@ try {
 		// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
 		// je fais une recopie :(
 		MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
-		if (MZ_EtatCdMs.tr_monstres && MZ_EtatCdMs.tr_monstres[0])
-			for (var i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) {// Roule 22/07/2020
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Dist/i)) MZ_EtatCdMs.indexCellDist = i;
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Action/i)) MZ_EtatCdMs.indexCellActions = i;
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/r[eéè]f/i)) MZ_EtatCdMs.indexCellID = i;
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^X$/i)) MZ_EtatCdMs.indexCellX = i;
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^Y$/i)) MZ_EtatCdMs.indexCellY = i;
-				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^N$/i)) MZ_EtatCdMs.indexCellN = i;
+		if (MZ_EtatCdMs.tr_monstres && MZ_EtatCdMs.tr_monstres[0]) {
+			for (let i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) { // Roule 22/07/2020
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Dist/i)) {
+					MZ_EtatCdMs.indexCellDist = i;
+				}
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Action/i)) {
+					MZ_EtatCdMs.indexCellActions = i;
+				}
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/r[eéè]f/i)) {
+					MZ_EtatCdMs.indexCellID = i;
+				}
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^X$/i)) {
+					MZ_EtatCdMs.indexCellX = i;
+				}
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^Y$/i)) {
+					MZ_EtatCdMs.indexCellY = i;
+				}
+				if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^N$/i)) {
+					MZ_EtatCdMs.indexCellN = i;
+				}
 			}
+		}
 
 		tr_trolls = VueContext.tr_trolls;
 		tr_tresors = VueContext.tr_tresors;
@@ -12682,19 +13619,19 @@ try {
 
 			if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
 				// c'est le cas en mode smartphone, dans le cas d'une vue qui ne montre pas les monstres
-				//avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
+				// avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
 				set2DViewSystem();
 				return;
 			}
 
 			// Fonctionnalité "Têtalenvert" cachée, en test :
-			if (MY_getValue(numTroll + '.VERLAN') == 'true') {
+			if (MY_getValue(`${numTroll}.VERLAN`) == 'true') {
 				inversionCoord();
 			}
 
 			ajoutDesFiltres();
 			set2DViewSystem();
-			//putBoutonTroogle();
+			// putBoutonTroogle();
 			putBoutonPXMP();
 
 			synchroniseFiltres();
@@ -12702,17 +13639,17 @@ try {
 
 			refreshDiplo();
 
-			//400 ms
-			var noGG = saveCheckBox(checkBoxGG, "NOGG");
-			var noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-			var noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-			var noGowapsS = saveCheckBox(checkBoxGowapsS, "NOGOWAPS");
-			var noGowapsA = saveCheckBox(checkBoxGowapsA, "NOGOWAPA");
-			var noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-			var noTresorsEngages =
+			// 400 ms
+			let noGG = saveCheckBox(checkBoxGG, "NOGG");
+			let noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
+			let noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
+			let noGowapsS = saveCheckBox(checkBoxGowapsS, "NOGOWAPS");
+			let noGowapsA = saveCheckBox(checkBoxGowapsA, "NOGOWAPA");
+			let noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
+			let noTresorsEngages =
 				saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-			var noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-			var noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
+			let noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
+			let noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
 			filtreMonstres();
 			if (noIntangibles) {
 				filtreTrolls();
@@ -12745,13 +13682,12 @@ try {
 			displayScriptTime();
 		} catch (e) {
 			logMZ(traceStack(e, 'vue'));
-			avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).");
+			avertissement(`[MZ ${GM_info.script.version}] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).`);
 		}
 	}
 
 
-
-	/*******************************************************************************
+	/** *****************************************************************************
 	*  This file is part of Mountyzilla.                                           *
 	*                                                                              *
 	*  Mountyzilla is free software; you can redistribute it and/or modify         *
@@ -12771,7 +13707,7 @@ try {
 
 	// x~x profil2
 
-	/*---------------------------- Variables globales ---------------------------- */
+	/* ---------------------------- Variables globales ---------------------------- */
 
 	var
 		// Anatrolliseur
@@ -12795,7 +13731,7 @@ try {
 		DLA, DLAsuiv, HeureServeur,
 		// details duree du tour (calcul pvdispo) :
 		dtb, pdm, bmt, adb, dpt, dtbm,
-		//posale
+		// posale
 		posX, posY, posN,
 		// caracs physiques
 		vue, vuebp, vuebm, vuetotale,
@@ -12817,36 +13753,34 @@ try {
 		lastDLA, DLAaccel;
 
 
-	/*-[functions]----------------- Fonctions utiles ----------------------------- */
+	/* -[functions]----------------- Fonctions utiles ----------------------------- */
 
 	// Retourne la valeur de l'element unique et identifie par son "selector" (cf querySelector())
 	// http://www.w3schools.com/jsref/met_document_queryselector.asp
 	function getUniqueValueBySelector(selector, defaultValue) {
-		var valNode = document.querySelector(selector);
+		let valNode = document.querySelector(selector);
 		if (valNode != null) {
 			if (valNode.hasChildNodes()) {
 				return valNode.childNodes[0].nodeValue;
-			} else {
-				return defaultValue;
 			}
-		} else {
-			debugMZ("Pas d'element trouve correspondant au selecteur : " + selector);
 			return defaultValue;
 		}
+		debugMZ(`Pas d'element trouve correspondant au selecteur : ${selector}`);
+		return defaultValue;
 	}
 	function getUniqueStringValueBySelector(selector) {
 		return getUniqueValueBySelector(selector, "");
 	}
 	function getUniqueIntValueBySelector(selector) {
-		var ret = getUniqueValueBySelector(selector, 0);
-		if (ret == null || /^\s*$/.test(ret)) { // test si chaine de caracteres composee de " "
+		let ret = getUniqueValueBySelector(selector, 0);
+		if (ret == null || (/^\s*$/).test(ret)) { // test si chaine de caracteres composee de " "
 			ret = 0;
 		}
 		return parseInt(ret);
 	}
 	function getUniqueFloatValueBySelector(selector) {
-		var ret = getUniqueValueBySelector(selector, 0.0);
-		if (ret == null || /^\s*$/.test(ret)) {  // test si chaine de caracteres composee de " "
+		let ret = getUniqueValueBySelector(selector, 0.0);
+		if (ret == null || (/^\s*$/).test(ret)) { // test si chaine de caracteres composee de " "
 			ret = 0.0;
 		}
 		return parseFloat(ret);
@@ -12863,7 +13797,7 @@ try {
 	}
 
 	function retourAZero(fatig) {
-		var fat = fatig, raz = 0;
+		let fat = fatig, raz = 0;
 		while (fat > 0) {
 			raz++;
 			fat = Math.floor(fat / 1.25);
@@ -12882,12 +13816,16 @@ try {
 	}
 
 	function dureeHM(dmin) {
-		var ret = "";
+		let ret = "";
 		dmin = Math.floor(dmin);
-		if (dmin > 59) { ret = Math.floor(dmin / 60) + "h"; }
-		var mins = dmin % 60;
-		if (mins != 0) { ret += (ret) ? addZero(mins) + "min" : mins + "min"; }
-		return (ret) ? ret : "-";
+		if (dmin > 59) {
+			ret = `${Math.floor(dmin / 60)}h`;
+		}
+		let mins = dmin % 60;
+		if (mins != 0) {
+			ret = ret + (ret ? `${addZero(mins)}min` : `${mins}min`);
+		}
+		return ret ? ret : "-";
 	}
 
 	// extraction d'une durée
@@ -12895,38 +13833,44 @@ try {
 	// c'est protégé (rend 0 si l'élément est absent)
 	// Roule' 24/12/2016
 	function extractionDuree(selecteur) {
-		var s = getUniqueStringValueBySelector(selecteur);
-		if (!s) return 0;
-		var tabN = getNumbers(s);
-		if (tabN.length < 1) return 0;
-		if (tabN.length == 1) tabN = [tabN[0], 0];	// pas de minutes dans le texte si on a un nombre exact d'heures
+		let s = getUniqueStringValueBySelector(selecteur);
+		if (!s) {
+			return 0;
+		}
+		let tabN = getNumbers(s);
+		if (tabN.length < 1) {
+			return 0;
+		}
+		if (tabN.length == 1) {
+			tabN = [tabN[0], 0];
+		}	// pas de minutes dans le texte si on a un nombre exact d'heures
 		if (s.includes('-')) {
-			return - tabN[0] * 60 - tabN[1];
+			return -tabN[0] * 60 - tabN[1];
 		}
 		return tabN[0] * 60 + tabN[1];
 	}
 
-	/*-[functions]------- Extraction / Sauvegarde des donnees -------------------- */
+	/* -[functions]------- Extraction / Sauvegarde des donnees -------------------- */
 
 	function extractionDonnees() {
 		// Variables temporaires
-		var Nbrs = {};
+		let Nbrs = {};
 
 		// *********************
 		// Cadre "Description"
 		// *********************
 		race = getUniqueStringValueBySelector('#descr #race');
-		debugMZ("Race : " + race);
+		debugMZ(`Race : ${race}`);
 		idtroll = getUniqueStringValueBySelector('#descr #id');
-		debugMZ("Id troll : " + idtroll);
-		var strDateCrea = getUniqueStringValueBySelector('#descr td#crea>span');
+		debugMZ(`Id troll : ${idtroll}`);
+		let strDateCrea = getUniqueStringValueBySelector('#descr td#crea>span');
 		strDateCrea = strDateCrea.slice(strDateCrea.indexOf("(") + 1, strDateCrea.indexOf(")"));
 		datecrea = new Date(StringToDate(strDateCrea));
-		debugMZ("Date creation : " + datecrea);
+		debugMZ(`Date creation : ${datecrea}`);
 		// Guilde
 		idguilde = getUniqueIntValueBySelector('#descr #idguilde');
 		nomguilde = getUniqueStringValueBySelector('#descr #nomguilde');
-		debugMZ("Guilde: " + idguilde + ' ' + nomguilde);
+		debugMZ(`Guilde: ${idguilde} ${nomguilde}`);
 
 		// *******************
 		// Cadre "Experience"
@@ -12934,55 +13878,55 @@ try {
 		// Niveau de troll
 		niv = getUniqueIntValueBySelector('#exp #niv');
 		nivTroll = niv;
-		debugMZ("Niveau : " + niv);
+		debugMZ(`Niveau : ${niv}`);
 		// PX
 		pxdistribuables = getUniqueIntValueBySelector('#exp #px');
 		pxperso = getUniqueIntValueBySelector('#exp #px_perso');
-		debugMZ("Px Distrib/Perso: " + pxdistribuables + " / " + pxperso);
+		debugMZ(`Px Distrib/Perso: ${pxdistribuables} / ${pxperso}`);
 		// PI
 		piutilisable = getUniqueIntValueBySelector('#exp #pi');
 		pitotal = getUniqueIntValueBySelector('#exp #pitot');
-		debugMZ("PI utilisables/total: " + piutilisable + " / " + pitotal);
+		debugMZ(`PI utilisables/total: ${piutilisable} / ${pitotal}`);
 		// Meutres/Morts
 		nbmeurtres = getUniqueIntValueBySelector('#exp #kill');
 		nbmorts = getUniqueIntValueBySelector('#exp #mort');
-		debugMZ("Nb Meutres/Morts: " + nbmeurtres + " / " + nbmorts);
+		debugMZ(`Nb Meutres/Morts: ${nbmeurtres} / ${nbmorts}`);
 
 		// *********************
 		// Cadre "Tour de Jeu"
 		// *********************
 		// DLA
-		Nbrs['dla'] = getUniqueStringValueBySelector('#dla #dla>b');
-		DLA = new Date(StringToDate(Nbrs['dla']));
-		debugMZ('DLA: ' + DLA);
+		Nbrs.dla = getUniqueStringValueBySelector('#dla #dla>b');
+		DLA = new Date(StringToDate(Nbrs.dla));
+		debugMZ(`DLA: ${DLA}`);
 		// DLA suivante
-		Nbrs['dlasuiv'] = getUniqueStringValueBySelector('#dla #dla_next');
-		DLAsuiv = new Date(StringToDate(Nbrs['dlasuiv']));
-		debugMZ('DLAsuiv: ' + DLAsuiv);
+		Nbrs.dlasuiv = getUniqueStringValueBySelector('#dla #dla_next');
+		DLAsuiv = new Date(StringToDate(Nbrs.dlasuiv));
+		debugMZ(`DLAsuiv: ${DLAsuiv}`);
 		// Duree normale de mon Tour
 		dtb = extractionDuree('#dla #tour');
-		debugMZ('Duree normale de mon Tour : ' + dtb);
+		debugMZ(`Duree normale de mon Tour : ${dtb}`);
 		// Bonus/malus
 		dtbm = extractionDuree('#dla #bm');
-		debugMZ('Bonus/Malus équipement sur la duree : ' + dtbm);
+		debugMZ(`Bonus/Malus équipement sur la duree : ${dtbm}`);
 		// Réserve
 		dtreserve = extractionDuree('#dla #reserve');
-		debugMZ('Durée de réserve : ' + dtreserve);
+		debugMZ(`Durée de réserve : ${dtreserve}`);
 		// Poids de l'equipement
 		pdm = extractionDuree('#dla #poids');
-		debugMZ('Poids de l\'equipement : ' + pdm);
+		debugMZ(`Poids de l'equipement : ${pdm}`);
 		// Bonus/Malus equipement
 		bmt = extractionDuree('#dla #bmequipement');	// Roule' 24/12/2016 on a trouvé un Troll qui n'a pas de bmt !
-		debugMZ('Bonus/Malus équipement sur la duree : ' + bmt);
+		debugMZ(`Bonus/Malus équipement sur la duree : ${bmt}`);
 		// Augmentation due aux blessures
 		adb = extractionDuree('#dla #blessure');
-		debugMZ('Augmentation due aux blessures : ' + adb);
+		debugMZ(`Augmentation due aux blessures : ${adb}`);
 		// Mouches
 		bmmouche = extractionDuree('#dla #mouche');
-		debugMZ('Bonus des mouches : ' + bmmouche);
+		debugMZ(`Bonus des mouches : ${bmmouche}`);
 		// Duree de mon prochain Tour
 		dpt = extractionDuree('#dla #duree>b');
-		debugMZ('Duree de mon prochain Tour : ' + dpt);
+		debugMZ(`Duree de mon prochain Tour : ${dpt}`);
 
 		// ****************
 		// Cadre "Etats"
@@ -12991,15 +13935,15 @@ try {
 		posX = getUniqueIntValueBySelector('#pos #x');
 		posY = getUniqueIntValueBySelector('#pos #y');
 		posN = getUniqueIntValueBySelector('#pos #n');
-		debugMZ("(X Y Z) : " + posX + " " + posY + " " + posN);
+		debugMZ(`(X Y Z) : ${posX} ${posY} ${posN}`);
 		// PV actuel
 		pvcourant = getUniqueIntValueBySelector('#pos #pv_courant');
 		pvActuelKastar = pvcourant;
-		debugMZ("PV actuel : " + pvcourant)
+		debugMZ(`PV actuel : ${pvcourant}`);
 		// Fatigue
 		fatigue = getUniqueIntValueBySelector('#pos #fatigue');
 		bmfatigue = getUniqueIntValueBySelector('#pos #fatiguebm');
-		debugMZ('Fatigue : ' + fatigue + " + " + bmfatigue);
+		debugMZ(`Fatigue : ${fatigue} + ${bmfatigue}`);
 
 		// **************************
 		// Cadre "Caracteristiques"
@@ -13008,15 +13952,15 @@ try {
 		att = getUniqueIntValueBySelector('#carac #att');
 		attbp = getUniqueIntValueBySelector('#carac #att_p');
 		attbm = getUniqueIntValueBySelector('#carac #att_m');
-		atttour = getUniqueIntValueBySelector('#carac #att_tour');    // % bonus AdA
+		atttour = getUniqueIntValueBySelector('#carac #att_tour'); // % bonus AdA
 		atttourD = getUniqueIntValueBySelector('#carac #att_tour_d'); // malus Parade
 		attmoy = 3.5 * att + attbp + attbm;
-		var DAttBonus = Math.floor(((att + atttourD) * atttour / 100)); // À vérifier
+		let DAttBonus = Math.floor((att + atttourD) * atttour / 100); // À vérifier
 		attmoytour = 3.5 * (att + DAttBonus) + attbp + attbm;
 		debugMZ(
-			"ATT: " + att + "+(" + attbp + ")+(" + attbm + ") ;AttMoy:" + attmoy +
-			"; BM Dé att/tour:(" + atttourD + "D;" + atttour + "%) " + (atttourD + DAttBonus) +
-			"D ;AttMoyTour:" + attmoytour
+			`ATT: ${att}+(${attbp})+(${attbm}) ;AttMoy:${attmoy
+			}; BM Dé att/tour:(${atttourD}D;${atttour}%) ${atttourD + DAttBonus
+			}D ;AttMoyTour:${attmoytour}`
 		);
 		// Esquive
 		esq = getUniqueIntValueBySelector('#carac #esq');
@@ -13025,7 +13969,7 @@ try {
 		esqtourD = getUniqueIntValueBySelector('#carac #esq_tour_d');
 		esqmoy = 3.5 * esq + esqbp + esqbm;
 		esqmoytour = 3.5 * (esq + esqtourD) + esqbp + esqbm;
-		debugMZ("ESQ: " + esq + "+(" + esqbp + ")+(" + esqbm + ") ;EsqMoy:" + esqmoy + "; esq/tour:" + esqtourD + " ;EsqMoyTour:" + esqmoytour);
+		debugMZ(`ESQ: ${esq}+(${esqbp})+(${esqbm}) ;EsqMoy:${esqmoy}; esq/tour:${esqtourD} ;EsqMoyTour:${esqmoytour}`);
 		// Degat
 		deg = getUniqueIntValueBySelector('#carac #deg');
 		degbp = getUniqueIntValueBySelector('#carac #deg_p');
@@ -13033,26 +13977,26 @@ try {
 		degtour = getUniqueIntValueBySelector('#carac #deg_tour'); // % bonus AdD
 		degmoy = 2 * deg + degbp + degbm;
 		degmoycrit = 2 * (deg + Math.floor(deg / 2)) + degbp + degbm;
-		var DDegBonus = Math.floor(deg * degtour / 100);
+		let DDegBonus = Math.floor(deg * degtour / 100);
 		degmoytour = 2 * (deg + DDegBonus) + degbp + degbm;
 		degmoycrittour = degmoytour + 2 * Math.floor(deg / 2);
 		debugMZ(
-			"DEG: " + deg + "+(" + degbp + ")+(" + degbm + ") ;DegMoy:" + degmoy + "/" + degmoycrit +
-			" ;deg/tour:(" + degtour + "%) " + DDegBonus +
-			"D; DegMoyTour:" + degmoytour + "/" + degmoycrittour
+			`DEG: ${deg}+(${degbp})+(${degbm}) ;DegMoy:${degmoy}/${degmoycrit
+			} ;deg/tour:(${degtour}%) ${DDegBonus
+			}D; DegMoyTour:${degmoytour}/${degmoycrittour}`
 		);
 		// PV
 		pvbase = getUniqueIntValueBySelector('#carac #pv');
 		pvbpm = getUniqueIntValueBySelector('#carac #pv_p_m');
 		pvtotal = getUniqueIntValueBySelector('#carac #pv_tot');
 		pvmax = getUniqueIntValueBySelector('#pv_max');
-		debugMZ("PV: " + pvbase + " + (" + pvbpm + ") = " + pvtotal);
+		debugMZ(`PV: ${pvbase} + (${pvbpm}) = ${pvtotal}`);
 		// Regeneration
 		reg = getUniqueIntValueBySelector('#carac #reg');
 		regbp = getUniqueIntValueBySelector('#carac #reg_p');
 		regbm = getUniqueIntValueBySelector('#carac #reg_m');
 		regmoy = 2 * reg + regbp + regbm; // D3
-		debugMZ("REG: " + reg + "+(" + regbp + ")+(" + regbm + ") ;RegMoy:" + regmoy);
+		debugMZ(`REG: ${reg}+(${regbp})+(${regbm}) ;RegMoy:${regmoy}`);
 		// Armure
 		arm = getUniqueIntValueBySelector('#carac #arm');
 		armbp = getUniqueIntValueBySelector('#carac #arm_p');
@@ -13060,47 +14004,47 @@ try {
 		armtourD = getUniqueIntValueBySelector('#carac #arm_tour_d');
 		armmoy = 2 * arm + armbp + armbm;
 		armmoytour = 2 * Math.max(arm + armtourD, 0) + armbp + armbm;
-		debugMZ("ARM: " + arm + "+(" + armbp + ")+(" + armbm + "); ArmMoy:" + armmoy + "; arm/tour:" + armtourD + "; ArmMoyTour:" + armmoytour);
+		debugMZ(`ARM: ${arm}+(${armbp})+(${armbm}); ArmMoy:${armmoy}; arm/tour:${armtourD}; ArmMoyTour:${armmoytour}`);
 		// TODO : D d'armure non active
 		// Vue
 		vue = getUniqueIntValueBySelector('#carac #vue');
 		vuebp = getUniqueIntValueBySelector('#carac #vue_p');
 		vuebm = getUniqueIntValueBySelector('#carac #vue_m');
 		vuetotale = getUniqueIntValueBySelector('#carac #vue_tot');
-		debugMZ("Vue: " + vue + " + (" + vuebp + ") + (" + vuebm + ") = " + vuetotale);
+		debugMZ(`Vue: ${vue} + (${vuebp}) + (${vuebm}) = ${vuetotale}`);
 		// RM
 		rm = getUniqueIntValueBySelector('#carac #rm');
 		rmbp = getUniqueIntValueBySelector('#carac #rm_p');
 		rmbm = getUniqueIntValueBySelector('#carac #rm_m');
 		rmtotale = getUniqueIntValueBySelector('#carac #rm_tot');
 		rmTroll = rmtotale;
-		debugMZ("RM: " + rm + " + (" + rmbp + ") + (" + rmbm + ") = " + rmtotale);
+		debugMZ(`RM: ${rm} + (${rmbp}) + (${rmbm}) = ${rmtotale}`);
 		// MM
 		mm = getUniqueIntValueBySelector('#carac #mm');
 		mmbp = getUniqueIntValueBySelector('#carac #mm_p');
 		mmbm = getUniqueIntValueBySelector('#carac #mm_m');
 		mmtotale = getUniqueIntValueBySelector('#carac #mm_tot');
 		mmTroll = mmtotale;
-		debugMZ("MM: " + mm + " + (" + mmbp + ") + (" + mmbm + ") = " + mmtotale);
+		debugMZ(`MM: ${mm} + (${mmbp}) + (${mmbm}) = ${mmtotale}`);
 
 		// Heure Serveur
 		try {
-			var heureServeurSTR = document.querySelector("#hserveur").innerHTML;
+			let heureServeurSTR = document.querySelector("#hserveur").innerHTML;
 			heureServeurSTR = heureServeurSTR.slice(heureServeurSTR.indexOf("/") - 2, heureServeurSTR.lastIndexOf(":") + 3);
 			HeureServeur = new Date(StringToDate(heureServeurSTR));
 		} catch (e) {
 			window.console.warn(
-				"[MZ " + GM_info.script.version + "] Heure Serveur introuvable, utilisation de l'heure actuelle", e
+				`[MZ ${GM_info.script.version}] Heure Serveur introuvable, utilisation de l'heure actuelle`, e
 			);
 			HeureServeur = new Date();
 		}
-		debugMZ("HeureServeur: " + HeureServeur);
+		debugMZ(`HeureServeur: ${HeureServeur}`);
 
 		// ***INIT GLOBALE*** NBjours
 		NBjours = Math.floor((HeureServeur - datecrea) / jour_en_ms) + 1;
 
 		// Calcul debut lien anatroliseur avec les caracteristiques connues
-		var amelio_dtb = function (dtb) {
+		let amelio_dtb = function (dtb) {
 			if (dtb > 555) {
 				return Math.floor((21 - Math.sqrt(8 * dtb / 3 - 1479)) / 2);
 			}
@@ -13113,144 +14057,164 @@ try {
 			amelio_deg = deg - 3,
 			amelio_reg = reg - 1,
 			amelio_arm = arm - 1;
-		if (race === "Darkling") { amelio_reg--; }
-		if (race === "Durakuir") { amelio_pv--; }
-		if (race === "Kastar") { amelio_deg--; }
-		if (race === "Skrim") { amelio_att--; }
-		if (race === "Tomawak") { amelio_vue--; }
+		if (race === "Darkling") {
+			amelio_reg--;
+		}
+		if (race === "Durakuir") {
+			amelio_pv--;
+		}
+		if (race === "Kastar") {
+			amelio_deg--;
+		}
+		if (race === "Skrim") {
+			amelio_att--;
+		}
+		if (race === "Tomawak") {
+			amelio_vue--;
+		}
 
-		urlAnatrolliseur = URL_AnatrolDispas
-			+ "outils_anatrolliseur.php?anatrolliseur=v8"
-			+ "|r=" + race.toLowerCase()
-			+ "|dla=" + amelio_dtb(dtb)
-			+ "|pv=" + amelio_pv + "," + pvbpm + ",0"
-			+ "|vue=" + amelio_vue + "," + vuebp + "," + vuebm
-			+ "|att=" + amelio_att + "," + attbp + "," + attbm
-			+ "|esq=" + amelio_esq + "," + esqbp + "," + esqbm
-			+ "|deg=" + amelio_deg + "," + degbp + "," + degbm
-			+ "|reg=" + amelio_reg + "," + regbp + "," + regbm
-			+ "|arm=" + amelio_arm + "," + armbp + "," + armbm
-			+ "|mm=" + mmtotale
-			+ "|rm=" + rmtotale + "|";
+		urlAnatrolliseur = `${URL_AnatrolDispas
+			}outils_anatrolliseur.php?anatrolliseur=v8` +
+			`|r=${race.toLowerCase()
+			}|dla=${amelio_dtb(dtb)
+			}|pv=${amelio_pv},${pvbpm},0` +
+			`|vue=${amelio_vue},${vuebp},${vuebm
+			}|att=${amelio_att},${attbp},${attbm
+			}|esq=${amelio_esq},${esqbp},${esqbm
+			}|deg=${amelio_deg},${degbp},${degbm
+			}|reg=${amelio_reg},${regbp},${regbm
+			}|arm=${amelio_arm},${armbp},${armbm
+			}|mm=${mmtotale
+			}|rm=${rmtotale}|`;
 	}
 
 	function saveProfil() {
-		MY_setValue(idtroll + '.caracs.attaque', att);
-		MY_setValue(idtroll + '.caracs.attaque.bm', (attbp + attbm));
-		MY_setValue(idtroll + '.caracs.attaque.bmp', attbp);
-		MY_setValue(idtroll + '.caracs.attaque.bmm', attbm);
+		MY_setValue(`${idtroll}.caracs.attaque`, att);
+		MY_setValue(`${idtroll}.caracs.attaque.bm`, attbp + attbm);
+		MY_setValue(`${idtroll}.caracs.attaque.bmp`, attbp);
+		MY_setValue(`${idtroll}.caracs.attaque.bmm`, attbm);
 		if (atttourD || atttour) {
-			var DAttBonus = atttourD + Math.floor((att + atttourD) * atttour / 100);
-			MY_setValue(idtroll + '.bonus.DAttM', DAttBonus);
+			let DAttBonus = atttourD + Math.floor((att + atttourD) * atttour / 100);
+			MY_setValue(`${idtroll}.bonus.DAttM`, DAttBonus);
 		} else {
-			MY_removeValue(idtroll + '.bonus.DAttM');
+			MY_removeValue(`${idtroll}.bonus.DAttM`);
 		}
-		MY_setValue(idtroll + '.caracs.esquive', esq);
-		MY_setValue(idtroll + '.caracs.esquive.bm', (esqbp + esqbm));
-		MY_setValue(idtroll + '.caracs.esquive.bmp', esqbp);
-		MY_setValue(idtroll + '.caracs.esquive.bmm', esqbm);
-		MY_setValue(idtroll + '.caracs.esquive.nbattaques', esqtourD);
-		MY_setValue(idtroll + '.caracs.degats', deg);
-		MY_setValue(idtroll + '.caracs.degats.bm', (degbp + degbm));
-		MY_setValue(idtroll + '.caracs.degats.bmp', degbp);
-		MY_setValue(idtroll + '.caracs.degats.bmm', degbm);
+		MY_setValue(`${idtroll}.caracs.esquive`, esq);
+		MY_setValue(`${idtroll}.caracs.esquive.bm`, esqbp + esqbm);
+		MY_setValue(`${idtroll}.caracs.esquive.bmp`, esqbp);
+		MY_setValue(`${idtroll}.caracs.esquive.bmm`, esqbm);
+		MY_setValue(`${idtroll}.caracs.esquive.nbattaques`, esqtourD);
+		MY_setValue(`${idtroll}.caracs.degats`, deg);
+		MY_setValue(`${idtroll}.caracs.degats.bm`, degbp + degbm);
+		MY_setValue(`${idtroll}.caracs.degats.bmp`, degbp);
+		MY_setValue(`${idtroll}.caracs.degats.bmm`, degbm);
 		if (degtour) {
-			var DDegBonus = Math.floor(deg * degtour / 100);
-			MY_setValue(idtroll + '.bonus.DDeg', DDegBonus);
+			let DDegBonus = Math.floor(deg * degtour / 100);
+			MY_setValue(`${idtroll}.bonus.DDeg`, DDegBonus);
 		} else {
-			MY_removeValue(idtroll + '.bonus.DDeg');
+			MY_removeValue(`${idtroll}.bonus.DDeg`);
 		}
-		MY_setValue(idtroll + '.caracs.regeneration', reg);
-		MY_setValue(idtroll + '.caracs.regeneration.bm', (regbp + regbm));
-		MY_setValue(idtroll + '.caracs.regeneration.bmp', regbp);
-		MY_setValue(idtroll + '.caracs.regeneration.bmm', regbm);
-		MY_setValue(idtroll + '.caracs.vue', vue);
-		MY_setValue(idtroll + '.caracs.vue.bm', (vuebp + vuebm));
-		MY_setValue(idtroll + '.caracs.vue.bmp', vuebp);
-		MY_setValue(idtroll + '.caracs.vue.bmm', vuebm);
-		MY_setValue(idtroll + '.caracs.pv', pvcourant);
-		MY_setValue(idtroll + '.caracs.pv.base', pvbase);
-		MY_setValue(idtroll + '.caracs.pv.max', pvtotal);
-		MY_setValue(idtroll + '.caracs.rm', rm);
-		MY_setValue(idtroll + '.caracs.rm.bm', (rmtotale));
-		MY_setValue(idtroll + '.caracs.rm.bmp', rmbp);
-		MY_setValue(idtroll + '.caracs.rm.bmm', rmbm);
-		MY_setValue(idtroll + '.caracs.mm', mm);
-		MY_setValue(idtroll + '.caracs.mm.bm', (mmtotale));
-		MY_setValue(idtroll + '.caracs.mm.bmp', mmbp);
-		MY_setValue(idtroll + '.caracs.mm.bmm', mmbm);
-		MY_setValue(idtroll + '.caracs.armure', arm);
-		MY_setValue(idtroll + '.caracs.armure.bm', (armbp + armbm));
-		MY_setValue(idtroll + '.caracs.armure.bmp', armbp);
-		MY_setValue(idtroll + '.caracs.armure.bmm', armbm);
-		MY_setValue(idtroll + '.position.X', posX);
-		MY_setValue(idtroll + '.position.Y', posY);
-		MY_setValue(idtroll + '.position.N', posN);
-		MY_setValue(idtroll + '.race', race);
-		MY_setValue(idtroll + '.niveau', niv);
-		MY_setValue(idtroll + '.idguilde', idguilde);
-		MY_setValue(idtroll + '.nomguilde', nomguilde);
+		MY_setValue(`${idtroll}.caracs.regeneration`, reg);
+		MY_setValue(`${idtroll}.caracs.regeneration.bm`, regbp + regbm);
+		MY_setValue(`${idtroll}.caracs.regeneration.bmp`, regbp);
+		MY_setValue(`${idtroll}.caracs.regeneration.bmm`, regbm);
+		MY_setValue(`${idtroll}.caracs.vue`, vue);
+		MY_setValue(`${idtroll}.caracs.vue.bm`, vuebp + vuebm);
+		MY_setValue(`${idtroll}.caracs.vue.bmp`, vuebp);
+		MY_setValue(`${idtroll}.caracs.vue.bmm`, vuebm);
+		MY_setValue(`${idtroll}.caracs.pv`, pvcourant);
+		MY_setValue(`${idtroll}.caracs.pv.base`, pvbase);
+		MY_setValue(`${idtroll}.caracs.pv.max`, pvtotal);
+		MY_setValue(`${idtroll}.caracs.rm`, rm);
+		MY_setValue(`${idtroll}.caracs.rm.bm`, rmtotale);
+		MY_setValue(`${idtroll}.caracs.rm.bmp`, rmbp);
+		MY_setValue(`${idtroll}.caracs.rm.bmm`, rmbm);
+		MY_setValue(`${idtroll}.caracs.mm`, mm);
+		MY_setValue(`${idtroll}.caracs.mm.bm`, mmtotale);
+		MY_setValue(`${idtroll}.caracs.mm.bmp`, mmbp);
+		MY_setValue(`${idtroll}.caracs.mm.bmm`, mmbm);
+		MY_setValue(`${idtroll}.caracs.armure`, arm);
+		MY_setValue(`${idtroll}.caracs.armure.bm`, armbp + armbm);
+		MY_setValue(`${idtroll}.caracs.armure.bmp`, armbp);
+		MY_setValue(`${idtroll}.caracs.armure.bmm`, armbm);
+		MY_setValue(`${idtroll}.position.X`, posX);
+		MY_setValue(`${idtroll}.position.Y`, posY);
+		MY_setValue(`${idtroll}.position.N`, posN);
+		MY_setValue(`${idtroll}.race`, race);
+		MY_setValue(`${idtroll}.niveau`, niv);
+		MY_setValue(`${idtroll}.idguilde`, idguilde);
+		MY_setValue(`${idtroll}.nomguilde`, nomguilde);
 	}
 
 
-	/*-[functions]----------- Fonctions modifiant la page ------------------------ */
+	/* -[functions]----------- Fonctions modifiant la page ------------------------ */
 
 	function setInfosCaracteristiques() {
 		// Modification de l'entete
-		var thTotal = document.querySelector("table#caracs>thead>tr>th:nth-child(6)");
-		thTotal.innerHTML += '|<i>Moyenne</i>';
+		let thTotal = document.querySelector("table#caracs>thead>tr>th:nth-child(6)");
+		thTotal.innerHTML = `${thTotal.innerHTML}|<i>Moyenne</i>`;
 		thTotal.title = "Moyenne (Moyenne ce tour)";
 
 		// Ajout des informations calculees
-		var tdAttTotal = document.querySelector("table#caracs td#att").parentElement.children[5];
-		tdAttTotal.innerHTML = "<i>" + attmoy + "</i>";
-		if (attmoy != attmoytour) { tdAttTotal.innerHTML += " (" + attmoytour + ")"; }
+		let tdAttTotal = document.querySelector("table#caracs td#att").parentElement.children[5];
+		tdAttTotal.innerHTML = `<i>${attmoy}</i>`;
+		if (attmoy != attmoytour) {
+			tdAttTotal.innerHTML = `${tdAttTotal.innerHTML} (${attmoytour})`;
+		}
 
-		var tdEsqTotal = document.querySelector("table#caracs td#esq").parentElement.children[5];
-		tdEsqTotal.innerHTML = "<i>" + esqmoy + "</i>";
-		if (esqmoy != esqmoytour) { tdEsqTotal.innerHTML += " (" + esqmoytour + ")"; }
+		let tdEsqTotal = document.querySelector("table#caracs td#esq").parentElement.children[5];
+		tdEsqTotal.innerHTML = `<i>${esqmoy}</i>`;
+		if (esqmoy != esqmoytour) {
+			tdEsqTotal.innerHTML = `${tdEsqTotal.innerHTML} (${esqmoytour})`;
+		}
 
-		var tdDegTotal = document.querySelector("table#caracs td#deg").parentElement.children[5];
-		tdDegTotal.innerHTML = "<i>" + degmoy + "/" + degmoycrit + "</i>";
-		if (degmoy != degmoytour) { tdDegTotal.innerHTML += " (" + degmoytour + "/" + degmoycrittour + ")"; }
+		let tdDegTotal = document.querySelector("table#caracs td#deg").parentElement.children[5];
+		tdDegTotal.innerHTML = `<i>${degmoy}/${degmoycrit}</i>`;
+		if (degmoy != degmoytour) {
+			tdDegTotal.innerHTML = `${tdDegTotal.innerHTML} (${degmoytour}/${degmoycrittour})`;
+		}
 
-		var trRegeneration = document.querySelector("table#caracs td#reg").parentElement;
-		var tdRegTotal = trRegeneration.children[5];
-		tdRegTotal.innerHTML = "<i>" + regmoy + "</i>";
+		let trRegeneration = document.querySelector("table#caracs td#reg").parentElement;
+		let tdRegTotal = trRegeneration.children[5];
+		tdRegTotal.innerHTML = `<i>${regmoy}</i>`;
 		// Temps recupere par reg (propale R')
-		var regmoyTemp = Math.max(0, regmoy);
-		var regTitle = "Temps moyen récupéré par régénération: " + Math.floor(250 * regmoyTemp / pvtotal) + " min";
-		var sec = Math.floor(15000 * regmoyTemp / pvtotal) % 60;
+		let regmoyTemp = Math.max(0, regmoy);
+		let regTitle = `Temps moyen récupéré par régénération: ${Math.floor(250 * regmoyTemp / pvtotal)} min`;
+		let sec = Math.floor(15000 * regmoyTemp / pvtotal) % 60;
 		if (sec != 0) {
-			regTitle += " " + sec + " sec";
+			regTitle = `${regTitle} ${sec} sec`;
 		}
 		trRegeneration.title = regTitle;
 
-		var tdArmTotal = document.querySelector("table#caracs td#arm").parentElement.children[5];
-		tdArmTotal.innerHTML = "<i>" + armmoy + "</i>";
-		if (armmoy != armmoytour) { tdArmTotal.innerHTML += " (" + armmoytour + ")"; }
+		let tdArmTotal = document.querySelector("table#caracs td#arm").parentElement.children[5];
+		tdArmTotal.innerHTML = `<i>${armmoy}</i>`;
+		if (armmoy != armmoytour) {
+			tdArmTotal.innerHTML = `${tdArmTotal.innerHTML} (${armmoytour})`;
+		}
 
-		var trRM = document.querySelector("table#caracs #rm").parentElement;
-		trRM.title = (Math.round(10 * rm / NBjours) / 10) + ' (' + (Math.round(10 * rmTroll / NBjours) / 10) + ') points de RM par jour | '
-			+ (Math.round(10 * rm / niv) / 10) + ' (' + (Math.round(10 * rmtotale / niv) / 10) + ') points de RM par niveau';
+		let trRM = document.querySelector("table#caracs #rm").parentElement;
+		trRM.title = `${Math.round(10 * rm / NBjours) / 10} (${Math.round(10 * rmTroll / NBjours) / 10}) points de RM par jour | ${Math.round(10 * rm / niv) / 10} (${Math.round(10 * rmtotale / niv) / 10}) points de RM par niveau`;
 
 
-		var trMM = document.querySelector("table#caracs #mm").parentElement;
-		trMM.title = (Math.round(10 * mm / NBjours) / 10) + ' (' + (Math.round(10 * mmTroll / NBjours) / 10) + ') points de MM  par jour | '
-			+ (Math.round(10 * mm / niv) / 10) + ' (' + (Math.round(10 * mmtotale / niv) / 10) + ') points de MM par niveau';
+		let trMM = document.querySelector("table#caracs #mm").parentElement;
+		trMM.title = `${Math.round(10 * mm / NBjours) / 10} (${Math.round(10 * mmTroll / NBjours) / 10}) points de MM  par jour | ${Math.round(10 * mm / niv) / 10} (${Math.round(10 * mmtotale / niv) / 10}) points de MM par niveau`;
 
-		var tdRefl = document.querySelector("#refl");
+		let tdRefl = document.querySelector("#refl");
 		// TODO : prendre en compte bonus/malus D esq du tour ?
-		var refMoy = Math.floor(2 * (reg + esq) / 3) * 3.5 + esqbp + esqbm;
-		tdRefl.innerHTML += " <i>(moyenne : " + refMoy + ")</i>";
+		let refMoy = Math.floor(2 * (reg + esq) / 3) * 3.5 + esqbp + esqbm;
+		tdRefl.innerHTML = `${tdRefl.innerHTML} <i>(moyenne : ${refMoy})</i>`;
 	}
 
 	function setLienAnatrolliseur() {
-		var pTableAmelio = document.querySelector("#carac>div>p");
-		if (!pTableAmelio) pTableAmelio = document.querySelector("#carac>div>div>p");
-		if (!pTableAmelio) return;
+		let pTableAmelio = document.querySelector("#carac>div>p");
+		if (!pTableAmelio) {
+			pTableAmelio = document.querySelector("#carac>div>div>p");
+		}
+		if (!pTableAmelio) {
+			return;
+		}
 		pTableAmelio.appendChild(document.createTextNode(' - '));
-		var aElt = document.createElement("a");
+		let aElt = document.createElement("a");
 		aElt.setAttribute("href", urlAnatrolliseur);
 		aElt.setAttribute("target", "_blank");
 		aElt.className = "AllLinks";
@@ -13258,19 +14222,18 @@ try {
 		pTableAmelio.appendChild(aElt);
 	}
 	function setInfoDescription() {
-		var txtDateCrea = (NBjours != 1) ?
-			" (" + NBjours + " jours dans le hall)" :
+		let txtDateCrea = NBjours != 1 ?
+			` (${NBjours} jours dans le hall)` :
 			" (Bienvenue à toi pour ton premier jour dans le hall)";
 		appendText(document.querySelector("#descr td#crea"), txtDateCrea, false);
 	}
 
 	function setInfosEtatLieux() {
-		var urlBricol = URL_bricol_mountyhall + 'lieux.php' +
-			'?search=position&orderBy=distance&posx=' +
-			posX + '&posy=' + posY + '&posn=' + posN + '&typeLieu=3';
-		var tdPosition = document.querySelector("#pos td span#x").parentElement;
+		let urlBricol = `${URL_bricol_mountyhall}lieux.php` +
+			`?search=position&orderBy=distance&posx=${posX}&posy=${posY}&posn=${posN}&typeLieu=3`;
+		let tdPosition = document.querySelector("#pos td span#x").parentElement;
 		appendBr(tdPosition);
-		var aElt = document.createElement("a");
+		let aElt = document.createElement("a");
 		aElt.setAttribute("href", urlBricol);
 		aElt.setAttribute("target", "_blank");
 		aElt.className = "AllLinks";
@@ -13279,41 +14242,45 @@ try {
 	}
 
 	function setInfosEtatPV() { // pour AM et Sacro
-		var
-			txt = "1 PV de perdu = +" + Math.floor(250 / pvtotal) + " min",
+		let
+			txt = `1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
 			sec = Math.floor(15000 / pvtotal) % 60,
 			lifebar = document.querySelector("#pos .barre-vie");
-		if (sec != 0) { txt += " " + sec + " sec"; }
-		if (lifebar) { lifebar.title = txt; }
-		if (pvcourant <= 0) { return; }
+		if (sec != 0) {
+			txt = `${txt} ${sec} sec`;
+		}
+		if (lifebar) {
+			lifebar.title = txt;
+		}
+		if (pvcourant <= 0) {
+			return;
+		}
 
 		// Difference PV p/r a equilibre de temps (propale R')
 		// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + bmmouche))
 		// ***INIT GLOBALE*** pvdispo
-		var bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
-		var pvdispo = pvcourant - pvtotal - Math.ceil(bmPVHorsBlessure * pvtotal / 250);
-		var span = document.createElement("span");
+		let bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
+		let pvdispo = pvcourant - pvtotal - Math.ceil(bmPVHorsBlessure * pvtotal / 250);
+		let span = document.createElement("span");
 		span.title = txt;
 		span.style.fontStyle = "italic";
 		if (bmPVHorsBlessure >= 0) {
 			txt = "[MZ] Vous ne pouvez compenser aucune blessure actuellement.";
 		} else if (pvdispo > 0) {
-			txt = "[MZ] Vous pouvez encore perdre " +
-				Math.min(pvdispo, pvcourant) +
-				" PV sans malus de temps.";
+			txt = `[MZ] Vous pouvez encore perdre ${Math.min(pvdispo, pvcourant)
+				} PV sans malus de temps.`;
 		} else if (pvdispo < 0) {
-			txt = "[MZ] Il vous manque "
-				+ (-pvdispo)
-				+ " PV pour ne plus avoir de malus de temps.";
+			txt = `[MZ] Il vous manque ${-pvdispo
+				} PV pour ne plus avoir de malus de temps.`;
 		} else {
 			txt = "[MZ] Vous êtes à l'équilibre en temps (+/- 30sec).";
 		}
 		appendText(span, txt);
 		document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
-		var marge = dtbm + dtreserve + pdm + bmt + adb + bmmouche;
-		var tr = document.createElement('tr');
+		let marge = dtbm + dtreserve + pdm + bmt + adb + bmmouche;
+		let tr = document.createElement('tr');
 		tr.className = 'detail';
-		var th = document.createElement('th');
+		let th = document.createElement('th');
 		if (marge <= 0) {
 			appendText(th, '[MZ] Marge');
 		} else {
@@ -13321,73 +14288,77 @@ try {
 			tr.style.color = 'red';
 		}
 		tr.appendChild(th);
-		var td = document.createElement('td');
+		let td = document.createElement('td');
 		appendText(td, MZ_FormatHeureMinute(marge, true));
 		tr.appendChild(td);
 		document.querySelector("#dla #duree").parentElement.parentElement.appendChild(tr);
 	}
 
 	function MZ_FormatHeureMinute(duree, bPlus) {
-		var txt = '';
+		let txt = '';
 		if (duree < 0) {
 			txt = '- ';
 			duree = -duree;
 		} else if (duree > 0 && bPlus) {
 			txt = '+ ';
 		}
-		var h = Math.floor(duree / 60);
-		if (h) txt += h + ' h ';
-		txt += (duree % 60) + ' m';
+		let h = Math.floor(duree / 60);
+		if (h) {
+			txt = `${txt}${h} h `;
+		}
+		txt = `${txt}${duree % 60} m`;
 		return txt;
 	}
 
 	// Complete le cadre "Experience"
 	function setInfosExp() {
-		var tdNiv = document.querySelector("#exp #niv");
+		let tdNiv = document.querySelector("#exp #niv");
 
 		// Calcul niveau monstre/troll min pour gain PX
-		var nivCibleMin = Math.ceil((2 * nivTroll - 10) / 3);
-		tdNiv.parentElement.title = "Vos cibles doivent être au minim de niveau " + nivCibleMin + " pour qu'elles vous rapportent des PX";
+		let nivCibleMin = Math.ceil((2 * nivTroll - 10) / 3);
+		tdNiv.parentElement.title = `Vos cibles doivent être au minim de niveau ${nivCibleMin} pour qu'elles vous rapportent des PX`;
 
 		// Calcul PX restant
-		var pxRestant = (pxdistribuables + pxperso) - 2 * nivTroll;
+		let pxRestant = pxdistribuables + pxperso - 2 * nivTroll;
 		if (pxRestant >= 0) {
-			var tdinfoEntrainement = document.querySelector("#exp table tr:nth-child(4) td span");
-			if (tdinfoEntrainement) tdinfoEntrainement.innerHTML += " <i>Il vous restera " + pxRestant + " PX</i>";
+			let tdinfoEntrainement = document.querySelector("#exp table tr:nth-child(4) td span");
+			if (tdinfoEntrainement) {
+				tdinfoEntrainement.innerHTML = `${tdinfoEntrainement.innerHTML} <i>Il vous restera ${pxRestant} PX</i>`;
+			}
 		}
 
 		// Calul pi/jour
-		var
+		let
 			tdPiTotal = document.querySelector("#exp #pitot").parentElement,
 			tdPi = document.querySelector("#exp #pi").parentElement;
-		tdPiTotal.title = (Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10) + ' PI par jour'
+		tdPiTotal.title = `${Math.round(10 * (pitotal + pxperso + pxdistribuables) / NBjours) / 10} PI par jour`;
 		tdPi.title = tdPiTotal.title;
 
 		// Rapports meurtres,morts
-		var tdKill = document.querySelector("#exp #kill");
+		let tdKill = document.querySelector("#exp #kill");
 		tdKill.setAttribute("colspan", 1);
-		appendTdText(tdKill.parentElement, (Math.round(10 * NBjours / nbmeurtres) / 10) + ' jours/kill', false);
+		appendTdText(tdKill.parentElement, `${Math.round(10 * NBjours / nbmeurtres) / 10} jours/kill`, false);
 
-		var tdMort = document.querySelector("#exp #mort");
+		let tdMort = document.querySelector("#exp #mort");
 		tdMort.setAttribute("colspan", 1);
-		appendTdText(tdMort.parentElement, (Math.round(10 * NBjours / nbmorts) / 10) + ' jours/mort', false);
+		appendTdText(tdMort.parentElement, `${Math.round(10 * NBjours / nbmorts) / 10} jours/mort`, false);
 
-		tdKill.parentElement.title = 'Rapport meurtres/décès: ' + Math.floor((nbmeurtres / nbmorts) * 100) / 100;
-		tdMort.parentElement.title = 'Rapport décès/meurtres: ' + Math.floor((nbmorts / nbmeurtres) * 100) / 100;
+		tdKill.parentElement.title = `Rapport meurtres/décès: ${Math.floor(nbmeurtres / nbmorts * 100) / 100}`;
+		tdMort.parentElement.title = `Rapport décès/meurtres: ${Math.floor(nbmorts / nbmeurtres * 100) / 100}`;
 	}
 
-	/*-[functions]----------- Fonctions speciales Kastars ------------------------ */
+	/* -[functions]----------- Fonctions speciales Kastars ------------------------ */
 
 	function minParPVsac(fat, bm) {
 		// Calcule le nombre de min gagnees / PV sacrifies pour une AM realisee sous
 		// fatigue = 'fat', sans et avec un bm de fatigue = 'bm'
-		var out = [];
-		out[0] = (fat > 4) ?
+		let out = [];
+		out[0] = fat > 4 ?
 			Math.floor(120 / (fat * (1 + Math.floor(fat / 10)))) :
 			30;
 		if (bm && bm > 0) {
-			var totalfat = fat + bm;
-			out[1] = (totalfat > 4) ?
+			let totalfat = fat + bm;
+			out[1] = totalfat > 4 ?
 				Math.floor(120 / (totalfat * (1 + Math.floor(totalfat / 10)))) :
 				30; // en principe inutile pour des bm fat >= 15 mais bon...
 		}
@@ -13396,18 +14367,18 @@ try {
 
 	function toInt(str) {
 		str = parseInt(str);
-		return (str) ? str : 0;
+		return str ? str : 0;
 	}
 
 	function saveLastDLA() {
 		// pour les calculs d'AM max
-		var str = addZero(toInt(inJour.value)) + '/' + addZero(toInt(inMois.value))
-			+ '/' + toInt(inAn.value) + ' ' + addZero(toInt(inHr.value))
-			+ ':' + addZero(toInt(inMin.value)) + ':' + addZero(toInt(inSec.value));
+		let str = `${addZero(toInt(inJour.value))}/${addZero(toInt(inMois.value))
+			}/${toInt(inAn.value)} ${addZero(toInt(inHr.value))
+			}:${addZero(toInt(inMin.value))}:${addZero(toInt(inSec.value))}`;
 		lastDLA = new Date(StringToDate(str));
-		MY_setValue(numTroll + '.DLA.ancienne', str);
+		MY_setValue(`${numTroll}.DLA.ancienne`, str);
 		lastDLAZone.innerHTML = '';
-		var b = document.createElement('b');
+		let b = document.createElement('b');
 		b.addEventListener('click', inputMode, false);
 		appendText(b, str);
 		lastDLAZone.appendChild(b);
@@ -13416,11 +14387,12 @@ try {
 
 	function inputMode() {
 		// Edition manuelle lastDLA
-		var date;
-		if (lastDLA)
+		let date;
+		if (lastDLA) {
 			date = new Date(lastDLA);
-		else
+		} else {
 			date = new Date(DLAaccel);
+		}
 		lastDLAZone.innerHTML = '';
 		inJour = appendTextbox(lastDLAZone, 'text', 'inJour', 1, 2, date.getDate());
 		appendText(lastDLAZone, '/');
@@ -13428,17 +14400,17 @@ try {
 		appendText(lastDLAZone, '/');
 		inAn = appendTextbox(lastDLAZone, 'text', 'inAn', 3, 4, date.getFullYear());
 		appendText(lastDLAZone, ' - ');
-		inHr = appendTextbox(lastDLAZone, 'text', 'inHr', 1, 2, date.getHours() + '');
+		inHr = appendTextbox(lastDLAZone, 'text', 'inHr', 1, 2, `${date.getHours()}`);
 		appendText(lastDLAZone, ':');
-		inMin = appendTextbox(lastDLAZone, 'text', 'inMin', 1, 2, date.getMinutes() + '');
+		inMin = appendTextbox(lastDLAZone, 'text', 'inMin', 1, 2, `${date.getMinutes()}`);
 		appendText(lastDLAZone, ':');
-		inSec = appendTextbox(lastDLAZone, 'text', 'inSec', 1, 2, date.getSeconds() + '');
+		inSec = appendTextbox(lastDLAZone, 'text', 'inSec', 1, 2, `${date.getSeconds()}`);
 		appendText(lastDLAZone, ' - ');
 		appendButton(lastDLAZone, 'Enregistrer', saveLastDLA);
 	}
 
 	function setAccel() {
-		var
+		let
 			BMfrais = false,
 			fat = fatigue, listeBmFat = [],
 			tr, th, insertPt;
@@ -13454,25 +14426,25 @@ try {
 
 		// Est-on en over-DLA ?
 		// ***INIT GLOBALE*** overDLA
-		overDLA = (HeureServeur > DLA.getTime() + 3e5);
+		overDLA = HeureServeur > DLA.getTime() + 3e5;
 		if (overDLA) {
 			fat = Math.floor(fatigue / 1.25);
 		}
 
 		// Gestion des BM de fatigue
 		if (bmfatigue > 0) {
-			debugMZ('MZE setAccel, bmfatigue=' + bmfatigue + ', ' + numTroll + '.bm.fatigue=' + MY_getValue(numTroll + '.bm.fatigue'));
+			debugMZ(`MZE setAccel, bmfatigue=${bmfatigue}, ${numTroll}.bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}`);
 			// On tente de recuperer les BM de fatigue de la page des BM
-			if (MY_getValue(numTroll + '.bm.fatigue')) {
-				var BMmemoire = MY_getValue(numTroll + '.bm.fatigue').split(';');
+			if (MY_getValue(`${numTroll}.bm.fatigue`)) {
+				let BMmemoire = MY_getValue(`${numTroll}.bm.fatigue`).split(';');
 				BMmemoire.pop();
 				for (var i = 0; i < BMmemoire.length; i++) {
 					var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
-					var s = '0000' + nbrs[0];
-					BMmemoire[i] = s.substr(s.length - 4) + ' ' + nbrs[1];
+					let s = `0000${nbrs[0]}`;
+					BMmemoire[i] = `${s.substr(s.length - 4)} ${nbrs[1]}`;
 				}
 				BMmemoire.sort();	// tri par n° de tour
-				var tour = 0;
+				let tour = 0;
 				for (var i = 0; i < BMmemoire.length; i++) {
 					var nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
 					while (tour <= parseInt(nbrs[0])) {
@@ -13485,7 +14457,7 @@ try {
 				// Si (bm profil=1er bm stocke), on suppose que les bm stockes sont a jour
 				BMfrais = true;
 				// Roule 17/06/2020 je ne vois pas du tout pourquoi on viderait xxx;bm.fatigue ici. Et ça fait que la fatigue des Kastars affiche une erreur la 2e fois qu'on va sur le profil... J'enlève
-				//MY_removeValue(numTroll+".bm.fatigue");
+				// MY_removeValue(numTroll+".bm.fatigue");
 			}
 		} else {
 			// S'il n'y a pas de bm de fatigue sur le profil, on est a jour
@@ -13498,7 +14470,6 @@ try {
 			} else {
 				listeBmFat = [30, 30, 15];
 			}
-
 		}
 		if (overDLA) {
 			// Si on est en over-DLA, on decale les bm d'un tour
@@ -13506,13 +14477,13 @@ try {
 		}
 
 		// Tableau des fatigues et accel futures
-		var
+		let
 			minppv = minParPVsac(fat, listeBmFat[0]),
 			table, tbody,
 			ligneTour, ligneFat, ligneMin,
 			col;
 		// ***INIT GLOBALE*** minParPV
-		minParPV = (listeBmFat[0] == void (0)) ? minppv[0] : minppv[1];
+		minParPV = listeBmFat[0] == void 0 ? minppv[0] : minppv[1];
 		if (fat > 0 || listeBmFat[0] > 0) {
 			table = document.createElement('table');
 			table.className = 'mh_tdborder';
@@ -13526,7 +14497,7 @@ try {
 
 			ligneTour = appendTr(tbody, 'mh_tdtitre');
 			ligneTour.style.fontWeight = "bold";
-			var td = appendTdText(ligneTour, 'Tour :', true);
+			let td = appendTdText(ligneTour, 'Tour :', true);
 			td.align = 'left';
 			ligneFat = appendTr(tbody, 'mh_tdpage');
 			td = appendTdText(ligneFat, 'Fatigue :', true);
@@ -13547,42 +14518,42 @@ try {
 						appendTdText(ligneTour, 'En cours');
 					}
 				} else {
-					appendTdText(ligneTour, '\u00A0\u00A0+' + col + '\u00A0\u00A0');
+					appendTdText(ligneTour, `\u00A0\u00A0+${col}\u00A0\u00A0`);
 				}
 				if (listeBmFat[col]) {
-					if (BMfrais || (!overDLA && col == 0)) {
-						appendTdText(ligneFat, fat + '+' + listeBmFat[col]);
-						appendTdText(ligneMin, Math.max(1, minppv[1]) + '\'');
+					if (BMfrais || !overDLA && col == 0) {
+						appendTdText(ligneFat, `${fat}+${listeBmFat[col]}`);
+						appendTdText(ligneMin, `${Math.max(1, minppv[1])}'`);
 					} else {
-						appendTdText(ligneFat, fat + '+' + listeBmFat[col] + ' (?)');
-						appendTdText(ligneMin, minppv[1] + '\' (' + minppv[0] + '\')');
+						appendTdText(ligneFat, `${fat}+${listeBmFat[col]} (?)`);
+						appendTdText(ligneMin, `${minppv[1]}' (${minppv[0]}')`);
 					}
 				} else {
 					appendTdText(ligneFat, fat);
-					appendTdText(ligneMin, minppv[0] + '\'');
+					appendTdText(ligneMin, `${minppv[0]}'`);
 				}
 				col++;
 				fat = Math.floor(fat / 1.25);
 				minppv = minParPVsac(fat, listeBmFat[col]);
 			}
-			if (fat > 1 || (fat == 1 && !overDLA)) {
+			if (fat > 1 || fat == 1 && !overDLA) {
 				appendTdText(ligneTour, '\u00A0 ... \u00A0', true);
 				appendTdText(ligneFat, '-');
 				appendTdText(ligneMin, '-');
 			}
-			col = (overDLA) ?
+			col = overDLA ?
 				Math.max(retourAZero(fatigue) - 1, col) :
 				Math.max(retourAZero(fatigue), col);
-			appendTdText(ligneTour, '\u00A0\u00A0+' + col + '\u00A0\u00A0');
+			appendTdText(ligneTour, `\u00A0\u00A0+${col}\u00A0\u00A0`);
 			appendTdText(ligneFat, '0');
 			appendTdText(ligneMin, '30\'');
 
 			if (!BMfrais && bmfatigue) {
 				// si les BM n'ont pas ete rafraichis, on signale:
 				var b = document.createElement('b');
-				b.appendChild(document.createTextNode('/!\\ Attention, ce tableau est probablement faux.'
-					+ ' Visitez la page des Bonus/Malus'
-					+ ' pour mettre à jour votre fatigue. /!\\'));
+				b.appendChild(document.createTextNode('/!\\ Attention, ce tableau est probablement faux.' +
+					' Visitez la page des Bonus/Malus' +
+					' pour mettre à jour votre fatigue. /!\\'));
 				b.style.color = 'red';
 				insertPt.appendChild(b);
 				appendBr(insertPt);
@@ -13605,7 +14576,7 @@ try {
 			// bypass des infos de "menu_FF.js" en cas d'overDLA
 			DLAaccel = new Date(DLAsuiv);
 			lastDLA = new Date(DLA);
-			MY_setValue(numTroll + '.DLA.ancienne', MZ_formatDateMS(DLA, false));
+			MY_setValue(`${numTroll}.DLA.ancienne`, MZ_formatDateMS(DLA, false));
 			// ***INIT GLOBALE*** pvActuelKastar
 			pvActuelKastar = Math.min(pvcourant + regmoy, pvtotal);
 			appendText(
@@ -13617,8 +14588,8 @@ try {
 		} else {
 			DLAaccel = new Date(DLA);
 			pvActuelKastar = pvcourant;
-			if (MY_getValue(numTroll + '.DLA.ancienne')) {
-				lastDLA = new Date(StringToDate(MY_getValue(numTroll + '.DLA.ancienne')));
+			if (MY_getValue(`${numTroll}.DLA.ancienne`)) {
+				lastDLA = new Date(StringToDate(MY_getValue(`${numTroll}.DLA.ancienne`)));
 			} else {
 				lastDLA = false;
 			}
@@ -13649,16 +14620,16 @@ try {
 	}
 
 	function refreshAccel() {
-		var pvs, pvsmax;
+		let pvs, pvsmax;
 
 		// Acceleration pour cumul instantane
-		//window.console.debug('refreshAccel',pvActuelKastar,DLAaccel,lastDLA,minParPV);
+		// window.console.debug('refreshAccel',pvActuelKastar,DLAaccel,lastDLA,minParPV);
 		if (lastDLA) {
 			pvsmax = Math.min(
 				pvActuelKastar - 1,
 				Math.ceil(Math.floor((DLAaccel - lastDLA) / 6e4) / minParPV)
 			);
-			maxAMZone.innerHTML = pvsmax + " PV";
+			maxAMZone.innerHTML = `${pvsmax} PV`;
 		} else {
 			pvsmax = pvActuelKastar - 1;
 			maxAMZone.innerHTML = "inconnue";
@@ -13669,52 +14640,49 @@ try {
 		cumulZone.innerHTML = '';
 		if (pvs <= pvsmax) {
 			appendText(cumulZone, 'Vous devez accélérer d\'au moins ');
-			appendText(cumulZone, pvs + ' PV', true);
+			appendText(cumulZone, `${pvs} PV`, true);
 			appendText(cumulZone, ' pour activer immédiatement un nouveau tour.');
 			if (pvs != 1) {
-				var gainSec = Math.floor((DLAaccel - HeureServeur) / 1e3)
-					- (pvs - 1) * 60 * minParPV;
+				let gainSec = Math.floor((DLAaccel - HeureServeur) / 1e3) -
+					(pvs - 1) * 60 * minParPV;
 				appendText(
 					cumulZone,
-					' (' + (pvs - 1) + ' PV dans ' +
-					Math.floor(gainSec / 60) + 'min' +
-					addZero(gainSec % 60) + 's)'
+					` (${pvs - 1} PV dans ${Math.floor(gainSec / 60)}min${addZero(gainSec % 60)}s)`
 				);
 			}
 		} else {
-			var avantDLA = new Date(DLAaccel - HeureServeur - pvsmax * minParPV * 6e4);
+			let avantDLA = new Date(DLAaccel - HeureServeur - pvsmax * minParPV * 6e4);
 			appendText(
 				cumulZone,
-				'Après votre accélération maximale, il vous faudra encore attendre ' +
-				dureeHM(avantDLA / 6e4) +
-				' avant de réactiver.'
+				`Après votre accélération maximale, il vous faudra encore attendre ${dureeHM(avantDLA / 6e4)
+				} avant de réactiver.`
 			);
 		}
 	}
 
 	function setInfosFatiguesOptimiales() {
-		var thFatigue = document.querySelector('#fatigue').parentElement.parentElement;
+		let thFatigue = document.querySelector('#fatigue').parentElement.parentElement;
 		thFatigue.title = "Fat. optimale : 29 / 23 / 18 / 14 / 11 / 8 / 6 / 4";
 	}
 
 
-	/*-[functions]-------- Fonctions gerant les infos-bulles --------------------- */
+	/* -[functions]-------- Fonctions gerant les infos-bulles --------------------- */
 
 	function traitementTalents() {
 		trCompetence = document.querySelectorAll("#comp table#competences>tbody>tr");
 		trSorts = document.querySelectorAll("#sort table#sortileges>tbody>tr");
 		removeAllTalents();
-		var totalComp = injecteInfosBulles(trCompetence, 'competences');
-		var totalSort = injecteInfosBulles(trSorts, 'sortileges');
-		document.querySelector('#comp>div>h3.mh_tdtitre').textContent += ' (Total : ' + totalComp + '%)';
-		document.querySelector('#sort>div>h3.mh_tdtitre').textContent += ' (Total : ' + totalSort + '%)';
+		let totalComp = injecteInfosBulles(trCompetence, 'competences');
+		let totalSort = injecteInfosBulles(trSorts, 'sortileges');
+		document.querySelector('#comp>div>h3.mh_tdtitre').textContent += ` (Total : ${totalComp}%)`;
+		document.querySelector('#sort>div>h3.mh_tdtitre').textContent += ` (Total : ${totalSort}%)`;
 	}
 
 	function injecteInfosBulles(liste, fonction) {
-		var totalpc = 0;
+		let totalpc = 0;
 		// on parse la liste des talents du type 'fonction'
-		for (var i = 0; i < liste.length; i++) {
-			var
+		for (let i = 0; i < liste.length; i++) {
+			let
 				trTalent = liste[i],
 				node = trTalent.cells[1].querySelector('a'),
 				nomTalent = epure(trim(node.textContent)),
@@ -13728,18 +14696,20 @@ try {
 				sousCompetences = trTalent.cells[indiceTDSousCompetence].textContent.split(',');
 				for (var j = 0; j < sousCompetences.length; j++) {
 					sousCompetences[j] = sousCompetences[j].epure().trim();
-					if (arrayTalents[sousCompetences[j]]) sousCompetences[j] = arrayTalents[sousCompetences[j]];
+					if (arrayTalents[sousCompetences[j]]) {
+						sousCompetences[j] = arrayTalents[sousCompetences[j]];
+					}
 				}
 			}
-			var niveauxMaitrisesTalentArray = getNumbers(trTalent.cells[indiceTDniveaux].textContent);
+			let niveauxMaitrisesTalentArray = getNumbers(trTalent.cells[indiceTDniveaux].textContent);
 			setInfos(node, nomTalent, fonction, niveauxMaitrisesTalentArray[0]);
 			setTalent(nomTalent, niveauxMaitrisesTalentArray[1], niveauxMaitrisesTalentArray[0], sousCompetences);
-			totalpc += niveauxMaitrisesTalentArray[1];
+			totalpc = totalpc + niveauxMaitrisesTalentArray[1];
 
 			// stockage des niveaux inferieurs du talent si presents
-			for (var j = 2; j < niveauxMaitrisesTalentArray.length; j += 2) {
+			for (var j = 2; j < niveauxMaitrisesTalentArray.length; j = j + 2) {
 				setTalent(nomTalent, niveauxMaitrisesTalentArray[j + 1], niveauxMaitrisesTalentArray[j], sousCompetences);
-				totalpc += niveauxMaitrisesTalentArray[j + 1];
+				totalpc = totalpc + niveauxMaitrisesTalentArray[j + 1];
 			}
 		}
 		return totalpc;
@@ -13754,35 +14724,37 @@ try {
 	}
 
 	var arrayModifAnatroll = {
-		'Glue': 'Glu',
-		'PuM': 'PuiM',
-		'HE': 'Hurlement',
-		//'Insultes':'Insu',
-		'Pistage': 'Pist',
-		'PuC': 'Planter',
-		'Golemo': 'Golem',
-	}
+		Glue: 'Glu',
+		PuM: 'PuiM',
+		HE: 'Hurlement',
+		// 'Insultes':'Insu',
+		Pistage: 'Pist',
+		PuC: 'Planter',
+		Golemo: 'Golem',
+	};
 
 	function setTalent(nom, pc, niveau, sousCompetences) {
 		// Nota : voir plus tard si stocker les effets des comps/sorts directement
 		// (et pas les % dont osf) ne serait pas plus rentable
-		var nomEnBase = arrayTalents[epure(nom)];
+		let nomEnBase = arrayTalents[epure(nom)];
 		if (!nomEnBase) {
-			debugMZ("setTalent: le talent " + nom + " n'est pas dans la base MZ");
+			debugMZ(`setTalent: le talent ${nom} n'est pas dans la base MZ`);
 			return;
 		}
-		if (!niveau) { niveau = 1; }
+		if (!niveau) {
+			niveau = 1;
+		}
 
 		switch (nomEnBase) {
 			case 'Insultes':
-				urlAnatrolliseur += 'Insu' + niveau + '|';
+				urlAnatrolliseur = `${urlAnatrolliseur}Insu${niveau}|`;
 			case 'IdT':
-				nomEnBase += niveau;
+				nomEnBase = nomEnBase + niveau;
 				break;
 			case 'Piege':
-				for (var i = 0; i < sousCompetences.length; i++) {
-					urlAnatrolliseur += (arrayModifAnatroll[sousCompetences[i]] ?
-						arrayModifAnatroll[sousCompetences[i]] : sousCompetences[i]) + '|';
+				for (let i = 0; i < sousCompetences.length; i++) {
+					urlAnatrolliseur = `${urlAnatrolliseur}${arrayModifAnatroll[sousCompetences[i]] ?
+						arrayModifAnatroll[sousCompetences[i]] : sousCompetences[i]}|`;
 				}
 				break;
 			case 'AP':
@@ -13792,17 +14764,17 @@ try {
 			case 'Retraite':
 			case 'RB':
 			case 'SInterposer':
-				nomEnBase += niveau;
+				nomEnBase = nomEnBase + niveau;
 			default:
-				urlAnatrolliseur += (arrayModifAnatroll[nomEnBase] ?
-					arrayModifAnatroll[nomEnBase] : nomEnBase) + '|';
+				urlAnatrolliseur = `${urlAnatrolliseur}${arrayModifAnatroll[nomEnBase] ?
+					arrayModifAnatroll[nomEnBase] : nomEnBase}|`;
 		}
 		// debugMZ("setTalent: nom=" + nom + ", pc=" + pc + ", niveau=" + niveau + ", sousCompetences=" + JSON.stringify(sousCompetences) + "=>setValue(" + numTroll+'.talent.'+nomEnBase+", " + pc + ")");
-		MY_setValue(numTroll + '.talent.' + nomEnBase, pc);
+		MY_setValue(`${numTroll}.talent.${nomEnBase}`, pc);
 	}
 
 	function creerBulleVide() {
-		var table = document.createElement('table');
+		let table = document.createElement('table');
 		table.id = 'bulle';
 		table.className = 'mh_tdborder';
 		table.width = 300;
@@ -13810,87 +14782,106 @@ try {
 		table.cellPadding = 5;
 		table.cellSpacing = 1;
 		table.style =
-			'position:absolute;'
-			+ 'visibility:hidden;'
-			+ 'z-index:800;'
-			+ 'height:auto;';
-		var tr = appendTr(table, 'mh_tdtitre');
+			'position:absolute;' +
+			'visibility:hidden;' +
+			'z-index:800;' +
+			'height:auto;';
+		let tr = appendTr(table, 'mh_tdtitre');
 		appendTdText(tr, 'Titre');
 		tr = appendTr(table, 'mh_tdpage');
 		appendTdText(tr, 'Contenu');
-		var aList = document.getElementsByTagName('a');
+		let aList = document.getElementsByTagName('a');
 		aList[aList.length - 1].parentNode.appendChild(table);
 		return table;
 	}
 
 	function cacherBulle() {
-		if (bulleStyle)
+		if (bulleStyle) {
 			bulleStyle.visibility = 'hidden';
+		}
 	}
 
 	function setBulle(evt) {
-		var nom = this.nom;
-		var fonction = this.fonction;
-		var niveau = parseInt(this.niveau);
-		var str = '';
+		let nom = this.nom;
+		let fonction = this.fonction;
+		let niveau = parseInt(this.niveau);
+		let str = '';
 		if (fonction == 'competences') {
 			str = competences(nom, niveau);
 		} else if (fonction == 'sortileges') {
 			str = sortileges(nom);
 		} else if (fonction == '*') {	// pour les raccourcis de la frame de gauche : on ne sait pas si c'est compétence ou sort
 			str = competences(nom, niveau);
-			if (str == '') str = sortileges(nom);
+			if (str == '') {
+				str = sortileges(nom);
+			}
 		}
 		if (str == '') {
-			debugMZ('MZ setBulle, pas de description sur ' + nom);
+			debugMZ(`MZ setBulle, pas de description sur ${nom}`);
 			return;
 		}
-		if (nom.indexOf('Golem') != -1) nom = 'Golemologie';
+		if (nom.indexOf('Golem') != -1) {
+			nom = 'Golemologie';
+		}
 
-		var xfenetre, yfenetre, xpage, ypage, element = null;
-		var offset = 15;
-		var bulleWidth = 300;
-		if (!hauteur) hauteur = 50;
+		let xfenetre, yfenetre, xpage, ypage, element = null;
+		let offset = 15;
+		let bulleWidth = 300;
+		if (!hauteur) {
+			hauteur = 50;
+		}
 		element = document.getElementById('bulle');
-		if (!element) element = creerBulleVide();
+		if (!element) {
+			element = creerBulleVide();
+		}
 		xfenetre = evt.clientX;
 		yfenetre = evt.clientY;
 		xpage = xfenetre;
 		ypage = yfenetre;
-		if (evt.pageX) xpage = evt.pageX;
-		if (evt.pageY) ypage = evt.pageY;
+		if (evt.pageX) {
+			xpage = evt.pageX;
+		}
+		if (evt.pageY) {
+			ypage = evt.pageY;
+		}
 		if (element) {
 			bulleStyle = element.style;
-			element.firstChild.firstChild.innerHTML = '<b>' + nom + '</b>';
+			element.firstChild.firstChild.innerHTML = `<b>${nom}</b>`;
 			element.childNodes[1].firstChild.innerHTML = str;
 		}
 		if (bulleStyle) {
-			if (xfenetre > bulleWidth + offset)
-				xpage -= bulleWidth + offset;
-			else
-				xpage += offset;
-			if (yfenetre > hauteur + offset)
-				ypage -= hauteur + offset;
+			if (xfenetre > bulleWidth + offset) {
+				xpage = xpage - (bulleWidth + offset);
+			} else {
+				xpage = xpage + offset;
+			}
+			if (yfenetre > hauteur + offset) {
+				ypage = ypage - (hauteur + offset);
+			}
 			bulleStyle.width = bulleWidth;
-			bulleStyle.left = xpage + 'px';
-			bulleStyle.top = ypage + 'px';
+			bulleStyle.left = `${xpage}px`;
+			bulleStyle.top = `${ypage}px`;
 			bulleStyle.visibility = 'visible';
 		}
 	}
 
 
-	/*-[functions] Textes des infos-bulles pour les competences et sortileges ----*/
+	/* -[functions] Textes des infos-bulles pour les competences et sortileges ----*/
 
 	function competences(comp, niveau) {
-		var
+		let
 			modA = atttour ? Math.floor((att + atttourD) * atttour / 100) : 0,
 			modD = degtour ? Math.floor(deg * degtour / 100) : 0,
 			texte = "";
 
 		if (comp.indexOf('Acceleration du Metabolisme') != -1 && minParPV != null) {
-			texte = '<b>1</b> PV = <b>' + minParPV + '</b> minute';
-			if (minParPV > 1) texte += 's';
-			if (overDLA) texte += '<br/><i>(Votre DLA est dépassée.)</i>';
+			texte = `<b>1</b> PV = <b>${minParPV}</b> minute`;
+			if (minParPV > 1) {
+				texte = `${texte}s`;
+			}
+			if (overDLA) {
+				texte = `${texte}<br/><i>(Votre DLA est dépassée.)</i>`;
+			}
 		} else if (comp.indexOf("Attaque Precise") != -1) {
 			var
 				i, pc,
@@ -13907,14 +14898,13 @@ try {
 				jetatt = Math.round(3.5 * (
 					Math.min(Math.floor(1.5 * att), att + 3 * i) + modA
 				)) + attbp + attbm;
-				espatt += (pc - lastmax) * jetatt;
-				texte += "Attaque niv. " + i +
-					" (" + (pc - lastmax) + "%) : <b>" +
-					Math.min(Math.floor(att * 1.5), att + 3 * i) + "</b> D6 ";
+				espatt = espatt + (pc - lastmax) * jetatt;
+				texte = `${texte}Attaque niv. ${i
+					} (${pc - lastmax}%) : <b>${Math.min(Math.floor(att * 1.5), att + 3 * i)}</b> D6 `;
 				if (modA) {
-					texte += "<i>" + aff(modA) + "D6</i> ";
+					texte = `${texte}<i>${aff(modA)}D6</i> `;
 				}
-				texte += aff(attbp + attbm) + " => <b>" + jetatt + "</b><br>";
+				texte = `${texte}${aff(attbp + attbm)} => <b>${jetatt}</b><br>`;
 				lastmax = pc;
 				if (i < niveau) {
 					// Si l'un des % de niveau inf est > % nivmax,
@@ -13923,30 +14913,29 @@ try {
 				}
 			}
 			if (notMaxedOut) {
-				texte += "<i>Attaque moyenne (si réussite) : <b>" +
-					Math.floor(10 * espatt / lastmax) / 10 + "</b></i><br>";
+				texte = `${texte}<i>Attaque moyenne (si réussite) : <b>${Math.floor(10 * espatt / lastmax) / 10}</b></i><br>`;
 			}
-			texte += "Dégâts : <b>" + deg + "</b> D3 ";
+			texte = `${texte}Dégâts : <b>${deg}</b> D3 `;
 			if (modD) {
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			}
-			texte += aff(degbp + degbm) +
-				" => <b>" + degmoytour + "/" + degmoycrittour + "</b>";
+			texte = `${texte}${aff(degbp + degbm)
+				} => <b>${degmoytour}/${degmoycrittour}</b>`;
 		} else if (comp.indexOf("Balayage") != -1) {
-			texte = "Déstabilisation : <b>" + att + "</b> D6 ";
+			texte = `Déstabilisation : <b>${att}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(attbp + attbm) +
-				" => <b>" + attmoytour + "</b><br>" +
-				"Effet : <b>Met à terre l'adversaire</b>";
-		} else if (comp.indexOf('Bidouille') != -1)
-			texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet '
-				+ 'de votre inventaire avec le texte de votre choix.';
-		else if (comp.indexOf('Baroufle') != -1) {
-			texte = 'Vous voulez encourager vos compagnons de chasse ? '
-				+ 'Ramassez quelques Coquillages, et en avant la musique !<br>';
-			texte += '<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
+			texte = `${texte}${aff(attbp + attbm)
+				} => <b>${attmoytour}</b><br>` +
+				`Effet : <b>Met à terre l'adversaire</b>`;
+		} else if (comp.indexOf('Bidouille') != -1) {
+			texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet ' +
+				'de votre inventaire avec le texte de votre choix.';
+		} else if (comp.indexOf('Baroufle') != -1) {
+			texte = 'Vous voulez encourager vos compagnons de chasse ? ' +
+				'Ramassez quelques Coquillages, et en avant la musique !<br>';
+			texte = `${texte}${'<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
 				'<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th></tr>' +
 				'<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td></tr>' +
 				'<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td></tr>' +
@@ -13964,39 +14953,36 @@ try {
 				'<tr class="mh_tdpage"><td>Whoooom</td><td>concentration +2</td></tr>' +
 				'<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
 				'<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
-				'</tbody></table>';
+				'</tbody></table>'}`;
 		} else if (comp.indexOf("Botte Secrete") != -1) {
 			modA = atttour ? Math.floor(Math.floor(2 * att / 3) * atttour / 100) : 0;
 			modD = degtour ? Math.floor(Math.floor(att / 2) * degtour / 100) : 0;
-			texte = "Attaque : <b>" + Math.floor(2 * att / 3) + "</b> D6 ";
+			texte = `Attaque : <b>${Math.floor(2 * att / 3)}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(Math.floor((attbp + attbm) / 2)) +
-				" => <b>" + Math.round(
+			texte = `${texte}${aff(Math.floor((attbp + attbm) / 2))
+				} => <b>${Math.round(
 					3.5 * (Math.floor(2 * att / 3) + modA) + Math.floor((attbp + attbm) / 2)
-				) + "</b><br/>Dégâts : <b>" + Math.floor(att / 2) + "</b> D3 ";
+				)}</b><br/>Dégâts : <b>${Math.floor(att / 2)}</b> D3 `;
 			if (modD) {
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			}
-			texte += aff(Math.floor((degbp + degbm) / 2)) + " => <b>" +
-				(2 * (Math.floor(att / 2) + modD) + Math.floor((degbp + degbm) / 2)) +
-				"/" + (
-					2 * (Math.floor(1.5 * Math.floor(att / 2)) + modD) +
-					Math.floor((degbp + degbm) / 2)
-				) + "</b>";
+			texte = `${texte}${aff(Math.floor((degbp + degbm) / 2))} => <b>${2 * (Math.floor(att / 2) + modD) + Math.floor((degbp + degbm) / 2)
+				}/${2 * (Math.floor(1.5 * Math.floor(att / 2)) + modD) +
+				Math.floor((degbp + degbm) / 2)}</b>`;
 		} else if (comp.indexOf('Camouflage') != -1) {
-			var camou = getTalent('Camouflage');
-			texte = 'Pour conserver son camouflage, il faut réussir un jet sous:<br/>'
-				+ '<i>Déplacement :</i> <b>' + Math.floor(0.75 * camou) + '%</b><br/>'
-				+ '<i>Attaque :</i> <b>perte automatique</b>.<br/>'
-				+ '<i>Projectile Magique :</i> <b>' + Math.floor(0.25 * camou) + '%</b>';
+			let camou = getTalent('Camouflage');
+			texte = `${'Pour conserver son camouflage, il faut réussir un jet sous:<br/>' +
+				'<i>Déplacement :</i> <b>'}${Math.floor(0.75 * camou)}%</b><br/>` +
+				`<i>Attaque :</i> <b>perte automatique</b>.<br/>` +
+				`<i>Projectile Magique :</i> <b>${Math.floor(0.25 * camou)}%</b>`;
 		} else if (comp.indexOf("Charger") != -1) {
 			if (pvcourant <= 0) {
 				// N'est plus censé se produire : activation obligatoire si mort
 				return "<i>On ne peut charger personne quand on est mort !</i>";
 			}
-			var portee = Math.min(
+			let portee = Math.min(
 				Math.max(
 					getPortee(reg + Math.floor(pvcourant / 10)) -
 					Math.floor((fatigue + bmfatigue) / 5),
@@ -14007,47 +14993,52 @@ try {
 			if (portee < 1) {
 				return "<b>Impossible de charger</b>";
 			}
-			texte = "Attaque : <b>" + att + "</b> D6 ";
+			texte = `Attaque : <b>${att}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(attbp + attbm) +
-				" => <b>" + attmoytour + "</b><br>" +
-				"Dégâts : <b>" + deg + "</b> D3 ";
+			texte = `${texte}${aff(attbp + attbm)
+				} => <b>${attmoytour}</b><br>` +
+				`Dégâts : <b>${deg}</b> D3 `;
 			if (modD) {
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			}
-			texte += aff(degbp + degbm) +
-				" => <b>" + degmoytour + "/" + degmoycrittour + "</b><br>" +
-				"Portée : <b>" + portee + "</b> case";
-			if (portee > 1) { texte += "s"; }
+			texte = `${texte}${aff(degbp + degbm)
+				} => <b>${degmoytour}/${degmoycrittour}</b><br>` +
+				`Portée : <b>${portee}</b> case`;
+			if (portee > 1) {
+				texte = `${texte}s`;
+			}
 		} else if (comp.indexOf('Connaissance des Monstres') != -1) {
-			texte = 'Portée horizontale : <b>' + vuetotale + '</b> case';
-			if (vuetotale > 1) texte += 's';
-			texte += '<br/>Portée verticale : <b>' + Math.ceil(vuetotale / 2) + '</b> case';
-			if (vuetotale > 2) texte += 's';
-		}
-		else if (comp.indexOf('Piege') != -1) {
+			texte = `Portée horizontale : <b>${vuetotale}</b> case`;
+			if (vuetotale > 1) {
+				texte = `${texte}s`;
+			}
+			texte = `${texte}<br/>Portée verticale : <b>${Math.ceil(vuetotale / 2)}</b> case`;
+			if (vuetotale > 2) {
+				texte = `${texte}s`;
+			}
+		} else if (comp.indexOf('Piege') != -1) {
 			texte = 'Piège à Glue :<ul><li>Et si vous colliez vos adversaires au sol ?</li></ul>';
-			texte += 'Piège à Feu: <ul><li>À moins que vous ne préfériez les envoyer en l\'air !</li>';
-			texte += '<li>Dégats du piège à feu : <b>' + Math.floor((esq + vue) / 2) + '</b> D3'
-				+ ' => <b>' + 2 * Math.floor((esq + vue) / 2) + ' (' + resiste((esq + vue) / 2) + ')</b></li></ul>';
+			texte = `${texte}Piège à Feu: <ul><li>À moins que vous ne préfériez les envoyer en l'air !</li>`;
+			texte = `${texte}<li>Dégats du piège à feu : <b>${Math.floor((esq + vue) / 2)}</b> D3` +
+				` => <b>${2 * Math.floor((esq + vue) / 2)} (${resiste((esq + vue) / 2)})</b></li></ul>`;
 		} else if (comp.indexOf("Contre-Attaquer") != -1) {
 			modA = atttour ? Math.floor(Math.floor(att / 2) * atttour / 100) : 0;
-			texte = "Attaque : <b>" + Math.floor(att / 2) + "</b> D6 ";
+			texte = `Attaque : <b>${Math.floor(att / 2)}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(Math.floor((attbp + attbm) / 2)) +
-				" => <b>" + Math.round(
+			texte = `${texte}${aff(Math.floor((attbp + attbm) / 2))
+				} => <b>${Math.round(
 					3.5 * (Math.floor(att / 2) + modA) + Math.floor((attbp + attbm) / 2)
-				) + "</b><br>" +
-				"Dégâts : <b>" + deg + "</b> D3 ";
+				)}</b><br>` +
+				`Dégâts : <b>${deg}</b> D3 `;
 			if (modD) {
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			}
-			texte += aff(degbp + degbm) +
-				" => <b>" + degmoytour + "/" + degmoycrittour + "</b>";
+			texte = `${texte}${aff(degbp + degbm)
+				} => <b>${degmoytour}/${degmoycrittour}</b>`;
 		} else if (comp.indexOf("Coup de Butoir") != -1) {
 			var
 				i, pc,
@@ -14055,12 +15046,12 @@ try {
 				jetdeg, espdeg = 0,
 				notMaxedOut = false;
 
-			texte = "Attaque : <b>" + att + "</b> D6 ";
+			texte = `Attaque : <b>${att}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(attbp + attbm) +
-				" => <b>" + attmoytour + "</b>";
+			texte = `${texte}${aff(attbp + attbm)
+				} => <b>${attmoytour}</b>`;
 			for (i = niveau; i > 0; i--) {
 				pc = getTalent(comp, i);
 				if (lastmax != 0 && pc <= lastmax) {
@@ -14070,15 +15061,14 @@ try {
 				jetdeg = 2 * (
 					Math.min(Math.floor(1.5 * deg), deg + 3 * i) + modD
 				) + degbp + degbm;
-				espdeg += (pc - lastmax) * jetdeg;
-				texte += "<br>Dégâts niv. " + i + " (" + (pc - lastmax) + "%) : <b>" +
-					Math.min(Math.floor(deg * 1.5), deg + 3 * i) + "</b> D3 ";
+				espdeg = espdeg + (pc - lastmax) * jetdeg;
+				texte = `${texte}<br>Dégâts niv. ${i} (${pc - lastmax}%) : <b>${Math.min(Math.floor(deg * 1.5), deg + 3 * i)}</b> D3 `;
 				if (modD) {
-					texte += "<i>" + aff(modD) + "D3</i> ";
+					texte = `${texte}<i>${aff(modD)}D3</i> `;
 				}
-				texte += aff(degbp + degbm) +
-					" => <b>" + jetdeg +
-					"/" + (jetdeg + 2 * Math.floor(deg / 2)) + "</b>";
+				texte = `${texte}${aff(degbp + degbm)
+					} => <b>${jetdeg
+					}/${jetdeg + 2 * Math.floor(deg / 2)}</b>`;
 				lastmax = pc;
 				if (i < niveau) {
 					// Si l'un des % de niveau inf est > % nivmax,
@@ -14087,175 +15077,169 @@ try {
 				}
 			}
 			if (notMaxedOut) {
-				texte += "<br><i>Dégâts moyens (si réussite) : <b>" +
-					Math.floor(10 * espdeg / lastmax) / 10 + "/" +
-					(Math.floor(10 * espdeg / lastmax) / 10 + 2 * Math.floor(deg / 2)) +
-					"</b></i>";
+				texte = `${texte}<br><i>Dégâts moyens (si réussite) : <b>${Math.floor(10 * espdeg / lastmax) / 10}/${Math.floor(10 * espdeg / lastmax) / 10 + 2 * Math.floor(deg / 2)
+					}</b></i>`;
 			}
-		} else if (comp.indexOf('Course') != -1)
-			texte = 'Déplacement gratuit : <b>'
-				+ Math.floor(getTalent('Course') / 2)
-				+ ' %</b> de chance';
-		else if (comp.indexOf('Deplacement Eclair') != -1)
-			texte = 'Permet d\'économiser <b>1</b> PA '
-				+ 'par rapport au déplacement classique';
-		else if (comp.indexOf('Dressage') != -1)
-			texte = 'Le dressage permet d\'apprivoiser un Gowap redevenu sauvage, un Mouch\'oo Sauvage '
-				+ 'ou un Gnu Sauvage. La portée est de une case.';
-		else if (comp.indexOf('Ecriture Magique') != -1)
-			texte = 'Réaliser la copie d\'un sortilège après en avoir découvert '
-				+ 'la formule nécessite de réunir les composants de cette formule, '
-				+ 'd\'obtenir un parchemin vierge sur lequel écrire, et de récupérer '
-				+ 'un champignon adéquat pour confectionner l\'encre.';
-		else if (comp.indexOf('Frenesie') != -1) {
-			texte = 'Attaque : <b>' + att + '</b> D6 ' + aff((attbp + attbm))
-				+ ' => <b>' + attmoy + '</b><br/>'
-				+ 'Dégâts : <b>' + deg + '</b> D3 ' + aff((degbp + degbm))
-				+ ' => <b>' + degmoy + '/' + degmoycrit + '</b>';
-		}
-		else if (comp.indexOf('Golem') != -1)
-			texte = 'Animez votre golem en assemblant divers matériaux '
-				+ 'autour d\'un cerveau minéral.'
-		else if (comp.indexOf('Grattage') != -1) {
-			texte = 'Permet de confectionner un Parchemin Vierge '
-				+ 'à partir de composants et de Gigots de Gob\'.';
-		}
-		else if (comp.indexOf('Hurlement Effrayant') != -1)
-			texte = 'Fait fuir un monstre si tout se passe bien.'
-				+ '<br/>Lui donne de gros bonus sinon...';
-		else if (comp.indexOf('Identification des Champignons') != -1) {
-			texte = 'Portée horizontale : <b>' + Math.floor(vuetotale / 2) + '</b> case';
-			if (vuetotale > 2) texte += 's';
-			texte += '<br/>Portée verticale : <b>' + Math.floor(vuetotale / 4) + '</b> case';
-			if (vuetotale > 4) texte += 's';
-		}
-		else if (comp.indexOf('Insultes') != -1)
-			texte = 'Portée horizontale : <b>' + Math.min(vuetotale, 1) + '</b> case';
-		else if (comp.indexOf('interposer') != -1)
-			texte = 'Jet de réflexe : <b>'
-				+ Math.floor(2 * (esq + reg) / 3) + '</b> D6 ' + aff((esqbp + esqbm))
-				+ ' => <b>' + Math.round(3.5 * Math.floor(2 * (esq + reg) / 3) + (esqbp + esqbm)) + '</b>';
-		else if (comp.indexOf('Lancer de Potions') != -1)
-			texte = 'Portée : <b>' + (2 + Math.floor(vuetotale / 5)) + '</b> cases';
-		else if (comp.indexOf('Marquage') != -1)
-			texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut '
-				+ 'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut '
-				+ 'se trouver dans la même caverne que le monstre pour le marquer.';
-		else if (comp.indexOf('Melange Magique') != -1)
-			texte = 'Cette Compétence permet de combiner deux Potions pour '
-				+ 'en réaliser une nouvelle dont l\'effet est la somme '
-				+ 'des effets des potions initiales.';
-		else if (comp.indexOf('Travail de la Pierre') != -1)
-			texte = 'Miner :<ul><li>Portée horizontale (officieuse) : <b>'
-				+ 2 * vuetotale + '</b> cases</li>'
-				+ '<li>Portée verticale (officieuse) : <b>'
-				+ 2 * Math.ceil(vuetotale / 2) + '</b> cases</li></ul>'
-				+ 'Tailler: <ul><li>Permet d\'augmenter sensiblement la valeur marchande de certains '
-				+ 'minerais. Mais cette opération délicate n\'est pas sans risques...</li></ul>';
-		else if (comp.indexOf('Necromancie') != -1)
-			texte = 'La Nécromancie permet à partir des composants d\'un monstre '
-				+ 'de faire "revivre" ce monstre.';
-		else if (comp.indexOf('Painthure de Guerre') != -1)
-			texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier '
-				+ 'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite '
-				+ 'pour s\'inspirer, et laissez parler votre créativité.'
-		else if (comp.indexOf("Parer") != -1) {
+		} else if (comp.indexOf('Course') != -1) {
+			texte = `Déplacement gratuit : <b>${Math.floor(getTalent('Course') / 2)
+				} %</b> de chance`;
+		} else if (comp.indexOf('Deplacement Eclair') != -1) {
+			texte = 'Permet d\'économiser <b>1</b> PA ' +
+				'par rapport au déplacement classique';
+		} else if (comp.indexOf('Dressage') != -1) {
+			texte = 'Le dressage permet d\'apprivoiser un Gowap redevenu sauvage, un Mouch\'oo Sauvage ' +
+				'ou un Gnu Sauvage. La portée est de une case.';
+		} else if (comp.indexOf('Ecriture Magique') != -1) {
+			texte = 'Réaliser la copie d\'un sortilège après en avoir découvert ' +
+				'la formule nécessite de réunir les composants de cette formule, ' +
+				'd\'obtenir un parchemin vierge sur lequel écrire, et de récupérer ' +
+				'un champignon adéquat pour confectionner l\'encre.';
+		} else if (comp.indexOf('Frenesie') != -1) {
+			texte = `Attaque : <b>${att}</b> D6 ${aff(attbp + attbm)
+				} => <b>${attmoy}</b><br/>` +
+				`Dégâts : <b>${deg}</b> D3 ${aff(degbp + degbm)
+				} => <b>${degmoy}/${degmoycrit}</b>`;
+		} else if (comp.indexOf('Golem') != -1) {
+			texte = 'Animez votre golem en assemblant divers matériaux ' +
+				'autour d\'un cerveau minéral.';
+		} else if (comp.indexOf('Grattage') != -1) {
+			texte = 'Permet de confectionner un Parchemin Vierge ' +
+				'à partir de composants et de Gigots de Gob\'.';
+		} else if (comp.indexOf('Hurlement Effrayant') != -1) {
+			texte = 'Fait fuir un monstre si tout se passe bien.' +
+				'<br/>Lui donne de gros bonus sinon...';
+		} else if (comp.indexOf('Identification des Champignons') != -1) {
+			texte = `Portée horizontale : <b>${Math.floor(vuetotale / 2)}</b> case`;
+			if (vuetotale > 2) {
+				texte = `${texte}s`;
+			}
+			texte = `${texte}<br/>Portée verticale : <b>${Math.floor(vuetotale / 4)}</b> case`;
+			if (vuetotale > 4) {
+				texte = `${texte}s`;
+			}
+		} else if (comp.indexOf('Insultes') != -1) {
+			texte = `Portée horizontale : <b>${Math.min(vuetotale, 1)}</b> case`;
+		} else if (comp.indexOf('interposer') != -1) {
+			texte = `Jet de réflexe : <b>${Math.floor(2 * (esq + reg) / 3)}</b> D6 ${aff(esqbp + esqbm)
+				} => <b>${Math.round(3.5 * Math.floor(2 * (esq + reg) / 3) + (esqbp + esqbm))}</b>`;
+		} else if (comp.indexOf('Lancer de Potions') != -1) {
+			texte = `Portée : <b>${2 + Math.floor(vuetotale / 5)}</b> cases`;
+		} else if (comp.indexOf('Marquage') != -1) {
+			texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut ' +
+				'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut ' +
+				'se trouver dans la même caverne que le monstre pour le marquer.';
+		} else if (comp.indexOf('Melange Magique') != -1) {
+			texte = 'Cette Compétence permet de combiner deux Potions pour ' +
+				'en réaliser une nouvelle dont l\'effet est la somme ' +
+				'des effets des potions initiales.';
+		} else if (comp.indexOf('Travail de la Pierre') != -1) {
+			texte = `Miner :<ul><li>Portée horizontale (officieuse) : <b>${2 * vuetotale}</b> cases</li>` +
+				`<li>Portée verticale (officieuse) : <b>${2 * Math.ceil(vuetotale / 2)}</b> cases</li></ul>` +
+				`Tailler: <ul><li>Permet d'augmenter sensiblement la valeur marchande de certains ` +
+				`minerais. Mais cette opération délicate n'est pas sans risques...</li></ul>`;
+		} else if (comp.indexOf('Necromancie') != -1) {
+			texte = 'La Nécromancie permet à partir des composants d\'un monstre ' +
+				'de faire "revivre" ce monstre.';
+		} else if (comp.indexOf('Painthure de Guerre') != -1) {
+			texte = 'Grimez vos potrõlls et réveillez l\'esprit guerrier ' +
+				'qui sommeille en eux ! Un peu d\'encre, une Tête Réduite ' +
+				'pour s\'inspirer, et laissez parler votre créativité.';
+		} else if (comp.indexOf("Parer") != -1) {
 			modA = atttour ? Math.floor(Math.floor(att / 2) * atttour / 100) : 0;
-			texte = "Jet de parade : <b>" + Math.floor(att / 2) + "</b> D6 ";
+			texte = `Jet de parade : <b>${Math.floor(att / 2)}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(Math.floor((attbp + attbm) / 2)) +
-				" => <b>" + Math.round(
+			texte = `${texte}${aff(Math.floor((attbp + attbm) / 2))
+				} => <b>${Math.round(
 					3.5 * (Math.floor(att / 2) + modA) +
 					Math.floor((attbp + attbm) / 2)
-				) + "</b><hr>Equivalent esquive : <b>" +
-				(Math.floor(att / 2) + esq) + "</b> D6 ";
+				)}</b><hr>Equivalent esquive : <b>${Math.floor(att / 2) + esq}</b> D6 `;
 			if (modA) {
-				texte += "<i>" + aff(modA) + "D6</i> ";
+				texte = `${texte}<i>${aff(modA)}D6</i> `;
 			}
-			texte += aff(Math.floor((attbp + attbm) / 2) + esqbp + esqbm) +
-				" => <b>" + (Math.round(
+			texte = `${texte}${aff(Math.floor((attbp + attbm) / 2) + esqbp + esqbm)
+				} => <b>${Math.round(
 					3.5 * (Math.floor(att / 2) + modA + esq) +
 					Math.floor((attbp + attbm) / 2)
-				) + esqbp + esqbm) + "</b></i>";
-		} else if (comp.indexOf('Pistage') != -1)
-			texte = 'Portée horizontale : <b>'
-				+ 2 * vuetotale + '</b> cases<br/>'
-				+ 'Portée verticale : <b>'
-				+ 2 * Math.ceil(vuetotale / 2) + '</b> cases';
-		else if (comp.indexOf('Planter un Champignon') != -1)
-			texte = 'Planter un Champignon est une compétence qui vous permet de '
-				+ 'créer des colonies d\'une variété donnée de champignon à partir de '
-				+ 'quelques exemplaires préalablement enterrés.';
-		else if (comp.indexOf('Regeneration Accrue') != -1)
-			texte = 'Régénération : <b>' + Math.floor(pvtotal / 15) + '</b> D3'
-				+ ' => <b>+' + 2 * Math.floor(pvtotal / 15) + '</b> PV';
-		else if (comp.indexOf('Reparation') != -1)
-			texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, '
-				+ 'et réparez vous-même votre matériel !';
-		else if (comp.indexOf('Retraite') != -1)
-			texte = 'Vous jugez la situation avec sagesse et estimez qu\'il serait '
-				+ 'préférable de préparer un repli stratégique pour déconcerter '
-				+ 'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! '
-				+ 'Quelle intelligence démoniaque.';
-		else if (comp.indexOf("RotoBaffe") != -1) {
-			var
+				) + esqbp + esqbm}</b></i>`;
+		} else if (comp.indexOf('Pistage') != -1) {
+			texte = `Portée horizontale : <b>${2 * vuetotale}</b> cases<br/>` +
+				`Portée verticale : <b>${2 * Math.ceil(vuetotale / 2)}</b> cases`;
+		} else if (comp.indexOf('Planter un Champignon') != -1) {
+			texte = 'Planter un Champignon est une compétence qui vous permet de ' +
+				'créer des colonies d\'une variété donnée de champignon à partir de ' +
+				'quelques exemplaires préalablement enterrés.';
+		} else if (comp.indexOf('Regeneration Accrue') != -1) {
+			texte = `Régénération : <b>${Math.floor(pvtotal / 15)}</b> D3` +
+				` => <b>+${2 * Math.floor(pvtotal / 15)}</b> PV`;
+		} else if (comp.indexOf('Reparation') != -1) {
+			texte = 'Marre de ces arnaqueurs de forgerons ? Prenez quelques outils, ' +
+				'et réparez vous-même votre matériel !';
+		} else if (comp.indexOf('Retraite') != -1) {
+			texte = 'Vous jugez la situation avec sagesse et estimez qu\'il serait ' +
+				'préférable de préparer un repli stratégique pour déconcerter ' +
+				'l\'ennemi et lui foutre une bonne branlée ... plus tard. MOUAHAHA ! ' +
+				'Quelle intelligence démoniaque.';
+		} else if (comp.indexOf("RotoBaffe") != -1) {
+			let
 				Datt = att, vattbm = attbp + attbm,
 				Ddeg = deg, vdegbm = degbp + degbm,
 				tabTxt = [];
-			for (var iNiveau = 0, iAttaque = 1; iNiveau <= niveau; iNiveau++) {
-				for (var i2 = 0; i2 < (iNiveau == 0 ? 1 : iNiveau); i2++, iAttaque++) {
-					texte = "<b>Attaque n°" + iAttaque + " :</b><br>" +
-						"Attaque : <b>" + Datt + "</b> D6 ";
+			for (let iNiveau = 0, iAttaque = 1; iNiveau <= niveau; iNiveau++) {
+				for (let i2 = 0; i2 < (iNiveau == 0 ? 1 : iNiveau); i2++, iAttaque++) {
+					texte = `<b>Attaque n°${iAttaque} :</b><br>` +
+						`Attaque : <b>${Datt}</b> D6 `;
 					if (modA) {
-						texte += "<i>" + aff(modA) + "D6</i> ";
+						texte = `${texte}<i>${aff(modA)}D6</i> `;
 					}
-					texte += aff(vattbm) +
-						" => <b>" + (Math.round(3.5 * (Datt + modA)) + vattbm) + "</b><br>" +
-						"Dégâts : <b>" + Ddeg + "</b> D3 ";
+					texte = `${texte}${aff(vattbm)
+						} => <b>${Math.round(3.5 * (Datt + modA)) + vattbm}</b><br>` +
+						`Dégâts : <b>${Ddeg}</b> D3 `;
 					if (modD) {
-						texte += "<i>" + aff(modD) + "D3</i> ";
+						texte = `${texte}<i>${aff(modD)}D3</i> `;
 					}
-					texte += aff(vdegbm) +
-						" => <b>" + (2 * (Ddeg + modD) + vdegbm) +
-						"/" + (2 * (Math.floor(1.5 * Ddeg) + modD) + vdegbm) + "</b>";
+					texte = `${texte}${aff(vdegbm)
+						} => <b>${2 * (Ddeg + modD) + vdegbm
+						}/${2 * (Math.floor(1.5 * Ddeg) + modD) + vdegbm}</b>`;
 					tabTxt.push(texte);
 				}
-				//Datt = Math.floor(0.75*Datt);	// il n'y a plus de baisse d'attaque
+				// Datt = Math.floor(0.75*Datt);	// il n'y a plus de baisse d'attaque
 				modA = atttour ? Math.floor((Datt + atttourD) * atttour / 100) : 0;
-				//vattbm = Math.floor(0.75*vattbm);
+				// vattbm = Math.floor(0.75*vattbm);
 				Ddeg = Math.floor(0.75 * Ddeg);
 				modD = degtour ? Math.floor(Ddeg * degtour / 100) : 0;
 				vdegbm = Math.floor(0.75 * vdegbm);
 			}
 			texte = tabTxt.join('<hr>');
-		} else if (comp.indexOf('Shamaner') != -1)
-			texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux '
-				+ 'des monstres en utilisant des champignons (de 1 à 3).';
+		} else if (comp.indexOf('Shamaner') != -1) {
+			texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux ' +
+				'des monstres en utilisant des champignons (de 1 à 3).';
+		}
 		return texte;
 	}
 
 	function sortileges(sort) {
 		sort = sort.toLowerCase();
-		var
+		let
 			// Fonctions utiles uniquement à "sortileges"
 			decumul_buff = function (nom, str, buff) {
 				// Décumul des sorts de buff (old school)
-				var
-					txt = "1<sup>ere</sup>" + nom + " : <b>" + str + " +" + buff + "</b>",
+				let
+					txt = `1<sup>ere</sup>${nom} : <b>${str} +${buff}</b>`,
 					dec = buff,
 					total = buff,
 					i = 1;
 				while (i < 6) {
 					i++;
 					dec = Math.floor(coefDecumul(i) * buff);
-					if (dec <= 1 || i == 6) break;
-					total += dec;
-					txt += "<br/><i>" + i + "<sup>e</sup> " + nom + " : " +
-						str + " +" + dec + " (+" + total + ")</i>";
+					if (dec <= 1 || i == 6) {
+						break;
+					}
+					total = total + dec;
+					txt = `${txt}<br/><i>${i}<sup>e</sup> ${nom} : ${str} +${dec} (+${total})</i>`;
 				}
-				txt += "<br/><i>" + i + "<sup>e</sup> et + : " + str + " +" + dec + "</i>";
+				txt = `${txt}<br/><i>${i}<sup>e</sup> et + : ${str} +${dec}</i>`;
 				return txt;
 			},
 			nbrAdX = function (pc) {
@@ -14294,12 +15278,14 @@ try {
 			texte = "";
 
 		if (sort.indexOf('analyse anatomique') != -1) {
-			texte = 'Portée horizontale : <b>'
-				+ Math.floor(vuetotale / 2) + '</b> case';
-			if (vuetotale > 3) { texte += 's'; }
-			texte += '<br/>Portée verticale : <b>'
-				+ Math.floor((vuetotale + 1) / 4) + '</b> case';
-			if (vuetotale > 7) { texte += 's'; }
+			texte = `Portée horizontale : <b>${Math.floor(vuetotale / 2)}</b> case`;
+			if (vuetotale > 3) {
+				texte = `${texte}s`;
+			}
+			texte = `${texte}<br/>Portée verticale : <b>${Math.floor((vuetotale + 1) / 4)}</b> case`;
+			if (vuetotale > 7) {
+				texte = `${texte}s`;
+			}
 		} else if (sort.indexOf('armure etheree') != -1) {
 			texte = decumul_buff('AE', 'Armure magique', reg);
 		} else if (sort.indexOf("augmentation") != -1 && sort.indexOf("attaque") != -1) {
@@ -14307,25 +15293,25 @@ try {
 				categoriesAdA = {
 					"attx1": {
 						// Affichage: code MZ (cf arrayTalents)
-						"AN": true,
-						"AP": "AP1",
-						"Balayage": "Balayage",
-						"Charge": "Charger",
-						"CdB": "CdB1",
-						"Frénésie": "Frenesie",
-						"RB": "RB1",
-						"GdS": "GdS",
-						"Siphon": "Siphon"
+						AN: true,
+						AP: "AP1",
+						Balayage: "Balayage",
+						Charge: "Charger",
+						CdB: "CdB1",
+						Frénésie: "Frenesie",
+						RB: "RB1",
+						GdS: "GdS",
+						Siphon: "Siphon"
 					},
 					"attx2/3": {
 						"Botte Secrète": "BS"
 					},
 					"attx1/2": {
-						"CA": "CA",
-						"Parer": "Parer1"
+						CA: "CA",
+						Parer: "Parer1"
 					},
 					"degx2/3": {
-						"Vampirisme": "Vampi"
+						Vampirisme: "Vampi"
 					},
 					"vuex1": {
 						"Projectile Magique": "Projo"
@@ -14346,11 +15332,12 @@ try {
 
 			i = nbrAdA;
 			while (i++ < nbrAdA + 3) {
-				pc += decumulPc(i);
-				fixe += decumulFixe(3.5, i);
-				if (texte) { texte += "<hr>"; }
-				texte += "<b>" + i + "<sup>e</sup> AdA : " +
-					aff(pc) + "% de Dés d'attaque :</b><br>";
+				pc = pc + decumulPc(i);
+				fixe = fixe + decumulFixe(3.5, i);
+				if (texte) {
+					texte = `${texte}<hr>`;
+				}
+				texte = `${texte}<b>${i}<sup>e</sup> AdA : ${aff(pc)}% de Dés d'attaque :</b><br>`;
 				for (categorie in categoriesAdA) {
 					// On génére la liste: "talent1, talent2"
 					DSup = Math.floor(baseAdA[categorie] * pc / 100) -
@@ -14358,15 +15345,16 @@ try {
 					newTalent = false;
 					for (var talent in categoriesAdA[categorie]) {
 						if (getTalent(categoriesAdA[categorie][talent])) {
-							if (newTalent) { texte += ", "; }
-							texte += talent;
+							if (newTalent) {
+								texte = `${texte}, `;
+							}
+							texte = texte + talent;
 							newTalent = true;
 						}
 					}
 					if (newTalent) {
 						// Si le trõll a au moins un talent dans la catégorie :
-						texte += ": <b>+" + DSup + "D6 +" + Math.floor(fixe) + "</b> <i>(+" +
-							Math.floor(3.5 * DSup + fixe) + ")</i><br>";
+						texte = `${texte}: <b>+${DSup}D6 +${Math.floor(fixe)}</b> <i>(+${Math.floor(3.5 * DSup + fixe)})</i><br>`;
 					}
 				}
 			}
@@ -14379,15 +15367,15 @@ try {
 						"Botte Secrète": "BS"
 					},
 					"degx1": {
-						"AN": true,
-						"AP": "AP1",
-						"Charge": "Charger",
-						"CA": "CA",
-						"CdB": "CdB1",
-						"Frénésie": "Frenesie",
-						"RB": "RB1",
-						"Rafale": "Rafale",
-						"Vampi": "Vampi"
+						AN: true,
+						AP: "AP1",
+						Charge: "Charger",
+						CA: "CA",
+						CdB: "CdB1",
+						Frénésie: "Frenesie",
+						RB: "RB1",
+						Rafale: "Rafale",
+						Vampi: "Vampi"
 					},
 					"degx1/2": {
 						"Griffe du Sorcier": "GdS"
@@ -14414,11 +15402,12 @@ try {
 
 			i = nbrAdD;
 			while (i++ < nbrAdD + 3) {
-				pc += decumulPc(i);
-				fixe += decumulFixe(2, i);
-				if (texte) { texte += "<hr>"; }
-				texte += "<b>" + i + "<sup>e</sup> AdD : " +
-					aff(pc) + "% de Dés de dégâts :</b><br>";
+				pc = pc + decumulPc(i);
+				fixe = fixe + decumulFixe(2, i);
+				if (texte) {
+					texte = `${texte}<hr>`;
+				}
+				texte = `${texte}<b>${i}<sup>e</sup> AdD : ${aff(pc)}% de Dés de dégâts :</b><br>`;
 				for (categorie in categoriesAdD) {
 					// On génére la liste: "talent1, talent2"
 					DSup = Math.floor(baseAdD[categorie] * pc / 100) -
@@ -14426,257 +15415,252 @@ try {
 					newTalent = false;
 					for (var talent in categoriesAdD[categorie]) {
 						if (getTalent(categoriesAdD[categorie][talent])) {
-							if (newTalent) { texte += ", "; }
-							texte += talent;
+							if (newTalent) {
+								texte = `${texte}, `;
+							}
+							texte = texte + talent;
 							newTalent = true;
 						}
 					}
 					if (newTalent) {
 						// Si le trõll a au moins un talent dans la catégorie :
-						texte += ": <b>+" + DSup + "D3 +" + Math.floor(fixe) +
-							"</b> <i>(+" + Math.floor(2 * DSup + fixe) +
-							")</i><br>";
+						texte = `${texte}: <b>+${DSup}D3 +${Math.floor(fixe)
+							}</b> <i>(+${Math.floor(2 * DSup + fixe)
+							})</i><br>`;
 					}
 				}
 			}
 		} else if (sort.indexOf('bulle anti-magie') != -1) {
-			texte = 'RM : <b>+' + rm + '</b><br/>MM : <b>-' + mm + '</b>';
-		}
-		else if (sort.indexOf('bulle magique') != -1) {
-			texte = 'RM : <b>-' + rm + '</b><br/>MM : <b>+' + mm + '</b>';
-		}
-		else if (sort.indexOf('explosion') != -1) {
-			texte = 'Dégâts : <b>'
-				+ Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2) + '</b> D3 '
-				+ ' => <b>' + 2 * Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2)
-				+ ' (' + resiste(1 + (deg + Math.floor(pvbase / 10)) / 2) + ')</b>';
-		}
-		else if (sort.indexOf('faiblesse passagere') != -1) {
-			if (pvcourant <= 0)
+			texte = `RM : <b>+${rm}</b><br/>MM : <b>-${mm}</b>`;
+		} else if (sort.indexOf('bulle magique') != -1) {
+			texte = `RM : <b>-${rm}</b><br/>MM : <b>+${mm}</b>`;
+		} else if (sort.indexOf('explosion') != -1) {
+			texte = `Dégâts : <b>${Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2)}</b> D3 ` +
+				` => <b>${2 * Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2)
+				} (${resiste(1 + (deg + Math.floor(pvbase / 10)) / 2)})</b>`;
+		} else if (sort.indexOf('faiblesse passagere') != -1) {
+			if (pvcourant <= 0) {
 				return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
-			texte = 'Portée horizontale : <b>'
-				+ Math.min(1, vuetotale) + '</b> case<br/>'
-				+ 'Dégâts physiques : <b>-'
-				+ Math.ceil((Math.floor(pvcourant / 10) + deg - 5) / 4)
-				+ ' (-' + Math.ceil((Math.floor(pvcourant / 10) + deg - 5) / 8) + ')</b><br/>'
-				+ 'Dégâts magiques : <b>-'
-				+ Math.floor((Math.floor(pvcourant / 10) + deg - 4) / 4)
-				+ ' (-' + Math.floor((Math.floor(pvcourant / 10) + deg - 2) / 8) + ')</b>';
-		}
-		else if (sort.indexOf('flash aveuglant') != -1) {
-			texte = 'Vue, Attaque, Esquive : <b>-' + (1 + Math.floor(vue / 5)) + '</b>';
-		}
-		else if (sort.indexOf('glue') != -1) {
-			texte = 'Portée : <b>' + (1 + Math.floor(vuetotale / 3)) + '</b> case';
-			if (vuetotale > 2) texte += 's';
+			}
+			texte = `Portée horizontale : <b>${Math.min(1, vuetotale)}</b> case<br/>` +
+				`Dégâts physiques : <b>-${Math.ceil((Math.floor(pvcourant / 10) + deg - 5) / 4)
+				} (-${Math.ceil((Math.floor(pvcourant / 10) + deg - 5) / 8)})</b><br/>` +
+				`Dégâts magiques : <b>-${Math.floor((Math.floor(pvcourant / 10) + deg - 4) / 4)
+				} (-${Math.floor((Math.floor(pvcourant / 10) + deg - 2) / 8)})</b>`;
+		} else if (sort.indexOf('flash aveuglant') != -1) {
+			texte = `Vue, Attaque, Esquive : <b>-${1 + Math.floor(vue / 5)}</b>`;
+		} else if (sort.indexOf('glue') != -1) {
+			texte = `Portée : <b>${1 + Math.floor(vuetotale / 3)}</b> case`;
+			if (vuetotale > 2) {
+				texte = `${texte}s`;
+			}
 		} else if (sort.indexOf("griffe du sorcier") != -1) {
 			var
 				modD = 0,
 				addVenin = function (type, effet, duree) {
-					var
-						ret = "<b>Venin " + type + " : </b><br/><b>" +
-							effet + "</b> D3" +
-							" pendant <b>" + duree + "</b> tour",
+					let
+						ret = `<b>Venin ${type} : </b><br/><b>${effet}</b> D3` +
+							` pendant <b>${duree}</b> tour`,
 						dureeReduite = Math.max(Math.floor(duree / 2), 1);
 					if (duree > 1) {
-						ret += "s";
+						ret = `${ret}s`;
 					}
-					return ret +
-						" => <b>" + 2 * effet + " x " + duree + " = " + 2 * effet * duree +
-						"</b> (" + 2 * effet + " x " + dureeReduite + " = " +
-						2 * effet * dureeReduite + ")";
+					return `${ret
+						} => <b>${2 * effet} x ${duree} = ${2 * effet * duree
+						}</b> (${2 * effet} x ${dureeReduite} = ${2 * effet * dureeReduite})`;
 				},
 				effet = 1 + Math.floor((Math.floor(pvmax / 10) + reg) / 3);
 			// Frappe
-			texte = "Attaque : <b>" + att + "</b> D6 ";
+			texte = `Attaque : <b>${att}</b> D6 `;
 			if (atttour != 0) {
 				modD = Math.floor(att * atttour / 100);
-				texte += "<i>" + aff(modD) + "D6</i> ";
+				texte = `${texte}<i>${aff(modD)}D6</i> `;
 			}
-			texte += aff(attbm)
-				+ " => <b>" + (Math.round(3.5 * (att + modD)) + attbm) + "</b><br/>"
-				+ "Dégâts : <b>" + Math.floor(deg / 2) + "</b> D3 ";
+			texte = `${texte}${aff(attbm)
+				} => <b>${Math.round(3.5 * (att + modD)) + attbm}</b><br/>` +
+				`Dégâts : <b>${Math.floor(deg / 2)}</b> D3 `;
 			if (degtour != 0) {
 				modD = Math.floor(Math.floor(deg / 2) * degtour / 100);
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			} else {
 				modD = 0;
 			}
-			texte += aff(degbm) +
-				" => <b>" + (2 * (Math.floor(deg / 2) + modD) + degbm) +
-				"/" + (2 * (Math.floor(deg / 2) + Math.floor(deg / 4) + modD) + degbm) +
-				" (" + resiste(Math.floor(deg / 2) + modD, degbm) +
-				"/" + resiste(Math.floor(deg / 2) + Math.floor(deg / 4) + modD, degbm) +
-				")</b>";
+			texte = `${texte}${aff(degbm)
+				} => <b>${2 * (Math.floor(deg / 2) + modD) + degbm
+				}/${2 * (Math.floor(deg / 2) + Math.floor(deg / 4) + modD) + degbm
+				} (${resiste(Math.floor(deg / 2) + modD, degbm)
+				}/${resiste(Math.floor(deg / 2) + Math.floor(deg / 4) + modD, degbm)
+				})</b>`;
 			// Venins
-			texte += "<hr>" + addVenin("insidieux", effet, 2 + Math.floor(vue / 5));
+			texte = `${texte}<hr>${addVenin("insidieux", effet, 2 + Math.floor(vue / 5))}`;
 			effet = Math.floor(1.5 * effet);
-			texte += "<hr>" + addVenin("virulent", effet, 1 + Math.floor(vue / 10));
-		} else if (sort.indexOf('hypnotisme') != -1)
-			texte = 'Esquive : <b>-' + Math.floor(1.5 * esq) + '</b> Dés'
-				+ ' (<b>-' + Math.floor(esq / 3) + '</b> Dés)';
-		else if (sort.indexOf('identification des tresors') != -1)
-			texte = 'Permet de connaitre les caractéristiques et effets précis '
-				+ 'd\'un trésor.';
-		else if (sort.indexOf('invisibilite') != -1)
-			texte = 'Un troll invisible est indétectable même quand on se trouve '
-				+ 'sur sa zone. Toute action physique ou sortilège d\'attaque '
-				+ 'fait disparaître l\'invisibilité.';
-		else if (sort.indexOf('levitation') != -1)
-			texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. '
-				+ 'Comme les pièges ou les trous par exemple...';
-		else if (sort.indexOf("projectile magique") != -1) {
+			texte = `${texte}<hr>${addVenin("virulent", effet, 1 + Math.floor(vue / 10))}`;
+		} else if (sort.indexOf('hypnotisme') != -1) {
+			texte = `Esquive : <b>-${Math.floor(1.5 * esq)}</b> Dés` +
+				` (<b>-${Math.floor(esq / 3)}</b> Dés)`;
+		} else if (sort.indexOf('identification des tresors') != -1) {
+			texte = 'Permet de connaitre les caractéristiques et effets précis ' +
+				'd\'un trésor.';
+		} else if (sort.indexOf('invisibilite') != -1) {
+			texte = 'Un troll invisible est indétectable même quand on se trouve ' +
+				'sur sa zone. Toute action physique ou sortilège d\'attaque ' +
+				'fait disparaître l\'invisibilité.';
+		} else if (sort.indexOf('levitation') != -1) {
+			texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. ' +
+				'Comme les pièges ou les trous par exemple...';
+		} else if (sort.indexOf("projectile magique") != -1) {
 			var
 				modD = 0,
 				portee = getPortee(vuetotale);
 			// Att
-			texte = "Attaque : <b>" + vue + "</b> D6 ";
+			texte = `Attaque : <b>${vue}</b> D6 `;
 			if (atttour != 0) {
 				modD = Math.floor(vue * atttour / 100);
-				texte += "<i>" + aff(modD) + "D6</i> ";
+				texte = `${texte}<i>${aff(modD)}D6</i> `;
 			}
-			texte += aff(attbm) +
-				" => <b>" + (Math.round(3.5 * (vue + modD)) + attbm) + "</b><br>" +
-				"Dégâts : <b>" + Math.floor(vue / 2) + "</b> D3 ";
+			texte = `${texte}${aff(attbm)
+				} => <b>${Math.round(3.5 * (vue + modD)) + attbm}</b><br>` +
+				`Dégâts : <b>${Math.floor(vue / 2)}</b> D3 `;
 			// Deg
 			if (degtour != 0) {
 				modD = Math.floor(Math.floor(vue / 2) * degtour / 100);
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			} else {
 				modD = 0;
 			}
-			texte += aff(degbm) +
-				" => <b>" + (2 * (Math.floor(vue / 2) + modD) + degbm) +
-				"/" + (2 * (Math.floor(1.5 * Math.floor(vue / 2)) + modD) + degbm) +
-				" (" + resiste(Math.floor(vue / 2) + modD, degbm) +
-				"/" + resiste(1.5 * Math.floor(vue / 2) + modD, degbm) +
-				") (+ 1D3 par bonus de portée)</b>";
+			texte = `${texte}${aff(degbm)
+				} => <b>${2 * (Math.floor(vue / 2) + modD) + degbm
+				}/${2 * (Math.floor(1.5 * Math.floor(vue / 2)) + modD) + degbm
+				} (${resiste(Math.floor(vue / 2) + modD, degbm)
+				}/${resiste(1.5 * Math.floor(vue / 2) + modD, degbm)
+				}) (+ 1D3 par bonus de portée)</b>`;
 			// Portée
-			texte += "<br/>Portée : <b>" + portee + "</b> case";
-			if (portee > 1) texte += "s";
+			texte = `${texte}<br/>Portée : <b>${portee}</b> case`;
+			if (portee > 1) {
+				texte = `${texte}s`;
+			}
 		} else if (sort.indexOf('projection') != -1) {
-			texte = 'Si le jet de résistance de la victime est raté:<br/>'
-				+ 'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>'
-				+ 'Si le jet de résistance de la victime est réussi:<br/>'
-				+ 'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
+			texte = 'Si le jet de résistance de la victime est raté:<br/>' +
+				'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>' +
+				'Si le jet de résistance de la victime est réussi:<br/>' +
+				'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
 		} else if (sort.indexOf("rafale psychique") != -1) {
 			var modD = 0;
-			texte = "Dégâts : <b>" + deg + "</b> D3 ";
+			texte = `Dégâts : <b>${deg}</b> D3 `;
 			if (degtour != 0) {
 				modD = Math.floor(deg * degtour / 100);
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			}
-			texte += aff(degbm) +
-				" => <b>" + (2 * (deg + modD) + degbm) +
-				" (" + resiste(deg + modD, degbm) + ")</b><br>" +
-				"Malus : régénération <b>-" + (deg + modD) + "</b>";
+			texte = `${texte}${aff(degbm)
+				} => <b>${2 * (deg + modD) + degbm
+				} (${resiste(deg + modD, degbm)})</b><br>` +
+				`Malus : régénération <b>-${deg + modD}</b>`;
 		} else if (sort.indexOf("sacrifice") != -1) {
 			if (pvcourant <= 0) {
 				// N'est plus censé se produire : activation obligatoire si mort
 				return "<i>Qui voulez-vous donc soigner ? Vous êtes mort !</i>";
 			}
-			var
+			let
 				perteSacro = function (sac) {
-					return " (-" + (sac + 2 * (1 + Math.floor(sac / 5))) + " PV)";
+					return ` (-${sac + 2 * (1 + Math.floor(sac / 5))} PV)`;
 				},
 				sac = Math.floor((pvcourant - 1) / 2);
-			var bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
-			var pvdispoSansMalusTemps = pvcourant - pvtotal - Math.ceil(bmPVHorsBlessure * pvtotal / 250);
+			let bmPVHorsBlessure = dtbm + dtreserve + pdm + bmt + bmmouche;
+			let pvdispoSansMalusTemps = pvcourant - pvtotal - Math.ceil(bmPVHorsBlessure * pvtotal / 250);
 
-			texte = "Portée horizontale : <b>" +
-				Math.min(1, vuetotale) + "</b> case<br>" +
-				"Soin maximal : <b>" + sac + "</b> PV" + perteSacro(sac);
+			texte = `Portée horizontale : <b>${Math.min(1, vuetotale)}</b> case<br>` +
+				`Soin maximal : <b>${sac}</b> PV${perteSacro(sac)}`;
 			// Sacros max et optimal sans malus (propale R')
 			sac = Math.floor((pvdispoSansMalusTemps - 2) * 5 / 7);
 			if (sac > 0) {
-				texte += "<hr>Soin maximum limitant les risques de malus " +
-					"de temps : <b>" + sac + "</b> PV" + perteSacro(sac);
+				texte = `${texte}${"<hr>Soin maximum limitant les risques de malus " +
+					"de temps : <b>"}${sac}</b> PV${perteSacro(sac)}`;
 			} else {
-				texte += "<hr>Vous ne pouvez pas compenser de blessures " +
-					"dues à un sacrifice";
+				texte = `${texte}${"<hr>Vous ne pouvez pas compenser de blessures " +
+					"dues à un sacrifice"}`;
 			}
 		} else if (sort.indexOf("siphon") != -1) {
 			var modD = 0;
-			texte = "Attaque : <b>" + att + "</b> D6 ";
+			texte = `Attaque : <b>${att}</b> D6 `;
 			if (atttour != 0) {
 				modD = Math.floor(att * atttour / 100);
-				texte += "<i>" + aff(modD) + "D6</i> ";
+				texte = `${texte}<i>${aff(modD)}D6</i> `;
 			}
-			texte += aff(attbm) +
-				" => <b>" + Math.round(3.5 * (att + modD) + attbm) + "</b><br>" +
-				"Dégâts : <b>" + reg + "</b> D3 ";
+			texte = `${texte}${aff(attbm)
+				} => <b>${Math.round(3.5 * (att + modD) + attbm)}</b><br>` +
+				`Dégâts : <b>${reg}</b> D3 `;
 			if (degtour != 0) {
 				modD = Math.floor(reg * degtour / 100);
-				texte += "<i>" + aff(modD) + "D3</i> ";
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			} else {
 				modD = 0;
 			}
-			texte += aff(degbm) +
-				" => <b>" + (2 * (reg + modD) + degbm) +
-				"/" + (2 * (Math.floor(1.5 * reg) + modD) + degbm) +
-				" (" + resiste(reg + modD, degbm) +
-				"/" + resiste(1.5 * reg + modD, degbm) + ")</b>";
-			texte += "<br>Nécrose : attaque magique <b>-" + (reg + modD) + "</b>";
+			texte = `${texte}${aff(degbm)
+				} => <b>${2 * (reg + modD) + degbm
+				}/${2 * (Math.floor(1.5 * reg) + modD) + degbm
+				} (${resiste(reg + modD, degbm)
+				}/${resiste(1.5 * reg + modD, degbm)})</b>`;
+			texte = `${texte}<br>Nécrose : attaque magique <b>-${reg + modD}</b>`;
 		} else if (sort.indexOf('telekinesie') != -1) {
 			texte = 'Portée horizontale  :';
-			var vt = Math.floor(vuetotale / 2) + 2;
-			var strList = ['d\'une Plum\' ou Très Léger', 'Léger',
+			let vt = Math.floor(vuetotale / 2) + 2;
+			let strList = ['d\'une Plum\' ou Très Léger', 'Léger',
 				'Moyen', 'Lourd', 'Très Lourd ou d\'une Ton\''];
 			for (var i = 0; i < 5; i++) {
-				texte += '<br/><i>Trésor ' + strList[i] + ' : </i><b>' + vt + '</b> case';
-				if (vt > 1) texte += 's';
+				texte = `${texte}<br/><i>Trésor ${strList[i]} : </i><b>${vt}</b> case`;
+				if (vt > 1) {
+					texte = `${texte}s`;
+				}
 				vt = Math.max(0, vt - 1);
 			}
-		}
-		else if (sort.indexOf('teleportation') != -1) {
+		} else if (sort.indexOf('teleportation') != -1) {
 			var portee = getPortee(pitotal / 5);	// Roule, 30/09/2016, TP basé sur les PI
-			debugMZ('calcul portée Teleportation, pitotal=' + pitotal + ', portée=' + portee);
-			var pmh = (20 + vue + portee);
-			var pmv = 3 + Math.floor(portee / 3);
-			texte = 'Portée horizontale : <b>' + pmh + '</b> cases<br/>'
-				+ 'Portée verticale : <b>' + pmv + '</b> cases<hr>'
-				+ 'X compris entre ' + (posX - pmh) + ' et ' + (posX + pmh) + '<br/>'
-				+ 'Y compris entre ' + (posY - pmh) + ' et ' + (posY + pmh) + '<br/>'
-				+ 'N compris entre ' + (posN - pmv) + ' et ' + Math.min(-1, posN + pmv) + '<br/>';
+			debugMZ(`calcul portée Teleportation, pitotal=${pitotal}, portée=${portee}`);
+			let pmh = 20 + vue + portee;
+			let pmv = 3 + Math.floor(portee / 3);
+			texte = `Portée horizontale : <b>${pmh}</b> cases<br/>` +
+				`Portée verticale : <b>${pmv}</b> cases<hr>` +
+				`X compris entre ${posX - pmh} et ${posX + pmh}<br/>` +
+				`Y compris entre ${posY - pmh} et ${posY + pmh}<br/>` +
+				`N compris entre ${posN - pmv} et ${Math.min(-1, posN + pmv)}<br/>`;
 		} else if (sort.indexOf('vampirisme') != -1) {
 			var modD = 0;
-			texte = 'Attaque : <b>' + Math.floor(2 * deg / 3) + '</b> D6 ';
+			texte = `Attaque : <b>${Math.floor(2 * deg / 3)}</b> D6 `;
 			if (atttour != 0) {
 				modD = Math.floor(Math.floor(2 * deg / 3) * atttour / 100);
-				texte += '<i>' + aff(modD) + 'D6</i> ';
+				texte = `${texte}<i>${aff(modD)}D6</i> `;
 			}
-			texte += aff(attbm) +
-				' => <b>' + Math.round(3.5 * (Math.floor(2 * deg / 3) + modD) + attbm) +
-				'</b><br/>Dégâts : <b>' + deg + '</b> D3 ';
+			texte = `${texte}${aff(attbm)
+				} => <b>${Math.round(3.5 * (Math.floor(2 * deg / 3) + modD) + attbm)
+				}</b><br/>Dégâts : <b>${deg}</b> D3 `;
 			if (degtour != 0) {
 				modD = Math.floor(deg * degtour / 100);
-				texte += '<i>' + aff(modD) + 'D3</i> ';
+				texte = `${texte}<i>${aff(modD)}D3</i> `;
 			} else {
 				modD = 0;
 			}
-			texte += aff(degbm) +
-				' => <b>' + (2 * (deg + modD) + degbm) +
-				'/' + (2 * (Math.floor(1.5 * deg) + modD) + degbm) +
-				' (' + resiste(deg + modD, degbm) +
-				'/' + resiste(1.5 * deg + modD, degbm) + ')</b>';
-		} else if (sort.indexOf('vision accrue') != -1)
+			texte = `${texte}${aff(degbm)
+				} => <b>${2 * (deg + modD) + degbm
+				}/${2 * (Math.floor(1.5 * deg) + modD) + degbm
+				} (${resiste(deg + modD, degbm)
+				}/${resiste(1.5 * deg + modD, degbm)})</b>`;
+		} else if (sort.indexOf('vision accrue') != -1) {
 			texte = decumul_buff('VA', 'Vue', Math.floor(vue / 2));
-		else if (sort.indexOf('vision lointaine') != -1)
-			texte = 'En ciblant une zone située n\'importe où dans le '
-				+ 'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
-		else if (sort.indexOf('voir le cache') != -1)
-			texte = '<b>Sur soi :</b><br/>Portée horizontale : <b>'
-				+ Math.min(5, getPortee(vue)) + '</b> cases<hr>'
-				+ '<b>A distance :</b><br/>Portée horizontale : <b>'
-				+ getPortee(vuetotale) + '</b> cases';
-		else if (sort.indexOf('vue troublee') != -1)
-			texte = 'Portée horizontale : <b>' + Math.min(1, vuetotale) + '</b> case<br/>'
-				+ 'Vue : <b>-' + Math.floor(vue / 3) + '</b>';
+		} else if (sort.indexOf('vision lointaine') != -1) {
+			texte = 'En ciblant une zone située n\'importe où dans le ' +
+				'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
+		} else if (sort.indexOf('voir le cache') != -1) {
+			texte = `<b>Sur soi :</b><br/>Portée horizontale : <b>${Math.min(5, getPortee(vue))}</b> cases<hr>` +
+				`<b>A distance :</b><br/>Portée horizontale : <b>${getPortee(vuetotale)}</b> cases`;
+		} else if (sort.indexOf('vue troublee') != -1) {
+			texte = `Portée horizontale : <b>${Math.min(1, vuetotale)}</b> case<br/>` +
+				`Vue : <b>-${Math.floor(vue / 3)}</b>`;
+		}
 		return texte;
 	}
 
 
-	/*---------------------------------- Main ------------------------------------ */
+	/* ---------------------------------- Main ------------------------------------ */
 
 	function do_profil2() {
 		try {
@@ -14695,16 +15679,18 @@ try {
 			setLienAnatrolliseur();
 
 			// Cette fonction modifie lourdement le DOM, à placer en dernier :
-			if (race == 'Kastar' || MY_DEBUG) { setAccel(); }
+			if (race == 'Kastar' || MY_DEBUG) {
+				setAccel();
+			}
 			saveProfil();
 			displayScriptTime();
 		} catch (e) {
-			avertissement("[MZ " + GM_info.script.version + "] Une erreur s'est produite.<br>" + traceStack(e, 'profil2').replace("\n", "<br>"), 1000000, true);
+			avertissement(`[MZ ${GM_info.script.version}] Une erreur s'est produite.<br>${traceStack(e, 'profil2').replace("\n", "<br>")}`, 1000000, true);
 			logMZ(traceStack(e, 'profil2'));
 		}
 	}
 
-	/*******************************************************************************
+	/** *****************************************************************************
 	*   This file is part of Mountyzilla.                                          *
 	*                                                                              *
 	*   Mountyzilla is free software; you can redistribute it and/or modify        *
@@ -14738,20 +15724,32 @@ try {
 	 * Configurable variables. You may need to tweak these to be compatible with
 	 * the server-side, but the defaults work in most cases.
 	 */
-	var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase        */
+	var hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase        */
 	var b64pad = ""; /* base-64 pad character. "=" for strict RFC compliance   */
-	var chrsz = 8;  /* bits per input character. 8 - ASCII; 16 - Unicode      */
+	var chrsz = 8; /* bits per input character. 8 - ASCII; 16 - Unicode      */
 
 	/*
 	 * These are the functions you'll usually want to call
 	 * They take string arguments and return either hex or base-64 encoded strings
 	 */
-	function hex_md5(s) { return binl2hex(core_md5(str2binl(s), s.length * chrsz)); }
-	function b64_md5(s) { return binl2b64(core_md5(str2binl(s), s.length * chrsz)); }
-	function str_md5(s) { return binl2str(core_md5(str2binl(s), s.length * chrsz)); }
-	function hex_hmac_md5(key, data) { return binl2hex(core_hmac_md5(key, data)); }
-	function b64_hmac_md5(key, data) { return binl2b64(core_hmac_md5(key, data)); }
-	function str_hmac_md5(key, data) { return binl2str(core_hmac_md5(key, data)); }
+	function hex_md5(s) {
+		return binl2hex(core_md5(str2binl(s), s.length * chrsz));
+	}
+	function b64_md5(s) {
+		return binl2b64(core_md5(str2binl(s), s.length * chrsz));
+	}
+	function str_md5(s) {
+		return binl2str(core_md5(str2binl(s), s.length * chrsz));
+	}
+	function hex_hmac_md5(key, data) {
+		return binl2hex(core_hmac_md5(key, data));
+	}
+	function b64_hmac_md5(key, data) {
+		return binl2b64(core_hmac_md5(key, data));
+	}
+	function str_hmac_md5(key, data) {
+		return binl2str(core_hmac_md5(key, data));
+	}
 
 	/*
 	 * Perform a simple self-test to see if the VM is working
@@ -14765,19 +15763,19 @@ try {
 	 */
 	function core_md5(x, len) {
 		/* append padding */
-		x[len >> 5] |= 0x80 << ((len) % 32);
-		x[(((len + 64) >>> 9) << 4) + 14] = len;
+		x[len >> 5] |= 0x80 << len % 32;
+		x[(len + 64 >>> 9 << 4) + 14] = len;
 
-		var a = 1732584193;
-		var b = -271733879;
-		var c = -1732584194;
-		var d = 271733878;
+		let a = 1732584193;
+		let b = -271733879;
+		let c = -1732584194;
+		let d = 271733878;
 
-		for (var i = 0; i < x.length; i += 16) {
-			var olda = a;
-			var oldb = b;
-			var oldc = c;
-			var oldd = d;
+		for (let i = 0; i < x.length; i = i + 16) {
+			let olda = a;
+			let oldb = b;
+			let oldc = c;
+			let oldd = d;
 
 			a = md5_ff(a, b, c, d, x[i + 0], 7, -680876936);
 			d = md5_ff(d, a, b, c, x[i + 1], 12, -389564586);
@@ -14853,7 +15851,6 @@ try {
 			d = safe_add(d, oldd);
 		}
 		return Array(a, b, c, d);
-
 	}
 
 	/*
@@ -14863,32 +15860,34 @@ try {
 		return safe_add(bit_rol(safe_add(safe_add(a, q), safe_add(x, t)), s), b);
 	}
 	function md5_ff(a, b, c, d, x, s, t) {
-		return md5_cmn((b & c) | ((~b) & d), a, b, x, s, t);
+		return md5_cmn(b & c | ~b & d, a, b, x, s, t);
 	}
 	function md5_gg(a, b, c, d, x, s, t) {
-		return md5_cmn((b & d) | (c & (~d)), a, b, x, s, t);
+		return md5_cmn(b & d | c & ~d, a, b, x, s, t);
 	}
 	function md5_hh(a, b, c, d, x, s, t) {
 		return md5_cmn(b ^ c ^ d, a, b, x, s, t);
 	}
 	function md5_ii(a, b, c, d, x, s, t) {
-		return md5_cmn(c ^ (b | (~d)), a, b, x, s, t);
+		return md5_cmn(c ^ (b | ~d), a, b, x, s, t);
 	}
 
 	/*
 	 * Calculate the HMAC-MD5, of a key and some data
 	 */
 	function core_hmac_md5(key, data) {
-		var bkey = str2binl(key);
-		if (bkey.length > 16) bkey = core_md5(bkey, key.length * chrsz);
+		let bkey = str2binl(key);
+		if (bkey.length > 16) {
+			bkey = core_md5(bkey, key.length * chrsz);
+		}
 
-		var ipad = Array(16), opad = Array(16);
-		for (var i = 0; i < 16; i++) {
+		let ipad = Array(16), opad = Array(16);
+		for (let i = 0; i < 16; i++) {
 			ipad[i] = bkey[i] ^ 0x36363636;
 			opad[i] = bkey[i] ^ 0x5C5C5C5C;
 		}
 
-		var hash = core_md5(ipad.concat(str2binl(data)), 512 + data.length * chrsz);
+		let hash = core_md5(ipad.concat(str2binl(data)), 512 + data.length * chrsz);
 		return core_md5(opad.concat(hash), 512 + 128);
 	}
 
@@ -14897,16 +15896,16 @@ try {
 	 * to work around bugs in some JS interpreters.
 	 */
 	function safe_add(x, y) {
-		var lsw = (x & 0xFFFF) + (y & 0xFFFF);
-		var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-		return (msw << 16) | (lsw & 0xFFFF);
+		let lsw = (x & 0xFFFF) + (y & 0xFFFF);
+		let msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+		return msw << 16 | lsw & 0xFFFF;
 	}
 
 	/*
 	 * Bitwise rotate a 32-bit number to the left.
 	 */
 	function bit_rol(num, cnt) {
-		return (num << cnt) | (num >>> (32 - cnt));
+		return num << cnt | num >>> 32 - cnt;
 	}
 
 	/*
@@ -14914,10 +15913,11 @@ try {
 	 * If chrsz is ASCII, characters >255 have their hi-byte silently ignored.
 	 */
 	function str2binl(str) {
-		var bin = Array();
-		var mask = (1 << chrsz) - 1;
-		for (var i = 0; i < str.length * chrsz; i += chrsz)
-			bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << (i % 32);
+		let bin = Array();
+		let mask = (1 << chrsz) - 1;
+		for (let i = 0; i < str.length * chrsz; i = i + chrsz) {
+			bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << i % 32;
+		}
 		return bin;
 	}
 
@@ -14925,10 +15925,11 @@ try {
 	 * Convert an array of little-endian words to a string
 	 */
 	function binl2str(bin) {
-		var str = "";
-		var mask = (1 << chrsz) - 1;
-		for (var i = 0; i < bin.length * 32; i += chrsz)
-			str += String.fromCharCode((bin[i >> 5] >>> (i % 32)) & mask);
+		let str = "";
+		let mask = (1 << chrsz) - 1;
+		for (let i = 0; i < bin.length * 32; i = i + chrsz) {
+			str = str + String.fromCharCode(bin[i >> 5] >>> i % 32 & mask);
+		}
 		return str;
 	}
 
@@ -14936,11 +15937,11 @@ try {
 	 * Convert an array of little-endian words to a hex string.
 	 */
 	function binl2hex(binarray) {
-		var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
-		var str = "";
-		for (var i = 0; i < binarray.length * 4; i++) {
-			str += hex_tab.charAt((binarray[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) +
-				hex_tab.charAt((binarray[i >> 2] >> ((i % 4) * 8)) & 0xF);
+		let hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+		let str = "";
+		for (let i = 0; i < binarray.length * 4; i++) {
+			str = str + (hex_tab.charAt(binarray[i >> 2] >> i % 4 * 8 + 4 & 0xF) +
+				hex_tab.charAt(binarray[i >> 2] >> i % 4 * 8 & 0xF));
 		}
 		return str;
 	}
@@ -14949,23 +15950,26 @@ try {
 	 * Convert an array of little-endian words to a base-64 string
 	 */
 	function binl2b64(binarray) {
-		var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-		var str = "";
-		for (var i = 0; i < binarray.length * 4; i += 3) {
-			var triplet = (((binarray[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16)
-				| (((binarray[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8)
-				| ((binarray[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
-			for (var j = 0; j < 4; j++) {
-				if (i * 8 + j * 6 > binarray.length * 32) str += b64pad;
-				else str += tab.charAt((triplet >> 6 * (3 - j)) & 0x3F);
+		let tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		let str = "";
+		for (let i = 0; i < binarray.length * 4; i = i + 3) {
+			let triplet = (binarray[i >> 2] >> 8 * (i % 4) & 0xFF) << 16 |
+				(binarray[i + 1 >> 2] >> 8 * ((i + 1) % 4) & 0xFF) << 8 |
+				binarray[i + 2 >> 2] >> 8 * ((i + 2) % 4) & 0xFF;
+			for (let j = 0; j < 4; j++) {
+				if (i * 8 + j * 6 > binarray.length * 32) {
+					str = str + b64pad;
+				} else {
+					str = str + tab.charAt(triplet >> 6 * (3 - j) & 0x3F);
+				}
 			}
 		}
 		return str;
 	}
 
-	///////////////////////////////////////////
+	// /////////////////////////////////////////
 	// debug cartes capitan Roule 07/12/2016
-	///////////////////////////////////
+	// /////////////////////////////////
 	// essais : objet
 	//	.mode : description
 	//	.essais : tableau d'objets essai
@@ -14974,10 +15978,12 @@ try {
 	//			.noCarte : id de la carte
 	//			.essais : tableau d'essais, [x, y, n, nb]
 	function AfficheEssais(essais, sMode) {
-		var eBigDiv = document.getElementById('ListeEssaiCapitan');
+		let eBigDiv = document.getElementById('ListeEssaiCapitan');
 		if (!eBigDiv) {
-			var insertPoint = document.getElementById('footer1');
-			if (!insertPoint) insertPoint = document.getElementById('footer');	// mode smartphone
+			let insertPoint = document.getElementById('footer1');
+			if (!insertPoint) {
+				insertPoint = document.getElementById('footer');
+			}	// mode smartphone
 			eBigDiv = document.createElement('table');
 			eBigDiv.id = 'ListeEssaiCapitan';
 			insertBefore(insertPoint, document.createElement('p'));
@@ -14989,9 +15995,9 @@ try {
 			addTrEssais(eBigDiv, sMode, '', 'pas d\'essai', false);
 			return;
 		}
-		var carte;
+		let carte;
 		for (carte in essais) {
-			addTrEssais(eBigDiv, sMode, carte, essais[carte] + ' essai(s)', false);
+			addTrEssais(eBigDiv, sMode, carte, `${essais[carte]} essai(s)`, false);
 		}
 		if (carte === undefined) {
 			addTrEssais(eBigDiv, sMode, '', '0 essai', false);
@@ -14999,8 +16005,8 @@ try {
 	}
 
 	function addTrEssais(eTable, sMode, sCarte, sText, bBold) {
-		var tr = appendTr(eTable);
-		var td = appendTd(tr);
+		let tr = appendTr(eTable);
+		let td = appendTd(tr);
 		appendText(td, sMode, bBold);
 		td = appendTd(tr);
 		appendText(td, sCarte, bBold);
@@ -15010,32 +16016,39 @@ try {
 
 	function getEssaiV1_0() {
 		try {
-			var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+			let prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
 			prefs = prefs.getBranch("mountyzilla.storage.capitan.");
-			var tabK, nK;
+			let tabK, nK;
 			prefs.getChildList('', nK, tabK);
-			logMZ('getEssaiV1_0, nb key : ' + nK);
+			logMZ(`getEssaiV1_0, nb key : ${nK}`);
 			// logMZ('getEssaiV1_0, ' + nK);
 			return;
-			//return r;
+			// return r;
 		} catch (e) {
 			logMZ(traceStack(e, 'getEssaiV1_0'));
 		}
 	}
 
 	function getEssaiV1_1() {
-		var locSto = window.localStorage;
-		logMZ('getEssaiV1_1, nb key : ' + locSto.length);
-		var r = [];
-		for (var i = 0; i < locSto.length; i++) {
-			var k = locSto.key(i);
+		let locSto = window.localStorage;
+		logMZ(`getEssaiV1_1, nb key : ${locSto.length}`);
+		let r = [];
+		for (let i = 0; i < locSto.length; i++) {
+			let k = locSto.key(i);
 			// logMZ('getEssaiV1_1 key ' + k + ' => ' + locSto.getItem(k));
-			var t = k.split(/\./);
-			if (t[0] !== 'capitan') continue;
-			if (t[2] !== 'essai') continue;
-			var carte = 'carte n°' + t[1];
-			if (r[carte]) r[carte]++;
-			else r[carte] = 1;
+			let t = k.split(/\./);
+			if (t[0] !== 'capitan') {
+				continue;
+			}
+			if (t[2] !== 'essai') {
+				continue;
+			}
+			let carte = `carte n°${t[1]}`;
+			if (r[carte]) {
+				r[carte]++;
+			} else {
+				r[carte] = 1;
+			}
 			// logMZ('getEssaiV1_1 r[' + carte + ']=' + r[carte]);
 		}
 		return r;
@@ -15043,7 +16056,7 @@ try {
 
 	function showEssaiCartes() {
 		logMZ('début showEssai Tout_MZ');
-		var essais = getEssaiV1_0();
+		let essais = getEssaiV1_0();
 		AfficheEssais(essais, 'V1.0');
 		essais = getEssaiV1_1();
 		AfficheEssais(essais, 'V1.1');
@@ -15052,38 +16065,38 @@ try {
 
 	function testBoolLocalStorage() {
 		var b = true;
-		var key = 'MZ_essai_bool';
+		let key = 'MZ_essai_bool';
 		GM_setValue(key, b);
 		window.localStorage[key] = b;
 		var v = GM_getValue(key);
-		logMZ('recup GM true => ' + v + ', ' + typeof v);
+		logMZ(`recup GM true => ${v}, ${typeof v}`);
 		var v = window.localStorage.getItem(key);
-		logMZ('recup localstorage true => ' + v + ', ' + typeof v);	// localStorage nous rend une chaine 'true' :(
+		logMZ(`recup localstorage true => ${v}, ${typeof v}`);	// localStorage nous rend une chaine 'true' :(
 
 		var b = false;
 		GM_setValue(key, b);
 		window.localStorage[key] = b;
 		var v = GM_getValue(key);
-		logMZ('recup GM false => ' + v + ', ' + typeof v);
+		logMZ(`recup GM false => ${v}, ${typeof v}`);
 		var v = window.localStorage.getItem(key);
-		logMZ('recup localstorage false => ' + v + ', ' + typeof v);
+		logMZ(`recup localstorage false => ${v}, ${typeof v}`);
 
-		var x = window.localStorage.getItem('lkjlkjerziurlijzer');
-		logMZ('recup LocalStorage inconnu => ' + typeof (x));	// object null
-		var y = GM_getValue('654654897894654654');
-		logMZ('recup GM inconnu => ' + typeof (y));	// undefined
-		logMZ('égalité ? => ' + (x == y));	// les deux sont "égaux" avec l'opérateur == (pas avec ===, bien sûr)
+		let x = window.localStorage.getItem('lkjlkjerziurlijzer');
+		logMZ(`recup LocalStorage inconnu => ${typeof x}`);	// object null
+		let y = GM_getValue('654654897894654654');
+		logMZ(`recup GM inconnu => ${typeof y}`);	// undefined
+		logMZ(`égalité ? => ${x == y}`);	// les deux sont "égaux" avec l'opérateur == (pas avec ===, bien sûr)
 	}
 
-	/*--------------------------------- Création liste trolligion --------------------------------- */
+	/* --------------------------------- Création liste trolligion --------------------------------- */
 	function export_trolligion() {
 		try {
-			var tabDl = document.getElementsByTagName('dl');
-			if ((!tabDl) || !tabDl[0]) {
-				logMZ('[MZ ' + GM_info.script.version + '] pas de dl');
+			let tabDl = document.getElementsByTagName('dl');
+			if (!tabDl || !tabDl[0]) {
+				logMZ(`[MZ ${GM_info.script.version}] pas de dl`);
 				return;
 			}
-			var tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
+			let tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
 			// nom : string
 			// rayonnement : entier
 			// grades : table d'objets (une occurence par grade)
@@ -15096,114 +16109,126 @@ try {
 			// race
 			// niveau
 			// ferveur
-			var currentDieu;
-			var currentGrade;
-			for (var iChild1 in tabDl[0].children) {
-				var eChild1 = tabDl[0].children[iChild1];
-				if (eChild1.tagName) switch (eChild1.tagName.toLowerCase()) {
-					case 'dd':	// Trõll
-						var oTroll = {};
-						export_trolligion_analyse(oTroll, eChild1);
-						currentGrade.trolls.push(oTroll);
-						break;
-					case 'dt':
-						var tabH3 = eChild1.getElementsByTagName('h3');
-						if (tabH3 && tabH3[0]) {	// changement de dieu
-							currentDieu = {
-								nom: tabH3[0].innerText || tabH3[0].textContent
-								, grades: []
-							};
-							var txt = eChild1.innerText || eChild1.textContent;
-							var m = txt.match(/yon*ement *:* *(\d+)/);
-							if (m) currentDieu.rayonnement = parseInt(m[1]);
-							currentGrade = undefined;
-							tabDieux.push(currentDieu);
+			let currentDieu;
+			let currentGrade;
+			for (let iChild1 in tabDl[0].children) {
+				let eChild1 = tabDl[0].children[iChild1];
+				if (eChild1.tagName) {
+					switch (eChild1.tagName.toLowerCase()) {
+						case 'dd':	// Trõll
+							var oTroll = {};
+							export_trolligion_analyse(oTroll, eChild1);
+							currentGrade.trolls.push(oTroll);
 							break;
-						}
-						var tabH4 = eChild1.getElementsByTagName('h4');
-						if (tabH4 && tabH4[0]) {	// changement de grade
-							var grade;
-							var txt = tabH4[0].innerText || tabH4[0].textContent;
-							tabI = tabH4[0].getElementsByTagName('i');
-							if (tabI && tabI[0]) {
-								grade = tabI[0].innerText || tabI[0].textContent;
-								grade = grade.replace(/"/g, '');
-								m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
-								if (m) grade += ' (' + m[1] + ')';
-							} else {
-								grade = txt.replace(/"/g, '');
+						case 'dt':
+							var tabH3 = eChild1.getElementsByTagName('h3');
+							if (tabH3 && tabH3[0]) {	// changement de dieu
+								currentDieu = {
+									nom: tabH3[0].innerText || tabH3[0].textContent,
+									grades: []
+								};
+								var txt = eChild1.innerText || eChild1.textContent;
+								var m = txt.match(/yon*ement *:* *(\d+)/);
+								if (m) {
+									currentDieu.rayonnement = parseInt(m[1]);
+								}
+								currentGrade = undefined;
+								tabDieux.push(currentDieu);
+								break;
 							}
-							currentGrade = { nom: grade, trolls: [] };
-							currentDieu.grades.push(currentGrade);
+							var tabH4 = eChild1.getElementsByTagName('h4');
+							if (tabH4 && tabH4[0]) {	// changement de grade
+								var grade;
+								var txt = tabH4[0].innerText || tabH4[0].textContent;
+								tabI = tabH4[0].getElementsByTagName('i');
+								if (tabI && tabI[0]) {
+									grade = tabI[0].innerText || tabI[0].textContent;
+									grade = grade.replace(/"/g, '');
+									m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
+									if (m) {
+										grade = `${grade} (${m[1]})`;
+									}
+								} else {
+									grade = txt.replace(/"/g, '');
+								}
+								currentGrade = { nom: grade, trolls: [] };
+								currentDieu.grades.push(currentGrade);
+								break;
+							}
+							logMZ(`[MZ ${GM_info.script.version}] ignore tag dt ${eChild1.innerHTML}`);
 							break;
-						}
-						logMZ('[MZ ' + GM_info.script.version + '] ignore tag dt ' + eChild1.innerHTML);
-						break;
-					default:
-						logMZ('[MZ ' + GM_info.script.version + '] ignore tag ' + eChild1.tagName); //+ ' ' + eChild1);
+						default:
+							logMZ(`[MZ ${GM_info.script.version}] ignore tag ${eChild1.tagName}`); // + ' ' + eChild1);
+					}
 				}
 			}
 
 			// logMZ('[MZ ' + GM_info.script.version + '] nb dieux = ' + tabDieux.length);
 			// logMZ('[MZ ' + GM_info.script.version + '] ' + JSON.stringify(tabDieux));
 			var txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
-			var txt2 = "Dieu\tRayonnement\n";	// Roule 25/01/2017 ajout d'un tableau résumé par religion
-			for (var iDieu in tabDieux) {
-				var oDieu = tabDieux[iDieu];
-				for (var iGrade in oDieu.grades) {
-					var oGrade = oDieu.grades[iGrade];
-					for (var iTroll in oGrade.trolls) {
+			let txt2 = "Dieu\tRayonnement\n";	// Roule 25/01/2017 ajout d'un tableau résumé par religion
+			for (let iDieu in tabDieux) {
+				let oDieu = tabDieux[iDieu];
+				for (let iGrade in oDieu.grades) {
+					let oGrade = oDieu.grades[iGrade];
+					for (let iTroll in oGrade.trolls) {
 						var oTroll = oGrade.trolls[iTroll];
-						var t = [oDieu.nom, oDieu.rayonnement
-							, oGrade.nom
-							, oTroll.id, oTroll.nom
-							, oTroll.idguilde, oTroll.guilde
-							, oTroll.race, oTroll.niveau
-							, oTroll.ferveur];
+						var t = [oDieu.nom, oDieu.rayonnement,
+						oGrade.nom,
+						oTroll.id, oTroll.nom,
+						oTroll.idguilde, oTroll.guilde,
+						oTroll.race, oTroll.niveau,
+						oTroll.ferveur];
 						for (var iParam in t) {
-							if (t[iParam] === undefined) t[iParam] = '';	// protection
+							if (t[iParam] === undefined) {
+								t[iParam] = '';
+							}	// protection
 							t[iParam] = t[iParam].toString().replace(/[\n\r\t]/g, ' ').trim();	// plus de protection
 						}
-						txt += t.join("\t") + "\n";
+						txt = `${txt}${t.join("\t")}\n`;
 					}
 				}
 				var t = [oDieu.nom, oDieu.rayonnement];
 				for (var iParam in t) {
-					if (t[iParam] === undefined) t[iParam] = '';	// protection
+					if (t[iParam] === undefined) {
+						t[iParam] = '';
+					}	// protection
 					t[iParam] = t[iParam].toString().replace(/[\n\r\t]/g, ' ').trim();	// plus de protection
 				}
-				txt2 += t.join("\t") + "\n";
+				txt2 = `${txt2}${t.join("\t")}\n`;
 			}
-			txt += "\n" + txt2;
+			txt = `${txt}\n${txt2}`;
 		} catch (e) {
-			avertissement("Échec à l'extraction\n" + e);
+			avertissement(`Échec à l'extraction\n${e}`);
 		}
 		// logMZ('[MZ ' + GM_info.script.version + '] txt =  ' + txt);
 		try {
 			if (copyTextToClipboard(txt)) {
-				avertissement("[MZ] Les données ont été copiées dans le presse-papier\n"
-					+ "Collez dans Calc\n"
-					+ "ou, au pire, dans EXCEL®");
+				avertissement("[MZ] Les données ont été copiées dans le presse-papier\n" +
+					"Collez dans Calc\n" +
+					"ou, au pire, dans EXCEL®");
 			} else {
 				avertissement("[MZ] Echec à la copie vers le presse-papier\nVoir la console (F12)");
 			}
 		} catch (e) {
-			avertissement("[MZ] Échec à la copie vers le presse-papier\n" + e);
+			avertissement(`[MZ] Échec à la copie vers le presse-papier\n${e}`);
 		}
 	}
 
 	function export_trolligion_analyse(oTroll, eChild1) {
-		for (var iChild2 in eChild1.childNodes) {	// childNodes pour obtenir les éléments texte aussi
-			var eChild2 = eChild1.childNodes[iChild2];
-			if (eChild2.nodeType === undefined) continue;	// properties
+		for (let iChild2 in eChild1.childNodes) {	// childNodes pour obtenir les éléments texte aussi
+			let eChild2 = eChild1.childNodes[iChild2];
+			if (eChild2.nodeType === undefined) {
+				continue;
+			}	// properties
 			// logMZ('[MZ ' + GM_info.script.version + '] eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
 			switch (eChild2.nodeType) {
-				case 1:	//ELEMENT_NODE:
+				case 1:	// ELEMENT_NODE:
 					switch (eChild2.nodeName.toLowerCase()) {
 						case 'a':
 							var m;
 							if (!eChild2.href) {
-								logMZ('[MZ ' + GM_info.script.version + '] a sans href ' + eChild2.outerHTML);
+								logMZ(`[MZ ${GM_info.script.version}] a sans href ${eChild2.outerHTML}`);
 								break;
 							}
 							m = eChild2.href.match(/EnterPJView\((\d+) *,/);
@@ -15214,14 +16239,14 @@ try {
 							}
 							m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
 							if (m) {
-								var idGuilde = parseInt(m[1]);
+								let idGuilde = parseInt(m[1]);
 								if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
 									oTroll.idguilde = parseInt(m[1]);
 									oTroll.guilde = (eChild2.innerText || eChild2.textContent).trim();
 								}
 								break;
 							}
-							logMZ('[MZ ' + GM_info.script.version + '] a non traité ' + eChild2.outerHTML);
+							logMZ(`[MZ ${GM_info.script.version}] a non traité ${eChild2.outerHTML}`);
 							break;
 						case 'br':	// ignore
 						case 'style':	// ignore
@@ -15237,13 +16262,15 @@ try {
 							// logMZ('[MZ ' + GM_info.script.version + '] troll ' + JSON.stringify(oTroll));
 							break;
 						default:
-							logMZ('[MZ ' + GM_info.script.version + '] ignore élément tag ' + eChild2.nodeName);
+							logMZ(`[MZ ${GM_info.script.version}] ignore élément tag ${eChild2.nodeName}`);
 							break;
 					}
 					break;
-				case 3:	//TEXT_NODE:
+				case 3:	// TEXT_NODE:
 					var txt = eChild2.nodeValue.trim();
-					if (txt === '') break;
+					if (txt === '') {
+						break;
+					}
 					var m = txt.match(/(.*) *\((\d+)\)/);
 					if (m) {
 						oTroll.race = m[1].trim();
@@ -15253,14 +16280,14 @@ try {
 					}
 					break;
 				default:	// ne devrait pas arriver
-					logMZ('[MZ ' + GM_info.script.version + '] ignore élément type ' + eChild2.nodeType);
+					logMZ(`[MZ ${GM_info.script.version}] ignore élément type ${eChild2.nodeType}`);
 					break;
 			}
 		}
 	}
 
 	function do_trolligion() {
-		var divpopup = document.createElement('div');
+		let divpopup = document.createElement('div');
 		divpopup.id = 'MZ_divCopier';
 		divpopup.style.position = 'fixed';
 		divpopup.style.top = '2px';
@@ -15270,62 +16297,78 @@ try {
 		divpopup.style.zIndex = 200;
 		divpopup.title = '[MZ] Cliquer ici pour copier les données';
 		divpopup.onclick = export_trolligion;
-		var img = createAltImage(URL_MZimg + 'copy_32.png', 'Cliquer ici pour copier les données');
+		let img = createAltImage(`${URL_MZimg}copy_32.png`, 'Cliquer ici pour copier les données');
 		divpopup.appendChild(img);
 		document.body.appendChild(divpopup);
 	}
 
 	function MZ_extern_param() {
-		if (!document.body.MZ_Params) return;
-		if (document.body.MZ_Params.INFOCARAC != undefined) MY_setValue('INFOCARAC', document.body.MZ_Params.INFOCARAC);
-		if (document.body.MZ_Params.CONFIRMEDECALAGE != undefined) MY_setValue('CONFIRMEDECALAGE', document.body.MZ_Params.CONFIRMEDECALAGE);
-		if (document.body.MZ_Params.COMPTEAREBOURSDLA != undefined) MY_setValue('COMPTEAREBOURSDLA', document.body.MZ_Params.COMPTEAREBOURSDLA);
-		if (document.body.MZ_Params.MZ_SuivantsOrdres != undefined) MY_setValue('MZ_SuivantsOrdres', document.body.MZ_Params.MZ_SuivantsOrdres);
-		if (document.body.MZ_Params.MZ_SuivantsCompress != undefined) MY_setValue('MZ_SuivantsCompress', document.body.MZ_Params.MZ_SuivantsCompress);
-		if (document.body.MZ_Params.MZ_SuivantsTresUnique != undefined) MY_setValue('MZ_SuivantsTresUnique', document.body.MZ_Params.MZ_SuivantsTresUnique);
+		if (!document.body.MZ_Params) {
+			return;
+		}
+		if (document.body.MZ_Params.INFOCARAC != undefined) {
+			MY_setValue('INFOCARAC', document.body.MZ_Params.INFOCARAC);
+		}
+		if (document.body.MZ_Params.CONFIRMEDECALAGE != undefined) {
+			MY_setValue('CONFIRMEDECALAGE', document.body.MZ_Params.CONFIRMEDECALAGE);
+		}
+		if (document.body.MZ_Params.COMPTEAREBOURSDLA != undefined) {
+			MY_setValue('COMPTEAREBOURSDLA', document.body.MZ_Params.COMPTEAREBOURSDLA);
+		}
+		if (document.body.MZ_Params.MZ_SuivantsOrdres != undefined) {
+			MY_setValue('MZ_SuivantsOrdres', document.body.MZ_Params.MZ_SuivantsOrdres);
+		}
+		if (document.body.MZ_Params.MZ_SuivantsCompress != undefined) {
+			MY_setValue('MZ_SuivantsCompress', document.body.MZ_Params.MZ_SuivantsCompress);
+		}
+		if (document.body.MZ_Params.MZ_SuivantsTresUnique != undefined) {
+			MY_setValue('MZ_SuivantsTresUnique', document.body.MZ_Params.MZ_SuivantsTresUnique);
+		}
 	}
 
 	function MZ_CompoTanieresPrepare(eTable) {
-		if (!eTable) eTable = document.getElementById('tabTresorInfo');
+		if (!eTable) {
+			eTable = document.getElementById('tabTresorInfo');
+		}
 		if (!eTable) {
 			debugMZ('MZ_CompoTanieresPrepare erreur, impossible de trouver tabTresorInfo');
 			return;
 		}
-		var eDiv = document.getElementById('MZ_CompoTanieres');
+		let eDiv = document.getElementById('MZ_CompoTanieres');
 		if (eDiv) {
 			debugMZ('MZ_CompoTanieresPrepare div MZ_CompoTanieres déjà là');
 			return;
 		}
-		var oInfo = MZ_AnalyseInfoHistoTresor(eTable);
+		let oInfo = MZ_AnalyseInfoHistoTresor(eTable);
 		if (oInfo.type != 'Composant') {
-			debugMZ('MZ_CompoTanieresPrepare div MZ_CompoTanieres pas composant (' + oInfo.type + ')');
+			debugMZ(`MZ_CompoTanieresPrepare div MZ_CompoTanieres pas composant (${oInfo.type})`);
 			return;
 		}
 		debugMZ('MZ_CompoTanieresPrepare création div MZ_CompoTanieres');
-		var eNew = document.createElement('table');
+		let eNew = document.createElement('table');
 		eNew.id = 'MZ_CompoTanieres';
 		eNew.className = 'mh_tdborder';
 		eNew.style.width = '98%';
 		eNew.style.margin = 'auto';
-		var eTr = document.createElement('tr');
-		var eTd = document.createElement('td');
+		let eTr = document.createElement('tr');
+		let eTd = document.createElement('td');
 		eTd.className = 'mh_tdpage';
 		eTd.style.cursor = 'pointer';
 		eTd.style.color = 'blue';
 		eTd.onclick = MZ_doSearchCompoTanieres;
-		eTd.appendChild(document.createTextNode('[MZ] Voir mes compos de ' + oInfo.monstre + ' en tanière'));
+		eTd.appendChild(document.createTextNode(`[MZ] Voir mes compos de ${oInfo.monstre} en tanière`));
 		eTr.appendChild(eTd);
 		eNew.appendChild(eTr);
 		eTable.parentNode.insertBefore(eNew, eTable.nextSibling);
 	}
 
 	function MZ_doSearchCompoTanieres(event) {
-		var eTableTaniere = document.getElementById('MZ_CompoTanieres');
+		let eTableTaniere = document.getElementById('MZ_CompoTanieres');
 		if (!eTableTaniere) {
 			logMZ('[MZ] MZ_doSearchCompoTanieres, erreur, pas de MZ_CompoTanieres');
 			return;
 		}
-		var eTableMH = document.getElementById('tabTresorInfo');
+		let eTableMH = document.getElementById('tabTresorInfo');
 		if (!eTableMH) {
 			logMZ('[MZ] MZ_doSearchCompoTanieres, erreur, impossible de trouver tabTresorInfo');
 			return;
@@ -15335,17 +16378,21 @@ try {
 			logMZ('[MZ] MZ_doSearchCompoTanieres, erreur, pas sur un compo');
 			return;
 		}
-		var url = '/mountyhall/MH_Comptoirs/Comptoir_Recherche.php?as_type=Composant&as_nom_base=' + oInfo.monstre + '&as_Action=Rechercher';
-		if (!event) url += '&as_composant_morceau=' + oInfo.composant;
+		let url = `/mountyhall/MH_Comptoirs/Comptoir_Recherche.php?as_type=Composant&as_nom_base=${oInfo.monstre}&as_Action=Rechercher`;
+		if (!event) {
+			url = `${url}&as_composant_morceau=${oInfo.composant}`;
+		}
 		FF_XMLHttpRequest({
 			method: 'GET',
 			HTML: true,
 			url: url,
-			trace: 'recherche en tanière compos ' + oInfo.monstre,
+			trace: `recherche en tanière compos ${oInfo.monstre}`,
 			onload: function (responseDetails) {
 				try {
 					// logMZ('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-					if (responseDetails.status == 0) return;
+					if (responseDetails.status == 0) {
+						return;
+					}
 					let eDivRecherches = responseDetails.responseXML.getElementById('recherches');
 					if (!eDivRecherches) {
 						logMZ('[MZ] MZ_doSearchCompoTanieres réponse sans DIV recherches');
@@ -15355,84 +16402,108 @@ try {
 					let bFound = false;
 					let nTotal = 0;
 					for (let eDiv of eDivRecherches.children) {
-						if (eDiv.tagName != 'DIV') continue;
-						var oTable = eDiv.getElementsByTagName('table')[0];
-						if (!oTable) continue;
-						for (var oTr of oTable.rows) {
+						if (eDiv.tagName != 'DIV') {
+							continue;
+						}
+						let oTable = eDiv.getElementsByTagName('table')[0];
+						if (!oTable) {
+							continue;
+						}
+						for (let oTr of oTable.rows) {
 							for (oTd of oTr.cells) {
-								var tabA = oTd.getElementsByTagName('a');
-								if (!tabA[0]) continue;
-								if (tabA[0].href.indexOf('TresorHistory.php') <= 0) continue;
-								var m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
+								let tabA = oTd.getElementsByTagName('a');
+								if (!tabA[0]) {
+									continue;
+								}
+								if (tabA[0].href.indexOf('TresorHistory.php') <= 0) {
+									continue;
+								}
+								let m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
 								if (!m) {
-									debugMZ('MZ_doSearchCompoTanieres no match ' + oTd.textContent);
+									debugMZ(`MZ_doSearchCompoTanieres no match ${oTd.textContent}`);
 									continue;
 								}
 								var compo = m[1];
-								var monstre = m[2];
+								let monstre = m[2];
 								var qualite = m[3];
 								oCompo = oCompos[compo];
 								if (oCompo == undefined) {
 									oCompo = {};
 									oCompos[compo] = oCompo;
 								}
-								var qty = oCompo[qualite];
-								if (qty == undefined) qty = 0;
+								let qty = oCompo[qualite];
+								if (qty == undefined) {
+									qty = 0;
+								}
 								oCompo[qualite] = ++qty;
 								nTotal++;
 								bFound = true;
 							}
 						}
 					}
-					while (eTableTaniere.rows.length > 0) eTableTaniere.deleteRow(0);
+					while (eTableTaniere.rows.length > 0) {
+						eTableTaniere.deleteRow(0);
+					}
 					var eTr = document.createElement('tr');
 					var eTd = document.createElement('td');
 					eTd.className = 'mh_tdpage';
-					var bErreur = false;
-					var color = 'blue';
+					let bErreur = false;
+					let color = 'blue';
 					if (!bFound) {
-						var sMsg = 'Pas de '
-						if (!event) sMsg += oInfo.composant;
-						else sMsg += 'composant';
-						sMsg += ' de ' + oInfo.monstre + ' en tanière';
+						var sMsg = 'Pas de ';
+						if (!event) {
+							sMsg = sMsg + oInfo.composant;
+						} else {
+							sMsg = `${sMsg}composant`;
+						}
+						sMsg = `${sMsg} de ${oInfo.monstre} en tanière`;
 						bErreur = true;
 						color = 'red';
 					} else if (nTotal < 100) {
 						if (!event) {
-							var sMsg = 'Vous avez au moins 100 composants de ' + oInfo.monstre + ' en tanière.';
-							sMsg += ' La recherche a été restreinte aux composants de type ' + oInfo.composant;
+							var sMsg = `Vous avez au moins 100 composants de ${oInfo.monstre} en tanière.`;
+							sMsg = `${sMsg} La recherche a été restreinte aux composants de type ${oInfo.composant}`;
 							color = 'purple';
 						} else {
-							var sMsg = 'Composants de ' + oInfo.monstre + ' en tanière';
+							var sMsg = `Composants de ${oInfo.monstre} en tanière`;
 						}
 						eTd.colSpan = 6;
 					} else if (!event) {
 						bErreur = true;
 						color = 'red';
-						var sMsg = 'Vous avez au moins 100 ' + oInfo.composant + ' de ' + oInfo.monstre + '. MZ met les pouces.';
+						var sMsg = `Vous avez au moins 100 ${oInfo.composant} de ${oInfo.monstre}. MZ met les pouces.`;
 					} else {
 						MZ_doSearchCompoTanieres(false);
 						return;
 					}
 					eTd.style.color = color;
-					eTd.appendChild(document.createTextNode('[MZ] ' + sMsg));
+					eTd.appendChild(document.createTextNode(`[MZ] ${sMsg}`));
 					eTr.appendChild(eTd);
 					eTableTaniere.appendChild(eTr);
-					if (bErreur) return;
-					debugMZ('MZ_doSearchCompoTanieres réponse OK ' + JSON.stringify(oCompos));
+					if (bErreur) {
+						return;
+					}
+					debugMZ(`MZ_doSearchCompoTanieres réponse OK ${JSON.stringify(oCompos)}`);
 					// tri par nom de compo
-					var tabTri = [];
-					for (var compo in oCompos) tabTri.push(compo);
-					if (!tabTri.includes(oInfo.composant)) tabTri.push(oInfo.composant);
+					let tabTri = [];
+					for (var compo in oCompos) {
+						tabTri.push(compo);
+					}
+					if (!tabTri.includes(oInfo.composant)) {
+						tabTri.push(oInfo.composant);
+					}
 					tabTri.sort();
 					var eTr = document.createElement('tr');
 					eTr.className = 'mh_tdtitre';
-					var tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
+					let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
 					for (var qualite of tabQualite) {
-						var eTh = document.createElement('th');
+						let eTh = document.createElement('th');
 						eTh.appendChild(document.createTextNode(qualite));
-						if (qualite == '') eTh.style.width = '30%';
-						else eTh.style.width = '14%';
+						if (qualite == '') {
+							eTh.style.width = '30%';
+						} else {
+							eTh.style.width = '14%';
+						}
 						eTh.style.border = 'solid black 1px';
 						eTr.appendChild(eTh);
 					}
@@ -15465,31 +16536,35 @@ try {
 	}
 
 	function MZ_AnalyseInfoHistoTresor(eTable, oRet) {
-		if (oRet == undefined) oRet = {};
-		for (var oTr of eTable.rows) {
+		if (oRet == undefined) {
+			oRet = {};
+		}
+		for (let oTr of eTable.rows) {
 			if (oTr.cells[0] == undefined) {
 				// ça arrive
 				// debugMZ('MZ_AnalyseInfoHistoTresor pas de oTr.cells[0] => ' + JSON.stringify(oTr));
 				continue;
 			}
 			if (oTr.cells[0].className == 'titre2' || oTr.className == 'mh_tdtitre') {
-				var s = oTr.cells[0].textContent;
-				var m = s.match(/\] (.*) d'une* (.+) de Qualité (.*) \[/i);
+				let s = oTr.cells[0].textContent;
+				let m = s.match(/\] (.*) d'une* (.+) de Qualité (.*) \[/i);
 				if (m) {
-					debugMZ('MZ_AnalyseInfoHistoTresor match titre => ' + JSON.stringify(m));
+					debugMZ(`MZ_AnalyseInfoHistoTresor match titre => ${JSON.stringify(m)}`);
 					oRet.monstre = m[2];
 					oRet.composant = m[1];
 					oRet.qualite = m[3];
 				} else {
-					debugMZ('MZ_AnalyseInfoHistoTresor no match titre ' + s + ', class=' + oTr.cells[0].className);
+					debugMZ(`MZ_AnalyseInfoHistoTresor no match titre ${s}, class=${oTr.cells[0].className}`);
 				}
 				continue;
 			}
 			if (oTr.cells.length < 2) {
-				for (var oT2 of oTr.cells[0].getElementsByTagName('table')) MZ_AnalyseInfoHistoTresor(oT2, oRet);	// appel récursif
+				for (let oT2 of oTr.cells[0].getElementsByTagName('table')) {
+					MZ_AnalyseInfoHistoTresor(oT2, oRet);
+				}	// appel récursif
 				continue;
 			}
-			var c0 = oTr.cells[0].textContent;
+			let c0 = oTr.cells[0].textContent;
 			// debugMZ('MZ_AnalyseInfoHistoTresor nb cell=' + oTr.cells.length + ' [' + c0 + '][' + oTr.cells[1].textContent + ']');
 			if (c0.match(/Type/i)) {
 				oRet.type = oTr.cells[1].textContent;
@@ -15502,13 +16577,14 @@ try {
 	var MZ_hookCompoTanieresCounter;
 
 	function MZ_CompoTanieresCallback() {
-		var eTable = document.getElementById('tabTresorInfo');
+		let eTable = document.getElementById('tabTresorInfo');
 		if (!eTable) {
-			debugMZ('MZ_CompoTanieresCallback pas de tabTresorInfo, counter=' + MZ_hookCompoTanieresCounter);
-			if (MZ_hookCompoTanieresCounter--)
+			debugMZ(`MZ_CompoTanieresCallback pas de tabTresorInfo, counter=${MZ_hookCompoTanieresCounter}`);
+			if (MZ_hookCompoTanieresCounter--) {
 				window.setTimeout(MZ_CompoTanieresCallback, 100);
-			else
+			} else {
 				MZ_hookCompoTanieresCounter = undefined;
+			}
 			return;
 		}
 		MZ_hookCompoTanieresCounter = undefined;
@@ -15517,9 +16593,9 @@ try {
 
 	function MZdo_hookCompoTanieres() {
 		debugMZ('do_hookCompoTanieres');
-		var hookSetCallback = function () {
+		let hookSetCallback = function () {
 			if (MZ_hookCompoTanieresCounter != undefined) {
-				MZ_hookCompoTanieresCounter += 50;
+				MZ_hookCompoTanieresCounter = MZ_hookCompoTanieresCounter + 50;
 				return;
 			}
 			MZ_hookCompoTanieresCounter = 50;
@@ -15529,11 +16605,11 @@ try {
 		document.body.onkeypress = hookSetCallback;
 	}
 
-	/*--------------------------------- Dispatch --------------------------------- */
+	/* --------------------------------- Dispatch --------------------------------- */
 
-	//chargerScriptDev("libs");
-	//chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
-	//if (isDEV) testBoolLocalStorage();
+	// chargerScriptDev("libs");
+	// chargerScriptDev("ALWAYS");	// ALWAYS contient des aides au test (GOD-MODE ;)
+	// if (isDEV) testBoolLocalStorage();
 	/* Roule, test getPVsRestants
 		var pv = 'Inimaginables (supérieurs à 200)';
 		var pvminmax = pv.match(/\d+/g);
@@ -15545,7 +16621,7 @@ try {
 
 	// Détection de la page à traiter
 	if (isPage("MH_Play/Play_a_ActionResult")) {
-		debugMZ('Play_a_ActionResult id=' + document.body.id);
+		debugMZ(`Play_a_ActionResult id=${document.body.id}`);
 		switch (document.body.id) {
 			case 'p_comptenceconnaissancedesmonstres':
 				do_cdmcomp();
@@ -15562,7 +16638,7 @@ try {
 		do_menu();
 	} else if (isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
 		do_option();
-		//showEssaiCartes();
+		// showEssaiCartes();
 	} else if (isPage("View/PJView_Events")) {
 		/* SCIZ */
 		do_scizOverwriteEvents();
@@ -15572,6 +16648,7 @@ try {
 		do_tancompo();
 	} else if (isPage("MH_Play/Play_vue")) {
 		do_vue();
+
 		/* SCIZ */
 		do_scizEnhanceView();
 	} else if (isPage("MH_Play/Play_news")) {
@@ -15585,6 +16662,7 @@ try {
 		do_mission();
 	} else if (isPage("View/MonsterView")) {
 		do_infomonstre();
+
 		/* SCIZ */
 		do_scizOverwriteEvents();
 	} else if (isPage("MH_Play/Play_e_follo.php")) {
@@ -15622,11 +16700,11 @@ try {
 	} else if (isPage('View/TresorHistory.php')) {
 		MZ_CompoTanieresPrepare();
 	}
-	if (isPage('MH_Play/Play_equipement.php')
-		|| isPage('MH_Play/Play_e_follo.php')
-		|| isPage('MH_Follower/FO_Equipement.php')
-		|| isPage('MH_Taniere/TanierePJ_o_Stock.php')
-		|| isPage('MH_Comptoirs/Comptoir_Recherche.php')) {
+	if (isPage('MH_Play/Play_equipement.php') ||
+		isPage('MH_Play/Play_e_follo.php') ||
+		isPage('MH_Follower/FO_Equipement.php') ||
+		isPage('MH_Taniere/TanierePJ_o_Stock.php') ||
+		isPage('MH_Comptoirs/Comptoir_Recherche.php')) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
@@ -15640,8 +16718,8 @@ try {
 	setTimeout(MZ_extern_param, 500);
 } catch (e) {
 	try {
-		logMZ(traceStack(e, 'catch général page ' + window.location.pathname));
+		logMZ(traceStack(e, `catch général page ${window.location.pathname}`));
 	} catch (e2) {
-		logMZ('catch général page ' + window.location.pathname + "\n" + e.message);
+		logMZ(`catch général page ${window.location.pathname}\n${e.message}`);
 	}
 }
