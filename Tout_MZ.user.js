@@ -526,6 +526,65 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 			}
 **********************************************************/
 
+/** x~x Logging/debugging MZ ------------------------------------------- */
+let MY_DEBUG = false, MY_LOG = true;
+
+function logMZ(obj, version = '') {
+	if (!MY_LOG) {
+		return;
+	}
+	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
+	let lv = version != '' ? `|${version}` : '';
+	window.console.log(`[MZ${lv}] ${msg}`);
+}
+
+function warnMZ(obj, version = '') {
+	if (!MY_LOG) {
+		return;
+	}
+	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
+	let lv = version != '' ? `|${version}` : '';
+	window.console.warn(`[MZ${lv}] ${msg}`);
+}
+
+function debugMZ(obj, version = '') {
+	if (!MY_DEBUG) {
+		return;
+	}
+	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
+	let lv = version != '' ? `|${version}` : '';
+	window.console.log(`[MZ_DEBUG${lv}] ${msg}`);
+	// window.console.debug(`[MZ_DEBUG] ${msg}`);
+}
+
+function traceStack(e, sModule) {
+	let version = '';
+	if (GM_info && GM_info.script && GM_info.script.version) {
+		version = `${GM_info.script.version}`;
+	}
+	let sRet = `[MZ_TRACE|${version}]`;
+	if (sModule) {
+		sRet = `${sRet} \{${sModule}\}`;
+	}
+	try {
+		if (e.message) {
+			sRet = `${sRet} ${e.message}`;
+		}
+	} catch (e2) {
+		sRet = `${sRet} <exception acces message>`; // + e2.message;
+	}
+	try {
+		if (e.stack) {
+			let sStack = e.stack;
+			// enlever les infos confidentielles
+			sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
+		}
+	} catch (e2) {
+		sRet = `${sRet} <exception acces stack>`; // + e2.message;
+	}
+	return sRet;
+}
+
 try {
 	/** ********************************************************
 	**** Début de zone à déplacer dans une bibli commune ******
@@ -596,68 +655,10 @@ try {
 	let URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
 	let MHicons = '/mountyhall/Images/Icones/';
 
-	/** x~x Logging/debugging MZ ------------------------------------------- */
-	let MY_DEBUG = false, MY_LOG = true;
-
-	function logMZ(obj, version = '') {
-		if (!MY_LOG) {
-			return;
-		}
-		let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-		let lv = version != '' ? `|${version}` : '';
-		window.console.log(`[MZ${lv}] ${msg}`);
-	}
-
-	function warnMZ(obj, version = '') {
-		if (!MY_LOG) {
-			return;
-		}
-		let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-		let lv = version != '' ? `|${version}` : '';
-		window.console.warn(`[MZ${lv}] ${msg}`);
-	}
-
-	function debugMZ(obj, version = '') {
-		if (!MY_DEBUG) {
-			return;
-		}
-		let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-		let lv = version != '' ? `|${version}` : '';
-		window.console.log(`[MZ_DEBUG${lv}] ${msg}`);
-		// window.console.debug(`[MZ_DEBUG] ${msg}`);
-	}
-
-	function traceStack(e, sModule) {
-		let version = '';
-		if (GM_info && GM_info.script && GM_info.script.version) {
-			version = `${GM_info.script.version}`;
-		}
-		let sRet = `[MZ_TRACE|${version}]`;
-		if (sModule) {
-			sRet = `${sRet} \{${sModule}\}`;
-		}
-		try {
-			if (e.message) {
-				sRet = `${sRet} ${e.message}`;
-			}
-		} catch (e2) {
-			sRet = `${sRet} <exception acces message>`; // + e2.message;
-		}
-		try {
-			if (e.stack) {
-				let sStack = e.stack;
-				// enlever les infos confidentielles
-				sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
-			}
-		} catch (e2) {
-			sRet = `${sRet} <exception acces stack>`; // + e2.message;
-		}
-		return sRet;
-	}
-
 	/** x~x Compatibilité Greasemonkey/ViolentMonkey ----------------------- */
 	try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
 		let horsGM = GM_getValue === undefined;
+		logMZ('Fonctionnement dans Greasemonkey');
 	} catch (_e) {
 		logMZ('Fonctionnement hors Greasemonkey');
 		GM_getValue = function (key) { };
@@ -3500,7 +3501,7 @@ try {
 		}
 		let str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203)'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
 		let i;
-		for (i = 0; i < array.length; i++) {
+		for (let i = 0; i < array.length; i++) {
 			if (array[i][1] == 100 && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
 				needAutres = true;
 				break;
@@ -5394,7 +5395,7 @@ try {
 				texte = texte.substring(0, texte.lastIndexOf(" "));
 			}
 			let nomChampi = texte.substring(0, texte.lastIndexOf(" "));
-			if (moisChampi[nomChampi]) {
+			if (moisChampi[nomChampi]) { // gath: 'moisChampi' is not defined
 				appendText(node.parentNode.parentNode, ` [Mois ${moisChampi[nomChampi]}]`);
 			}
 		}
@@ -5779,7 +5780,7 @@ try {
 				e[iRow].style.paddingBottom = '0';
 			}
 		}
-		for (oSuivant of MZ_analyse_page_suivants.suivants) {
+		for (let oSuivant of MZ_analyse_page_suivants.suivants) {
 			if (nMaxOrdres != undefined) {
 				let tabTxtOrdre = [];
 				let nDisplayOrdre = 0;
@@ -5918,7 +5919,7 @@ try {
 			if (nodeTitre != null) {
 				texte = nodeTitre.firstChild.nodeValue;
 			} else {
-				tabEventDescription = document.getElementsByClassName('mh_monstres');
+				let tabEventDescription = document.getElementsByClassName('mh_monstres');
 				if (tabEventDescription[0] != undefined) {
 					let eltNom = tabEventDescription[0];
 					texte = eltNom.textContent;
@@ -6181,7 +6182,7 @@ try {
 		scizGlobal.treasures = [];
 
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 		if (jwt === null || jwt === undefined || jwt.trim() === '') {
 			return;
 		}
@@ -6198,11 +6199,12 @@ try {
 		let viewV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
 
 		/* SCIZ View - TROLLS */
-		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
 		if (cbx !== '0') {
 			// Retrieve trolls
 			let xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
 			let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+			let xPathTroll;
 			while (xPathTroll = xPathTrolls.iterateNext()) {
 				scizGlobal.trolls.push({
 					id: parseInt(xPathTroll.children[2].innerHTML),
@@ -6233,9 +6235,10 @@ try {
 							return;
 						}
 						// Look for trolls to enhanced
+						let found = false;
 						trolls.trolls.forEach((t) => {
-							for (i = 0; i < scizGlobal.trolls.length; i++) {
-								let found = false;
+							for (let i = 0; i < scizGlobal.trolls.length; i++) {
+								found = false;
 								if (scizGlobal.trolls[i].id === t.id) {
 									// PrettyPrint
 									scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML + scizPrettyPrintTroll(t);
@@ -6262,6 +6265,7 @@ try {
 								// Find the right index
 								let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
 								let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+								let xPathTroll;
 								while (xPathTroll = xPathTrolls.iterateNext()) {
 									if (is_self) {
 										break;
@@ -6307,6 +6311,7 @@ try {
 			let ids = [];
 			let xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
 			let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+			let xPathTreasure;
 			while (xPathTreasure = xPathTreasures.iterateNext()) {
 				scizGlobal.treasures.push({
 					id: parseInt(xPathTreasure.children[2].innerHTML),
@@ -6322,7 +6327,7 @@ try {
 			}
 
 			// Call SCIZ
-			sciz_url = 'https://www.sciz.fr/api/hook/treasures';
+			let sciz_url = 'https://www.sciz.fr/api/hook/treasures';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -6342,7 +6347,7 @@ try {
 						}
 						// Look for treasures to enhanced
 						treasures.treasures.forEach((t) => {
-							for (i = 0; i < scizGlobal.treasures.length; i++) {
+							for (let i = 0; i < scizGlobal.treasures.length; i++) {
 								if (scizGlobal.treasures[i].id === t.id) {
 									// PrettyPrint
 									t = scizPrettyPrintTreasure(t);
@@ -6369,9 +6374,10 @@ try {
 		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
 		if (cbx !== '0') {
 			// Retrieve mushrooms
-			ids = [];
+			let ids = [];
 			let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
 			let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
+			let xPathMushroom;
 			while (xPathMushroom = xPathMushrooms.iterateNext()) {
 				scizGlobal.mushrooms.push({
 					id: parseInt(xPathMushroom.children[2].innerHTML),
@@ -6386,7 +6392,7 @@ try {
 			}
 
 			// Call SCIZ
-			sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
+			let sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -6406,7 +6412,7 @@ try {
 						}
 						// Look for mushrooms to enhanced
 						mushrooms.mushrooms.forEach((m) => {
-							for (i = 0; i < scizGlobal.mushrooms.length; i++) {
+							for (let i = 0; i < scizGlobal.mushrooms.length; i++) {
 								if (scizGlobal.mushrooms[i].id === m.id) {
 									// PrettyPrint
 									m = scizPrettyPrintMushroom(m);
@@ -6433,6 +6439,7 @@ try {
 			let mobs = [];
 			let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
 			let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
+			let xPathMonster;
 			while (xPathMonster = xPathMonsters.iterateNext()) {
 				let mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
 				scizGlobal.monsters.push({
@@ -6446,7 +6453,7 @@ try {
 				mobs.push({ name: mob[1], age: mob[2] });
 			}
 			// Check the list against the SCIZ bestiaire
-			sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
+			let sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -6482,9 +6489,10 @@ try {
 		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`);
 		if (cbx !== '0') {
 			// Retrieve traps
-			ids = [];
+			let ids = [];
 			let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
 			let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+			let xPathPlace;
 			while (xPathPlace = xPathPlaces.iterateNext()) {
 				let trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
 				if (trap === null) {
@@ -6501,7 +6509,7 @@ try {
 			}
 
 			// Call SCIZ
-			sciz_url = 'https://www.sciz.fr/api/hook/traps';
+			let sciz_url = 'https://www.sciz.fr/api/hook/traps';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -6521,7 +6529,7 @@ try {
 						// Look for traps to enhanced
 						traps.traps.forEach((t) => {
 							let found = false;
-							for (i = 0; i < scizGlobal.traps.length; i++) {
+							for (let i = 0; i < scizGlobal.traps.length; i++) {
 								if (scizGlobal.traps[i].id === t.id) {
 									scizGlobal.traps[i].sciz_desc = scizPrettyPrintTrap(t);
 									// Adapt the sciz type (delete the hidden marker, the do_scizSwitchTraps will handle it)
@@ -6569,9 +6577,10 @@ try {
 		cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`);
 		if (cbx !== '0') {
 			// Retrieve portals
-			ids = [];
-			xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-			xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+			let ids = [];
+			let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+			let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+			let xPathPlace;
 			while (xPathPlace = xPathPlaces.iterateNext()) {
 				let portal = xPathPlace.children[3].innerHTML.match(/Portail/);
 				if (portal === null) {
@@ -6586,7 +6595,7 @@ try {
 				ids.push(xPathPlace.children[2].innerHTML);
 			}
 			// Call SCIZ
-			sciz_url = 'https://www.sciz.fr/api/hook/portals';
+			let sciz_url = 'https://www.sciz.fr/api/hook/portals';
 			FF_XMLHttpRequest({
 				method: 'POST',
 				url: sciz_url,
@@ -6606,7 +6615,7 @@ try {
 						}
 						// Look for treasures to enhanced
 						portals.portals.forEach((t) => {
-							for (i = 0; i < scizGlobal.portals.length; i++) {
+							for (let i = 0; i < scizGlobal.portals.length; i++) {
 								if (scizGlobal.portals[i].id === t.id) {
 									scizGlobal.portals[i].sciz_desc = scizPrettyPrintPortal(t);
 									break;
@@ -6700,7 +6709,7 @@ try {
 
 	function do_scizBestiaire(monster) {
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 		if (jwt === null || jwt === undefined || jwt.trim() === '') {
 			return;
 		}
@@ -6764,8 +6773,8 @@ try {
 		let eventTableNode = null;
 
 		// Ensure we have a JWT setup for the current user
-		jwt = MY_getValue(`${numTroll}.SCIZJWT`);
-		cbx = MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`);
+		let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`);
 		if (jwt === null || jwt === undefined || jwt.trim() === '' || cbx === '0') {
 			return;
 		}
@@ -6781,6 +6790,7 @@ try {
 
 		// Retrieve local events
 		let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
+		let xPathEvent;
 		while (xPathEvent = xPathEvents.iterateNext()) {
 			scizGlobal.events.push({
 				time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
@@ -6838,7 +6848,7 @@ try {
 							// Look for the best event matching and not already replaced
 							let i = -1;
 							let lastDelta = Infinity;
-							for (j = 0; j < scizGlobal.events.length; j++) {
+							for (let j = 0; j < scizGlobal.events.length; j++) {
 								if (scizGlobal.events[j].sciz_desc === null) {
 									let delta = Math.abs(t - scizGlobal.events[j].time);
 									if (delta <= scizSetup.eventsMaxMatchingInterval && delta < lastDelta) {
@@ -7054,7 +7064,7 @@ try {
 				}
 				// if (isDEV) {
 				// niveau = 35;	// pour les tests Roule
-				// alert('niveau forcé à 35 pour test');
+				// window.alert('niveau forcé à 35 pour test');
 				// }
 				// debug Roule'
 				debugMZ(`traiteMission, save niveau=${niveau}, mod=${mod}, siMundidey=${siMundidey}, libelle=${libelle}`);
@@ -7486,6 +7496,7 @@ try {
 
 	function traiterJubilaires_a_supprimer() {	// ancienne méthode
 		try {
+			let URL_anniv = '';
 			FF_XMLHttpRequest({
 				method: 'GET',
 				url: URL_anniv,
@@ -7530,8 +7541,8 @@ try {
 			"Les Trõlls qui fêtent leur anniversaire aujourd'hui:",
 			'Envoyez leur un message ou un cadeau !'
 		);
-		tr = appendTr(tbody, 'mh_tdpage');
-		td = appendTdCenter(tr);
+		let tr = appendTr(tbody, 'mh_tdpage');
+		let td = appendTdCenter(tr);
 		let small = document.createElement('small');
 		td.appendChild(small);
 		let first = true;
@@ -7782,8 +7793,9 @@ try {
 		if (currentURL.indexOf("as_type=Divers") == -1) {
 			return;
 		}
+		let node;
 		try {
-			let node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'" +
+			node = document.evaluate("//form/table/tbody[@class='tablesorter-no-sort'" +
 				" and contains(./tr/th/text(),'Minerai')]", document, null, 9, null
 			).singleNodeValue;
 			node = node.nextSibling.nextSibling;
@@ -7855,6 +7867,7 @@ try {
 		let id_taniere = c.snapshotItem(0).nodeValue;
 		id_taniere = id_taniere.substring(id_taniere.lastIndexOf('(') + 1, id_taniere.lastIndexOf(')'));
 
+		// gath: 'getFormComboDB' is not defined
 		let form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
 			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"));
 		if (form) {
@@ -7920,6 +7933,7 @@ try {
 		let id_taniere = t2.snapshotItem(0).nodeValue;
 		id_taniere = id_taniere.substring(id_taniere.indexOf('(') + 1, id_taniere.indexOf(')'));
 
+		// gath: 'getFormComboDB' is not defined
 		let form = getFormComboDB(currentURL.indexOf('MH_Taniere') != -1 ? 'taniere' : 'grande_taniere', id_taniere,
 			texte.replace(/\240/g, " ").replace(/d'un/g, "d un"), "Vendre tous les composants non réservés sur le Troc de l\'Hydre");
 		if (form) {
@@ -7955,6 +7969,7 @@ try {
 			let locqual = desc[3].textContent;
 			let qualite = trim(locqual.substring(locqual.indexOf("Qualité:") + 9));
 			let localisation = trim(locqual.substring(0, locqual.indexOf("|") - 1));
+			// gath: 'isEM' is not defined
 			if (isEM(nomMonstre).length > 0) {
 				let infos = composantEM(nomMonstre, trim(nomCompo), localisation, getQualite(qualite));
 				if (infos.length > 0) {
@@ -7986,7 +8001,7 @@ try {
 		for (let i = 0; i < nodes.snapshotLength; i++) {
 			let node = nodes.snapshotItem(i);
 			let nomChampi = trim(node.nodeValue.replace(/\240/g, ' '));
-			if (moisChampi[nomChampi]) {
+			if (moisChampi[nomChampi]) { // gath: 'moisChampi' is not defined
 				appendText(node.parentNode.parentNode, ` [Mois ${moisChampi[nomChampi]}]`);
 			}
 		}
@@ -8079,7 +8094,7 @@ try {
 	 * - MZ2.0 : Implémenter les BDD en dur dans le module interne
 	 */
 
-	let DivInfo;         // Bulle d'infos
+	let DivInfo; // Bulle d'infos
 	let freezed = false; // Booléen stockant l'état de freezing de la bulle
 
 	// liste du matos
@@ -8344,7 +8359,7 @@ try {
 	function addArray(arr1, arr2) {
 		// Somme matricielle
 		let res = clone(arr1);
-		for (i = res.length - 1; i >= 0; i--) {
+		for (let i = res.length - 1; i >= 0; i--) {
 			res[i] += arr2[i];
 		}
 		return res;
@@ -8688,7 +8703,7 @@ try {
 						if (str) {
 							let arr = str.split('$');
 							if (system != arr[1] || login != arr[2] || affhv != arr[4]) {
-								alert(`Attention, système tactique Bricol'Trolls ${system} sans mot de passe => non modifié`);
+								window.alert(`Attention, système tactique Bricol'Trolls ${system} sans mot de passe => non modifié`);
 							}
 						}
 					}
@@ -9139,7 +9154,7 @@ try {
 
 		/* Bouton SaveAll */
 		td = appendTdCenter(appendTr(mainBody, 'mh_tdtitre'));
-		input = appendButton(td, 'Sauvegarder', saveAll);
+		let input = appendButton(td, 'Sauvegarder', saveAll);
 		input.id = 'saveAll';
 	}
 
@@ -9216,6 +9231,7 @@ try {
 			avertissement(e);
 		}
 	}
+
 	/* [functions]                     fin Obsolètes                                  */
 
 	/** x~x Partie principale ---------------------------------------------- */
@@ -9272,7 +9288,7 @@ try {
 			if (oldDev) {
 				MY_removeValue('MZ_dev');
 			} else {
-				alert('passage en mode DEV, shift-click sur le mot "Crédits" pour revenir en mode normal');
+				window.alert('passage en mode DEV, shift-click sur le mot "Crédits" pour revenir en mode normal');
 				MY_setValue('MZ_dev', 1);
 			}
 			document.location.href = document.location.href;
@@ -9284,7 +9300,7 @@ try {
 		if (MY_getValue(`${numTroll}.enchantement.liste`) &&
 			MY_getValue(`${numTroll}.enchantement.liste`) != "") {
 			insertTitle(insertPoint, 'Les Enchantements en cours');
-			table = document.createElement('table');
+			let table = document.createElement('table');
 			table.setAttribute('width', '98%');
 			table.setAttribute('border', '0');
 			table.setAttribute('align', 'center');
@@ -9292,10 +9308,10 @@ try {
 			table.setAttribute('cellspacing', '1');
 			table.setAttribute('class', 'mh_tdborder');
 
-			tbody = document.createElement('tbody');
+			let tbody = document.createElement('tbody');
 			table.appendChild(tbody);
 
-			tr = appendTr(tbody, 'mh_tdtitre');
+			let tr = appendTr(tbody, 'mh_tdtitre');
 			appendTdText(tr, 'Equipement', 1);
 			appendTdText(tr, 'Composants', 1);
 			appendTdText(tr, 'Enchanteur', 1);
@@ -9324,7 +9340,7 @@ try {
 						for (let k = 5; k < infoComposant.length; k++) {
 							texte = `${texte};${infoComposant[k].replace("Ril ", "Œil ")}`;
 						}
-						li = appendLi(ul, texte);
+						let li = appendLi(ul, texte);
 						let string = `<form action="${URL_troc_mh}" method="post" TARGET = "_blank">`;
 						string = `${string}<input type="hidden" name="monster" value="${infoComposant[2]}" />`;
 						string = `${string}<input type="hidden" name="part" value="${infoComposant[0]}" />`;
@@ -9342,7 +9358,7 @@ try {
 					}
 					tr = appendTr(tbody, 'mh_tdpage');
 
-					td = appendTdText(tr, nomEquipement);
+					let td = appendTdText(tr, nomEquipement);
 					td.setAttribute('valign', 'center');
 
 					td = document.createElement('td');
@@ -9365,6 +9381,7 @@ try {
 			insertBefore(insertPoint, table);
 			insertBefore(insertPoint, document.createElement('p'));
 		}
+
 		/* [zone]                     fin Obsolète ??                                  */
 		displayScriptTime();
 	}
@@ -9400,9 +9417,10 @@ try {
 	 */
 
 	function traiteChampis() {
+		let trlist;
 		try {
 			let tr = document.getElementById('mh_objet_hidden_Champignon');
-			let trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
+			trlist = document.evaluate('./td/table/tbody/tr', tr, null, 7, null);
 		} catch (e) {
 			return;
 		}
@@ -10011,6 +10029,7 @@ try {
 			tstamp = etimestamp.innerText || etimestamp.textContent;
 		}
 		if (tstamp == undefined) {
+
 			/* dans le cas de la comp, le serveur se repliera sur la date/heure courante
 			logMZ('MZ_comp_traiteCdMcomp, pas de date/heure');
 			MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
@@ -10617,7 +10636,7 @@ try {
 
 	// Checkboxes de filtrage
 	let checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
-		checkBoxDiplo, checkBoxTrou, checkBoxEM, checkBoxTresorsNonLibres,
+		checkBoxDiplo, checkBoxTrou, checkBoxMythiques, checkBoxEM, checkBoxTresorsNonLibres,
 		checkBoxTactique, checkBoxLevels, checkBoxGowapsS, checkBoxGowapsA, checkBoxEngages,
 		comboBoxNiveauMin, comboBoxNiveauMax, comboBoxFamille;
 
@@ -10681,9 +10700,7 @@ try {
 		// Stocke la position (à jour) de la vue pour les autres scripts
 		// DEBUG: Lesquels et pourquoi?
 		let pos = getPosition();
-		x = pos[0];
-		y = pos[1];
-		n = pos[2];
+		let x = pos[0], y = pos[1], n = pos[2];
 		if (isNaN(x) || isNaN(y) || isNaN(n)) {
 			logMZ(`erreur savePosition_log, pos=${JSON.stringfy(pos)}`);
 		} else {
@@ -10796,10 +10813,10 @@ try {
 	}
 
 	function getMonstreNom(i) {
-		return getMonstreNomByTR(MZ_EtatCdMs.tr_monstres[i]);
+		return getMonstreNomByTR(MZ_EtatCdMs.tr_monstres[i], i);
 	}
 
-	function getMonstreNomByTR(tr) {
+	function getMonstreNomByTR(tr, i = 'undef') {
 		try {
 			let nom = document.evaluate(
 				"./td/a[starts-with(@href, 'javascript:EMV')]/text()", tr, null, 2, null
@@ -11105,18 +11122,19 @@ try {
 		];
 	}
 
-	function appendLieux(txt) {
-		for (let i = 1; i < nbLieux + 1; i++) {
-			let tds = x_lieux[i].childNodes;
-			txt = `${txt}${tds[1].firstChild.nodeValue};${getLieuNom(i)};${tds[3].firstChild.nodeValue};${tds[4].firstChild.nodeValue};${tds[5].firstChild.nodeValue}\n`;
-		}
-		return txt;
-	}
+	// function appendLieux(txt) {
+	// 	for (let i = 1; i < nbLieux + 1; i++) {
+	//		// gath: 'x_lieux' is not defined
+	// 		let tds = x_lieux[i].childNodes;
+	// 		txt = `${txt}${tds[1].firstChild.nodeValue};${getLieuNom(i)};${tds[3].firstChild.nodeValue};${tds[4].firstChild.nodeValue};${tds[5].firstChild.nodeValue}\n`;
+	// 	}
+	// 	return txt;
+	// }
 
-	function getLieux() {
-		let vue = getVue();
-		return appendLieux(`${positionToString(getPosition())};${vue[0]};${vue[1]}\n`);
-	}
+	// function getLieux() {
+	// 	let vue = getVue();
+	// 	return appendLieux(`${positionToString(getPosition())};${vue[0]};${vue[1]}\n`);
+	// }
 
 	function bddLieux(start, stop, limitH, limitV) {
 		start = start || 1;
@@ -11368,7 +11386,7 @@ try {
 
 		try {
 			// Création du sélecteur de vue externe
-			selectVue2D = document.createElement('select');
+			let selectVue2D = document.createElement('select');
 			selectVue2D.id = 'selectVue2D';
 			selectVue2D.className = 'SelectboxV2';
 			// logMZ('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
@@ -11914,7 +11932,7 @@ try {
 		let tReq = [];
 		let nbReq = 0;
 		let prevLastIndexDone = MZ_EtatCdMs.lastIndexDone;
-		let i = prevLastIndexDone + 1
+		let i = prevLastIndexDone + 1;
 		for (; i <= MZ_EtatCdMs.nbMonstres; i++) {
 			// tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
 			// ne pas demander pour les Gowaps
@@ -12345,9 +12363,10 @@ try {
 	*/
 	function computeTactique(begin, end) {
 		// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeVLC
+		begin = begin || 1;
+		end = end || MZ_EtatCdMs.nbMonstres;
+		let j = end;
 		try {
-			begin = begin || 1;
-			end = end || MZ_EtatCdMs.nbMonstres;
 			// +++logMZ('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);
 			let noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
 			// +++logMZ('computeTactique, noTactique=' + noTactique);
@@ -12356,7 +12375,6 @@ try {
 			}
 			// +++logMZ('computeTactique, après isProfilActif');
 
-			let j = end;
 			for (; j >= begin; j--) {
 				let id = getMonstreID(j);
 				let nom = getMonstreNom(j);
@@ -12877,7 +12895,7 @@ try {
 
 		for (let type in keltypes) {
 			debugMZ(`computeActionDistante(${dmin}, ${dmax}, ${oussa}, ${urlIcon}, ${message}) type=${type}`);
-			alt = oussa == 'self' ? type.slice(0, -1) : oussa;
+			let alt = oussa == 'self' ? type.slice(0, -1) : oussa;
 			for (let i = VueContext[`nb${type}`]; i > 0; i--) {
 				let tr = VueContext[`tr_${type.toLowerCase()}`][i];
 				// Roule 11/03/2016, on passe par les nouvelles fonctions getXxxPosition et getXxxDistance
@@ -13178,7 +13196,7 @@ try {
 				td.width = 40;
 				td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PV', true);
 				td.width = 105;
-				for (i = nbTrolls; i > 0; i--) {
+				for (let i = nbTrolls; i > 0; i--) {
 					insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 					insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 					MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
@@ -13504,7 +13522,7 @@ try {
 		// calcul des DLA suivantes
 		DLA, DLAsuiv, HeureServeur,
 		// details duree du tour (calcul pvdispo) :
-		dtb, pdm, bmt, adb, dpt, dtbm,
+		dtb, pdm, bmt, adb, dpt, dtbm, dtreserve, bmmouche,
 		// posale
 		posX, posY, posN,
 		// caracs physiques
@@ -15818,6 +15836,7 @@ try {
 
 	/* --------------------------------- Création liste trolligion --------------------------------- */
 	function export_trolligion() {
+		let txt = '';
 		try {
 			let tabDl = document.getElementsByTagName('dl');
 			if (!tabDl || !tabDl[0]) {
@@ -15855,7 +15874,7 @@ try {
 									nom: tabH3[0].innerText || tabH3[0].textContent,
 									grades: []
 								};
-								let txt = eChild1.innerText || eChild1.textContent;
+								txt = eChild1.innerText || eChild1.textContent;
 								let m = txt.match(/yon*ement *:* *(\d+)/);
 								if (m) {
 									currentDieu.rayonnement = parseInt(m[1]);
@@ -15867,12 +15886,12 @@ try {
 							let tabH4 = eChild1.getElementsByTagName('h4');
 							if (tabH4 && tabH4[0]) {	// changement de grade
 								let grade;
-								let txt = tabH4[0].innerText || tabH4[0].textContent;
-								tabI = tabH4[0].getElementsByTagName('i');
+								txt = tabH4[0].innerText || tabH4[0].textContent;
+								let tabI = tabH4[0].getElementsByTagName('i');
 								if (tabI && tabI[0]) {
 									grade = tabI[0].innerText || tabI[0].textContent;
 									grade = grade.replace(/"/g, '');
-									m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
+									let m = txt.match(/\((.*)\)/);	// cas particulier Líhã dont les grades ont des catégories
 									if (m) {
 										grade = `${grade} (${m[1]})`;
 									}
@@ -15893,7 +15912,7 @@ try {
 
 			// logMZ('nb dieux = ' + tabDieux.length, GM_info.script.version);
 			// logMZ(' + JSON.stringify(tabDieux), GM_info.script.version);
-			let txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
+			txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
 			let txt2 = "Dieu\tRayonnement\n";	// Roule 25/01/2017 ajout d'un tableau résumé par religion
 			for (let iDieu in tabDieux) {
 				let oDieu = tabDieux[iDieu];
@@ -16100,7 +16119,7 @@ try {
 			logMZ('MZ_doSearchCompoTanieres, erreur, impossible de trouver tabTresorInfo');
 			return;
 		}
-		oInfo = MZ_AnalyseInfoHistoTresor(eTableMH);
+		let oInfo = MZ_AnalyseInfoHistoTresor(eTableMH);
 		if (oInfo.type != 'Composant') {
 			logMZ('MZ_doSearchCompoTanieres, erreur, pas sur un compo');
 			return;
@@ -16137,7 +16156,7 @@ try {
 							continue;
 						}
 						for (let oTr of oTable.rows) {
-							for (oTd of oTr.cells) {
+							for (let oTd of oTr.cells) {
 								let tabA = oTd.getElementsByTagName('a');
 								if (!tabA[0]) {
 									continue;
@@ -16153,7 +16172,7 @@ try {
 								let compo = m[1];
 								let monstre = m[2];
 								let qualite = m[3];
-								oCompo = oCompos[compo];
+								let oCompo = oCompos[compo];
 								if (oCompo == undefined) {
 									oCompo = {};
 									oCompos[compo] = oCompo;
