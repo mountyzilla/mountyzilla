@@ -529,61 +529,78 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 /** x~x Logging/debugging MZ ------------------------------------------- */
 let MY_DEBUG = false, MY_LOG = true;
 
-function logMZ(obj, version = '') {
-	if (!MY_LOG) {
+function printMZ(print, check, obj, exc = undefined) {
+	// Wrapper logging MZ avec injection d'exception pour les devs.
+	// Utiliser : logMZ(..), warnMZ(..), debugMZ(..), avertissement(..)
+	if (!check) {
 		return;
 	}
 	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-	let lv = version != '' ? `|${version}` : '';
-	window.console.log(`[MZ${lv}] ${msg}`);
-}
-
-function warnMZ(obj, version = '') {
-	if (!MY_LOG) {
+	let lv = GM_info && GM_info.script && GM_info.script.version ? `|${GM_info.script.version}` : '';
+	if (exc) {
+		// Source l'exception directement dans le logger.
+		// Les navigateurs modernes injectent directement
+		// une stacktrace interactive (support large cf MDN) :
+		// https://developer.mozilla.org/fr/docs/Web/API/console/error_static
+		print(`[MZ${lv}] ${msg}\n---\n`, exc);
 		return;
 	}
-	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-	let lv = version != '' ? `|${version}` : '';
-	window.console.warn(`[MZ${lv}] ${msg}`);
+	print(`[MZ${lv}] ${msg}`);
 }
 
-function debugMZ(obj, version = '') {
-	if (!MY_DEBUG) {
+function logMZ(obj, exc = undefined) {
+	if (exc) {
+		// Comme logMZ est le logger "par défaut"
+		// -> upgrade en _error_ si exception présente.
+		printMZ(window.console.error, MY_LOG, obj, exc);
 		return;
 	}
-	let msg = typeof obj === "object" ? JSON.stringify(obj) : obj;
-	let lv = version != '' ? `|${version}` : '';
-	window.console.log(`[MZ_DEBUG${lv}] ${msg}`);
-	// window.console.debug(`[MZ_DEBUG] ${msg}`);
+	printMZ(window.console.info, MY_LOG, obj);
 }
 
-function traceStack(e, sModule) {
-	let version = '';
-	if (GM_info && GM_info.script && GM_info.script.version) {
-		version = `${GM_info.script.version}`;
-	}
-	let sRet = `[MZ_TRACE|${version}]`;
-	if (sModule) {
-		sRet = `${sRet} \{${sModule}\}`;
-	}
-	try {
-		if (e.message) {
-			sRet = `${sRet} ${e.message}`;
-		}
-	} catch (e2) {
-		sRet = `${sRet} <exception acces message>`; // + e2.message;
-	}
-	try {
-		if (e.stack) {
-			let sStack = e.stack;
-			// enlever les infos confidentielles
-			sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
-		}
-	} catch (e2) {
-		sRet = `${sRet} <exception acces stack>`; // + e2.message;
-	}
-	return sRet;
+function warnMZ(obj, exc = undefined) {
+	printMZ(window.console.warn, MY_LOG, obj, exc);
 }
+
+function debugMZ(obj, exc = undefined) {
+	if (exc) {
+		// Comme debugMZ est le debugger "par défaut"
+		// -> upgrade en _trace_ si exception présente.
+		printMZ(window.console.trace, MY_DEBUG, obj, exc);
+		return;
+	}
+	printMZ(window.console.log, MY_DEBUG, obj);
+	// printMZ(window.console.debug, MY_DEBUG, obj);
+}
+
+// WARNING (gath) - non utilisé (refonte logging) -> commenté
+// function traceStack(e, sModule) {
+// 	let version = '';
+// 	if (GM_info && GM_info.script && GM_info.script.version) {
+// 		version = `${GM_info.script.version}`;
+// 	}
+// 	let sRet = `[MZ_TRACE|${version}]`;
+// 	if (sModule) {
+// 		sRet = `${sRet} \{${sModule}\}`;
+// 	}
+// 	try {
+// 		if (e.message) {
+// 			sRet = `${sRet} ${e.message}`;
+// 		}
+// 	} catch (e2) {
+// 		sRet = `${sRet} <exception acces message>`; // + e2.message;
+// 	}
+// 	try {
+// 		if (e.stack) {
+// 			let sStack = e.stack;
+// 			// enlever les infos confidentielles
+// 			sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
+// 		}
+// 	} catch (e2) {
+// 		sRet = `${sRet} <exception acces stack>`; // + e2.message;
+// 	}
+// 	return sRet;
+// }
 
 /** ********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
@@ -656,7 +673,7 @@ let MHicons = '/mountyhall/Images/Icones/';
 
 /** x~x Compatibilité Greasemonkey/ViolentMonkey ----------------------- */
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
-	let horsGM = GM_getValue === undefined;
+	GM_getValue === undefined;
 	logMZ('Fonctionnement dans Greasemonkey');
 } catch (_e) {
 	logMZ('Fonctionnement hors Greasemonkey');
@@ -695,13 +712,13 @@ function MY_setValue(key, val) {
 	}
 	try {
 		GM_setValue(key, val);
-	} catch (e) {
-		logMZ(`MY_setValue echec GM_setValue(${key}, ${val})`, GM_info.script.version);
+	} catch (exc) {
+		logMZ(`MY_setValue echec GM_setValue(${key}, ${val})`, exc);
 	}
 	try {
 		window.localStorage[key] = val;
-	} catch (e) {
-		logMZ(`MY_setValue echec localStorage[${key}] = ${val}]`, GM_info.script.version);
+	} catch (exc) {
+		logMZ(`MY_setValue echec localStorage[${key}] = ${val}]`, exc);
 	}
 }
 function MZ_setOrRemoveValue(key, val) {
@@ -744,7 +761,7 @@ let date_debut = null;
 let jour_en_ms = 864e5;
 
 function start_script(nbJours_exp) {
-	debugMZ(`Script début sur ${window.location.pathname}`, GM_info.script.version);
+	debugMZ(`Script début sur ${window.location.pathname}`);
 	if (date_debut) {
 		return;
 	}
@@ -776,7 +793,7 @@ function displayScriptTime(duree, texte) {
 		return;
 	}
 	insertText(node, ` - [Script MZ exécuté en ${(new Date().getTime() - date_debut.getTime()) / 1000} sec.]`);
-	debugMZ(`Script fin sur ${window.location.pathname}`, GM_info.script.version);
+	debugMZ(`Script fin sur ${window.location.pathname}`);
 }
 
 /** x~x Communication serveurs ----------------------------------------- */
@@ -787,7 +804,6 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 		request.setRequestHeader(head, MY_XHR_Ob.headers[head]);
 	}
 	request.onreadystatechange = function () {
-		// logMZ(`XMLHttp.readystatechange url=${MY_XHR_Ob.url}, readyState='${request.readyState}, readyState='${request.error}, status='${request.status}`)
 		if (request.readyState != 4) {
 			return;
 		}
@@ -798,7 +814,6 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 			return;
 		}
 		if (request.status == 0) {
-			logMZ(`XMLHttp.status=0 au retour de ${MY_XHR_Ob.url}, réponse=${request.responseText}`);
 			if (isDEV) {
 				let grandCadre = createOrGetGrandCadre();
 				let sousCadre = document.createElement('div');
@@ -815,18 +830,14 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 			return;
 		}
 		if (MY_XHR_Ob.onload) {
-			let version = '';
 			if (MY_XHR_Ob.trace) {
-				if (GM_info && GM_info.script && GM_info.script.version) {
-					version = `${GM_info.script.version}`;
-				}
-				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`, version);
+				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`);
 			}
 
 			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
 			MY_XHR_Ob.onload(request);
 			if (MY_XHR_Ob.trace) {
-				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} fin traitement retour AJAX ${MY_XHR_Ob.trace}`, version);
+				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} fin traitement retour AJAX ${MY_XHR_Ob.trace}`);
 			}
 		}
 	};
@@ -899,9 +910,10 @@ function copyTextToClipboard(text) {
 	return successful;
 }
 
-function avertissement(txt, duree, bBloque) {
+function avertissement(txt, duree, bBloque, exc = undefined) {
 	let d = duree ? ` pour (${duree} ms)` : '';
-	logMZ(`Avertissement: ${txt}${d}`);
+	let excDetails = exc ? ' - Plus de détails en console (F12)' : '';
+	logMZ(`Avertissement: ${txt}${d}`, exc);
 	if (!duree) {
 		duree = 15000;
 	}
@@ -921,7 +933,7 @@ function avertissement(txt, duree, bBloque) {
 	div.style.zIndex = 2 + num;
 	div.style.cursor = 'pointer';
 	div.style.fontSize = 'large';
-	div.innerHTML = txt;
+	div.innerHTML = `${txt}${excDetails}`;
 	if (!bBloque) {
 		div.onclick = function () {
 			tueAvertissement(this.num);
@@ -1598,8 +1610,8 @@ function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic, valDef, valMin, val
 				if (elt && elt.setZoom != undefined) {
 					elt.setZoom(val);
 				}
-			} catch (e) {
-				logMZ(traceStack(e, 'glissiere_MZ.doCallback'));
+			} catch (exc) {
+				logMZ('glissiere_MZ.doCallback', exc);
 			}
 		};
 
@@ -1632,8 +1644,8 @@ function glissiere_MZ(ref, labelHTML, paramTarget, bDynamic, valDef, valMin, val
 			val_init = valDef;
 		}
 		dessine_glissiere(val_init);
-	} catch (e) {
-		logMZ(traceStack(e, 'glissiere_MZ'));
+	} catch (exc) {
+		logMZ('glissiere_MZ', exc);
 	}
 }
 
@@ -1942,8 +1954,8 @@ function carte_MZ(ref, tabDepl) {
 		this.getElt = function () {
 			return div1_carte;
 		};
-	} catch (e) {
-		logMZ(traceStack(e, 'carte_MZ'));
+	} catch (exc) {
+		logMZ('glissiere_MZ.carte_MZ', exc);
 	}
 }
 
@@ -2856,8 +2868,8 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 		if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
 		*/
 		return table;
-	} catch (e) {
-		avertissement(`Erreur createCDMTable() :\n${e}`);
+	} catch (exc) {
+		avertissement('Une erreur est survenue (createCDMTable)', null, null, exc);
 	}
 }
 
@@ -3194,8 +3206,8 @@ function getInfoEnchantementFromMonstre(nom) {
 			}
 		}
 		return trim(infosEnchant);
-	} catch (e) {
-		avertissement(`Erreur getInfoEnchantementFromMonstre() :\n${e}`);
+	} catch (exc) {
+		avertissement('Une erreur est survenue (getInfoEnchantementFromMonstre)', null, null, exc);
 	}
 }
 
@@ -3245,8 +3257,8 @@ function insertEnchantInfos(tbody) {
 				link.parentNode.appendChild(createImage(urlImg, infos));
 			}
 		}
-	} catch (e) {
-		avertissement(`Erreur insertEnchantInfos() :\n${e}`);
+	} catch (exc) {
+		avertissement('Une erreur est survenue (insertEnchantInfos)', null, null, exc);
 	}
 }
 
@@ -3282,8 +3294,8 @@ function computeEnchantementEquipement(fontionTexte, fontionFormateTexte) {
 			}
 			MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, `${nomEquipement} (${idEquipement})`);
 		}
-	} catch (e) {
-		avertissement(`Erreur computeEnchantementEquipement() :\n${e}`);
+	} catch (exc) {
+		avertissement('Une erreur est survenue (computeEnchantementEquipement)', null, null, exc);
 	}
 }
 
@@ -3350,8 +3362,8 @@ let MZ_Tactique = {
 			}
 			MZ_Tactique.popup.style.top = `${evt.pageY + 15}px`;
 			MZ_Tactique.popup.style.display = 'block';
-		} catch (e) {
-			logMZ(`showPopup() exception pour id=${id}, nom=${nom}:\n${e}`);
+		} catch (exc) {
+			logMZ(`showPopup() exception pour id=${id}, nom=${nom}`, exc);
 		}
 	}
 };
@@ -3603,8 +3615,8 @@ function analyseTactique(donneesMonstre, nom) {
 			esqM = 0;
 			try {
 				esqM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-			} catch (e) {
-				debugMZ(`analyseTactique, exception calcul esqM ${e.message}`);
+			} catch (exc) {
+				debugMZ(`analyseTactique, exception calcul esqM`, exc);
 				esqM = Math.ceil(parseInt(td.firstChild.nodeValue));
 				modificateurEsquive = '<';
 				modificateurArmure = '<';
@@ -3615,8 +3627,8 @@ function analyseTactique(donneesMonstre, nom) {
 			attM = 0;
 			try {
 				attM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-			} catch (e) {
-				debugMZ(`analyseTactique, exeception calcul attM ${e.message}`);
+			} catch (exc) {
+				debugMZ(`analyseTactique, exeception calcul attM`, exc);
 				attM = Math.ceil(parseInt(td.firstChild.nodeValue));
 				modificateurEsquiveM = '>';
 				modificateurArmureM = '>';
@@ -3626,8 +3638,8 @@ function analyseTactique(donneesMonstre, nom) {
 			degM = 0;
 			try {
 				degM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
-			} catch (e) {
-				debugMZ(`analyseTactique, exeception calcul degM ${e.message}`);
+			} catch (exc) {
+				debugMZ(`analyseTactique, exeception calcul degM`, exc);
 				degM = Math.ceil(parseInt(td.firstChild.nodeValue));
 				modificateurArmureM = '>';
 			}
@@ -3636,8 +3648,8 @@ function analyseTactique(donneesMonstre, nom) {
 			try {
 				armM_tot = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				armM_mag = armM_tot;	// compatibilité avec ancien calcul
-			} catch (e) {
-				debugMZ(`analyseTactique, exeception calcul armM ${e.message}`);
+			} catch (exc) {
+				debugMZ(`analyseTactique, exeception calcul armM`, exc);
 				armM_tot = Math.ceil(parseInt(td.firstChild.nodeValue));
 				armM_mag = armM_tot;
 				modificateurArmure = '<';
@@ -3650,8 +3662,8 @@ function analyseTactique(donneesMonstre, nom) {
 				let v = rm / mm;
 				let seuil = rm < mm ? Math.max(10, Math.floor(v * 50)) : Math.min(90, Math.floor(100 - 50 / v));
 				coeffSeuil = (200 - seuil) / 200;
-			} catch (e) {
-				debugMZ(`analyseTactique, exeception calcul SR ${e.message}`);
+			} catch (exc) {
+				debugMZ(`analyseTactique, exeception calcul SR`, exc);
 				modificateurMagie = '<';
 				pasDeSR = true;
 			}
@@ -3901,13 +3913,14 @@ function analyseTactique(donneesMonstre, nom) {
 
 		listeAttaques.unshift(new Array("Monstre", Math.round(chanceDEsquiveParfaite * 100) / 100, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
 		return listeAttaques;
-	} catch (e) {
+	} catch (exc) {
 		let msgid = '';
 		try {
-			msgid = `, monstre ${donneesMonstre.id}`;
-		} catch (e2) { }
-		logMZ(traceStack(e, `analyseTactique(${msgid})`));
-		avertissement(`Erreur analyseTactique() :\n${e}`);
+			msgid = ` du monstre ${donneesMonstre.id}`;
+		} catch (exc2) {
+			// pass
+		}
+		avertissement(`Échec de l'analyse tactique${msgid}`, null, null, exc);
 	}
 }
 
@@ -3928,15 +3941,15 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 			"//b[@class='mh_titre3']/a[contains(@href,'Mission_')]", document, null, 7, null
 		);
 		obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
-	} catch (e) {
-		logMZ(traceStack(e, 'mission_liste initialisation'));
+	} catch (exc) {
+		logMZ('mission_liste initialisation', exc);
 		return;
 	}
 
 	let enCours = {};
-	debugMZ(`MZ checkLesMimis nb=${titresMimis.snapshotLength}`);
+	debugMZ(`checkLesMimis nb=${titresMimis.snapshotLength}`);
 	for (let i = 0; i < titresMimis.snapshotLength; i++) {
-		debugMZ(`MZ checkLesMimis text=${titresMimis.snapshotItem(i).textContent}`);
+		debugMZ(`checkLesMimis text=${titresMimis.snapshotItem(i).textContent}`);
 		let num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
 		enCours[num] = true;
 	}
@@ -4235,9 +4248,9 @@ function changeActionDecalage() {
 		scriptTxt = scriptTxt.split('\n')[0];
 		let nbs = scriptTxt.match(/\d+/g);
 		oldDLA = new Date(nbs[0], nbs[1], nbs[2], nbs[3], nbs[4], nbs[5]);
-	} catch (e) {
-		avertissement('Erreur de parsage : confirmation de décalage impossible');
-		logMZ(traceStack(e, 'changeActionDecalage DLA non trouvée'));
+	} catch (exc) {
+		avertissement('Erreur de parsage : confirmation de décalage impossible', null, null, exc);
+		logMZ('changeActionDecalage DLA non trouvée');
 		return;
 	}
 
@@ -4245,8 +4258,7 @@ function changeActionDecalage() {
 	if (form) {
 		form.addEventListener('submit', newsubmitDLA, true);
 	} else {
-		avertissement('Erreur de parsage : confirmation de décalage impossible');
-		logMZ('[changeActionDecalage] ActionForm non trouvé');
+		avertissement('Erreur de parsage : confirmation de décalage impossible', null, null, '[changeActionDecalage] ActionForm non trouvé');
 	}
 }
 
@@ -4308,10 +4320,11 @@ function prochainMundi() {
 			"//div[@class='dateAction']/b", document, null, 9, null
 		).singleNodeValue;
 		if (!node) {
-			logMZ('skip mundi'); return;
+			logMZ('skip mundi');
+			return;
 		}
-	} catch (e) {
-		logMZ(traceStack(e, 'prochainMundi Date introuvable'));
+	} catch (exc) {
+		logMZ('prochainMundi Date introuvable', exc);
 		return;
 	}
 
@@ -4326,7 +4339,7 @@ function prochainMundi() {
 	} else {
 		txt = `${txt}demain]`;
 	}
-	div = insertTextDiv(node.parentNode.nextSibling, txt, true);
+	let div = insertTextDiv(node.parentNode.nextSibling, txt, true);
 	div.align = 'center';
 }
 
@@ -4888,12 +4901,12 @@ function setDisplayBM() {
 function traiteMalus() {
 	let mainTab = document.getElementById('bmm');
 	if (!mainTab) {
-		logMZ('[MZ], traiteMalus, pas de table bmm');
+		logMZ('traiteMalus: pas de table bmm');
 		return;
 	}
 	let tbody = mainTab.tBodies[0];
 	if (!tbody) {
-		logMZ('[MZ], traiteMalus, pas de BM (pas de tbody)');
+		logMZ('traiteMalus: pas de BM (pas de tbody)');
 		return;
 	}
 
@@ -4960,7 +4973,7 @@ function traiteMalus() {
 				bm = Number(tmatch[3]);
 			}	// cas DEG : +0\-5
 			uniListe[nb].caracs[carac] = bm;
-			debugMZ(`[MZ debug] effetsT[${i}]=${effetsT[i]}, uniListe[${nb}]['caracs'][${carac}] = ${bm}, durée=${duree} tmatch=${JSON.stringify(tmatch)}`);
+			debugMZ(`effetsT[${i}]=${effetsT[i]}, uniListe[${nb}]['caracs'][${carac}] = ${bm}, durée=${duree} tmatch=${JSON.stringify(tmatch)}`);
 			listeDurees[duree] = true;
 		}
 	}	// fin boucle sur les lignes de bonus/malus
@@ -4973,7 +4986,7 @@ function traiteMalus() {
 	toursGeres.sort((a, b) => {
 		return b - a;
 	});
-	debugMZ(`[MZ debug] toursGeres=${JSON.stringify(toursGeres)}\nuniListe=${JSON.stringify(uniListe)}`);
+	debugMZ(`toursGeres=${JSON.stringify(toursGeres)}\nuniListe=${JSON.stringify(uniListe)}`);
 	let strfat = ''; // pour sauvegarder les bm de fatigue
 	// Pour affichage & adpatation à footable.js (statique)
 	let thead = document.getElementsByTagName('thead')[0];
@@ -5040,7 +5053,7 @@ function traiteMalus() {
 
 		for (let j = 0; j < caracGerees.length; j++) {
 			let carac = caracGerees[j], str = '';
-			debugMZ(`MZ traiteMalus, j=${j}, carac=${carac}, effetsCeTour=${effetsCeTour[carac]}, toursGeres=${toursGeres[i]}`);
+			debugMZ(`traiteMalus, j=${j}, carac=${carac}, effetsCeTour=${effetsCeTour[carac]}, toursGeres=${toursGeres[i]}`);
 
 			switch (carac) {
 				case 'ATT':
@@ -5072,7 +5085,7 @@ function traiteMalus() {
 				texteD = texteD + str;
 				texteS = texteS + str;
 			}
-			debugMZ(`MZ traiteMalus, j=${j}, strfat=${strfat}`);
+			debugMZ(`traiteMalus, j=${j}, strfat=${strfat}`);
 		}	// fin boucle sur les caractéristiques
 
 		/* Affichage */
@@ -5119,8 +5132,8 @@ function do_malus() {
 		traiteMalus();
 		setDisplayBM();
 		displayScriptTime();
-	} catch (e) {
-		avertissement(e);
+	} catch (exc) {
+		avertissement('Une erreur est survenue (do_malus)', null, null, exc);
 	}
 }
 
@@ -5150,9 +5163,8 @@ function initialiseMouches() {
 	try {
 		mainTab = document.getElementById('mouches');
 		tr_mouches = document.evaluate('./tbody/tr', mainTab, null, 7, null);
-	} catch (e) {
-		avertissement('Erreur MZ:<br />Consulter la console.');
-		logMZ(traceStack(e, 'mouches'));
+	} catch (exc) {
+		avertissement('Une erreur est survenue (mouches)', null, null, exc);
 		return;
 	}
 	if (mainTab === void 0 || tr_mouches.snapshotLength == 0) {
@@ -5491,8 +5503,8 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 					}
 				}
 				debugMZ(`fin MZ_analyse_page_ordre_suivant ${JSON.stringify(this.result)}`);
-			} catch (e) {
-				logMZ(`Exception dans MZ_analyse_page_ordre_suivant.init ${e}`);
+			} catch (exc) {
+				logMZ('Exception dans MZ_analyse_page_ordre_suivant.init', exc);
 			}
 		}
 	};
@@ -5728,8 +5740,8 @@ function testeGlissiere() {
 		let gliss = new glissiere_MZ('test', 'Test glissière', 'xxx', false, 100, 50, 250);
 		let footer = getFooter();
 		insertBefore(footer, gliss.getElt());
-	} catch (e) {
-		logMZ(traceStack(e, 'testeGlissiere'));
+	} catch (exc) {
+		logMZ('testeGlissiere', exc);
 	}
 }
 
@@ -5880,8 +5892,8 @@ function MZ_upgradeVueSuivants() {
 				e = oCategorie.eTableTresors.rows[0].cells[4];	// cell for weight of first trésor
 				e.innerHTML = s;
 				oCategorie.eTableTresors.rows[0].cells[3].style.whiteSpace = 'nowrap';
-			} catch (e) {
-				logMZ(`Erreur dans copie poids ${e}`);
+			} catch (exc) {
+				logMZ('Erreur dans copie poids', exc);
 			}
 		}
 	}
@@ -5958,8 +5970,8 @@ function traiteMonstre() {
 			}
 		}
 		// logMZ('traiteMonstre, nom=' + texte);
-	} catch (e) {
-		logMZ(traceStack(e, 'traiteMonstre'));
+	} catch (exc) {
+		logMZ('traiteMonstre', exc);
 		return;
 	}
 
@@ -5996,8 +6008,8 @@ function traiteMonstre() {
 					nodeInsert = document.evaluate(
 						"//div[@class = 'titre3']", document, null, 9, null
 					).singleNodeValue;
-				} catch (e) {
-					logMZ(traceStack(e, 'recherche node pour info CdM'));
+				} catch (exc) {
+					logMZ('recherche node pour info CdM', exc);
 					return;
 				}
 				let table = createCDMTable(g_idMonstre, g_nomMonstre, info);
@@ -6011,8 +6023,8 @@ function traiteMonstre() {
 				tbody.style.display = 'none';
 				table.style.width = '350px';
 				insertBefore(nodeInsert, table);
-			} catch (e) {
-				logMZ(e);
+			} catch (exc) {
+				logMZ('traiteMonstre onload', exc);
 			}
 		},
 	});
@@ -6028,9 +6040,8 @@ function do_infomonstre() {
 	try {
 		MZ_Tactique.initPopup();
 		traiteMonstre();
-	} catch (e) {
-		logMZ(traceStack(e, 'do_infomonstre'));
-		avertissement(`Erreur do_infomonstre() :\n${e}`);
+	} catch (exc) {
+		avertissement(`Une erreur est survenue (do_infomonstre)`, null, null, exc);
 	}
 	displayScriptTime();
 }
@@ -6237,8 +6248,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					let trolls = JSON.parse(responseDetails.responseText);
@@ -6305,9 +6315,8 @@ function do_scizEnhanceView() {
 							}
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchTrolls();
@@ -6347,8 +6356,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					let treasures = JSON.parse(responseDetails.responseText);
@@ -6370,9 +6378,8 @@ function do_scizEnhanceView() {
 							}
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchTreasures();
@@ -6412,8 +6419,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					let mushrooms = JSON.parse(responseDetails.responseText);
@@ -6433,9 +6439,8 @@ function do_scizEnhanceView() {
 							}
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchMushrooms();
@@ -6473,8 +6478,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					mobs = JSON.parse(responseDetails.responseText);
@@ -6488,9 +6492,8 @@ function do_scizEnhanceView() {
 							m.node.children[4].appendChild(icon);
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 			}
 		});
@@ -6529,8 +6532,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					let traps = JSON.parse(responseDetails.responseText);
@@ -6574,9 +6576,8 @@ function do_scizEnhanceView() {
 							}
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchTraps();
@@ -6615,8 +6616,7 @@ function do_scizEnhanceView() {
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
 					let portals = JSON.parse(responseDetails.responseText);
@@ -6633,9 +6633,8 @@ function do_scizEnhanceView() {
 							}
 						}
 					});
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 				// Do the display overwrite and add the switches
 				do_scizSwitchPortals();
@@ -6737,8 +6736,7 @@ function do_scizBestiaire(monster) {
 				try {
 					if (responseDetails.status !== 200) {
 						monster.sciz_desc = "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.";
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-						logMZ(responseDetails);
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 					}
 					monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
 					// Add the tooltip (kind of)
@@ -6748,9 +6746,8 @@ function do_scizBestiaire(monster) {
 						monster.icon.parentNode.replaceChild(abbr, monster.icon);
 						abbr.appendChild(monster.icon);
 					}
-				} catch (e) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-					logMZ(e);
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
 			}
 		});
@@ -6841,8 +6838,7 @@ function do_scizOverwriteEvents() {
 		onload: function (responseDetails) {
 			try {
 				if (responseDetails.status == 0) {
-					logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...');
-					logMZ(responseDetails);
+					logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 					return;
 				}
 				let events = JSON.parse(responseDetails.responseText);
@@ -6890,9 +6886,8 @@ function do_scizOverwriteEvents() {
 					let div = scizCreateClickable('50', 'block', do_scizSwitchEvents);
 					eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
 				}
-			} catch (e) {
-				logMZ('ERREUR - MZ/SCIZ - Stacktrace');
-				logMZ(e);
+			} catch (exc) {
+				logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 			}
 		}
 	});
@@ -6954,8 +6949,8 @@ function saveMission(num, obEtape) {
 		try {
 			// logMZ('JSON MISSION (before) = ' + MY_getValue(numTroll+'.MISSIONS'));
 			obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
-		} catch (e) {
-			logMZ(traceStack(e, 'Mission parsage'));
+		} catch (exc) {
+			logMZ('Mission parsage', exc);
 			return;
 		}
 	}
@@ -7002,8 +6997,8 @@ function traiteMission() {
 		tdLibelle = document.evaluate(
 			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]", missionForm, null, 9, null
 		).singleNodeValue;
-	} catch (e) {
-		logMZ(traceStack(e, 'récupération mission'));
+	} catch (exc) {
+		logMZ('récupération mission', exc);
 		return;
 	}
 	if (!numMission) {
@@ -7045,7 +7040,7 @@ function traiteMission() {
 						niveau = Number(m[1]);
 						mod = Number(m[2]);
 					} else {
-						logMZ(`[MZ ${GM_info.script.version}] traiteMission, échec analyse de ${libelle}`);
+						logMZ(`traiteMission, échec analyse de ${libelle}`);
 						return;
 					}
 				}
@@ -7143,8 +7138,8 @@ function traiteMission() {
 			debugMZ('traiteMission étape pas pour troogle');
 			saveMission(numMission, false);
 		}
-	} catch (e) {
-		logMZ(traceStack(e, 'récupération étape mission'));
+	} catch (exc) {
+		logMZ('récupération étape mission', exc);
 		return;
 	}
 }
@@ -7321,8 +7316,8 @@ function validateTPDestination() {
 			);
 		}
 		return true;
-	} catch (e) {
-		avertissement(e);
+	} catch (exc) {
+		avertissement(`Une erreur est survenue (validateTPDestination)`, null, null, exc);
 	}
 }
 
@@ -7410,8 +7405,8 @@ function testCertif(paramURL, callbackOnError) {
 				}	// FAIL si status == 0
 			}
 		});
-	} catch (e) {
-		logMZ(`erreur testCertif(${paramURL})${traceStack(e, 'testCertif')}`);
+	} catch (exc) {
+		logMZ(`erreur testCertif(${paramURL})`, exc);
 		callbackOnError();
 	}
 }
@@ -7425,7 +7420,7 @@ function createOrGetGrandCadre() {
 		rappels = document.evaluate(
 			"//p[contains(a/text(),'messagerie')]", document, null, 9, null
 		).singleNodeValue;
-	} catch (e) {
+	} catch (exc) {
 		avertissement('Tu es en HTTPS. Pour bénéficier de MoutyZilla, tu devrais débloquer le contenu mixte');
 		grandCadre = document.createElement('div');
 		return grandCadre;
@@ -7528,12 +7523,12 @@ function traiterJubilaires_a_supprimer() {	// ancienne méthode
 				afficherJubilaires(listeTrolls);
 			},
 		});
-	} catch (e) {
+	} catch (exc) {
 		if (isHTTPS) {
-			logMZ(traceStack(e, 'appel jubilaires'));
+			logMZ('appel jubilaires', exc);
 			showHttpsErrorContenuMixte();
 		} else {
-			avertissement(`Erreur Jubilaires:\n${e}`);
+			avertissement(`Une erreur est survenue (Jubilaires)`, null, null, exc);
 		}
 	}
 }
@@ -7594,7 +7589,7 @@ function traiterNouvelles() {
 function afficherNouvelles(items) {
 	let footer = getFooter();
 	if (!footer) {
-		logMZ(`afficherNouvelles, impossible de retrouver le footer`, GM_info.script.version);
+		logMZ('afficherNouvelles, impossible de retrouver le footer');
 		return;
 	}
 	let p = document.createElement('p');
@@ -7654,8 +7649,8 @@ function afficherNouvelles(items) {
 			let pre = document.createElement('pre');
 			appendText(pre, MZ_changeLog.join("\n"));
 			td.appendChild(pre);
-		} catch (e) {
-			logMZ('affichage changeLog', e);
+		} catch (exc) {
+			logMZ('affichage changeLog', exc);
 		}
 	};
 	insertBefore(footer, p);
@@ -7663,29 +7658,29 @@ function afficherNouvelles(items) {
 	if (isDEV) {	// Roule 02/02/2017 copie de la conf vers https
 		if (false) {	// essai avorté via sessionStorage (ne fonctionne pas)
 			if (isHTTPS) {
-				logMZ(`[MZ test] sessionStorage.getItem(xxx)=${window.sessionStorage.getItem('xxx')}`);
-				logMZ(`[MZ test] window.parent.xxx=${window.parent.xxx}`);
+				logMZ(`[test] sessionStorage.getItem(xxx)=${window.sessionStorage.getItem('xxx')}`);
+				logMZ(`[test] window.parent.xxx=${window.parent.xxx}`);
 			} else {
-				logMZ('[MZ test] début switch to https');
+				logMZ('[test] début switch to https');
 				window.sessionStorage.setItem('xxx', "test session trans https");
 				window.parent.xxx = "autre test";
 				let url = document.location.href;
-				logMZ(`[MZ test] url=${url}`);
+				logMZ(`[test] url=${url}`);
 				url = url.replace(/http:\/\//i, 'https://');
-				logMZ(`[MZ test] switched url=${url}`);
+				logMZ(`[test] switched url=${url}`);
 				document.location.href = url;
 			}
 		}
 		if (false) {	// version par utilisation d'un IFrame en https
 			if (isHTTPS) {
-				// logMZ('[MZ test] window.xxx=' + window.xxx);
-				// logMZ('[MZ test] window.name=' + window.name);
-				// logMZ('[MZ test] window.document.xxx=' + window.document.xxx);
-				// logMZ('[MZ test] window.parent.xxx=' + window.parent.xxx);
+				// logMZ('[test] window.xxx=' + window.xxx);
+				// logMZ('[test] window.name=' + window.name);
+				// logMZ('[test] window.document.xxx=' + window.document.xxx);
+				// logMZ('[test] window.parent.xxx=' + window.parent.xxx);
 				let txt = window.name;
 				let tabtxt = txt.split(/µ/);
 				for (let i = 0; i < tabtxt.length; i++) {
-					logMZ(`[MZ test]config https ${tabtxt[i]}`);
+					logMZ(`[test] config https ${tabtxt[i]}`);
 				}
 			} else {
 				let txt = '';
@@ -7696,9 +7691,9 @@ function afficherNouvelles(items) {
 				}
 				let iframe = document.createElement('iframe');
 				let url = document.location.href;
-				// logMZ('[MZ test] url=' + url);
+				// logMZ('[test] url=' + url);
 				url = url.replace(/http:\/\//i, 'https://');
-				// logMZ('[MZ test] switched url=' + url);
+				// logMZ('[test] switched url=' + url);
 				// iframe.xxx = "truc en plume";
 				iframe.name = txt;
 				// window.xxx = "machin";
@@ -8050,8 +8045,8 @@ function treateEnchant() {
 				}
 			}
 		}
-	} catch (e) {
-		avertissement(e);
+	} catch (exc) {
+		avertissement(`Une erreur est survenue (treateEnchant)`, null, null, exc);
 	}
 }
 
@@ -8833,9 +8828,9 @@ function saveAll() {
 		sciz_cb_view_portals = sciz_cb_view_portals !== null ? sciz_cb_view_portals : true;
 		MY_setValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`, sciz_cb_view_portals);
 		saveITData();
-	} catch (e) {
+	} catch (exc) {
 		let bouton = document.getElementById('saveAll');
-		logMZ(`saveAll(): ${e}: `);
+		logMZ('saveAll()', exc);
 		bouton.value = "il y a eu une erreur";
 		return;
 	}
@@ -9237,8 +9232,8 @@ function deleteEnchantement() {
 			this.parentNode.parentNode.parentNode
 				.removeChild(this.parentNode.parentNode);
 		}
-	} catch (e) {
-		avertissement(e);
+	} catch (exc) {
+		avertissement(`Une erreur est survenue (deleteEnchantement)`, null, null, exc);
 	}
 }
 
@@ -9384,8 +9379,8 @@ function do_option() {
 				input.setAttribute('name', idEquipement);
 				tr.appendChild(td);
 				td.setAttribute('valign', 'center');
-			} catch (e) {
-				avertissement(e);
+			} catch (exc) {
+				avertissement(`Une erreur est survenue (do_option)`, null, null, exc);
 			}
 		}
 		insertBefore(insertPoint, table);
@@ -9672,8 +9667,8 @@ function setChoixCouleurs() {
 			"./table/tbody/tr[not(@class='mh_tdtitre')]/td",
 			form, null, 7, null
 		);
-	} catch (e) {
-		logMZ(traceStack(e, 'Diplomatie Structure de la page non reconnue'));
+	} catch (exc) {
+		logMZ('Diplomatie Structure de la page non reconnue', exc);
 		return false;
 	}
 	nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
@@ -9713,8 +9708,8 @@ function fetchDiploGuilde() {
 				}
 			}
 		}
-	} catch (e) {
-		logMZ(traceStack(e, 'Diplomatie récupération de la diplo'));
+	} catch (exc) {
+		logMZ('Diplomatie récupération de la diplo', exc);
 		return false;
 	}
 	return true;
@@ -10142,7 +10137,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 				if (s != '') {
 					oRet.oData.tabCdM.push(s);
 				}
-				logMZ(`[MZ ${GM_info.script.version}] MZ_analyseCdM, type d'élément non traité : ${eHTML.nodeName} ${s}`);
+				logMZ(`MZ_analyseCdM, type d'élément non traité : ${eHTML.nodeName} ${s}`);
 				break;
 		}
 	}
@@ -10419,7 +10414,7 @@ function updateData() {
 		MY_setValue('NUM_TROLL', l_numTroll);
 		debugMZ(`updateData_log: numTroll=${l_numTroll}`);
 	} else {
-		logMZ(`[MZd ${GM_info.script.version}] updateData_log, impossible de retrouver le numéro de Troll, eltId=${eltId}`);
+		logMZ(`updateData_log, impossible de retrouver le numéro de Troll, eltId=${eltId}`);
 	}
 	let eltSpan = eltId.getElementsByTagName('span');
 	if (eltSpan[0]) {
@@ -10564,7 +10559,7 @@ function initUpdateCoordGauche() {
 function MZ_initPopupFrameGauche() {
 	let eListeFavoris = document.getElementById('listeFavori');
 	if (!eListeFavoris) {
-		logMZ('MZ **erreur** pas de listeFavori dans la frame de gauche');
+		logMZ('**erreur** pas de listeFavori dans la frame de gauche');
 		return;
 	}
 	let tabA = eListeFavoris.getElementsByTagName('A');
@@ -10687,8 +10682,8 @@ function fetchData(type) {
 		node = document.getElementById(`mh_vue_hidden_${type}`);
 		VueContext[`tr_${type}`] = node.getElementsByTagName('tr');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
-	} catch (e) {
-		warnMZ(`[MZ Vue] Erreur acquisition type ${type}: \n${e}`);
+	} catch (exc) {
+		warnMZ(`Erreur acquisition type ${type}`, exc);
 	}
 }
 
@@ -10816,9 +10811,8 @@ function getMonstreNomNode(i) {
 			MZ_EtatCdMs.tr_monstres[i], null, 9, null
 		).singleNodeValue;
 		return td;
-	} catch (e) {
-		avertissement(`[getMonstreNomNode] Impossible de trouver le monstre ${i}`);
-		logMZ(traceStack(e, `getMonstreNomNode Impossible de trouver le monstre${i}`));
+	} catch (exc) {
+		avertissement(`[getMonstreNomNode] Impossible de trouver le monstre ${i}`, null, null, exc);
 	}
 }
 
@@ -10832,9 +10826,8 @@ function getMonstreNomByTR(tr, i = 'undef') {
 			"./td/a[starts-with(@href, 'javascript:EMV')]/text()", tr, null, 2, null
 		).stringValue;
 		return nom;
-	} catch (e) {
-		avertissement(`[getMonstreNom] Impossible de trouver le monstre ${i}`);
-		logMZ(traceStack(e, `getMonstreNom Impossible de trouver le monstre ${i}`));
+	} catch (exc) {
+		avertissement(`[getMonstreNom] Impossible de trouver le monstre ${i}`, null, null, exc);
 	}
 }
 
@@ -10959,10 +10952,8 @@ function getTrollGuildeID(i) {
 				return -1;
 			}	// Roule 21/12/2016 protection contre le "bug Marsak"
 			href = tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].firstChild.getAttribute('href');
-		} catch (e) {	// debug pb remonté par Marsak
-			logMZ(traceStack(e, 'getTrollGuildeID')
-				, `nb child=${tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length}`
-				, tr_trolls[i].innerHTML.replace(/</g, '‹'));
+		} catch (exc) {	// debug pb remonté par Marsak
+			logMZ(`getTrollGuildeID: nb child=${tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE].childNodes.length}` + tr_trolls[i].innerHTML.replace(/</g, '‹'), exc);
 			return -1;
 		}
 		return href.substring(href.indexOf('(') + 1, href.indexOf(','));
@@ -11269,12 +11260,11 @@ function getVueScript() {
 			bddLieux(null, null, limitH, limitV)
 			}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
 			}\n#FIN ORIGINE\n`;
-		debugMZ(`MZ getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
-		logMZ(`[MZd ${GM_info.script.version}] fin getVueScript`);
+		debugMZ(`getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
+		logMZ(`fin getVueScript`);
 		return txt;
-	} catch (e) {
-		avertissement("[getVueScript] Erreur d'export vers Vue externe");
-		logMZ(traceStack(e, 'getVueScript'));
+	} catch (exc) {
+		avertissement("[getVueScript] Erreur d'export vers Vue externe", null, null, exc);
 	}
 }
 
@@ -11354,7 +11344,7 @@ function refresh2DViewButton() {
 	} else {
 		appendSubmit(form, 'Voir',
 			() => {
-				logMZ('click voir vue externe', GM_info.script.version);
+				logMZ('click voir vue externe');
 				document.getElementsByName(oParamVue.paramid)[0].value =
 					oParamVue.func();
 			}
@@ -11381,9 +11371,8 @@ function set2DViewSystem() {
 				"//h2[@id='MHTitreH2']/following-sibling::div", document, null, 9, null
 			).singleNodeValue;
 		}
-	} catch (e) {
-		avertissement("Erreur d'initialisation du système de vue 2D");
-		logMZ(traceStack(e, 'set2DViewSystem'));
+	} catch (exc) {
+		avertissement("Erreur d'initialisation du système de vue 2D", null, null, exc);
 		return;
 	}
 
@@ -11440,10 +11429,9 @@ function set2DViewSystem() {
 
 		// Appelle le handler pour initialiser le bouton de submit
 		refresh2DViewButton();
-		logMZ('fin préparation des vues externes', GM_info.script.version);
-	} catch (e) {
-		avertissement("Erreur de traitement du système de vue externe");
-		logMZ(traceStack(e, 'set2DViewSystem'));
+		logMZ('fin préparation des vues externes');
+	} catch (exc) {
+		avertissement("Erreur de traitement du système de vue externe", null, null, exc);
 	}
 }
 
@@ -11466,9 +11454,9 @@ function initialiseInfos() {
 		// ***INIT GLOBALE*** currentPosition
 		currentPosition = getIntegers(strPos);
 		debugMZ(`retrievePosition(): ${currentPosition}`);
-	} catch (e) {
+	} catch (exc) {
 		// Si on ne trouve pas le "X ="
-		logMZ(traceStack(e, 'Vue Position joueur non trouvée'));
+		logMZ('Vue Position joueur non trouvée', exc);
 	}
 
 	// Récupération des portées (max et limitée) de la vue
@@ -11488,8 +11476,8 @@ function initialiseInfos() {
 			porteeVue[2] = array[0];
 			porteeVue[3] = array[1];
 		}
-	} catch (e) {
-		logMZ(traceStack(e, 'Vue Portées Vue non trouvée'));
+	} catch (exc) {
+		logMZ('Vue Portées Vue non trouvée', exc);
 	}
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
@@ -11583,8 +11571,8 @@ function prepareFiltrage(ref, width) {
 	let tdTitre;
 	try {
 		tdTitre = document.getElementById(ref.toLowerCase()).closest('td');
-	} catch (e) {
-		warnMZ(`[prepareFiltrage] Référence filtrage ${ref} non trouvée: \n${e}`);
+	} catch (exc) {
+		warnMZ(`[prepareFiltrage] Référence filtrage ${ref} non trouvée`, exc);
 		return false;
 	}
 	if (width) {
@@ -11678,8 +11666,8 @@ function ajoutFiltreStr(td, nomBouton, id, onClick) {
 				event.preventDefault();
 				bouton.click();
 			}
-		} catch (e) {
-			avertissement(e);
+		} catch (exc) {
+			avertissement(`Une erreur est survenue (ajoutFiltreStr)`, null, null, exc);
 		}
 	};
 }
@@ -12050,8 +12038,8 @@ function retrieveCDMs() {
 						document.body.MZ_Callback_fin_vue[iCallback]();
 					}
 				}
-			} catch (e) {
-				logMZ(`${traceStack(e, 'retrieveCDMs')}\n${URL_MZgetCaracMonstre}\n${texte}`);
+			} catch (exc) {
+				logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
 			}
 			// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
 			MZ_EtatCdMs.isCDMsRetrieved = true;
@@ -12399,8 +12387,8 @@ function computeTactique(begin, end) {
 				td.appendChild(MZ_Tactique.createImage(id, nom));
 			}
 		}
-	} catch (e) {
-		logMZ(`${traceStack(e, 'computeTactique')}\nmob num : ${j}`);
+	} catch (exc) {
+		logMZ(`computeTactique: mob num : ${j}`, exc);
 	}
 	filtreMonstres();
 }
@@ -13054,18 +13042,18 @@ function putScriptExterneOneIT(sInfo) {
 						} else {
 							putInfosTrolls(ratibusData.data.trolls, data[1]);
 						}
-					} catch (e) {
-						logMZ(traceStack(e, 'retour bricol\'troll'));
-						avertissement(`<br />Erreur dans la réponse de Bricol'Troll<br />${e}<br />${responseDetails.responseText}`);
+					} catch (exc) {
+						logMZ('retour bricol\'troll', exc);
+						avertissement(`<br />Erreur dans la réponse de Bricol'Troll<br />${exc}<br />${responseDetails.responseText}`);
 					}
 				}
 			});
-		} catch (e) {
+		} catch (exc) {
 			if (isHTTPS) {
 				avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
 			} else {
-				logMZ(traceStack(e, 'appel bricol\'troll'));
-				avertissement(`<br />Erreur générale avec l'interface Bricol'Troll<br />${e}`);
+				logMZ('appel bricol\'troll', exc);
+				avertissement(`<br />Erreur générale avec l'interface Bricol'Troll<br />${exc}`);
 			}
 		}
 	}
@@ -13329,9 +13317,8 @@ function putInfosTrolls(infosTrolls, itName) {
 				tr.done = true;
 			}
 		}
-	} catch (e) {
-		avertissement('Erreur de traitement des informations Bricol\'Troll, le détail est dans la console (F12)');
-		logMZ(traceStack(e, 'putInfosTrolls'));
+	} catch (exc) {
+		avertissement('Erreur de traitement des informations Bricol\'Troll', null, null, exc);
 	}
 }
 
@@ -13478,9 +13465,11 @@ function do_vue() {
 		putScriptExterne();
 
 		displayScriptTime();
-	} catch (e) {
-		logMZ(traceStack(e, 'vue'));
-		avertissement(`[MZ ${GM_info.script.version}] Une erreur s'est produite (seriez-vous sous l'effet d'un Fumeux ?).`);
+	} catch (exc) {
+		// gath: on garde le message sympa plutôt qu'ajouter un '- Plus d'infos
+		// en console (F12)' sans ame !
+		avertissement(`Une erreur est survenue. Seriez-vous sous l'effet d'un Fumeux ?`);
+		logMZ('do_vue', exc);
 	}
 }
 
@@ -13830,10 +13819,8 @@ function extractionDonnees() {
 		let heureServeurSTR = document.querySelector("#hserveur").innerHTML;
 		heureServeurSTR = heureServeurSTR.slice(heureServeurSTR.indexOf("/") - 2, heureServeurSTR.lastIndexOf(":") + 3);
 		HeureServeur = new Date(StringToDate(heureServeurSTR));
-	} catch (e) {
-		warnMZ(
-			`Heure Serveur introuvable, utilisation de l'heure actuelle: \n${e}`, GM_info.script.version
-		);
+	} catch (exc) {
+		warnMZ(`Heure Serveur introuvable, utilisation de l'heure actuelle`, exc);
 		HeureServeur = new Date();
 	}
 	debugMZ(`HeureServeur: ${HeureServeur}`);
@@ -14600,7 +14587,7 @@ function setBulle(evt) {
 		}
 	}
 	if (str == '') {
-		debugMZ(`MZ setBulle, pas de description sur ${nom}`);
+		debugMZ(`setBulle, pas de description sur ${nom}`);
 		return;
 	}
 	if (nom.indexOf('Golem') != -1) {
@@ -15439,9 +15426,8 @@ function do_profil2() {
 		}
 		saveProfil();
 		displayScriptTime();
-	} catch (e) {
-		avertissement(`[MZ ${GM_info.script.version}] Une erreur s'est produite.<br>${traceStack(e, 'profil2').replace("\n", "<br>")}`, 1000000, true);
-		logMZ(traceStack(e, 'profil2'), GM_info.script.version);
+	} catch (exc) {
+		avertissement(`Une erreur est survenue (do_profil2)`, null, null, exc);
 	}
 }
 
@@ -15776,8 +15762,8 @@ function getEssaiV1_0() {
 		// logMZ('getEssaiV1_0, ' + nK);
 		return;
 		// return r;
-	} catch (e) {
-		logMZ(traceStack(e, 'getEssaiV1_0'));
+	} catch (exc) {
+		logMZ('getEssaiV1_0', exc);
 	}
 }
 
@@ -15846,7 +15832,7 @@ function export_trolligion() {
 	try {
 		let tabDl = document.getElementsByTagName('dl');
 		if (!tabDl || !tabDl[0]) {
-			logMZ(`[MZ ${GM_info.script.version}] pas de dl`);
+			logMZ(`pas de dl`);
 			return;
 		}
 		let tabDieux = [];	// chaque élément est un objet avec les propriétés suivantes
@@ -15908,16 +15894,16 @@ function export_trolligion() {
 							currentDieu.grades.push(currentGrade);
 							break;
 						}
-						logMZ(`ignore tag dt ${eChild1.innerHTML}`, GM_info.script.version);
+						logMZ(`ignore tag dt ${eChild1.innerHTML}`);
 						break;
 					default:
-						logMZ(`ignore tag ${eChild1.tagName}`, GM_info.script.version); // + ' ' + eChild1);
+						logMZ(`ignore tag ${eChild1.tagName}`); // + ' ' + eChild1);
 				}
 			}
 		}
 
-		// logMZ('nb dieux = ' + tabDieux.length, GM_info.script.version);
-		// logMZ(' + JSON.stringify(tabDieux), GM_info.script.version);
+		// logMZ('nb dieux = ' + tabDieux.length);
+		// logMZ(' + JSON.stringify(tabDieux));
 		txt = "Dieu\tRayonnement\tGrade\tidTroll\tTroll\tidGuilde\tGuilde\tRace\tNiveau\tFerveur\n";
 		let txt2 = "Dieu\tRayonnement\n";	// Roule 25/01/2017 ajout d'un tableau résumé par religion
 		for (let iDieu in tabDieux) {
@@ -15951,19 +15937,18 @@ function export_trolligion() {
 			txt2 = `${txt2}${t.join("\t")}\n`;
 		}
 		txt = `${txt}\n${txt2}`;
-	} catch (e) {
-		avertissement(`Échec à l'extraction\n${e}`);
+	} catch (exc) {
+		avertissement(`Échec durant l'export de trolligion`, null, null, exc);
 	}
-	// logMZ('txt =  ' + txt, GM_info.script.version);
 	try {
 		if (copyTextToClipboard(txt)) {
 			avertissement("Les données ont été copiées dans le presse-papier\n" +
 				"Collez dans Calc\nou, au pire, dans EXCEL®");
 		} else {
-			avertissement("Echec à la copie vers le presse-papier\nVoir la console (F12)");
+			avertissement("Échec durant la copie vers le presse-papier");
 		}
-	} catch (e) {
-		avertissement(`Échec à la copie vers le presse-papier\n${e}`);
+	} catch (exc) {
+		avertissement(`Échec durant la copie vers le presse-papier`, exc);
 	}
 }
 
@@ -15973,14 +15958,14 @@ function export_trolligion_analyse(oTroll, eChild1) {
 		if (eChild2.nodeType === undefined) {
 			continue;
 		}	// properties
-		// logMZ('eChild2 ' + iChild2 + ' ' + eChild2.nodeName, GM_info.script.version);
+		// logMZ('eChild2 ' + iChild2 + ' ' + eChild2.nodeName);
 		switch (eChild2.nodeType) {
 			case 1:	// ELEMENT_NODE:
 				switch (eChild2.nodeName.toLowerCase()) {
 					case 'a':
 						let m;
 						if (!eChild2.href) {
-							logMZ(`a sans href ${eChild2.outerHTML}`, GM_info.script.version);
+							logMZ(`a sans href ${eChild2.outerHTML}`);
 							break;
 						}
 						m = eChild2.href.match(/EnterPJView\((\d+) *,/);
@@ -15998,7 +15983,7 @@ function export_trolligion_analyse(oTroll, eChild1) {
 							}
 							break;
 						}
-						logMZ(`a non traité ${eChild2.outerHTML}`, GM_info.script.version);
+						logMZ(`a non traité ${eChild2.outerHTML}`);
 						break;
 					case 'br':	// ignore
 					case 'style':	// ignore
@@ -16011,10 +15996,10 @@ function export_trolligion_analyse(oTroll, eChild1) {
 						}
 						// logMZ(eChild2.innerHTML);
 						export_trolligion_analyse(oTroll, eChild2);
-						// logMZ('troll ' + JSON.stringify(oTroll), GM_info.script.version);
+						// logMZ('troll ' + JSON.stringify(oTroll));
 						break;
 					default:
-						logMZ(`ignore élément tag ${eChild2.nodeName}`, GM_info.script.version);
+						logMZ(`ignore élément tag ${eChild2.nodeName}`);
 						break;
 				}
 				break;
@@ -16032,7 +16017,7 @@ function export_trolligion_analyse(oTroll, eChild1) {
 				}
 				break;
 			default:	// ne devrait pas arriver
-				logMZ(`ignore élément type ${eChild2.nodeType}`, GM_info.script.version);
+				logMZ(`ignore élément type ${eChild2.nodeType}`);
 				break;
 		}
 	}
@@ -16281,8 +16266,8 @@ function MZ_doSearchCompoTanieres(event) {
 					}
 					eTableTaniere.appendChild(eTr);
 				}
-			} catch (e) {
-				logMZ(e);
+			} catch (exc) {
+				logMZ('compo taniere .onload', exc);
 			}
 		},
 	});
@@ -16464,10 +16449,6 @@ try {
 		}
 	}
 	setTimeout(MZ_extern_param, 500);
-} catch (e) {
-	try {
-		logMZ(traceStack(e, `catch général page ${window.location.pathname}`));
-	} catch (e2) {
-		logMZ(`catch général page ${window.location.pathname}\n${e.message}`);
-	}
+} catch (exc) {
+	logMZ(`Catch général page ${window.location.pathname}`, exc);
 }
