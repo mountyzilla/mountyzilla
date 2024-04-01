@@ -2715,24 +2715,24 @@ try {
 	function insertButtonCdmSmartphone(nextName, onClick, texte) {
 		let tabInput = document.getElementsByName(nextName);
 		if (!tabInput) {
-			return;
+			return false;
 		}
 		let eInput = tabInput[0];
 		if (!eInput) {
-			return;
+			return false;
 		}
 		let eDiv = eInput.parentNode;
 		if (!eDiv) {
-			return;
+			return false;
 		}
 		let eNewDiv = eDiv.cloneNode(true);
 		let tabNewSpan = eNewDiv.getElementsByTagName('span');
 		if (!tabNewSpan || tabNewSpan.length == 0) {
-			return;
+			return false;
 		}
 		Array.from(tabNewSpan).forEach((pSpan) => {
 			if (pSpan.getElementsByTagName('span').length > 0) {
-				return;
+				return false;
 			}
 			while (pSpan.firstChild) {
 				pSpan.removeChild(pSpan.firstChild);
@@ -2741,11 +2741,11 @@ try {
 		});
 		let tabNewInput = eNewDiv.getElementsByTagName('input');
 		if (!tabNewInput) {
-			return;
+			return false;
 		}
 		let eNewInput = tabNewInput[0];
 		if (!eNewInput) {
-			return;
+			return false;
 		}
 		eNewInput.onclick = onClick;
 		eNewInput.value = texte;
@@ -3140,8 +3140,8 @@ try {
 				array[2] = infoComposant[2];
 				array[3] = getQualite(infoComposant[3]);
 				let texte = infoComposant[4].replace("Ril", "Œil");
-				for (let k = 5; k < infoComposant.length; k++) {
-					texte = `${texte};${infoComposant[k].replace("Ril", "Œil")}`;
+				for (let jj = 5; jj < infoComposant.length; jj++) {
+					texte = `${texte};${infoComposant[jj].replace("Ril", "Œil")}`;
 				}
 				texteGlobal = `${texteGlobal}${texte}\n`;
 				texte = `${texte} pour l'enchantement d'un(e) ${nomEquipement} chez l'enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`;
@@ -3239,7 +3239,7 @@ try {
 		}
 	}
 
-	function computeEnchantementEquipement(fontionTexte, formateTexte) {
+	function computeEnchantementEquipement(fontionTexte, fontionFormateTexte) {
 		try {
 			if (!listeMonstreEnchantement) {
 				computeCompoEnchantement();
@@ -3260,7 +3260,7 @@ try {
 					continue;
 				}
 				let infos = listeEquipementEnchantement[idEquipement];
-				infos = formateTexte(infos);
+				infos = fontionFormateTexte(infos);
 				if (infos.length <= 0) {
 					continue;
 				}
@@ -3345,21 +3345,21 @@ try {
 		}
 	};
 
-	let c = new Array(); // Les % de toucher
+	let g_cnp = new Array(); // Les % de toucher
 	// coefficients binomiaux
 	function cnp(n, k) {
-		if (c[n] != null && c[n][k] != null) {
-			return c[n][k];
+		if (g_cnp[n] != null && g_cnp[n][k] != null) {
+			return g_cnp[n][k];
 		}
-		if (c[n] == null) {
-			c[n] = new Array();
+		if (g_cnp[n] == null) {
+			g_cnp[n] = new Array();
 		}
 		if (k == 0) {
-			c[n][k] = 1;
+			g_cnp[n][k] = 1;
 			return 1;
 		}
 		let result = cnp(n - 1, k - 1) * n / k; // mouais... k mul+k div
-		c[n][k] = result;
+		g_cnp[n][k] = result;
 		// logMZ('cnp(' + n + ',' + k + ')=' + result); // Roule debug
 		return result;
 	}
@@ -3370,29 +3370,29 @@ try {
 			return 0;
 		}
 
-		if (c[n]) {
-			if (c[n][p]) {
-				return c[n][p];
+		if (g_cnp[n]) {
+			if (g_cnp[n][p]) {
+				return g_cnp[n][p];
 			}
 
-			c[n] = [1];
-			c[n][n] = 1;
+			g_cnp[n] = [1];
+			g_cnp[n][n] = 1;
 			if (p == 0 || p == n) {
 				return 1;
 			}
 		}
 
 		if (2 * p > n) {
-			c[n][p] = binom(n, n - p);
+			g_cnp[n][p] = binom(n, n - p);
 		} else {
-			c[n][p] = binom(n - 1, p - 1) + binom(n - 1, p);
+			g_cnp[n][p] = binom(n - 1, p - 1) + binom(n - 1, p);
 		} // k(k-1)/2 additions
 
-		return c[n][p];
+		return g_cnp[n][p];
 	}
 
-	let coeff = new Array();
-	function coef(n, p) {
+	let g_coeff = new Array();
+	function coef_np(n, p) {
 		if (n == 0 && p == 0) {
 			return 1;
 		}
@@ -3400,18 +3400,18 @@ try {
 			p = 7 * n - p;
 		}
 		// roule désactive cache
-		if (coeff[n] != null && coeff[n][p] != null) {
-			return coeff[n][p];
+		if (g_coeff[n] != null && g_coeff[n][p] != null) {
+			return g_coeff[n][p];
 		}
-		if (coeff[n] == null) {
-			coeff[n] = new Array();
+		if (g_coeff[n] == null) {
+			g_coeff[n] = new Array();
 		}
 		let kmax = Math.floor((p - n) / 6);
 		let x = 0;
 		for (let k = 0; k <= kmax; k++) {
 			x = x + (1 - 2 * (k % 2)) * cnp(n, k) * cnp(p - 6 * k - 1, n - 1);
 		}
-		coeff[n][p] = x;
+		g_coeff[n][p] = x;
 		// logMZ('cnk(' + n + ',' + p + ')=' + x); // Roule debug
 		return x;
 	}
@@ -3421,12 +3421,12 @@ try {
 		// if(6*a+ba<2*(d+bd)) { return 100; }
 		// if(a+ba>2*(6*d+bd)) { return 0; }
 		for (let dd = d; dd <= 6 * d; dd++) {
-			let cd = coef(d, dd);
+			let cd = coef_np(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
 				if (2 * Math.max(aa + ba, 0) < Math.max(dd + bd, 0)) {
-					win = win + cd * coef(a, aa);
+					win = win + cd * coef_np(a, aa);
 				} else {
-					los = los + cd * coef(a, aa);
+					los = los + cd * coef_np(a, aa);
 				}
 			}
 		}
@@ -3443,12 +3443,12 @@ try {
 			return 0;
 		}
 		for (let dd = d; dd <= 6 * d; dd++) {
-			let cd = coef(d, dd);
+			let cd = coef_np(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
 				if (Math.max(aa + ba, 0) > Math.max(dd + bd, 0)) {
-					win = win + cd * coef(a, aa);
+					win = win + cd * coef_np(a, aa);
 				} else {
-					los = los + cd * coef(a, aa);
+					los = los + cd * coef_np(a, aa);
 				}
 			}
 		}
@@ -3464,12 +3464,12 @@ try {
 			return 0;
 		}
 		for (let dd = d; dd <= 6 * d; dd++) {
-			let cd = coef(d, dd);
+			let cd = coef_np(d, dd);
 			for (let aa = a; aa <= 6 * a; aa++) {
 				if (Math.max(aa + ba, 0) > 2 * Math.max(dd + bd, 0)) {
-					win = win + cd * coef(a, aa);
+					win = win + cd * coef_np(a, aa);
 				} else {
-					los = los + cd * coef(a, aa);
+					los = los + cd * coef_np(a, aa);
 				}
 			}
 		}
@@ -3501,7 +3501,7 @@ try {
 		}
 		let str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203)'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
 		let i;
-		for (let i = 0; i < array.length; i++) {
+		for (i = 0; i < array.length; i++) {
 			if (array[i][1] == 100 && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
 				needAutres = true;
 				break;
@@ -3589,7 +3589,7 @@ try {
 				// à supprimer
 				let td = document.createElement('td');
 				td.innerHTML = bbcode(donneesMonstre[4]); // sans déconner ? C'est quoi cette histoire ?
-				let esqM = 0;
+				esqM = 0;
 				try {
 					esqM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
@@ -3601,7 +3601,7 @@ try {
 				}
 
 				td.innerHTML = bbcode(donneesMonstre[3]);
-				let attM = 0;
+				attM = 0;
 				try {
 					attM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
@@ -3612,7 +3612,7 @@ try {
 				}
 
 				td.innerHTML = bbcode(donneesMonstre[5]);
-				let degM = 0;
+				degM = 0;
 				try {
 					degM = Math.ceil(td.getElementsByTagName('b')[0].firstChild.nodeValue);
 				} catch (e) {
@@ -3827,9 +3827,9 @@ try {
 			if (getSortComp("Attaque Précise", 1) > 0) {
 				let niveau = 5;
 				let oldPour = 0;
-				let chanceDEsquiveParfaite = 0;
-				let chanceDeTouche = 0;
-				let chanceDeCritique = 0;
+				chanceDEsquiveParfaite = 0;
+				chanceDeTouche = 0;
+				chanceDeCritique = 0;
 				degats = 0;
 				while (niveau > 0) {
 					let pour = getSortComp("Attaque Précise", niveau);
@@ -3851,9 +3851,9 @@ try {
 			if (getSortComp("Coup de Butoir", 1) > 0) {
 				let niveau = 5;
 				let oldPour = 0;
-				let chanceDEsquiveParfaite = 0;
-				let chanceDeTouche = 0;
-				let chanceDeCritique = 0;
+				chanceDEsquiveParfaite = 0;
+				chanceDeTouche = 0;
+				chanceDeCritique = 0;
 				degats = 0;
 				while (niveau > 0) {
 					let pour = getSortComp("Coup de Butoir", niveau);
@@ -4973,21 +4973,21 @@ try {
 		for (let i = 0; i < toursGeres.length; i++) {
 			let tour = toursGeres[i];
 			let effetsCeTour = {}, decumulsCeTour = {};
-			for (let nb = 1; nb < uniListe.length; nb++) {
-				if (uniListe[nb].duree < toursGeres[i]) {
+			for (let nbb = 1; nbb < uniListe.length; nbb++) {
+				if (uniListe[nbb].duree < toursGeres[i]) {
 					continue;
 				} // si durée pvr < durée analysée, on passe
-				let nom = uniListe[nb].nom;
+				let nom = uniListe[nbb].nom;
 				if (nom != 'pasdedecumul') {
 					if (decumulsCeTour[nom] == null) {
 						decumulsCeTour[nom] = 0;
 					}
 					decumulsCeTour[nom]++;
 				}
-				for (let carac in uniListe[nb].caracs) {
-					let bm = uniListe[nb].caracs[carac];
+				for (let carac in uniListe[nbb].caracs) {
+					let bm = uniListe[nbb].caracs[carac];
 					if (carac == 'ATT' || carac == 'DEG' || carac == 'Armure') {
-						let type = uniListe[nb].type;
+						let type = uniListe[nbb].type;
 						if (!effetsCeTour[carac]) {
 							effetsCeTour[carac] = { Physique: 0, Magique: 0 };
 						}
@@ -5907,7 +5907,7 @@ try {
 	/** x~x Infomonstre ---------------------------------------------------- */
 
 	// DEBUG
-	let nomMonstre = '', idMonstre = -1;
+	let g_nomMonstre = '', g_idMonstre = -1;
 	// let tbody;
 
 	function traiteMonstre() {
@@ -5951,12 +5951,12 @@ try {
 			return;
 		}
 
-		nomMonstre = texte.slice(0, texte.indexOf('(') - 1);
-		if (nomMonstre.indexOf(']') != -1) {
-			nomMonstre = nomMonstre.slice(0, nomMonstre.indexOf(']') + 1);
+		g_nomMonstre = texte.slice(0, texte.indexOf('(') - 1);
+		if (g_nomMonstre.indexOf(']') != -1) {
+			g_nomMonstre = g_nomMonstre.slice(0, g_nomMonstre.indexOf(']') + 1);
 		}
-		idMonstre = texte.match(/[^\]]\].*\((\d+)\)/)[1];
-		let tReq = [{ index: 1, id: Number(idMonstre), nom: nomMonstre }];	// "+" pour forcer du numérique
+		g_idMonstre = texte.match(/[^\]]\].*\((\d+)\)/)[1];
+		let tReq = [{ index: 1, id: Number(g_idMonstre), nom: g_nomMonstre }];	// "+" pour forcer du numérique
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: URL_MZgetCaracMonstre,
@@ -5970,7 +5970,7 @@ try {
 						return;
 					}
 					// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-					let texte = responseDetails.responseText;
+					texte = responseDetails.responseText;
 					let infosRet = JSON.parse(texte);
 					if (infosRet.length == 0) {
 						return;
@@ -5978,7 +5978,7 @@ try {
 					let info = infosRet[0];
 					// QUESTION Quelle est l'utilité de ceci?
 					// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
-					MZ_EtatCdMs.listeCDM[idMonstre] = info;
+					MZ_EtatCdMs.listeCDM[g_idMonstre] = info;
 					let nodeInsert;
 					try {
 						nodeInsert = document.evaluate(
@@ -5988,7 +5988,7 @@ try {
 						logMZ(traceStack(e, 'recherche node pour info CdM'));
 						return;
 					}
-					let table = createCDMTable(idMonstre, nomMonstre, info);
+					let table = createCDMTable(g_idMonstre, g_nomMonstre, info);
 					table.align = 'center';
 					let tbody = table.childNodes[1];
 					let thead = table.childNodes[0];
@@ -6264,8 +6264,7 @@ try {
 								}
 								// Find the right index
 								let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
-								let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
-								let xPathTroll;
+								xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 								while (xPathTroll = xPathTrolls.iterateNext()) {
 									if (is_self) {
 										break;
@@ -6466,7 +6465,7 @@ try {
 							logMZ(responseDetails);
 							return;
 						}
-						let mobs = JSON.parse(responseDetails.responseText);
+						mobs = JSON.parse(responseDetails.responseText);
 						// Add the SCIZ icons
 						scizGlobal.monsters.forEach((m) => {
 							if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
@@ -7029,7 +7028,7 @@ try {
 						niveau = Number(m[1]);
 						mod = 'plus';
 					} else {
-						let m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
+						m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
 						if (m) {
 							niveau = Number(m[1]);
 							mod = Number(m[2]);
@@ -7805,7 +7804,7 @@ try {
 
 		let trlist = document.evaluate('./tr', node, null, 7, null);
 		for (let i = 0; i < trlist.snapshotLength; i++) {
-			let node = trlist.snapshotItem(i);
+			node = trlist.snapshotItem(i);
 			let nature = node.childNodes[5].textContent;
 			let caracs = node.childNodes[7].textContent;
 			let taille = caracs.match(/\d+/)[0];
@@ -8711,7 +8710,6 @@ try {
 				}
 			}
 		} else {
-			let nBricol = 1;
 			for (let iBricol = 1; ; iBricol++) {
 				let extClef = nBricol == 1 ? '' : iBricol;
 				let sInfo = MY_getValue(`${numTroll}.INFOSIT${extClef}`);
@@ -9337,8 +9335,8 @@ try {
 							continue;
 						}
 						let texte = infoComposant[4].replace("Ril ", "Œil ");
-						for (let k = 5; k < infoComposant.length; k++) {
-							texte = `${texte};${infoComposant[k].replace("Ril ", "Œil ")}`;
+						for (let kk = 5; kk < infoComposant.length; kk++) {
+							texte = `${texte};${infoComposant[kk].replace("Ril ", "Œil ")}`;
 						}
 						let li = appendLi(ul, texte);
 						let string = `<form action="${URL_troc_mh}" method="post" TARGET = "_blank">`;
@@ -9841,7 +9839,7 @@ try {
 			if (valideChamp(champs.rows[i])) {
 				let type = champs.rows[i].cells[0].firstChild.value;
 				let num = champs.rows[i].cells[1].childNodes[1].value;
-				let couleur = champs.rows[i].cells[2].childNodes[1].value;
+				couleur = champs.rows[i].cells[2].childNodes[1].value;
 				let descr = champs.rows[i].cells[3].childNodes[1].value;
 				diploPerso[type][num] = {
 					couleur: couleur
@@ -10404,10 +10402,10 @@ try {
 	// met à jour les carac sauvegardées (position, DLA, etc.)
 	function updateData() {
 		let eltId = document.getElementById('id');
-		let numTroll = parseInt(eltId.getAttribute('data-id'));
-		if (!isNaN(numTroll)) {
-			MY_setValue('NUM_TROLL', numTroll);
-			debugMZ(`updateData_log: numTroll=${numTroll}`);
+		let l_numTroll = parseInt(eltId.getAttribute('data-id'));
+		if (!isNaN(l_numTroll)) {
+			MY_setValue('NUM_TROLL', l_numTroll);
+			debugMZ(`updateData_log: numTroll=${l_numTroll}`);
 		} else {
 			logMZ(`[MZd ${GM_info.script.version}] updateData_log, impossible de retrouver le numéro de Troll, eltId=${eltId}`);
 		}
@@ -10432,17 +10430,17 @@ try {
 			return;
 		}
 		let DLA = new Date(StringToDate(m[1]));
-		if (MY_getValue(`${numTroll}.DLA.encours`)) {
+		if (MY_getValue(`${l_numTroll}.DLA.encours`)) {
 			let DLAstockee = new Date(
-				StringToDate(MY_getValue(`${numTroll}.DLA.encours`))
+				StringToDate(MY_getValue(`${l_numTroll}.DLA.encours`))
 			);
 			if (DLA > DLAstockee) {
-				MY_setValue(`${numTroll}.DLA.ancienne`, MZ_formatDateMS(DLAstockee, false));
+				MY_setValue(`${l_numTroll}.DLA.ancienne`, MZ_formatDateMS(DLAstockee, false));
 				debugMZ(`updateData_log: DLA précédente=${MZ_formatDateMS(DLAstockee, false)}`);
 				// Pose un pb en cas de décalage de DLA
 			}
 		}
-		MY_setValue(`${numTroll}.DLA.encours`, MZ_formatDateMS(DLA, false));
+		MY_setValue(`${l_numTroll}.DLA.encours`, MZ_formatDateMS(DLA, false));
 		debugMZ(`updateData_log: DLA =${MZ_formatDateMS(DLA, false)}`);
 
 		let x = parseInt(m[2]);
@@ -10451,9 +10449,9 @@ try {
 		if (isNaN(x) || isNaN(y) || isNaN(n)) {
 			logMZ(`erreur updateData_log, à la récupération de la position, analyse=${JSON.stringify(m)}`);
 		} else {
-			MY_setValue(`${numTroll}.position.X`, x);
-			MY_setValue(`${numTroll}.position.Y`, y);
-			MY_setValue(`${numTroll}.position.N`, n);
+			MY_setValue(`${l_numTroll}.position.X`, x);
+			MY_setValue(`${l_numTroll}.position.Y`, y);
+			MY_setValue(`${l_numTroll}.position.N`, n);
 		}
 	}
 
@@ -12751,8 +12749,7 @@ try {
 					getLieuNom(i).toLowerCase().indexOf(strLieu) == -1 ||
 					noTrou &&
 					getLieuNom(i).toLowerCase().indexOf("trou de météorite") != -1 &&
-					getLieuDistance(i) > 1 ?
-					'none' : '';
+					getLieuDistance(i) > 1 ? 'none' : '';
 		}
 	}
 
@@ -12775,7 +12772,7 @@ try {
 		//  guilde cible < troll cible
 
 		/* Diplo de Guilde */
-		let diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`) ? JSON.parse(MY_getValue(`${numTroll}.diplo.guilde`)) : {};
+		diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`) ? JSON.parse(MY_getValue(`${numTroll}.diplo.guilde`)) : {};
 		if (diploGuilde && diploGuilde.isOn == 'true') {
 			// Guilde perso
 			if (diploGuilde.guilde) {
@@ -13836,11 +13833,11 @@ try {
 		NBjours = Math.floor((HeureServeur - datecrea) / jour_en_ms) + 1;
 
 		// Calcul debut lien anatroliseur avec les caracteristiques connues
-		let amelio_dtb = function (dtb) {
-			if (dtb > 555) {
-				return Math.floor((21 - Math.sqrt(8 * dtb / 3 - 1479)) / 2);
+		let amelio_dtb = function (dtbb) {
+			if (dtbb > 555) {
+				return Math.floor((21 - Math.sqrt(8 * dtbb / 3 - 1479)) / 2);
 			}
-			return 10 + Math.ceil((555 - dtb) / 2.5);
+			return 10 + Math.ceil((555 - dtbb) / 2.5);
 		},
 			amelio_pv = Math.floor(pvbase / 10) - 3,
 			amelio_vue = vue - 3,
@@ -16256,9 +16253,9 @@ try {
 					}
 					eTableTaniere.appendChild(eTr);
 					for (let compo of tabTri) {
-						let eTr = document.createElement('tr');
+						eTr = document.createElement('tr');
 						for (let qualite of tabQualite) {
-							let eTd = document.createElement('td');
+							eTd = document.createElement('td');
 							eTd.style.border = 'solid black 1px';
 							eTd.className = 'mh_tdpage';
 							if (oInfo.composant == compo && oInfo.qualite == qualite) {
