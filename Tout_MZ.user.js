@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-let MZ_changeLog = [
+var MZ_changeLog = [
 	"V1.3.1.41 27/03/2024",
 	"	Meilleur affichage des trolls hors-vue (interface tactique)",
 	"V1.3.1.40 26/03/2024",
@@ -527,7 +527,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-let MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = false, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -607,7 +607,7 @@ function debugMZ(obj, exc = undefined) {
 **********************************************************/
 
 // URL de base serveur MZ
-let URL_MZ = 'http://mz.mh.raistlin.fr/mz';
+var URL_MZ = 'http://mz.mh.raistlin.fr/mz';
 // pour passer en mode IP, commenter la ligne précédente et décommenter la suivante
 // let URL_MZ = 'http://192.99.225.92/mz';
 
@@ -615,24 +615,24 @@ let URL_MZ = 'http://mz.mh.raistlin.fr/mz';
 // On dirait qu'il n'y en a plus...
 
 // URLs externes redirection (pas de souci CORS)
-let URL_pageNiv = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
-let URL_AnatrolDispas = 'http://mountyhall.dispas.net/dynamic/';
-let URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
-let URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
-let URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
-let URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
-let URL_vue_cube = 'vueCube/vueCube.html';
-let URL_troc_mh = 'http://troc.mountyhall.com/search.php';
-let URL_cyclotrolls = 'http://www.cyclotrolls.be/';
-let URL_troogle = 'http://troogle.iktomi.eu/entities/';
+var URL_pageNiv = 'http://mountypedia.ratibus.net/mz/niveau_monstre_combat.php';
+var URL_AnatrolDispas = 'http://mountyhall.dispas.net/dynamic/';
+var URL_vue_CCM = 'http://clancentremonde.free.fr/Vue2/RecupVue.php';
+var URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
+var URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
+var URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
+var URL_vue_cube = 'vueCube/vueCube.html';
+var URL_troc_mh = 'http://troc.mountyhall.com/search.php';
+var URL_cyclotrolls = 'http://www.cyclotrolls.be/';
+var URL_troogle = 'http://troogle.iktomi.eu/entities/';
 
 // URLs de test HTTPS
-let URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
-let URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
+var URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
+var URL_CertifRaistlin2 = 'https://it.mh.raistlin.fr/vilya/mz_json.php';
 
 // ceux-ci rendent bien les 2 entêtes CORS (mais pas de HTTPS)
-let URL_bricol = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
-let URL_bricol_https = 'https://it.mh.raistlin.fr/';	// IT bricol'troll en https via relai Raistlin
+var URL_bricol = 'http://trolls.ratibus.net/';	// recupération des infos des trolls dans l'IT bricol'troll
+var URL_bricol_https = 'https://it.mh.raistlin.fr/';	// IT bricol'troll en https via relai Raistlin
 
 /** x~x	marque pour s'y retrouver sous l'éditeur (longueur: 80 chars) -- */
 /** x~x Libs ----------------------------------------------------------- */
@@ -644,7 +644,7 @@ let URL_bricol_https = 'https://it.mh.raistlin.fr/';	// IT bricol'troll en https
  */
 
 // Roule 04/09/2016 switch extern URLs to https if available
-let isHTTPS = false;
+var isHTTPS = false;
 if (window.location.protocol.indexOf('https') === 0) {
 	URL_MZ = URL_MZ.replace(/http:\/\//, 'https://');
 	URL_bricol = URL_bricol_https;
@@ -652,7 +652,7 @@ if (window.location.protocol.indexOf('https') === 0) {
 }
 
 // Roule 23/12/2016 mode dev
-let isDEV = false;
+var isDEV = false;
 if (window.localStorage.getItem('MZ_dev') ||
 	window.location.href.indexOf('rouletabille.mh.free.fr') > 0 ||
 	window.location.href.indexOf('mzdev.mh') >= 0) {
@@ -661,15 +661,15 @@ if (window.localStorage.getItem('MZ_dev') ||
 }
 
 // Images (pas de souci CORS)
-let URL_MZimg = `${URL_MZ}/img/`;
+var URL_MZimg = `${URL_MZ}/img/`;
 // URLs externes ajax (CORS OK)
-let URL_MZinfoMonstre = `${URL_MZ}/monstres_0.9_FF.php`;
-let URL_MZgetCaracMonstre = `${URL_MZ}/getCaracMonstre.php`;
-let URL_pageDispatcherV2 = `${URL_MZ}/cdmdispatcherV2.php`;
+var URL_MZinfoMonstre = `${URL_MZ}/monstres_0.9_FF.php`;
+var URL_MZgetCaracMonstre = `${URL_MZ}/getCaracMonstre.php`;
+var URL_pageDispatcherV2 = `${URL_MZ}/cdmdispatcherV2.php`;
 
 // liens externes déduits
-let URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
-let MHicons = '/mountyhall/Images/Icones/';
+var URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
+var MHicons = '/mountyhall/Images/Icones/';
 
 /** x~x Compatibilité Greasemonkey/ViolentMonkey ----------------------- */
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
@@ -743,22 +743,22 @@ function MZ_getValueBoolean(key) {
 
 /** x~x Variables globales utiles -------------------------------------- */
 // utilisé pour accès bdd (un peu partout) :
-let numTroll = MY_getValue('NUM_TROLL');
+var numTroll = MY_getValue('NUM_TROLL');
 // utilisé dans vue pour PX :
 // Roule 16/06/2017 on ne peut pas prendre le dernier niveau vu ! on a peut-être changé de Troll
-let nivTroll; // = MY_getValue('NIV_TROLL');
+var nivTroll; // = MY_getValue('NIV_TROLL');
 // Roule 20/04/2017 le niveau n'est plus dans la frame de gauche, on récupère dans <numtroll>.niveau
 if (nivTroll == undefined) {
 	nivTroll = MY_getValue(`${numTroll}.niveau`);
 }
 // utilisés dans actions et vue (calculs SR) :
-let mmTroll = MY_getValue(`${numTroll}.caracs.mm`);
-let rmTroll = MY_getValue(`${numTroll}.caracs.rm`);
-let currentURL = window.location.href;
+var mmTroll = MY_getValue(`${numTroll}.caracs.mm`);
+var rmTroll = MY_getValue(`${numTroll}.caracs.rm`);
+var currentURL = window.location.href;
 
 /** x~x Durée script --------------------------------------------------- */
-let date_debut = null;
-let jour_en_ms = 864e5;
+var date_debut = null;
+var jour_en_ms = 864e5;
 
 function start_script(nbJours_exp) {
 	debugMZ(`Script début sur ${window.location.pathname}`);
@@ -1455,7 +1455,7 @@ function SQLDateToObject(str) {
 	return new Date(t[0], t[1] - 1, t[2], t[3], t[4], t[5]);
 }
 
-let mz_ie = Boolean(window.attachEvent);
+var mz_ie = Boolean(window.attachEvent);
 if (typeof addEvent !== 'function') {
 	if (mz_ie) {
 		function addEvent(obj, typ, fn, sens) {
@@ -1966,7 +1966,7 @@ function carte_MZ(ref, tabDepl) {
 * en mode objet car ça permet d'isoler les noms
 /**********************/
 
-let MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
+var MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
 	sectionList: {
 		Monstre: "VueMONSTRE",
 		Troll: "VueTROLL",
@@ -2137,7 +2137,7 @@ function analysePXTroll(niv) {
 /** x~x Gestion compos / champis --------------------------------------- */
 // Refonte totale du code de Zorya
 // Elements à implémenter en dur dans MZ2.0
-let numQualite = {
+var numQualite = {
 	'Très Mauvaise': 1,
 	'Mauvaise': 2,
 	'Moyenne': 3,
@@ -2145,7 +2145,7 @@ let numQualite = {
 	'Très Bonne': 5
 };
 
-let qualiteNum = [
+var qualiteNum = [
 	'_dummy_',
 	'Très Mauvaise',
 	'Mauvaise',
@@ -2325,7 +2325,7 @@ let qualiteNum = [
 // 	'Zombie': 2
 // }
 
-let tabEM = {
+var tabEM = {
 	// Monstre: [Compo exact, Sort, Position, Localisation]
 	// AA
 	'Basilisk': ["Œil d'un ", "Analyse Anatomique", 3, "Tête"],
@@ -2416,7 +2416,7 @@ let tabEM = {
 	'Scarabée': ["d'un"]
 };
 
-let mundiChampi = {
+var mundiChampi = {
 	'Préscientus Reguis': 'du Phoenix',
 	'Amanite Trolloïde': 'de la Mouche',
 	'Girolle Sanglante': 'du Dindon',
@@ -2561,8 +2561,7 @@ function composantEM(mob, compo, localisation, qualite) {
 }
 
 /** x~x Stockage des Talents ------------------------------------------- */
-let arrayTalents = {
-
+var arrayTalents = {
 	/* Compétences */
 	'Acceleration du Metabolisme': 'AM',
 	'Attaque Precise': 'AP',
@@ -3130,7 +3129,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 
 
 /** x~x Gestion des enchantements -------------------------------------- */
-let listeMonstreEnchantement = null,
+var listeMonstreEnchantement = null,
 	listeEquipementEnchantement = null,
 	listeInfoEnchantement = null;
 
@@ -3307,7 +3306,7 @@ if (typeof isPage != "function") {
 }
 // Cette section est commune à InfoMonstre et Vue
 
-let MZ_Tactique = {
+var MZ_Tactique = {
 	// --- Variables
 	popup: null,
 
@@ -3368,7 +3367,7 @@ let MZ_Tactique = {
 	}
 };
 
-let g_cnp = new Array(); // Les % de toucher
+var g_cnp = new Array(); // Les % de toucher
 // coefficients binomiaux
 function cnp(n, k) {
 	if (g_cnp[n] != null && g_cnp[n][k] != null) {
@@ -3414,7 +3413,7 @@ function binom(n, p) {
 	return g_cnp[n][p];
 }
 
-let g_coeff = new Array();
+var g_coeff = new Array();
 function coef_np(n, p) {
 	if (n == 0 && p == 0) {
 		return 1;
@@ -4210,7 +4209,7 @@ function traiteRM() {
 
 
 /** x~x Décalage DLA --------------------------------------------------- */
-let oldDLA;
+var oldDLA;
 function confirmeDecalage() {
 	// On vérifie que MH n'excluera pas déjà la demande (validNumeric)
 	let nbMinutes = document.getElementById('ai_NbMinutes').value;
@@ -4411,7 +4410,7 @@ function do_actions() {
 /** x~x Pré-enchantement ----------------------------------------------- */
 /* 2013-08-19 : correction auto syntaxe alert */
 
-let combobox = null;
+var combobox = null;
 
 function changeObject() {
 	if (!combobox) {
@@ -4609,7 +4608,7 @@ function do_myevent() { }
  * - Identifier la position de "PV" dans l'ordre MH
  */
 
-let listeBM;
+var listeBM;
 
 /** x~x Utilitaires ---------------------------------------------------- */
 function decumul(bmt, nbr) {
@@ -5156,7 +5155,7 @@ function do_malus() {
 *******************************************************************************/
 
 /** x~x Mouches -------------------------------------------------------- */
-let mainTab, tr_mouches;
+var mainTab, tr_mouches;
 
 function initialiseMouches() {
 	// Lanceur global
@@ -5444,7 +5443,7 @@ function do_equipgowap() {
 
 /** x~x Ordres Gowap --------------------------------------------------- */
 
-let MZ_analyse_page_ordre_suivant;
+var MZ_analyse_page_ordre_suivant;
 if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
 	// Roule 07/10/2019
 	// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
@@ -5511,7 +5510,7 @@ if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres
 	MZ_analyse_page_ordre_suivant.init();
 }
 
-let MZ_analyse_page_suivants;
+var MZ_analyse_page_suivants;
 if (isPage("MH_Play/Play_e_follo")) {
 	if (MZ_analyse_page_suivants === undefined) {
 		// Roule 26/07/2021
@@ -5931,7 +5930,7 @@ function do_lieuTeleport() {
 /** x~x Infomonstre ---------------------------------------------------- */
 
 // DEBUG
-let g_nomMonstre = '', g_idMonstre = -1;
+var g_nomMonstre = '', g_idMonstre = -1;
 // let tbody;
 
 function traiteMonstre() {
@@ -6048,13 +6047,13 @@ function do_infomonstre() {
 
 /** x~x SCIZ ----------------------------------------------------------- */
 
-let scizSetup = {
+var scizSetup = {
 	eventsMaxMatchingInterval: 5000, // Maximum interval (seconds) for matching some events
 	viewMaxEnhancedTreasure: 100, // Maximum number of treasures to enhanced in the view
 	viewMaxEnhancedMushroom: 100 // Maximum number of treasures to enhanced in the view
 };
 
-let scizGlobal = {
+var scizGlobal = {
 	events: [],
 	trolls: [],
 	treasures: [],
@@ -7174,7 +7173,7 @@ function do_mission() {
 
 /** x~x Données sur les trous de météorites ---------------------------- */
 
-let petitsTrous = {
+var petitsTrous = {
 	'-52;57': true,
 	'55;70': true,
 	'64;70': true,
@@ -7183,7 +7182,7 @@ let petitsTrous = {
 	'48;-39': true
 };
 
-let grosTrous = {
+var grosTrous = {
 	'-35;65': true,
 	'-13;73': true,
 	'-64;9': true,
@@ -7201,9 +7200,9 @@ let grosTrous = {
 	'5;-49': true
 };
 
-let centreCarmine_X = 56.5;
-let centreCarmine_Y = 23.5;
-let rayonCarmine = 8.7;
+var centreCarmine_X = 56.5;
+var centreCarmine_Y = 23.5;
+var rayonCarmine = 8.7;
 
 function isTrou(x, y, n) {
 	if (petitsTrous[`${x};${y}`]) {
@@ -8100,14 +8099,14 @@ function do_tancompo() {
  * - MZ2.0 : Implémenter les BDD en dur dans le module interne
  */
 
-let DivInfo; // Bulle d'infos
-let freezed = false; // Booléen stockant l'état de freezing de la bulle
+var DivInfo; // Bulle d'infos
+var freezed = false; // Booléen stockant l'état de freezing de la bulle
 
 // liste du matos
 // mh_caracs ['Nom'] = [ 'Type', 'AttP', 'AttM', 'DegP','DegM', 'Esq',
 // 'ArmP','ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
 // 'PV', 'DLA', 'Poids_Min', 'Poids_Max' ];
-let mh_caracs = {
+var mh_caracs = {
 	'anneau de protection':
 		['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 3.00, 3.00],
 	"armure d'anneaux":
@@ -8288,7 +8287,7 @@ let mh_caracs = {
 // mh_templates['Nom'] = [ 'AttP', 'AttM', 'DegP', 'DegM', 'Esq',
 // 'ArmP', 'ArmM', 'Vue', 'Reg', 'RM_Min', 'RM_Max', 'MM_Min', 'MM_Max',
 // 'PV', 'DLA', 'Poids_Min', 'Poids_Max');
-let mh_templates = {
+var mh_templates = {
 	'de Feu':
 		[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 	'de Résistance':
@@ -9967,10 +9966,11 @@ function initDiplo(sType) {
 	}
 	return {};
 }
-let diploGuilde = initDiplo('guilde');
-let diploPerso = initDiplo('perso');
-let isDetailOn = diploGuilde.isDetailOn == 'true';
-let isMythiquesOn = diploPerso.mythiques != undefined;
+
+var diploGuilde = initDiplo('guilde');
+var diploPerso = initDiplo('perso');
+var isDetailOn = diploGuilde.isDetailOn == 'true';
+var isMythiquesOn = diploPerso.mythiques != undefined;
 
 function do_diplo() {
 	if (setChoixCouleurs() && fetchDiploGuilde()) {
@@ -10240,7 +10240,7 @@ function do_cdmcomp() {
  * - patch dégueu pour gérer la décomposition P/M de l'armure
  */
 
-let buttonCDM;
+var buttonCDM;
 
 /** *****************************************************************************************
 CDM :
@@ -10610,43 +10610,43 @@ function do_menu() {
 /** x~x Variables Globales --------------------------------------------- */
 
 // Position actuelle
-let currentPosition = [0, 0, 0];
+var currentPosition = [0, 0, 0];
 
 // Portées de la vue : [vueHpure, vueVpure, vueHlimitée, vueVlimitée]
-let porteeVue = [0, 0, 0, 0];
+var porteeVue = [0, 0, 0, 0];
 
 // Fenêtres déplaçables
-let winCurr = null;
-let offsetX, offsetY;
+var winCurr = null;
+var offsetX, offsetY;
 
 // Diplomatie
-let Diplo = {
+var Diplo = {
 	Guilde: {},
 	Troll: {},
 	Monstre: {}
 	// .mythiques: uniquement si option activée
 };
-let isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
+var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
 
 // Infos tactiques
 // => MZ_Tactique.popup
 
 // Utilisé pour supprimer les monstres "engagés"
-let listeEngages = {};
-let isEngagesComputed = false;
-let cursorOnLink = false; // DEBUG: wtf ?
+var listeEngages = {};
+var isEngagesComputed = false;
+var cursorOnLink = false; // DEBUG: wtf ?
 
-let needComputeEnchantement = MY_getValue(`${numTroll}.enchantement.liste`) &&
+var needComputeEnchantement = MY_getValue(`${numTroll}.enchantement.liste`) &&
 	MY_getValue(`${numTroll}.enchantement.liste`) != '';
 
 // Checkboxes de filtrage
-let checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
+var checkBoxGG, checkBoxCompos, checkBoxBidouilles, checkBoxIntangibles,
 	checkBoxDiplo, checkBoxTrou, checkBoxMythiques, checkBoxEM, checkBoxTresorsNonLibres,
 	checkBoxTactique, checkBoxLevels, checkBoxGowapsS, checkBoxGowapsA, checkBoxEngages,
 	comboBoxNiveauMin, comboBoxNiveauMax, comboBoxFamille;
 
 /* Acquisition & Stockage des données de DB */
-let typesAFetcher = {
+var typesAFetcher = {
 	monstres: 1,
 	trolls: 1,
 	tresors: 1,
@@ -10654,7 +10654,7 @@ let typesAFetcher = {
 	lieux: 1
 };
 
-let MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
+var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
 	nbMonstres: 0,
 	tr_monstres: [],
 	lastIndexDone: 0,
@@ -10672,9 +10672,9 @@ let MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la 
 	tdWitdh: 110,
 };
 
-let VueContext = {};
-let tr_trolls = {}, tr_tresors = {}, tr_champignons = {}, tr_lieux = {};
-let nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
+var VueContext = {};
+var tr_trolls = {}, tr_tresors = {}, tr_champignons = {}, tr_lieux = {};
+var nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
 	try {
@@ -10883,16 +10883,16 @@ function bddMonstres(start, stop, limitH, limitV) {
 /** x~x Récup données Trolls ------------------------------------------- */
 
 // Roule 12/07/2017 détecte les colonnes à partir des titres. Mamoune vient de les faire bouger :(
-let COL_TROLL_DIST = 0;	// celui-là, on le garde en dur
+var COL_TROLL_DIST = 0;	// celui-là, on le garde en dur
 
 function getTrollDistance(i) {
 	return parseInt(tr_trolls[i].cells[COL_TROLL_DIST].textContent);
 }
 
-let MZ_cache_col_TrollID;
-let MZ_cache_col_TrollNOM;
-let MZ_cache_col_TrollGUILDE;
-let MZ_cache_col_TrollNIV;
+var MZ_cache_col_TrollID;
+var MZ_cache_col_TrollNOM;
+var MZ_cache_col_TrollGUILDE;
+var MZ_cache_col_TrollNIV;
 
 function MZ_find_col_titre(trs, titre) {
 	let l = titre.length;
@@ -11269,7 +11269,7 @@ function getVueScript() {
 }
 
 /** x~x Menu Vue 2D ---------------------------------------------------- */
-let vue2Ddata = {
+var vue2Ddata = {
 	'Bricol\' Vue': {
 		url: `${URL_bricol_mountyhall}vue_form.php`,
 		paramid: 'vue',
@@ -11817,7 +11817,7 @@ function removeTableFromClickEvent() {	// "this" est supposé être un <td> ou <
 }
 
 /* DEBUG: Section à mettre à jour */
-let selectionFunction;
+var selectionFunction;
 
 function startDrag(evt) {
 	winCurr = this.parentNode;
@@ -13180,7 +13180,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
 }
 
-let MZ_tabTrTrollById;
+var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
 	try {
 		if (MZ_tabTrTrollById === undefined) {
@@ -13496,7 +13496,7 @@ function do_vue() {
 
 /*                           Variables globales                           */
 
-let
+var
 	// Anatrolliseur
 	urlAnatrolliseur,
 	// Infobulles talents
@@ -14493,7 +14493,7 @@ function setInfos(node, nom, fonction, niveau) {
 	node.onmouseout = cacherBulle;
 }
 
-let arrayModifAnatroll = {
+var arrayModifAnatroll = {
 	Glue: 'Glu',
 	PuM: 'PuiM',
 	HE: 'Hurlement',
@@ -15463,9 +15463,9 @@ function do_profil2() {
  * Configurable variables. You may need to tweak these to be compatible with
  * the server-side, but the defaults work in most cases.
  */
-let hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase        */
-let b64pad = ""; /* base-64 pad character. "=" for strict RFC compliance   */
-let chrsz = 8; /* bits per input character. 8 - ASCII; 16 - Unicode      */
+var hexcase = 0; /* hex output format. 0 - lowercase; 1 - uppercase        */
+var b64pad = ""; /* base-64 pad character. "=" for strict RFC compliance   */
+var chrsz = 8; /* bits per input character. 8 - ASCII; 16 - Unicode      */
 
 /*
  * These are the functions you'll usually want to call
@@ -16312,7 +16312,7 @@ function MZ_AnalyseInfoHistoTresor(eTable, oRet) {
 	return oRet;
 }
 
-let MZ_hookCompoTanieresCounter;
+var MZ_hookCompoTanieresCounter;
 
 function MZ_CompoTanieresCallback() {
 	let eTable = document.getElementById('tabTresorInfo');
