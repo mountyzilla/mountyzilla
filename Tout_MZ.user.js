@@ -675,12 +675,12 @@ let MHicons = '/mountyhall/Images/Icones/';
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
 	GM_getValue === undefined;
 	logMZ('Fonctionnement dans Greasemonkey');
-} catch (_e) {
-	logMZ('Fonctionnement hors Greasemonkey');
+} catch (exc) {
 	GM_getValue = function (key) { };
 	GM_setValue = function (key, val) { };
 	GM_deleteValue = function (key) { };
 	GM_info = { script: { version: 'sans GM' } };	// GM_info.script.version
+	logMZ('Fonctionnement hors Greasemonkey');
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
