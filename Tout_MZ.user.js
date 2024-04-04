@@ -4140,7 +4140,7 @@ function traiteMM() {
 
 function getRM(sr) {
 	if (mmTroll <= 0) {
-		return `Inconnue (quelle idée d'avoir une MM valant${mmTroll} !)`;
+		return `Inconnue (quelle idée d'avoir une MM valant ${mmTroll} !)`;
 	}
 	let nsr = Number(sr.match(/\d+/)[0]);
 	if (nsr == 10) {
@@ -10406,24 +10406,46 @@ function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du 
 
 let menuRac, mainIco;
 
+function updateNumTroll() {
+	let eltId = document.getElementById('id');
+	if (!eltId) {
+		warnMZ(`updateData: numéro Troll introuvable (desktop)`);
+		return null;
+	}
+	let l_numTroll = parseInt(eltId.getAttribute('data-id'));
+	if (isNaN(l_numTroll)) {
+		warnMZ(`updateData: numéro Troll introuvable: eltId=${eltId}`);
+		return null;
+	}
+	MY_setValue('NUM_TROLL', l_numTroll);
+	debugMZ(`updateData: numTroll=${l_numTroll}`);
+	return l_numTroll;
+}
+
+function updateNomTroll() {
+	let eltId = document.getElementById('id');
+	let eltSpan = eltId.getElementsByTagName('span');
+	if (!eltSpan[0]) {
+		warnMZ(`updateData: nom Troll introuvable`);
+		return null;
+	}
+	let l_nomTroll = eltSpan[0].innerText;
+	if (l_nomTroll === 'Troll') {
+		warnMZ(`updateData: nom Troll générique: Troll`);
+		return null;
+	}
+	MY_setValue('NOM_TROLL', l_nomTroll);
+	debugMZ(`updateData: nomTroll=${l_nomTroll}`);
+	return l_nomTroll;
+}
+
 // met à jour les carac sauvegardées (position, DLA, etc.)
 function updateData() {
-	let eltId = document.getElementById('id');
-	let l_numTroll = parseInt(eltId.getAttribute('data-id'));
-	if (!isNaN(l_numTroll)) {
-		MY_setValue('NUM_TROLL', l_numTroll);
-		debugMZ(`updateData_log: numTroll=${l_numTroll}`);
-	} else {
-		logMZ(`updateData_log, impossible de retrouver le numéro de Troll, eltId=${eltId}`);
+	let l_numTroll = updateNumTroll()
+	if (l_numTroll === null) {
+		return;
 	}
-	let eltSpan = eltId.getElementsByTagName('span');
-	if (eltSpan[0]) {
-		let nomTroll = eltSpan[0].innerText;
-		MY_setValue('NOM_TROLL', nomTroll);
-		debugMZ(`updateData_log: nomTroll=${nomTroll}`);
-	} else {
-		logMZ('erreur updateData_log: nomTroll inconnu, pas de span');
-	}
+	updateNomTroll()
 
 	let eltDLA_xyn = document.getElementById('DLA_xyn');
 	if (!eltDLA_xyn) {
@@ -12045,7 +12067,7 @@ function retrieveCDMs() {
 			MZ_EtatCdMs.isCDMsRetrieved = true;
 			// afficher/supprimer le bouton pour demander la suite
 			let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
-			logMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
+			debugMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
 			if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
 				if (eltBoutonSuite) {
 					while (eltBoutonSuite.firstChild) {
@@ -13503,7 +13525,7 @@ var
 	hauteur = 50, bulleStyle = null,
 	// Caracteristiques
 	// Infos troll
-	race, niv, idtroll, datecrea,
+	race, niv, datecrea,
 	idguilde, nomguilde,
 	// Etats du troll
 	fatigue, bmfatigue,
@@ -13648,7 +13670,8 @@ function extractionDonnees() {
 	// *********************
 	race = getUniqueStringValueBySelector('#descr #race');
 	debugMZ(`Race : ${race}`);
-	idtroll = getUniqueStringValueBySelector('#descr #id');
+	let idtroll = getUniqueStringValueBySelector('#descr #id');
+	numTroll = idtroll;
 	debugMZ(`Id troll : ${idtroll}`);
 	let strDateCrea = getUniqueStringValueBySelector('#descr td#crea>span');
 	strDateCrea = strDateCrea.slice(strDateCrea.indexOf("(") + 1, strDateCrea.indexOf(")"));
@@ -13874,61 +13897,67 @@ function extractionDonnees() {
 }
 
 function saveProfil() {
-	MY_setValue(`${idtroll}.caracs.attaque`, att);
-	MY_setValue(`${idtroll}.caracs.attaque.bm`, attbp + attbm);
-	MY_setValue(`${idtroll}.caracs.attaque.bmp`, attbp);
-	MY_setValue(`${idtroll}.caracs.attaque.bmm`, attbm);
+	logMZ('saveProfil()')
+	let l_numTroll = MY_getValue('NUM_TROLL');
+	if (l_numTroll === null) {
+		logMZ('Troll encore inconnu: pas de sauvegarde de caracs')
+		return;
+	}
+	MY_setValue(`${l_numTroll}.caracs.attaque`, att);
+	MY_setValue(`${l_numTroll}.caracs.attaque.bm`, attbp + attbm);
+	MY_setValue(`${l_numTroll}.caracs.attaque.bmp`, attbp);
+	MY_setValue(`${l_numTroll}.caracs.attaque.bmm`, attbm);
 	if (atttourD || atttour) {
 		let DAttBonus = atttourD + Math.floor((att + atttourD) * atttour / 100);
-		MY_setValue(`${idtroll}.bonus.DAttM`, DAttBonus);
+		MY_setValue(`${l_numTroll}.bonus.DAttM`, DAttBonus);
 	} else {
-		MY_removeValue(`${idtroll}.bonus.DAttM`);
+		MY_removeValue(`${l_numTroll}.bonus.DAttM`);
 	}
-	MY_setValue(`${idtroll}.caracs.esquive`, esq);
-	MY_setValue(`${idtroll}.caracs.esquive.bm`, esqbp + esqbm);
-	MY_setValue(`${idtroll}.caracs.esquive.bmp`, esqbp);
-	MY_setValue(`${idtroll}.caracs.esquive.bmm`, esqbm);
-	MY_setValue(`${idtroll}.caracs.esquive.nbattaques`, esqtourD);
-	MY_setValue(`${idtroll}.caracs.degats`, deg);
-	MY_setValue(`${idtroll}.caracs.degats.bm`, degbp + degbm);
-	MY_setValue(`${idtroll}.caracs.degats.bmp`, degbp);
-	MY_setValue(`${idtroll}.caracs.degats.bmm`, degbm);
+	MY_setValue(`${l_numTroll}.caracs.esquive`, esq);
+	MY_setValue(`${l_numTroll}.caracs.esquive.bm`, esqbp + esqbm);
+	MY_setValue(`${l_numTroll}.caracs.esquive.bmp`, esqbp);
+	MY_setValue(`${l_numTroll}.caracs.esquive.bmm`, esqbm);
+	MY_setValue(`${l_numTroll}.caracs.esquive.nbattaques`, esqtourD);
+	MY_setValue(`${l_numTroll}.caracs.degats`, deg);
+	MY_setValue(`${l_numTroll}.caracs.degats.bm`, degbp + degbm);
+	MY_setValue(`${l_numTroll}.caracs.degats.bmp`, degbp);
+	MY_setValue(`${l_numTroll}.caracs.degats.bmm`, degbm);
 	if (degtour) {
 		let DDegBonus = Math.floor(deg * degtour / 100);
-		MY_setValue(`${idtroll}.bonus.DDeg`, DDegBonus);
+		MY_setValue(`${l_numTroll}.bonus.DDeg`, DDegBonus);
 	} else {
-		MY_removeValue(`${idtroll}.bonus.DDeg`);
+		MY_removeValue(`${l_numTroll}.bonus.DDeg`);
 	}
-	MY_setValue(`${idtroll}.caracs.regeneration`, reg);
-	MY_setValue(`${idtroll}.caracs.regeneration.bm`, regbp + regbm);
-	MY_setValue(`${idtroll}.caracs.regeneration.bmp`, regbp);
-	MY_setValue(`${idtroll}.caracs.regeneration.bmm`, regbm);
-	MY_setValue(`${idtroll}.caracs.vue`, vue);
-	MY_setValue(`${idtroll}.caracs.vue.bm`, vuebp + vuebm);
-	MY_setValue(`${idtroll}.caracs.vue.bmp`, vuebp);
-	MY_setValue(`${idtroll}.caracs.vue.bmm`, vuebm);
-	MY_setValue(`${idtroll}.caracs.pv`, pvcourant);
-	MY_setValue(`${idtroll}.caracs.pv.base`, pvbase);
-	MY_setValue(`${idtroll}.caracs.pv.max`, pvtotal);
-	MY_setValue(`${idtroll}.caracs.rm`, rm);
-	MY_setValue(`${idtroll}.caracs.rm.bm`, rmtotale);
-	MY_setValue(`${idtroll}.caracs.rm.bmp`, rmbp);
-	MY_setValue(`${idtroll}.caracs.rm.bmm`, rmbm);
-	MY_setValue(`${idtroll}.caracs.mm`, mm);
-	MY_setValue(`${idtroll}.caracs.mm.bm`, mmtotale);
-	MY_setValue(`${idtroll}.caracs.mm.bmp`, mmbp);
-	MY_setValue(`${idtroll}.caracs.mm.bmm`, mmbm);
-	MY_setValue(`${idtroll}.caracs.armure`, arm);
-	MY_setValue(`${idtroll}.caracs.armure.bm`, armbp + armbm);
-	MY_setValue(`${idtroll}.caracs.armure.bmp`, armbp);
-	MY_setValue(`${idtroll}.caracs.armure.bmm`, armbm);
-	MY_setValue(`${idtroll}.position.X`, posX);
-	MY_setValue(`${idtroll}.position.Y`, posY);
-	MY_setValue(`${idtroll}.position.N`, posN);
-	MY_setValue(`${idtroll}.race`, race);
-	MY_setValue(`${idtroll}.niveau`, niv);
-	MY_setValue(`${idtroll}.idguilde`, idguilde);
-	MY_setValue(`${idtroll}.nomguilde`, nomguilde);
+	MY_setValue(`${l_numTroll}.caracs.regeneration`, reg);
+	MY_setValue(`${l_numTroll}.caracs.regeneration.bm`, regbp + regbm);
+	MY_setValue(`${l_numTroll}.caracs.regeneration.bmp`, regbp);
+	MY_setValue(`${l_numTroll}.caracs.regeneration.bmm`, regbm);
+	MY_setValue(`${l_numTroll}.caracs.vue`, vue);
+	MY_setValue(`${l_numTroll}.caracs.vue.bm`, vuebp + vuebm);
+	MY_setValue(`${l_numTroll}.caracs.vue.bmp`, vuebp);
+	MY_setValue(`${l_numTroll}.caracs.vue.bmm`, vuebm);
+	MY_setValue(`${l_numTroll}.caracs.pv`, pvcourant);
+	MY_setValue(`${l_numTroll}.caracs.pv.base`, pvbase);
+	MY_setValue(`${l_numTroll}.caracs.pv.max`, pvtotal);
+	MY_setValue(`${l_numTroll}.caracs.rm`, rm);
+	MY_setValue(`${l_numTroll}.caracs.rm.bm`, rmtotale);
+	MY_setValue(`${l_numTroll}.caracs.rm.bmp`, rmbp);
+	MY_setValue(`${l_numTroll}.caracs.rm.bmm`, rmbm);
+	MY_setValue(`${l_numTroll}.caracs.mm`, mm);
+	MY_setValue(`${l_numTroll}.caracs.mm.bm`, mmtotale);
+	MY_setValue(`${l_numTroll}.caracs.mm.bmp`, mmbp);
+	MY_setValue(`${l_numTroll}.caracs.mm.bmm`, mmbm);
+	MY_setValue(`${l_numTroll}.caracs.armure`, arm);
+	MY_setValue(`${l_numTroll}.caracs.armure.bm`, armbp + armbm);
+	MY_setValue(`${l_numTroll}.caracs.armure.bmp`, armbp);
+	MY_setValue(`${l_numTroll}.caracs.armure.bmm`, armbm);
+	MY_setValue(`${l_numTroll}.position.X`, posX);
+	MY_setValue(`${l_numTroll}.position.Y`, posY);
+	MY_setValue(`${l_numTroll}.position.N`, posN);
+	MY_setValue(`${l_numTroll}.race`, race);
+	MY_setValue(`${l_numTroll}.niveau`, niv);
+	MY_setValue(`${l_numTroll}.idguilde`, idguilde);
+	MY_setValue(`${l_numTroll}.nomguilde`, nomguilde);
 }
 
 /* -[functions]            Fonctions modifiant la page                   */
@@ -16358,8 +16387,11 @@ function MZdo_hookCompoTanieres() {
 */
 
 try {
+	// dookm: try remonté en début de fichier car conflit avec d'autres scripts...
 	// Détection de la page à traiter
-	if (isPage("MH_Play/Play_a_ActionResult")) {
+	if (isPage("MH_Play/TurnStart")) {
+		updateNumTroll();
+	} else if (isPage("MH_Play/Play_a_ActionResult")) {
 		debugMZ(`Play_a_ActionResult id=${document.body.id}`);
 		switch (document.body.id) {
 			case 'p_comptenceconnaissancedesmonstres':
