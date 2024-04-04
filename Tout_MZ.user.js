@@ -861,6 +861,15 @@ function isDesktopView() {
 	return document.getElementsByClassName('ui-mobile').length == 0;
 }
 
+function replaceLinkMHtoMZ() {
+	let aList = document.getElementsByTagName('a');
+	if (aList[2].href.includes('games.mountyhall')) {
+		aList[2].href = 'https://mhp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
+	} else if (aList[7].href.includes('smartphone.mountyhall')) {
+		aList[7].href = 'https://szp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
+	}
+}
+
 // http://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript
 function copyTextToClipboard(text) {
 	let textArea = document.createElement('textarea');
@@ -16389,6 +16398,9 @@ function MZdo_hookCompoTanieres() {
 try {
 	// dookm: try remonté en début de fichier car conflit avec d'autres scripts...
 	// Détection de la page à traiter
+	if (isPage("MH_Play/PlayStart2")) {
+		replaceLinkMHtoMZ();
+	} else
 	if (isPage("MH_Play/TurnStart")) {
 		updateNumTroll();
 	} else if (isPage("MH_Play/Play_a_ActionResult")) {
