@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.3.1.42
+// @version     1.4.0
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -35,6 +35,9 @@
 *******************************************************************************/
 
 var MZ_changeLog = [
+	"V1.4.0 05/04/2024",
+	"	Refonte générale du script tout MZ",
+	"	Meilleur support de MH en mode smartphone",
 	"V1.3.1.41 27/03/2024",
 	"	Meilleur affichage des trolls hors-vue (interface tactique)",
 	"V1.3.1.40 26/03/2024",
