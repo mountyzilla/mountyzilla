@@ -2818,13 +2818,18 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 	try {
 		let table = document.createElement('table');
 		let profilActif = isProfilActif();
-		table.className = 'mh_tdborder';
+		let desk_classes = isPage("MH_Play/Play_vue") ? 'mh_textbox ' : '';
+		let ui_classes = isDesktopView() ? `${desk_classes}mh_tdborder` : 'ui-body-c ui-corner-all';
+		table.className = ui_classes;
 		table.border = 0;
 		table.cellSpacing = 1;
 		table.cellPadding = 4;
+		if (!isDesktopView() && isPage("MH_Play/Play_vue")) {
+			table.style.fontSize = 'smaller';
+		}
 
 		let thead = document.createElement('thead');
-		let tr = appendTr(thead, 'mh_tdtitre');
+		let tr = appendTr(thead, 'mh_tdtitre ui-bar-c');
 		let td = appendTdText(tr, `CDM de ${nom} (N° ${id})`, false);
 		td.style.fontWeight = 'bold';
 		if (closeFunct) {
@@ -3347,7 +3352,6 @@ var MZ_Tactique = {
 		MZ_Tactique.popup.className = 'mh_textbox';
 		MZ_Tactique.popup.style =
 			'position: absolute;' +
-			'border: 1px solid #000000;' +
 			'display: none;' +
 			'z-index: 3;' +
 			'max-width: 400px;';
@@ -3533,7 +3537,10 @@ function getAnalyseTactique(id, nom) {
 	if (array == null) {
 		return "";
 	}
-	let str = "<table class='mh_tdborder' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203)'><tr class='mh_tdtitre'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>";
+	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-c ui-corner-all';
+	let ui_tr = isDesktopView() ? 'mh_tdtitre' : ' ui-bar-c';
+	let ui_size = isDesktopView() ? '' : ' font-size: smaller;';
+	let str = `<table class='${ui_table}' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203);${ui_size}'><tr class='${ui_tr}'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>`;
 	let i;
 	for (i = 0; i < array.length; i++) {
 		if (array[i][1] == 100 && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
@@ -5356,7 +5363,7 @@ function initPopupEquipgowap() {
 	let popup = document.createElement('div');
 	popup.setAttribute('id', 'popupGwp');
 	popup.setAttribute('class', 'mh_textbox');
-	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;' +
+	popup.setAttribute('style', 'position: absolute; visibility: hidden;' +
 		'display: inline; z-index: 3; max-width: 400px;');
 	document.body.appendChild(popup);
 }
@@ -7763,7 +7770,7 @@ function initPopupTabcompo() {
 	let popup = document.createElement('div');
 	popup.setAttribute('id', 'popupCompo');
 	popup.setAttribute('class', 'mh_textbox');
-	popup.setAttribute('style', 'position: absolute; border: 1px solid #000000; visibility: hidden;' +
+	popup.setAttribute('style', 'position: absolute; visibility: hidden;' +
 		'display: inline; z-index: 3; max-width: 400px;');
 	document.body.appendChild(popup);
 }
@@ -8536,7 +8543,6 @@ function toolTipInit() {
 	DivInfo.className = 'mh_textbox';
 	DivInfo.style =
 		'position: absolute;' +
-		'border: 1px solid #000000;' +
 		'visibility:hidden;' +
 		'display:inline;' +
 		'z-index:99;';
@@ -12585,15 +12591,14 @@ function filtreTrolls() {
 }
 
 /* [functions] Bulle PX Trolls */
-// let bulle;
 
 function initPXTroll() {
 	let bulle = document.createElement('div');
 	bulle.id = 'bulleTrollPX';
-	bulle.className = 'mh_textbox';
+	let ui_classes = isDesktopView() ? 'mh_textbox mh_tdtitre' : 'ui-body-c ui-corner-all';
+	bulle.className = `${ui_classes}`;
 	bulle.style =
 		'position: absolute;' +
-		'border: 1px solid #000000;' +
 		'visibility: hidden;' +
 		'display: inline;' +
 		'z-index: 2;';
@@ -14485,8 +14490,10 @@ function traitementTalents() {
 	removeAllTalents();
 	let totalComp = injecteInfosBulles(trCompetence, 'competences');
 	let totalSort = injecteInfosBulles(trSorts, 'sortileges');
-	document.querySelector('#comp>div>h3.mh_tdtitre').textContent += ` (Total : ${totalComp}%)`;
-	document.querySelector('#sort>div>h3.mh_tdtitre').textContent += ` (Total : ${totalSort}%)`;
+	let comps = document.querySelector('#comp>div>h3.mh_tdtitre');
+	comps.innerHTML = comps.innerHTML.replace('Compétences', `Compétences (Total : ${totalComp}%)`);
+	let sorts = document.querySelector('#sort>div>h3.mh_tdtitre');
+	sorts.innerHTML = sorts.innerHTML.replace('Sortilèges', `Sortilèges (Total : ${totalSort}%)`);
 }
 
 function injecteInfosBulles(liste, fonction) {
@@ -16399,7 +16406,6 @@ function MZdo_hookCompoTanieres() {
 */
 
 try {
-	// dookm: try remonté en début de fichier car conflit avec d'autres scripts...
 	// Détection de la page à traiter
 	if (isPage("MH_Play/PlayStart2")) {
 		replaceLinkMHtoMZ();
