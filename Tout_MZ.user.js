@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.1
+// @version     1.4.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.1';
+var MZ_latest = '1.4.2';
 var MZ_changeLog = [
+	"V1.4.2 \t\t 10/04/2024",
+	"	- Ajoute la possibilité d'afficher les rapports d'erreurs directement en jeu",
 	"V1.4.1 \t\t 09/04/2024",
 	"	- Affichage de version hors Greasemonkey",
 	"	- Meilleur gestion des popup et diverses insertions en version smartphone",
@@ -934,7 +936,8 @@ function copyTextToClipboard(text) {
 
 function avertissement(txt, duree, bBloque, exc = undefined) {
 	let d = duree ? ` pour (${duree} ms)` : '';
-	let excDetails = exc ? ' - Plus de détails en console (F12)' : '';
+	let print_stack = MY_getValue('PRINTSTACK') == 'true';
+	let excDetails = (exc && !print_stack) ? ' - Plus de détails en console (F12)' : '';
 	logMZ(`Avertissement: ${txt}${d}`, exc);
 	if (!duree) {
 		duree = 15000;
@@ -960,6 +963,12 @@ function avertissement(txt, duree, bBloque, exc = undefined) {
 		div.onclick = function () {
 			tueAvertissement(this.num);
 		};
+	}
+	if (exc && print_stack) {
+		let pre = document.createElement('pre');
+		appendText(pre, `---\n${exc.stack}`);
+		pre.style.whiteSpace = "pre-wrap";
+		div.appendChild(pre);
 	}
 
 	// un croix en haut à droite pour signifier à l'utilisateur qu'il peut cliquer pour fermer ce popup
@@ -8820,6 +8829,7 @@ function saveAll() {
 		MZ_setOrRemoveValue(`${numTroll}.AUTOCDM`, document.getElementById('autoCdM').checked);
 		// MY_setValue('VUECARAC',	// Roule 12/12/2019 ça ne fait plus rien
 		// document.getElementById('vueCarac').checked ? 'true' : 'false');
+		MZ_setOrRemoveValue('PRINTSTACK', document.getElementById('printstack').checked);
 		MZ_setOrRemoveValue('CONFIRMEDECALAGE', document.getElementById('confirmeDecalage').checked);
 
 		MZ_setOrRemoveValue('COMPTEAREBOURSDLA', document.getElementById('compteAreboursDLA').checked);
@@ -9170,6 +9180,9 @@ function insertOptionTable(insertPt) {
 	// td = appendTd(appendTr(mainBody,'mh_tdpage'));	// Roule 12/12/2019 ça ne fait plus rien
 	// appendCheckBox(td,'vueCarac',MY_getValue('VUECARAC')=='true');
 	// appendText(td,' Afficher la Vue avec les caractéristiques dans le Profil');
+
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+	appendCheckBoxBlock(td, 'printstack', "Joindre les rapports d'erreurs aux avertissements", MY_getValue('PRINTSTACK') == 'true');
 
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 	appendCheckBoxBlock(td, 'confirmeDecalage', "Demander confirmation lors d'un décalage de DLA", MY_getValue('CONFIRMEDECALAGE') == 'true');
@@ -16104,6 +16117,9 @@ function MZ_extern_param() {
 	}
 	if (document.body.MZ_Params.INFOCARAC != undefined) {
 		MY_setValue('INFOCARAC', document.body.MZ_Params.INFOCARAC);
+	}
+	if (document.body.MZ_Params.PRINTSTACK != undefined) {
+		MY_setValue('PRINTSTACK', document.body.MZ_Params.PRINTSTACK);
 	}
 	if (document.body.MZ_Params.CONFIRMEDECALAGE != undefined) {
 		MY_setValue('CONFIRMEDECALAGE', document.body.MZ_Params.CONFIRMEDECALAGE);
