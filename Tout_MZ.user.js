@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.2.1
+// @version     1.4.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.2.1';
+var MZ_latest = '1.4.3';
 var MZ_changeLog = [
+	"V1.4.3 \t\t 12/04/2024",
+	"	- Corrige l'affichage des trolls hors-vue",
 	"V1.4.2 \t\t 10/04/2024",
 	"	- Ajoute la possibilité d'afficher les rapports d'erreurs directement en jeu",
 	"V1.4.1 \t\t 09/04/2024",
@@ -9003,7 +9005,7 @@ function resetMainIco() {
 
 function insertTitle(next, txt) {
 	let div = document.createElement('div');
-	div.className = 'titre2 ui-bar-b';
+	div.className = 'titre2';
 	appendText(div, txt);
 	insertBefore(next, div);
 	return div;
@@ -9016,7 +9018,7 @@ function insertMainTable(next) {
 	table.align = 'center';
 	table.cellPadding = 2;
 	table.cellSpacing = 1;
-	table.className = 'mh_tdborder ui-body-d ui-corner-bottom';
+	table.className = 'mh_tdborder';
 	let tbody = document.createElement('tbody');
 	table.appendChild(tbody);
 	insertBefore(next, table);
@@ -13243,23 +13245,155 @@ function addTdInfosTroll(infos, TR, itName) {
 	TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
 }
 
+function createTrollRowFromRef(infos, ref_tr) {
+	let tr = ref_tr.cloneNode(true);
+	tr.style.color = 'cc7000';
+	// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
+	let desktopView = isDesktopView();
+	let idx = 0; // distance
+	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_dist', infos.dist);
+	if (desktopView) {
+		idx++; // action
+		tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id);
+		tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id);
+	}
+	idx++; // ref
+	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_ref', infos.id);
+	idx++; // name
+	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id).replace('r_name', infos.nom);
+	idx += 3; // guild (skip: pv, pa)
+	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_guild', infos.guilde ? infos.guilde : '');
+	if (desktopView) {
+		idx++;	// niv
+		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_niv', infos.niveau ? infos.niveau : '');
+		idx++;	// race
+		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_race', infos.race ? infos.race : '');
+	} else {
+		idx++;	// Race + Niveau
+		let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
+		let race_niv = infos.race ? `${lettreRace[infos.race]}` : '';
+		race_niv = infos.niveau ? `${race_niv}${infos.niveau}` : race_niv;
+		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_niv', race_niv);
+	}
+	idx++; // x
+	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_x', infos.x);
+	idx++; // y
+	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_y', infos.y);
+	idx++; // n
+	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_n', infos.n);
+	return tr;
+}
+
+function createTrollRow(infos, tr) {
+	if (tr) {
+		return createTrollRowFromRef(infos, tr);
+	}
+
+	// créer le tr si pas de ref disponible
+	tr = document.createElement('tr');
+	tr.className = 'mh_tdpage';
+	tr.style.color = 'cc7000';
+	let desktopView = isDesktopView();
+	let td = appendTd(tr);	// distance
+	appendText(td, infos.dist);
+	if (desktopView) {
+		td = appendTd(tr); // actions
+	}
+	td = appendTd(tr);	// ID
+	appendText(td, infos.id);
+	td = appendTd(tr);	// Nom
+	// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
+	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
+	td = appendTd(tr);	// PV
+	td = appendTd(tr);	// PA
+	td = appendTd(tr);	// Guilde
+	if (infos.guilde !== undefined) {
+		appendText(td, infos.guilde);
+	}
+	if (desktopView) {
+		td = appendTd(tr);	// Niveau
+		if (infos.niveau !== undefined) {
+			appendText(td, infos.niveau);
+		}
+		td.align = 'center';
+		td = appendTd(tr);	// Race
+		if (infos.race) {
+			appendText(td, infos.race);
+		}
+	} else {
+		td = appendTd(tr);	// Race + Niveau
+		let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
+		let race_niv = infos.race ? `${lettreRace[infos.race]}` : '';
+		race_niv = infos.niveau ? `${race_niv}${infos.niveau}` : race_niv;
+		appendText(td, race_niv);
+	}
+	td = appendTd(tr);	// X
+	if (infos.x !== undefined) {
+		appendText(td, infos.x);
+	}
+	td = appendTd(tr);	// Y
+	if (infos.y !== undefined) {
+		appendText(td, infos.y);
+	}
+	td = appendTd(tr);	// N
+	if (infos.n !== undefined) {
+		appendText(td, infos.n);
+	}
+	return tr;
+}
+
 var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
 	try {
+		let ref_tr = undefined;
+		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
+		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
+		isDesktopView() ? ref_anchors.splice(8, 0, 'r_race') : '';
 		if (MZ_tabTrTrollById === undefined) {
 			MZ_tabTrTrollById = new Array();
 			// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
 			}
-			let td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PA', true);
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PA', false);
+			td.className = "footable-visible";
 			td.width = 40;
-			td = insertTdText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PV', true);
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PV', false);
+			td.className = "footable-visible";
 			td.width = 105;
 			for (let i = nbTrolls; i > 0; i--) {
-				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				td.className = "footable-visible";
+				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				td.className = "footable-visible";
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
+				if (ref_tr === undefined) {
+					// gath: on construit pour afficher les trolls hors-vue
+					if (tr_trolls[i].innerText.includes('[PNJ]')) {
+						continue;
+					}
+					ref_tr = tr_trolls[i].cloneNode(true);
+					for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
+						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
+						let r_a = ref_anchors[j];
+						if (r_a == 'r_pa' || r_a == 'r_pv') {
+							continue;
+						} else if (r_a == 'r_act') {
+							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
+						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
+							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+							let s_name = tr_trolls[i].cells[j].innerText;
+							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a);
+						} else {
+							let s_txt = ref_tr.cells[j].innerText;
+							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
+						}
+					}
+				}
 			}
 		}
 
@@ -13292,11 +13426,11 @@ function putInfosTrolls(infosTrolls, itName) {
 			let infos = infosTrolls[idTroll];
 			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);	// trop vieux
 			if (infos.oUpdatedAt < dateLimite) {
-				continue;
-			}	// infos trop vieilles
+				continue; // infos trop vieilles
+			}
 			if (idTroll == numTroll) {
-				continue;
-			}	// pas nous-même
+				continue; // pas nous-même
+			}
 			let tr;
 			if (idTroll in MZ_tabTrTrollById) {
 				// logMZ('putInfosTrolls, le Troll ' + idTroll + ' est déjà dans la table HTML');
@@ -13306,73 +13440,18 @@ function putInfosTrolls(infosTrolls, itName) {
 					continue;
 				}
 				// logMZ('putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
-				let distance = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
+				infos.dist = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
 				// trouver où insérer ce Troll
 				let next = undefined;
 				for (let j = 0; j < tr_trolls.length; j++) {
 					let thisDist = parseInt(tr_trolls[j].cells[0].textContent);
-					if (thisDist > distance) {
+					if (thisDist > infos.dist) {
 						next = tr_trolls[j];
 						break;
 					}
 				}
-				if (next !== undefined) {
-					tr = insertTr(next, 'mh_tdpage');
-				} else {
-					tr = appendTr(tBody, 'mh_tdpage');
-				}
-				tr.style.color = 'orange';
-				let desktopView = isDesktopView();
-				let td = appendTd(tr);	// distance
-				appendText(td, distance);
-				if (desktopView) {
-					td = appendTd(tr);
-				}	// actions
-				td = appendTd(tr);	// ID
-				appendText(td, idTroll);
-				td = appendTd(tr);	// Nom
-				// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
-				appendA(td, `javascript:EPV(${idTroll})`, 'mh_trolls_1 ui-link', infos.nom);
-				td = appendTd(tr);	// PV
-				td = appendTd(tr);	// PA
-				td = appendTd(tr);	// Guilde
-				if (infos.guilde !== undefined) {
-					appendText(td, infos.guilde);
-				}
-				if (desktopView) {
-					td = appendTd(tr);	// Niveau
-					if (infos.niveau !== undefined) {
-						appendText(td, infos.niveau);
-					}
-					td.align = 'center';
-					td = appendTd(tr);	// Race
-					if (infos.race) {
-						appendText(td, infos.race);
-					}
-				} else {
-					td = appendTd(tr);	// Race + Niveau
-					let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
-					let td_niv = "";
-					if (infos.race) {
-						td_niv = `${lettreRace[infos.race]}`;
-					}
-					if (infos.niveau !== undefined) {
-						td_niv = `${td_niv}${infos.niveau}`;
-					}
-					appendText(td, td_niv);
-				}
-				td = appendTd(tr);	// X
-				if (infos.x !== undefined) {
-					appendText(td, infos.x);
-				}
-				td = appendTd(tr);	// Y
-				if (infos.y !== undefined) {
-					appendText(td, infos.y);
-				}
-				td = appendTd(tr);	// N
-				if (infos.n !== undefined) {
-					appendText(td, infos.n);
-				}
+				tr = createTrollRow(infos, ref_tr);
+				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
 				MZ_tabTrTrollById[idTroll] = tr;
 			}
 			if (!tr.done) {
@@ -14071,7 +14150,7 @@ function setLienAnatrolliseur() {
 	let aElt = document.createElement("a");
 	aElt.setAttribute("href", urlAnatrolliseur);
 	aElt.setAttribute("target", "_blank");
-	aElt.className = "AllLinks";
+	aElt.className = "AllLinks ui-link";
 	aElt.innerHTML = "Anatrolliser";
 	pTableAmelio.appendChild(aElt);
 }
@@ -14089,7 +14168,7 @@ function setInfosEtatLieux() {
 	let aElt = document.createElement("a");
 	aElt.setAttribute("href", urlBricol);
 	aElt.setAttribute("target", "_blank");
-	aElt.className = "AllLinks";
+	aElt.className = "AllLinks ui-link";
 	aElt.innerHTML = "Lieux à proximité";
 	tdPosition.appendChild(aElt);
 }
