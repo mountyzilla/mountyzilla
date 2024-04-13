@@ -36,8 +36,10 @@
 
 var MZ_latest = '1.4.3';
 var MZ_changeLog = [
-	"V1.4.3 \t\t 12/04/2024",
+	"V1.4.3 \t\t 13/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
+	"	- Permet le scroll des options Mountyzilla en affichage vertical",
+	"	- N'essaie plus d'afficher les infos trolls en vue spécifique (monstre, trésors, etc.)",
 	"V1.4.2 \t\t 10/04/2024",
 	"	- Ajoute la possibilité d'afficher les rapports d'erreurs directement en jeu",
 	"V1.4.1 \t\t 09/04/2024",
@@ -8898,7 +8900,7 @@ function addBricolIT(sSystem, sLogin, nAffhv, bFirst, bLast) {
 	let td = appendTd(tr);
 	if (bLast) {
 		td.style.whiteSpace = 'nowrap';
-		appendText(td, '+');
+		appendText(td, '(+)');
 		td.style.cursor = 'pointer';
 		td.title = 'Cliquer ici pour ajouter un autre système Bricol\'Troll';
 		td.onclick = function (e) {
@@ -9005,7 +9007,7 @@ function resetMainIco() {
 
 function insertTitle(next, txt) {
 	let div = document.createElement('div');
-	div.className = 'titre2';
+	div.className = isDesktopView() ? 'titre2' : 'ui-bar-b ui-corner-top';
 	appendText(div, txt);
 	insertBefore(next, div);
 	return div;
@@ -9013,15 +9015,23 @@ function insertTitle(next, txt) {
 
 function insertMainTable(next) {
 	let table = document.createElement('table');
-	table.width = '98%';
 	table.border = 0;
 	table.align = 'center';
 	table.cellPadding = 2;
 	table.cellSpacing = 1;
-	table.className = 'mh_tdborder';
+	table.className = isDesktopView() ? 'mh_tdborder' : 'ui-body-d ui-corner-bottom';
 	let tbody = document.createElement('tbody');
 	table.appendChild(tbody);
-	insertBefore(next, table);
+
+	if (isDesktopView()) {
+		table.style.maxWidth = '98%'
+		insertBefore(next, table);
+	} else {
+		let div = document.createElement('div');
+		div.style.overflowX = "scroll";
+		div.appendChild(table);
+		insertBefore(next, div);
+	}
 	return tbody;
 }
 
@@ -10747,8 +10757,7 @@ var nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
 	try {
-		let node;
-		node = document.getElementById(`mh_vue_hidden_${type}`);
+		let node = document.getElementById(`mh_vue_hidden_${type}`);
 		VueContext[`tr_${type}`] = node.getElementsByTagName('tr');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
 	} catch (exc) {
@@ -13066,7 +13075,7 @@ function putScriptExterne() {
 }
 
 function putScriptExterneOneIT(sInfo) {
-	if (!sInfo || sInfo == '') {
+	if (!sInfo || sInfo == '' || !tr_trolls) {
 		return;
 	}
 
