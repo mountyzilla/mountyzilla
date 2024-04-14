@@ -36,10 +36,11 @@
 
 var MZ_latest = '1.4.3';
 var MZ_changeLog = [
-	"V1.4.3 \t\t 13/04/2024",
+	"V1.4.3 \t\t 14/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
 	"	- Permet le scroll des options Mountyzilla en affichage vertical",
 	"	- N'essaie plus d'afficher les infos trolls en vue spécifique (monstre, trésors, etc.)",
+	"	- Affiche directement les derniers changements sur la page de nouvelles",
 	"V1.4.2 \t\t 10/04/2024",
 	"	- Ajoute la possibilité d'afficher les rapports d'erreurs directement en jeu",
 	"V1.4.1 \t\t 09/04/2024",
@@ -7423,7 +7424,7 @@ function appendTitledTable(node, titre, description) {
 	table.style.marginRight = 'auto';
 	let tbody = document.createElement('tbody');
 	table.appendChild(tbody);
-	let ui_tr = isDesktopView() ? 'mh_tdtitre' : 'ui-bar-c ui-corner-top';
+	let ui_tr = isDesktopView() ? 'mh_tdtitre' : 'ui-bar-b ui-corner-top';
 	let tr = appendTr(tbody, ui_tr);
 	let td = appendTdCenter(tr, 2);
 	let span = document.createElement('span');
@@ -7629,6 +7630,14 @@ function traiterNouvelles() {
 	afficherNouvelles(news);
 }
 
+function getLatestChanges() {
+	let changes = new Array();
+	for (let i = 0; i == 0 || MZ_changeLog[i].startsWith('\t- '); i++) {
+		changes.push(MZ_changeLog[i]);
+	}
+	return changes.join('\n');
+}
+
 function afficherNouvelles(items) {
 	let footer = getFooter();
 	if (!footer) {
@@ -7682,18 +7691,20 @@ function afficherNouvelles(items) {
 	p = document.createElement('p');
 	tbody = appendTitledTable(p, 'Changelog de Mountyzilla');
 	tbody.rows[0].cells[0].style.cursor = 'pointer';
+	let tr = appendTr(tbody, 'mh_tdpage');
+	let td = appendTd(tr);
+	td.colSpan = 2;
+	let pre = document.createElement('pre');
+	appendText(pre, getLatestChanges());
+	pre.id = 'mz_changelog'
+	pre.style.whiteSpace = 'pre-wrap';
+	td.appendChild(pre);
 	tbody.rows[0].cells[0].onclick = function () {
 		try {
 			tbody.rows[0].cells[0].onclick = undefined;
 			tbody.rows[0].cells[0].style.cursor = '';
-			let tr = appendTr(tbody, 'mh_tdpage');
-			let td = appendTd(tr);
-			td.colSpan = 2;
-			let pre = document.createElement('pre');
-			appendText(pre, MZ_changeLog.join("\n"));
-			pre.id = "mz_changelog"
-			pre.style.whiteSpace = "pre-wrap";
-			td.appendChild(pre);
+			let pre = document.getElementById('mz_changelog');
+			pre.innerText = MZ_changeLog.join('\n');
 		} catch (exc) {
 			logMZ('affichage changeLog', exc);
 		}
