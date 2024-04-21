@@ -13400,14 +13400,15 @@ function putInfosTrolls(infosTrolls, itName) {
 							continue;
 						} else if (r_a == 'r_act') {
 							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
 						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
+							Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
+								img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
+							});
 							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							let s_name = tr_trolls[i].cells[j].innerText;
+							let s_name = tr_trolls[i].cells[j].innerText.trim();
 							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a);
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
 						} else {
 							let s_txt = ref_tr.cells[j].innerText;
 							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
