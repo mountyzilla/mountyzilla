@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.3
+// @version     1.4.3.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,11 +34,11 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.3';
+var MZ_latest = '1.4.3.1';
 var MZ_changeLog = [
 	"V1.4.3 \t\t 14/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
-	"	- Permet le scroll des options Mountyzilla en affichage vertical",
+	"	- Permet le scroll des options Mountyzilla en affichage vertical (et accel pour les kastars)",
 	"	- N'essaie plus d'afficher les infos trolls en vue spécifique (monstre, trésors, etc.)",
 	"	- Affiche directement les derniers changements sur la page de nouvelles",
 	"V1.4.2 \t\t 10/04/2024",
@@ -14223,8 +14223,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 		txt = `[MZ] Vous pouvez encore perdre ${Math.min(pvdispo, pvcourant)
 			} PV sans malus de temps.`;
 	} else if (pvdispo < 0) {
-		txt = `[MZ] Il vous manque ${-pvdispo
-			} PV pour ne plus avoir de malus de temps.`;
+		txt = `[MZ] Il vous manque ${-pvdispo} PV pour ne plus avoir de malus de temps.`;
 	} else {
 		txt = "[MZ] Vous êtes à l'équilibre en temps (+/- 30sec).";
 	}
@@ -14439,6 +14438,11 @@ function setAccel() {
 		table.style.textAlign = "center";
 		tbody = document.createElement('tbody');
 		table.appendChild(tbody);
+		if (!isDesktopView()) {
+			// gath: patch pour permettre l'affichage accel faute de mieux pour l'instant
+			let div = document.querySelector('#pos div>div');
+			div.style.overflowX = "scroll";
+		}
 		insertPt.appendChild(table);
 
 		ligneTour = appendTr(tbody, 'mh_tdtitre');
