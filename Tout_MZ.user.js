@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.3
+// @version     1.4.3.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,11 +34,11 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.3';
+var MZ_latest = '1.4.3.1';
 var MZ_changeLog = [
 	"V1.4.3 \t\t 14/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
-	"	- Permet le scroll des options Mountyzilla en affichage vertical",
+	"	- Permet le scroll des options Mountyzilla en affichage vertical (et accel pour les kastars)",
 	"	- N'essaie plus d'afficher les infos trolls en vue spécifique (monstre, trésors, etc.)",
 	"	- Affiche directement les derniers changements sur la page de nouvelles",
 	"V1.4.2 \t\t 10/04/2024",
@@ -13400,14 +13400,15 @@ function putInfosTrolls(infosTrolls, itName) {
 							continue;
 						} else if (r_a == 'r_act') {
 							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
 						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
+							Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
+								img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
+							});
 							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							let s_name = tr_trolls[i].cells[j].innerText;
+							let s_name = tr_trolls[i].cells[j].innerText.trim();
 							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref');
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a);
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
 						} else {
 							let s_txt = ref_tr.cells[j].innerText;
 							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
@@ -14222,8 +14223,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 		txt = `[MZ] Vous pouvez encore perdre ${Math.min(pvdispo, pvcourant)
 			} PV sans malus de temps.`;
 	} else if (pvdispo < 0) {
-		txt = `[MZ] Il vous manque ${-pvdispo
-			} PV pour ne plus avoir de malus de temps.`;
+		txt = `[MZ] Il vous manque ${-pvdispo} PV pour ne plus avoir de malus de temps.`;
 	} else {
 		txt = "[MZ] Vous êtes à l'équilibre en temps (+/- 30sec).";
 	}
@@ -14438,6 +14438,11 @@ function setAccel() {
 		table.style.textAlign = "center";
 		tbody = document.createElement('tbody');
 		table.appendChild(tbody);
+		if (!isDesktopView()) {
+			// gath: patch pour permettre l'affichage accel faute de mieux pour l'instant
+			let div = document.querySelector('#pos div>div');
+			div.style.overflowX = "scroll";
+		}
 		insertPt.appendChild(table);
 
 		ligneTour = appendTr(tbody, 'mh_tdtitre');
