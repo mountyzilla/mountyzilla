@@ -6,14 +6,14 @@
 // @grant GM_deleteValue
 // @grant GM_listValues
 // @include */mountyhall/View/TresorHistory*
-// @include */mountyhall/MH_Play/Actions/Play_a_TrouverCachette2*
+// @include */mountyhall/MH_Play/Play_a_TrouverCachette2*
 // @include */mountyhall/MH_Play/Play_equipement.php*
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
-// @include */mountyhall/MH_Play/Actions/Play_a_ActionResult.php*
+// @include */mountyhall/MH_Play/Play_a_ActionResult.php*
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.15
+// @version 8.8.16
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -1420,7 +1420,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			{
 				this.analyseObject();
 			}
-			else if(this.isPage("MH_Play/Actions/Play_a_ActionResult.php") || this.isPage("MH_Play/Actions/Play_a_TrouverCachette2.php"))
+			else if(this.isPage("MH_Play/Play_a_ActionResult.php") || this.isPage("MH_Play/Play_a_TrouverCachette2.php"))
 			{
 				// uniquement si l'id du body est p_trouverunecachette
 				if (document.body.id != 'p_trouverunecachette') return;
