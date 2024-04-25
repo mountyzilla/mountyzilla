@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.3.3
+// @version     1.4.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.3.3';
+var MZ_latest = '1.4.4';
 var MZ_changeLog = [
+	"V1.4.4 \t\t 25/04/2024",
+	"	- Affiche les infos MZ dans la page profil mobile",
 	"V1.4.3 \t\t 14/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
 	"	- Permet le scroll des options Mountyzilla en affichage vertical (et accel pour les kastars)",
@@ -1028,6 +1030,25 @@ function appendTr(tbody, cls_name) {
 	return tr;
 }
 
+function appendTrDetail(tr_node, th_txt, td_txt, pre = undefined) {
+	let tr = document.createElement('tr');
+	tr.className = 'detail';
+	let th = document.createElement('th');
+	appendText(th, th_txt);
+	tr.appendChild(th);
+	let td = document.createElement('td');
+	if (pre) {
+		let p = document.createElement('pre');
+		appendText(p, td_txt);
+		td.appendChild(p);
+	} else {
+		appendText(td, td_txt);
+	}
+	tr.appendChild(td);
+	insertAfter(tr_node, tr);
+	return tr;
+}
+
 function insertTr(node, cls_name) {
 	let tr = document.createElement('tr');
 	if (cls_name) {
@@ -1095,14 +1116,19 @@ function appendA(node, href, cssClass, text) {
 	node.appendChild(a);
 }
 
-function appendText(node, text, bold) {
+function appendText(node, text, bold, color = undefined) {
+	let t = document.createTextNode(text);
 	if (!bold) {
-		node.appendChild(document.createTextNode(text));
-		return;
+		node.appendChild(t);
+		return t;
 	}
 	let b = document.createElement('b');
-	b.appendChild(document.createTextNode(text));
+	if (color) {
+		b.style.color = color;
+	}
+	b.appendChild(t);
 	node.appendChild(b);
+	return t;
 }
 
 function insertText(node, text, bold) {
@@ -1158,6 +1184,10 @@ function insertTdText(node, text, bold) {
 	let td = insertTd(node);
 	appendText(td, text, bold);
 	return td;
+}
+
+function appendHr(node) {
+	node.appendChild(document.createElement('hr'));
 }
 
 function appendBr(node) {
@@ -14204,16 +14234,20 @@ function setInfosEtatPV() { // pour AM et Sacro
 	let
 		txt = `1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
 		sec = Math.floor(15000 / pvtotal) % 60,
-		lifebar = document.querySelector("#pos .barre-vie");
+		lifebar = document.querySelector("#pos .barre-vie"),
+		tr_line = document.querySelector("#pos #pv_courant").parentElement.parentElement.parentElement;
 	if (sec != 0) {
 		txt = `${txt} ${sec} sec`;
 	}
-	if (lifebar) {
+	if (lifebar && isDesktopView()) {
 		lifebar.title = txt;
+	} else {
+		tr_line = appendTrDetail(tr_line, '[MZ] Durée de blessure', txt);
 	}
 	if (pvcourant <= 0) {
 		return;
 	}
+
 
 	// Difference PV p/r a equilibre de temps (propale R')
 	// Note : pvmin pour 0 malus = pvtotal + ceiling(pvtotal/250*(dtreserve + pdm + bmt + bmmouche))
@@ -14223,18 +14257,23 @@ function setInfosEtatPV() { // pour AM et Sacro
 	let span = document.createElement("span");
 	span.title = txt;
 	span.style.fontStyle = "italic";
+	span.className = 'detail';
 	if (bmPVHorsBlessure >= 0) {
-		txt = "[MZ] Vous ne pouvez compenser aucune blessure actuellement.";
+		txt = "Vous ne pouvez compenser aucune blessure actuellement.";
 	} else if (pvdispo > 0) {
-		txt = `[MZ] Vous pouvez encore perdre ${Math.min(pvdispo, pvcourant)
-			} PV sans malus de temps.`;
+		txt = `Vous pouvez encore perdre ${Math.min(pvdispo, pvcourant)} PV sans malus de temps.`;
 	} else if (pvdispo < 0) {
-		txt = `[MZ] Il vous manque ${-pvdispo} PV pour ne plus avoir de malus de temps.`;
+		txt = `Il vous manque ${-pvdispo} PV pour ne plus avoir de malus de temps.`;
 	} else {
-		txt = "[MZ] Vous êtes à l'équilibre en temps (+/- 30sec).";
+		txt = "Vous êtes à l'équilibre en temps (+/- 30sec).";
 	}
-	appendText(span, txt);
-	document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
+	if (isDesktopView()) {
+		appendText(span, `[MZ] ${txt}`);
+		document.querySelector("#pos #pv_courant").parentElement.parentElement.appendChild(span);
+	} else {
+		tr_line = appendTrDetail(tr_line, '[MZ] Compensation', txt);
+	}
+
 	let marge = dtbm + dtreserve + pdm + bmt + adb + bmmouche;
 	let tr = document.createElement('tr');
 	tr.className = 'detail';
@@ -14424,18 +14463,83 @@ function setAccel() {
 			listeBmFat = [30, 30, 15];
 		}
 	}
+
+	let skip = false;
+	if (pvcourant <= 0) {
+		appendText(insertPt, 'Aucun calcul possible : vous êtes mort voyons !');
+		skip = true;
+	}
+
+	if (!skip && fat > 30) {
+		appendText(insertPt, 'Vous êtes trop fatigué pour accélérer.');
+		skip = true;
+	}
+
+	// Setup lastDLAZone
 	if (overDLA) {
 		// Si on est en over-DLA, on decale les bm d'un tour
 		listeBmFat.shift();
+
+		// bypass des infos de "menu_FF.js" en cas d'overDLA
+		DLAaccel = new Date(DLAsuiv);
+		lastDLA = new Date(DLA);
+		MY_setValue(`${numTroll}.DLA.ancienne`, MZ_formatDateMS(DLA, false));
+		// ***INIT GLOBALE*** pvActuelKastar
+		pvActuelKastar = Math.min(pvcourant + regmoy, pvtotal);
+		appendText(insertPt, 'Votre DLA est dépassée, calculs basés sur des estimations.', true, 'red');
+		appendBr(insertPt);
+	} else {
+		DLAaccel = new Date(DLA);
+		pvActuelKastar = pvcourant;
+		if (MY_getValue(`${numTroll}.DLA.ancienne`)) {
+			lastDLA = new Date(StringToDate(MY_getValue(`${numTroll}.DLA.ancienne`)));
+		} else {
+			lastDLA = false;
+		}
 	}
 
-	// Tableau des fatigues et accel futures
-	let minppv = minParPVsac(fat, listeBmFat[0]),
-		table, tbody, col,
-		ligneTour, ligneFat, ligneMin;
 	// ***INIT GLOBALE*** minParPV
+	let minppv = minParPVsac(fat, listeBmFat[0]);
 	minParPV = listeBmFat[0] == void 0 ? minppv[0] : minppv[1];
-	if (fat > 0 || listeBmFat[0] > 0) {
+	if (!skip) {
+		appendText(insertPt, 'Dernière DLA enregistrée : ');
+		lastDLAZone = document.createElement('span');
+		lastDLAZone.style.cursor = 'pointer';
+		let b = document.createElement('b');
+		b.onclick = inputMode;
+		lastDLAZone.appendChild(b);
+		insertPt.appendChild(lastDLAZone);
+		if (lastDLA) {
+			appendText(b, MZ_formatDateMS(lastDLA, false));
+		} else {
+			appendText(b, 'aucune');
+		}
+		appendBr(insertPt);
+
+		// Setup maxAMZone et cumulZone
+		appendText(insertPt, 'Accélération maximale possible : ');
+		maxAMZone = document.createElement('b');
+		insertPt.appendChild(maxAMZone);
+		appendBr(insertPt);
+		cumulZone = document.createElement('span');
+		insertPt.appendChild(cumulZone);
+		refreshAccel();
+	}
+
+	if (!(fat > 0 || listeBmFat[0] > 0)) {
+		return; // skip si rien a calculer
+	}
+
+	// ancre pour afficher le warning d'erreur de calcul
+	let err_node = document.createElement('div');
+	insertPt.appendChild(err_node);
+
+	// Tableau des fatigues et accel futures
+	let table, tbody, col, ligneTour, ligneFat, ligneMin, tr_detail;
+	let nbsp = '\u00A0';
+	let desktopView = isDesktopView();
+	if (desktopView) {
+		appendHr(insertPt);
 		table = document.createElement('table');
 		table.className = 'mh_tdborder';
 		table.border = 0;
@@ -14444,13 +14548,7 @@ function setAccel() {
 		table.style.textAlign = "center";
 		tbody = document.createElement('tbody');
 		table.appendChild(tbody);
-		if (!isDesktopView()) {
-			// gath: patch pour permettre l'affichage accel faute de mieux pour l'instant
-			let div = document.querySelector('#pos div>div');
-			div.style.overflowX = "scroll";
-		}
 		insertPt.appendChild(table);
-
 		ligneTour = appendTr(tbody, 'mh_tdtitre');
 		ligneTour.style.fontWeight = "bold";
 		let td = appendTdText(ligneTour, 'Tour :', true);
@@ -14463,117 +14561,59 @@ function setAccel() {
 		td = appendTdText(ligneMin, '1 PV =', true);
 		td.className = 'mh_tdtitre';
 		td.align = 'left';
-		col = 0;
-		while (col < 9 && (fat > 0 || listeBmFat[col])) {
-			if (col == 0) {
-				if (overDLA) {
-					let i = document.createElement('i');
-					appendText(i, 'A activer');
-					ligneTour.appendChild(i);
-				} else {
-					appendTdText(ligneTour, 'En cours');
-				}
-			} else {
-				appendTdText(ligneTour, `\u00A0\u00A0+${col}\u00A0\u00A0`);
-			}
-			if (listeBmFat[col]) {
-				if (BMfrais || !overDLA && col == 0) {
-					appendTdText(ligneFat, `${fat}+${listeBmFat[col]}`);
-					appendTdText(ligneMin, `${Math.max(1, minppv[1])}'`);
-				} else {
-					appendTdText(ligneFat, `${fat}+${listeBmFat[col]} (?)`);
-					appendTdText(ligneMin, `${minppv[1]}' (${minppv[0]}')`);
-				}
-			} else {
-				appendTdText(ligneFat, fat);
-				appendTdText(ligneMin, `${minppv[0]}'`);
-			}
-			col++;
-			fat = Math.floor(fat / 1.25);
-			minppv = minParPVsac(fat, listeBmFat[col]);
-		}
-		if (fat > 1 || fat == 1 && !overDLA) {
-			appendTdText(ligneTour, '\u00A0 ... \u00A0', true);
-			appendTdText(ligneFat, '-');
-			appendTdText(ligneMin, '-');
-		}
-		col = overDLA ? Math.max(retourAZero(fatigue) - 1, col) : Math.max(retourAZero(fatigue), col);
-		appendTdText(ligneTour, `\u00A0\u00A0+${col}\u00A0\u00A0`);
-		appendTdText(ligneFat, '0');
-		appendTdText(ligneMin, '30\'');
-
-		if (!BMfrais && bmfatigue) {
-			// si les BM n'ont pas ete rafraichis, on signale:
-			let b = document.createElement('b');
-			b.appendChild(document.createTextNode('/!\\ Attention, ce tableau est probablement faux.' +
-				' Visitez la page des Bonus/Malus' +
-				' pour mettre à jour votre fatigue. /!\\'));
-			b.style.color = 'red';
-			insertPt.appendChild(b);
-			appendBr(insertPt);
-		}
-		appendBr(insertPt);
-	}
-
-	if (pvcourant <= 0) {
-		appendText(insertPt, 'Aucun calcul possible : vous êtes mort voyons !');
-		return;
-	}
-
-	if (fatigue > 30) {
-		appendText(insertPt, 'Vous êtes trop fatigué pour accélérer.');
-		return;
-	}
-
-	// Setup lastDLAZone
-	if (overDLA) {
-		// bypass des infos de "menu_FF.js" en cas d'overDLA
-		DLAaccel = new Date(DLAsuiv);
-		lastDLA = new Date(DLA);
-		MY_setValue(`${numTroll}.DLA.ancienne`, MZ_formatDateMS(DLA, false));
-		// ***INIT GLOBALE*** pvActuelKastar
-		pvActuelKastar = Math.min(pvcourant + regmoy, pvtotal);
-		appendText(insertPt, '/!\\ Votre DLA est dépassée, calculs basés sur des estimations. /!\\', true);
-		appendBr(insertPt);
 	} else {
-		DLAaccel = new Date(DLA);
-		pvActuelKastar = pvcourant;
-		if (MY_getValue(`${numTroll}.DLA.ancienne`)) {
-			lastDLA = new Date(StringToDate(MY_getValue(`${numTroll}.DLA.ancienne`)));
+		tr_detail = appendTrDetail(insertPt.parentElement, `[MZ] Tour`, `${'Fatigue'.padEnd(12, '\u00A0')}|${'1 PV ='.padStart(12, nbsp)}`, true)
+	}
+
+	col = 0;
+	while (col < 9 && (fat > 0 || listeBmFat[col])) {
+		let txt_tour = col == 0 ? 'En cours' : `\u00A0\u00A0+${col}\u00A0\u00A0`,
+			txt_fat, txt_min;
+		if (col == 0 && overDLA) {
+			txt_tour = 'A activer';
+			let i = document.createElement('i');
+			appendText(i, txt_tour);
+			ligneTour.appendChild(i);
 		} else {
-			lastDLA = false;
+			appendTdText(ligneTour, txt_tour);
 		}
+		if (listeBmFat[col]) {
+			txt_fat = (BMfrais || !overDLA && col == 0) ? `${fat}+${listeBmFat[col]}`: `${fat}+${listeBmFat[col]} (?)`;
+			txt_min = (BMfrais || !overDLA && col == 0) ? `${Math.max(1, minppv[1])}'`: `${minppv[1]}' (${minppv[0]}')`;
+		} else {
+			txt_fat = fat;
+			txt_min = `${minppv[0]}'`;
+		}
+		appendTdText(ligneFat, txt_fat);
+		appendTdText(ligneMin, txt_min);
+		tr_detail = desktopView ? '' : appendTrDetail(tr_detail, `[MZ] ${txt_tour}`, `${txt_fat.toString().padEnd(12, '\u00A0')}|${txt_min.padStart(12, nbsp)}`, true);
+		col++;
+		fat = Math.floor(fat / 1.25);
+		minppv = minParPVsac(fat, listeBmFat[col]);
 	}
-	appendText(insertPt, 'Dernière DLA enregistrée : ');
-	lastDLAZone = document.createElement('span');
-	lastDLAZone.style.cursor = 'pointer';
-	let b = document.createElement('b');
-	b.onclick = inputMode;
-	lastDLAZone.appendChild(b);
-	insertPt.appendChild(lastDLAZone);
-	if (lastDLA) {
-		appendText(b, MZ_formatDateMS(lastDLA, false));
-	} else {
-		appendText(b, 'aucune');
+	if (fat > 1 || fat == 1 && !overDLA) {
+		appendTdText(ligneTour, '\u00A0\u00A0...\u00A0\u00A0', true);
+		appendTdText(ligneFat, '-');
+		appendTdText(ligneMin, '-');
 	}
-	appendBr(insertPt);
+	col = overDLA ? Math.max(retourAZero(fatigue) - 1, col) : Math.max(retourAZero(fatigue), col);
+	appendTdText(ligneTour, `\u00A0\u00A0+${col}\u00A0\u00A0`);
+	appendTdText(ligneFat, '0');
+	appendTdText(ligneMin, '30\'');
+	tr_detail = desktopView ? '' : appendTrDetail(tr_detail, `[MZ] \u00A0\u00A0+${col}\u00A0\u00A0`, `${'0'.padEnd(12, '\u00A0')}|${'30\''.padStart(12, nbsp)}`, true);
 
-	// Setup maxAMZone et cumulZone
-	appendText(insertPt, 'Accélération maximale possible : ');
-	maxAMZone = document.createElement('b');
-	insertPt.appendChild(maxAMZone);
-	appendBr(insertPt);
-	cumulZone = document.createElement('span');
-	insertPt.appendChild(cumulZone);
-
-	refreshAccel();
+	if (!BMfrais && bmfatigue) {
+		// si les BM n'ont pas ete rafraichis, on signale:
+		appendText(err_node, 'Attention, ce tableau est probablement faux.' +
+		' Visitez la page des Bonus/Malus pour mettre à jour votre fatigue.', true, 'red');
+	}
 }
 
 function refreshAccel() {
 	let pvs, pvsmax;
 
 	// Acceleration pour cumul instantane
-	// debugMZ('refreshAccel',pvActuelKastar,DLAaccel,lastDLA,minParPV);
+	// debugMZ(`refreshAccel: pvActuelKastar=${pvActuelKastar},DLAaccel=${DLAaccel},lastDLA=${lastDLA},minParPV=${minParPV}`);
 	if (lastDLA) {
 		pvsmax = Math.min(
 			pvActuelKastar - 1,
@@ -14582,7 +14622,7 @@ function refreshAccel() {
 		maxAMZone.innerHTML = `${pvsmax} PV`;
 	} else {
 		pvsmax = pvActuelKastar - 1;
-		maxAMZone.innerHTML = "inconnue";
+		maxAMZone.innerHTML = 'inconnue';
 	}
 
 	// pvAccel = (nb min avant DLA (arr. sup) / nb min p/ PVsac) (arrondi sup)
@@ -14593,8 +14633,7 @@ function refreshAccel() {
 		appendText(cumulZone, `${pvs} PV`, true);
 		appendText(cumulZone, ' pour activer immédiatement un nouveau tour.');
 		if (pvs != 1) {
-			let gainSec = Math.floor((DLAaccel - HeureServeur) / 1e3) -
-				(pvs - 1) * 60 * minParPV;
+			let gainSec = Math.floor((DLAaccel - HeureServeur) / 1e3) - (pvs - 1) * 60 * minParPV;
 			appendText(
 				cumulZone,
 				` (${pvs - 1} PV dans ${Math.floor(gainSec / 60)}min${addZero(gainSec % 60)}s)`
@@ -14604,15 +14643,20 @@ function refreshAccel() {
 		let avantDLA = new Date(DLAaccel - HeureServeur - pvsmax * minParPV * 6e4);
 		appendText(
 			cumulZone,
-			`Après votre accélération maximale, il vous faudra encore attendre ${dureeHM(avantDLA / 6e4)
-			} avant de réactiver.`
+			`Après votre accélération maximale, il vous faudra encore attendre ${dureeHM(avantDLA / 6e4)} avant de réactiver.`
 		);
 	}
 }
 
 function setInfosFatiguesOptimiales() {
-	let thFatigue = document.querySelector('#fatigue').parentElement.parentElement;
-	thFatigue.title = "Fat. optimale : 29 / 23 / 18 / 14 / 11 / 8 / 6 / 4";
+	let thFatigue = document.querySelector('#fatigue').parentElement.parentElement,
+		title = 'Fat. optimale',
+		txt = '29 / 23 / 18 / 14 / 11 / 8 / 6 / 4';
+	if (isDesktopView()) {
+		thFatigue.title = `${title} : ${txt}`;
+	} else {
+		appendTrDetail(thFatigue, `[MZ] ${title}`, `${txt}`)
+	}
 }
 
 
