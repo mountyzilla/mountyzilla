@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.3.1
+// @version     1.4.3.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -780,8 +780,8 @@ var currentURL = window.location.href;
 var date_debut = null;
 var jour_en_ms = 864e5;
 
-function start_script(nbJours_exp) {
-	debugMZ(`Script début sur ${window.location.pathname}`);
+function start_script(nbJours_exp, texte) {
+	debugMZ(`Script ${texte} début sur ${window.location.pathname}`);
 	if (date_debut) {
 		return;
 	}
@@ -813,7 +813,7 @@ function displayScriptTime(duree, texte) {
 		return;
 	}
 	insertText(node, ` - [Script MZ exécuté en ${(new Date().getTime() - date_debut.getTime()) / 1000} sec.]`);
-	debugMZ(`Script fin sur ${window.location.pathname}`);
+	debugMZ(`Script ${texte} fin sur ${window.location.pathname}`);
 }
 
 /** x~x Communication serveurs ----------------------------------------- */
@@ -3345,6 +3345,17 @@ if (typeof isPage != "function") {
 		return window.location.pathname.indexOf(`/mountyhall/${url}`) == 0;
 	}
 }
+function isPageWithParam(filters) {
+	if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
+	if (filters.body_id && document.body.id != filters.body_id) return false;
+	if (filters.params) 
+		for (let param in filters.params) 
+			if (paramsGET.get(param) != filters.params[param]) return false;
+	if (filters.ids)
+		for (let id in filters.ids)
+			if (!document.getElementById(filters.ids[id])) return false
+	return true;
+}
 // Cette section est commune à InfoMonstre et Vue
 
 var MZ_Tactique = {
@@ -5468,7 +5479,7 @@ function treateChampi() {
 }
 
 function do_equipgowap() {
-	start_script();
+	start_script(undefined, 'do_equipgowap');
 
 	treateGowaps();
 	treateChampi();
@@ -5477,7 +5488,7 @@ function do_equipgowap() {
 		computeEnchantementEquipement(createPopupImage, formateTexte);
 	}
 
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_equipgowap');
 }
 
 /** *******************************************************************************
@@ -5487,59 +5498,50 @@ function do_equipgowap() {
 /** x~x Ordres Gowap --------------------------------------------------- */
 
 var MZ_analyse_page_ordre_suivant;
-if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
-	// Roule 07/10/2019
-	// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
-	// rend un object, par exemple
+var MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
+if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
+	// objet réutilisé dans MZ, dans Trajet_canvas et dans une extension perso ☺
 	MZ_analyse_page_ordre_suivant = {
 		result: { ordres: [] },
 		init: function () {
 			// façon blindée de tester la variable MY_DEBUG
 			debugMZ('start MZ_analyse_page_ordre_suivant.init');
 			try {
-				let eTitle = document.getElementById('MHTitreH2');
-				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'MHTitreH2'
-				// debugMZ('eTitle.nextSibling=' + eTitle.parentNode);
-				let lignes = eTitle.parentNode.getElementsByTagName('tr');
-				for (let i = 0; i < lignes.length; i++) {
-					// debugMZ('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
-					// debugMZ('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
-					let etd = lignes[i].getElementsByTagName('td')[0];
-					if (lignes[i].className == 'mh_tdtitre_fo' ||
-						etd && etd.className == 'mh_tdtitre_fo') {
-						let tds = lignes[i].getElementsByTagName('div');
-						for (let j = 0; j < tds.length; j++) {
-							// debugMZ('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
-							let tabmatch = tds[j].innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
-							if (tabmatch) {
-								// ID, Nom
-								this.result.id = tabmatch[1].trim();
-								this.result.nom = tabmatch[2].trim();
-							}
-							tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
-							if (tabmatch) {
-								// PA, x, y, n
-								this.result.PA = parseInt(tabmatch[1]);
-								this.result.x = parseInt(tabmatch[2]);
-								this.result.y = parseInt(tabmatch[3]);
-								this.result.n = parseInt(tabmatch[4]);
-								// Trajet_canvas a besoin d'un pointeur vers cette div
-								this.result.eltPos = tds[j];
-							}
+				let e_t_ordres = document.getElementById('t_fo_ordre');
+				for (let ligne of e_t_ordres.getElementsByTagName('caption')) {
+					//debugMZ('MZ_analyse_page_ordre_suivant_log ' + ligne.innerText);
+					for (let div of ligne.getElementsByTagName('div')) {
+						//debugMZ('MZ_analyse_page_ordre_suivant_log div ' + j + ' ' + div.innerText);
+						let tabmatch = div.innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
+						if (tabmatch) {
+							// ID, Nom
+							this.result.id = tabmatch[1].trim();
+							this.result.nom = tabmatch[2].trim();
 						}
-					} else if (lignes[i].className == 'mh_tdpage_fo') {
-						if (etd !== undefined) {	// undefined dans le cas des Golems
-							debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${etd.textContent}`);
-							let tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+						tabmatch = div.innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
+						if (tabmatch) {
+							// PA, x, y, n
+							this.result.PA = parseInt(tabmatch[1]);
+							this.result.x = parseInt(tabmatch[2]);
+							this.result.y = parseInt(tabmatch[3]);
+							this.result.n = parseInt(tabmatch[4]);
+							// Trajet_canvas a besoin d'un pointeur vers cette div
+							this.result.eltPos = div;
+						}
+					}
+				}
+				for (let ligne of e_t_ordres.rows) {
+					//debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${ligne.textContent}`);
+					for (let td of ligne.getElementsByTagName('td')) {
+						let tabmatch = td.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+						if (tabmatch) {
+							this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
+						} else {
+							tabmatch = td.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
 							if (tabmatch) {
-								this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
+								this.result.ordres.push({ ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2]) });
 							} else {
-								tabmatch = etd.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
-								if (tabmatch) {
-									this.result.ordres.push({ ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2]) });
-								} else {
-									this.result.ordres.push({ ordre: etd.textContent.trim() });
-								}
+								this.result.ordres.push({ ordre: td.textContent.trim() });
 							}
 						}
 					}
@@ -5897,7 +5899,7 @@ function MZ_upgradeVueSuivants() {
 				eA.style.display = 'inline-block';
 				eA.style.cssFloat = 'right';
 				eA.style.whiteSpace = 'nowrap';
-				eA.href = `/mountyhall/MH_Follower/FO_Ordres.php?ai_IdFollower=${oSuivant.oJSON.id}`;
+				eA.href = `/mountyhall/MH_Play/Play_a_Action.php?type=F&id=-4&sub=ordres&gus_suivant=${oSuivant.oJSON.id}`;
 				eA.title = 'Accès direct aux ordres';
 				eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
 				eOuterDiv.appendChild(eA);
@@ -16536,13 +16538,15 @@ function MZdo_hookCompoTanieres() {
 	logMZ('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%', true)));
 */
 
+var MZ_fo_tresor = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_equip']});
 try {
 	// Détection de la page à traiter
 	if (isPage("MH_Play/PlayStart2")) {
 		replaceLinkMHtoMZ();
-	} else
-	if (isPage("MH_Play/TurnStart")) {
+	} else if (isPage("MH_Play/TurnStart")) {
 		updateNumTroll();
+	} else if (MZ_fo_ordres) {
+		do_ordresgowap();
 	} else if (isPage("MH_Play/Play_a_ActionResult")) {
 		debugMZ(`Play_a_ActionResult id=${document.body.id}`);
 		switch (document.body.id) {
@@ -16588,9 +16592,7 @@ try {
 		do_lieuDescription();
 	} else if (isPage("MH_Lieux/Lieu_Teleport")) {
 		do_lieuTeleport();
-	} else if (isPage("MH_Follower/FO_Ordres")) {
-		do_ordresgowap();
-	} else if (isPage("MH_Follower/FO_Equipement")) {
+	} else if (MZ_fo_tresor) {
 		do_equipgowap();
 	} else if (isPage("MH_Play/Play_mouche")) {
 		do_mouches();
@@ -16619,7 +16621,7 @@ try {
 	}
 	if (isPage('MH_Play/Play_equipement.php') ||
 		isPage('MH_Play/Play_e_follo.php') ||
-		isPage('MH_Follower/FO_Equipement.php') ||
+		MZ_fo_tresor ||
 		isPage('MH_Taniere/TanierePJ_o_Stock.php') ||
 		isPage('MH_Comptoirs/Comptoir_Recherche.php')) {
 		MZdo_hookCompoTanieres();

@@ -2,13 +2,12 @@
 // @name Trajet des gowap MkII
 // @namespace http://feldspath.free.fr/
 // @include */mountyhall/MH_Play/Play_e_follo.php*
+// @include */mountyhall/MH_Play/Play_a_Action.php*
+// @include */mountyhall/MH_Play/Play_a_ActionResult.php*
 // @include */mountyhall/MH_Play/Play_vue.php*
-// @include */mountyhall/MH_Follower/FO_Ordres.php*
-// @include */mountyhall/MH_Follower/FO_NewOrder.php*
-// @include */mountyhall/MH_Follower/FO_Profil.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.28
+// @version 2.29
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -65,6 +64,19 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	if("function" != typeof isPage) {
 		function isPage(url) {
 			return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
+		}
+	}
+	if("function" != typeof isPageWithParam) {
+		function isPageWithParam(filters) {
+			if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
+			if (filters.body_id && document.body.id != filters.body_id) return false;
+			if (filters.params) 
+				for (let param in filters.params) 
+					if (paramsGET.get(param) != filters.params[param]) return false;
+			if (filters.ids)
+				for (let id in filters.ids)
+					if (!document.getElementById(filters.ids[id])) return false
+			return true;
 		}
 	}
 	if("function" != typeof MY_getValue) {
@@ -138,26 +150,24 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	}
 
 	var lien = window.self.location.toString();
+	var MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
+	var MZ_fo_profil = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_profil']});
+	var MZ_fo_newordre = isPageWithParam({url: 'MH_Play/Play_a_Action', body_id:'p_ajoutdunordre'});
 	var page = "";
-	// if(true) {
-	if(lien.indexOf("/mountyhall/MH_Follower/FO_Ordres.php") != -1) {
-	// if(lien.indexOf("Trajet_gowap2.htm") != -1) {
+	if(MZ_fo_ordres) {
 		page = "trajet";
 	}
-	else if(lien.indexOf("/mountyhall/MH_Play/Play_e_follo.php") != -1){
-	// if(true) {
+	else if(lien.indexOf("/mountyhall/MH_Play/Play_e_follo.php") != -1) {
 		page = "suivants";
 	}
-	else if(lien.indexOf("/mountyhall/MH_Follower/FO_Profil.php") != -1) {
+	else if(MZ_fo_profil) {
 		page = "profil_gow";
 	}
 	else if((lien.indexOf("/mountyhall/MH_Lieux/Lieu_Description.php") != -1) && (window.document.getElementsByTagName("body")[0].innerHTML.indexOf("Portail : Portail de T") != -1)) {
-	// else if(true) {
 		var sortie = null;
 		var page = "lieu_tp";
 	}
-	else if(lien.indexOf("/mountyhall/MH_Follower/FO_NewOrder.php") != -1) {
-	// else if(window.self.location.toString().indexOf("FO_NewOrder.deplacer.html") != -1) {
+	else if(MZ_fo_newordre) {
 		page = "action_ordre";
 	}
 	else if(lien.indexOf("/mountyhall/MH_Play/Play_vue.php") != -1) {
@@ -591,8 +601,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			trajet.appendChild(cadre_liste);
 
-			parp = document.getElementsByTagName('p');
-			parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild);
+			let footer = document.getElementById('footer1');
+			footer.parentNode.insertBefore(trajet,footer);
 		}
 		function inserer_fav() {
 			ref = parseInt(document.getElementById("sel_fav").value);
@@ -1355,28 +1365,22 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return nvdiv;
 		}
 		function copier_action() {
-			if(!cadrable || (window.parent.frames[1].location.toString().indexOf("/mountyhall/MH_Follower/FO_NewOrder.php") == -1)) return;
-			// if(!cadrable || (window.parent.frames[1].location.toString().indexOf("FO_NewOrder") == -1)) return;
-			bas = window.parent.frames[1].document;
-			typ_ordre = quel_ordre(bas.forms[0]);
-			if(typ_ordre != 1 && typ_ordre != 7) return;
-
 			var ref = parseInt(this.parentNode.id.split("_")[1]);
-			var position = choix_ini? etapes_tt[ref]:etapes[ref];
-			bas.forms[0].elements[1].value = position[0];
-			bas.forms[0].elements[2].value = position[1];
-			bas.forms[0].elements[3].value = position[2];
+			copier_xxx(choix_ini? etapes_tt[ref]:etapes[ref]);
 		}
 		function copier_depart() {
-			if(!cadrable || (window.parent.frames[1].location.toString().indexOf("/mountyhall/MH_Follower/FO_NewOrder.php") == -1)) return;
-			// if(!cadrable || (window.parent.frames[1].location.toString().indexOf("FO_NewOrder") == -1)) return;
-			bas = window.parent.frames[1].document;
+			copier_xxx(depart);
+		}
+		function copier_xxx(xyn, doc) {
+			if(!cadrable) return;
+			bas = doc ? doc : window.parent.frames[1].document;
+			//console.log('copier_depart_log, id body frame1=' + bas.body.id);
+			if(bas.body.id != 'p_ajoutdunordre') return;
 			typ_ordre = quel_ordre(bas.forms[0]);
 			if(typ_ordre != 1 && typ_ordre != 7) return;
-
-			bas.forms[0].elements[1].value = depart[0];
-			bas.forms[0].elements[2].value = depart[1];
-			bas.forms[0].elements[3].value = depart[2];
+			bas.getElementsByName('gus_x')[0].value = xyn[0];
+			bas.getElementsByName('gus_y')[0].value = xyn[1];
+			bas.getElementsByName('gus_n')[0].value = xyn[2];
 		}
 		function aj_monter(num) {
 			dessin = dessin = creer_icone(11, 12, "Monter", monter_etape);
@@ -2442,16 +2446,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 
 			if(choix_fav == -1) {
-				document.forms[0].elements[1].value = soi[0];
-				document.forms[0].elements[2].value = soi[1];
-				document.forms[0].elements[3].value = soi[2];
+				copier_xxx(soi, document);
 			}
 			else {
 				charger_fav()
 				if (favori[choix_fav]) {
-					document.forms[0].elements[1].value = favori[choix_fav][1];
-					document.forms[0].elements[2].value = favori[choix_fav][2];
-					document.forms[0].elements[3].value = favori[choix_fav][3];
+					copier_xxx(favori[choix_fav].slice(1, 4), document);
 				}
 			}
 		}
@@ -2473,16 +2473,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function quel_ordre(formulaire) {
-			var elts = formulaire.elements;
-			var nb = elts.length, trouve = false, rg = 0;
-			for (var i=0; i<nb; i++) {
-				if (elts[i].name ==  "ai_IdOrdre") {
-					rg = parseInt(elts[i].value);
-					trouve = true;
-					break;
-				}
-			}
-			if(trouve) return rg;
+			let elts = formulaire.ownerDocument.getElementsByName('gus_save');
+			if (elts) return parseInt(elts[0].value, 10);
 			return -1;
 		}
 		////////////////////////////////////////////////////////////
@@ -2529,70 +2521,64 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		var cadrable = window.parent && window.parent.frames.length > 1 && window.parent.frames[0].document;
 
 var MZ_analyse_page_ordre_suivant;
-if (MZ_analyse_page_ordre_suivant === undefined && isPage("MH_Follower/FO_Ordres")) {
-	// Roule 07/10/2019
-	// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
-	// rend un object, par exemple
-	var MZ_analyse_page_ordre_suivant = {
-		'result': {ordres: []},
-		'init': function() {
+if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
+	if("function" != typeof debugMZ) {
+		function debugMZ(x) {
+			//window.console.log(x);	// activer pour passer en mode debug
+		}
+	}
+	// objet réutilisé dans MZ, dans Trajet_canvas et dans une extension perso ☺
+	MZ_analyse_page_ordre_suivant = {
+		result: { ordres: [] },
+		init: function () {
 			// façon blindée de tester la variable MY_DEBUG
-			if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('start MZ_analyse_page_ordre_suivant.init');
+			debugMZ('start MZ_analyse_page_ordre_suivant.init');
 			try {
-				var eTitle = document.getElementById('MHTitreH2');
-				// au 07/10/2019, on peut se baser sur les <tr> de l'élément HTML parent 'MHTitreH2'
-				//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('eTitle.nextSibling=' + eTitle.parentNode);
-				var lignes = eTitle.parentNode.getElementsByTagName('tr');
-				for(var i=0 ; i<lignes.length ; i++) {
-					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  ' className=' + lignes[i].className);
-					//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant tr ' + i +  lignes[i].innerHTML);
-					var etd = lignes[i].getElementsByTagName('td')[0];
-					if(lignes[i].className == 'mh_tdtitre_fo'
-						|| (etd && etd.className == 'mh_tdtitre_fo')) {
-						var tds = lignes[i].getElementsByTagName('div');
-						for (var j=0; j < tds.length; j++) {
-							//if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant div ' + j + ' ' + tds[j].innerText);
-							var tabmatch = tds[j].innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
-							if (tabmatch) {
-								// ID, Nom
-								this.result.id = tabmatch[1].trim();
-								this.result.nom = tabmatch[2].trim();
-							}
-							tabmatch = tds[j].innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
-							if (tabmatch) {
-								// PA, x, y, n
-								this.result.PA = parseInt(tabmatch[1]);
-								this.result.x = parseInt(tabmatch[2]);
-								this.result.y = parseInt(tabmatch[3]);
-								this.result.n = parseInt(tabmatch[4]);
-								// Trajet_canvas a besoin d'un pointeur vers cette div
-								this.result.eltPos = tds[j];
-							}
+				let e_t_ordres = document.getElementById('t_fo_ordre');
+				for (let ligne of e_t_ordres.getElementsByTagName('caption')) {
+					//debugMZ('MZ_analyse_page_ordre_suivant_log ' + ligne.innerText);
+					for (let div of ligne.getElementsByTagName('div')) {
+						//debugMZ('MZ_analyse_page_ordre_suivant_log div ' + j + ' ' + div.innerText);
+						let tabmatch = div.innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
+						if (tabmatch) {
+							// ID, Nom
+							this.result.id = tabmatch[1].trim();
+							this.result.nom = tabmatch[2].trim();
+						}
+						tabmatch = div.innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
+						if (tabmatch) {
+							// PA, x, y, n
+							this.result.PA = parseInt(tabmatch[1]);
+							this.result.x = parseInt(tabmatch[2]);
+							this.result.y = parseInt(tabmatch[3]);
+							this.result.n = parseInt(tabmatch[4]);
+							// Trajet_canvas a besoin d'un pointeur vers cette div
+							this.result.eltPos = div;
 						}
 					}
-					else if(lignes[i].className == 'mh_tdpage_fo') {
-						if (etd !== undefined) {	// undefined dans le cas des Golems
-							if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('MZ_analyse_page_ordre_suivant td[0]=' + etd.textContent);
-							var tabmatch = etd.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+				}
+				for (let ligne of e_t_ordres.rows) {
+					//debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${ligne.textContent}`);
+					for (let td of ligne.getElementsByTagName('td')) {
+						let tabmatch = td.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+						if (tabmatch) {
+							this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
+						} else {
+							tabmatch = td.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
 							if (tabmatch) {
-								this.result.ordres.push({ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4])});
+								this.result.ordres.push({ ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2]) });
 							} else {
-								tabmatch = etd.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
-								if (tabmatch) {
-									this.result.ordres.push({ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2])});
-								} else {
-									this.result.ordres.push({ordre: etd.textContent.trim()});
-								}
+								this.result.ordres.push({ ordre: td.textContent.trim() });
 							}
 						}
 					}
 				}
-				if (typeof MY_DEBUG !== 'undefined' && MY_DEBUG) window.console.log('fin MZ_analyse_page_ordre_suivant ' + JSON.stringify(this.result));
-			} catch(e) {
-				window.console.log('Exception dans MZ_analyse_page_ordre_suivant.init ' + e);
+				debugMZ(`fin MZ_analyse_page_ordre_suivant ${JSON.stringify(this.result)}`);
+			} catch (exc) {
+				logMZ('Exception dans MZ_analyse_page_ordre_suivant.init', exc);
 			}
 		}
-	}
+	};
 	MZ_analyse_page_ordre_suivant.init();
 }
 
@@ -2783,11 +2769,21 @@ if (isPage("MH_Play/Play_e_follo")) {
 			var ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
 			var noeud_courant = 0;
 			var aj_noeud = false, choix_ini = false;
-			let m = window.self.location.href.match(/ai_IdFollower=(\d+)/);
-			num_gow = +m[1];
-			//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
-			haut = document;
-			ini_trajet();
+			for (let ef of document.getElementsByTagName('form')) {
+				if (ef.action) {
+					//console.log('action=' + ef.action);
+					m = ef.action.match(/gus_suivant=(\d+)/);
+					if (m) {
+						//console.log('m=' + JSON.stringify(m));
+						num_gow = parseInt(m[1], 10);
+						break;
+					}
+				}
+			}
+			if (num_gow != undefined && !isNaN(num_gow)) {
+				haut = document;
+				ini_trajet();
+			}
 		}
 		else if(page == "suivants"){
 			var suivants = new Array();
@@ -2817,20 +2813,27 @@ if (isPage("MH_Play/Play_e_follo")) {
 				}
 			}
 			if (cadre_dla) {
-				let m = window.self.location.href.match(/ai_IdFollower=(\d+)/);
-				num_gow = +m[1];
-				//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
-				charge_trajet();
-				// Roule 07/09/2019 adaptation nouvelle présentation
-				//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
-				duree = cadre_dla.innerText.match(/\d+/g);
-				if (duree.length == 1)	// cas d'un suivant avec une durée de tour multiple exact d'heures
-					dla = parseInt(duree[0])*60;
-				else
-					dla = parseInt(duree[0])*60+parseInt(duree[1]);
-				//window.console.log('texte durée=' + cadre_dla.innerText + ', dla=' + dla);
-				nb_ajout = etapes.length;
-				sauve_trajet();
+				let t = document.getElementById('t_fo_profil');
+				for (ea of t.getElementsByTagName('a')) {
+					if (ea.href && ea.href.indexOf('EnterMonsterView') != -1) {
+						num_gow = parseInt(ea.innerText, 10);
+						break;
+					}
+				}
+				if (num_gow != undefined && !isNaN(num_gow)) {
+					//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
+					charge_trajet();
+					// Roule 07/09/2019 adaptation nouvelle présentation
+					//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
+					duree = cadre_dla.innerText.match(/\d+/g);
+					if (duree.length == 1)	// cas d'un suivant avec une durée de tour multiple exact d'heures
+						dla = parseInt(duree[0])*60;
+					else
+						dla = parseInt(duree[0])*60+parseInt(duree[1]);
+					//window.console.log('texte durée=' + cadre_dla.innerText + ', dla=' + dla);
+					nb_ajout = etapes.length;
+					sauve_trajet();
+				}
 			}
 		}
 		else if(page == "lieu_tp") {
