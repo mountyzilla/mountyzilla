@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.3.2
+// @version     1.4.3.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.3.1';
+var MZ_latest = '1.4.3.3';
 var MZ_changeLog = [
 	"V1.4.3 \t\t 14/04/2024",
 	"	- Corrige l'affichage des trolls hors-vue",
@@ -883,10 +883,14 @@ function isDesktopView() {
 
 function replaceLinkMHtoMZ() {
 	let aList = document.getElementsByTagName('a');
-	if (aList[2].href.includes('games.mountyhall')) {
-		aList[2].href = 'https://mhp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
-	} else if (aList[7].href.includes('smartphone.mountyhall')) {
-		aList[7].href = 'https://szp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
+	for(let i = 0; i < aList.length; i++) {
+		if (aList[i].href.includes('games.mountyhall')) {
+			aList[i].href = 'https://mhp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
+			return;
+		} else if (aList[i].href.includes('smartphone.mountyhall')) {
+			aList[i].href = 'https://szp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
+			return;
+		}
 	}
 }
 
@@ -3348,8 +3352,8 @@ if (typeof isPage != "function") {
 function isPageWithParam(filters) {
 	if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 	if (filters.body_id && document.body.id != filters.body_id) return false;
-	if (filters.params) 
-		for (let param in filters.params) 
+	if (filters.params)
+		for (let param in filters.params)
 			if (paramsGET.get(param) != filters.params[param]) return false;
 	if (filters.ids)
 		for (let id in filters.ids)
