@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.5
+// @version     1.4.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.5';
+var MZ_latest = '1.4.6';
 var MZ_changeLog = [
 	"V1.4.4 \t\t 25/04/2024",
 	"	- Affiche les infos MZ dans la page profil mobile",
@@ -3382,12 +3382,15 @@ if (typeof isPage != "function") {
 function isPageWithParam(filters) {
 	if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 	if (filters.body_id && document.body.id != filters.body_id) return false;
-	if (filters.params)
-		for (let param in filters.params)
+	if (filters.params) 
+		for (let param in filters.params) 
 			if (paramsGET.get(param) != filters.params[param]) return false;
 	if (filters.ids)
-		for (let id in filters.ids)
-			if (!document.getElementById(filters.ids[id])) return false
+		for (let id of filters.ids)
+			if (!document.getElementById(id)) return false
+	if (filters.names)
+		for (let name of filters.names)
+			if (document.getElementsByName(name).length == 0) return false
 	return true;
 }
 // Cette section est commune à InfoMonstre et Vue
@@ -5744,7 +5747,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 		};
 		MZ_analyse_page_suivants.init();
 	}
-	MZ_analyse_page_suivants.autoTest();
+	//MZ_analyse_page_suivants.autoTest();
 }
 
 // version Roule' janvier 2017

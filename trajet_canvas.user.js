@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.30
+// @version 2.31
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -74,8 +74,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				for (let param in filters.params) 
 					if (paramsGET.get(param) != filters.params[param]) return false;
 			if (filters.ids)
-				for (let id in filters.ids)
-					if (!document.getElementById(filters.ids[id])) return false
+				for (let id of filters.ids)
+					if (!document.getElementById(id)) return false
+			if (filters.names)
+				for (let name of filters.names)
+					if (document.getElementsByName(name).length == 0) return false
 			return true;
 		}
 	}
@@ -152,7 +155,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	var lien = window.self.location.toString();
 	var MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
 	var MZ_fo_profil = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_profil']});
-	var MZ_fo_newordre = isPageWithParam({url: 'MH_Play/Play_a_Action', body_id:'p_ajoutdunordre'});
+	var MZ_fo_newordre = isPageWithParam({url: 'MH_Play/Play_a_Action', names:['gus_ordre', 'type', 'id_target']});
+	//console.log('trajet MZ_fo_newordre=' + MZ_fo_newordre);
 	var page = "";
 	if(MZ_fo_ordres) {
 		page = "trajet";
@@ -1375,7 +1379,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(!cadrable) return;
 			bas = doc ? doc : window.parent.frames[1].document;
 			//console.log('copier_depart_log, id body frame1=' + bas.body.id);
-			if(bas.body.id != 'p_ajoutdunordre') return;
+			//if(bas.body.id != 'p_ajoutdunordre') return;
 			typ_ordre = quel_ordre(bas.forms[0]);
 			if(typ_ordre != 1 && typ_ordre != 7) return;
 			bas.getElementsByName('gus_x')[0].value = xyn[0];
@@ -2473,8 +2477,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function quel_ordre(formulaire) {
-			let elts = formulaire.ownerDocument.getElementsByName('gus_save');
-			if (elts) return parseInt(elts[0].value, 10);
+			let elts = formulaire.ownerDocument.getElementsByName('gus_ordre');
+			if (elts.length > 0) return parseInt(elts[0].value, 10);
 			return -1;
 		}
 		////////////////////////////////////////////////////////////
