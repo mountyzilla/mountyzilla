@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.4
+// @version     1.4.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.4';
+var MZ_latest = '1.4.5';
 var MZ_changeLog = [
 	"V1.4.4 \t\t 25/04/2024",
 	"	- Affiche les infos MZ dans la page profil mobile",
@@ -797,6 +797,7 @@ function start_script(nbJours_exp, texte) {
 }
 
 function displayScriptTime(duree, texte) {
+	debugMZ(`Script ${texte} fin sur ${window.location.pathname}`);
 	let footerNode = getFooter();
 	if (!footerNode) {
 		return;
@@ -815,7 +816,6 @@ function displayScriptTime(duree, texte) {
 		return;
 	}
 	insertText(node, ` - [Script MZ exécuté en ${(new Date().getTime() - date_debut.getTime()) / 1000} sec.]`);
-	debugMZ(`Script ${texte} fin sur ${window.location.pathname}`);
 }
 
 /** x~x Communication serveurs ----------------------------------------- */
@@ -4472,9 +4472,9 @@ function dispatch() {
 }
 
 function do_actions() {
-	start_script(31);
+	start_script(31, 'do_actions_log');
 	dispatch();
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_actions_log');
 }
 
 /** *******************************************************************************
@@ -4569,11 +4569,11 @@ function treateEnchantement_pre() {
 }
 
 function do_pre_enchant() {
-	start_script(60);
+	start_script(60, 'do_pre_enchant_log');
 	if (!treatePreEnchantement()) {
 		treateEnchantement_pre();
 	}
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_pre_enchant_log');
 }
 
 /** *******************************************************************************
@@ -4639,12 +4639,12 @@ function treateEnchantement() {
 }
 
 function do_enchant() {
-	start_script(60);
+	start_script(60, 'do_enchant_log');
 
 	treateEnchantement();
 	MY_removeValue(`${numTroll}.enchantement.lastEquipement`);
 	MY_removeValue(`${numTroll}.enchantement.lastEnchanteur`);
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_enchant_log');
 }
 
 /** *******************************************************************************
@@ -5215,10 +5215,10 @@ function traiteMalus() {
 
 function do_malus() {
 	try {
-		start_script();
+		start_script(undefined, 'do_malus_log');
 		traiteMalus();
 		setDisplayBM();
-		displayScriptTime();
+		displayScriptTime(undefined, 'do_malus_log');
 	} catch (exc) {
 		avertissement('Une erreur est survenue (do_malus)', null, null, exc);
 	}
@@ -5403,9 +5403,9 @@ function traiteMouches() {
 }
 
 function do_mouches() {
-	start_script();
+	start_script(undefined, 'do_mouches_log');
 	initialiseMouches();
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_mouches_log');
 }
 
 /** *******************************************************************************
@@ -5744,7 +5744,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 		};
 		MZ_analyse_page_suivants.init();
 	}
-	// MZ_analyse_page_suivants.autoTest();
+	MZ_analyse_page_suivants.autoTest();
 }
 
 // version Roule' janvier 2017
@@ -5933,7 +5933,7 @@ function MZ_upgradeVueSuivants() {
 				eA.style.display = 'inline-block';
 				eA.style.cssFloat = 'right';
 				eA.style.whiteSpace = 'nowrap';
-				eA.href = `/mountyhall/MH_Play/Play_a_Action.php?type=F&id=-4&sub=ordres&gus_suivant=${oSuivant.oJSON.id}`;
+				eA.href = `/mountyhall/MH_Play/Play_a_Action.php?type=F&id=-4&sub=ordres&id_target=${oSuivant.oJSON.id}`;
 				eA.title = 'Accès direct aux ordres';
 				eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
 				eOuterDiv.appendChild(eA);
@@ -6114,14 +6114,14 @@ function toggleTableau() {	// click sur un td de thead
 }
 
 function do_infomonstre() {
-	start_script();
+	start_script(undefined, 'do_infomonstre_log');
 	try {
 		MZ_Tactique.initPopup();
 		traiteMonstre();
 	} catch (exc) {
 		avertissement(`Une erreur est survenue (do_infomonstre)`, null, null, exc);
 	}
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_infomonstre_log');
 }
 
 /** x~x SCIZ ----------------------------------------------------------- */
@@ -7227,9 +7227,9 @@ function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 }
 
 function do_mission() {
-	start_script(60);
+	start_script(60, 'do_mission_log');
 	traiteMission();
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_mission_log');
 }
 
 /** *****************************************************************************
@@ -7801,7 +7801,7 @@ function afficherNouvelles(items) {
 /** x~x Main -------------------------------------------------------- */
 
 function do_news() {
-	start_script();
+	start_script(undefined, 'do_news_log');
 
 	traiterJubilaires();
 	traiterNouvelles();
@@ -7817,7 +7817,7 @@ function do_news() {
 	}
 	*/
 
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_news_log');
 }
 
 /** *******************************************************************************
@@ -8151,7 +8151,7 @@ function treateEquipEnchant() {
 }
 
 function do_tancompo() {
-	start_script();
+	start_script(undefined, 'do_tancompo_log');
 
 	treateAllComposants();
 	treateComposants();
@@ -8165,7 +8165,7 @@ function do_tancompo() {
 		treateEquipEnchant();
 	}
 
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_tancompo_log');
 }
 
 /** *****************************************************************************
@@ -9345,7 +9345,7 @@ function deleteEnchantement() {
 /** x~x Partie principale ---------------------------------------------- */
 
 function do_option() {
-	start_script(712);
+	start_script(712, 'do_option_log');
 	let insertPoint = getFooter();
 	insertBefore(insertPoint, document.createElement('p'));
 	let ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
@@ -9491,7 +9491,7 @@ function do_option() {
 	}
 
 	/* [zone]                     fin Obsolète ??                                  */
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_option_log');
 }
 
 /** *****************************************************************************
@@ -9630,13 +9630,13 @@ function traiteMinerai() {
 }
 
 function do_equip() {
-	start_script();
+	start_script(undefined, 'do_equip_log');
 
 	traiteChampis();
 	traiteCompos();
 	traiteMinerai();
 
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_equip_log');
 }
 
 /** *****************************************************************************
@@ -10315,9 +10315,9 @@ function MZ_comp_addPvRestant(oContexteCdM) {
 }
 
 function do_cdmcomp() {
-	start_script(31);
+	start_script(31, 'do_cdmcomp_log');
 	MZ_comp_traiteCdMcomp();
-	displayScriptTime();
+	displayScriptTime(undefined, 'do_cdmcomp_log');
 }
 
 /** *******************************************************************************
@@ -13597,7 +13597,7 @@ function do_vue() {
 	nbLieux = VueContext.nbLieux;
 
 	try {
-		start_script(31);
+		start_script(31, 'do_vue_log');
 
 		initialiseInfos();
 		savePosition();
@@ -13663,7 +13663,7 @@ function do_vue() {
 
 		putScriptExterne();
 
-		displayScriptTime();
+		displayScriptTime(undefined, 'do_vue_log');
 	} catch (exc) {
 		// gath: on garde le message sympa plutôt qu'ajouter un '- Plus d'infos
 		// en console (F12)' sans ame !
@@ -15632,7 +15632,7 @@ function sortileges(sort) {
 
 function do_profil2() {
 	try {
-		start_script(31);
+		start_script(31, 'do_profil2_log');
 
 		extractionDonnees();
 		setInfosCaracteristiques();
@@ -15651,7 +15651,7 @@ function do_profil2() {
 			setAccel();
 		}
 		saveProfil();
-		displayScriptTime();
+		displayScriptTime(undefined, 'do_profil2_log');
 	} catch (exc) {
 		avertissement(`Une erreur est survenue (do_profil2)`, null, null, exc);
 	}
@@ -16546,7 +16546,7 @@ var MZ_hookCompoTanieresCounter;
 function MZ_CompoTanieresCallback() {
 	let eTable = document.getElementById('tabTresorInfo');
 	if (!eTable) {
-		debugMZ(`MZ_CompoTanieresCallback pas de tabTresorInfo, counter=${MZ_hookCompoTanieresCounter}`);
+		debugMZ(`MZ_CompoTanieresCallback pas de tabTresorInfo`);
 		if (MZ_hookCompoTanieresCounter--) {
 			window.setTimeout(MZ_CompoTanieresCallback, 100);
 		} else {

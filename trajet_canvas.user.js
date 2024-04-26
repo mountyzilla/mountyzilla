@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.29
+// @version 2.30
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -2772,7 +2772,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 			for (let ef of document.getElementsByTagName('form')) {
 				if (ef.action) {
 					//console.log('action=' + ef.action);
-					m = ef.action.match(/gus_suivant=(\d+)/);
+					m = ef.action.match(/id_target=(\d+)/);
 					if (m) {
 						//console.log('m=' + JSON.stringify(m));
 						num_gow = parseInt(m[1], 10);
