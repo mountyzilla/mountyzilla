@@ -3,8 +3,8 @@
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
 // @author       Dabihul
-// @version      1.0.0.4
-// @include      */mountyhall/MH_Play/Actions/Play_a_Talent.php*id=43*
+// @version      1.0.0.5
+// @include      */mountyhall/MH_Play/Play_a_Action.php*id=43*
 // ==/UserScript==
 
 //---------------------- À l'intention des programmeurs ----------------------//
@@ -40,7 +40,7 @@
 //
 //---------------------------- Variables Globales ----------------------------//
 
-var BaroufleON = window.location.href.match(/Play_a_Talent.php.*id=43/);
+var BaroufleON = window.location.href.match(/Play_a_Action.php.*id=43/);
 if (BaroufleON)
 	window.console.log("[Baroufleur] Script ON sur : %s", window.location.href);
 
