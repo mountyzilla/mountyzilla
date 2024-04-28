@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.6
+// @version     1.4.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.6';
+var MZ_latest = '1.4.7';
 var MZ_changeLog = [
+	"V1.4.7 \t\t 28/04/2024",
+	"	- Possibilité d'afficher le compte à rebours dans le titre (voir dans les options)",
 	"V1.4.4 \t\t 25/04/2024",
 	"	- Affiche les infos MZ dans la page profil mobile",
 	"V1.4.3 \t\t 14/04/2024",
@@ -1148,7 +1150,8 @@ function insertTextDiv(node, text, bold) {
 		return;
 	}
 	let b = document.createElement('div');
-	appendText(b, text, bold);
+	appendText(b, text);
+	b.style.fontWeight = 'bold';
 	insertBefore(node, b);
 	return b;
 }
@@ -4380,25 +4383,86 @@ function initCompteAreboursDLA() {
 	if (MY_getValue('COMPTEAREBOURSDLA') != 'true') {
 		return;
 	}
+	let mhTitle = window.top.document.title;
+	let inTitleAlso = (MY_getValue('COMPTEAREBOURSTITRE') == 'true');
 	let div = document.evaluate(
 		"//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
 	).singleNodeValue;
 	let br = div.getElementsByTagName('br')[0];
 	// logMZ('initCompteAreboursDLA' + div.innerHTML);
 
-	let dla = DMYHMSToDate((/DLA:\s+([^<]+)</).exec(div.innerHTML)[1]),
+	let dlaDate = DMYHMSToDate((/DLA:\s+([^<]+)</).exec(div.innerHTML)[1]),
 		cnt = document.createElement('div');
 
 	div.insertBefore(cnt, br);
 	div.removeChild(br);
 
 	let timer = setInterval(() => {
-		let diff = DateDiff(new Date(), dla);
-		if (diff.length <= 0) {
-			diff = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#AEFFAE'>Vous pouvez réactiver!</a>";
-			clearInterval(timer);
+		let mhDiff = MY_getValue('MZ_rebours_diff_time');
+		if (mhDiff == undefined) mhDiff = 0;
+		let dlaDiff = dlaDate.getTime() - (new Date()).getTime() - mhDiff;
+		//console.log('dlaDate=' + dlaDate + ', date=' + (new Date()) + ', mhDiff=' + mhDiff + ', dlaDiff=' + dlaDiff);
+		let dlaTimeString, dlaTitleString;
+		let dlaColor = undefined;
+		let dlaFavicon = '/favicon.ico';
+		if (dlaDiff > 0) {
+			let dlaTime = new Date(dlaDiff);
+			let dlaHours = Math.floor(dlaDiff / 60 / 60 / 1000);
+			let dlaMinutes = dlaTime.getUTCMinutes();
+			if (dlaMinutes < 10) {
+				dlaMinutes = '0' + dlaMinutes;
+			}
+			let dlaSeconds = dlaTime.getUTCSeconds();
+			if (dlaSeconds < 10) {
+				dlaSeconds = '0' + dlaSeconds;
+			}
+			dlaTimeString = 'DLA dans : ' + dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
+			dlaTitleString = dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
+			if (dlaDiff < 5 * 60 * 1000) {
+				dlaFavicon = URL_MZimg + 'dangerRouge.ico';
+				dlaColor = 'red';
+			} else if (dlaDiff < 20 * 60 * 1000) {
+				dlaFavicon = URL_MZimg + 'dangerOrange.ico';
+				dlaColor = 'orange';
+			}
+		} else if (dlaDiff > -(5 * 60 * 1000)) {
+			let dlaTime = new Date(-dlaDiff);
+			let dlaMinutes = dlaTime.getUTCMinutes();
+			let dlaSeconds = dlaTime.getUTCSeconds();
+			if (dlaSeconds < 10) {
+				dlaSeconds = '0' + dlaSeconds;
+			}
+			dlaTimeString = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#FF0000'>Over-DLA : " + dlaMinutes + ':' + dlaSeconds + "</a>";
+			dlaTitleString = '(Over-DLA) ' + dlaMinutes + ':' + dlaSeconds;
+			dlaFavicon = URL_MZimg + 'dangerRouge.ico';
+		} else {
+			dlaTimeString = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#AEFFAE'>Vous pouvez réactiver!</a>";
+			dlaTitleString = 'Vous pouvez activer';
+			window.clearInterval(timer);
 		}
-		cnt.innerHTML = diff;
+ 
+		/* Affichage du compte à rebours */
+		cnt.innerHTML = dlaTimeString;
+		if (dlaColor === undefined)
+			cnt.style.removeProperty("color");
+		else
+			cnt.style.color = dlaColor;
+		if (inTitleAlso) {
+			window.top.document.title = dlaTitleString + ' - ' + mhTitle;
+			let done = false;
+			for (let elt of window.top.document.head.children) {
+				if (elt.tagName != 'LINK' || elt.rel != 'icon') continue;
+				if (elt.href != dlaFavicon) elt.href = dlaFavicon;
+				done = true;
+				break;
+			}
+			if (!done) {
+				let elt = window.top.document.createElement('link');
+				elt.rel = 'icon';
+				elt.href = dlaFavicon;
+				window.top.document.head.appendChild(elt);
+			}
+		}
 	}, 1000);
 }
 
@@ -4429,8 +4493,11 @@ function prochainMundi() {
 	} else {
 		txt = `${txt}demain]`;
 	}
-	let div = insertTextDiv(node.parentNode.nextSibling, txt, true);
-	div.align = 'center';
+	let br = node.parentNode.nextSibling;
+	if (br.nodeName == '#text') br = br.nextSibling;
+	let div = insertTextDiv(br, txt, true);
+	div.style.textAlign = 'center';
+	if (br.nodeName == 'BR') br.parentNode.removeChild(br);
 }
 
 /*                            Fonction principale                             */
@@ -7806,19 +7873,18 @@ function afficherNouvelles(items) {
 function do_news() {
 	start_script(undefined, 'do_news_log');
 
+	// mémorisation de décalage entre l'heure locale de ce PC/smartphone et l'heure du serveur MH
+	let eHServer = document.getElementById("hserveur");
+	//console.log('eHServer=' + eHServer);
+	if (eHServer) {
+		let mhInfo = eHServer.innerText.match(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/);
+		let mhDate = new Date(mhInfo[3], mhInfo[2]-1, mhInfo[1], mhInfo[4], mhInfo[5], mhInfo[6]);
+		MY_setValue('MZ_rebours_diff_time', mhDate.getTime() - (new Date()).getTime());
+		//console.log('do_news_log MH:' + eHServer.innerText + ', delta=' + MY_getValue('MZ_rebours_diff_time'));
+	}
+
 	traiterJubilaires();
 	traiterNouvelles();
-
-	/* plus besoin, le certificat est "officiel"
-	if (isHTTPS) {
-		// test si les certificats raistlin ont été acceptés
-		testCertif(URL_CertifRaistlin1, showHttpsErrorCadre1);	// l'infra raislin
-		let infoit = MY_getValue(numTroll+'.INFOSIT');
-		if(infoit && infoit!=='') {	// seulement pour les joueurs utilisant l'interface avec Bricol'Troll
-			testCertif(URL_CertifRaistlin2, showHttpsErrorCadre2);	// le relai raistlin vers Bricol'Troll
-		}
-	}
-	*/
 
 	displayScriptTime(undefined, 'do_news_log');
 }
@@ -8887,6 +8953,8 @@ function saveAll() {
 		MZ_setOrRemoveValue('CONFIRMEDECALAGE', document.getElementById('confirmeDecalage').checked);
 
 		MZ_setOrRemoveValue('COMPTEAREBOURSDLA', document.getElementById('compteAreboursDLA').checked);
+		MZ_setOrRemoveValue('COMPTEAREBOURSTITRE', document.getElementById('compteAreboursTitre').checked);
+		//MZ_setOrRemoveValue('COMPTEAREBOURSSUIVANTE', document.getElementById('compteAreboursSuivante').checked);
 
 		MZ_setOrRemoveValue('MZ_SuivantsOrdres', document.getElementById('MZ_SuivantsOrdres').value);
 		MZ_setOrRemoveValue('MZ_SuivantsCompress', document.getElementById('MZ_SuivantsCompress').checked);
@@ -9248,7 +9316,10 @@ function insertOptionTable(insertPt) {
 
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 	appendCheckBoxBlock(td, 'confirmeDecalage', "Demander confirmation lors d'un décalage de DLA", MY_getValue('CONFIRMEDECALAGE') == 'true');
+	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 	appendCheckBoxBlock(td, 'compteAreboursDLA', 'Compte à rebours de DLA', MY_getValue('COMPTEAREBOURSDLA') == 'true');
+	appendCheckBoxBlock(td, 'compteAreboursTitre', 'Aussi dans le titre', MY_getValue('COMPTEAREBOURSTITRE') == 'true');
+	//appendCheckBoxBlock(td, 'compteAreboursSuivante', 'Aussi pour la DLA suivante', MY_getValue('COMPTEAREBOURSSUIVANTE') == 'true');
 
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 	appendText(td, 'Page des suivants : ');
@@ -16283,6 +16354,12 @@ function MZ_extern_param() {
 	}
 	if (document.body.MZ_Params.COMPTEAREBOURSDLA != undefined) {
 		MY_setValue('COMPTEAREBOURSDLA', document.body.MZ_Params.COMPTEAREBOURSDLA);
+	}
+	if (document.body.MZ_Params.COMPTEAREBOURSTITRE != undefined) {
+		MY_setValue('COMPTEAREBOURSTITRE', document.body.MZ_Params.COMPTEAREBOURSTITRE);
+	}
+	if (document.body.MZ_Params.COMPTEAREBOURSSUIVANTE != undefined) {
+		MY_setValue('COMPTEAREBOURSSUIVANTE', document.body.MZ_Params.COMPTEAREBOURSSUIVANTE);
 	}
 	if (document.body.MZ_Params.MZ_SuivantsOrdres != undefined) {
 		MY_setValue('MZ_SuivantsOrdres', document.body.MZ_Params.MZ_SuivantsOrdres);
