@@ -3,7 +3,7 @@
 // @namespace   MH
 // @description Gestion "re" et previsu messagerie
 // @include     */mountyhall/*
-// @version     1.2.2
+// @version     1.2.3
 // @exclude     *trolls.ratibus.net*
 // @exclude     *it.mh.raistlin.fr*
 // @grant       none
@@ -54,8 +54,8 @@ if (lien.indexOf("Messagerie/MH_Messagerie.php?cat=3") !=-1) {
 	};
 
 	function wordwrap(str, width, brk, cut) {
-		brk = brk || '\n';
-		width = width || 75;
+		brk = brk || '';
+		width = width || 100000;
 		cut = cut || false;
 		if(!str)  return str;
 		var regex = '.{1,' + width + '}(\\s|$)' + (cut ? '|.{' + width + '}|.+$' : '|\\S+?(\\s|$)');

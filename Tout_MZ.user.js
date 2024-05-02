@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.7
+// @version     1.4.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,6 +36,8 @@
 
 var MZ_latest = '1.4.7';
 var MZ_changeLog = [
+	"V1.4.8 \t\t 02/05/2024",
+	"	- remise en route de l'avertissement pour les TP près d'un trou)",
 	"V1.4.7 \t\t 28/04/2024",
 	"	- Possibilité d'afficher le compte à rebours dans le titre (voir dans les options)",
 	"V1.4.4 \t\t 25/04/2024",
@@ -551,7 +553,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = true, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -3385,9 +3387,11 @@ if (typeof isPage != "function") {
 function isPageWithParam(filters) {
 	if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 	if (filters.body_id && document.body.id != filters.body_id) return false;
-	if (filters.params) 
+	if (filters.params) {
+		let paramsGET = new URLSearchParams(window.location.search);
 		for (let param in filters.params) 
 			if (paramsGET.get(param) != filters.params[param]) return false;
+	}
 	if (filters.ids)
 		for (let id of filters.ids)
 			if (!document.getElementById(id)) return false
@@ -4487,7 +4491,7 @@ function prochainMundi() {
 	if (node.textContent.indexOf('Mundidey') != -1) {
 		jour = longueurMois;
 	}
-	let txt = '[Prochain Mundidey ';
+	let txt = '[MZ : Prochain Mundidey ';
 	if (jour > 1) {
 		txt = `${txt}dans ${jour} jours]`;
 	} else {
@@ -4497,6 +4501,7 @@ function prochainMundi() {
 	if (br.nodeName == '#text') br = br.nextSibling;
 	let div = insertTextDiv(br, txt, true);
 	div.style.textAlign = 'center';
+	div.style.marginBottom = '-5px';
 	if (br.nodeName == 'BR') br.parentNode.removeChild(br);
 }
 
@@ -7374,32 +7379,47 @@ function isTrou(x, y, n) {
 /** x~x Gestion des DEs ------------------------------------------------ */
 
 function validateDestination() {
-	let x = Number(document.getElementsByName('ai_XDepart')[0].value);
-	let y = Number(document.getElementsByName('ai_YDepart')[0].value);
-	let n = Number(document.getElementsByName('ai_NDepart')[0].value);
-	let form = document.getElementsByName('ActionForm')[0];
-	if (form) {
-		for (let i = 0; i < document.getElementsByName('ai_DeplX').length; i++) {
-			if (document.getElementsByName('ai_DeplX')[i].checked) {
-				x = x + Number(document.getElementsByName('ai_DeplX')[i].value);
+	let dx = undefined, dy = undefined, dn = undefined;
+	for (let form of document.getElementsByTagName('form')) {
+		for (let eInput of form.getElementsByTagName('input')) {
+			if (eInput.name == 'depl_2D') {
+				if (!eInput.value) continue;
+				tDepl = eInput.value.split('_');
+				dx = parseInt(tDepl[0], 10);
+				dy = parseInt(tDepl[1], 10);
+				dn = parseInt(tDepl[2], 10);
+				break;
 			}
+			if (eInput.name == 'depl_x' && eInput.checked) dx = parseInt(eInput.value, 10);
+			if (eInput.name == 'depl_y' && eInput.checked) dy = parseInt(eInput.value, 10);
+			if (eInput.name == 'depl_n' && eInput.checked) dn = parseInt(eInput.value, 10);
 		}
-		for (let i = 0; i < document.getElementsByName('ai_DeplY').length; i++) {
-			if (document.getElementsByName('ai_DeplY')[i].checked) {
-				y = y + Number(document.getElementsByName('ai_DeplY')[i].value);
-			}
-		}
-		for (let i = 0; i < document.getElementsByName('ai_DeplN').length; i++) {
-			if (document.getElementsByName('ai_DeplN')[i].checked) {
-				n = n + Number(document.getElementsByName('ai_DeplN')[i].value);
-			}
-		}
-		if (isTrou(x, y, n)) {
+	}
+	if (dx === undefined || dy === undefined || dn == undefined ||
+		isNaN(dx) || isNaN(dy) || isNaN(dn)) {
+		window.console.log('validateDestination_log, impossible de retrouver les paramètres de Déplacement');
+		return true;	// tant pis pour le pauvre Trõll
+	}
+	let sx = dx < 0 ? -1 : +1;
+	dx = Math.abs(dx);
+	let sy = dy < 0 ? -1 : +1;
+	dy = Math.abs(dy);
+	let sn = dn < 0 ? -1 : +1;
+	dn = Math.abs(dn);
+	let x = parseInt(MY_getValue(`${numTroll}.position.X`), 10);
+	let y = parseInt(MY_getValue(`${numTroll}.position.Y`), 10);
+	let n = parseInt(MY_getValue(`${numTroll}.position.N`), 10);
+	debugMZ(`validateDestination_log ${x}, ${y}, ${n} DE ${sx*dx}, ${sy*dy}, ${sn*dn}`);
+	let dmax = Math.max(dx, dy, dn);
+	for (let i = 1; i <= dmax; i++) {
+		let this_dx = Math.min(dx, i);
+		let this_dy = Math.min(dy, i);
+		let this_dn = Math.min(dn, i);
+		if (isTrou(x + sx * this_dx, y + sy * this_dy, n + sn * this_dn)) {
 			return window.confirm(
-				'La voix de  mini TilK (n°36216) résonne dans votre tête :\n' +
-				'Vous allez tomber dans un trou de météorite.\n' +
-				'Êtes vous sûr de vouloir effectuer ce déplacement ?'
-			);
+				`La voix de  mini TilK (n°36216) résonne dans votre tête :
+				Vous allez tomber dans un trou de météorite.
+				Êtes vous sûr de vouloir effectuer ce déplacement ?`);
 		}
 	}
 	return true;
@@ -7408,16 +7428,23 @@ function validateDestination() {
 function newsubmitDE(event) {
 	event.stopPropagation();
 	event.preventDefault();
+	debugMZ('newsubmitDE_log : vérification trou')
 	if (validateDestination()) {
 		this.submit();
 	}
 }
 
 function changeValidation() {
-	let form = document.getElementsByName('ActionForm')[0];
-	if (form) {
-		form.addEventListener('submit', newsubmitDE, true);
+	let forms = document.getElementsByTagName('form');
+	for (form of forms) {
+		for (input of form.getElementsByTagName('input')) {
+			if (input.name != 'depl_2D' && input.name != 'depl_x') continue;
+				form.addEventListener('submit', newsubmitDE, true);
+				debugMZ('changeValidation_log : activation de la détection des TP dangereux')
+				return;
+			}
 	}
+	debugMZ('changeValidation_log : pas de form compatible avec la détection des TP dangereux')
 }
 
 /** x~x Gestion des TPs ------------------------------------------------ */
@@ -7450,20 +7477,20 @@ function validateTPDestination() {
 		}
 		if (nbtrous > 0 && nbtrous < 72) {
 			return window.confirm(
-				`${'La voix de  mini TilK (n°36216) résonne dans votre tête :\n' +
-				'Vous avez '}${Math.floor(100 * nbtrous / 144)
-				}% de risque de tomber dans un trou de météorite.\n` +
-				`Êtes-vous sûr de vouloir prendre ce portail ?`
+				`La voix de  mini TilK (n°36216) résonne dans votre tête :
+				Vous avez ${Math.floor(100 * nbtrous / 144)
+				}% de risque de tomber dans un trou de météorite.
+				Êtes-vous sûr de vouloir prendre ce portail ?`
 			);
 		} else if (nbtrous >= 72) {
 			return window.confirm(
-				`${'La voix de  mini TilK (n°36216) tonne dans votre tête :\n' +
-				'Malheureux, vous avez '}${Math.floor(100 * nbtrous / 144)
-				}% de risque de tomber dans un trou de météorite !\n` +
-				`Êtes-vous bien certain de vouloir prendre ce portail ?`
+				`La voix de  mini TilK (n°36216) tonne dans votre tête :
+				Malheureux, vous avez ${Math.floor(100 * nbtrous / 144)
+				}% de risque de tomber dans un trou de météorite !
+				Êtes-vous bien certain de vouloir prendre ce portail ?`
 			);
 		}
-		return true;
+		return false;
 	} catch (exc) {
 		avertissement(`Une erreur est survenue (validateTPDestination)`, null, null, exc);
 	}
@@ -7478,6 +7505,17 @@ function newsubmitTP(event) {
 }
 
 function changeButtonValidate() {
+	let forms = document.getElementsByName('ActionForm');
+	for (form of forms) {
+		for (input of form.getElementsByTagName('input')) {
+			if (input.name != 'portal') continue;
+				form.addEventListener('submit', newsubmitDE, true);
+				debugMZ('changeValidation_log : activation de la détection des TP dangereux')
+				return;
+			}
+	}
+	debugMZ('changeButtonValidate_log : pas de form compatible avec la détection des TP dangereux')
+
 	let form = document.getElementsByName('Formulaire')[0];
 	if (form) {
 		if (!form.getAttribute('onsubmit')) {
@@ -7490,6 +7528,7 @@ function changeButtonValidate() {
 /** x~x Partie Principale ---------------------------------------------- */
 
 function do_move() {
+	debugMZ('do_move_log');
 	// Roule', vérification du risque de tomber dans un trou déplacée dans do_lieuTeleport pour le cas des TP
 	// if(isPage('MH_Play/Play_a_Move.php')) {
 	changeValidation();
@@ -10587,16 +10626,16 @@ let menuRac, mainIco;
 function updateNumTroll() {
 	let eltId = document.getElementById('id');
 	if (!eltId) {
-		warnMZ(`updateData: numéro Troll introuvable (desktop)`);
+		warnMZ(`updateNumTroll_log: numéro Troll introuvable (desktop)`);
 		return null;
 	}
 	let l_numTroll = parseInt(eltId.getAttribute('data-id'));
 	if (isNaN(l_numTroll)) {
-		warnMZ(`updateData: numéro Troll introuvable: eltId=${eltId}`);
+		warnMZ(`updateNumTroll_log: numéro Troll introuvable: eltId=${eltId}`);
 		return null;
 	}
 	MY_setValue('NUM_TROLL', l_numTroll);
-	debugMZ(`updateData: numTroll=${l_numTroll}`);
+	debugMZ(`updateNumTroll_log: numTroll=${l_numTroll}`);
 	return l_numTroll;
 }
 
@@ -10604,16 +10643,16 @@ function updateNomTroll() {
 	let eltId = document.getElementById('id');
 	let eltSpan = eltId.getElementsByTagName('span');
 	if (!eltSpan[0]) {
-		warnMZ(`updateData: nom Troll introuvable`);
+		warnMZ(`updateNomTroll_log: nom Troll introuvable`);
 		return null;
 	}
 	let l_nomTroll = eltSpan[0].innerText;
 	if (l_nomTroll === 'Troll') {
-		warnMZ(`updateData: nom Troll générique: Troll`);
+		warnMZ(`updateNomTroll_log: nom Troll générique: Troll`);
 		return null;
 	}
 	MY_setValue('NOM_TROLL', l_nomTroll);
-	debugMZ(`updateData: nomTroll=${l_nomTroll}`);
+	debugMZ(`updateNomTroll_log: nomTroll=${l_nomTroll}`);
 	return l_nomTroll;
 }
 
@@ -16707,7 +16746,9 @@ try {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
 		do_scizOverwriteEvents(); /* SCIZ */
-	} else if (isPage("MH_Play/Play_a_Move")) {
+	} else if (isPageWithParam({url: 'MH_Play/Play_a_Action', params: {type: 'C', id: 12}})) {
+		do_move();
+	} else if (isPageWithParam({url: 'MH_Play/Play_a_Action', params: {type: 'A', id: 1}})) {
 		do_move();
 	} else if (isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
