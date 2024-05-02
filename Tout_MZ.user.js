@@ -34,10 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.7';
+var MZ_latest = '1.4.8';
 var MZ_changeLog = [
 	"V1.4.8 \t\t 02/05/2024",
-	"	- remise en route de l'avertissement pour les TP près d'un trou)",
+	"	- remise en route de l'avertissement pour les DE et TP près d'un trou",
 	"V1.4.7 \t\t 28/04/2024",
 	"	- Possibilité d'afficher le compte à rebours dans le titre (voir dans les options)",
 	"V1.4.4 \t\t 25/04/2024",
@@ -553,7 +553,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = true, MY_LOG = true;
+var MY_DEBUG = false, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -7418,8 +7418,8 @@ function validateDestination() {
 		if (isTrou(x + sx * this_dx, y + sy * this_dy, n + sn * this_dn)) {
 			return window.confirm(
 				`La voix de  mini TilK (n°36216) résonne dans votre tête :
-				Vous allez tomber dans un trou de météorite.
-				Êtes vous sûr de vouloir effectuer ce déplacement ?`);
+Vous allez tomber dans un trou de météorite.
+Êtes vous sûr de vouloir effectuer ce déplacement ?`);
 		}
 	}
 	return true;
@@ -7444,7 +7444,7 @@ function changeValidation() {
 				return;
 			}
 	}
-	debugMZ('changeValidation_log : pas de form compatible avec la détection des TP dangereux')
+	console.log('changeValidation_log : pas de form compatible avec la détection des TP dangereux')
 }
 
 /** x~x Gestion des TPs ------------------------------------------------ */
@@ -7478,16 +7478,16 @@ function validateTPDestination() {
 		if (nbtrous > 0 && nbtrous < 72) {
 			return window.confirm(
 				`La voix de  mini TilK (n°36216) résonne dans votre tête :
-				Vous avez ${Math.floor(100 * nbtrous / 144)
-				}% de risque de tomber dans un trou de météorite.
-				Êtes-vous sûr de vouloir prendre ce portail ?`
+Vous avez ${Math.floor(100 * nbtrous / 144)
+}% de risque de tomber dans un trou de météorite.
+Êtes-vous sûr de vouloir prendre ce portail ?`
 			);
 		} else if (nbtrous >= 72) {
 			return window.confirm(
 				`La voix de  mini TilK (n°36216) tonne dans votre tête :
-				Malheureux, vous avez ${Math.floor(100 * nbtrous / 144)
-				}% de risque de tomber dans un trou de météorite !
-				Êtes-vous bien certain de vouloir prendre ce portail ?`
+Malheureux, vous avez ${Math.floor(100 * nbtrous / 144)
+}% de risque de tomber dans un trou de météorite !
+Êtes-vous bien certain de vouloir prendre ce portail ?`
 			);
 		}
 		return false;
@@ -7497,32 +7497,28 @@ function validateTPDestination() {
 }
 
 function newsubmitTP(event) {
+	/*
 	event.stopPropagation();
 	event.preventDefault();
 	if (validateTPDestination()) {
 		this.submit();
 	}
+	*/
+	return validateTPDestination();
 }
 
 function changeButtonValidate() {
-	let forms = document.getElementsByName('ActionForm');
+	let forms = document.getElementsByTagName('form');
 	for (form of forms) {
 		for (input of form.getElementsByTagName('input')) {
-			if (input.name != 'portal') continue;
-				form.addEventListener('submit', newsubmitDE, true);
-				debugMZ('changeValidation_log : activation de la détection des TP dangereux')
-				return;
-			}
-	}
-	debugMZ('changeButtonValidate_log : pas de form compatible avec la détection des TP dangereux')
-
-	let form = document.getElementsByName('Formulaire')[0];
-	if (form) {
-		if (!form.getAttribute('onsubmit')) {
-			form.setAttribute('onsubmit', 'return true;');
+			if (input.name != 'portail') continue;
+			//form.addEventListener('submit', newsubmitTP, true);
+			form.onsubmit = newsubmitTP;
+			debugMZ('changeButtonValidate : activation de la détection des TP dangereux')
+			return;
 		}
-		form.addEventListener('submit', newsubmitTP, true);
 	}
+	console.log('changeButtonValidate_log : pas de form compatible avec la détection des TP dangereux')
 }
 
 /** x~x Partie Principale ---------------------------------------------- */

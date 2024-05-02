@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.31
+// @version 2.32
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -70,9 +70,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function isPageWithParam(filters) {
 			if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 			if (filters.body_id && document.body.id != filters.body_id) return false;
-			if (filters.params) 
+			if (filters.params) {
+				let paramsGET = new URLSearchParams(window.location.search);
 				for (let param in filters.params) 
 					if (paramsGET.get(param) != filters.params[param]) return false;
+			}
 			if (filters.ids)
 				for (let id of filters.ids)
 					if (!document.getElementById(id)) return false
