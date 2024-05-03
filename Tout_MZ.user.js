@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.8
+// @version     1.4.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -7490,7 +7490,7 @@ Malheureux, vous avez ${Math.floor(100 * nbtrous / 144)
 Êtes-vous bien certain de vouloir prendre ce portail ?`
 			);
 		}
-		return false;
+		return true;
 	} catch (exc) {
 		avertissement(`Une erreur est survenue (validateTPDestination)`, null, null, exc);
 	}
