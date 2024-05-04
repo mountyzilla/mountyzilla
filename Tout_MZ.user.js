@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.9
+// @version     1.4.9.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.8';
+var MZ_latest = '1.4.9.1';
 var MZ_changeLog = [
 	"V1.4.8 \t\t 02/05/2024",
 	"	- remise en route de l'avertissement pour les DE et TP près d'un trou",
@@ -1357,6 +1357,7 @@ function createImage(url, title, style) {
 	let img = document.createElement('img');
 	img.src = url;
 	img.title = title;
+	img.alt = `[${title}]`;
 	img.align = 'absmiddle'; // WARNING - Obsolete in HTML5.0
 	if (style) {
 		img.style = style;
@@ -3389,7 +3390,7 @@ function isPageWithParam(filters) {
 	if (filters.body_id && document.body.id != filters.body_id) return false;
 	if (filters.params) {
 		let paramsGET = new URLSearchParams(window.location.search);
-		for (let param in filters.params) 
+		for (let param in filters.params)
 			if (paramsGET.get(param) != filters.params[param]) return false;
 	}
 	if (filters.ids)
@@ -4444,7 +4445,7 @@ function initCompteAreboursDLA() {
 			dlaTitleString = 'Vous pouvez activer';
 			window.clearInterval(timer);
 		}
- 
+
 		/* Affichage du compte à rebours */
 		cnt.innerHTML = dlaTimeString;
 		if (dlaColor === undefined)
@@ -13364,23 +13365,13 @@ function addTdInfosTroll(infos, TR, itName) {
 	div2.style.height = '10px';
 	tab.appendChild(div2);
 
-	/* ancienne méthode par img, à supprimer
-	let img = document.createElement('img');
-	img.src = '../Images/Interface/milieu.gif';
-	img.height = 10;
-	img.width = Math.floor( (100*infos.pv)/infos.pv_max );
-	tab.appendChild(img);
-	*/
-
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
 	}
 	let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
-	if (infos.camoufle) {
-		tdNom.appendChild(createImage(`${URL_MZimg}warning.gif`, "Camouflé", "padding-left:2px"));
-	}
-	if (infos.invisible) {
-		tdNom.appendChild(createImage(`${URL_MZimg}warning.gif`, "Invisible", "padding-left:2px"));
+	if (infos.camoufle || infos.invisible) {
+		let title = infos.camoufle ? "Camouflé" : "Invisible";
+		tdNom.appendChild(createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px'));
 	}
 
 	/* lien vers l'IT */
