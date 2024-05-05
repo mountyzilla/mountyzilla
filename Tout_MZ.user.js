@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.10.1
+// @version     1.4.10.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -4495,7 +4495,6 @@ function initCompteAreboursDLA() {
 					d.setSeconds(d.getSeconds() + dlaDiff / 1000 - 20 * 60);
 					debugMZ('initCompteAreboursDLA_log reveil ' + MZ_formatDateMS(d));
 					window.setTimeout(funcTimer, dlaDiff - 20 * 60 * 1000);
-					clearInterval = true;
 				}
 			} else {
 				// on est après la DLA suivante
