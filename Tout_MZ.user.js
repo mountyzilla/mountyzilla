@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.9.1
+// @version     1.4.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.9.1';
+var MZ_latest = '1.4.10';
 var MZ_changeLog = [
+	"V1.4.10 \t\t 05/05/2024",
+	"	- Compte à rebours aussi pour la DLA suivante",
 	"V1.4.8 \t\t 02/05/2024",
 	"	- remise en route de l'avertissement pour les DE et TP près d'un trou",
 	"V1.4.7 \t\t 28/04/2024",
@@ -553,7 +555,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = true, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -1118,6 +1120,7 @@ function appendA(node, href, cssClass, text) {
 		a.appendChild(document.createTextNode(text));
 	}
 	node.appendChild(a);
+	return a;
 }
 
 function appendText(node, text, bold, color = undefined) {
@@ -1147,14 +1150,18 @@ function insertText(node, text, bold) {
 }
 
 function insertTextDiv(node, text, bold) {
-	if (!bold) {
-		insertBefore(node, document.createTextNode(text));
-		return;
-	}
 	let b = document.createElement('div');
 	appendText(b, text);
-	b.style.fontWeight = 'bold';
+	if (bold) b.style.fontWeight = 'bold';
 	insertBefore(node, b);
+	return b;
+}
+
+function appendTextDiv(node, text, bold) {
+	let b = document.createElement('div');
+	appendText(b, text);
+	if (bold) b.style.fontWeight = 'bold';
+	node.appendChild(b);
 	return b;
 }
 
@@ -4388,87 +4395,210 @@ function initCompteAreboursDLA() {
 	if (MY_getValue('COMPTEAREBOURSDLA') != 'true') {
 		return;
 	}
-	let mhTitle = window.top.document.title;
+	let mhTitle = window.top.document.body.mz_initial_title;
+	if (mhTitle === undefined) {
+		// mémoriser le titre initial dans le document lui-même
+		mhTitle = window.top.document.title;
+		window.top.document.body.mz_initial_title = mhTitle;
+	}
 	let inTitleAlso = (MY_getValue('COMPTEAREBOURSTITRE') == 'true');
-	let div = document.evaluate(
-		"//div[@class='infoMenu']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
-	).singleNodeValue;
+	let dlaFavicon = '/favicon.ico';
+	let div = document.getElementById('DLA_xyn');
+	div.style.marginTop = '10px';
 	let br = div.getElementsByTagName('br')[0];
-	// logMZ('initCompteAreboursDLA' + div.innerHTML);
+	// logMZ('initCompteAreboursDLA_log' + div.innerHTML);
 
-	let dlaDate = DMYHMSToDate((/DLA:\s+([^<]+)</).exec(div.innerHTML)[1]),
-		cnt = document.createElement('div');
+	let dlaDate = DMYHMSToDate((/DLA:\s+([^<]+)</).exec(div.innerHTML)[1]);
+	let cnt = document.createElement('div');
 
 	div.insertBefore(cnt, br);
 	div.removeChild(br);
+	
+	let diff2color = function(diff) {
+		if (diff > 20 * 60 * 1000) return;
+		if (diff > 5 * 60 * 1000) return 'yellow';
+		else if (diff > 0) return 'orange';
+		else if (diff > -5 * 60 * 1000) return 'red';
+		else return;
+	}
+	
+	let diff2icon = function(diff) {
+		if (diff > 20 * 60 * 1000) return dlaFavicon;
+		if (diff > 5 * 60 * 1000) return URL_MZimg + 'dangerJaune.ico';
+		else if (diff > 0) return URL_MZimg + 'dangerOrange.ico';
+		else if (diff > -6 * 60 * 1000) return URL_MZimg + 'dangerRouge.ico';
+		else return dlaFavicon;
+	}
 
-	let timer = setInterval(() => {
+	let funcTimer = function() {
 		let mhDiff = MY_getValue('MZ_rebours_diff_time');
 		if (mhDiff == undefined) mhDiff = 0;
 		let dlaDiff = dlaDate.getTime() - (new Date()).getTime() - mhDiff;
-		//console.log('dlaDate=' + dlaDate + ', date=' + (new Date()) + ', mhDiff=' + mhDiff + ', dlaDiff=' + dlaDiff);
-		let dlaTimeString, dlaTitleString;
+		//console.log('initCompteAreboursDLA_log : dlaDate=' + dlaDate + ', date=' + (new Date()) + ', mhDiff=' + mhDiff + ', dlaDiff=' + dlaDiff);
+		/*
+		let dlaTitleString = '';
+		let tabEltCnt = [];
 		let dlaColor = undefined;
-		let dlaFavicon = '/favicon.ico';
+		*/
+		let paRestant = parseInt(MY_getValue(`${numTroll}.PA`), 10);
+		let showLienActiver = true;
+		let showCompteARebours = undefined;	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
+		let showTitre = undefined;	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
+		let clearInterval = false;
+		let dlaNext = undefined;
+		let showPAPerdus = false;
+		//debugMZ('initCompteAreboursDLA_log paRestant=' + paRestant);
 		if (dlaDiff > 0) {
-			let dlaTime = new Date(dlaDiff);
-			let dlaHours = Math.floor(dlaDiff / 60 / 60 / 1000);
-			let dlaMinutes = dlaTime.getUTCMinutes();
-			if (dlaMinutes < 10) {
-				dlaMinutes = '0' + dlaMinutes;
+			if (paRestant === 0) {
+				// affichage compte à rebours sans couleur
+				// titre : rien
+				showLienActiver = false;
+				showCompteARebours = 3;
+			} else {
+				// affichage compte à rebours avec couleur si besoin
+				// affichage lien activer
+				// titre :  compte à rebours et icone d'alerte si besoin
+				showCompteARebours = 1;
+				showTitre = 1;
 			}
-			let dlaSeconds = dlaTime.getUTCSeconds();
-			if (dlaSeconds < 10) {
-				dlaSeconds = '0' + dlaSeconds;
-			}
-			dlaTimeString = 'DLA dans : ' + dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
-			dlaTitleString = dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
-			if (dlaDiff < 5 * 60 * 1000) {
-				dlaFavicon = URL_MZimg + 'dangerOrange.ico';
-				dlaColor = 'orange';
-			} else if (dlaDiff < 20 * 60 * 1000) {
-				dlaFavicon = URL_MZimg + 'dangerJaune.ico';
-				dlaColor = 'yellow';
-			}
-		} else if (dlaDiff > -(5 * 60 * 1000)) {
-			let dlaTime = new Date(-dlaDiff);
-			let dlaMinutes = dlaTime.getUTCMinutes();
-			let dlaSeconds = dlaTime.getUTCSeconds();
-			if (dlaSeconds < 10) {
-				dlaSeconds = '0' + dlaSeconds;
-			}
-			dlaTimeString = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#FF0000'>Over-DLA : " + dlaMinutes + ':' + dlaSeconds + "</a>";
-			dlaTitleString = '(Over-DLA) ' + dlaMinutes + ':' + dlaSeconds;
-			dlaFavicon = URL_MZimg + 'dangerRouge.ico';
+		} else if (dlaDiff > -(5 * 60 * 1000) && paRestant !== 0) {
+			// over-dla
+				// affichage compte à rebours en rouge, texte "over-DLA"
+				// titre : (Over-DLA) + compte (minutes uniquement) et icone rouge
+				showLienActiver = false;
+				showCompteARebours = 2;
+				showTitre = 2;
 		} else {
-			dlaTimeString = "<a href='/mountyhall/MH_Play/Activate_DLA.php' target='_top' style='color:#AEFFAE'>Vous pouvez réactiver!</a>";
-			dlaTitleString = 'Vous pouvez activer';
-			window.clearInterval(timer);
+			let dureeNext = parseInt(MY_getValue(`${numTroll}.caracs.dureeProchainTour`), 10);
+			dlaNext = new Date(dlaDate);
+			dlaNext.setMinutes(dlaDate.getMinutes() + dureeNext);
+			if (!isNaN(dureeNext)) {
+				dlaDiff = dlaDiff + dureeNext * 60 * 1000;
+			} else {
+				dlaDiff = undefined;
+			}
+			if (dlaDiff === undefined) {
+				// affichage lien activer
+				// titre : rien
+				// stop timer
+				clearInterval = true;
+			} else if (dlaDiff > 0) {
+				// on est avant la DLA suivante
+				// affichage compte à rebours avec couleur
+				// affichage lien activer
+				// titre :  compte à rebours et icone d'alerte si besoin
+				showCompteARebours = 1;
+				showTitre = 1;
+				// arrêt du timer si au moins 20 min avant la DLA
+				if (dlaDiff > 20 * 60 * 1000) {
+					let d = new Date();
+					d.setSeconds(d.getSeconds() + dlaDiff / 1000 - 20 * 60);
+					debugMZ('initCompteAreboursDLA_log reveil ' + MZ_formatDateMS(d));
+					window.setTimeout(funcTimer, dlaDiff - 20 * 60 * 1000);
+					clearInterval = true;
+				}
+			} else {
+				// on est après la DLA suivante
+				// affichage lien activer
+				// titre : rien
+				// stop timer
+				clearInterval = true;
+				// bricoler dlaDiff pour forcer pas de couleur
+				dlaDiff += 3600 * 1000;
+			}
+			// et, dans tous les cas, on affiche les PA perdus
+			showPAPerdus = true;
 		}
-
-		/* Affichage du compte à rebours */
-		cnt.innerHTML = dlaTimeString;
-		if (dlaColor === undefined)
+		
+		if (timer && clearInterval) {
+			window.clearInterval(timer);
+			debugMZ('initCompteAreboursDLA_log kill timer');
+			timer = undefined;
+		}
+		
+		while (cnt.firstChild) cnt.removeChild(cnt.lastChild);
+		
+		if (dlaNext !== undefined) appendTextDiv(cnt, 'suiv : ' + MZ_formatDateMS(dlaNext, false));
+				
+		let dlaTime, dlaHours, dlaMinutes, dlaSeconds, dlaCompteReboursTexte;
+		switch (showCompteARebours) {	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
+			case 1:
+			case 3:
+				dlaTime = new Date(dlaDiff);
+				dlaHours = Math.floor(dlaDiff / 60 / 60 / 1000);
+				dlaMinutes = dlaTime.getUTCMinutes();
+				if (dlaMinutes < 10) {
+					dlaMinutes = '0' + dlaMinutes;
+				}
+				dlaSeconds = dlaTime.getUTCSeconds();
+				if (dlaSeconds < 10) {
+					dlaSeconds = '0' + dlaSeconds;
+				}
+				dlaCompteReboursTexte = dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
+				appendTextDiv(cnt, 'DLA dans : ' + dlaCompteReboursTexte);
+				break;
+			case 2:
+				dlaTime = new Date(-dlaDiff);
+				dlaMinutes = dlaTime.getUTCMinutes();
+				dlaSeconds = dlaTime.getUTCSeconds();
+				if (dlaSeconds < 10) {
+					dlaSeconds = '0' + dlaSeconds;
+				}
+				dlaCompteReboursTexte = dlaMinutes + ':' + dlaSeconds;
+				appendTextDiv(cnt, 'Over-DLA : ' + dlaCompteReboursTexte);
+				break;
+		}
+		
+		if (showLienActiver) {
+			let ea = appendA(cnt, '/mountyhall/MH_Play/Activate_DLA.php', undefined, 'Vous pouvez réactiver');
+			ea.target = '_top';
+			ea.style.color = '#AEFFAE';
+		}
+		
+		let dlaColor = diff2color(dlaDiff);
+		//debugMZ('initCompteAreboursDLA_log dlaDiff=' + dlaDiff + ', color=' + dlaColor + ', showCompteARebours=' + showCompteARebours + ', paRestant=' + paRestant);
+		if (dlaColor === undefined || showCompteARebours == 3) {
 			cnt.style.removeProperty("color");
-		else
+			//debugMZ('initCompteAreboursDLA_log remove color');
+		} else {
 			cnt.style.color = dlaColor;
+			//debugMZ('initCompteAreboursDLA_log set color ' + dlaColor);
+		}
+		
+		if (showPAPerdus && paRestant > 0) appendTextDiv(cnt, 'Vous pourez concentrer ' + paRestant + ' PA');
+
 		if (inTitleAlso) {
-			window.top.document.title = dlaTitleString + ' - ' + mhTitle;
+			let dlaTitleString = '';
+			let icon = dlaFavicon;
+			switch (showTitre) {	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
+				case 1:
+					dlaTitleString = dlaCompteReboursTexte + ' - ';
+					icon = diff2icon(dlaDiff);
+					break;
+				case 2:
+					dlaTitleString = 'Over-DLA: ' + dlaCompteReboursTexte + ' - ';
+					icon = diff2icon(dlaDiff);
+					break;					
+			}
+			window.top.document.title = dlaTitleString + mhTitle;
+			
 			let done = false;
 			for (let elt of window.top.document.head.children) {
 				if (elt.tagName != 'LINK' || elt.rel != 'icon') continue;
-				if (elt.href != dlaFavicon) elt.href = dlaFavicon;
+				if (elt.href != icon) elt.href = icon;
 				done = true;
 				break;
 			}
 			if (!done) {
 				let elt = window.top.document.createElement('link');
 				elt.rel = 'icon';
-				elt.href = dlaFavicon;
+				elt.href = icon;
 				window.top.document.head.appendChild(elt);
 			}
 		}
-	}, 1000);
+	};
+
+	let timer = setInterval(funcTimer, 1000);
 }
 
 /** x~x Alerte Mundi --------------------------------------------------- */
@@ -4550,6 +4680,7 @@ function dispatch() {
 function do_actions() {
 	start_script(31, 'do_actions_log');
 	dispatch();
+	do_memoPA();
 	displayScriptTime(undefined, 'do_actions_log');
 }
 
@@ -9354,7 +9485,7 @@ function insertOptionTable(insertPt) {
 	appendCheckBoxBlock(td, 'confirmeDecalage', "Demander confirmation lors d'un décalage de DLA", MY_getValue('CONFIRMEDECALAGE') == 'true');
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
 	appendCheckBoxBlock(td, 'compteAreboursDLA', 'Compte à rebours de DLA', MY_getValue('COMPTEAREBOURSDLA') == 'true');
-	appendCheckBoxBlock(td, 'compteAreboursTitre', 'Aussi dans le titre', MY_getValue('COMPTEAREBOURSTITRE') == 'true');
+	appendCheckBoxBlock(td, 'compteAreboursTitre', 'Aussi dans le titre (pas sur smartphone)', MY_getValue('COMPTEAREBOURSTITRE') == 'true');
 	//appendCheckBoxBlock(td, 'compteAreboursSuivante', 'Aussi pour la DLA suivante', MY_getValue('COMPTEAREBOURSSUIVANTE') == 'true');
 
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
@@ -9462,15 +9593,39 @@ function do_option() {
 	ti.onclick = function (e) {
 		let evt = e || window.event;
 		if (evt.shiftKey) {
-			let txt = '';
+			let tabVal = [];
 			for (let i = 0, len = localStorage.length; i < len; ++i) {
 				let k = localStorage.key(i);
 				if (k.match(/INFOSIT/i)) {
 					continue;
 				}	// masquer le mdp Bricol'Troll
-				txt = `${txt}${k}\t${localStorage.getItem(k)}\n`;
+				if (k.match(/SCIZJWT/i)) {
+					continue;
+				}	// masquer le jeton SCIZ
+				tabVal.unshift(`${k}\t${localStorage.getItem(k)}`);
 			}
-			copyTextToClipboard(txt);
+			tabVal = tabVal.sort(function (a, b) {
+				let ta = a.split('.');
+				let ia = parseInt(ta[0]);
+				let tb = b.split('.');
+				let ib = parseInt(tb[0]);
+				if (isNaN(ia)) {
+					if (isNaN(ib)) {
+						return (a < b) ? -1 : ((a > b) ? +1 : 0);
+					} else {
+						return 1;
+					}
+				} else {
+					if (isNaN(ib)) {
+						return -1;
+					} else if (ia == ib) {
+						return (a < b) ? -1 : ((a > b) ? +1 : 0);
+					} else {
+						return ia - ib;
+					}
+				}
+			})
+			copyTextToClipboard(tabVal.join("\n"));
 			avertissement('La configuration MZ a été copiée dans le presse-papier (sauf le mot de passe Bricol\'Trõll)');
 		} else if (evt.ctrlKey) {
 			let tabK = [];
@@ -14228,6 +14383,7 @@ function saveProfil() {
 	MY_setValue(`${l_numTroll}.caracs.armure.bm`, armbp + armbm);
 	MY_setValue(`${l_numTroll}.caracs.armure.bmp`, armbp);
 	MY_setValue(`${l_numTroll}.caracs.armure.bmm`, armbm);
+	MY_setValue(`${l_numTroll}.caracs.dureeProchainTour`, dpt);
 	MY_setValue(`${l_numTroll}.position.X`, posX);
 	MY_setValue(`${l_numTroll}.position.Y`, posY);
 	MY_setValue(`${l_numTroll}.position.N`, posN);
@@ -16365,6 +16521,17 @@ function do_trolligion() {
 	document.body.appendChild(divpopup);
 }
 
+function do_memoPA() {
+	let t = document.body.innerText;
+	let m = t.match(/Il\s*me\s*reste\s*(\d+)\s*PA/i);
+	//debugMZ('do_memoPA_log t=' + t);
+	//debugMZ('do_memoPA_log m=' + JSON.stringify(m));
+	if (m && m.length > 1) {
+		let pa = parseInt(m[1], 10);
+		if (numTroll !== undefined && !isNaN(pa)) MY_setValue(numTroll + '.PA', pa);
+	}
+}
+
 function MZ_extern_param() {
 	if (!document.body.MZ_Params) {
 		return;
@@ -16706,6 +16873,7 @@ try {
 		switch (document.body.id) {
 			case 'p_comptenceconnaissancedesmonstres':
 				do_cdmcomp();
+				break;
 		}
 	} else if (isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
