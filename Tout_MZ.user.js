@@ -4423,11 +4423,11 @@ function initCompteAreboursDLA() {
 			dlaTimeString = 'DLA dans : ' + dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
 			dlaTitleString = dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
 			if (dlaDiff < 5 * 60 * 1000) {
-				dlaFavicon = URL_MZimg + 'dangerRouge.ico';
-				dlaColor = 'red';
-			} else if (dlaDiff < 20 * 60 * 1000) {
 				dlaFavicon = URL_MZimg + 'dangerOrange.ico';
 				dlaColor = 'orange';
+			} else if (dlaDiff < 20 * 60 * 1000) {
+				dlaFavicon = URL_MZimg + 'dangerJaune.ico';
+				dlaColor = 'yellow';
 			}
 		} else if (dlaDiff > -(5 * 60 * 1000)) {
 			let dlaTime = new Date(-dlaDiff);
