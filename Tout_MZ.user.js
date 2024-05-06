@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.10.2
+// @version     1.4.10.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.10';
+var MZ_latest = '1.4.10.3';
 var MZ_changeLog = [
 	"V1.4.10 \t\t 05/05/2024",
 	"	- Compte à rebours aussi pour la DLA suivante",
@@ -4441,7 +4441,7 @@ function initCompteAreboursDLA() {
 		let dlaColor = undefined;
 		*/
 		let paRestant = parseInt(MY_getValue(`${numTroll}.PA`), 10);
-		let showLienActiver = true;
+		let showLienActiver = undefined;	 // 1 "vous pouvez réactiver", 2 "vous pouvez jouer"
 		let showCompteARebours = undefined;	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
 		let showTitre = undefined;	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
 		let clearInterval = false;
@@ -4452,11 +4452,11 @@ function initCompteAreboursDLA() {
 			if (paRestant === 0) {
 				// affichage compte à rebours sans couleur
 				// titre : rien
-				showLienActiver = false;
 				showCompteARebours = 3;
 			} else {
 				// affichage compte à rebours avec couleur si besoin
-				// affichage lien activer
+				// affichage "vous pouvez jouer"
+				showLienActiver = 2;
 				// titre :  compte à rebours et icone d'alerte si besoin
 				showCompteARebours = 1;
 				showTitre = 1;
@@ -4465,10 +4465,10 @@ function initCompteAreboursDLA() {
 			// over-dla
 				// affichage compte à rebours en rouge, texte "over-DLA"
 				// titre : (Over-DLA) + compte (minutes uniquement) et icone rouge
-				showLienActiver = false;
 				showCompteARebours = 2;
 				showTitre = 2;
 		} else {
+			showLienActiver = 1;
 			let dureeNext = parseInt(MY_getValue(`${numTroll}.caracs.dureeProchainTour`), 10);
 			dlaNext = new Date(dlaDate);
 			dlaNext.setMinutes(dlaDate.getMinutes() + dureeNext);
@@ -4517,7 +4517,10 @@ function initCompteAreboursDLA() {
 		
 		while (cnt.firstChild) cnt.removeChild(cnt.lastChild);
 		
-		if (dlaNext !== undefined) appendTextDiv(cnt, 'suiv : ' + MZ_formatDateMS(dlaNext, false));
+		if (dlaNext !== undefined) {
+			let newdiv = appendTextDiv(cnt, 'suiv. indicative : ' + dlaNext.toLocaleTimeString());
+			newdiv.title = 'Heure indicative qui peut avoir changé entre-temps';
+		}
 				
 		let dlaTime, dlaHours, dlaMinutes, dlaSeconds, dlaCompteReboursTexte;
 		switch (showCompteARebours) {	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
@@ -4548,10 +4551,16 @@ function initCompteAreboursDLA() {
 				break;
 		}
 		
-		if (showLienActiver) {
-			let ea = appendA(cnt, '/mountyhall/MH_Play/Activate_DLA.php', undefined, 'Vous pouvez réactiver');
-			ea.target = '_top';
-			ea.style.color = '#AEFFAE';
+		switch (showLienActiver) {
+			case 1:
+				let ea = appendA(cnt, '/mountyhall/MH_Play/Activate_DLA.php', undefined, 'Vous pouvez réactiver');
+				ea.target = '_top';
+				ea.style.color = '#AEFFAE';
+				break;
+			case 2:
+				let newdiv = appendTextDiv(cnt, 'Vous pouvez jouer');
+				newdiv.style.color = '#AEFFAE';
+				break;
 		}
 		
 		let dlaColor = diff2color(dlaDiff);
