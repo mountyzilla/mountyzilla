@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.10.3
+// @version     1.4.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,8 +34,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.10.3';
+var MZ_latest = '1.4.11';
 var MZ_changeLog = [
+	"V1.4.11 \t\t 06/05/2024",
+	"	- Remise en route des Jubilaires",
 	"V1.4.10 \t\t 05/05/2024",
 	"	- Compte à rebours aussi pour la DLA suivante",
 	"V1.4.8 \t\t 02/05/2024",
@@ -7821,27 +7823,24 @@ function showHttpsErrorContenuMixte() {
 
 /** x~x Jubilaires ----------------------------------------------------- */
 
-function traiterJubilaires() {
-	// à faire
-}
-
-function traiterJubilaires_a_supprimer() {	// ancienne méthode
+function traiterJubilaires() {	// ancienne méthode
 	try {
-		let URL_anniv = '';
+		let URL_anniv = URL_MZ + '/jubilaires.json';
 		FF_XMLHttpRequest({
 			method: 'GET',
 			url: URL_anniv,
+			/*
 			headers: {
 				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
 				'Accept': 'application/xml,text/xml',
 			},
+			*/
 			onload: function (responseDetails) {
-				if (responseDetails.status == 0 && isHTTPS) {
+				if (responseDetails.status == 0) {
 					logMZ(`status=0 à l'appel jubilaires, réponse=${responseDetails.responseText}`);
-					// showHttpsErrorContenuMixte();
 					return;
 				}
-				let listeTrolls = responseDetails.responseText.split('\n');
+				let listeTrolls = JSON.parse(responseDetails.responseText);
 				if (!listeTrolls || listeTrolls.length == 0) {
 					return;
 				}
@@ -7849,61 +7848,47 @@ function traiterJubilaires_a_supprimer() {	// ancienne méthode
 			},
 		});
 	} catch (exc) {
-		if (isHTTPS) {
-			logMZ('appel jubilaires', exc);
-			showHttpsErrorContenuMixte();
-		} else {
-			avertissement(`Une erreur est survenue (Jubilaires)`, null, null, exc);
-		}
+		avertissement(`Une erreur est survenue (Jubilaires)`, null, null, exc);
 	}
 }
 
 function afficherJubilaires(listeTrolls) {
-	let rappels;
-	try {
-		rappels = document.evaluate(
-			"//p[contains(a/text(),'messagerie')]",
-			document, null, 9, null).singleNodeValue;
-	} catch (e) {
+	let footer = getFooter();
+	if (!footer) {
+		logMZ('afficherJubilaires_log, impossible de retrouver le footer');
 		return;
 	}
 	let p = document.createElement('p');
 	let tbody = appendTitledTable(p,
-		"Les Trõlls qui fêtent leur anniversaire aujourd'hui:",
-		'Envoyez leur un message ou un cadeau !'
+		"Les Trõlls qui fêtent leur anniversaire aujourd'hui :",
+		'Envoyez leur un message ou un cadeau !'
 	);
 	let tr = appendTr(tbody, 'mh_tdpage');
 	let td = appendTdCenter(tr);
 	let small = document.createElement('small');
 	td.appendChild(small);
 	let first = true;
-	for (let i = 0; i < listeTrolls.length; i++) {
-		let infos = listeTrolls[i].split(';');
-		if (infos.length != 3 || infos[2] === '0') {
-			continue;
-		}
+	for (let troll of listeTrolls) {
 		if (first) {
 			first = false;
 		} else {
 			appendText(small, ', ');
 		}
 		let a = document.createElement('a');
-		a.href = `javascript:EPV(${infos[0]})`;
-		appendText(a, infos[1]);
+		a.href = `javascript:EPV(${troll.num_troll})`;
+		appendText(a, troll.nom_troll);
 		small.appendChild(a);
-		appendText(small, ` (${infos[2]}${infos[2] === '1' ? ' an)' : ' ans)'}`);
+		appendText(small, ` (${troll.age}${troll.age === '1' ? ' an)' : ' ans)'}`);
 	}
-	insertBefore(rappels, p);
+	insertBefore(footer, p);
 }
 
 /** x~x News MZ -------------------------------------------------------- */
 
 function traiterNouvelles() {
 	let news = new Array();
-	news.push(['2022-12-17', "Ajout de l'affichage des composants de même monstre en tanière sur le détail d'un composant."]);
-	news.push(['2022-11-28', 'Mise à jour des nouvelles caractéristiques des équipements. Merci à ceux qui ont saisi les corrections. Prévenir Rouletabille si vous trouvez une erreur.']);
-	news.push(['2022-08-16', 'Enrichissement de la page des suivants (voir les options).']);
-	news.push([null, 'Les jubilaires ont disparu de Mountyzilla depuis un moment. Ils reviendront peut-être. Patience et espoir sont les maître qualités de l\'utilisateur MZ (et du joueur MH ;).']);
+	news.push(['2024-05-05', "Affichage d'une alerte dans l'onglet du navigateur. (Il faut activer l'option)"]);
+	news.push(['2024-05-06', 'Les jubilaires sont revenus. Merci pour votre patience pas infnie mais presque.']);
 	let d2 = new Date();
 	if (d2.getMonth() == 0 && d2.getDate() < 10) {
 		news.push([new Date(d2.getFullYear(), 0, 1), `MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
