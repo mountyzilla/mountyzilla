@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.1
+// @version     1.4.11.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.1';
+var MZ_latest = '1.4.11.2';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -4455,6 +4455,7 @@ function initCompteAreboursDLA() {
 				// affichage compte à rebours sans couleur
 				// titre : rien
 				showCompteARebours = 3;
+				showTitre = 1;
 			} else {
 				// affichage compte à rebours avec couleur si besoin
 				// affichage "vous pouvez jouer"
@@ -7832,12 +7833,6 @@ function traiterJubilaires() {
 		FF_XMLHttpRequest({
 			method: 'GET',
 			url: URL_anniv,
-			/*
-			headers: {
-				'User-agent': 'Mozilla/4.0 (compatible) Mountyzilla',
-				'Accept': 'application/xml,text/xml',
-			},
-			*/
 			onload: function (responseDetails) {
 				if (responseDetails.status == 0) {
 					logMZ(`status=0 à l'appel jubilaires, réponse=${responseDetails.responseText}`);
@@ -7863,7 +7858,7 @@ function afficherJubilaires(listeTrolls) {
 	}
 	let p = document.createElement('p');
 	let tbody = appendTitledTable(p,
-		"Les Trõlls qui fêtent leur anniversaire aujourd'hui :",
+		"Les Trõlls qui fêtent leur cycloversaire aujourd'hui :",
 		'Envoyez leur un message ou un cadeau !'
 	);
 	let tr = appendTr(tbody, 'mh_tdpage');
