@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.16
+// @version 8.8.17
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -474,15 +474,15 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if (originalPosText === undefined) {
 				let msg = "La recherche a été enregistrée. Mais vous n'avez pas encore affiché le détail de la carte "
 					+ idCarte + " et le « script du Capitan » ne connait pas la position de la mort du Capitan. Il ne peut pas vous en dire plus. Allez dans «  EQUIPEMENT » et affichez cette carte.";
-				this.afficheMsg(msg, 'red');
 				window.console.log('afficheInfoCarte_log: ' + msg);
+				this.afficheMsg(msg, 'red');
 				return;
 			}
 			var originalPos = originalPosText.split(";");
 			if(originalPos.length!=3) {
 				msg = 'Text non reconnu : ' + originalPosText;
-				this.afficheMsg(msg, 'red');
 				window.console.log('afficheInfoCarte_log: ' + msg);
+				this.afficheMsg(msg, 'red');
 				return;
 			}
 			this.oMort = new this.oEssai(originalPosText);
@@ -792,7 +792,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			let p = document.createElement('p');
 			if (color) p.style.color = color;
 			p.appendChild(document.createTextNode('MZ Capitan : ' + msg));
-			document.getElementById('msgDiv').appendChild(p);
+			let contMsg = document.getElementById('msgDiv');
+			if (!contMsg) {
+				contMsg = document.evaluate("//div[@class = 'modal']",
+				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+			}
+			if (!contMsg) contMsg = document.body;
+			contMsg.appendChild(p);
 		},
 
 		// Roule 08/08/2016
