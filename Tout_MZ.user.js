@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11
+// @version     1.4.11.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11';
+var MZ_latest = '1.4.11.1';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -7823,9 +7823,12 @@ function showHttpsErrorContenuMixte() {
 
 /** x~x Jubilaires ----------------------------------------------------- */
 
-function traiterJubilaires() {	// ancienne méthode
+function traiterJubilaires() {
 	try {
-		let URL_anniv = URL_MZ + '/jubilaires.json';
+		let URL_anniv = URL_MZ + '/jubilaires.json?v=';
+		// forcer le fichier a être rafraîchi au changement de jour
+		let dNow = new Date();
+		URL_anniv += dNow.getMonth() + '.' + dNow.getDate();
 		FF_XMLHttpRequest({
 			method: 'GET',
 			url: URL_anniv,
@@ -7874,11 +7877,16 @@ function afficherJubilaires(listeTrolls) {
 		} else {
 			appendText(small, ', ');
 		}
+		let span = document.createElement('span');
+		span.style.whiteSpace = 'nowrap';
+		if (troll.num_troll == numTroll) span.style.backgroundColor = '#98FB98';
 		let a = document.createElement('a');
 		a.href = `javascript:EPV(${troll.num_troll})`;
+		a.className = 'ui-link';
 		appendText(a, troll.nom_troll);
-		small.appendChild(a);
-		appendText(small, ` (${troll.age}${troll.age === '1' ? ' an)' : ' ans)'}`);
+		span.appendChild(a);
+		appendText(span, ` (${troll.age}${troll.age == 1 ? ' cycle)' : ' cycles)'}`);
+		small.appendChild(span);
 	}
 	insertBefore(footer, p);
 }
@@ -7887,8 +7895,8 @@ function afficherJubilaires(listeTrolls) {
 
 function traiterNouvelles() {
 	let news = new Array();
-	news.push(['2024-05-05', "Affichage d'une alerte dans l'onglet du navigateur. (Il faut activer l'option)"]);
-	news.push(['2024-05-06', 'Les jubilaires sont revenus. Merci pour votre patience pas infnie mais presque.']);
+	news.push(['2024-05-05', "Affichage d'une alerte à l'approche de la DLA dans l'onglet du navigateur (il faut activer l'option)."]);
+	news.push(['2024-05-06', 'Les jubilaires sont revenus. Merci pour votre patience pas infinie mais presque.']);
 	let d2 = new Date();
 	if (d2.getMonth() == 0 && d2.getDate() < 10) {
 		news.push([new Date(d2.getFullYear(), 0, 1), `MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
