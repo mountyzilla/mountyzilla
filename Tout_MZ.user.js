@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.2
+// @version     1.4.11.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.2';
+var MZ_latest = '1.4.11.3';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -4415,15 +4415,15 @@ function initCompteAreboursDLA() {
 
 	div.insertBefore(cnt, br);
 	div.removeChild(br);
-	
+
 	let diff2color = function(diff) {
 		if (diff > 20 * 60 * 1000) return;
 		if (diff > 5 * 60 * 1000) return 'yellow';
 		else if (diff > 0) return 'orange';
-		else if (diff > -5 * 60 * 1000) return 'red';
+		else if (diff > -5 * 60 * 1000) return 'orangered';
 		else return;
 	}
-	
+
 	let diff2icon = function(diff) {
 		if (diff > 20 * 60 * 1000) return dlaFavicon;
 		if (diff > 5 * 60 * 1000) return URL_MZimg + 'dangerJaune.ico';
@@ -4511,61 +4511,55 @@ function initCompteAreboursDLA() {
 			// et, dans tous les cas, on affiche les PA perdus
 			showPAPerdus = true;
 		}
-		
+
 		if (timer && clearInterval) {
 			window.clearInterval(timer);
 			debugMZ('initCompteAreboursDLA_log kill timer');
 			timer = undefined;
 		}
-		
+
 		while (cnt.firstChild) cnt.removeChild(cnt.lastChild);
-		
+
 		if (dlaNext !== undefined) {
 			let newdiv = appendTextDiv(cnt, 'suiv. indicative : ' + dlaNext.toLocaleTimeString());
 			newdiv.title = 'Heure indicative qui peut avoir changé entre-temps';
 		}
-				
+
 		let dlaTime, dlaHours, dlaMinutes, dlaSeconds, dlaCompteReboursTexte;
+        let tFmt = function (t, sfx) { return t > 0 ? ` ${t}${sfx}` : ''; };
 		switch (showCompteARebours) {	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
 			case 1:
 			case 3:
 				dlaTime = new Date(dlaDiff);
 				dlaHours = Math.floor(dlaDiff / 60 / 60 / 1000);
 				dlaMinutes = dlaTime.getUTCMinutes();
-				if (dlaMinutes < 10) {
-					dlaMinutes = '0' + dlaMinutes;
-				}
 				dlaSeconds = dlaTime.getUTCSeconds();
-				if (dlaSeconds < 10) {
-					dlaSeconds = '0' + dlaSeconds;
-				}
-				dlaCompteReboursTexte = dlaHours + ':' + dlaMinutes + ':' + dlaSeconds;
-				appendTextDiv(cnt, 'DLA dans : ' + dlaCompteReboursTexte);
+				dlaCompteReboursTexte = tFmt(dlaHours, 'h') + tFmt(dlaMinutes, 'm') + tFmt(dlaSeconds, 's');
+				appendTextDiv(cnt, `DLA dans${dlaCompteReboursTexte}`);
 				break;
 			case 2:
-				dlaTime = new Date(-dlaDiff);
+				dlaTime = new Date(- dlaDiff);
 				dlaMinutes = dlaTime.getUTCMinutes();
 				dlaSeconds = dlaTime.getUTCSeconds();
-				if (dlaSeconds < 10) {
-					dlaSeconds = '0' + dlaSeconds;
-				}
-				dlaCompteReboursTexte = dlaMinutes + ':' + dlaSeconds;
-				appendTextDiv(cnt, 'Over-DLA : ' + dlaCompteReboursTexte);
+				dlaCompteReboursTexte = tFmt(dlaMinutes, 'm') + tFmt(dlaSeconds, 's');
+				appendTextDiv(cnt, `Over-DLA :${dlaCompteReboursTexte}`);
 				break;
 		}
-		
+
 		switch (showLienActiver) {
-			case 1:
+			case 1: {
 				let ea = appendA(cnt, '/mountyhall/MH_Play/Activate_DLA.php', undefined, 'Vous pouvez réactiver');
 				ea.target = '_top';
 				ea.style.color = '#AEFFAE';
-				break;
-			case 2:
+            }
+			break;
+			case 2: {
 				let newdiv = appendTextDiv(cnt, 'Vous pouvez jouer');
 				newdiv.style.color = '#AEFFAE';
-				break;
+            }
+			break;
 		}
-		
+
 		let dlaColor = diff2color(dlaDiff);
 		//debugMZ('initCompteAreboursDLA_log dlaDiff=' + dlaDiff + ', color=' + dlaColor + ', showCompteARebours=' + showCompteARebours + ', paRestant=' + paRestant);
 		if (dlaColor === undefined || showCompteARebours == 3) {
@@ -4575,7 +4569,7 @@ function initCompteAreboursDLA() {
 			cnt.style.color = dlaColor;
 			//debugMZ('initCompteAreboursDLA_log set color ' + dlaColor);
 		}
-		
+
 		if (showPAPerdus && paRestant > 0) appendTextDiv(cnt, 'Vous pourez concentrer ' + paRestant + ' PA');
 
 		if (inTitleAlso) {
@@ -4583,16 +4577,16 @@ function initCompteAreboursDLA() {
 			let icon = dlaFavicon;
 			switch (showTitre) {	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
 				case 1:
-					dlaTitleString = dlaCompteReboursTexte + ' - ';
+					dlaTitleString = `${dlaCompteReboursTexte} - `;
 					icon = diff2icon(dlaDiff);
 					break;
 				case 2:
-					dlaTitleString = 'Over-DLA: ' + dlaCompteReboursTexte + ' - ';
+					dlaTitleString = `Over-DLA:${dlaCompteReboursTexte} - `;
 					icon = diff2icon(dlaDiff);
-					break;					
+					break;
 			}
 			window.top.document.title = dlaTitleString + mhTitle;
-			
+
 			let done = false;
 			for (let elt of window.top.document.head.children) {
 				if (elt.tagName != 'LINK' || elt.rel != 'icon') continue;
