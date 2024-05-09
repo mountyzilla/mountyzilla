@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.3
+// @version     1.4.11.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.3';
+var MZ_latest = '1.4.11.4';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -4496,7 +4496,7 @@ function initCompteAreboursDLA() {
 				if (dlaDiff > 20 * 60 * 1000) {
 					let d = new Date();
 					d.setSeconds(d.getSeconds() + dlaDiff / 1000 - 20 * 60);
-					debugMZ('initCompteAreboursDLA_log reveil ' + MZ_formatDateMS(d));
+					//debugMZ('initCompteAreboursDLA_log reveil ' + MZ_formatDateMS(d));
 					window.setTimeout(funcTimer, dlaDiff - 20 * 60 * 1000);
 				}
 			} else {
@@ -6003,7 +6003,10 @@ function MZ_setCarteTousGogoHTML5() {
 		// if (cas.className == "mh_tdtitre") {
 		if (cas.className == "mh_tdtitre_fo") { // correction par Vapulabehemot (82169) le 10/07/2015
 			let oGogo = {};
-			oGogo.id = parseInt(cas.getElementsByTagName('a')[0].href.split("=")[1]);
+			if (cas.getElementsByTagName('a')[0].href) {
+				let m = cas.getElementsByTagName('a')[0].href.match(/id_target=(\d+)/);
+				if (m) oGogo.id = parseInt(m[1], 10);
+			}
 			oGogo.nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
 			let point = cas.innerHTML.match(/X[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+Y[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+N =[ \n\r]+(-?\d+)/);	// Roule 21/01/2020 des espaces multiples et un saut de ligne sont apparus entre "Y" et "="
 			oGogo.x = parseInt(point[1]);
@@ -7857,14 +7860,17 @@ function afficherJubilaires(listeTrolls) {
 	);
 	let tr = appendTr(tbody, 'mh_tdpage');
 	let td = appendTdCenter(tr);
-	let small = document.createElement('small');
-	td.appendChild(small);
-	let first = true;
+	let lastAge = undefined;
 	for (let troll of listeTrolls) {
-		if (first) {
-			first = false;
+		if (lastAge != troll.age) {
+			if (lastAge !== undefined) appendText(td, ', ');
+			let eAge = document.createElement('span');
+			eAge.style.fontWeight = 'bold';
+			eAge.style.whiteSpace = 'nowrap';
+			appendText(eAge, `${troll.age} cycle${troll.age > 1 ? 's' : ''} : ` )
+			td.appendChild(eAge);
 		} else {
-			appendText(small, ', ');
+			appendText(td, ', ');
 		}
 		let span = document.createElement('span');
 		span.style.whiteSpace = 'nowrap';
@@ -7874,8 +7880,8 @@ function afficherJubilaires(listeTrolls) {
 		a.className = 'ui-link';
 		appendText(a, troll.nom_troll);
 		span.appendChild(a);
-		appendText(span, ` (${troll.age}${troll.age == 1 ? ' cycle)' : ' cycles)'}`);
-		small.appendChild(span);
+		td.appendChild(span);
+		lastAge = troll.age;
 	}
 	insertBefore(footer, p);
 }
@@ -16810,7 +16816,7 @@ function MZ_CompoTanieresCallback() {
 	let eTable = document.getElementById('tabTresorInfo');
 	if (!eTable) {
 		debugMZ(`MZ_CompoTanieresCallback pas de tabTresorInfo`);
-		if (MZ_hookCompoTanieresCounter--) {
+		if (MZ_hookCompoTanieresCounter-- > 0) {
 			window.setTimeout(MZ_CompoTanieresCallback, 100);
 		} else {
 			MZ_hookCompoTanieresCounter = undefined;

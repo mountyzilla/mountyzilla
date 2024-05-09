@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.32
+// @version 2.33
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -782,7 +782,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(nb_etape == 0) return;
 			for(var i=0; i< nb_etape; i++) {
 				if (!noeuds[i]) {
-					window.console.log('trace_trajet, noeuds vide pour i=' + i + ', noeuds=' + JSON.stringify(noeuds));
+					window.console.log('trace_trajet_log, noeuds vide pour i=' + i + ', noeuds=' + JSON.stringify(noeuds));
 					return;	// Roule' 14/11/2018 protection
 				}
 				dx = noeuds[i][0] - ref[0];
@@ -1850,10 +1850,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			var continu = true, deb = 0, fin = 0, dx, dy, dxa, dya, inter, suivre = false;
 			for(var i in transition) {
 				fin = transition[i][1];
-				// if (gowap_debug == 567387) {
-					// window.console.log('trace_reel, transition(' + i + ')=' + JSON.stringify(transition[i]));
-					// window.console.log('trace_reel, couleur=' + couleur + ', deb=' + deb + ', fin=' + fin + ', suivre=' + suivre + ', ref=' + JSON.stringify(ref) + ', soi=' + JSON.stringify(soi));
-				// }
+				//if (gowap_debug == 5811849) {
+				//	window.console.log('trace_reel, transition(' + i + ')=' + JSON.stringify(transition[i]));
+				//	window.console.log('trace_reel, couleur=' + couleur + ', deb=' + deb + ', fin=' + fin + ', suivre=' + suivre + ', ref=' + JSON.stringify(ref) + ', soi=' + JSON.stringify(soi));
+				//}
 				if(deb != fin && suivre) {
 					trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [noeuds[deb]], refaire);
 					//if (gowap_debug == 567387) window.console.log('trace_reel, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
@@ -1901,7 +1901,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				var cas = ligne[i].getElementsByTagName("td")[0];
 				//if (cas.className == "mh_tdtitre") {
 				if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
-					num_gow = cas.getElementsByTagName('a')[0].href.split("=")[1];
+					if (cas.getElementsByTagName('a')[0].href) {
+						let m = cas.getElementsByTagName('a')[0].href.match(/id_target=(\d+)/);
+						if (m) num_gow = parseInt(m[1], 10);
+					}
 					nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
 					point = cas.innerHTML.match(/X[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+Y[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+N =[ \n\r]+(-?\d+)/);	// Roule 21/01/2020 des espaces multiples et un saut de ligne sont apparus entre "Y" et "="
 					arret = new Array();	// Roule' 23/12/2018
