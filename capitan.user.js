@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.18
+// @version 8.8.19
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -725,18 +725,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if (modalElt) parentElt = modalElt;
 
 			// bloc liste de solutions
-			try {
-				var table = this.afficheInfoCarte(idCarte);
+			var table = this.afficheInfoCarte(idCarte);
+			if (table) {
 				var p = document.createElement('p');
-				let oPrevSpacer = document.getElementById('spacerMZCapitan');
-				if (oPrevSpacer) console.log('analyseObject : il y a déjà un spacerMZCapitan');
 				p.id = 'spacerMZCapitan';
 				//window.console.log('analyseObject_log: table=' + JSON.stringify(table));
 				p.appendChild(table);
 				parentElt.appendChild(p);
-			} catch(e) {
-				window.console.log("analyseObject_log: le navigateur refuse d'afficher un élément qui a lui même créé 😛, type=" + p);
-				window.console.log(e);
 			}
 
 			// position courante du Troll
@@ -1388,12 +1383,20 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			try {	// à partir du 11/07/2018, (GM_info === undefined) provoque une exception
 				if (GM_info == undefined) {
 					this.CAPITAN_horsGM = true;
-				} else if (GM_info.script.version == 'sans GM') {
+				} else if (GM_info.script == undefined) {
 					this.CAPITAN_horsGM = true;
+				} else {
+					if (this.bDebug) window.console.log('GM_info.script=' + JSON.stringify(GM_info.script));
+					// si un autre script GM est actif sur la page, on peut avoir GM_Info.script qui existe. Ça ressemble à un bug de ViolentMonkey
+					if (GM_info.script.name != 'Capitan') {
+						this.CAPITAN_horsGM = true;
+					} else if (GM_info.script.version == 'sans GM') {
+						this.CAPITAN_horsGM = true;
+					}
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_getValue == undefined) {
@@ -1402,7 +1405,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				GM_getValue('x');	// provoque une exception hors GM
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_deleteValue == undefined) {
@@ -1410,9 +1413,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
-			if (true || this.bDebug) window.console.log('CAPITAN init_log: horsGM=' + this.CAPITAN_horsGM);
+			if (this.bDebug) window.console.log('CAPITAN init_log: horsGM=' + this.CAPITAN_horsGM);
 			if (this.CAPITAN_horsGM) {	// remplacer GM_xxxValue
 				this.CAPITAN_getValue = function(key) {
 					return window.localStorage[key];
