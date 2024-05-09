@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.4
+// @version     1.4.11.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -4445,7 +4445,7 @@ function initCompteAreboursDLA() {
 		let paRestant = parseInt(MY_getValue(`${numTroll}.PA`), 10);
 		let showLienActiver = undefined;	 // 1 "vous pouvez réactiver", 2 "vous pouvez jouer"
 		let showCompteARebours = undefined;	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
-		let showTitre = undefined;	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
+		let showTitre = undefined;	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA, 3 pour le mode avec compte à rebours sans icone
 		let clearInterval = false;
 		let dlaNext = undefined;
 		let showPAPerdus = false;
@@ -4453,9 +4453,9 @@ function initCompteAreboursDLA() {
 		if (dlaDiff > 0) {
 			if (paRestant === 0) {
 				// affichage compte à rebours sans couleur
-				// titre : rien
+				// titre : compte à rebours sans icone
 				showCompteARebours = 3;
-				showTitre = 1;
+				showTitre = 3;
 			} else {
 				// affichage compte à rebours avec couleur si besoin
 				// affichage "vous pouvez jouer"
@@ -4526,7 +4526,7 @@ function initCompteAreboursDLA() {
 		}
 
 		let dlaTime, dlaHours, dlaMinutes, dlaSeconds, dlaCompteReboursTexte;
-        let tFmt = function (t, sfx) { return t > 0 ? ` ${t}${sfx}` : ''; };
+        let tFmt = function (t, sfx, padding) { return (padding || t > 0) ? ` ${padding && t < 10 ? '0' : ''}${t}${sfx}` : ''; };
 		switch (showCompteARebours) {	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
 			case 1:
 			case 3:
@@ -4534,14 +4534,14 @@ function initCompteAreboursDLA() {
 				dlaHours = Math.floor(dlaDiff / 60 / 60 / 1000);
 				dlaMinutes = dlaTime.getUTCMinutes();
 				dlaSeconds = dlaTime.getUTCSeconds();
-				dlaCompteReboursTexte = tFmt(dlaHours, 'h') + tFmt(dlaMinutes, 'm') + tFmt(dlaSeconds, 's');
+				dlaCompteReboursTexte = tFmt(dlaHours, 'h') + tFmt(dlaMinutes, 'm', true) + tFmt(dlaSeconds, 's', true);
 				appendTextDiv(cnt, `DLA dans${dlaCompteReboursTexte}`);
 				break;
 			case 2:
 				dlaTime = new Date(- dlaDiff);
 				dlaMinutes = dlaTime.getUTCMinutes();
 				dlaSeconds = dlaTime.getUTCSeconds();
-				dlaCompteReboursTexte = tFmt(dlaMinutes, 'm') + tFmt(dlaSeconds, 's');
+				dlaCompteReboursTexte = tFmt(dlaMinutes, 'm') + tFmt(dlaSeconds, 's', true);
 				appendTextDiv(cnt, `Over-DLA :${dlaCompteReboursTexte}`);
 				break;
 		}
@@ -4575,10 +4575,11 @@ function initCompteAreboursDLA() {
 		if (inTitleAlso) {
 			let dlaTitleString = '';
 			let icon = dlaFavicon;
-			switch (showTitre) {	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA"
+			switch (showTitre) {	// 1 pour le mode compte à rebours, 2 pour le mode Over-DLA, 3 pour le mode avec compte à rebours sans icone
 				case 1:
-					dlaTitleString = `${dlaCompteReboursTexte} - `;
 					icon = diff2icon(dlaDiff);
+				case 3:
+					dlaTitleString = `${dlaCompteReboursTexte} - `;
 					break;
 				case 2:
 					dlaTitleString = `Over-DLA:${dlaCompteReboursTexte} - `;
