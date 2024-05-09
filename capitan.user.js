@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.17
+// @version 8.8.18
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -725,12 +725,19 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if (modalElt) parentElt = modalElt;
 
 			// bloc liste de solutions
-			var table = this.afficheInfoCarte(idCarte);
-			var p = document.createElement('p');
-			p.id = 'spacerMZCapitan';
-			//window.console.log('analyseObject_log: table=' + JSON.stringify(table));
-			p.appendChild(table);
-			parentElt.appendChild(p);
+			try {
+				var table = this.afficheInfoCarte(idCarte);
+				var p = document.createElement('p');
+				let oPrevSpacer = document.getElementById('spacerMZCapitan');
+				if (oPrevSpacer) console.log('analyseObject : il y a déjà un spacerMZCapitan');
+				p.id = 'spacerMZCapitan';
+				//window.console.log('analyseObject_log: table=' + JSON.stringify(table));
+				p.appendChild(table);
+				parentElt.appendChild(p);
+			} catch(e) {
+				window.console.log("analyseObject_log: le navigateur refuse d'afficher un élément qui a lui même créé 😛, type=" + p);
+				window.console.log(e);
+			}
 
 			// position courante du Troll
 			// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
@@ -1386,7 +1393,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_getValue == undefined) {
@@ -1395,7 +1402,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				GM_getValue('x');	// provoque une exception hors GM
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
 			try {
 				if (GM_deleteValue == undefined) {
@@ -1403,9 +1410,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 			} catch (e2) {
 				this.CAPITAN_horsGM = true;
-				if (this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
+				if (true || this.bDebug) window.console.log('CAPITAN init_log: test GM_deleteValue, exception=' + e2);
 			}
-			if (this.bDebug) window.console.log('CAPITAN init_log: horsGM=' + this.CAPITAN_horsGM);
+			if (true || this.bDebug) window.console.log('CAPITAN init_log: horsGM=' + this.CAPITAN_horsGM);
 			if (this.CAPITAN_horsGM) {	// remplacer GM_xxxValue
 				this.CAPITAN_getValue = function(key) {
 					return window.localStorage[key];
