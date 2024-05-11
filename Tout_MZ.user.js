@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.5
+// @version     1.4.11.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -34,7 +34,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.4';
+var MZ_latest = '1.4.11.6';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -8041,10 +8041,14 @@ function do_news() {
 	let eHServer = document.getElementById("hserveur");
 	//console.log('eHServer=' + eHServer);
 	if (eHServer) {
-		let mhInfo = eHServer.innerText.match(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/);
-		let mhDate = new Date(mhInfo[3], mhInfo[2]-1, mhInfo[1], mhInfo[4], mhInfo[5], mhInfo[6]);
-		MY_setValue('MZ_rebours_diff_time', mhDate.getTime() - (new Date()).getTime());
-		//console.log('do_news_log MH:' + eHServer.innerText + ', delta=' + MY_getValue('MZ_rebours_diff_time'));
+		// intervertir jour/mois (satanés américains ! Même les Anglais ne font pas cette bêtise)
+		let mhInfo = eHServer.innerText.match(/^(\d+)\/(\d+)\/(.*)\]+$/);
+		if (mhInfo) {
+			// cette méthode permet de tenir compte du fuseau horaire GMT+0200 par exemple)
+			let mhDate = new Date(`${mhInfo[2]}/${mhInfo[1]}/${mhInfo[3]}`);
+			MY_setValue('MZ_rebours_diff_time', mhDate.getTime() - (new Date()).getTime());
+			//console.log(`do_news_log MH:${eHServer.innerText}, delta=${MY_getValue('MZ_rebours_diff_time')}ms`);
+		}
 	}
 
 	traiterJubilaires();
