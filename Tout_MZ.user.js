@@ -6355,42 +6355,46 @@ function do_infomonstre() {
 
 /** x~x Highlight same XYN --------------------------------------------- */
 function do_highlightSameXYN() {
-  if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
+	if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
 
-  addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
+	addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
 
-  // maintenant que jQuery est là, il serait dommage de ne pas en tirer
-  // parti, même si les perfs ne sont pas miraculeuses
-  //$("<style type='text/css'></style>").appendTo("head");
+	// Vu que jQuery est disponible, il serait dommage de ne pas en tirer
+	// parti, même si les perfs ne sont pas miraculeuses...
+	// En pratique, ce serait vraiment beaucoup plus ch... de coder ça en
+	// vanilla, alors tant pis.
+	// Le principe: On marque chaque ligne de tableau avec un attribut
+	// calculé à partir de ses coordonnées, puis on associe à chaque case
+	// (ou uniquement à celles de coordonnées) un traitement de bascule de
+	// style sur survol ou click souris qui va s'appliquer à toutes les
+	// cellules (de tous les tableaux) comportant le même attribut.
 
-  let toggleFn = function (e) {
-        let tr = $(this).parent("tr");
-        $(`tr[data-xyn='${tr.attr("data-xyn")}']`).toggleClass(e.data.class);
-      };
+	let toggleFn = function (e) {
+		let tr = $(this).parent("tr");
+		$(`tr[data-xyn='${tr.attr("data-xyn")}']`).toggleClass(e.data.class);
+	};
 
-  $.each(MZ_AnalyseVue.sectionList, function (_, section) {
-    let tableSpec = `table#${section}`,
-        nthChild = $(`${tableSpec} tr.mh_tdtitre th:contains("X")`).index(),
-        xSel = `td:nth-child(${nthChild + 1})`,
-        ySel = `td:nth-child(${nthChild + 2})`,
-        nSel = `td:nth-child(${nthChild + 3})`;
-    $(`${tableSpec} tr.mh_tdpage`).each(function(i, e) {
-      let tr =  $(e),
-          tdX = tr.find(xSel),
-          tdY = tr.find(ySel),
-          tdN = tr.find(nSel);
-
-      tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
-
-      $.each(
-        (MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true') ? [tdX, tdY, tdN] : tr.find("td"),
-        function(i, e) {
-          let td = $(e);
-          td.on("mouseenter mouseleave", {class:"xyn"}, toggleFn);
-          td.on("click", {class:"xyn-sel"}, toggleFn);
-        });
-    });
-  });
+	$.each(MZ_AnalyseVue.sectionList, function (_, section) {
+		let tableSpec = `table#${section}`,
+			nthChild = $(`${tableSpec} tr.mh_tdtitre th:contains("X")`).index(),
+			xSel = `td:nth-child(${nthChild + 1})`,
+			ySel = `td:nth-child(${nthChild + 2})`,
+			nSel = `td:nth-child(${nthChild + 3})`;
+		$(`${tableSpec} tr.mh_tdpage`).each(function(i, e) {
+			let tr =  $(e),
+				tdX = tr.find(xSel),
+				tdY = tr.find(ySel),
+				tdN = tr.find(nSel);
+			tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
+			$.each(
+				(MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true') ? [tdX, tdY, tdN] : tr.find("td"),
+				function(i, e) {
+					let td = $(e);
+					td.on("mouseenter mouseleave", {class:"xyn"}, toggleFn);
+					td.on("click", {class:"xyn-sel"}, toggleFn);
+				});
+		});
+	});
 }
 
 /** x~x SCIZ ----------------------------------------------------------- */
@@ -9151,8 +9155,8 @@ function saveAll() {
 
 		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
-    MZ_setOrRemoveValue('HIGHLIGHTSAMEXYN', document.getElementById('highlightSameXYN').checked);
-    MZ_setOrRemoveValue('HIGHLIGHTSAMEXYNCOORDSONLY', document.getElementById('highlightSameXYNCoordsOnly').checked);
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYN', document.getElementById('highlightSameXYN').checked);
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYNCOORDSONLY', document.getElementById('highlightSameXYNCoordsOnly').checked);
 
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
@@ -9437,9 +9441,9 @@ function insertOptionTable(insertPt) {
 	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
 
 	tr = appendTr(tbody);
-  td = appendTd(tr);
-  appendCheckBoxBlock(td, 'highlightSameXYN', "Réhausse des lignes de tableau", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
-  appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement au survol des coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
+	td = appendTd(tr);
+	appendCheckBoxBlock(td, 'highlightSameXYN', "Réhausse des lignes de tableau", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
+	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement au survol des coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 
 	/* Interface Tactique */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -16937,7 +16941,7 @@ try {
 	} else if (isPage("MH_Play/Play_vue")) {
 		do_vue();
 		do_scizEnhanceView(); /* SCIZ */
-    do_highlightSameXYN();
+		do_highlightSameXYN();
 	} else if (isPage("MH_Play/Play_news")) {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
