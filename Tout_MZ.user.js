@@ -8,7 +8,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.6
+// @version     1.4.11.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -1429,6 +1429,17 @@ function insertAfter(elt, newElt) {
 	} else {
 		elt.parentNode.appendChild(newElt);
 	}
+}
+
+function addStyleSheet(cssText) {
+  let styleElt = document.createElement('style');
+  styleElt.type = 'text/css';
+  if (styleElt.styleSheet) {
+    styleElt.styleSheet.cssText = cssText;
+  } else {
+    styleElt.appendChild(document.createTextNode(cssText));
+  }
+  document.getElementsByTagName('head')[0].appendChild(styleElt);
 }
 
 /** x~x Fonctions de mise en forme du texte ---------------------------- */
@@ -4374,6 +4385,7 @@ function DMYHMSToDate(t) {
 	return new Date(t.replace(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/, "$2/$1/$3 $4:$5:$6"));
 }
 
+/*
 function DateDiff(d1, d2) {
 	let diff = {},
 		tmp = Math.floor((d2 - d1) / 1000); // on s'affranchit des 1000e de s
@@ -4392,6 +4404,7 @@ function DateDiff(d1, d2) {
 		return o;
 	}).join(" ");
 }
+*/
 
 function initCompteAreboursDLA() {
 	if (MY_getValue('COMPTEAREBOURSDLA') != 'true') {
@@ -6340,6 +6353,50 @@ function do_infomonstre() {
 	displayScriptTime(undefined, 'do_infomonstre_log');
 }
 
+/** x~x Highlight same XYN --------------------------------------------- */
+function do_highlightSameXYN() {
+	if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
+
+	addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
+
+	// Vu que jQuery est disponible, il serait dommage de ne pas en tirer
+	// parti, même si les perfs ne sont pas miraculeuses...
+	// En pratique, ce serait vraiment beaucoup plus ch... de coder ça en
+	// vanilla, alors tant pis.
+	// Le principe: On marque chaque ligne de tableau avec un attribut
+	// calculé à partir de ses coordonnées, puis on associe à chaque case
+	// (ou uniquement à celles de coordonnées) un traitement de bascule de
+	// style sur survol ou click souris qui va s'appliquer à toutes les
+	// cellules (de tous les tableaux) comportant le même attribut.
+
+	let toggleFn = function (e) {
+		let tr = $(this).parent("tr");
+		$(`tr[data-xyn='${tr.attr("data-xyn")}']`).toggleClass(e.data.class);
+	};
+
+	$.each(MZ_AnalyseVue.sectionList, function (_, section) {
+		let tableSpec = `table#${section}`,
+			nthChild = $(`${tableSpec} tr.mh_tdtitre th:contains("X")`).index(),
+			xSel = `td:nth-child(${nthChild + 1})`,
+			ySel = `td:nth-child(${nthChild + 2})`,
+			nSel = `td:nth-child(${nthChild + 3})`;
+		$(`${tableSpec} tr.mh_tdpage`).each(function(i, e) {
+			let tr =  $(e),
+				tdX = tr.find(xSel),
+				tdY = tr.find(ySel),
+				tdN = tr.find(nSel);
+			tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
+			$.each(
+				(MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true') ? [tdX, tdY, tdN] : tr.find("td"),
+				function(i, e) {
+					let td = $(e);
+					td.on("mouseenter mouseleave", {class:"xyn"}, toggleFn);
+					td.on("click", {class:"xyn-sel"}, toggleFn);
+				});
+		});
+	});
+}
+
 /** x~x SCIZ ----------------------------------------------------------- */
 
 var scizSetup = {
@@ -6360,7 +6417,7 @@ var scizGlobal = {
 
 function scizAddCSS() {
 	// SCIZ style
-	let scizStyle = `
+  addStyleSheet(`
 		.sciz-progress-bar-wrapper {
 			width: 75px;
 			margin-right: 5px;
@@ -6386,16 +6443,7 @@ function scizAddCSS() {
 			border-left: 1px solid black;
 			white-space: pre-wrap;
 		}
-		`;
-	// Actually add the SCIZ style
-	let scizStyleSheet = document.createElement('style');
-	scizStyleSheet.type = 'text/css';
-	if (scizStyleSheet.styleSheet) {
-		scizStyleSheet.styleSheet.cssText = scizStyle;
-	} else {
-		scizStyleSheet.appendChild(document.createTextNode(scizStyle));
-	}
-	document.getElementsByTagName('head')[0].appendChild(scizStyleSheet);
+		`);
 }
 
 function scizCreateHoverable(height, display, callbackOnHover) {
@@ -9107,6 +9155,9 @@ function saveAll() {
 
 		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYN', document.getElementById('highlightSameXYN').checked);
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYNCOORDSONLY', document.getElementById('highlightSameXYNCoordsOnly').checked);
+
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
 		MZ_setOrRemoveValue(`${numTroll}.USECSS`, document.getElementById('usecss').checked);
@@ -9380,16 +9431,19 @@ function insertOptionTable(insertPt) {
 	}
 
 	td = appendTd(tr);
-	appendCheckBox(td, 'noInfoEM', MY_getValue('NOINFOEM') == 'true');
-	appendText(td, ' Masquer les informations à propos de l\'écriture magique');
+	appendCheckBoxBlock(td, 'noInfoEM', "Masquer les informations à propos de l'écriture magique", MY_getValue('NOINFOEM') == 'true');
 
 	tr = appendTr(tbody);
 	td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
 	appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(`${numTroll}.MAXCDM`));
 
 	td = appendTd(tr);
-	appendCheckBox(td, 'usecss', MY_getValue(`${numTroll}.USECSS`) == 'true');
-	appendText(td, ' Utiliser la CSS pour les couleurs de la diplomatie');
+	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
+
+	tr = appendTr(tbody);
+	td = appendTd(tr);
+	appendCheckBoxBlock(td, 'highlightSameXYN', "Réhausse des lignes de tableau", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
+	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement au survol des coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 
 	/* Interface Tactique */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -9424,43 +9478,35 @@ function insertOptionTable(insertPt) {
 	tr = appendTr(tbody);
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_events', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`)));
-	appendText(td, ' Surcharger les événements');
+	appendCheckBoxBlock(td, 'sciz_cb_events', 'Surcharger les événements', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`)));
 	// Bestiaire checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_bestiaire', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`)));
-	appendText(td, ' Afficher les données du bestiaire');
+	appendCheckBoxBlock(td, 'sciz_cb_bestiaire', 'Afficher les données du bestiaire', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`)));
 	// Treasures checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_treasures', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`)));
-	appendText(td, ' Afficher les trésors identifiés');
+	appendCheckBoxBlock(td, 'sciz_cb_view_treasures', 'Afficher les trésors identifiés', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`)));
 	// Mushrooms checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_mushrooms', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`)));
-	appendText(td, ' Afficher les champignons identifiés');
+	appendCheckBoxBlock(td, 'sciz_cb_view_mushrooms', 'Afficher les champignons identifiés', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`)));
 	// Trolls data checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_trolls', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`)));
-	appendText(td, ' Afficher les données des trolls');
+	appendCheckBoxBlock(td, 'sciz_cb_view_trolls', 'Afficher les données des trolls', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`)));
 	// User data checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_user', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`)));
-	appendText(td, ' S\'afficher soi-même');
+	appendCheckBoxBlock(td, 'sciz_cb_view_user', 'S\'afficher soi-même', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`)));
 	// Traps checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_traps', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`)));
-	appendText(td, ' Afficher les pièges');
+	appendCheckBoxBlock(td, 'sciz_cb_view_traps', 'Afficher les pièges', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`)));
 	// Portals checkbox
 	td = appendTd(tr);
 	td.setAttribute('align', 'center');
-	appendCheckBox(td, 'sciz_cb_view_portals', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`)));
-	appendText(td, ' Afficher les destinations de portails');
+	appendCheckBoxBlock(td, 'sciz_cb_view_portals', 'Afficher les destinations de portails', [null, '1'].includes(MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`)));
 
 	/* Options diverses */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -12363,14 +12409,11 @@ function retrieveCDMs() {
 				}
 
 				// ajouter les styles CSS pour les popup
-				let mystyle = document.createElement('style');
-				mystyle.type = 'text/css';
-				let sCSS = '.MZtooltip {position: relative;color:red;text-align:center;}\n';
-				sCSS = `${sCSS}.MZtooltip .MZtooltiptext {visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white}\n`;
-				sCSS = `${sCSS}.MZtooltip:hover .MZtooltiptext {visibility: visible;}\n`;
-				mystyle.innerHTML = sCSS;
-				document.getElementsByTagName('head')[0].appendChild(mystyle);
-
+        addStyleSheet(`
+          .MZtooltip { position: relative;color:red;text-align:center; }
+          .MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
+          .MZtooltip:hover .MZtooltiptext {visibility: visible;}
+        `);
 				// if (MY_DEBUG) {
 				// for (let i = 0; i < 20; i++) logMZ('infos[' + i + ']=' + JSON.stringify(infos[i]));
 				// }
@@ -16898,6 +16941,7 @@ try {
 	} else if (isPage("MH_Play/Play_vue")) {
 		do_vue();
 		do_scizEnhanceView(); /* SCIZ */
+		do_highlightSameXYN();
 	} else if (isPage("MH_Play/Play_news")) {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
