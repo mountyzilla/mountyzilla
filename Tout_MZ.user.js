@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.7
+// @version     1.4.11.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
