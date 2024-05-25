@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.6';
+var MZ_latest = '1.4.11.8';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
