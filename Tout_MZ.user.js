@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.8
+// @version     1.4.11.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.8';
+var MZ_latest = '1.4.11.9';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -11264,7 +11264,9 @@ function getMonstreNomByTR(tr, i = 'undef') {
 		let nom = document.evaluate(
 			"./td/a[starts-with(@href, 'javascript:EMV')]/text()", tr, null, 2, null
 		).stringValue;
-		return nom;
+		return nom.replace(/&#(\d+);/g, function(match, dec) {
+				return String.fromCharCode(dec);
+			});
 	} catch (exc) {
 		avertissement(`[getMonstreNom] Impossible de trouver le monstre ${i}`, null, null, exc);
 	}
@@ -11314,7 +11316,9 @@ function bddMonstres(start, stop, limitH, limitV) {
 		if (!isMonstreVisible(i)) {
 			continue;
 		}
-		txt = `${txt}${getMonstreID(i)};${getMonstreNom(i).replace(';', ',').replace(/[\u2000-\uFFFF]/ug, '?')};${positionToString(monstrePosition)}\n`;
+		let thisTxt = `${getMonstreID(i)};${getMonstreNom(i).replace(';', ',').replace(/[\u2000-\u{FFFFF}]/ug, '?')};${positionToString(monstrePosition)}\n`;
+		//debugMZ(thisTxt);
+		txt += thisTxt;
 	}
 	return txt ? `#DEBUT MONSTRES\n${txt}#FIN MONSTRES\n` : '';
 }
@@ -11468,7 +11472,9 @@ function getTresorNom(i) {
 	let tds = tr_tresors[i].childNodes;
 	let l = tds.length;
 	// Utilisation de textContent pour régler le "bug de Pollux"
-	return trim(tr_tresors[i].cells[l - 4].textContent);
+	return trim(tr_tresors[i].cells[l - 4].textContent).replace(/&#(\d+);/g, function(match, dec) {
+				return String.fromCharCode(dec);
+			});
 }
 
 function getTresorPosition(i) {
@@ -11499,7 +11505,7 @@ function bddTresors(dmin, start, stop, limitH, limitV) {
 			continue;
 		}
 		if (getTresorDistance(i) >= dmin) {
-			txt = `${txt}${getTresorID(i)};${getTresorNom(i)};${positionToString(tresorPosition)}\n`;
+			txt = `${txt}${getTresorID(i)};${getTresorNom(i).replace(/[\u2000-\u{FFFFF}]/ug, '?')};${positionToString(tresorPosition)}\n`;
 		}
 	}
 	return txt ? `#DEBUT TRESORS\n${txt}#FIN TRESORS\n` : '';
