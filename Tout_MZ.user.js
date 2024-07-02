@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.9
+// @version     1.4.11.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -6163,10 +6163,19 @@ function MZ_upgradeVueSuivants() {
 				eA.id = `MZ_suiv_ordres_${oSuivant.oJSON.id}`;
 				eA.style.display = 'inline-block';
 				eA.style.cssFloat = 'right';
-				eA.style.whiteSpace = 'nowrap';
+				eA.style.textAlign = 'right';
+				//eA.style.whiteSpace = 'nowrap';
 				eA.href = `/mountyhall/MH_Play/Play_a_Action.php?type=F&id=-4&sub=ordres&id_target=${oSuivant.oJSON.id}`;
 				eA.title = 'Accès direct aux ordres';
-				eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
+				for (let ordre of tabTxtOrdre) {
+					let eDiv = document.createElement('div');
+					eDiv.style.whiteSpace = 'nowrap';
+					eDiv.style.display = 'inline-block';
+					eDiv.appendChild(document.createTextNode(ordre));
+					if (eA.firstChild) eA.appendChild(document.createTextNode(' / '));
+					eA.appendChild(eDiv);
+				}
+				//eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
 				eOuterDiv.appendChild(eA);
 			} else {
 				eOuterDiv.style.display = 'none';
