@@ -2,8 +2,8 @@
 // @name         [Mountyhall] Le Baroufleur
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
-// @author       Dabihul
-// @version      1.0.0.5
+// @author       Dabihul, Rouletabille
+// @version      1.0.1
 // @include      */mountyhall/MH_Play/Play_a_Action.php*id=43*
 // ==/UserScript==
 
@@ -199,38 +199,6 @@ var
 }
 
 //-------------------------- Utilitaires génériques --------------------------//
-
-// Gestion perso des objets pour Storage
-Storage.prototype.setObject = function(key, value) {
-	if(typeof value!=="object") {
-		window.console.error(
-			"[setObject] given value is not of object type: %o",
-			value
-		);
-	} else {
-		this.setItem(key, JSON.stringify(value));
-	}
-}
-
-Storage.prototype.getObject = function(key) {
-	var	value = this.getItem(key), obj;
-	if(!value) {
-		window.console.warn(
-			"[getObject] nothing found at key: %s", key
-		);
-		return {};
-	}
-	try {
-		obj = JSON.parse(value);
-	} catch(e) {
-		window.console.error(
-			"[getObject] Parsing error. Non-JSON value at key: %s\n%o",
-			key, e
-		);
-		return {};
-	}
-	return obj;
-}
 
 function relatif(num) {
 // Force l'affichage du signe d'un relatif
@@ -776,7 +744,7 @@ function ajouteLigneMelodies() {
 	select = ajouteSelect(td);
 	select.id = "baroufleur_select_melodie";
 	select.onchange = chargeMelodie;
-	majMelodies();
+	baroufle_majMelodiesIntoForm();
 	
 	// Ajout du bouton de suppression
 	btn = ajouteBouton(td, "Suppr.");
@@ -811,7 +779,7 @@ function ajouteLigneMelodies() {
 	select.onchange = changeModeClavier;
 }
 
-function majMelodies() {
+function baroufle_majMelodiesIntoForm() {
 	var
 		select = document.getElementById("baroufleur_select_melodie"),
 		ordreAlpha = [],
@@ -856,7 +824,7 @@ function changeModeClavier() {
 	}
 
 	// Sauvegarde du nouveau mode
-	window.localStorage.setItem("baroufleur.mode", modeClavier);
+	baroufle_saveMode();
 }
 
 function valideNote() {
@@ -916,8 +884,8 @@ function supprimeMelodie() {
 	if(!nom) { return; }
 	if(window.confirm("Supprimer définitivement \""+nom+"\" ?")) {
 		delete objMelodies[nom];
-		window.localStorage.setObject("baroufleur.melodies", objMelodies);
-		majMelodies();
+		baroufle_saveMelodies();
+		baroufle_majMelodiesIntoForm();
 	}
 }
 
@@ -948,32 +916,118 @@ function ajouteMelodie() {
 	objMelodies[nom] = melodie;
 	
 	// Stockage & maj
-	window.localStorage.setObject("baroufleur.melodies", objMelodies);
-	majMelodies();
+	baroufle_saveMelodies();
+	baroufle_majMelodiesIntoForm();
+}
+
+function baroufle_saveMelodies() {
+	if (MH_le_baroufleur_json !== undefined)
+		baroufle_saveIntoMH();
+	window.localStorage.setItem('baroufleur.melodies', JSON.stringify(objMelodies));
+}
+
+function baroufle_saveMode() {
+	if (MH_le_baroufleur_json !== undefined)
+		baroufle_saveIntoMH();
+	window.localStorage.setItem("baroufleur.mode", modeClavier);
+}
+
+function baroufle_saveIntoMH() {
+	let objConfigMH = {
+		melodies: objMelodies,
+		modeClavier: modeClavier,
+	}
+	let url = window.location.origin;	// https://gams.mountyhall.com
+	url += '/mountyhall/MH_PageUtils/Services/json_extension.php';
+	url += '?mode=set&ext=le_baroufleur'
+	let request = new XMLHttpRequest();
+	request.open('POST', url);
+	request.onreadystatechange = function () {
+		if (request.readyState != 4) {
+			return;
+		}
+		if (request.error) {
+			window.console.error('[Baroufleur] erreur set config MH : ' + request.error);
+			return;
+		}
+	};
+	request.send(JSON.stringify(objConfigMH));
 }
 
 //-------------------------------- Code actif --------------------------------//
 
 if (BaroufleON) {
+	let	value = window.localStorage.getItem('baroufleur.melodies');
+	if(value) {
+		try {
+			objMelodies = JSON.parse(value);
+		} catch(e) {
+			window.console.error(
+				"[Baroufleur] Parsing error. Non-JSON value at key: baroufleur.melodies\n%o", e);
+			objMelodies = {};
+		}
+	} else {
+		objMelodies = {};
+	}
+	value = window.localStorage.getItem("baroufleur.mode");
+	if (value) {	// si 0, ben.... ça reste 0
+		modeClavier = Number(window.localStorage.getItem("baroufleur.mode"));
+		if(isNaN(modeClavier) || modeClavier<0 || modeClavier>3) {
+			modeClavier = 0;
+		}
+	}
+
+	if (MH_le_baroufleur_json !== undefined) {
+		// mode extension gérée par MH, configuration sauvée dans MH
+		if (MH_le_baroufleur_json === null) {
+			if (modeClavier != 0 || Object.keys(objMelodies).length > 0)
+				baroufle_saveIntoMH();
+		} else 	{
+			// fusionner vers MH
+			let objMelodiesLocalStorage = objMelodies;
+			let modeClavierLocalStorage = modeClavier;
+			try {
+				let objConfigMH = JSON.parse(MH_le_baroufleur_json);
+				objMelodies = objConfigMH.melodies;
+				if (objMelodies === undefined) objMelodies = {};
+				modeClavier = objConfigMH.modeClavier;
+				if (modeClavier === undefined) modeClavier = 0;
+			} catch(e) {
+				window.console.error(
+					"[Baroufleur] la config MH n'est pas JSON\n" + MH_le_baroufleur_json, e);
+				objMelodies = {};
+				modeClavier = 0;
+			}
+			let bUpdate = false;
+			//console.log('[Baroufleur] avant merge modeClavier=' + modeClavier + ', modeClavierLocalStorage=' + modeClavierLocalStorage);
+			if (modeClavier == 0 && modeClavierLocalStorage != 0) {
+				modeClavier = modeClavierLocalStorage;
+				bUpdate = true;
+			}
+			//console.log('[Baroufleur] avant merge objMelodies=' + JSON.stringify(objMelodies));
+			//console.log('[Baroufleur] avant merge objMelodiesLocalStorage=' + JSON.stringify(objMelodiesLocalStorage));
+			//console.log('[Baroufleur] avant merge keys objMelodiesLocalStorage=' + JSON.stringify(Object.keys(objMelodiesLocalStorage)));
+			for (let melod of Object.keys(objMelodiesLocalStorage)) {
+				if (JSON.stringify(objMelodies[melod]) != JSON.stringify(objMelodiesLocalStorage[melod])) {
+					objMelodies[melod] = objMelodiesLocalStorage[melod];
+					bUpdate = true;
+				}
+			}
+			//console.log('[Baroufleur] après merge objMelodies=' + JSON.stringify(objMelodies) + ', bUpdate=' + bUpdate);
+			if (bUpdate) baroufle_saveIntoMH();
+		}
+	}
+	
 	if(getSonsDisponibles() && getTableComp()) {
 		initialiseListesSons();
 		ajouteZoneTotal();
 		
-		// Extraction et vérification de baroufleur.mode
-		if(window.localStorage.getItem("baroufleur.mode")) {
-			modeClavier = Number(window.localStorage.getItem("baroufleur.mode"));
-			if(isNaN(modeClavier) || modeClavier<0 || modeClavier>3) {
-				modeClavier = 0;
-			}
-		}
-		
-		// Extraction et vérification de baroufleur.melodies
-		objMelodies = window.localStorage.getObject("baroufleur.melodies");
+		// Vérification de baroufleur.melodies
 		for(var nom in objMelodies) {
 			melodie = objMelodies[nom];
 			if(!melodie.constructor==="Array") {
 				window.console.error(
-					"[baroufleur] Mélodie \'%s\' de type invalide: %o",
+					"[Baroufleur] Mélodie \'%s\' de type invalide: %o",
 					nom, melodie
 				);
 				delete objMelodies[nom];
@@ -985,7 +1039,7 @@ if (BaroufleON) {
 					!melodie[i] in objSonParCode
 				) {
 					window.console.error(
-						"[baroufleur] Sonorité invalide pour \'%s\': %o",
+						"[Baroufleur] Sonorité invalide pour \'%s\': %o",
 						nom, melodie[i]
 					);
 					delete objMelodies[nom];
