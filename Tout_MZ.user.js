@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.12
+// @version     1.4.11.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.12';
+var MZ_latest = '1.4.11.13';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -559,7 +559,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = true, MY_LOG = true;
+var MY_DEBUG = false, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
