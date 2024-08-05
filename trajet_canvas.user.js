@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.33
+// @version 2.34
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -1892,9 +1892,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_sortie(sortie);
 		}
 		function ini_position() {
-			var tabForm = document.getElementsByTagName("form");
-			if (tabForm.length < 0) var ligne = [0].getElementsByTagName("tbody")[0].childNodes;	// ancienne version
-			else                    var ligne = document.getElementById("mhPlay").getElementsByTagName("tbody")[0].childNodes;
+			let ligne = document.getElementById('suivants').getElementsByTagName("tbody")[0].childNodes;
 			nbs = 0;
 			for (var i=0;i<ligne.length;i++) {
 				if(ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) continue;
@@ -2859,6 +2857,6 @@ if (isPage("MH_Play/Play_e_follo")) {
 	}
 }
 catch (e) { // ajout par Vapulabehemot (82169) le 30/08/2013
+	window.console.error(e);
 	window.alert('trajet_canvas.user.js : ' + e.message);
-	window.console.log('line ' + e.lineNumber + '\n' + e);
 }

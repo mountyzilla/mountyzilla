@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.11
+// @version     1.4.11.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.11';
+var MZ_latest = '1.4.11.12';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -559,7 +559,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = true, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -6003,13 +6003,7 @@ function MZ_showCarteBottom(listeSuiv) {
 
 function MZ_setCarteTousGogoHTML5() {
 	// partie récupérée de "trajet gowaps" de feldspath et Vapulabehemot
-	let ligne, tabForm = document.getElementsByTagName("form");
-	if (tabForm.length < 0) {
-		ligne = [0].getElementsByTagName("tbody")[0].childNodes;
-	}	// ancienne version
-	else {
-		ligne = document.getElementById("mhPlay").getElementsByTagName("tbody")[0].childNodes;
-	}
+	let ligne = document.getElementById('suivants').getElementsByTagName("tbody")[0].childNodes;
 	let suivants = [];
 	for (let i = 0; i < ligne.length; i++) {
 		if (ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) {
@@ -8787,6 +8781,7 @@ function addMithril(arrayCaracs, typeItem) {
 	// Ajoute l'effet du Mithril sur les caracs
 	return arrayCaracs;	// il n'y a plus de modif des caracs
 	// on garde la suite, si jamais ça revenait
+	/*
 	if (typeItem == 'arme') {
 		if (arrayCaracs[0] < 0) {
 			arrayCaracs[0] = Math.ceil(arrayCaracs[0] / 2);
@@ -8797,6 +8792,7 @@ function addMithril(arrayCaracs, typeItem) {
 	arrayCaracs[15] = arrayCaracs[15] / 2;
 	arrayCaracs[16] = arrayCaracs[16] / 2;
 	return arrayCaracs;
+	*/
 }
 
 function addRenfort(arrayCaracs, template) {
@@ -11128,7 +11124,9 @@ var nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
 function fetchData(type) {
 	try {
 		let node = document.getElementById(`mh_vue_hidden_${type}`);
-		VueContext[`tr_${type}`] = node.getElementsByTagName('tr');
+		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
+		VueContext[`tr_${type}`] = Array.prototype.slice.call(node.getElementsByTagName('tr'));
+		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
 	} catch (exc) {
 		warnMZ(`Erreur acquisition type ${type}`, exc);
@@ -11228,7 +11226,12 @@ function getMonstreIDByTR(tr) {
 }
 
 function getMonstreLevelNode(i) {
-	return MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellNivMZ];
+	let tr = MZ_EtatCdMs.tr_monstres[i];
+	if (!tr) {
+		printMZ(window.console.error, true, `Pas de monstre n°${i} / ${MZ_EtatCdMs.tr_monstres.length}`);
+		return;
+	}
+	return tr.cells[MZ_EtatCdMs.indexCellNivMZ];
 }
 
 function isMonstreLevelOutLimit(i, limitMin, limitMax) {
@@ -12426,11 +12429,11 @@ function retrieveCDMs() {
 				}
 
 				// ajouter les styles CSS pour les popup
-        addStyleSheet(`
-          .MZtooltip { position: relative;color:red;text-align:center; }
-          .MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
-          .MZtooltip:hover .MZtooltiptext {visibility: visible;}
-        `);
+		        addStyleSheet(`
+		          .MZtooltip { position: relative;color:red;text-align:center; }
+		          .MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
+		          .MZtooltip:hover .MZtooltiptext {visibility: visible;}
+		        `);
 				// if (MY_DEBUG) {
 				// for (let i = 0; i < 20; i++) logMZ('infos[' + i + ']=' + JSON.stringify(infos[i]));
 				// }
@@ -14998,10 +15001,15 @@ function injecteInfosBulles(liste, fonction) {
 		let
 			trTalent = liste[i],
 			node = trTalent.cells[1].querySelector('a'),
-			nomTalent = epure(trim(node.textContent)),
 			indiceTDniveaux = 7,
 			indiceTDSousCompetence = 2,
 			sousCompetences = undefined;
+		if (!node) {
+			printMZ(window.console.log, true, `pas de "a" dans ${trTalent.cells[1].innerHTML}`);
+			continue;
+		}
+		printMZ(window.console.log, true, `"a" OK dans ${trTalent.cells[1].innerHTML}`);
+		let nomTalent = epure(trim(node.textContent));
 		if (fonction == "competences") {
 			// un TD en plus pour des information complementaire liees a la comp
 			indiceTDniveaux++;
