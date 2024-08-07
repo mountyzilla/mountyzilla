@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.13
+// @version     1.4.11.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.13';
+var MZ_latest = '1.4.11.14';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -11125,7 +11125,10 @@ function fetchData(type) {
 	try {
 		let node = document.getElementById(`mh_vue_hidden_${type}`);
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
-		VueContext[`tr_${type}`] = Array.prototype.slice.call(node.getElementsByTagName('tr'));
+		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
+		// footable ajout une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici 
+		if (a[1] && a[1].className == 'footable-empty') a = a.splice(1, 1);
+		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
 	} catch (exc) {
