@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.14
+// @version     1.4.11.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.14';
+var MZ_latest = '1.4.11.15';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -7967,17 +7967,9 @@ function afficherNouvelles(items) {
 		logMZ('afficherNouvelles, impossible de retrouver le footer');
 		return;
 	}
-	let p = document.createElement('p');
-	let tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
-	let div = document.createElement('div');
-	div.style.position = 'absolute';
-	div.style.right = 0;
-	div.style.top = 0;
-	div.style.paddingRight = '3px';
-	div.style.whiteSpace = 'nowrap';
-	appendText(div, `(version ${GM_info.script.version})`);
-	tbody.rows[0].cells[0].style.position = 'relative';
-	tbody.rows[0].cells[0].appendChild(div);
+	let p, tbody, tr;
+	p = document.createElement('p');
+	tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
 	for (let i = 0; i < items.length; i++) {
 		let color = undefined;
 		let d = undefined;
@@ -7996,7 +7988,7 @@ function afficherNouvelles(items) {
 				color = 'red';
 			}
 		}
-		let tr = appendTr(tbody, 'mh_tdpage');
+		tr = appendTr(tbody, 'mh_tdpage');
 		if (color) {
 			tr.style.color = color;
 		}
@@ -8008,13 +8000,26 @@ function afficherNouvelles(items) {
 		td = appendTd(tr);
 		td.appendChild(document.createTextNode(items[i][1]));
 	}
-	insertBefore(footer, p);
-
+	// astuce : tr reste undefined s'il n'y a pas de nouvelle à afficher
+	if (tr) insertBefore(footer, p);
+	if (items.length > 0) {
+	}
+	
 	// changelog
 	p = document.createElement('p');
 	tbody = appendTitledTable(p, 'Changelog de Mountyzilla');
+	let div = document.createElement('div');
+	div.style.position = 'absolute';
+	div.style.right = 0;
+	div.style.top = 0;
+	div.style.paddingRight = '3px';
+	div.style.whiteSpace = 'nowrap';
+	appendText(div, `(version ${GM_info.script.version})`);
+	tbody.rows[0].cells[0].style.position = 'relative';
+	tbody.rows[0].cells[0].appendChild(div);
 	tbody.rows[0].cells[0].style.cursor = 'pointer';
-	let tr = appendTr(tbody, 'mh_tdpage');
+	tbody.rows[0].cells[0].style.minWidth = '400px';
+	tr = appendTr(tbody, 'mh_tdpage');
 	let td = appendTd(tr);
 	td.colSpan = 2;
 	let pre = document.createElement('pre');
@@ -8033,56 +8038,6 @@ function afficherNouvelles(items) {
 		}
 	};
 	insertBefore(footer, p);
-
-	if (isDEV) {	// Roule 02/02/2017 copie de la conf vers https
-		if (false) {	// essai avorté via sessionStorage (ne fonctionne pas)
-			if (isHTTPS) {
-				logMZ(`[test] sessionStorage.getItem(xxx)=${window.sessionStorage.getItem('xxx')}`);
-				logMZ(`[test] window.parent.xxx=${window.parent.xxx}`);
-			} else {
-				logMZ('[test] début switch to https');
-				window.sessionStorage.setItem('xxx', "test session trans https");
-				window.parent.xxx = "autre test";
-				let url = document.location.href;
-				logMZ(`[test] url=${url}`);
-				url = url.replace(/http:\/\//i, 'https://');
-				logMZ(`[test] switched url=${url}`);
-				document.location.href = url;
-			}
-		}
-		if (false) {	// version par utilisation d'un IFrame en https
-			if (isHTTPS) {
-				// logMZ('[test] window.xxx=' + window.xxx);
-				// logMZ('[test] window.name=' + window.name);
-				// logMZ('[test] window.document.xxx=' + window.document.xxx);
-				// logMZ('[test] window.parent.xxx=' + window.parent.xxx);
-				let txt = window.name;
-				let tabtxt = txt.split(/µ/);
-				for (let i = 0; i < tabtxt.length; i++) {
-					logMZ(`[test] config https ${tabtxt[i]}`);
-				}
-			} else {
-				let txt = '';
-				for (let i = 0, len = localStorage.length; i < len; ++i) {
-					let k = localStorage.key(i);
-					// if (k.match(/INFOSIT$/i)) continue;	// masquer le mdp Bricol'Troll
-					txt = `${txt}${k}£${localStorage.getItem(k)}µ`;
-				}
-				let iframe = document.createElement('iframe');
-				let url = document.location.href;
-				// logMZ('[test] url=' + url);
-				url = url.replace(/http:\/\//i, 'https://');
-				// logMZ('[test] switched url=' + url);
-				// iframe.xxx = "truc en plume";
-				iframe.name = txt;
-				// window.xxx = "machin";
-				iframe.src = url;
-				// iframe.document.xxx = "truc en plume";
-				document.body.appendChild(iframe);
-				iframe.style.display = 'none';
-			}
-		}
-	}
 }
 
 /** x~x Main -------------------------------------------------------- */
@@ -11126,7 +11081,7 @@ function fetchData(type) {
 		let node = document.getElementById(`mh_vue_hidden_${type}`);
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
-		// footable ajout une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici 
+		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici 
 		if (a[1] && a[1].className == 'footable-empty') a = a.splice(1, 1);
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
@@ -15000,41 +14955,28 @@ function traitementTalents() {
 function injecteInfosBulles(liste, fonction) {
 	let totalpc = 0;
 	// on parse la liste des talents du type 'fonction'
-	for (let i = 0; i < liste.length; i++) {
-		let
-			trTalent = liste[i],
-			node = trTalent.cells[1].querySelector('a'),
-			indiceTDniveaux = 7,
-			indiceTDSousCompetence = 2,
-			sousCompetences = undefined;
-		if (!node) {
-			printMZ(window.console.log, true, `pas de "a" dans ${trTalent.cells[1].innerHTML}`);
+	for (let trTalent of liste) {
+		let node = trTalent.getElementsByTagName('a')[0];
+		let jsonInfo = trTalent.getAttribute('data-json');
+		if (!jsonInfo) {
+			printMZ(window.console.log, true, `pas de json dans ${trTalent.innerHTML}`);
 			continue;
 		}
-		printMZ(window.console.log, true, `"a" OK dans ${trTalent.cells[1].innerHTML}`);
-		let nomTalent = epure(trim(node.textContent));
-		if (fonction == "competences") {
-			// un TD en plus pour des information complementaire liees a la comp
-			indiceTDniveaux++;
-			// chercher les sous-compétence (type de golem, type de piège) s'il y a
-			sousCompetences = trTalent.cells[indiceTDSousCompetence].textContent.split(',');
-			for (let j = 0; j < sousCompetences.length; j++) {
-				sousCompetences[j] = sousCompetences[j].epure().trim();
-				if (arrayTalents[sousCompetences[j]]) {
-					sousCompetences[j] = arrayTalents[sousCompetences[j]];
-				}
-			}
-		}
-		let niveauxMaitrisesTalentArray = getNumbers(trTalent.cells[indiceTDniveaux].textContent);
-		setInfos(node, nomTalent, fonction, niveauxMaitrisesTalentArray[0]);
-		setTalent(nomTalent, niveauxMaitrisesTalentArray[1], niveauxMaitrisesTalentArray[0], sousCompetences);
-		totalpc = totalpc + niveauxMaitrisesTalentArray[1];
+		let oInfo = JSON.parse(jsonInfo);
+		//console.log('[MZ] totalpc = ' + totalpc + ', info=' + JSON.stringify(oInfo));
+		let nivMax = oInfo.maitrise.length - 1;
+		if (nivMax < 1) continue;	// cas des sorts avec un apprentissage Ogham non actifs
+		let sousCompetences = null;
+		if (oInfo.notes) sousCompetences = oInfo.notes;
+		if (oInfo.pieges) sousCompetences = oInfo.pieges;
+		if (oInfo.peintures) sousCompetences = oInfo.peintures;
+		let maitrise = oInfo.maitrise[nivMax];
+		if (node)
+			setInfos(node, oInfo.nom, fonction, maitrise);
+		for (let niv = 1; niv <= nivMax; niv++)
+			setTalent(oInfo.nom, oInfo.maitrise[niv], niv, sousCompetences);
+		totalpc = totalpc + maitrise;
 
-		// stockage des niveaux inferieurs du talent si presents
-		for (let j = 2; j < niveauxMaitrisesTalentArray.length; j = j + 2) {
-			setTalent(nomTalent, niveauxMaitrisesTalentArray[j + 1], niveauxMaitrisesTalentArray[j], sousCompetences);
-			totalpc = totalpc + niveauxMaitrisesTalentArray[j + 1];
-		}
 	}
 	return totalpc;
 }
