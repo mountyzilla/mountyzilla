@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.15
+// @version     1.4.11.16
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.15';
+var MZ_latest = '1.4.11.16';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -712,7 +712,10 @@ try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une excep
 	GM_setValue = function (key, val) { };
 	GM_deleteValue = function (key) { };
 	GM_info = { script: { version: MZ_latest } };	// GM_info.script.version
-	logMZ('Fonctionnement hors Greasemonkey');
+	if (MH_mountyzilla_json !== undefined)
+		logMZ('Fonctionnement intégré MH');
+	else
+		logMZ('Fonctionnement hors Greasemonkey');
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
@@ -12164,8 +12167,10 @@ function insertLevelColumn() {
 	MZ_EtatCdMs.indexCellX = MZ_EtatCdMs.indexCellX + 1;	// et ça décale les colonnes suivantes
 	MZ_EtatCdMs.indexCellY = MZ_EtatCdMs.indexCellY + 1;
 	MZ_EtatCdMs.indexCellN = MZ_EtatCdMs.indexCellN + 1;
+	if (MZ_EtatCdMs.tr_monstres[1] && MZ_EtatCdMs.tr_monstres[1].cells[MZ_EtatCdMs.indexCellDist].innerText.indexOf('|') > -1)
+		MZ_EtatCdMs.tr_monstres[0].cells[MZ_EtatCdMs.indexCellDist].style.width = '50px';	// forcer l'affichage large
 	let td = insertThText(getMonstreLevelNode(0), 'Niv.', false);
-	// td.width = 25;
+	td.style.width = '20px';
 
 	/* plus de colgroup le 08/07/2020. Mais comme ça pourrait revenir, je laisse le bout de code en commentaire (Roule)
 	let eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
@@ -12174,9 +12179,13 @@ function insertLevelColumn() {
 	insertBefore(eColGroup.children[3],eCol);
 	*/
 	let monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
-	let styleColNivMZ = `.mh_tdborder.footable#VueMONSTRE th:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {width:35px; text-align:center;}`;
-	styleColNivMZ = `${styleColNivMZ}.mh_tdborder.footable#VueMONSTRE td:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {font-weight:bold;text-align:center;}`;
-	MZ_insertStyleNth(monsterStyle, MZ_EtatCdMs.indexCellNivMZ, styleColNivMZ, MZ_EtatCdMs.indexCellN);
+	if (monsterStyle) {
+		let styleColNivMZ = `.mh_tdborder.footable#VueMONSTRE th:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {width:35px; text-align:center;}`;
+		styleColNivMZ = `${styleColNivMZ}.mh_tdborder.footable#VueMONSTRE td:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {font-weight:bold;text-align:center;}`;
+		MZ_insertStyleNth(monsterStyle, MZ_EtatCdMs.indexCellNivMZ, styleColNivMZ, MZ_EtatCdMs.indexCellN);
+	} else {
+		//logMZ("[MZ] vue, pas de style spécial monstre, pas d'adaptation");
+	}
 
 	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
 	for (let i = 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
@@ -12421,6 +12430,7 @@ function retrieveCDMs() {
 							basculeCDM(getMonstreNomByTR(this.parentNode), getMonstreIDByTR(this.parentNode));
 						};
 					}
+					eTdLevel.style.width = '20px';
 					MZ_EtatCdMs.listeCDM[info.id] = info;
 					if (myColor) {
 						eTdLevel.style.color = myColor;
@@ -13337,6 +13347,7 @@ function computeActionDistante(dmin, dmax, keltypes, oussa, urlIcon, message) {
 					icon.alt = alt;
 					icon.title = thismessage;
 					tdAction.appendChild(icon);
+					tdAction.style.whiteSpace = 'nowrap';
 				}
 			}
 		}
@@ -14963,7 +14974,7 @@ function injecteInfosBulles(liste, fonction) {
 			continue;
 		}
 		let oInfo = JSON.parse(jsonInfo);
-		//console.log('[MZ] totalpc = ' + totalpc + ', info=' + JSON.stringify(oInfo));
+		//console.log('[MZ] totalpc = ' + totalpc + ', nb<a>=' + trTalent.getElementsByTagName('a').length + ', info=' + JSON.stringify(oInfo));
 		let nivMax = oInfo.maitrise.length - 1;
 		if (nivMax < 1) continue;	// cas des sorts avec un apprentissage Ogham non actifs
 		let sousCompetences = null;
@@ -14972,7 +14983,7 @@ function injecteInfosBulles(liste, fonction) {
 		if (oInfo.peintures) sousCompetences = oInfo.peintures;
 		let maitrise = oInfo.maitrise[nivMax];
 		if (node)
-			setInfos(node, oInfo.nom, fonction, maitrise);
+			setInfos(node.parentNode, oInfo.nom, fonction, maitrise);
 		for (let niv = 1; niv <= nivMax; niv++)
 			setTalent(oInfo.nom, oInfo.maitrise[niv], niv, sousCompetences);
 		totalpc = totalpc + maitrise;
@@ -15128,6 +15139,7 @@ function setBulle(evt) {
 		bulleStyle.left = `${xpage}px`;
 		bulleStyle.top = `${ypage}px`;
 		bulleStyle.visibility = 'visible';
+		bulleStyle.border = 'solid black 1px';
 	}
 }
 
@@ -15277,8 +15289,9 @@ function competences(comp, niveau) {
 		if (vuetotale > 2) {
 			texte = `${texte}s`;
 		}
-	} else if (comp.indexOf('Piege') != -1) {
+	} else if (comp.indexOf('Piège') != -1) {
 		texte = 'Piège à Glue :<ul><li>Et si vous colliez vos adversaires au sol ?</li></ul>';
+		texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">`;
 		texte = `${texte}Piège à Feu: <ul><li>À moins que vous ne préfériez les envoyer en l'air !</li>`;
 		texte = `${texte}<li>Dégats du piège à feu : <b>${Math.floor((esq + vue) / 2)}</b> D3` +
 			` => <b>${2 * Math.floor((esq + vue) / 2)} (${resiste((esq + vue) / 2)})</b></li></ul>`;
@@ -15340,7 +15353,7 @@ function competences(comp, niveau) {
 	} else if (comp.indexOf('Course') != -1) {
 		texte = `Déplacement gratuit : <b>${Math.floor(getTalent('Course') / 2)
 			} %</b> de chance`;
-	} else if (comp.indexOf('Deplacement Eclair') != -1) {
+	} else if (comp.indexOf('Déplacement Eclair') != -1) {
 		texte = 'Permet d\'économiser <b>1</b> PA ' +
 			'par rapport au déplacement classique';
 	} else if (comp.indexOf('Dressage') != -1) {
@@ -15411,7 +15424,7 @@ function competences(comp, niveau) {
 			} => <b>${Math.round(
 				3.5 * (Math.floor(att / 2) + modA) +
 				Math.floor((attbp + attbm) / 2)
-			)}</b><hr>Equivalent esquive : <b>${Math.floor(att / 2) + esq}</b> D6 `;
+			)}</b><hr style="margin:3px!important; border-top: 1px solid black!important">Equivalent esquive : <b>${Math.floor(att / 2) + esq}</b> D6 `;
 		if (modA) {
 			texte = `${texte}<i>${aff(modA)}D6</i> `;
 		}
@@ -15467,7 +15480,7 @@ function competences(comp, niveau) {
 			modD = degtour ? Math.floor(Ddeg * degtour / 100) : 0;
 			vdegbm = Math.floor(0.75 * vdegbm);
 		}
-		texte = tabTxt.join('<hr>');
+		texte = tabTxt.join('<hr style="margin:3px!important; border-top: 1px solid black!important">');
 	} else if (comp.indexOf('Shamaner') != -1) {
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux ' +
 			'des monstres en utilisant des champignons (de 1 à 3).';
@@ -15589,7 +15602,7 @@ function sortileges(sort) {
 			pc = pc + decumulPc(i);
 			fixe = fixe + decumulFixe(3.5, i);
 			if (texte) {
-				texte = `${texte}<hr>`;
+				texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">`;
 			}
 			texte = `${texte}<b>${i}<sup>e</sup> AdA : ${aff(pc)}% de Dés d'attaque :</b><br>`;
 			for (let categorie in categoriesAdA) {
@@ -15614,7 +15627,7 @@ function sortileges(sort) {
 		}
 	} else if (sort.indexOf('augmentation') != -1 && sort.indexOf('esquive') != -1) {
 		texte = decumul_buff('AdE', 'Esquive', Math.floor((esq - 1) / 2));
-	} else if (sort.indexOf("augmentation des degats") != -1) {
+	} else if (sort.indexOf("augmentation des dégâts") != -1) {
 		let categoriesAdD = {
 			"attx1/2": {
 				"Botte Secrète": "BS"
@@ -15658,7 +15671,7 @@ function sortileges(sort) {
 			pc = pc + decumulPc(i);
 			fixe = fixe + decumulFixe(2, i);
 			if (texte) {
-				texte = `${texte}<hr>`;
+				texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">`;
 			}
 			texte = `${texte}<b>${i}<sup>e</sup> AdD : ${aff(pc)}% de Dés de dégâts :</b><br>`;
 			for (let categorie in categoriesAdD) {
@@ -15738,18 +15751,18 @@ function sortileges(sort) {
 			}/${resiste(Math.floor(deg / 2) + Math.floor(deg / 4) + modD, degbm)
 			})</b>`;
 		// Venins
-		texte = `${texte}<hr>${addVenin("insidieux", effet, 2 + Math.floor(vue / 5))}`;
+		texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">${addVenin("insidieux", effet, 2 + Math.floor(vue / 5))}`;
 		effet = Math.floor(1.5 * effet);
-		texte = `${texte}<hr>${addVenin("virulent", effet, 1 + Math.floor(vue / 10))}`;
+		texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">${addVenin("virulent", effet, 1 + Math.floor(vue / 10))}`;
 	} else if (sort.indexOf('hypnotisme') != -1) {
 		texte = `Esquive : <b>-${Math.floor(1.5 * esq)}</b> Dés (<b>-${Math.floor(esq / 3)}</b> Dés)`;
-	} else if (sort.indexOf('identification des tresors') != -1) {
+	} else if (sort.indexOf('dentification des tr') != -1) {
 		texte = 'Permet de connaitre les caractéristiques et effets précis d\'un trésor.';
-	} else if (sort.indexOf('invisibilite') != -1) {
+	} else if (sort.indexOf('nvisibilit') != -1) {
 		texte = 'Un troll invisible est indétectable même quand on se trouve ' +
 			'sur sa zone. Toute action physique ou sortilège d\'attaque ' +
 			'fait disparaître l\'invisibilité.';
-	} else if (sort.indexOf('levitation') != -1) {
+	} else if (sort.indexOf('vitation') != -1) {
 		texte = 'Prendre un peu de hauteur permet parfois d\'éviter les ennuis. Comme les pièges ou les trous par exemple...';
 	} else if (sort.indexOf("projectile magique") != -1) {
 		let modD = 0,
@@ -15783,7 +15796,7 @@ function sortileges(sort) {
 		}
 	} else if (sort.indexOf('projection') != -1) {
 		texte = 'Si le jet de résistance de la victime est raté:<br/>' +
-			'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr>' +
+			'la victime est <b>déplacée</b> et perd <b>1D6</b> d\'Esquive<hr style="margin:3px!important; border-top: 1px solid black!important">' +
 			'Si le jet de résistance de la victime est réussi:<br/>' +
 			'la victime ne <b>bouge pas</b> mais perd <b>1D6</b> d\'Esquive.';
 	} else if (sort.indexOf("rafale psychique") != -1) {
@@ -15814,10 +15827,10 @@ function sortileges(sort) {
 		// Sacros max et optimal sans malus (propale R')
 		sac = Math.floor((pvdispoSansMalusTemps - 2) * 5 / 7);
 		if (sac > 0) {
-			texte = `${texte}${"<hr>Soin maximum limitant les risques de malus " +
-				"de temps : <b>"}${sac}</b> PV${perteSacro(sac)}`;
+			texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">Soin maximum limitant les risques de malus
+				de temps : <b>${sac}</b> PV${perteSacro(sac)}`;
 		} else {
-			texte = `${texte}<hr>Vous ne pouvez pas compenser de blessures dues à un sacrifice`;
+			texte = `${texte}<hr style="margin:3px!important; border-top: 1px solid black!important">Vous ne pouvez pas compenser de blessures dues à un sacrifice`;
 		}
 	} else if (sort.indexOf("siphon") != -1) {
 		let modD = 0;
@@ -15841,7 +15854,7 @@ function sortileges(sort) {
 			} (${resiste(reg + modD, degbm)
 			}/${resiste(1.5 * reg + modD, degbm)})</b>`;
 		texte = `${texte}<br>Nécrose : attaque magique <b>-${reg + modD}</b>`;
-	} else if (sort.indexOf('telekinesie') != -1) {
+	} else if (sort.indexOf('télékinésie') != -1) {
 		texte = 'Portée horizontale  :';
 		let vt = Math.floor(vuetotale / 2) + 2;
 		let strList = ['d\'une Plum\' ou Très Léger', 'Léger', 'Moyen', 'Lourd', 'Très Lourd ou d\'une Ton\''];
@@ -15852,13 +15865,13 @@ function sortileges(sort) {
 			}
 			vt = Math.max(0, vt - 1);
 		}
-	} else if (sort.indexOf('teleportation') != -1) {
+	} else if (sort.indexOf('téléportation') != -1) {
 		let portee = getPortee(pitotal / 5);	// Roule, 30/09/2016, TP basé sur les PI
 		debugMZ(`calcul portée Teleportation, pitotal=${pitotal}, portée=${portee}`);
 		let pmh = 20 + vue + portee;
 		let pmv = 3 + Math.floor(portee / 3);
 		texte = `Portée horizontale : <b>${pmh}</b> cases<br/>` +
-			`Portée verticale : <b>${pmv}</b> cases<hr>` +
+			`Portée verticale : <b>${pmv}</b> cases<hr style="margin:3px!important; border-top: 1px solid black!important">` +
 			`X compris entre ${posX - pmh} et ${posX + pmh}<br/>` +
 			`Y compris entre ${posY - pmh} et ${posY + pmh}<br/>` +
 			`N compris entre ${posN - pmv} et ${Math.min(-1, posN + pmv)}<br/>`;
@@ -15888,13 +15901,14 @@ function sortileges(sort) {
 	} else if (sort.indexOf('vision lointaine') != -1) {
 		texte = 'En ciblant une zone située n\'importe où dans le ' +
 			'Monde Souterrain, votre Trõll peut voir comme s\'il s\'y trouvait.';
-	} else if (sort.indexOf('voir le cache') != -1) {
-		texte = `<b>Sur soi :</b><br/>Portée horizontale : <b>${Math.min(5, getPortee(vue))}</b> cases<hr>` +
+	} else if (sort.indexOf('voir le caché') != -1) {
+		texte = `<b>Sur soi :</b><br/>Portée horizontale : <b>${Math.min(5, getPortee(vue))}</b> cases<hr style="margin:3px!important; border-top: 1px solid black!important">` +
 			`<b>A distance :</b><br/>Portée horizontale : <b>${getPortee(vuetotale)}</b> cases`;
-	} else if (sort.indexOf('vue troublee') != -1) {
+	} else if (sort.indexOf('vue troublée') != -1) {
 		texte = `Portée horizontale : <b>${Math.min(1, vuetotale)}</b> case<br/>` +
 			`Vue : <b>-${Math.floor(vue / 3)}</b>`;
-	}
+	} 
+	//else texte = `Non documenté`;
 	return texte;
 }
 
