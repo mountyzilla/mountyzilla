@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.16
+// @version     1.4.11.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.16';
+var MZ_latest = '1.4.11.17';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -712,7 +712,7 @@ try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une excep
 	GM_setValue = function (key, val) { };
 	GM_deleteValue = function (key) { };
 	GM_info = { script: { version: MZ_latest } };	// GM_info.script.version
-	if (MH_mountyzilla_json !== undefined)
+	if (typeof MH_mountyzilla_json !== "undefined")
 		logMZ('Fonctionnement intégré MH');
 	else
 		logMZ('Fonctionnement hors Greasemonkey');
