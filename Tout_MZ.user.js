@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.17
+// @version     1.4.11.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.17';
+var MZ_latest = '1.4.11.18';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -14983,7 +14983,7 @@ function injecteInfosBulles(liste, fonction) {
 		if (oInfo.peintures) sousCompetences = oInfo.peintures;
 		let maitrise = oInfo.maitrise[nivMax];
 		if (node)
-			setInfos(node.parentNode, oInfo.nom, fonction, maitrise);
+			setInfos(node.parentNode, oInfo.nom, fonction, nivMax);
 		for (let niv = 1; niv <= nivMax; niv++)
 			setTalent(oInfo.nom, oInfo.maitrise[niv], niv, sousCompetences);
 		totalpc = totalpc + maitrise;
@@ -15225,7 +15225,7 @@ function competences(comp, niveau) {
 			'<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
 			'<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
 			'</tbody></table>'}`;
-	} else if (comp.indexOf("Botte Secrete") != -1) {
+	} else if (comp.indexOf("Botte Secrète") != -1) {
 		modA = atttour ? Math.floor(Math.floor(2 * att / 3) * atttour / 100) : 0;
 		modD = degtour ? Math.floor(Math.floor(att / 2) * degtour / 100) : 0;
 		texte = `Attaque : <b>${Math.floor(2 * att / 3)}</b> D6 `;
@@ -15398,7 +15398,7 @@ function competences(comp, niveau) {
 		texte = 'Marquage permet de rajouter un sobriquet à un monstre. Il faut ' +
 			'bien choisir le nom à ajouter car celui-ci sera définitif. Il faut ' +
 			'se trouver dans la même caverne que le monstre pour le marquer.';
-	} else if (comp.indexOf('Melange Magique') != -1) {
+	} else if (comp.indexOf('Mélange Magique') != -1) {
 		texte = 'Cette Compétence permet de combiner deux Potions pour ' +
 			'en réaliser une nouvelle dont l\'effet est la somme ' +
 			'des effets des potions initiales.';
@@ -15702,7 +15702,7 @@ function sortileges(sort) {
 		texte = `Dégâts : <b>${Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2)}</b> D3 ` +
 			` => <b>${2 * Math.floor(1 + (deg + Math.floor(pvbase / 10)) / 2)
 			} (${resiste(1 + (deg + Math.floor(pvbase / 10)) / 2)})</b>`;
-	} else if (sort.indexOf('faiblesse passagere') != -1) {
+	} else if (sort.indexOf('faiblesse passagère') != -1) {
 		if (pvcourant <= 0) {
 			return '<i>Dans votre état, vous n\'affaiblirez personne...</i>';
 		}
