@@ -7,52 +7,12 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.34
+// @version 2.35
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
 // @injectframes 1
 // ==/UserScript==
-
-// V 2.2 10/10/2016 Roule'
-//	correction profondeur du trou en 55 70 (60 au lieu de 70)
-//	correction intersection des trajets des suivants avec les trous (donnait un danger quand le trajet frôlait le trou)
-// V 2.3 05/11/2016 Roule'
-//	protection contre les golem (l'affichage des ordres donnait une erreur MZ)
-// V 2.4 12/11/2018 Roule'
-//	Adaptation à un changement MH (saut de ligne dans les coord.)
-// V 2.5 14/11/2018 Roule'
-//	Protection contre "ref" vide dans trace_reel
-// V 2.6 23/12/2018 Roule'
-//	Correction trajet en plusieurs étapes + changement de nom de la variable globale coeff (collision avec MZ)
-// V 2.7 03/05/2019 Roule'
-//	Adapation pour modification du message MH sur un lieu TP (plus d'espaces autour de "=")
-// V 2.8 03/05/2019 Roule'
-//	Adapation pour modification du tableau des ordres de gowap MH_Follower/FO_Ordres.php
-// V 2.9 07/09/2019 Roule'
-//	Adapation pour modification du tableau du profil de suivant MH_Follower/FO_Profil.php
-// V 2.10 03/10/2019 Roule'
-//	Adaptation modif MH de la page des suivants
-// V 2.11 04/10/2019 Roule'
-//	Correction icône de copie de la position de départ
-// V 2.12 16/10/2019 Roule'
-//	Mutualisation analyse ordres suivants MZ_analyse_page_ordre_suivant
-// V 2.13 25/10/2019 Roule'
-//	Ajout du surlignage de la position du suivant au survol de la souris dans la liste des suivants
-// V 2.14 30/10/2019 Roule'
-//	Correction bug sur l'affichage des coordonnées sur la carte
-// V 2.15 25/11/2019 Roule'
-//	Protection à l'utilisation sur smartphone
-// V 2.16 21/01/2020 Roule'
-//	Adaptation à un changement MH (encore des sauts de ligne dans les coord.)
-// V 2.17 14/04/2020 Roule'
-//	Adaptation à un changement MH (page d'ordres des suivants)
-// V 2.18 18/07/2020 Roule'
-//	Adaptation à un changement MH (vue)
-// V 2.19 01/01/2022 Roule'
-//	Adaptation à un changement MH (suivants)
-// V 2.20 10/04/2022 Roule'
-//	Gestion des durées de tour sans minutes (nombre entier d'heures)
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
@@ -238,7 +198,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					document.getElementById("action_coord").innerHTML = ref;
 					cadre.style.display = "block";
 					cadre.style.left = evt.clientX;
-					cadre.style.top = (evt.clientY + document.body.scrollTop-20);
+					cadre.style.top = (evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0) - 20);
 				}
 				else {
 					cadre.style.display = "none";
@@ -914,7 +874,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -980,7 +940,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				// https://stackoverflow.com/questions/28633221/document-body-scrolltop-firefox-returns-0-only-js
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -1091,7 +1052,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -1135,7 +1096,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -1177,7 +1138,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -1261,7 +1222,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;
@@ -2084,7 +2045,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function poser_fav() {
 			var gestion = haut.getElementById("gestion_fav_gow");
 			if(page == "action_ordre") {
-				gestion.style.top = (haut.body.clientHeight+haut.body.scrollTop-2-gestion.offsetHeight)+"px";
+				//let scroll = haut.body.scrollTop;
+				let scroll = (haut.defaultView.pageYOffset || haut.documentElement.scrollTop || haut.body.scrollTop || 0);
+				gestion.style.top = (haut.body.clientHeight+scroll-2-gestion.offsetHeight)+"px";
 			}
 			else {
 				var noeud = document.getElementById("ligne_fav");
@@ -2298,7 +2261,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
 				xpos = evt.clientX;
-				ypos = evt.clientY + document.body.scrollTop;
+				ypos = evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
 			}
 			else {
 				xpage = evt.layerX;

@@ -3,7 +3,7 @@
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
 // @author       Dabihul, Rouletabille
-// @version      1.0.1
+// @version      1.0.2
 // @include      */mountyhall/MH_Play/Play_a_Action.php*id=43*
 // ==/UserScript==
 
@@ -932,6 +932,10 @@ function baroufle_saveMode() {
 	window.localStorage.setItem("baroufleur.mode", modeClavier);
 }
 
+function baroufle_escapeUnicode(str) { // https://stackoverflow.com/questions/62449035/escape-all-unicode-non-ascii-characters-in-a-string-with-javascript
+   return [...str].map(c => /^[\x00-\x7F]$/.test(c) ? c : c.split("").map(a => "\\u" + a.charCodeAt().toString(16).padStart(4, "0")).join("")).join("");
+}
+
 function baroufle_saveIntoMH() {
 	let objConfigMH = {
 		melodies: objMelodies,
@@ -951,7 +955,7 @@ function baroufle_saveIntoMH() {
 			return;
 		}
 	};
-	request.send(JSON.stringify(objConfigMH));
+	request.send(baroufle_escapeUnicode(JSON.stringify(objConfigMH)));
 }
 
 //-------------------------------- Code actif --------------------------------//

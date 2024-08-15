@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.18
+// @version     1.4.11.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.18';
+var MZ_latest = '1.4.11.19';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -13027,10 +13027,11 @@ function prepareEnvoi() {
 	// = 1er Handler du bouton d'envoi
 
 	/* Ajout de la colonne des CheckBoxes */
-	let td = insertTdText(getTrollNomNode(0), '');
-	td.width = 5;
+	let td = insertThText(getTrollNomNode(0), '');
+	td.style.width = '17px';
 	for (let i = nbTrolls; i > 0; i--) {
 		td = insertTd(getTrollNomNode(i));
+		td.style.width = '17px';
 		appendCheckBox(td, `envoi${i}`);
 	}
 
@@ -13332,6 +13333,7 @@ function computeActionDistante(dmin, dmax, keltypes, oussa, urlIcon, message) {
 				let iconeAction = document.evaluate(
 					`./descendant::img[@alt='${alt}']`, tr, null, 9, null
 				).singleNodeValue;
+				let tdAction = tr.getElementsByTagName('td')[1];
 				if (iconeAction) {
 					if (iconeAction.title) {
 						iconeAction.title = `${iconeAction.title}\n${thismessage}`;
@@ -13340,15 +13342,14 @@ function computeActionDistante(dmin, dmax, keltypes, oussa, urlIcon, message) {
 					}
 					iconeAction.src = urlIcon;
 				} else {
-					let tdAction = tr.getElementsByTagName('td')[1];
 					let icon = document.createElement('img');
 					icon.src = urlIcon;
 					icon.height = 20;
 					icon.alt = alt;
 					icon.title = thismessage;
 					tdAction.appendChild(icon);
-					tdAction.style.whiteSpace = 'nowrap';
 				}
+				tdAction.style.whiteSpace = 'nowrap';
 			}
 		}
 	}
