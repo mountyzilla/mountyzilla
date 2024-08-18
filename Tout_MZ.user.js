@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.19
+// @version     1.4.11.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.19';
+var MZ_latest = '1.4.11.20';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -5902,7 +5902,8 @@ if (isPage("MH_Play/Play_e_follo")) {
 					this.tresors = [];
 					if (this.eTableTresors.nodeName == 'TABLE') {
 						for (let row of this.eTableTresors.rows) {
-							this.tresors.push(new this.oMZ_tresor(row));
+							let oTresor = new this.oMZ_tresor(row);
+							if (oTresor.id) this.tresors.push(oTresor);
 						}
 					}
 				};
@@ -5947,6 +5948,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 						// logMZ('oMZ_TrSuivant.initTresors oCategorie=' + oCategorie);
 						this.categories.push(oCategorie);
 					}
+					//console.log('[MZ_analyse_page_suivants debug] iniTresor ' + this.nom + ' ' + JSON.stringify(this));
 				};
 
 				for (let eTd of eTr.cells) {
@@ -6190,12 +6192,16 @@ function MZ_upgradeVueSuivants() {
 			}
 			continue;
 		}
-		if (!bTresorUnique) {
-			continue;
-		}	// la suite ne concerne que l'affichage des trésors uniques
 
 		for (let oCategorie of oSuivant.categories) {
-			if (oCategorie.eTableTresors.rows.length != 1) {
+			if (bVueCompressee && oCategorie.eTableTresors.tHead) 
+				oCategorie.eTableTresors.tHead.style.display = 'none';
+			if (!bTresorUnique) {
+				continue;
+			}	// la suite ne concerne que l'affichage des trésors uniques
+			
+			//console.log('[MZ debug] categorie ' + oSuivant.nom + ', nb tr=' + oCategorie.eTableTresors.rows.length + ', nb tresor=' + oCategorie.tresors.length);
+			if (oCategorie.tresors.length != 1) {
 				continue;
 			}
 			oCategorie.eTableCategorie.style.display = 'none';

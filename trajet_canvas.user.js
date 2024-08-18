@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.36
+// @version 2.37
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -2557,136 +2557,41 @@ if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
 
 var MZ_analyse_page_suivants;
 if (isPage("MH_Play/Play_e_follo")) {
-	if (MZ_analyse_page_suivants === undefined) {
-		// Roule 26/07/2021
-		// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
-		// rend un object, par exemple
-		MZ_analyse_page_suivants = {
-			suivants: [],	// objet de type oMZ_TrSuivant
-			eTabSuivant: undefined,
-			init: function() {
-				this.eTabSuivant = document.getElementById('suivants');
-				if (!this.eTabSuivant) {
-					window.console.log("MZ_analyse_page_suivants : pas d'élément 'suivants' dans la page");
-					return;
-				}
-				for (let eTr of this.eTabSuivant.rows) {
-					let oSuivant = new this.oMZ_TrSuivant(eTr);
-					if (oSuivant.oJSON) {
-						this.suivants.push(oSuivant);
-					} else {
-						//window.console.log('MZ_analyse_page_suivants ignore tr ' + eTr.innerHTML);
-					}
-				}
-			},
-			oMZ_getTrTresorSuivant: function (eTrTitre) {
-				let eTr2 = eTrTitre.nextElementSibling;
-				if (!eTr2) return;
-				if (eTr2.tagName != 'TR') return;
-				let eTd = eTr2.cells[0];
-				if (!eTd) return;
-				if (!eTd.classList.contains('mh_tdpage')) return;
-				return eTr2;
-			},
-			oMZ_TrSuivant: function(eTr) {	// ceci est un objet
-				// .eTrTi   : le TR HTML de titre
-				// .eTrTr   : le TR HTML des trésors
-				// .oJSON : l'objet reçu en JSON dans le data-json
-				// .nom   : le nom complet
-				// .categories : tableau d'objets de type oMz_categorieTresorSuivant
-				// .bVide : true si le suivant est vide
-				// .loc : objet avec x, y, n
-				this.eTrTi = eTr;
-				this.eTrTr = MZ_analyse_page_suivants.oMZ_getTrTresorSuivant(eTr);
-				for (var eDiv of this.eTrTi.cells[0].getElementsByTagName('div')) {
-					var sTextDiv = eDiv.textContent.trim();
-					if (eDiv.classList.contains('mh_titre3')) {
-						this.nom = sTextDiv;
-						if (this.loc) break;
-					}
-					var m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
-					if (m && m.length >= 5) {
-						this.loc = new Object();
-						this.loc.x = parseInt(m[2], 10);
-						this.loc.y = parseInt(m[3], 10);
-						this.loc.n = parseInt(m[4], 10);
-						if (this.nom) break;
-					}
-				}
-
-				this.oMZ_categorieSuivant = function(oSuivant, eTable, eDiv) {	// object
-					this.oMZ_tresor = function(row) {	// objet
-						this.id = parseInt(row.id.substring(3, 999));
-					};
-
-					this.eTableCategorie = eTable;
-					this.eDivTresors = eDiv;
-					this.eTableTresors = eDiv.children[0];
-					this.tresors = [];
-					if (this.eTableTresors.nodeName == 'TABLE') for (let row of this.eTableTresors.rows) {
-						this.tresors.push(new this.oMZ_tresor(row));
-					}
-				};
-
-				// lecture des infos des trésors et valorisation de this.categories
-				this.initTresors = function() {
-					var eTd = this.eTrTr.cells[0];
-					if (!eTd) return;
-					var eContenu = eTd.children[0];
-					if (!eContenu || eContenu.tagName == "DIV") {	// no equipement
-						this.bVide = true;
-						return;
-					}
-					// énumération des catégories. 2 éléments pour chaque
-					this.categories = [];
-					for (var i = 0, l = eTd.children.length; i < l; i ++) {
-						var eTable = eTd.children[i];
-						var sTag = eTable.tagName;
-						if (sTag == 'SCRIPT') continue;	// c'est le cas pour le premier suivant qui porte du matos
-						if (sTag == 'STYLE') continue;	// ça pourrait bien se produire aussi...
-						if (sTag != 'TABLE') {	// ce n'est pas normal
-							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément de type non attendu : ' + sTag);
-							continue;
-						}
-						// le suivant doit être une DIV
-						if (++i >= l) {
-							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ", pas d'élément suivant");
-							continue;
-						}
-						var eDiv = eTd.children[i];
-						if (eDiv.tagName != 'DIV') {
-							window.console.log('oMZ_TrSuivant.initTresors id=' + this.oJSON.id + ', élément suivant de type non attendu : ' + eDiv.tagName);
-							continue;
-						}
-						var oCategorie = new this.oMZ_categorieSuivant(this, eTable, eDiv);
-						//window.console.log('oMZ_TrSuivant.initTresors oCategorie=' + oCategorie);
-						this.categories.push(oCategorie);
-					}
-				}
-
-				for (let eTd of eTr.cells) {
-					if (eTd.hasAttribute('data-json')) {
-						//window.console.log('oMZ_TrSuivant json=' + eTd.getAttribute('data-json'));
-						this.oJSON = JSON.parse(eTd.getAttribute('data-json'));
-						break;
-					}
-					for (let eDiv of eTd.getElementsByTagName('div')) {
-						if (eDiv.hasAttribute('data-json')) {
-							//window.console.log('oMZ_TrSuivant json=' + eDiv.getAttribute('data-json'));
-							this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
-						}
-					}
-					if (this.oJSON) break;
-				}
-			},
-			autoTest: function() {
-				window.console.log('MZ_analyse_page_suivants.autoTest : nb suivants=' + this.suivants.length)
-				for (let oSuivant of this.suivants) window.console.log(JSON.stringify(oSuivant));
-			},
-		}
-		MZ_analyse_page_suivants.init();
+	// bizarement, MZ_analyse_page_suivants a l'air de servir à rien dans trajet_canvas/Play_e_follo
+	if (false && MZ_analyse_page_suivants === undefined) {
+		let div = document.createElement('div');
+		div.style.position = 'fixed';
+		div.style.top = '10px';
+		div.style.left = '10px';
+		div.style.backgroundColor = '#FFFFFF';
+		div.style.border = 'solid black 2px';
+		div.id = 'TrajetCanvasErreur';
+		let d2 = document.createElement('div');
+		d2.style.fontSize = '200%';
+		d2.style.color = 'red';
+		d2.appendChild(document.createTextNode('trajet_canvas ne fonctionne plus sans MZ    '));
+		div.appendChild(d2);
+		d2 = document.createElement('div');
+		d2.appendChild(document.createTextNode('Si vous souhaitez utiliser trajet_canvas sans MZ, demandez ici :'));
+		div.appendChild(d2);
+		d2 = document.createElement('div');
+		d2.appendChild(document.createTextNode('×'));
+		d2.style.position = 'absolute';
+		d2.style.top = 0;
+		d2.style.right = '3px';
+		div.appendChild(d2);
+		d2 = document.createElement('a');
+		d2.href = 'https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785';
+		d2.target = 'ForumMH'
+		d2.appendChild(document.createTextNode('https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785'));
+		div.appendChild(d2);
+		div.onclick = function() {
+			let msg = document.getElementById('TrajetCanvasErreur');
+			if (msg) document.body.removeChild(msg);
+		};
+		div.style.cursor = 'pointer';
+		document.body.appendChild(div);
 	}
-	//MZ_analyse_page_suivants.autoTest();
 }
 
 		if (MZ_analyse_page_suivants) {
