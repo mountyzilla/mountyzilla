@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.20
+// @version     1.4.11.21
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.20';
+var MZ_latest = '1.4.11.21';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -5823,20 +5823,20 @@ if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
 var MZ_analyse_page_suivants;
 if (isPage("MH_Play/Play_e_follo")) {
 	if (MZ_analyse_page_suivants === undefined) {
-		// Roule 26/07/2021
 		// Fonction réutilisée dans MZ, dans Trajet_canvas et dans une extension perso ☺
 		// rend un object, par exemple
 		MZ_analyse_page_suivants = {
 			suivants: [],	// objet de type oMZ_TrSuivant
-			eTabSuivant: undefined,
+			eTabSuivant: undefined,	// la div qui contient tous les suivants
 			init: function () {
 				this.eTabSuivant = document.getElementById('suivants');
 				if (!this.eTabSuivant) {
 					logMZ("MZ_analyse_page_suivants : pas d'élément 'suivants' dans la page");
 					return;
 				}
-				for (let eTr of this.eTabSuivant.rows) {
-					let oSuivant = new this.oMZ_TrSuivant(eTr);
+				let nbDiv = this.eTabSuivant.children.length;
+				for (let iDiv = 0; iDiv < nbDiv - 1; iDiv += 2) {
+					let oSuivant = new this.oMZ_TrSuivant(this.eTabSuivant.children[iDiv], this.eTabSuivant.children[iDiv+1]);
 					if (oSuivant.oJSON) {
 						this.suivants.push(oSuivant);
 					} else {
@@ -5844,50 +5844,36 @@ if (isPage("MH_Play/Play_e_follo")) {
 					}
 				}
 			},
-			oMZ_getTrTresorSuivant: function (eTrTitre) {
-				let eTr2 = eTrTitre.nextElementSibling;
-				if (!eTr2) {
-					return;
-				}
-				if (eTr2.tagName != 'TR') {
-					return;
-				}
-				let eTd = eTr2.cells[0];
-				if (!eTd) {
-					return;
-				}
-				if (!eTd.classList.contains('mh_tdpage')) {
-					return;
-				}
-				return eTr2;
-			},
-			oMZ_TrSuivant: function (eTr) {	// ceci est un objet
-				// .eTrTi   : le TR HTML de titre
-				// .eTrTr   : le TR HTML des trésors
+			oMZ_TrSuivant: function (div1, div2) {	// ceci est un objet
+				// .eTi   : l'élément HTML de titre (div en ce moment qui qui sait quand ça changera ?)
+				// .eTr   : l'élément HTML des trésors
 				// .oJSON : l'objet reçu en JSON dans le data-json
 				// .nom   : le nom complet
-				// .categories : tableau d'objets de type oMz_categorieTresorSuivant
-				// .bVide : true si le suivant est vide
 				// .loc : objet avec x, y, n
-				this.eTrTi = eTr;
-				this.eTrTr = MZ_analyse_page_suivants.oMZ_getTrTresorSuivant(eTr);
-				for (let eDiv of this.eTrTi.cells[0].getElementsByTagName('div')) {
+				// les suivants sont chargés par la méthode initTresors()
+				// .categories : tableau d'objets de type oMZ_categorieSuivant
+				// .bVide : true si le suivant est vide
+				this.eTi = div1.getElementsByTagName('div')[0];
+				this.eTr = div2;
+				for (let eDiv of this.eTi.getElementsByTagName('div')) {
 					let sTextDiv = eDiv.textContent.trim();
-					if (eDiv.classList.contains('mh_titre3')) {
+					if ((!this.nom) && eDiv.classList.contains('mh_titre3')) {
 						this.nom = sTextDiv;
-						if (this.loc) {
-							break;
+						//logMZ('oMZ_TrSuivant nom=' + this.nom);
+					}
+					if (!this.loc) {
+						let m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
+						if (m && m.length >= 5) {
+							this.loc = new Object();
+							this.loc.x = parseInt(m[2], 10);
+							this.loc.y = parseInt(m[3], 10);
+							this.loc.n = parseInt(m[4], 10);
+							//logMZ('oMZ_TrSuivant loc=' + JSON.stringify(this.loc));
 						}
 					}
-					let m = sTextDiv.match(/(\d+) *PA *-* *X *= *(-?\d+) \| Y\n* *= *(-?\d+) \| N\n* *= *(-?\d+)/i);
-					if (m && m.length >= 5) {
-						this.loc = new Object();
-						this.loc.x = parseInt(m[2], 10);
-						this.loc.y = parseInt(m[3], 10);
-						this.loc.n = parseInt(m[4], 10);
-						if (this.nom) {
-							break;
-						}
+					if ((!this.oJSON) && eDiv.hasAttribute('data-json')) {
+						//logMZ('oMZ_TrSuivant json=' + eDiv.getAttribute('data-json'));
+						this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
 					}
 				}
 
@@ -5910,19 +5896,15 @@ if (isPage("MH_Play/Play_e_follo")) {
 
 				// lecture des infos des trésors et valorisation de this.categories
 				this.initTresors = function () {
-					let eTd = this.eTrTr.cells[0];
-					if (!eTd) {
-						return;
-					}
-					let eContenu = eTd.children[0];
+					let eContenu = this.eTr.children[0];
 					if (!eContenu || eContenu.tagName == "DIV") {	// no equipement
 						this.bVide = true;
 						return;
 					}
 					// énumération des catégories. 2 éléments pour chaque
 					this.categories = [];
-					for (let i = 0, l = eTd.children.length; i < l; i++) {
-						let eTable = eTd.children[i];
+					for (let i = 0, l = this.eTr.children.length; i < l; i++) {
+						let eTable = this.eTr.children[i];
 						let sTag = eTable.tagName;
 						if (sTag == 'SCRIPT') {
 							continue;
@@ -5939,7 +5921,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 							logMZ(`oMZ_TrSuivant.initTresors id=${this.oJSON.id}, pas d'élément suivant`);
 							continue;
 						}
-						let eDiv = eTd.children[i];
+						let eDiv = this.eTr.children[i];
 						if (eDiv.tagName != 'DIV') {
 							logMZ(`oMZ_TrSuivant.initTresors id=${this.oJSON.id}, élément suivant de type non attendu : ${eDiv.tagName}`);
 							continue;
@@ -5950,23 +5932,6 @@ if (isPage("MH_Play/Play_e_follo")) {
 					}
 					//console.log('[MZ_analyse_page_suivants debug] iniTresor ' + this.nom + ' ' + JSON.stringify(this));
 				};
-
-				for (let eTd of eTr.cells) {
-					if (eTd.hasAttribute('data-json')) {
-						// logMZ('oMZ_TrSuivant json=' + eTd.getAttribute('data-json'));
-						this.oJSON = JSON.parse(eTd.getAttribute('data-json'));
-						break;
-					}
-					for (let eDiv of eTd.getElementsByTagName('div')) {
-						if (eDiv.hasAttribute('data-json')) {
-							// logMZ('oMZ_TrSuivant json=' + eDiv.getAttribute('data-json'));
-							this.oJSON = JSON.parse(eDiv.getAttribute('data-json'));
-						}
-					}
-					if (this.oJSON) {
-						break;
-					}
-				}
 			},
 			autoTest: function () {
 				logMZ(`MZ_analyse_page_suivants.autoTest : nb suivants=${this.suivants.length}`);
@@ -6180,7 +6145,7 @@ function MZ_upgradeVueSuivants() {
 				eOuterDiv.style.display = 'none';
 			}
 
-			oSuivant.eTrTi.cells[0].appendChild(eOuterDiv);
+			oSuivant.eTi.appendChild(eOuterDiv);
 		}
 		if (!bVueCompressee && !bTresorUnique) {
 			continue;
@@ -6188,7 +6153,7 @@ function MZ_upgradeVueSuivants() {
 		oSuivant.initTresors();
 		if (oSuivant.bVide) {	// no equipement
 			if (bVueCompressee) {
-				oSuivant.eTrTr.style.display = 'none';
+				oSuivant.eTr.style.display = 'none';
 			}
 			continue;
 		}
@@ -15142,7 +15107,7 @@ function setBulle(evt) {
 		if (yfenetre > hauteur + offset) {
 			ypage = ypage - (hauteur + offset);
 		}
-		bulleStyle.width = bulleWidth;
+		bulleStyle.width = bulleWidth + 'px';
 		bulleStyle.left = `${xpage}px`;
 		bulleStyle.top = `${ypage}px`;
 		bulleStyle.visibility = 'visible';
@@ -16652,14 +16617,17 @@ function MZ_doSearchCompoTanieres(event) {
 		logMZ('MZ_doSearchCompoTanieres, erreur, pas sur un compo');
 		return;
 	}
-	let url = `/mountyhall/MH_Play/Play_a_Action.php?type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=${oInfo.monstre}&as_Action=Action en cours...`;
+	let url = `/mountyhall/MH_Play/Play_a_Action.php?type=L&id=-5&sub=rech`;
+	let postData = `type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=Gorgone&as_Action=Action+en+cours...`
 	if (!event) {
-		url = `${url}&as_composant_morceau=${oInfo.composant}`;
+		postData = `${postData}&as_composant_morceau=${oInfo.composant}`;
 	}
 	FF_XMLHttpRequest({
-		method: 'GET',
+		method: 'POST',
 		HTML: true,
 		url: url,
+		headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+		data: postData,
 		trace: `recherche en tanière compos ${oInfo.monstre}`,
 		onload: function (responseDetails) {
 			try {
