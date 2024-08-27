@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.37
+// @version 2.38
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -16,6 +16,7 @@
 
 // À faire
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
+//	réécrire en mode objet
 
 //var MY_DEBUG = true;
 
@@ -389,7 +390,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		function declare_css() {
 			if(haut.getElementById("css_gow")) return;
-			css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, div.mh_tdpage { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; white-space: nowrap;}\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
+			css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, #MZ_carte_cartegogo { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; white-space: nowrap;}\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
 
 			var node = document.createElement("style");
 			node.type = "text/css";
@@ -412,10 +413,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		////////////////////////////////////////////////////////////
 		function charge_trajet() {
 			let data_gowap = MY_getValue("TRAJET_"+num_gow);
-			if(!data_gowap) return;
+			if(!data_gowap) {
+				//console.log('trajet_canvas pas de trajet pour suivant ' + num_gow);
+				return;
+			}
 			let param = data_gowap.split("/");
 			//window.console.log('charge_trajet TRAJET_' + num_gow + '=' + MY_getValue("TRAJET_"+num_gow) + ', on va splitter sur /');
-			if(param[0] != "zoom") return;
+			if(param[0] != "zoom") {
+				console.log('trajet_canvas pas zoom en début de trajet pour suivant ' + num_gow);
+				return;
+			}
 			zoom = parseInt(param[1]);
 			if (isNaN(zoom)) zoom = 100;
 			TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
@@ -423,7 +430,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			typ_gow = parseInt(param[3]);
 			if (typ_gow == 2) typ_gow = 3;
 			dla = parseInt(param[5]);
-			var coord = param[7].split(",");
+			let coord = param[7].split(",");
 			etapes_ini = new Array();
 			if(coord.length > 1) {
 				nb_ini = Math.floor(coord.length/3);
@@ -431,7 +438,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					etapes_ini.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2]), coord[3*i].match(/^\d+e$/g) !== null]);
 				}
 			}
-			//if (num_gow == 567387) window.console.log('etapes_ini=' + JSON.stringify(etapes_ini));
 			etapes = new Array();
 			coord = param[9].split(",");
 			if(coord.length > 1) {
@@ -443,7 +449,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			else {
 				choix_ini = true;
 			}
-			//if (num_gow == 567387) window.console.log('etapes=' + JSON.stringify(etapes));
 			if(param.length > 10) {
 				param = param[11].split(",");
 				if(param.length > 1) {
@@ -459,7 +464,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			else {
 				arret = [[-1, etapes.length]];
 			}
-			//if (num_gow == 567387) window.console.log('arret=' + JSON.stringify(arret));
+			//if (num_gow == 5813233) window.console.log('trajet_canvas charge_trajet pour suivant ' + num_gow + '\netapes_ini=' + JSON.stringify(etapes_ini) + '\netapes=' + JSON.stringify(etapes) + '\narret=' + JSON.stringify(arret));
 		}
 		function sauve_trajet() {
 			let param = "zoom/"+zoom+"/typ_gow/"+typ_gow+"/dla/"+dla+"/t_enreg/";
@@ -512,6 +517,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			cadre_liste = bloc("cadre_liste");
 			cadre_liste.className = "mh_tdpage";
+			//cadre_liste.style.display = 'none';
 			cadre_liste.appendChild(bloc("liste_etapes"));
 
 			cadre_liste.appendChild(document.createElement("br"));
@@ -1795,7 +1801,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in suivants) {
 				// suivants[i] : [(0)num_gow, (1)nom, (2)x, (3)y, (4)n, (5)etapes_ini, (6)etapes, (7)arret];
 				//gowap_debug = suivants[i][0];
-				//if (gowap_debug == 567387) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivants[i]));
+				//if (gowap_debug == 5813233) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivants[i]));
 				trace_position([suivants[i][2], suivants[i][3]]);
 				aleatoire = 50+Math.round(155.0*i/nbs);
 				//if(t_prev && suivants[i][6]) {
@@ -1820,7 +1826,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				//}
 				if(deb != fin && suivre) {
 					trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [noeuds[deb]], refaire);
-					//if (gowap_debug == 567387) window.console.log('trace_reel, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
+					//if (gowap_debug == 5813233) window.console.log('trace_reel, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
 					ref = noeuds[deb];
 					deb++;
 					suivre = false;
@@ -1831,7 +1837,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 						points.push(noeuds[j]);
 					}
 					trace_trajet("rgba(0,0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, points, refaire);
-					//if (gowap_debug == 567387) window.console.log('trace_reel, trace2 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify(points));
+					//if (gowap_debug == 5813233) window.console.log('trace_reel, trace2 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify(points));
 					ref = noeuds[fin-1];
 				}
 				if(transition[i][0] != -1 && soi) {
@@ -1842,7 +1848,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					if(dxa >0 || dya >0) {
 						inter = [ref[0]+((dx>0)? dxa:-dxa), ref[1]+((dy>0)? dya:-dya)];
 						trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [inter], refaire);
-						//if (gowap_debug == 567387) window.console.log('trace_reel, trace3 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([inter]));
+						//if (gowap_debug == 5813233) window.console.log('trace_reel, trace3 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([inter]));
 						ref = inter;
 						suivre = true;
 					}
@@ -1856,50 +1862,50 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_sortie(sortie);
 		}
 		function ini_position() {
-			let ligne = document.getElementById('suivants').getElementsByTagName("tbody")[0].childNodes;
 			nbs = 0;
-			for (var i=0;i<ligne.length;i++) {
-				if(ligne[i].nodeName != "TR" || !ligne[i].getElementsByTagName('a')[0]) continue;
-				var cas = ligne[i].getElementsByTagName("td")[0];
-				//if (cas.className == "mh_tdtitre") {
-				if (cas.className == "mh_tdtitre_fo") {// correction par Vapulabehemot (82169) le 10/07/2015
-					if (cas.getElementsByTagName('a')[0].href) {
-						let m = cas.getElementsByTagName('a')[0].href.match(/id_target=(\d+)/);
-						if (m) num_gow = parseInt(m[1], 10);
-					}
-					nom = trim(cas.getElementsByTagName('a')[0].firstChild.nodeValue);
-					point = cas.innerHTML.match(/X[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+Y[ \n\r]+=[ \n\r]+(-?\d+)[ \n\r]+\|[ \n\r]+N =[ \n\r]+(-?\d+)/);	// Roule 21/01/2020 des espaces multiples et un saut de ligne sont apparus entre "Y" et "="
-					arret = new Array();	// Roule' 23/12/2018
-					charge_trajet();
-					suivants[nbs] = [num_gow, nom, parseInt(point[1]), parseInt(point[2]), parseInt(point[3]), etapes_ini, etapes, arret];
-					cas.suivant = suivants[nbs];	// Roule 25/10/2019 pour surlignage position suivant
-					addEvent(cas, "mouseover", surligne_point, true);
-					addEvent(cas, "mouseout", efface_surligne, true);
-					nbs++;
-				}
-			}
+			for (let oSuivant of MZ_analyse_page_suivants.suivants) {
+				arret = new Array();	// Roule' 23/12/2018
+				num_gow = oSuivant.oJSON.id;
+				charge_trajet();
+				//if (oSuivant.oJSON.id == 5813233) window.console.log('trajet_canvas init_potition pour suivant ' + oSuivant.oJSON.id + '\netapes_ini=' + JSON.stringify(etapes_ini) + '\netapes=' + JSON.stringify(etapes) + '\narret=' + JSON.stringify(arret));
+				
+				suivants[nbs] = [
+					oSuivant.oJSON.id,
+					oSuivant.nom,
+					parseInt(oSuivant.loc.x),
+					parseInt(oSuivant.loc.y),
+					parseInt(oSuivant.loc.n),
+					etapes_ini,
+					etapes,
+					arret];
+				oSuivant.eTr.suivant = suivants[nbs];	// Roule 25/10/2019 pour surlignage position suivant
+				oSuivant.eTi.suivant = suivants[nbs];
+				addEvent(oSuivant.eTr, "mouseover", surligne_point, true);
+				addEvent(oSuivant.eTr, "mouseout", efface_surligne, true);
+				addEvent(oSuivant.eTi, "mouseover", surligne_point, true);
+				addEvent(oSuivant.eTi, "mouseout", efface_surligne, true);
+				nbs++;
+			}			
 			if(nbs > 0) {
 				charge_opt_position();
 				declare_css();
-				var trajet = bloc("carte_trajet");
+				let trajet = bloc("carte_trajet");
 
-				var dessin = creer_canvas("trou");
+				let dessin = creer_canvas("trou");
 				dessin.className = "mh_tdpage";
 				addEvent(dessin, "mousemove", afficher_position_suivant, true);
 				addEvent(dessin, "mouseout", function() { cacher_bulle(true) }, true);
 				addEvent(dessin, "mouseover",  function() { cacher_bulle(false) }, true);
 				trajet.appendChild(dessin);
 
-				var div_gliss = creer_glissiere("gow", zoom);
+				let div_gliss = creer_glissiere("gow", zoom);
 				div_gliss.appendChild(aj_opt("opt_enreg", "Trajets enregistrés", t_enreg));
 				addEvent(div_gliss.lastChild.firstChild, "click", alterne_trajet, true);
 				div_gliss.appendChild(aj_opt("opt_prev", "Trajets prévisionnels", t_prev));
 				addEvent(div_gliss.lastChild.firstChild, "click", alterne_trajet, true);
 				trajet.appendChild(div_gliss);
 
-				//parp = document.getElementsByTagName('p');
-				//parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild);
-				var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+				let footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
 				footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
 
 				introspection();
@@ -1907,7 +1913,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				trace_glissiere();
 				echelle_position();
 				creer_bulle_trajet();
-				var dessin = creer_canvas("surligne");	// Roule 25/10/2019 pour surlignage position suivant
+				dessin = creer_canvas("surligne");	// Roule 25/10/2019 pour surlignage position suivant
 				dessin.style.display = 'none';
 				trajet.appendChild(dessin);
 }
@@ -2493,107 +2499,109 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		var cadrable = window.parent && window.parent.frames.length > 1 && window.parent.frames[0].document;
 
-var MZ_analyse_page_ordre_suivant;
-if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
-	if("function" != typeof debugMZ) {
-		function debugMZ(x) {
-			//window.console.log(x);	// activer pour passer en mode debug
+	var MZ_analyse_page_ordre_suivant;
+	if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
+		if("function" != typeof debugMZ) {
+			function debugMZ(x) {
+				//window.console.log(x);	// activer pour passer en mode debug
+			}
 		}
-	}
-	// objet réutilisé dans MZ, dans Trajet_canvas et dans une extension perso ☺
-	MZ_analyse_page_ordre_suivant = {
-		result: { ordres: [] },
-		init: function () {
-			// façon blindée de tester la variable MY_DEBUG
-			debugMZ('start MZ_analyse_page_ordre_suivant.init');
-			try {
-				let e_t_ordres = document.getElementById('t_fo_ordre');
-				for (let ligne of e_t_ordres.getElementsByTagName('caption')) {
-					//debugMZ('MZ_analyse_page_ordre_suivant_log ' + ligne.innerText);
-					for (let div of ligne.getElementsByTagName('div')) {
-						//debugMZ('MZ_analyse_page_ordre_suivant_log div ' + j + ' ' + div.innerText);
-						let tabmatch = div.innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
-						if (tabmatch) {
-							// ID, Nom
-							this.result.id = tabmatch[1].trim();
-							this.result.nom = tabmatch[2].trim();
-						}
-						tabmatch = div.innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
-						if (tabmatch) {
-							// PA, x, y, n
-							this.result.PA = parseInt(tabmatch[1]);
-							this.result.x = parseInt(tabmatch[2]);
-							this.result.y = parseInt(tabmatch[3]);
-							this.result.n = parseInt(tabmatch[4]);
-							// Trajet_canvas a besoin d'un pointeur vers cette div
-							this.result.eltPos = div;
-						}
-					}
-				}
-				for (let ligne of e_t_ordres.rows) {
-					//debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${ligne.textContent}`);
-					for (let td of ligne.getElementsByTagName('td')) {
-						let tabmatch = td.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
-						if (tabmatch) {
-							this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
-						} else {
-							tabmatch = td.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
+		// objet réutilisé dans MZ, dans Trajet_canvas et dans une extension perso ☺
+		MZ_analyse_page_ordre_suivant = {
+			result: { ordres: [] },
+			init: function () {
+				// façon blindée de tester la variable MY_DEBUG
+				debugMZ('start MZ_analyse_page_ordre_suivant.init');
+				try {
+					let e_t_ordres = document.getElementById('t_fo_ordre');
+					for (let ligne of e_t_ordres.getElementsByTagName('caption')) {
+						//debugMZ('MZ_analyse_page_ordre_suivant_log ' + ligne.innerText);
+						for (let div of ligne.getElementsByTagName('div')) {
+							//debugMZ('MZ_analyse_page_ordre_suivant_log div ' + j + ' ' + div.innerText);
+							let tabmatch = div.innerText.match(/(\d+) *\.* *(.*\[.*\].*)$/);
 							if (tabmatch) {
-								this.result.ordres.push({ ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2]) });
-							} else {
-								this.result.ordres.push({ ordre: td.textContent.trim() });
+								// ID, Nom
+								this.result.id = tabmatch[1].trim();
+								this.result.nom = tabmatch[2].trim();
+							}
+							tabmatch = div.innerText.match(/(\d+) *PA.*X = (-?\d+).*Y = (-?\d+).*N = (-?\d+)/i);
+							if (tabmatch) {
+								// PA, x, y, n
+								this.result.PA = parseInt(tabmatch[1]);
+								this.result.x = parseInt(tabmatch[2]);
+								this.result.y = parseInt(tabmatch[3]);
+								this.result.n = parseInt(tabmatch[4]);
+								// Trajet_canvas a besoin d'un pointeur vers cette div
+								this.result.eltPos = div;
 							}
 						}
 					}
+					for (let ligne of e_t_ordres.rows) {
+						//debugMZ(`MZ_analyse_page_ordre_suivant td[0]=${ligne.textContent}`);
+						for (let td of ligne.getElementsByTagName('td')) {
+							let tabmatch = td.textContent.match(/^(.*)X=(-?\d+) \| Y=(-?\d+) \| N=(-?\d+)/i);
+							if (tabmatch) {
+								this.result.ordres.push({ ordre: tabmatch[1].trim(), x: parseInt(tabmatch[2]), y: parseInt(tabmatch[3]), n: parseInt(tabmatch[4]) });
+							} else {
+								tabmatch = td.textContent.match(/^\s*Aller\s*chercher\s*le\s*trésor\s*\[\s*(\d+)\s*\](.*)$/i);
+								if (tabmatch) {
+									this.result.ordres.push({ ordre: tabmatch[0].trim(), idtresor: parseInt(tabmatch[1]), nomtresor: trim(tabmatch[2]) });
+								} else {
+									this.result.ordres.push({ ordre: td.textContent.trim() });
+								}
+							}
+						}
+					}
+					debugMZ(`fin MZ_analyse_page_ordre_suivant ${JSON.stringify(this.result)}`);
+				} catch (exc) {
+					logMZ('Exception dans MZ_analyse_page_ordre_suivant.init', exc);
 				}
-				debugMZ(`fin MZ_analyse_page_ordre_suivant ${JSON.stringify(this.result)}`);
-			} catch (exc) {
-				logMZ('Exception dans MZ_analyse_page_ordre_suivant.init', exc);
 			}
-		}
-	};
-	MZ_analyse_page_ordre_suivant.init();
-}
-
-var MZ_analyse_page_suivants;
-if (isPage("MH_Play/Play_e_follo")) {
-	// bizarement, MZ_analyse_page_suivants a l'air de servir à rien dans trajet_canvas/Play_e_follo
-	if (false && MZ_analyse_page_suivants === undefined) {
-		let div = document.createElement('div');
-		div.style.position = 'fixed';
-		div.style.top = '10px';
-		div.style.left = '10px';
-		div.style.backgroundColor = '#FFFFFF';
-		div.style.border = 'solid black 2px';
-		div.id = 'TrajetCanvasErreur';
-		let d2 = document.createElement('div');
-		d2.style.fontSize = '200%';
-		d2.style.color = 'red';
-		d2.appendChild(document.createTextNode('trajet_canvas ne fonctionne plus sans MZ    '));
-		div.appendChild(d2);
-		d2 = document.createElement('div');
-		d2.appendChild(document.createTextNode('Si vous souhaitez utiliser trajet_canvas sans MZ, demandez ici :'));
-		div.appendChild(d2);
-		d2 = document.createElement('div');
-		d2.appendChild(document.createTextNode('×'));
-		d2.style.position = 'absolute';
-		d2.style.top = 0;
-		d2.style.right = '3px';
-		div.appendChild(d2);
-		d2 = document.createElement('a');
-		d2.href = 'https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785';
-		d2.target = 'ForumMH'
-		d2.appendChild(document.createTextNode('https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785'));
-		div.appendChild(d2);
-		div.onclick = function() {
-			let msg = document.getElementById('TrajetCanvasErreur');
-			if (msg) document.body.removeChild(msg);
 		};
-		div.style.cursor = 'pointer';
-		document.body.appendChild(div);
+		MZ_analyse_page_ordre_suivant.init();
 	}
-}
-
+	
+	var MZ_analyse_page_suivants;
+	if (isPage("MH_Play/Play_e_follo")) {
+		if (MZ_analyse_page_suivants === undefined) {
+			let div = document.createElement('div');
+			div.style.position = 'fixed';
+			div.style.top = '10px';
+			div.style.left = '10px';
+			div.style.backgroundColor = '#FFFFFF';
+			div.style.border = 'solid black 2px';
+			div.id = 'TrajetCanvasErreur';
+			let d2 = document.createElement('div');
+			d2.style.fontSize = '200%';
+			d2.style.color = 'red';
+			let msg = 'trajet_canvas ne fonctionne plus sans MZ    ';
+			windows.console.log(msg);
+			d2.appendChild(document.createTextNode(msg));
+			div.appendChild(d2);
+			d2 = document.createElement('div');
+			d2.appendChild(document.createTextNode('Si vous souhaitez utiliser trajet_canvas sans MZ, demandez ici :'));
+			div.appendChild(d2);
+			d2 = document.createElement('div');
+			d2.appendChild(document.createTextNode('×'));
+			d2.style.position = 'absolute';
+			d2.style.top = 0;
+			d2.style.right = '3px';
+			div.appendChild(d2);
+			d2 = document.createElement('a');
+			d2.href = 'https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785';
+			d2.target = 'ForumMH'
+			d2.appendChild(document.createTextNode('https://www.mountyhall.com/Forum/display_topic_threads.php?TopicID=170785'));
+			div.appendChild(d2);
+			div.onclick = function() {
+				let msg = document.getElementById('TrajetCanvasErreur');
+				if (msg) document.body.removeChild(msg);
+			};
+			div.style.cursor = 'pointer';
+			document.body.appendChild(div);
+		}
+	}
+	//MZ_analyse_page_suivants.autoTest();
+	//console.log('trajet canvas : page=' + page);
 		if (MZ_analyse_page_suivants) {
 			introspection();	// charger soi
 			for (oSuivant of MZ_analyse_page_suivants.suivants) {
@@ -2665,6 +2673,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 		}
 		else if(page == "suivants"){
 			var suivants = new Array();
+			var nbs = 0;
 			var nb_liste = 0;
 			var t_enreg = false, t_prev = false;
 			haut = document;

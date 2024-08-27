@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.21
+// @version     1.4.11.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.21';
+var MZ_latest = '1.4.11.22';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -6076,6 +6076,12 @@ function MZ_upgradeVueSuivants() {
 			e[iRow].style.paddingTop = '0';
 			e[iRow].style.paddingBottom = '0';
 		}
+		for (let oSuivant of MZ_analyse_page_suivants.suivants) {
+			try {
+			oSuivant.eTi.parentNode.style.paddingTop = '0';
+			oSuivant.eTi.parentNode.style.paddingBottom = '0';
+			} catch(e) {console.error(e);}
+		}
 	}
 	for (let oSuivant of MZ_analyse_page_suivants.suivants) {
 		if (nMaxOrdres != undefined) {
@@ -6154,6 +6160,7 @@ function MZ_upgradeVueSuivants() {
 		if (oSuivant.bVide) {	// no equipement
 			if (bVueCompressee) {
 				oSuivant.eTr.style.display = 'none';
+				oSuivant.eTi.style.borderBottom = 'solid 1px #FFFFCC';
 			}
 			continue;
 		}
