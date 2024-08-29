@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.22
+// @version     1.4.11.23
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.22';
+var MZ_latest = '1.4.11.23';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -6557,7 +6557,7 @@ function do_scizEnhanceView() {
 		let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 		let xPathTroll;
 		while (xPathTroll = xPathTrolls.iterateNext()) {
-			scizGlobal.trolls.push({
+			if (xPathTroll.children[2]) scizGlobal.trolls.push({
 				id: parseInt(xPathTroll.children[2].innerHTML),
 				name: xPathTroll.children[3].innerHTML,
 				sciz_desc: null,
@@ -6641,6 +6641,8 @@ function do_scizEnhanceView() {
 							} else {
 								document.evaluate("//*/table[@id='VueTROLL']/tbody", document, null, 0, null).iterateNext().appendChild(troll);
 							}
+							//console.log(`MZ do_scizEnhanceView set tr_trolls[${nbTrolls+1}] `);
+							tr_trolls[++nbTrolls] = troll;
 						}
 					});
 				} catch (exc) {
@@ -6717,12 +6719,12 @@ function do_scizEnhanceView() {
 
 
 	/* SCIZ View - MUSHROOMS */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
-	if (cbx !== '0') {
+    cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
+	let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
+	let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
+	if (cbx !== '0' && !xPathMushrooms) {
 		// Retrieve mushrooms
 		let ids = [];
-		let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
-		let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
 		let xPathMushroom;
 		while (xPathMushroom = xPathMushrooms.iterateNext()) {
 			scizGlobal.mushrooms.push({
@@ -11318,6 +11320,10 @@ function getTrollNomNode(i) {
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
 	}
+	if (!tr_trolls[i]) {
+		logMZ(`getTrollNomNode: pas de Trol n°${i}`);
+		return;
+	}
 	return tr_trolls[i].cells[MZ_cache_col_TrollNOM];
 }
 
@@ -13777,6 +13783,7 @@ function putInfosTrolls(infosTrolls, itName) {
 				tr = createTrollRow(infos, ref_tr);
 				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
 				MZ_tabTrTrollById[idTroll] = tr;
+				tr_trolls[++nbTrolls] = tr;
 			}
 			if (!tr.done) {
 				addTdInfosTroll(infos, tr, itName);
