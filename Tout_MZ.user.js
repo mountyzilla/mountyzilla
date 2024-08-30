@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.23
+// @version     1.4.11.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.23';
+var MZ_latest = '1.4.11.24';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -16632,7 +16632,7 @@ function MZ_doSearchCompoTanieres(event) {
 		return;
 	}
 	let url = `/mountyhall/MH_Play/Play_a_Action.php?type=L&id=-5&sub=rech`;
-	let postData = `type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=Gorgone&as_Action=Action+en+cours...`
+	let postData = `type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=${oInfo.monstre}&as_Action=Action+en+cours...`
 	if (!event) {
 		postData = `${postData}&as_composant_morceau=${oInfo.composant}`;
 	}
