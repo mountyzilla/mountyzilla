@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.24
+// @version     1.4.11.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.24';
+var MZ_latest = '1.4.11.25';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -6182,11 +6182,12 @@ function MZ_upgradeVueSuivants() {
 			try {	// ignore error
 				let e = oCategorie.eTableCategorie.rows[0].cells[3];	// cell containing total weight
 				let s = e.textContent.match(/poids total *\u00A0*: *(.*)$/i)[1];
-				e = oCategorie.eTableTresors.rows[0].cells[4];	// cell for weight of first trésor
+				e = oCategorie.eTableTresors.rows[1].cells[4];	// cell for weight of first trésor
+				//console.log('[MZ debug] categorie ' + oSuivant.nom + ', remppace ' + e.innerHTML  + ' par ' + s);
 				e.innerHTML = s;
 				oCategorie.eTableTresors.rows[0].cells[3].style.whiteSpace = 'nowrap';
 			} catch (exc) {
-				logMZ('Erreur dans copie poids', exc);
+				console.error(exc);
 			}
 		}
 	}
