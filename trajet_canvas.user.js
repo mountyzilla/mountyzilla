@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.38
+// @version 2.39
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -2575,7 +2575,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			d2.style.fontSize = '200%';
 			d2.style.color = 'red';
 			let msg = 'trajet_canvas ne fonctionne plus sans MZ    ';
-			windows.console.log(msg);
+			window.console.log(msg);
 			d2.appendChild(document.createTextNode(msg));
 			div.appendChild(d2);
 			d2 = document.createElement('div');
