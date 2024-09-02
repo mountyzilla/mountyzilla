@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.26
+// @version     1.4.11.27
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.26';
+var MZ_latest = '1.4.11.27';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -1295,7 +1295,8 @@ function appendCheckBoxBlock(node, name, text, checked, onClick) {
 function appendCheckBoxSpan(node, id, onClick, text) {
 	let span = document.createElement('span');
 	span.style.whiteSpace = 'nowrap';
-	appendCheckBox(span, id, false, onClick);
+	let chk = appendCheckBox(span, id, false, onClick);
+	chk.setAttribute('data-role', 'none');	// Dire à JQuery de le laisser tranquile, même en mode smartphone
 	let label = document.createElement('label');
 	appendText(label, text);
 	label.htmlFor = id;
@@ -6664,14 +6665,26 @@ function do_scizEnhanceView() {
 		let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
 		let xPathTreasure;
 		while (xPathTreasure = xPathTreasures.iterateNext()) {
-			scizGlobal.treasures.push({
-				id: parseInt(xPathTreasure.children[2].innerHTML),
-				type: xPathTreasure.children[3].innerHTML,
+			let xPathRef = document.evaluate("//td[@class='ref']", xPathTreasure, null, 0, null).iterateNext();
+			let xPathNom = document.evaluate("//td[@class='nom']", xPathTreasure, null, 0, null).iterateNext();
+			let oTres = {
+				id: parseInt(xPathRef.innerHTML),
+				type: xPathNom.innerHTML,
 				sciz_desc: null,
-				buried: xPathTreasure.children[3].innerHTML.includes('Enterré'),
+				buried: xPathNom.innerHTML.includes('Enterré'),
 				node: xPathTreasure,
-			});
-			ids.push(xPathTreasure.children[2].innerHTML);
+			};
+			if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
+				logMZ("do_scizEnhanceView recup des trésors, échec de l'analyse" 
+					+ "\n" + xPathTreasure.children[0].innerHTML
+					+ "\n" + xPathTreasure.children[1].innerHTML
+					+ "\n" + xPathTreasure.children[2].innerHTML
+					+ "\n" + xPathTreasure.children[3].innerHTML
+					);
+				continue;
+			}
+			scizGlobal.treasures.push(oTres);
+			ids.push(oTres.id);
 			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
 				break;
 			}
@@ -6679,7 +6692,7 @@ function do_scizEnhanceView() {
 
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/treasures';
-		FF_XMLHttpRequest({
+		if (ids.length > 0) FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
@@ -6690,7 +6703,13 @@ function do_scizEnhanceView() {
 						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 						return;
 					}
-					let treasures = JSON.parse(responseDetails.responseText);
+					let treasures;
+					try {
+						treasures = JSON.parse(responseDetails.responseText);
+					} catch (e) {
+						//logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ trésors en échec', e);
+						return;
+					}
 					if (treasures.treasures.length < 1) {
 						// logMZ('DEBUG - MZ/SCIZ - Aucun trésor trouvé dans la base SCIZ...');
 						return;
@@ -6789,6 +6808,17 @@ function do_scizEnhanceView() {
 		let xPathMonster;
 		while (xPathMonster = xPathMonsters.iterateNext()) {
 			let mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
+			if (!mob) mob = xPathMonster.children[3].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);	// cas smartphone
+			if (!mob) {
+				logMZ("do_scizEnhanceView recup des monstres, échec de l'analyse" 
+					+ "\n" + xPathMonster.children[0].innerHTML
+					+ "\n" + xPathMonster.children[1].innerHTML
+					+ "\n" + xPathMonster.children[2].innerHTML
+					+ "\n" + xPathMonster.children[3].innerHTML
+					+ "\n" + xPathMonster.children[4].innerHTML
+					);
+				continue;
+			}
 			scizGlobal.monsters.push({
 				id: parseInt(xPathMonster.children[2].innerHTML),
 				name: mob[1],
