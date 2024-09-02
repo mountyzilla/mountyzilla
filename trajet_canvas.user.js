@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.39
+// @version 2.40
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -244,6 +244,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			choix.type = "checkbox";
 			choix.checked = val;
 			choix.title = desc;
+			choix.setAttribute('data-role', 'none');
 			etik = document.createElement("label");
 			etik.appendChild(document.createTextNode(desc));
 			etik.htmlFor = ref;
@@ -576,8 +577,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			trajet.appendChild(cadre_liste);
 
-			let footer = document.getElementById('footer1');
-			footer.parentNode.insertBefore(trajet,footer);
+			let footer1 = document.getElementById('footer1');
+			if (!footer1) footer1 = document.getElementById('footer');
+			footer1.parentNode.insertBefore(trajet,footer1);
 		}
 		function inserer_fav() {
 			ref = parseInt(document.getElementById("sel_fav").value);
@@ -1906,6 +1908,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				trajet.appendChild(div_gliss);
 
 				let footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+				if (!footer1) footer1 = document.getElementById('footer');
 				footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
 
 				introspection();
@@ -1938,7 +1941,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			//parp = document.getElementsByTagName('p');
 			//parp[parp.length-1].insertBefore(trajet,parp[parp.length-1].firstChild)
-			var footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+			let footer1 = document.getElementById('footer1'); // correction par Vapulabehemot (82169) le 30/08/2013
+			if (!footer1) footer1 = document.getElementById('footer');
 			footer1.parentNode.insertBefore(trajet, footer1); // correction par Vapulabehemot (82169) le 30/08/2013
 
 			trace_glissiere();
