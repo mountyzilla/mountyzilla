@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.27
+// @version     1.4.11.28
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13668,8 +13668,12 @@ function createTrollRow(infos, tr) {
 	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
 	td = appendTd(tr);	// Guilde
 	if (infos.guilde !== undefined) {
+		// La réponse de Bricol'Troll ne contient pas la guilde des Trolls membrent de la cohorte
 		appendText(td, infos.guilde);
-	}
+	} else {
+		// Texte vide pour remplacer le nom de guilde reprit par "ref_tr = tr_trolls[i].cloneNode(true);"
+        	appendText(td, ""); 
+   	 }
 	if (desktopView) {
 		td = appendTd(tr);	// Niveau
 		if (infos.niveau !== undefined) {
