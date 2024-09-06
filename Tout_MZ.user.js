@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.27';
+var MZ_latest = '1.4.11.28';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -13659,13 +13659,13 @@ function createTrollRow(infos, tr) {
 	if (desktopView) {
 		td = appendTd(tr); // actions
 	}
+	td = appendTd(tr);	// PV
+	td = appendTd(tr);	// PA
 	td = appendTd(tr);	// ID
 	appendText(td, infos.id);
 	td = appendTd(tr);	// Nom
 	// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
 	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
-	td = appendTd(tr);	// PV
-	td = appendTd(tr);	// PA
 	td = appendTd(tr);	// Guilde
 	if (infos.guilde !== undefined) {
 		appendText(td, infos.guilde);
