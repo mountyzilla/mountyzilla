@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.28
+// @version     1.4.11.29
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.28';
+var MZ_latest = '1.4.11.29';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -13572,7 +13572,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
 	}
-	let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
+	let tdNom = TR.getElementsByClassName('nom')[0];
 	if (infos.camoufle || infos.invisible) {
 		let title = infos.camoufle ? "Camouflé" : "Invisible";
 		tdNom.appendChild(createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px'));
@@ -13590,7 +13590,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	// logMZ('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
 	// let tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
 	// insertTdElement(tdGuilde,lien);
-	TR.childNodes[MZ_cache_col_TrollGUILDE].appendChild(lien);
+	TR.getElementsByClassName('PV')[0].appendChild(lien);
 
 	/* PAs dispos */
 	let span = document.createElement('span');
@@ -13602,7 +13602,7 @@ function addTdInfosTroll(infos, TR, itName) {
 		span.style.backgroundColor = 'B8EEB8';
 	}
 	// insertTdElement(tdGuilde, span);
-	TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
+	TR.getElementsByClassName('PA')[0].appendChild(span);
 }
 
 function createTrollRowFromRef(infos, ref_tr) {
@@ -13659,13 +13659,13 @@ function createTrollRow(infos, tr) {
 	if (desktopView) {
 		td = appendTd(tr); // actions
 	}
-	td = appendTd(tr);	// PV
-	td = appendTd(tr);	// PA
 	td = appendTd(tr);	// ID
 	appendText(td, infos.id);
 	td = appendTd(tr);	// Nom
 	// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
 	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
+	td = appendTd(tr);	// PV
+	td = appendTd(tr);	// PA
 	td = appendTd(tr);	// Guilde
 	if (infos.guilde !== undefined) {
 		// La réponse de Bricol'Troll ne contient pas la guilde des Trolls membrent de la cohorte
@@ -13719,17 +13719,17 @@ function putInfosTrolls(infosTrolls, itName) {
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
 			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PA', false);
-			td.className = "footable-visible";
+			let td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PA', false);
+			td.className = "PA footable-visible";
 			td.width = 40;
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE], 'PV', false);
-			td.className = "footable-visible";
+			td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PV', false);
+			td.className = "PV footable-visible";
 			td.width = 105;
 			for (let i = nbTrolls; i > 0; i--) {
-				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				td.className = "footable-visible";
-				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				td.className = "footable-visible";
+				let td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
+				td.className = "PA footable-visible";
+				td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
+				td.className = "PV footable-visible";
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
 				if (ref_tr === undefined) {
 					// gath: on construit pour afficher les trolls hors-vue
@@ -13741,6 +13741,7 @@ function putInfosTrolls(infosTrolls, itName) {
 						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
 						let r_a = ref_anchors[j];
 						if (r_a == 'r_pa' || r_a == 'r_pv') {
+							ref_tr.cells[j].innerHTML = "";
 							continue;
 						} else if (r_a == 'r_act') {
 							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
