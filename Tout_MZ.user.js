@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.29
+// @version     1.4.11.30
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.29';
+var MZ_latest = '1.4.11.30';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -13710,6 +13710,7 @@ var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
 	try {
 		let ref_tr = undefined;
+		let balise_tr, balise_td, balise_a;
 		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
 		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
 		isDesktopView() ? ref_anchors.splice(8, 0, 'r_race') : '';
@@ -13736,7 +13737,30 @@ function putInfosTrolls(infosTrolls, itName) {
 					if (tr_trolls[i].innerText.includes('[PNJ]')) {
 						continue;
 					}
-					ref_tr = tr_trolls[i].cloneNode(true);
+
+					let tab_class = ['dist footable-first-visible', 'actions', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'race', 'x', 'y', 'n footable-last-visible'];
+					let tab_equiv = ['r_dist', 'r_actions', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_race', 'r_x', 'r_y', 'r_n'];
+					balise_tr = document.createElement('tr');
+					balise_tr.setAttribute("class", "mh_tdpage");
+					for(let i=0; i<tab_class.length;i++) {
+						balise_td = document.createElement('td');
+						balise_td.setAttribute("class", tab_class[i]);
+						balise_td.setAttribute("style", "display: table-cell;");
+						if (i != 1 && i != 3 && i != 4 && i != 5) balise_td.innerHTML = tab_equiv[i];
+						if (i == 0 || i == 3 || i == 6) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
+						if (i == 3) {
+							balise_a = document.createElement('a');
+							balise_a.setAttribute("href", "javascript:EPV(r_ref)");
+							balise_a.setAttribute("class", "mh_trolls_1");
+							balise_a.innerHTML = tab_equiv[i];
+							balise_td.appendChild(balise_a);
+						}
+						balise_tr.appendChild(balise_td);
+					}
+					ref_tr = true;
+
+					// Code qui provoque un espace noir
+					/*ref_tr = tr_trolls[i].cloneNode(true);
 					for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
 						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
 						let r_a = ref_anchors[j];
@@ -13758,7 +13782,7 @@ function putInfosTrolls(infosTrolls, itName) {
 							let s_txt = ref_tr.cells[j].innerText;
 							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
 						}
-					}
+					}*/
 				}
 			}
 		}
@@ -13816,7 +13840,7 @@ function putInfosTrolls(infosTrolls, itName) {
 						break;
 					}
 				}
-				tr = createTrollRow(infos, ref_tr);
+				tr = createTrollRow(infos, balise_tr);
 				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
 				MZ_tabTrTrollById[idTroll] = tr;
 				tr_trolls[++nbTrolls] = tr;
