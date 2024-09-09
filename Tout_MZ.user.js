@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.30
+// @version     1.4.11.31
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.30';
+var MZ_latest = '1.4.11.31';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -13732,11 +13732,11 @@ function putInfosTrolls(infosTrolls, itName) {
 				td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
 				td.className = "PV footable-visible";
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
-				if (ref_tr === undefined) {
+				//if (ref_tr === undefined) {
 					// gath: on construit pour afficher les trolls hors-vue
-					if (tr_trolls[i].innerText.includes('[PNJ]')) {
-						continue;
-					}
+					//if (tr_trolls[i].innerText.includes('[PNJ]')) {
+					//	continue;
+					//}
 
 					let tab_class = ['dist footable-first-visible', 'actions', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'race', 'x', 'y', 'n footable-last-visible'];
 					let tab_equiv = ['r_dist', 'r_actions', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_race', 'r_x', 'r_y', 'r_n'];
@@ -13757,7 +13757,7 @@ function putInfosTrolls(infosTrolls, itName) {
 						}
 						balise_tr.appendChild(balise_td);
 					}
-					ref_tr = true;
+					//ref_tr = true;
 
 					// Code qui provoque un espace noir
 					/*ref_tr = tr_trolls[i].cloneNode(true);
@@ -13783,7 +13783,7 @@ function putInfosTrolls(infosTrolls, itName) {
 							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
 						}
 					}*/
-				}
+				//}
 			}
 		}
 
