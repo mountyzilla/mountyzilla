@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.31
+// @version     1.4.11.32
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.31';
+var MZ_latest = '1.4.11.32';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -11092,7 +11092,7 @@ var nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
 
 function fetchData(type) {
 	try {
-		let node = document.getElementById(`mh_vue_hidden_${type}`);
+		let node = document.getElementById(`vue2toggle_${type}`);
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
 		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici 
@@ -12003,7 +12003,7 @@ function prepareFiltrage(ref, width) {
 	// = Initialise le filtre 'ref'
 	let tdTitre;
 	try {
-		tdTitre = document.getElementById(ref.toLowerCase()).closest('td');
+		tdTitre = document.getElementById(`vue_toggle_selector_${ref.toLowerCase()}`).parentNode;
 	} catch (exc) {
 		warnMZ(`[prepareFiltrage] Référence filtrage ${ref} non trouvée`, exc);
 		return false;
@@ -12125,7 +12125,7 @@ function ajoutFiltreMenu(tr, id, onChange, liste) {
 
 function ajoutDesFiltres() {
 	/* Monstres */
-	let td = prepareFiltrage('Monstres', 130);
+	let td = prepareFiltrage('Monstres', 150);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du monstre:', 'strMonstres', filtreMonstres);
 		appendText(td, '\u00a0\u00a0\u00a0');
@@ -12140,7 +12140,7 @@ function ajoutDesFiltres() {
 	}
 
 	/* Trõlls */
-	td = prepareFiltrage('Trolls', 50);
+	td = prepareFiltrage('Trolls', 40);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du trõll:', 'strTrolls', filtreTrolls);
 		appendText(td, '\u00a0\u00a0\u00a0');
@@ -12148,13 +12148,13 @@ function ajoutDesFiltres() {
 	}
 
 	/* Trésors */
-	td = prepareFiltrage('Tresors', 55);
+	td = prepareFiltrage('Tresors', 45);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du trésor:', 'strTresors', filtreTresors);
 	}
 
 	/* Lieux */
-	td = prepareFiltrage('Lieux', 40);
+	td = prepareFiltrage('Lieux', 60);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du lieu:', 'strLieux', filtreLieux);
 	}
@@ -12193,7 +12193,7 @@ function insertLevelColumn() {
 	eCol.style.width= '35px';
 	insertBefore(eColGroup.children[3],eCol);
 	*/
-	let monsterStyle = document.getElementById('mh_vue_hidden_monstres').getElementsByTagName('style')[0];
+	let monsterStyle = document.getElementById('vue2toggle_monstres').getElementsByTagName('style')[0];
 	if (monsterStyle) {
 		let styleColNivMZ = `.mh_tdborder.footable#VueMONSTRE th:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {width:35px; text-align:center;}`;
 		styleColNivMZ = `${styleColNivMZ}.mh_tdborder.footable#VueMONSTRE td:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {font-weight:bold;text-align:center;}`;
