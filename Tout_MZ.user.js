@@ -898,7 +898,7 @@ function isDesktopView() {
 
 function replaceLinkMHtoMZ() {
 	let aList = document.getElementsByTagName('a');
-	for(let i = 0; i < aList.length; i++) {
+	for (let i = 0; i < aList.length; i++) {
 		if (aList[i].href.includes('games.mountyhall')) {
 			aList[i].href = 'https://mhp.mh.raistlin.fr/mountyhall/MH_Play/PlayStart2.php';
 			return;
@@ -1438,14 +1438,14 @@ function insertAfter(elt, newElt) {
 }
 
 function addStyleSheet(cssText) {
-  let styleElt = document.createElement('style');
-  styleElt.type = 'text/css';
-  if (styleElt.styleSheet) {
-    styleElt.styleSheet.cssText = cssText;
-  } else {
-    styleElt.appendChild(document.createTextNode(cssText));
-  }
-  document.getElementsByTagName('head')[0].appendChild(styleElt);
+	let styleElt = document.createElement('style');
+	styleElt.type = 'text/css';
+	if (styleElt.styleSheet) {
+		styleElt.styleSheet.cssText = cssText;
+	} else {
+		styleElt.appendChild(document.createTextNode(cssText));
+	}
+	document.getElementsByTagName('head')[0].appendChild(styleElt);
 }
 
 /** x~x Fonctions de mise en forme du texte ---------------------------- */
@@ -4435,7 +4435,7 @@ function initCompteAreboursDLA() {
 	div.insertBefore(cnt, br);
 	div.removeChild(br);
 
-	let diff2color = function(diff) {
+	let diff2color = function (diff) {
 		if (diff > 20 * 60 * 1000) return;
 		if (diff > 5 * 60 * 1000) return 'yellow';
 		else if (diff > 0) return 'orange';
@@ -4443,7 +4443,7 @@ function initCompteAreboursDLA() {
 		else return;
 	}
 
-	let diff2icon = function(diff) {
+	let diff2icon = function (diff) {
 		if (diff > 20 * 60 * 1000) return dlaFavicon;
 		if (diff > 5 * 60 * 1000) return URL_MZimg + 'dangerJaune.ico';
 		else if (diff > 0) return URL_MZimg + 'dangerOrange.ico';
@@ -4451,7 +4451,7 @@ function initCompteAreboursDLA() {
 		else return dlaFavicon;
 	}
 
-	let funcTimer = function() {
+	let funcTimer = function () {
 		let mhDiff = MY_getValue('MZ_rebours_diff_time');
 		if (mhDiff == undefined) mhDiff = 0;
 		let dlaDiff = dlaDate.getTime() - (new Date()).getTime() - mhDiff;
@@ -4485,10 +4485,10 @@ function initCompteAreboursDLA() {
 			}
 		} else if (dlaDiff > -(5 * 60 * 1000) && paRestant !== 0) {
 			// over-dla
-				// affichage compte à rebours en rouge, texte "over-DLA"
-				// titre : (Over-DLA) + compte (minutes uniquement) et icone rouge
-				showCompteARebours = 2;
-				showTitre = 2;
+			// affichage compte à rebours en rouge, texte "over-DLA"
+			// titre : (Over-DLA) + compte (minutes uniquement) et icone rouge
+			showCompteARebours = 2;
+			showTitre = 2;
 		} else {
 			showLienActiver = 1;
 			let dureeNext = parseInt(MY_getValue(`${numTroll}.caracs.dureeProchainTour`), 10);
@@ -4545,7 +4545,7 @@ function initCompteAreboursDLA() {
 		}
 
 		let dlaTime, dlaHours, dlaMinutes, dlaSeconds, dlaCompteReboursTexte;
-        let tFmt = function (t, sfx, padding) { return (padding || t > 0) ? ` ${padding && t < 10 ? '0' : ''}${t}${sfx}` : ''; };
+		let tFmt = function (t, sfx, padding) { return (padding || t > 0) ? ` ${padding && t < 10 ? '0' : ''}${t}${sfx}` : ''; };
 		switch (showCompteARebours) {	// 1 avec gestion couleur, 2 mode Over-DLA, 3 sans couleur
 			case 1:
 			case 3:
@@ -4570,13 +4570,13 @@ function initCompteAreboursDLA() {
 				let ea = appendA(cnt, '/mountyhall/MH_Play/Activate_DLA.php', undefined, 'Vous pouvez réactiver');
 				ea.target = '_top';
 				ea.style.color = '#AEFFAE';
-            }
-			break;
+			}
+				break;
 			case 2: {
 				let newdiv = appendTextDiv(cnt, 'Vous pouvez jouer');
 				newdiv.style.color = '#AEFFAE';
-            }
-			break;
+			}
+				break;
 		}
 
 		let dlaColor = diff2color(dlaDiff);
@@ -5764,7 +5764,7 @@ function do_equipgowap() {
 /** x~x Ordres Gowap --------------------------------------------------- */
 
 var MZ_analyse_page_ordre_suivant;
-var MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
+var MZ_fo_ordres = isPageWithParam({ url: 'MH_Play/Play_a_Action', ids: ['t_fo_ordre'] });
 if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
 	// objet réutilisé dans MZ, dans Trajet_canvas et dans une extension perso ☺
 	MZ_analyse_page_ordre_suivant = {
@@ -5837,7 +5837,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 				}
 				let nbDiv = this.eTabSuivant.children.length;
 				for (let iDiv = 0; iDiv < nbDiv - 1; iDiv += 2) {
-					let oSuivant = new this.oMZ_TrSuivant(this.eTabSuivant.children[iDiv], this.eTabSuivant.children[iDiv+1]);
+					let oSuivant = new this.oMZ_TrSuivant(this.eTabSuivant.children[iDiv], this.eTabSuivant.children[iDiv + 1]);
 					if (oSuivant.oJSON) {
 						this.suivants.push(oSuivant);
 					} else {
@@ -6079,9 +6079,9 @@ function MZ_upgradeVueSuivants() {
 		}
 		for (let oSuivant of MZ_analyse_page_suivants.suivants) {
 			try {
-			oSuivant.eTi.parentNode.style.paddingTop = '0';
-			oSuivant.eTi.parentNode.style.paddingBottom = '0';
-			} catch(e) {console.error(e);}
+				oSuivant.eTi.parentNode.style.paddingTop = '0';
+				oSuivant.eTi.parentNode.style.paddingBottom = '0';
+			} catch (e) { console.error(e); }
 		}
 	}
 	for (let oSuivant of MZ_analyse_page_suivants.suivants) {
@@ -6167,12 +6167,12 @@ function MZ_upgradeVueSuivants() {
 		}
 
 		for (let oCategorie of oSuivant.categories) {
-			if (bVueCompressee && oCategorie.eTableTresors.tHead) 
+			if (bVueCompressee && oCategorie.eTableTresors.tHead)
 				oCategorie.eTableTresors.tHead.style.display = 'none';
 			if (!bTresorUnique) {
 				continue;
 			}	// la suite ne concerne que l'affichage des trésors uniques
-			
+
 			//console.log('[MZ debug] categorie ' + oSuivant.nom + ', nb tr=' + oCategorie.eTableTresors.rows.length + ', nb tresor=' + oCategorie.tresors.length);
 			if (oCategorie.tresors.length != 1) {
 				continue;
@@ -6368,18 +6368,18 @@ function do_highlightSameXYN() {
 			xSel = `td:nth-child(${nthChild + 1})`,
 			ySel = `td:nth-child(${nthChild + 2})`,
 			nSel = `td:nth-child(${nthChild + 3})`;
-		$(`${tableSpec} tr.mh_tdpage`).each(function(i, e) {
-			let tr =  $(e),
+		$(`${tableSpec} tr.mh_tdpage`).each(function (i, e) {
+			let tr = $(e),
 				tdX = tr.find(xSel),
 				tdY = tr.find(ySel),
 				tdN = tr.find(nSel);
 			tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
 			$.each(
 				(MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true') ? [tdX, tdY, tdN] : tr.find("td"),
-				function(i, e) {
+				function (i, e) {
 					let td = $(e);
-					td.on("mouseenter mouseleave", {class:"xyn"}, toggleFn);
-					td.on("click", {class:"xyn-sel"}, toggleFn);
+					td.on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
+					td.on("click", { class: "xyn-sel" }, toggleFn);
 				});
 		});
 	});
@@ -6405,7 +6405,7 @@ var scizGlobal = {
 
 function scizAddCSS() {
 	// SCIZ style
-  addStyleSheet(`
+	addStyleSheet(`
 		.sciz-progress-bar-wrapper {
 			width: 75px;
 			margin-right: 5px;
@@ -6675,12 +6675,12 @@ function do_scizEnhanceView() {
 				node: xPathTreasure,
 			};
 			if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
-				logMZ("do_scizEnhanceView recup des trésors, échec de l'analyse" 
+				logMZ("do_scizEnhanceView recup des trésors, échec de l'analyse"
 					+ "\n" + xPathTreasure.children[0].innerHTML
 					+ "\n" + xPathTreasure.children[1].innerHTML
 					+ "\n" + xPathTreasure.children[2].innerHTML
 					+ "\n" + xPathTreasure.children[3].innerHTML
-					);
+				);
 				continue;
 			}
 			scizGlobal.treasures.push(oTres);
@@ -6739,7 +6739,7 @@ function do_scizEnhanceView() {
 
 
 	/* SCIZ View - MUSHROOMS */
-    cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
+	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
 	let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
 	let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
 	if (cbx !== '0' && !xPathMushrooms) {
@@ -6810,13 +6810,13 @@ function do_scizEnhanceView() {
 			let mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
 			if (!mob) mob = xPathMonster.children[3].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);	// cas smartphone
 			if (!mob) {
-				logMZ("do_scizEnhanceView recup des monstres, échec de l'analyse" 
+				logMZ("do_scizEnhanceView recup des monstres, échec de l'analyse"
 					+ "\n" + xPathMonster.children[0].innerHTML
 					+ "\n" + xPathMonster.children[1].innerHTML
 					+ "\n" + xPathMonster.children[2].innerHTML
 					+ "\n" + xPathMonster.children[3].innerHTML
 					+ "\n" + xPathMonster.children[4].innerHTML
-					);
+				);
 				continue;
 			}
 			scizGlobal.monsters.push({
@@ -7617,7 +7617,7 @@ function validateDestination() {
 	let x = parseInt(MY_getValue(`${numTroll}.position.X`), 10);
 	let y = parseInt(MY_getValue(`${numTroll}.position.Y`), 10);
 	let n = parseInt(MY_getValue(`${numTroll}.position.N`), 10);
-	debugMZ(`validateDestination_log ${x}, ${y}, ${n} DE ${sx*dx}, ${sy*dy}, ${sn*dn}`);
+	debugMZ(`validateDestination_log ${x}, ${y}, ${n} DE ${sx * dx}, ${sy * dy}, ${sn * dn}`);
 	let dmax = Math.max(dx, dy, dn);
 	for (let i = 1; i <= dmax; i++) {
 		let this_dx = Math.min(dx, i);
@@ -7647,10 +7647,10 @@ function changeValidation() {
 	for (form of forms) {
 		for (input of form.getElementsByTagName('input')) {
 			if (input.name != 'depl_2D' && input.name != 'depl_x') continue;
-				form.addEventListener('submit', newsubmitDE, true);
-				debugMZ('changeValidation_log : activation de la détection des TP dangereux')
-				return;
-			}
+			form.addEventListener('submit', newsubmitDE, true);
+			debugMZ('changeValidation_log : activation de la détection des TP dangereux')
+			return;
+		}
 	}
 	console.log('changeValidation_log : pas de form compatible avec la détection des TP dangereux')
 }
@@ -7687,14 +7687,14 @@ function validateTPDestination() {
 			return window.confirm(
 				`La voix de  mini TilK (n°36216) résonne dans votre tête :
 Vous avez ${Math.floor(100 * nbtrous / 144)
-}% de risque de tomber dans un trou de météorite.
+				}% de risque de tomber dans un trou de météorite.
 Êtes-vous sûr de vouloir prendre ce portail ?`
 			);
 		} else if (nbtrous >= 72) {
 			return window.confirm(
 				`La voix de  mini TilK (n°36216) tonne dans votre tête :
 Malheureux, vous avez ${Math.floor(100 * nbtrous / 144)
-}% de risque de tomber dans un trou de météorite !
+				}% de risque de tomber dans un trou de météorite !
 Êtes-vous bien certain de vouloir prendre ce portail ?`
 			);
 		}
@@ -7768,7 +7768,7 @@ function appendTitledTable(node, titre, description) {
 	table.className = ui_table;
 	table.cellSpacing = 1;
 	table.cellPadding = 1;
-	isDesktopView() ? table.style.maxWidth = '98%': table.style.width = '100%';
+	isDesktopView() ? table.style.maxWidth = '98%' : table.style.width = '100%';
 	table.style.marginLeft = 'auto';
 	table.style.marginRight = 'auto';
 	let tbody = document.createElement('tbody');
@@ -7935,7 +7935,7 @@ function afficherJubilaires(listeTrolls) {
 			let eAge = document.createElement('span');
 			eAge.style.fontWeight = 'bold';
 			eAge.style.whiteSpace = 'nowrap';
-			appendText(eAge, `${troll.age} cycle${troll.age > 1 ? 's' : ''} : ` )
+			appendText(eAge, `${troll.age} cycle${troll.age > 1 ? 's' : ''} : `)
 			td.appendChild(eAge);
 		} else {
 			appendText(td, ', ');
@@ -8018,7 +8018,7 @@ function afficherNouvelles(items) {
 	if (tr) insertBefore(footer, p);
 	if (items.length > 0) {
 	}
-	
+
 	// changelog
 	p = document.createElement('p');
 	tbody = appendTitledTable(p, 'Changelog de Mountyzilla');
@@ -11248,9 +11248,9 @@ function getMonstreNomByTR(tr, i = 'undef') {
 		let nom = document.evaluate(
 			"./td/a[starts-with(@href, 'javascript:EMV')]/text()", tr, null, 2, null
 		).stringValue;
-		return nom.replace(/&#(\d+);/g, function(match, dec) {
-				return String.fromCharCode(dec);
-			});
+		return nom.replace(/&#(\d+);/g, function (match, dec) {
+			return String.fromCharCode(dec);
+		});
 	} catch (exc) {
 		avertissement(`[getMonstreNom] Impossible de trouver le monstre ${i}`, null, null, exc);
 	}
@@ -11460,9 +11460,9 @@ function getTresorNom(i) {
 	let tds = tr_tresors[i].childNodes;
 	let l = tds.length;
 	// Utilisation de textContent pour régler le "bug de Pollux"
-	return trim(tr_tresors[i].cells[l - 4].textContent).replace(/&#(\d+);/g, function(match, dec) {
-				return String.fromCharCode(dec);
-			});
+	return trim(tr_tresors[i].cells[l - 4].textContent).replace(/&#(\d+);/g, function (match, dec) {
+		return String.fromCharCode(dec);
+	});
 }
 
 function getTresorPosition(i) {
@@ -12140,7 +12140,7 @@ function ajoutDesFiltres() {
 	}
 
 	/* Trõlls */
-	td = prepareFiltrage('Trolls', 40);
+	td = prepareFiltrage('Trolls', 70);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du trõll:', 'strTrolls', filtreTrolls);
 		appendText(td, '\u00a0\u00a0\u00a0');
@@ -12148,13 +12148,13 @@ function ajoutDesFiltres() {
 	}
 
 	/* Trésors */
-	td = prepareFiltrage('Tresors', 45);
+	td = prepareFiltrage('Tresors', 75);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du trésor:', 'strTresors', filtreTresors);
 	}
 
 	/* Lieux */
-	td = prepareFiltrage('Lieux', 60);
+	td = prepareFiltrage('Lieux', 70);
 	if (td) {
 		ajoutFiltreStr(td, 'Nom du lieu:', 'strLieux', filtreLieux);
 	}
@@ -12411,7 +12411,7 @@ function retrieveCDMs() {
 				}
 
 				// ajouter les styles CSS pour les popup
-		        addStyleSheet(`
+				addStyleSheet(`
 		          .MZtooltip { position: relative;color:red;text-align:center; }
 		          .MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
 		          .MZtooltip:hover .MZtooltiptext {visibility: visible;}
@@ -13672,8 +13672,8 @@ function createTrollRow(infos, tr) {
 		appendText(td, infos.guilde);
 	} else {
 		// Texte vide pour remplacer le nom de guilde reprit par "ref_tr = tr_trolls[i].cloneNode(true);"
-        	appendText(td, ""); 
-   	 }
+		appendText(td, "");
+	}
 	if (desktopView) {
 		td = appendTd(tr);	// Niveau
 		if (infos.niveau !== undefined) {
@@ -13733,56 +13733,56 @@ function putInfosTrolls(infosTrolls, itName) {
 				td.className = "PV footable-visible";
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
 				//if (ref_tr === undefined) {
-					// gath: on construit pour afficher les trolls hors-vue
-					//if (tr_trolls[i].innerText.includes('[PNJ]')) {
-					//	continue;
-					//}
+				// gath: on construit pour afficher les trolls hors-vue
+				//if (tr_trolls[i].innerText.includes('[PNJ]')) {
+				//	continue;
+				//}
 
-					let tab_class = ['dist footable-first-visible', 'actions', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'race', 'x', 'y', 'n footable-last-visible'];
-					let tab_equiv = ['r_dist', 'r_actions', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_race', 'r_x', 'r_y', 'r_n'];
-					balise_tr = document.createElement('tr');
-					balise_tr.setAttribute("class", "mh_tdpage");
-					for(let i=0; i<tab_class.length;i++) {
-						balise_td = document.createElement('td');
-						balise_td.setAttribute("class", tab_class[i]);
-						balise_td.setAttribute("style", "display: table-cell;");
-						if (i != 1 && i != 3 && i != 4 && i != 5) balise_td.innerHTML = tab_equiv[i];
-						if (i == 0 || i == 3 || i == 6) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
-						if (i == 3) {
-							balise_a = document.createElement('a');
-							balise_a.setAttribute("href", "javascript:EPV(r_ref)");
-							balise_a.setAttribute("class", "mh_trolls_1");
-							balise_a.innerHTML = tab_equiv[i];
-							balise_td.appendChild(balise_a);
-						}
-						balise_tr.appendChild(balise_td);
+				let tab_class = ['dist footable-first-visible', 'actions', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'race', 'x', 'y', 'n footable-last-visible'];
+				let tab_equiv = ['r_dist', 'r_actions', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_race', 'r_x', 'r_y', 'r_n'];
+				balise_tr = document.createElement('tr');
+				balise_tr.setAttribute("class", "mh_tdpage");
+				for (let i = 0; i < tab_class.length; i++) {
+					balise_td = document.createElement('td');
+					balise_td.setAttribute("class", tab_class[i]);
+					balise_td.setAttribute("style", "display: table-cell;");
+					if (i != 1 && i != 3 && i != 4 && i != 5) balise_td.innerHTML = tab_equiv[i];
+					if (i == 0 || i == 3 || i == 6) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
+					if (i == 3) {
+						balise_a = document.createElement('a');
+						balise_a.setAttribute("href", "javascript:EPV(r_ref)");
+						balise_a.setAttribute("class", "mh_trolls_1");
+						balise_a.innerHTML = tab_equiv[i];
+						balise_td.appendChild(balise_a);
 					}
-					//ref_tr = true;
+					balise_tr.appendChild(balise_td);
+				}
+				//ref_tr = true;
 
-					// Code qui provoque un espace noir
-					/*ref_tr = tr_trolls[i].cloneNode(true);
-					for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
-						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
-						let r_a = ref_anchors[j];
-						if (r_a == 'r_pa' || r_a == 'r_pv') {
-							ref_tr.cells[j].innerHTML = "";
-							continue;
-						} else if (r_a == 'r_act') {
-							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
-						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
-							Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
-								img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
-							});
-							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							let s_name = tr_trolls[i].cells[j].innerText.trim();
-							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
-						} else {
-							let s_txt = ref_tr.cells[j].innerText;
-							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
-						}
-					}*/
+				// Code qui provoque un espace noir
+				/*ref_tr = tr_trolls[i].cloneNode(true);
+				for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
+					// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
+					let r_a = ref_anchors[j];
+					if (r_a == 'r_pa' || r_a == 'r_pv') {
+						ref_tr.cells[j].innerHTML = "";
+						continue;
+					} else if (r_a == 'r_act') {
+						let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+						ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
+					} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
+						Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
+							img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
+						});
+						let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+						let s_name = tr_trolls[i].cells[j].innerText.trim();
+						r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
+						ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
+					} else {
+						let s_txt = ref_tr.cells[j].innerText;
+						ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
+					}
+				}*/
 				//}
 			}
 		}
@@ -14913,8 +14913,8 @@ function setAccel() {
 			appendTdText(ligneTour, txt_tour);
 		}
 		if (listeBmFat[col]) {
-			txt_fat = (BMfrais || !overDLA && col == 0) ? `${fat}+${listeBmFat[col]}`: `${fat}+${listeBmFat[col]} (?)`;
-			txt_min = (BMfrais || !overDLA && col == 0) ? `${Math.max(1, minppv[1])}'`: `${minppv[1]}' (${minppv[0]}')`;
+			txt_fat = (BMfrais || !overDLA && col == 0) ? `${fat}+${listeBmFat[col]}` : `${fat}+${listeBmFat[col]} (?)`;
+			txt_min = (BMfrais || !overDLA && col == 0) ? `${Math.max(1, minppv[1])}'` : `${minppv[1]}' (${minppv[0]}')`;
 		} else {
 			txt_fat = fat;
 			txt_min = `${minppv[0]}'`;
@@ -14940,7 +14940,7 @@ function setAccel() {
 	if (!BMfrais && bmfatigue) {
 		// si les BM n'ont pas ete rafraichis, on signale:
 		appendText(err_node, 'Attention, ce tableau est probablement faux.' +
-		' Visitez la page des Bonus/Malus pour mettre à jour votre fatigue.', true, 'red');
+			' Visitez la page des Bonus/Malus pour mettre à jour votre fatigue.', true, 'red');
 	}
 }
 
@@ -15953,7 +15953,7 @@ function sortileges(sort) {
 	} else if (sort.indexOf('vue troublée') != -1) {
 		texte = `Portée horizontale : <b>${Math.min(1, vuetotale)}</b> case<br/>` +
 			`Vue : <b>-${Math.floor(vue / 3)}</b>`;
-	} 
+	}
 	//else texte = `Non documenté`;
 	return texte;
 }
@@ -16936,7 +16936,7 @@ function MZdo_hookCompoTanieres() {
 	logMZ('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%', true)));
 */
 
-var MZ_fo_tresor = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_equip']});
+var MZ_fo_tresor = isPageWithParam({ url: 'MH_Play/Play_a_Action', ids: ['t_fo_equip'] });
 try {
 	// Détection de la page à traiter
 	if (isPage("MH_Play/PlayStart2")) {
@@ -16979,9 +16979,9 @@ try {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
 		do_scizOverwriteEvents(); /* SCIZ */
-	} else if (isPageWithParam({url: 'MH_Play/Play_a_Action', params: {type: 'C', id: 12}})) {
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 12 } })) {
 		do_move();
-	} else if (isPageWithParam({url: 'MH_Play/Play_a_Action', params: {type: 'A', id: 1}})) {
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
 		do_move();
 	} else if (isPage("MH_Missions/Mission_Etape")) {
 		do_mission();
