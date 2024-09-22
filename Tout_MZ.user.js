@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.32
+// @version     1.4.11.33
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.32';
+var MZ_latest = '1.4.11.33';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -2909,7 +2909,7 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 		let table = document.createElement('table');
 		let profilActif = isProfilActif();
 		let desk_classes = isPage("MH_Play/Play_vue") ? 'mh_textbox ' : '';
-		let ui_classes = isDesktopView() ? `${desk_classes}mh_tdborder` : 'ui-body-c ui-corner-all';
+		let ui_classes = isDesktopView() ? `${desk_classes}mh_tdborder` : 'ui-body-a ui-corner-all';
 		table.className = ui_classes;
 		table.border = 0;
 		table.cellSpacing = 1;
@@ -2919,7 +2919,7 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 		}
 
 		let thead = document.createElement('thead');
-		let tr = appendTr(thead, 'mh_tdtitre ui-bar-c');
+		let tr = appendTr(thead, 'mh_tdtitre ui-bar-b');
 		let td = appendTdText(tr, `CDM de ${nom} (N° ${id})`, false);
 		td.style.fontWeight = 'bold';
 		if (closeFunct) {
@@ -3643,8 +3643,8 @@ function getAnalyseTactique(id, nom) {
 	if (array == null) {
 		return "";
 	}
-	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-c ui-corner-all';
-	let ui_tr = isDesktopView() ? 'mh_tdtitre' : ' ui-bar-c';
+	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-all';
+	let ui_tr = isDesktopView() ? 'mh_tdtitre' : ' ui-bar-b';
 	let ui_size = isDesktopView() ? '' : ' font-size: smaller;';
 	let str = `<table class='${ui_table}' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203);${ui_size}'><tr class='${ui_tr}'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>`;
 	let i;
@@ -7764,7 +7764,7 @@ function appendTitledTable(node, titre, description) {
 	// Crée les tables contenant les infos (avec titre)
 	let table = document.createElement('table');
 	table.border = 0;
-	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-c ui-corner-all';
+	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-all';
 	table.className = ui_table;
 	table.cellSpacing = 1;
 	table.cellPadding = 1;
@@ -9332,7 +9332,7 @@ function insertMainTable(next) {
 	table.align = 'center';
 	table.cellPadding = 2;
 	table.cellSpacing = 1;
-	table.className = isDesktopView() ? 'mh_tdborder' : 'ui-body-d ui-corner-bottom';
+	table.className = isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-bottom';
 	let tbody = document.createElement('tbody');
 	table.appendChild(tbody);
 
@@ -12992,7 +12992,7 @@ function filtreTrolls() {
 function initPXTroll() {
 	let bulle = document.createElement('div');
 	bulle.id = 'bulleTrollPX';
-	let ui_classes = isDesktopView() ? 'mh_textbox mh_tdtitre' : 'ui-body-c ui-corner-all';
+	let ui_classes = isDesktopView() ? 'mh_textbox mh_tdtitre' : 'ui-body-a ui-corner-all';
 	bulle.className = `${ui_classes}`;
 	bulle.style =
 		'position: absolute;' +
