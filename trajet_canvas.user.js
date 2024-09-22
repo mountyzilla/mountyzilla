@@ -1759,9 +1759,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(window.parent && window.parent.parent && window.parent.parent.frames.length > 1) {
 				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X *= *(-?\d+) *\| *Y *= *(-?\d+) *\| *N *= *(-?\d+)/);
 				if(pos) {
-					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].firstElementChild.innerHTML];
+					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].textContent];
 				} else {
-					window.console.log('introspection: Impossible de trouver la position courante, xyn=' + window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent);
+					window.console.log('trajet_canvas introspection: Impossible de trouver la position courante, xyn=' + window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent);
 				}
 			}
 		}
