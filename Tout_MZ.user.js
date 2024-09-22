@@ -16524,13 +16524,13 @@ function export_trolligion_analyse(oTroll, eChild1) {
 							logMZ(`a sans href ${eChild2.outerHTML}`);
 							break;
 						}
-						m = eChild2.href.match(/EnterPJView\((\d+) *,/);
+						m = eChild2.href.match(/EPV\((\d+) *,/);
 						if (m) {
 							oTroll.id = parseInt(m[1]);
 							oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
 							break;
 						}
-						m = eChild2.href.match(/EnterAllianceView\((\d+) *,/);
+						m = eChild2.href.match(/EAV\((\d+) *,/);
 						if (m) {
 							let idGuilde = parseInt(m[1]);
 							if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
@@ -16546,7 +16546,7 @@ function export_trolligion_analyse(oTroll, eChild1) {
 					case 'img':	// ignore
 						break;
 					case 'div':	// barre de vie
-						if (eChild2.style && eChild2.style.width) {
+						if (eChild2.classList.contains('barre-vie') && eChild2.style && eChild2.style.width) {
 							oTroll.ferveur = eChild2.style.width;
 							break;
 						}
