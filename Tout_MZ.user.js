@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.33
+// @version     1.4.11.34
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.33';
+var MZ_latest = '1.4.11.34';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -11095,7 +11095,7 @@ function fetchData(type) {
 		let node = document.getElementById(`vue2toggle_${type}`);
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
-		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici 
+		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici
 		if (a[1] && a[1].className == 'footable-empty') a = a.splice(1, 1);
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
@@ -13709,7 +13709,6 @@ function createTrollRow(infos, tr) {
 var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
 	try {
-		let ref_tr = undefined;
 		let balise_tr, balise_td, balise_a;
 		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
 		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
@@ -13722,68 +13721,52 @@ function putInfosTrolls(infosTrolls, itName) {
 			}
 			let td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PA', false);
 			td.className = "PA footable-visible";
-			td.width = 40;
+			td.width = 50;
 			td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PV', false);
 			td.className = "PV footable-visible";
-			td.width = 105;
+			td.width = 110;
 			for (let i = nbTrolls; i > 0; i--) {
 				let td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
 				td.className = "PA footable-visible";
 				td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
 				td.className = "PV footable-visible";
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
-				//if (ref_tr === undefined) {
-				// gath: on construit pour afficher les trolls hors-vue
-				//if (tr_trolls[i].innerText.includes('[PNJ]')) {
-				//	continue;
-				//}
-
-				let tab_class = ['dist footable-first-visible', 'actions', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'race', 'x', 'y', 'n footable-last-visible'];
-				let tab_equiv = ['r_dist', 'r_actions', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_race', 'r_x', 'r_y', 'r_n'];
-				balise_tr = document.createElement('tr');
-				balise_tr.setAttribute("class", "mh_tdpage");
-				for (let i = 0; i < tab_class.length; i++) {
-					balise_td = document.createElement('td');
-					balise_td.setAttribute("class", tab_class[i]);
-					balise_td.setAttribute("style", "display: table-cell;");
-					if (i != 1 && i != 3 && i != 4 && i != 5) balise_td.innerHTML = tab_equiv[i];
-					if (i == 0 || i == 3 || i == 6) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
-					if (i == 3) {
-						balise_a = document.createElement('a');
-						balise_a.setAttribute("href", "javascript:EPV(r_ref)");
-						balise_a.setAttribute("class", "mh_trolls_1");
-						balise_a.innerHTML = tab_equiv[i];
-						balise_td.appendChild(balise_a);
-					}
-					balise_tr.appendChild(balise_td);
-				}
-				//ref_tr = true;
-
-				// Code qui provoque un espace noir
-				/*ref_tr = tr_trolls[i].cloneNode(true);
-				for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
-					// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
-					let r_a = ref_anchors[j];
-					if (r_a == 'r_pa' || r_a == 'r_pv') {
-						ref_tr.cells[j].innerHTML = "";
+				if (balise_tr === undefined) {
+					// gath: on construit pour afficher les trolls hors-vue
+					if (tr_trolls[i].innerText.includes('[PNJ]')) {
 						continue;
-					} else if (r_a == 'r_act') {
-						let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-						ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
-					} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
-						Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
-							img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
-						});
-						let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-						let s_name = tr_trolls[i].cells[j].innerText.trim();
-						r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
-						ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
-					} else {
-						let s_txt = ref_tr.cells[j].innerText;
-						ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
 					}
-				}*/
-				//}
+
+					let tab_class = ['dist footable-first-visible', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'x', 'y', 'n footable-last-visible'];
+					let tab_equiv = ['r_dist', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
+					isDesktopView() ? tab_class.splice(1, 0, 'actions') : '';
+					isDesktopView() ? tab_equiv.splice(1, 0, 'r_actions') : '';
+					isDesktopView() ? tab_class.splice(8, 0, 'race') : '';
+					isDesktopView() ? tab_equiv.splice(8, 0, 'r_race') : '';
+					balise_tr = document.createElement('tr');
+					balise_tr.setAttribute("class", "mh_tdpage");
+					for (let i = 0; i < tab_class.length; i++) {
+						balise_td = document.createElement('td');
+						balise_td.setAttribute("class", tab_class[i]);
+						balise_td.setAttribute("style", "display: table-cell;");
+						let idx_n = isDesktopView() ? 3 : 2;
+						let idx_pa = isDesktopView() ? 4 : 3;
+						let idx_pv = isDesktopView() ? 5 : 4;
+						let idx_g = isDesktopView() ? 6 : 5;
+						let skip_equiv = [idx_n, idx_pa, idx_pv]
+						isDesktopView() ? skip_equiv.push(1) : '';
+						if (!skip_equiv.includes(i)) balise_td.innerHTML = tab_equiv[i];
+						if ([0, idx_n, idx_g].includes(i)) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
+						if (i == idx_n) {
+							balise_a = document.createElement('a');
+							balise_a.setAttribute("href", "javascript:EPV(r_ref)");
+							balise_a.setAttribute("class", "mh_trolls_1");
+							balise_a.innerHTML = tab_equiv[i];
+							balise_td.appendChild(balise_a);
+						}
+						balise_tr.appendChild(balise_td);
+					}
+				}
 			}
 		}
 
