@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.19
+// @version 8.8.20
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -670,10 +670,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return idCarte;
 		},
 
-		analyseObjectCallback: function() {	// appelle analyseObject dans le contexte de l'objet
-			oCAPITAN_MH_ROULE.analyseObject();
-		},
-
 		analyseObject: function() {
 			var eSpacer = document.getElementById('spacerMZCapitan');
 			if (eSpacer) return;	// déjà affiché
@@ -770,24 +766,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					parentElt.appendChild(p);
 				}
 			}
-
-			// Roule 25/08/2016 récupération des anciennes recherches (préférences)
-			table = this.PrepareRecupFromPreferences();
-			if(table!=null)
-			{
-				p = document.createElement('p');
-				p.appendChild(table);
-				parentElt.appendChild(p);
-			}
-
-			// Roule 24/08/2016 récupération des anciennes recherches (localStorage)
-			table = this.PrepareRecupFromLocalStorage(idCarte);
-			if(table!=null)
-			{
-				p = document.createElement('p');
-				p.appendChild(table);
-				parentElt.appendChild(p);
-			}
 		},
 
 		afficheMsg: function(msg, color) {
@@ -879,10 +857,11 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			tbody.id = 'MZ_capitan_tbody_liste_memo';
 			table.appendChild(tbody);
 
+			let delRecherche = this.delRecherche.bind(this);	// créer une version de delrecherche qui aura le "bon" this
 			for (var i = 0; i < this.gEssais.length; i++) {
 				var td2 = this.createCase("X = " + this.gEssais[i].x + ", Y = "+this.gEssais[i].y +", N = " + this.gEssais[i].n + " => " + this.gEssais[i].c,tbody,400);
 				var td3 = this.appendTd(td2.parentNode);
-				var bt = this.appendButton(td3, "Supprimer", this.delRecherche);
+				var bt = this.appendButton(td3, "Supprimer", delRecherche);
 				bt.idEssai = i;
 				bt.idCarte = idCarte;
 				td3.setAttribute('class', 'mh_tdpage');
@@ -899,28 +878,28 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return table;
 		},
 
-		delRecherche: function(e) {	// ATTENTION, cette fonction ne tourne pas dans le contexte de l'objet ("this" pointe vers le bouton)
+		delRecherche: function(e) {
 			let idEssaiDel = e.target.idEssai;
 			let idCarte = e.target.idCarte;
-			if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', oCAPITAN_MH_ROULE.gEssais.length=' + oCAPITAN_MH_ROULE.gEssais.length);
-			oCAPITAN_MH_ROULE.gEssais.splice(idEssaiDel, 1);
-			if (oCAPITAN_MH_ROULE.bDebug) window.console.log('delRecherche_log ' + JSON.stringify(oCAPITAN_MH_ROULE.gEssais));
-			let lg = oCAPITAN_MH_ROULE.gEssais.length;
+			if (this.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', this.gEssais.length=' + this.gEssais.length);
+			this.gEssais.splice(idEssaiDel, 1);
+			if (this.bDebug) window.console.log('delRecherche_log ' + JSON.stringify(this.gEssais));
+			let lg = this.gEssais.length;
 			for (let i = 0; i < lg; i++) {
 				let clef = "capitan." + idCarte + ".essai." + i;
-				let oEssai = oCAPITAN_MH_ROULE.gEssais[i];
+				let oEssai = this.gEssais[i];
 				let v = oEssai.x + ';' + oEssai.y + ';' + oEssai.n + ';' + oEssai.c;
-				if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche_log: set ' + clef + '=' + v);
-				oCAPITAN_MH_ROULE.CAPITAN_setValue(clef, v);
+				if (this.bDebug) window.console.log('CAPITAN delRecherche_log: set ' + clef + '=' + v);
+				this.CAPITAN_setValue(clef, v);
 			}
 			for (let i = 0; i < 10; i++) {	// pour être sûr, on  supprime les 10 suivantes
 				let clef = "capitan." + idCarte + ".essai." + (i + lg);
-				if (oCAPITAN_MH_ROULE.bDebug) window.console.log('CAPITAN delRecherche_log: remove ' + clef);
-				oCAPITAN_MH_ROULE.CAPITAN_deleteValue(clef);
+				if (this.bDebug) window.console.log('CAPITAN delRecherche_log: remove ' + clef);
+				this.CAPITAN_deleteValue(clef);
 			}
 			let eP = document.getElementById('MZ_capitan_p_liste_memo');
 			while (eP.lastChild) eP.removeChild(eP.lastChild);
-			let eTable = oCAPITAN_MH_ROULE.prevRecherche(idCarte);
+			let eTable = this.prevRecherche(idCarte);
 			eP.appendChild(eTable);
 			let tbody = document.getElementById('MZ_capitan_tbody_liste_memo');
 			tbody.style.display = '';	// show
@@ -952,246 +931,10 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			td.appendChild(document.createTextNode("Nombre de chiffres bien placés : "));
 			this.addInput(td, "rBP",1);
 			td.appendChild(document.createElement('br'));
-			var button=this.appendButton(td, "Ajouter", this.addRecherche);
+			this.appendButton(td, "Ajouter", this.addRecherche.bind(this));
 
 			p.appendChild(table);
 			parentElt.appendChild(p);
-		},
-
-		// Roule 24/08/2016 récupération des anciennes recherches (localStorage)
-		PrepareRecupFromLocalStorage: function(idCarte) {
-			var table = document.createElement('table');
-			table.setAttribute('class', 'mh_tdborder');
-			table.setAttribute('border', '0');
-			table.setAttribute('cellspacing', '1');
-			table.setAttribute('cellpadding', '4');
-			table.setAttribute('style', 'width: 400px;');
-			table.setAttribute('align', 'center');
-
-			var thead = document.createElement('thead');
-			var tr = this.appendTr(thead, 'mh_tdtitre');
-			var td = this.appendTdText(tr, "Récupération des anciens essais V1.1", true);
-			td.setAttribute('align', 'center');
-			td.title = "C'est ici pour tenter de récupérer les essais faits avec le version 1.1 du script";
-			table.appendChild(thead);
-
-			var tbody = document.createElement('tbody');
-			tbody.idCarte = idCarte;
-			table.appendChild(tbody);
-
-			td.addEventListener("click", this.recupFromLocalStorage, true);
-			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
-			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
-			td.setAttribute('colspan', 2);
-			tbody.setAttribute('style', 'display:none;');
-
-			return table;
-		},
-
-		// Roule 24/08/2016 récupération des anciennes recherches (localStorage)
-		recupFromLocalStorage: function() {
-			var tbody = this.parentNode.parentNode.parentNode.childNodes[1];
-			if (tbody.RecupVisible) return;	// ne pas populer 2 fois
-			var idCarte = parseInt(tbody.idCarte);
-			tbody.setAttribute('style', !tbody.getAttribute('style') || tbody.getAttribute('style') == '' ? 'display:none;' : '');
-			// entrée d'un jeu de test
-			// window.localStorage.setItem('91305.capitan.8600686.essai.1', '1;2;3;4');
-			// window.localStorage.removeItem('91305.capitan.8600686.essai.2');
-			// window.localStorage.removeItem('91305.capitan.8600686.essai.3');
-			// window.localStorage.removeItem('91306.capitan.8600686.essai.1');
-			// window.localStorage.setItem('91305.capitan.8600686.essai.2', '1;2;-4;4');
-			// window.localStorage.setItem('91305.capitan.8600686.essai.3', '1;-2;5;4');
-			// window.localStorage.setItem('91306.capitan.8600686.essai.1', '-1;2;6;4');
-			 // return;
-
-			try {
-				var nLocalStorage = window.localStorage.length;
-				//var td2 = this.createCase('nLocalStorage=' + nLocalStorage,tbody,400);
-				var nAlready = 0;
-				var nRecup = 0;
-				for (var iKey = 0; iKey < nLocalStorage; iKey++) {
-					var k = window.localStorage.key(iKey);
-					//var td2 = this.createCase(k + '=' + v,tbody,400);	// debug
-					var m = k.match(/(\d*)\.capitan\.(\d*)\.essai\.(\d*)/i);
-					if (!m) continue;	// pas une entrée de carte de capitan
-					if (parseInt(m[2]) != idCarte) continue;	// pas la même carte
-
-					var v = window.localStorage.getItem(k);
-					//var nTroll = parseInt(m[1]);	// pas utile
-					//var nEssai = parseInt(m[3]);	// pas utile non plus
-					var bAlready = this.testAlready(idCarte, v);
-					if (bAlready) {	// déjà connu : on compte et on ignore
-						nAlready++;
-						continue;
-					}
-					// extraire x, y, n, nb
-					m = v.match(/([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
-					if (!m) {
-						var td2 = this.createCase('Erreur à la récupération des coordonnées ' + v,tbody,400);
-						continue;
-					}
-					var x = m[1];
-					var y = m[2];
-					var n = m[3];
-					var nbChiffres = m[4];
-					// ajout sous Greasemonkey
-					this.addOneRecherche(idCarte, x, y, n, nbChiffres);
-					nRecup++;
-					var td2 = this.createCase('Recherche récupérée X = '+ x + ', Y = ' + y + ', N = ' + n + ' => ' + nbChiffres,tbody,400);
-				}
-				if (nRecup > 0) {
-					var td2 = this.createCase('Recharger la page (F5) maintenant',tbody,400);
-					td2.style.fontWeight="bold";
-				}
-				if (nAlready > 0) {
-					var td2 = this.createCase(nAlready + ' recherche(s) avaient déjà été récupérée(s)',tbody,400);
-					td2.style.fontStyle="italic";
-				}
-				if (nRecup == 0 && nAlready == 0) {
-					var td2 = this.createCase('Désolé, je n\'ai rien trouvé pour la carte ' + idCarte,tbody,400);
-				}
-			}
-			catch(e)
-			{
-				window.console.log(e);
-			}
-
-			tbody.RecupVisible = true;
-		},
-
-		testAlready: function(idCarte, v) {
-			var v2;
-			// tester si cet essai est déjà connu sous Greasemonkey
-			var bAlready = false;
-			for (var iGM = 0; v2 = this.CAPITAN_getValue("capitan."+idCarte+".essai."+iGM); iGM++) {
-				if (v2 != v) continue;
-				return true;
-				break;
-			}
-			return false;
-		},
-
-		// Roule 25/08/2016 récupération des anciennes recherches (préférences)
-		PrepareRecupFromPreferences: function() {
-			var table = document.createElement('table');
-			table.setAttribute('class', 'mh_tdborder');
-			table.setAttribute('border', '0');
-			table.setAttribute('cellspacing', '1');
-			table.setAttribute('cellpadding', '4');
-			table.setAttribute('style', 'width: 400px;');
-			table.setAttribute('align', 'center');
-
-			var thead = document.createElement('thead');
-			var tr = this.appendTr(thead, 'mh_tdtitre');
-			var td = this.appendTdText(tr, "Récupération des anciens essais V1.0", true);
-			td.setAttribute('align', 'center');
-			td.title = "C'est ici pour entrer manuellement les essais faits avec la version 1.0 du script";
-			table.appendChild(thead);
-
-			var tbody = document.createElement('tbody');
-			table.appendChild(tbody);
-
-			var td2 = this.createCase("Ouvrez un nouvel onglet sous Firefox",tbody);
-			td2.style.textAlign = "left";
-
-			var nbsp = String.fromCharCode(160);
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("(«" + nbsp + "+" + nbsp + "» à droite des onglets)"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("Tapez dans la barre d'adresse «" + nbsp + "about:config" + nbsp + "» et validez"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("C'est promis, vous ferez attention" + nbsp + "!"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("Filtrez ensuite par «" + nbsp + "capitan" + nbsp +"» (zone «" + nbsp + "Rechercher" + nbsp + "» en haut)"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("Ensuite, ligne par ligne,"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("copiez la ligne (bouton de droite de la souris - copier),"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("(Vous pouvez aussi copier *tout* le contenu de pref.js trouvé dans le profil Firefox)"));
-			td2.appendChild(document.createElement('br'));
-			td2.appendChild(document.createTextNode("Collez ci-dessous et Ajouter"));
-			td2.appendChild(document.createElement('br'));
-			var inp = this.addInput(td2, "t", 100);
-			inp.removeAttribute('maxlength');	// permettre de copier tout pref.js
-			inp.style.width = "350px";
-			td2.appendChild(document.createElement('br'));
-			var button=this.appendButton(td2, "Ajouter", this.addV1);
-
-			td.addEventListener("click", this.toggleTableau, true);
-			td.setAttribute('onmouseover', "this.style.cursor = 'pointer'; this.className = 'mh_tdpage';");
-			td.setAttribute('onmouseout', "this.className = 'mh_tdtitre';");
-			td.setAttribute('colspan', 2);
-			tbody.setAttribute('style', 'display:none;');
-
-			return table;
-		},
-
-		addV1: function(eButton) {
-			// pour test mountyhall.91306.capitan.8600686.essai.1;-1;2;6;4
-			try
-			{
-				var td=this.parentNode;
-				var eInput = td.getElementsByTagName("input")[0];
-				var val = eInput.value;
-				var bClear;
-				if (val.match(/user_pref\(/)) {
-					bClear = this.addV1Pref(val);
-				} else {
-					bClear = this.addV1Unitaire(val);
-				}
-				if (bClear)eInput.value = '';	// vider le champ pour que l'utilisateur puisse copier à nouveau
-			}
-			catch(e)
-			{
-				window.alert(e);
-			}
-		},
-
-		addV1Pref: function(val) {
-			// on a tout le contenu de pref.js dans val
-			tabPref = val.split(/\);/);
-			if (this.bDebug) window.console.log('CAPITAN addV1Pref: nb val=' + tabPref.length);
-			//user_pref("mountyzilla.storage.91305.capitan.8600686.essai.1", "1;2;3;4");
-			var nAlready = 0;
-			var nDone = 0;
-			for (var i = 0; i < tabPref.length; i++) {
-				var m = tabPref[i].match(/user_pref\(\"mountyzilla\.storage\.(\d*)\.capitan\.(\d*)\.essai\.(\d*)\", *\"([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)\"/i);
-				if (!m) continue;
-				//window.console.log('CAPITAN addV1Pref: trouvé troll ' + m[1] + ', carte ' + m[2] + ', essai ' + m[3] + ', X = ' + m[4] + ', Y=' + m[5] + ', N=' + m[6] + ' => ' + m[7]);
-				var bAlready = this.testAlready(m[2], m[4] + ';' + m[5] + ';' + m[6] + ';' + m[7]);
-				if (bAlready) {
-					nAlready++;
-				} else {
-					this.addOneRecherche(parseInt(m[2]), m[4], m[5], m[6], m[7]);
-					nDone++;
-				}
-			}
-			alert(nAlready + ' essai(s) ont été ignorés car déjà migrés'
-				+ "\n" + nDone + ' essai(s) viennent d\'être migrés'
-				+ "\nIl faut rafraichir cette page (F5 ou afficher à nouveau l'équipement)");
-			return true;
-		},
-
-		addV1Unitaire: function(val) {
-			if (this.bDebug) window.console.log('CAPITAN addV1Unitaire: val=' + val);
-			var m = val.match(/capitan\.(\d*)\.essai\.(\d*);([+-]?\d*);([+-]?\d*);([+-]?\d*);(\d*)/i);
-			if (!m) {
-				alert("Désolé, impossible de retrouver le numéro de carte, les coordonnées et le nombre de chiffres bien placés");
-				return false;
-			}
-			var bAlready = this.testAlready(m[1], m[3] + ';' + m[4] + ';' + m[5] + ';' + m[6]);
-			if (bAlready) {
-				alert("L'essai pour la carte " + m[1] + "\nX = " + m[3]
-					+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6]
-					+ "\navait DÉJÀ été entré");
-				return true;
-			}
-			this.addOneRecherche(parseInt(m[1]), m[3], m[4], m[5], m[6]);
-			alert("L'essai pour la carte " + m[1] + "\nX = " + m[3]
-				+ ", Y=" + m[4] + ", N=" + m[5] + " => " + m[6]
-				+ "\na bien été enregistré\nIl faudra rafraichir cette page (F5) quand vous aurez terminé");
-			return true;
 		},
 
 		addRecherche: function()
@@ -1223,7 +966,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					window.alert("Erreur : nombre de chiffres bien placés mal formaté.");
 					return;
 				}
-				oCAPITAN_MH_ROULE.addOneRecherche(oCAPITAN_MH_ROULE.getIDCarte(), x, y, n, nbChiffres);
+				this.addOneRecherche(this.getIDCarte(), x, y, n, nbChiffres);
 				window.location.replace(window.location);
 			}
 			catch(e)
@@ -1348,35 +1091,6 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			this.appendText(td, sText, bBold);
 		},
 
-		getEssaiV1_2: function() {
-			if (!GM_getValue) {
-				window.console.log('CAPITAN getEssaiV1_2: pas de GM_getValue');
-				return;
-			}
-			var tabKey = GM_listValues();
-			window.console.log('CAPITAN getEssaiV1_2: nb key : ' + tabKey.length);
-			var r = [];
-			for (var i = 0; i < tabKey.length; i++) {
-				var k = tabKey[i];
-				//window.console.log('CAPITAN getEssaiV1_2: key ' + k + ' => ' + GM_getValue(k));
-				var t = k.split(/\./);
-				if (t[0] !== 'capitan') continue;
-				if (t[2] !== 'essai') continue;
-				var carte = 'carte n°' + t[1];
-				if (r[carte]) r[carte]++;
-				else         r[carte] = 1;
-				//window.console.log('CAPITAN getEssaiV1_2: r[' + carte + ']=' + r[carte]);
-			}
-			return r;
-		},
-
-		showEssai: function() {
-			window.console.log('CAPITAN début this.showEssai CapitanList');
-			var essai1_2 = this.getEssaiV1_2();
-			this.AfficheEssais(essai1_2, 'V1.2');
-			window.console.log('CAPITAN fin this.showEssai CapitanList');
-		},
-
 		CAPITAN_horsGM: false,
 		init: function () {
 			this.CAPITAN_horsGM = false;
@@ -1445,14 +1159,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			else if(this.isPage("MH_Play/Play_equipement.php") || this.isPage("MH_Taniere/TanierePJ_o_Stock.php"))
 			{
 				// Roule, 23/11/2016, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
-				//window.setInterval(this.analyseObject.bind(this), 1000);	// ceci fonctionne mais n'est supporté que par les navigateurs récents
-				window.setInterval(this.analyseObjectCallback, 1000);
+				window.setInterval(this.analyseObject.bind(this), 1000);
 			}
-			// debuging
-			// else if(this.isPage("MH_Play/Options/Play_o_Interface"))
-			// {
-			// 	this.showEssai();
-			// }
 		},
 	}
 	try

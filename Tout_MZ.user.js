@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.34
+// @version     1.4.11.35
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.34';
+var MZ_latest = '1.4.11.35';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -10816,12 +10816,7 @@ function updateNumTroll() {
 
 function updateNomTroll() {
 	let eltId = document.getElementById('id');
-	let eltSpan = eltId.getElementsByTagName('span');
-	if (!eltSpan[0]) {
-		warnMZ(`updateNomTroll_log: nom Troll introuvable`);
-		return null;
-	}
-	let l_nomTroll = eltSpan[0].innerText;
+	let l_nomTroll = eltId.innerText;
 	if (l_nomTroll === 'Troll') {
 		warnMZ(`updateNomTroll_log: nom Troll générique: Troll`);
 		return null;
