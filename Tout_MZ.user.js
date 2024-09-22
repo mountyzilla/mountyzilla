@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.35
+// @version     1.4.11.36
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.35';
+var MZ_latest = '1.4.11.36';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -5885,9 +5885,9 @@ if (isPage("MH_Play/Play_e_follo")) {
 
 					this.eTableCategorie = eTable;
 					this.eDivTresors = eDiv;
-					this.eTableTresors = eDiv.children[0];
+					this.eTableTresors = eDiv.getElementsByTagName('table')[0];
 					this.tresors = [];
-					if (this.eTableTresors.nodeName == 'TABLE') {
+					if (this.eTableTresors) {
 						for (let row of this.eTableTresors.rows) {
 							let oTresor = new this.oMZ_tresor(row);
 							if (oTresor.id) this.tresors.push(oTresor);
