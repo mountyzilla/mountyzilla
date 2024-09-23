@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.2
+// @version     1.5.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.2';
+var MZ_latest = '1.5.3';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -13549,42 +13549,30 @@ function corrigeBricolTrolls(infosTrolls) {
 
 // insère 2 TD avant nextTD avec les infos venant de l'IT
 function addTdInfosTroll(infos, TR, itName) {
-	/* cadre barre PV */
-	let tab = document.createElement('div');
-	tab.title = `${infos.pv}/${infos.pv_max} PV le ${SQLDateToFrenchTime(infos.updated_at)}`;
+	// inject lifebar css MH
+	document.head.innerHTML += '<link rel="stylesheet" href="/mountyhall/libs/lifebar.css">';
 
-	/* barre PV */
-	/* Roule' : sans aucune honte, j'ai copié la méthode de Bricol'Troll
-	<div class="vieContainer"><div style="background-color: #77EE77; width: 90%">&nbsp;</div></div>
-	.vieContainer {
-	background-color: #CCC;
-	width: 50px;
-	height: 6px;
-	border: 1px solid #000;
-	text-align: left;
-	}
-	*/
-	tab.style.width = "100%";
-	tab.style.height = '10px';
-	tab.style.border = '1px solid #000';
-	tab.style.textAlign = 'left';
-	let div2 = document.createElement('div');
+	let pv_cadre = document.createElement('div');
+	pv_cadre.className = "barre";
+	pv_cadre.title = `${infos.pv}/${infos.pv_max} PV le ${SQLDateToFrenchTime(infos.updated_at)}`;
+
+	let pv_jauge = document.createElement('div');
 	let pourcentVie = Math.floor(100 * infos.pv / infos.pv_max);
 	let dateLimite = new Date();
 	dateLimite.setDate(dateLimite.getDate() - 7);
 	if (infos.oUpdatedAt < dateLimite) {
-		div2.style.backgroundColor = '#888888';	// infos de plus de 7 jours => grisé
-		tab.title = `${tab.title}\nLes informations sont trop vieilles pour être fiables`;
+		pv_jauge.className = "barre-vie";
+		pv_jauge.style.backgroundColor = '#C8C8C8';	// infos de plus de 7 jours => grisé
+		pv_cadre.title = `${pv_cadre.title}\nLes informations sont trop vieilles pour être fiables`;
 	} else if (pourcentVie > 66) {
-		div2.style.backgroundColor = '#77EE77';
+		pv_jauge.className = "barre-vie full-vie";
 	} else if (pourcentVie > 33) {
-		div2.style.backgroundColor = '#EEEE77';
+		pv_jauge.className = "barre-vie vie";
 	} else {
-		div2.style.backgroundColor = '#FF0000';
+		pv_jauge.className = "barre-vie vie-critique";
 	}
-	div2.style.width = `${pourcentVie}%`;
-	div2.style.height = '8px';
-	tab.appendChild(div2);
+	pv_jauge.style.width = `${pourcentVie}%`;
+	pv_cadre.appendChild(pv_jauge);
 
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
@@ -13600,7 +13588,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	// let nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
 	lien.href = `${URL_bricol + itName}/index.php`;
 	lien.target = '_blank';
-	lien.appendChild(tab);
+	lien.appendChild(pv_cadre);
 	if (MZ_cache_col_TrollGUILDE === undefined) {
 		MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
 	}
