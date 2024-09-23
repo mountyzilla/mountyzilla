@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.37
+// @version     1.5.0
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.37';
+var MZ_latest = '1.5.0';
 var MZ_changeLog = [
+	"V1.5.x \t\t 23/09/2024",
+	"	- Multiples correctifs suites aux mises à jours MH",
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
 	"V1.4.10 \t\t 05/05/2024",
@@ -7605,7 +7607,7 @@ function validateDestination() {
 	}
 	if (dx === undefined || dy === undefined || dn == undefined ||
 		isNaN(dx) || isNaN(dy) || isNaN(dn)) {
-		window.console.log('validateDestination_log, impossible de retrouver les paramètres de Déplacement');
+		debugMZ('validateDestination_log, impossible de retrouver les paramètres de Déplacement');
 		return true;	// tant pis pour le pauvre Trõll
 	}
 	let sx = dx < 0 ? -1 : +1;
@@ -11111,7 +11113,7 @@ function fetchData(type) {
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
 		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici
-		if (a[1] && a[1].className == 'footable-empty') a = a.splice(1, 1);
+		if (a[a.length-1].className == 'footable-empty') a.pop();
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
@@ -13562,7 +13564,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	text-align: left;
 	}
 	*/
-	tab.style.width = '100px';
+	tab.style.width = "100%";
 	tab.style.height = '10px';
 	tab.style.border = '1px solid #000';
 	tab.style.textAlign = 'left';
@@ -13581,13 +13583,13 @@ function addTdInfosTroll(infos, TR, itName) {
 		div2.style.backgroundColor = '#FF0000';
 	}
 	div2.style.width = `${pourcentVie}%`;
-	div2.style.height = '10px';
+	div2.style.height = '8px';
 	tab.appendChild(div2);
 
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
 	}
-	let tdNom = TR.getElementsByClassName('nom')[0];
+	let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
 	if (infos.camoufle || infos.invisible) {
 		let title = infos.camoufle ? "Camouflé" : "Invisible";
 		tdNom.appendChild(createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px'));
@@ -13605,7 +13607,7 @@ function addTdInfosTroll(infos, TR, itName) {
 	// logMZ('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
 	// let tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
 	// insertTdElement(tdGuilde,lien);
-	TR.getElementsByClassName('PV')[0].appendChild(lien);
+	TR.childNodes[MZ_cache_col_TrollGUILDE].appendChild(lien);
 
 	/* PAs dispos */
 	let span = document.createElement('span');
@@ -13617,7 +13619,7 @@ function addTdInfosTroll(infos, TR, itName) {
 		span.style.backgroundColor = 'B8EEB8';
 	}
 	// insertTdElement(tdGuilde, span);
-	TR.getElementsByClassName('PA')[0].appendChild(span);
+	TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
 }
 
 function createTrollRowFromRef(infos, ref_tr) {
@@ -13679,15 +13681,12 @@ function createTrollRow(infos, tr) {
 	td = appendTd(tr);	// Nom
 	// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
 	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
-	td = appendTd(tr);	// PV
 	td = appendTd(tr);	// PA
+	td = appendTd(tr);	// PV
 	td = appendTd(tr);	// Guilde
 	if (infos.guilde !== undefined) {
 		// La réponse de Bricol'Troll ne contient pas la guilde des Trolls membrent de la cohorte
 		appendText(td, infos.guilde);
-	} else {
-		// Texte vide pour remplacer le nom de guilde reprit par "ref_tr = tr_trolls[i].cloneNode(true);"
-		appendText(td, "");
 	}
 	if (desktopView) {
 		td = appendTd(tr);	// Niveau
@@ -13718,13 +13717,20 @@ function createTrollRow(infos, tr) {
 	if (infos.n !== undefined) {
 		appendText(td, infos.n);
 	}
+
+	// récupération des colonnes cachées par VueContext
+	let ctx_cols = VueContext["tr_trolls"][0].children, tr_cols = tr.children;
+	// debugMZ(`cols == td ? ${cols.length == tr.children.length}`)  // normalement tjrs vrai
+	for (let i = 0; i < ctx_cols.length; i++) {
+		tr_cols[i].setAttribute("style", ctx_cols[i].style.cssText);
+	}
 	return tr;
 }
 
 var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
 	try {
-		let balise_tr, balise_td, balise_a;
+		let ref_tr = undefined;
 		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
 		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
 		isDesktopView() ? ref_anchors.splice(8, 0, 'r_race') : '';
@@ -13732,54 +13738,45 @@ function putInfosTrolls(infosTrolls, itName) {
 			MZ_tabTrTrollById = new Array();
 			// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
 			if (MZ_cache_col_TrollGUILDE === undefined) {
-				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
+				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
 			}
-			let td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PA', false);
-			td.className = "PA footable-visible";
-			td.width = 50;
-			td = insertThText(tr_trolls[0].getElementsByClassName('guilde')[0], 'PV', false);
-			td.className = "PV footable-visible";
-			td.width = 110;
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PV', false);
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PA', false);
 			for (let i = nbTrolls; i > 0; i--) {
-				let td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
-				td.className = "PA footable-visible";
-				td = insertTd(tr_trolls[i].getElementsByClassName('guilde')[0]);
-				td.className = "PV footable-visible";
+				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
-				if (balise_tr === undefined) {
-					// gath: on construit pour afficher les trolls hors-vue
+				if (ref_tr === undefined) {
+					// gath: on construit pour afficher les trolls hors-vue.
+					// Le premier troll visible (hors PNJ) est dupliqué puis
+					// ses attributs sont réinitilisés pour servir de référence
+					// (gère les cas de colonne invisible type 'guilde').
 					if (tr_trolls[i].innerText.includes('[PNJ]')) {
 						continue;
 					}
 
-					let tab_class = ['dist footable-first-visible', 'ref', 'nom', 'PA', 'PV', 'guilde', 'niv', 'x', 'y', 'n footable-last-visible'];
-					let tab_equiv = ['r_dist', 'r_ref', 'r_name', 'r_pa', 'r_pv', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
-					isDesktopView() ? tab_class.splice(1, 0, 'actions') : '';
-					isDesktopView() ? tab_equiv.splice(1, 0, 'r_actions') : '';
-					isDesktopView() ? tab_class.splice(8, 0, 'race') : '';
-					isDesktopView() ? tab_equiv.splice(8, 0, 'r_race') : '';
-					balise_tr = document.createElement('tr');
-					balise_tr.setAttribute("class", "mh_tdpage");
-					for (let i = 0; i < tab_class.length; i++) {
-						balise_td = document.createElement('td');
-						balise_td.setAttribute("class", tab_class[i]);
-						balise_td.setAttribute("style", "display: table-cell;");
-						let idx_n = isDesktopView() ? 3 : 2;
-						let idx_pa = isDesktopView() ? 4 : 3;
-						let idx_pv = isDesktopView() ? 5 : 4;
-						let idx_g = isDesktopView() ? 6 : 5;
-						let skip_equiv = [idx_n, idx_pa, idx_pv]
-						isDesktopView() ? skip_equiv.push(1) : '';
-						if (!skip_equiv.includes(i)) balise_td.innerHTML = tab_equiv[i];
-						if ([0, idx_n, idx_g].includes(i)) balise_td.setAttribute("data-sort-value", tab_equiv[i]);
-						if (i == idx_n) {
-							balise_a = document.createElement('a');
-							balise_a.setAttribute("href", "javascript:EPV(r_ref)");
-							balise_a.setAttribute("class", "mh_trolls_1");
-							balise_a.innerHTML = tab_equiv[i];
-							balise_td.appendChild(balise_a);
+					ref_tr = tr_trolls[i].cloneNode(true);
+					for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
+						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
+						let r_a = ref_anchors[j];
+						if (r_a == 'r_pa' || r_a == 'r_pv') {
+							// ref_tr.cells[j].innerHTML = "";
+							continue;
+						} else if (r_a == 'r_act') {
+							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
+						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
+							Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
+								img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
+							});
+							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
+							let s_name = tr_trolls[i].cells[j].innerText.trim();
+							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
+							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
+						} else {
+							let s_txt = ref_tr.cells[j].innerText;
+							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
 						}
-						balise_tr.appendChild(balise_td);
 					}
 				}
 			}
@@ -13838,7 +13835,7 @@ function putInfosTrolls(infosTrolls, itName) {
 						break;
 					}
 				}
-				tr = createTrollRow(infos, balise_tr);
+				tr = createTrollRow(infos, ref_tr);
 				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
 				MZ_tabTrTrollById[idTroll] = tr;
 				tr_trolls[++nbTrolls] = tr;
@@ -15014,7 +15011,7 @@ function injecteInfosBulles(liste, fonction) {
 		let node = trTalent.getElementsByTagName('a')[0];
 		let jsonInfo = trTalent.getAttribute('data-json');
 		if (!jsonInfo) {
-			printMZ(window.console.log, true, `pas de json dans ${trTalent.innerHTML}`);
+			debugMZ(`pas de json dans ${trTalent.innerHTML}`);
 			continue;
 		}
 		let oInfo = JSON.parse(jsonInfo);
