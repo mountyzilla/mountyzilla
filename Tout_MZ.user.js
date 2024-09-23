@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.0
+// @version     1.5.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.0';
+var MZ_latest = '1.5.1';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -13740,8 +13740,8 @@ function putInfosTrolls(infosTrolls, itName) {
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
 			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PV', false);
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PA', false);
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PA', false);
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PV', false);
 			for (let i = nbTrolls; i > 0; i--) {
 				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
