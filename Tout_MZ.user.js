@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.4.11.36
+// @version     1.4.11.37
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.4.11.36';
+var MZ_latest = '1.4.11.37';
 var MZ_changeLog = [
 	"V1.4.11 \t\t 06/05/2024",
 	"	- Remise en route des Jubilaires",
@@ -559,7 +559,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = true, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -10008,15 +10008,17 @@ function isCouleur(str) {
 function appendChoixCouleur(node, id) {
 	let span = document.createElement('span');
 	span.id = `span${id}`;
-	if (isDetailOn) {
+	// C'est un grand jour quand on utilise un OU Exclusif
+	if (isDetailOn ^ (id.indexOf('All') < 0)) {
 		span.style.display = 'none';
 	}
-	let couleur = id == 'AllAmis' ? '#AAFFAA' : '#FFAAAA';
+	let couleur= '#AAFFAA';
+	if (id.indexOf('nnemi') > 0) couleur = '#FFAAAA';
 	if (diploGuilde[id]) {
-		couleur = diploGuilde[id];
+		couleur = diploGuilde[id].couleur;
 	}
 	appendText(span, ' - Couleur HTML: ');
-	let input = appendTextbox(span, 'text', id, 7, 7, couleur);
+	let input = appendTextbox(span, 'text', id, 8, 7, couleur);
 	input.onkeyup = previewCouleur;
 	input.onchange = previewCouleur;
 	input.onkeyup();
@@ -10035,7 +10037,7 @@ function insertChoixCouleur(node, id) {
 		couleur = diploGuilde[id].couleur;
 	}
 	appendText(span, ' - Couleur HTML: ');
-	let input = appendTextbox(span, 'text', id, 7, 7, couleur);
+	let input = appendTextbox(span, 'text', id, 8, 7, couleur);
 	input.onkeyup = previewCouleur;
 	input.onchange = previewCouleur;
 	input.onkeyup();
@@ -10043,35 +10045,35 @@ function insertChoixCouleur(node, id) {
 }
 
 function setChoixCouleurs() {
-	let nodesAE, nodes;
 	try {
-		// let form = document.getElementsByName('ActionForm')[0];
-		let form = document.getElementById('mhPlay');
-		nodesAE = document.evaluate(
-			// "./table/tbody/tr/td[@class='mh_tdtitre']",
-			"./table/tbody/tr/th[@class='mh_tdtitre']",
-			// "./table/tbody/tr[@class='mh_tdtitre']/th",
-			form, null, 7, null
-		);
-		nodes = document.evaluate(
-			// "./table/tbody/tr/td[not(@class='mh_tdtitre')]",
-			"./table/tbody/tr[not(@class='mh_tdtitre')]/td",
-			form, null, 7, null
-		);
+		let eAmis = document.getElementById('amis');
+		eAmis.parentNode.id = 'insertPt';
+		let i, mode, Mode;
+		for (let e of eAmis.parentNode.children) {
+			switch (e.id) {
+				case 'amis':
+					i = 0;
+					mode = 'ami';
+					Mode = 'Ami';
+					appendChoixCouleur(e, `AllAmis`);
+					continue;
+				case 'ennemis':
+					i = 0;
+					mode = 'ennemi';
+					Mode = 'Ennemi';
+					appendChoixCouleur(e, `AllEnnemis`);
+					continue
+			}
+			if (e.tagName != 'H3') continue;
+			e.id = `td${Mode}s${i}`;
+			appendChoixCouleur(e, `${Mode}s${i}`);
+			i++;
+		}
+		return true;
 	} catch (exc) {
 		logMZ('Diplomatie Structure de la page non reconnue', exc);
 		return false;
 	}
-	nodesAE.snapshotItem(0).parentNode.id = 'insertPt';
-	appendChoixCouleur(nodesAE.snapshotItem(0), 'AllAmis');
-	appendChoixCouleur(nodesAE.snapshotItem(1), 'AllEnnemis');
-	for (let i = 0; i < 5; i++) {
-		nodes.snapshotItem(i).id = `tdAmis${i}`;
-		insertChoixCouleur(nodes.snapshotItem(i).childNodes[1], `Amis${i}`);
-		nodes.snapshotItem(i + 5).id = `tdEnnemis${i}`;
-		insertChoixCouleur(nodes.snapshotItem(i + 5).childNodes[1], `Ennemis${i}`);
-	}
-	return true;
 }
 
 function fetchDiploGuilde() {
@@ -10079,9 +10081,17 @@ function fetchDiploGuilde() {
 		for (let AE in { Amis: 0, Ennemis: 0 }) {
 			for (let i = 0; i < 5; i++) {
 				/* Récup des A/E de rang i */
-				let td = document.getElementById(`td${AE}${i}`);
-				let ligne = td.getElementsByTagName('table')[0].rows;
-				let titre = trim(td.firstChild.textContent);
+				let h3 = document.getElementById(`td${AE}${i}`);
+				let form = h3.nextSibling;
+				while (form && form.nodeType != 1) {
+					form = form.nextSibling;	// sauter le texte
+				}
+				if (!form) {
+					logMZ(`Diplomatie fetchDiploGuilde pour td${AE}${i}, pas d'élément`);
+					continue;
+				}
+				let ligne = form.getElementsByTagName('table')[0].rows;
+				let titre = trim(h3.textContent);
 				// On laisse la gestion des couleurs à setChoixCouleurs:
 				let couleur = document.getElementById(AE + i).value;
 				diploGuilde[AE + i] = {
@@ -10126,12 +10136,22 @@ function toggleMythiques() {
 
 function previewCouleur() {
 	let value = this.value;
+	let eErrMsg = this.nextSibling;
+	if (eErrMsg && !eErrMsg.classList.contains('MZ_error')) eErrMsg = undefined;
 	if (isCouleur(value)) {
 		this.style.backgroundColor = value;
-		this.title = '';
+		if (eErrMsg) eErrMsg.parentNode.removeChild(eErrMsg);
 	} else {
 		this.style.backgroundColor = '';
-		this.title = 'Entrez une couleur au format #789ABC pour prévisualiser';
+		if (!eErrMsg) {
+			eErrMsg = document.createElement('span');
+			eErrMsg.appendChild(document.createTextNode('Entrez une couleur au format #789ABC'));
+			eErrMsg.style.color = 'red';
+			eErrMsg.style.marginLeft = '5px';
+			eErrMsg.style.fontSize = 'small';
+			eErrMsg.className = 'MZ_error';
+			this.parentNode.insertBefore(eErrMsg, this.nextSibling);
+		}
 	}
 }
 
@@ -10159,7 +10179,7 @@ function ajouteChamp(type, num, couleur, descr) {
 	appendTextbox(td, 'text', `num${nb}`, 6, 15, num);
 	td = appendTd(tr);
 	appendText(td, ' couleur HTML:');
-	let input = appendTextbox(td, 'text', `couleur${nb}`, 7, 7, couleur);
+	let input = appendTextbox(td, 'text', `couleur${nb}`, 8, 7, couleur);
 	input.onkeyup = previewCouleur;
 	input.onchange = previewCouleur;
 	input.onkeyup();
@@ -16934,7 +16954,8 @@ try {
 		do_cdmbot();
 	} else if (isPage("MH_Play/Play_a_TalentResult")) {
 		do_cdmcomp();
-	} else if (isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
+	//} else if (isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -6, sub: 'diplomatie' } })) {
 		do_diplo();
 	} else if (isPage("MH_Play/Play_equipement")) {
 		do_equip();
@@ -16998,6 +17019,8 @@ try {
 		do_trolligion();
 	} else if (isPage('View/TresorHistory.php')) {
 		MZ_CompoTanieresPrepare();
+	} else if (MY_DEBUG) {
+		debugMZ(`page non traitée ${window.location}`);
 	}
 	if (isPage('MH_Play/Play_equipement.php') ||
 		isPage('MH_Play/Play_e_follo.php') ||
