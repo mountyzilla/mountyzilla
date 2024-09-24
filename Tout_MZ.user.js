@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.3
+// @version     1.5.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.3';
+var MZ_latest = '1.5.4';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -5843,7 +5843,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 					if (oSuivant.oJSON) {
 						this.suivants.push(oSuivant);
 					} else {
-						// logMZ('MZ_analyse_page_suivants ignore tr ' + eTr.innerHTML);
+						// logMZ('MZ_analyse_page_suivants ignore ' + this.eTabSuivant.children[iDiv].innerText);
 					}
 				}
 			},
@@ -5858,9 +5858,12 @@ if (isPage("MH_Play/Play_e_follo")) {
 				// .bVide : true si le suivant est vide
 				this.eTi = div1.getElementsByTagName('div')[0];
 				this.eTr = div2;
-				for (let eDiv of this.eTi.getElementsByTagName('div')) {
+				let elts = [];
+				for (let eDiv of this.eTi.getElementsByTagName('div')) elts.push(eDiv);
+				for (let eDiv of this.eTi.getElementsByTagName('h3')) elts.push(eDiv);
+				for (let eDiv of elts) {
 					let sTextDiv = eDiv.textContent.trim();
-					if ((!this.nom) && eDiv.classList.contains('mh_titre3')) {
+					if ((!this.nom) && (eDiv.classList.contains('mh_titre3') || eDiv.tagName == 'H3')) {
 						this.nom = sTextDiv;
 						//logMZ('oMZ_TrSuivant nom=' + this.nom);
 					}
@@ -6083,6 +6086,10 @@ function MZ_upgradeVueSuivants() {
 			try {
 				oSuivant.eTi.parentNode.style.paddingTop = '0';
 				oSuivant.eTi.parentNode.style.paddingBottom = '0';
+			} catch (e) { console.error(e); }
+			try {
+				for (let h3 of oSuivant.eTi.getElementsByTagName('h3'))
+					h3.style.marginTop = '1px';
 			} catch (e) { console.error(e); }
 		}
 	}
