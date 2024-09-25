@@ -10021,7 +10021,7 @@ function appendChoixCouleur(node, id) {
 	if (isDetailOn ^ (id.indexOf('All') < 0)) {
 		span.style.display = 'none';
 	}
-	let couleur= '#AAFFAA';
+	let couleur = '#AAFFAA';
 	if (id.indexOf('nnemi') > 0) couleur = '#FFAAAA';
 	if (diploGuilde[id]) {
 		couleur = diploGuilde[id].couleur;
@@ -11120,7 +11120,7 @@ function fetchData(type) {
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
 		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici
-		if (a[a.length-1].className == 'footable-empty') a.pop();
+		if (a[a.length - 1].className == 'footable-empty') a.pop();
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
@@ -13735,8 +13735,8 @@ function putInfosTrolls(infosTrolls, itName) {
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
 			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PA', false);
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PV', false);
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PA', false);
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PV', false);
 			for (let i = nbTrolls; i > 0; i--) {
 				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
@@ -16912,6 +16912,100 @@ function MZdo_hookCompoTanieres() {
 	document.body.onkeypress = hookSetCallback;
 }
 
+function Alerte_nouveau_message(taille = 48, interval = 15000) {
+	/*
+	 * Pour chaque page contenant un titre (id 'MHTitreH2'), on interroge la page "messagerie" pour savoir s'il y a
+	 * au moins un message non lu (classe 'new'). On affiche une chauve souris à droite du titre.
+	 *
+	 */
+	try {
+		let banner = document.getElementById('MHTitreH2');
+		let chauve_souris_statut = MY_getValue(`${numTroll}.chauve_souris`);
+		if (!chauve_souris_statut) { MY_setValue(`${numTroll}.chauve_souris`, true); }
+		// Pour limiter le nombre d'appel, uniquement s'il y un titre sur la page.
+		if (banner && chauve_souris_statut == true) {
+			// On démarre le timer pour contrôler l'arrivée de nouveaux messages
+			chauve_souris_timer = window.setTimeout(Alerte_nouveau_message, interval)
+			// https://developer.mozilla.org/fr/docs/Web/API/Fetch_API/Using_Fetch
+			// https://developer.mozilla.org/fr/docs/Web/API/Response
+			// Contrôle des nouveaux messages uniquement sur la première page (1 à 50 messages selaon le pramétrage du joueur)
+			fetch("https://games.mountyhall.com/mountyhall/Messagerie/MH_Messagerie.php?cat=1")
+				.then(function (response) {
+					return response.text();
+				})
+				.then(function (text) {
+					// S'il y a un message non lu et pas de chauve, on l'joute
+					// S'il y a un message non lu et une chauve-souris, on ne fait rien
+					let chauve_souris = document.getElementById('chauve_souris');
+					if (text.includes("new")) {
+						if (!chauve_souris) {
+							chauve_souris = document.createElement('img');
+							chauve_souris.id = 'chauve_souris'
+							chauve_souris.src = 'https://img1.picmix.com/output/stamp/normal/7/1/1/1/1561117_d96d4.gif';
+							chauve_souris.alt = 'Vous avez un parchemin à lire';
+							chauve_souris.title = 'Au moins une chauve-souris vous a déposé un parchemin.';
+							chauve_souris.height = taille;
+							banner.appendChild(chauve_souris);
+						}
+						// Si pas de nouveau message, on retire la chauve-souris si elle est présente
+					} else {
+						if (chauve_souris) {
+							chauve_souris.remove();
+						}
+					}
+				});
+		}
+	} catch (exc) {
+		logMZ(`${window.location.pathname}`, exc);
+	}
+}
+
+function Ajout_Personnalisation_Alerte_message_par_Chauve_souris() {
+	try {
+		let ligne_tab_bouton = false;
+		// Contiendra la ligne du tableau avec tous les boutons d'actions
+		// Rrépondre, Répondre à tous...
+		let list_forms = document.getElementsByTagName('form');
+		// Recherche de ladite ligne
+		for (i = 0; i < list_forms.length; i++) {
+			//console.debug(list_forms[i]);
+			let lignes_tab_bouton = list_forms[i].getElementsByTagName('td');
+			for (j = 0; j < lignes_tab_bouton.length; j++) {
+				if (lignes_tab_bouton[j].innerHTML.includes('Marquer comme lus')) {
+					ligne_tab_bouton = lignes_tab_bouton[j];
+					break;
+				}
+			}
+		}
+		// Si la ligne est trouvée
+		if (ligne_tab_bouton) {
+			let label_checkbox = document.createElement('label');
+			label_checkbox.innerText = 'Alerte par chauve-souris';
+			let bouton_checkbox = document.createElement('input');
+			bouton_checkbox.setAttribute("type", "checkbox");
+			bouton_checkbox.setAttribute("id", 'chauve_souris_checkbox');
+			bouton_checkbox.setAttribute("title", "Affiche une chauve-souris à côté du titre de la page lorsqu'il y a des messages non lus");
+			bouton_checkbox.addEventListener('change', Save_Statut_Ajout_Personnalisation_Alerte_message_par_Chauve_souris, true);
+			label_checkbox.appendChild(bouton_checkbox);
+			ligne_tab_bouton.appendChild(label_checkbox);
+			// Actualise l'état de la checkbox en fonction de la valeur stockée
+			MY_getValue(`${numTroll}.chauve_souris`) == 1 ? document.getElementById("chauve_souris_checkbox").checked = true : false;
+		}
+
+	} catch (exc) {
+		logMZ(`${window.location.pathname}`, exc);
+	}
+}
+
+function Save_Statut_Ajout_Personnalisation_Alerte_message_par_Chauve_souris() {
+	try {
+		//console.debug(document.getElementById("chauve_souris_checkbox").checked);
+		MY_setValue(`${numTroll}.chauve_souris`, document.getElementById("chauve_souris_checkbox").checked);
+	} catch (exc) {
+		logMZ(`${window.location.pathname}`, exc);
+	}
+}
+
 /* --------------------------------- Dispatch --------------------------------- */
 
 // chargerScriptDev("libs");
@@ -16928,6 +17022,11 @@ function MZdo_hookCompoTanieres() {
 
 var MZ_fo_tresor = isPageWithParam({ url: 'MH_Play/Play_a_Action', ids: ['t_fo_equip'] });
 try {
+
+	if (!isPage("Messagerie/MH_Messagerie")) {
+		Alerte_nouveau_message();
+	}
+
 	// Détection de la page à traiter
 	if (isPage("MH_Play/PlayStart2")) {
 		replaceLinkMHtoMZ();
@@ -16942,11 +17041,13 @@ try {
 				do_cdmcomp();
 				break;
 		}
+	} else if (isPage("Messagerie/MH_Messagerie")) {
+		Ajout_Personnalisation_Alerte_message_par_Chauve_souris();
 	} else if (isPage("Messagerie/ViewMessageBot")) {
 		do_cdmbot();
 	} else if (isPage("MH_Play/Play_a_TalentResult")) {
 		do_cdmcomp();
-	//} else if (isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
+		//} else if (isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -6, sub: 'diplomatie' } })) {
 		do_diplo();
 	} else if (isPage("MH_Play/Play_equipement")) {
