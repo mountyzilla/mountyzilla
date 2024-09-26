@@ -13584,8 +13584,8 @@ function addTdInfosTroll(infos, TR, itName) {
 	if (MZ_cache_col_TrollNOM === undefined) {
 		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
 	}
-	let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
 	if (infos.camoufle || infos.invisible) {
+		let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
 		let title = infos.camoufle ? "Camouflé" : "Invisible";
 		tdNom.appendChild(createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px'));
 	}
@@ -13718,9 +13718,29 @@ function createTrollRow(infos, tr) {
 	// debugMZ(`cols == td ? ${cols.length == tr.children.length}`)  // normalement tjrs vrai
 	for (let i = 0; i < ctx_cols.length; i++) {
 		tr_cols[i].setAttribute("style", ctx_cols[i].style.cssText);
+		ctx_cols[i].getAttribute('class') ? tr_cols[i].setAttribute("class", ctx_cols[i].getAttribute('class')) : '';
+		ctx_cols[i].getAttribute('data-type') ? tr_cols[i].setAttribute("data-type", ctx_cols[i].getAttribute('data-type')) : '';
 	}
 	return tr;
 }
+
+var observer = new MutationObserver(function (mutations) {
+	mutations.forEach(function (mutationRecord) {
+		let class_contenu = document.getElementById('VueTROLL').getAttribute('class')
+		if (class_contenu.includes('breakpoint-xs')) {
+			let lignes_guilde = document.getElementById('VueTROLL').getElementsByClassName('guilde');
+			for (i = 0; i < lignes_guilde.length; i++) {
+				lignes_guilde[i].setAttribute("style", "display: none;");
+			}
+		} // Orientation du Smartphone verticale sans la colonne Guilde
+		else if (class_contenu.includes('breakpoint-sm')) {
+			let lignes_guilde = document.getElementById('VueTROLL').getElementsByClassName('guilde');
+			for (i = 0; i < lignes_guilde.length; i++) {
+				lignes_guilde[i].setAttribute("style", "display: table-cell;");
+			}
+		} // Orientation du Smartphone horizontale avec la colonne Guilde
+	});
+});
 
 var MZ_tabTrTrollById;
 function putInfosTrolls(infosTrolls, itName) {
@@ -13729,17 +13749,27 @@ function putInfosTrolls(infosTrolls, itName) {
 		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
 		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
 		isDesktopView() ? ref_anchors.splice(8, 0, 'r_race') : '';
+		if (!isDesktopView()) {
+			// Ajout d'un observateur d'événement sur le tableau des trolls pour voir l'ajout/retrait de la colonne GUILDE
+			var target = document.getElementById('VueTROLL');
+			observer.observe(target, { attributes: true, attributeFilter: ['class'] });
+		}
 		if (MZ_tabTrTrollById === undefined) {
 			MZ_tabTrTrollById = new Array();
 			// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
 			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PA', false);
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PV', false);
+			// Ajout des colonnes PA & PV dans le menu du tableau
+			// index de childnode différent entre vue Desktop et vue smartphone => 26/09/2024 David
+			let index_child_correction = isDesktopView() ? 0 : 2;
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + index_child_correction], 'PA', false);
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + index_child_correction], 'PV', false);
 			for (let i = nbTrolls; i > 0; i--) {
+				// Pour tous les trolls présents dans la vue, on ajoute les colonnes PV & PA
 				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
+				// On alimente la table pour organiser l'affichage par distance croissante
 				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
 				if (ref_tr === undefined) {
 					// gath: on construit pour afficher les trolls hors-vue.
@@ -13793,14 +13823,11 @@ function putInfosTrolls(infosTrolls, itName) {
 			affhv = arr[4] > 0;
 		}
 
-		let tBody = tr_trolls[0].parentNode;
-		if (tr_trolls[1] !== undefined) {
-			tBody = tr_trolls[1].parentNode;
-		}
+		// Correction du tbody : si pas de troll dans la vue, données ajoutées dans thead => Correction 26/09/2024
+		let tBody = document.getElementById('VueTROLL').getElementsByTagName('tbody')[0];
 
 		// logMZ('nb Troll IT : ' + IDs.length);
 		let pos = getPosition();
-
 		// mise à jour des infos dans le HTML (et ajout de ligne si nécessaire)
 		for (let idTroll in infosTrolls) {
 			let infos = infosTrolls[idTroll];
@@ -13822,10 +13849,12 @@ function putInfosTrolls(infosTrolls, itName) {
 				// logMZ('putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
 				infos.dist = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
 				// trouver où insérer ce Troll
+				let num_ligne = undefined;
 				let next = undefined;
 				for (let j = 0; j < tr_trolls.length; j++) {
 					let thisDist = parseInt(tr_trolls[j].cells[0].textContent);
 					if (thisDist > infos.dist) {
+						num_ligne = j;
 						next = tr_trolls[j];
 						break;
 					}
@@ -13833,7 +13862,8 @@ function putInfosTrolls(infosTrolls, itName) {
 				tr = createTrollRow(infos, ref_tr);
 				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
 				MZ_tabTrTrollById[idTroll] = tr;
-				tr_trolls[++nbTrolls] = tr;
+				//tr_trolls[++nbTrolls] = tr; // => Ne classe pas les trolls donc "if (thisDist > infos.dist)" n'est pas cohérent
+				!num_ligne ? tr_trolls.push(tr) : tr_trolls.splice(num_ligne, 0, tr);
 			}
 			if (!tr.done) {
 				addTdInfosTroll(infos, tr, itName);
