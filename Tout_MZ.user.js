@@ -16959,7 +16959,7 @@ function Alerte_nouveau_message(taille = 48, interval = 15000) {
 			// https://developer.mozilla.org/fr/docs/Web/API/Fetch_API/Using_Fetch
 			// https://developer.mozilla.org/fr/docs/Web/API/Response
 			// Contrôle des nouveaux messages uniquement sur la première page (1 à 50 messages selaon le pramétrage du joueur)
-			fetch("https://games.mountyhall.com/mountyhall/Messagerie/MH_Messagerie.php?cat=1")
+			fetch("/mountyhall/Messagerie/MH_Messagerie.php?cat=1")
 				.then(function (response) {
 					return response.text();
 				})
@@ -16971,7 +16971,7 @@ function Alerte_nouveau_message(taille = 48, interval = 15000) {
 						if (!chauve_souris) {
 							chauve_souris = document.createElement('img');
 							chauve_souris.id = 'chauve_souris'
-							chauve_souris.src = 'https://img1.picmix.com/output/stamp/normal/7/1/1/1/1561117_d96d4.gif';
+							chauve_souris.src = URL_MZimg + 'chauvesouris.gif';
 							chauve_souris.alt = 'Vous avez un parchemin à lire';
 							chauve_souris.title = 'Au moins une chauve-souris vous a déposé un parchemin.';
 							chauve_souris.height = taille;
