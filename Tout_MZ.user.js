@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.4
+// @version     1.5.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.4';
+var MZ_latest = '1.5.5';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -4064,7 +4064,7 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 	let titresMimis, obMissions;
 	try {
 		titresMimis = document.evaluate(
-			"//b[@class='mh_titre3']/a[contains(@href,'Mission_')]", document, null, 7, null
+			"//h3/a[contains(@href,'Mission_')]", document, null, 7, null
 		);
 		obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
 	} catch (exc) {
