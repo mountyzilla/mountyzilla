@@ -16942,7 +16942,7 @@ function MZdo_hookCompoTanieres() {
 	document.body.onkeypress = hookSetCallback;
 }
 
-function Alerte_nouveau_message(taille = 48, interval = 15000) {
+function Alerte_nouveau_message(taille = 48, interval = 60000) {
 	/*
 	 * Pour chaque page contenant un titre (id 'MHTitreH2'), on interroge la page "messagerie" pour savoir s'il y a
 	 * au moins un message non lu (classe 'new'). On affiche une chauve souris à droite du titre.
