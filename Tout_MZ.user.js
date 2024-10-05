@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.5
+// @version     1.5.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.5';
+var MZ_latest = '1.5.6';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -1073,8 +1073,10 @@ function insertTr(node, cls_name) {
 	return tr;
 }
 
-function appendTd(tr) {
+function appendTd(tr, styles) {
 	let td = document.createElement('td');
+	if (styles)
+		for (s in styles) td.style[s] = styles[s];
 	if (tr) {
 		tr.appendChild(td);
 	}
@@ -1186,8 +1188,8 @@ function appendThText(tr, text, bold) {
 	return th;
 }
 
-function appendTdText(tr, text, bold) {
-	let td = appendTd(tr);
+function appendTdText(tr, text, bold, styles) {
+	let td = appendTd(tr, styles);
 	td.appendChild(document.createTextNode(text));
 	if (bold) {
 		td.style.fontWeight = 'bold';
@@ -1302,7 +1304,7 @@ function appendCheckBoxSpan(node, id, onClick, text) {
 	let label = document.createElement('label');
 	appendText(label, text);
 	label.htmlFor = id;
-	label.style.marginLeft = '-5px';
+	label.style.marginLeft = '1px';
 	span.appendChild(label);
 	span.style.marginRight = '3px';
 	node.appendChild(span);
@@ -11859,17 +11861,19 @@ function set2DViewSystem() {
 		// Insertion du système de vue
 		let table = document.createElement('table');
 		let tr = appendTr(table);
-		let td = appendTd(tr);
-		td.appendChild(selectVue2D);
-		appendTdText(tr, 'Limiter à ').style.whiteSpace = 'nowrap';
-		td = appendTd(tr);
+		let stylesEspacement = {paddingLeft: '1px', paddingRight: '1px', whiteSpace: 'nowrap'};
+		let td = appendTd(tr, stylesEspacement);
+		td.appendChild(selectVue2D);	//.style.marginRight = '2px';
+		appendTdText(tr, 'Limiter à ', false, stylesEspacement);
+		td = appendTd(tr, stylesEspacement);
 		appendTextbox(td, 'input', 'MZvueExtMaxH', 3, 3, MY_getValue('MZ_VueExtMaxH'), 'MZvueExtMaxH');
-		appendTdText(tr, ' cases horizontales et ').style.whiteSpace = 'nowrap';
-		td = appendTd(tr);
+		appendTdText(tr, ' cases horizontales et ', false, stylesEspacement);
+		td = appendTd(tr, stylesEspacement);
 		appendTextbox(td, 'input', 'MZvueExtMaxV', 3, 3, MY_getValue('MZ_VueExtMaxV'), 'MZvueExtMaxV');
-		appendTdText(tr, ' cases verticales').style.whiteSpace = 'nowrap';
-		td = appendTd(tr);
-		td.style.fontSize = '0px'; // gère le bug de l'extra character
+		appendTdText(tr, ' cases verticales', false, stylesEspacement);
+		td = appendTd(tr, stylesEspacement);
+		// Roule : fontSize à 0 enlève le texte du bouton !!!! Qu'est-ce que c'est que le "bug de l'extra character" ?
+		//td.style.fontSize = '0px'; // gère le bug de l'extra character
 		td.appendChild(form);
 		if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
 			let eDiv = document.createElement('div');
