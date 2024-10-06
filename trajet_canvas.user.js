@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.41
+// @version 2.42
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -178,18 +178,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				if ( !tableau_tete[num].getElementsByTagName("tbody")[0] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
 				var tableau = tableau_tete[num].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
 				var nb = tableau.length;
-				//if(nb > 1) {
+				//console.log('trajet canvas ajout tête ' + tableau_tete[num].id + ', nb=' + nb);
 				if(nb > 0) { // correction par Vapulabehemot (82169) le 10/07/2015
-				//debut = (tableau[i].firstChild.getElementsByTagName("input").length > 0)? 0:1; // suppression par Vapulabehemot (82169) le 30/08/2013 (la variable "i" n'existe pas)
-					//for (var i = 1; i < nb; i++) {
 					for (var i = 0; i < nb; i++) { // correction par Vapulabehemot (82169) le 10/07/2015
-						//addEvent(tableau[i].childNodes[debut], "click", function(event) { affiche_action(this, event); }, true);
 						addEvent(tableau[i].childNodes[0], "click", function(event) { affiche_action(this, event); }, true); // correction par Vapulabehemot (82169) le 30/08/2013
-						//tableau[i].childNodes[debut].style.cursor = "pointer";
 						tableau[i].childNodes[0].style.cursor = "pointer"; // correction par Vapulabehemot (82169) le 30/08/2013
-						//tableau[i].childNodes[debut].id = num+"_"+i+"_";
 						tableau[i].childNodes[0].id = num+"_"+i+"_"; // correction par Vapulabehemot (82169) le 30/08/2013
-
 					}
 				}
 			}
@@ -198,11 +192,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				var nb = ligne.childNodes.length;
 				var ref = cible.id+ligne.childNodes[nb-3].innerHTML+"_"+ligne.childNodes[nb-2].innerHTML+"_"+ligne.childNodes[nb-1].innerHTML;
 				var cadre = document.getElementById("action_lieu");
+				//console.log('trajet canvas affiche_action cadre display=' + cadre.style.display + ', contenu action_coord=' + document.getElementById("action_coord").innerHTML);
 				if (cadre.style.display == "none" || document.getElementById("action_coord").innerHTML != ref) {
 					document.getElementById("action_coord").innerHTML = ref;
 					cadre.style.display = "block";
-					cadre.style.left = evt.clientX;
-					cadre.style.top = (evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0) - 20);
+					cadre.style.left = evt.clientX + 'px';
+					cadre.style.top = (evt.clientY + (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0) - 20) + 'px';
+					//console.log('trajet canvas affiche_action cadre evt:' + evt.clientX + ', ' + evt.clientY + ', cadre:' + cadre.style.left + ', ' + cadre.style.top);
 				}
 				else {
 					cadre.style.display = "none";
