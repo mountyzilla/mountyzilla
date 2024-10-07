@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.6
+// @version     1.5.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.6';
+var MZ_latest = '1.5.7';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6244,7 +6244,7 @@ function traiteMonstre() {
 	let texte;
 	try {
 		let nodeTitre = document.evaluate(
-			"//div[@class='titre2' and contains(text(),'(')]", document, null, 9, null
+			"//div[@class='view']//thead//h2", document, null, 9, null
 		).singleNodeValue;
 		if (nodeTitre != null) {
 			texte = nodeTitre.firstChild.nodeValue;
@@ -6312,7 +6312,7 @@ function traiteMonstre() {
 				let nodeInsert;
 				try {
 					nodeInsert = document.evaluate(
-						"//div[@class = 'titre3']", document, null, 9, null
+						"//div[@class='view']//h3", document, null, 9, null
 					).singleNodeValue;
 				} catch (exc) {
 					logMZ('recherche node pour info CdM', exc);
@@ -11126,8 +11126,10 @@ function fetchData(type) {
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
+		return true;
 	} catch (exc) {
-		warnMZ(`Erreur acquisition type ${type}`, exc);
+		// warnMZ(`Erreur acquisition type ${type}`, exc);
+		return false;
 	}
 }
 
@@ -13882,8 +13884,10 @@ function inversionCoord() {
 
 /*                             Partie principale                              */
 function do_vue() {
+	let skip = [];
 	for (let type in typesAFetcher) {
-		fetchData(type);
+		let ok = fetchData(type);
+		if (!ok) { skip.push(type); }
 	}
 
 	// roule' 11/03/2016
@@ -13930,13 +13934,6 @@ function do_vue() {
 		initialiseInfos();
 		savePosition();
 
-		if (MZ_EtatCdMs.indexCellDist < 0 || MZ_EtatCdMs.indexCellID < 0 || MZ_EtatCdMs.indexCellX < 0 || MZ_EtatCdMs.indexCellY < 0 || MZ_EtatCdMs.indexCellN < 0) {
-			// c'est le cas en mode smartphone, dans le cas d'une vue qui ne montre pas les monstres
-			// avertissement('Impossible de retrouver les colonnes de la vue des monstres, arrêt MZ', 9999999);
-			set2DViewSystem();
-			return;
-		}
-
 		// Fonctionnalité "Têtalenvert" cachée, en test :
 		if (MY_getValue(`${numTroll}.VERLAN`) == 'true') {
 			inversionCoord();
@@ -13948,7 +13945,9 @@ function do_vue() {
 		putBoutonPXMP();
 
 		synchroniseFiltres();
-		toggleLevelColumn();	// appel des CdM, ne fait rien si la checkbox NOCDM est cochée
+		if (!skip.includes("monstres")) {
+			toggleLevelColumn();	// appel des CdM, ne fait rien si la checkbox NOCDM est cochée
+		}
 
 		refreshDiplo();
 
