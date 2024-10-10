@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.7
+// @version     1.5.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.7';
+var MZ_latest = '1.5.8';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6241,15 +6241,15 @@ var g_nomMonstre = '', g_idMonstre = -1;
 // let tbody;
 
 function traiteMonstre() {
-	let texte;
+	let texte = "";
 	try {
 		let nodeTitre = document.evaluate(
 			"//div[@class='view']//thead//h2", document, null, 9, null
 		).singleNodeValue;
-		if (nodeTitre != null) {
-			texte = nodeTitre.firstChild.nodeValue;
-		} else {
-			let tabEventDescription = document.getElementsByClassName('mh_monstres');
+		texte = (nodeTitre != null) ? nodeTitre.firstChild.nodeValue : texte;
+		if (texte == "" || texte.includes("existe pas")) {
+			let tabEventDescription = document.getElementsByClassName('monstre');
+			console.log(tabEventDescription);
 			if (tabEventDescription[0] != undefined) {
 				let eltNom = tabEventDescription[0];
 				texte = eltNom.textContent;
@@ -10023,7 +10023,7 @@ function appendChoixCouleur(node, id) {
 	if (isDetailOn ^ (id.indexOf('All') < 0)) {
 		span.style.display = 'none';
 	}
-	let couleur= '#AAFFAA';
+	let couleur = '#AAFFAA';
 	if (id.indexOf('nnemi') > 0) couleur = '#FFAAAA';
 	if (diploGuilde[id]) {
 		couleur = diploGuilde[id].couleur;
@@ -11122,7 +11122,7 @@ function fetchData(type) {
 		// slice pour faire un shallow clone car la collection HTML est cassée par le tri de footable :(
 		let a = Array.prototype.slice.call(node.getElementsByTagName('tr'));
 		// footable ajoute une ligne cachée quand un tableau et vide. Ça nous met le bronx. On vire la ligne ici
-		if (a[a.length-1].className == 'footable-empty') a.pop();
+		if (a[a.length - 1].className == 'footable-empty') a.pop();
 		VueContext[`tr_${type}`] = a;
 		debugMZ(`fetch ${type} recup ` + VueContext[`tr_${type}`].length + ' lignes');
 		VueContext[`nb${type[0].toUpperCase()}${type.slice(1)}`] = VueContext[`tr_${type}`].length - 1;
@@ -11863,7 +11863,7 @@ function set2DViewSystem() {
 		// Insertion du système de vue
 		let table = document.createElement('table');
 		let tr = appendTr(table);
-		let stylesEspacement = {paddingLeft: '1px', paddingRight: '1px', whiteSpace: 'nowrap'};
+		let stylesEspacement = { paddingLeft: '1px', paddingRight: '1px', whiteSpace: 'nowrap' };
 		let td = appendTd(tr, stylesEspacement);
 		td.appendChild(selectVue2D);	//.style.marginRight = '2px';
 		appendTdText(tr, 'Limiter à ', false, stylesEspacement);
@@ -13741,8 +13741,9 @@ function putInfosTrolls(infosTrolls, itName) {
 			if (MZ_cache_col_TrollGUILDE === undefined) {
 				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
 			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PA', false);
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE+2], 'PV', false);
+			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PA', false);
+			td.style.width = "50px";
+			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PV', false);
 			for (let i = nbTrolls; i > 0; i--) {
 				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
 				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
@@ -16949,7 +16950,6 @@ try {
 		do_cdmbot();
 	} else if (isPage("MH_Play/Play_a_TalentResult")) {
 		do_cdmcomp();
-	//} else if (isPage("MH_Guildes/Guilde_o_AmiEnnemi")) {
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -6, sub: 'diplomatie' } })) {
 		do_diplo();
 	} else if (isPage("MH_Play/Play_equipement")) {
