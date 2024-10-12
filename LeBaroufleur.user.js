@@ -3,7 +3,7 @@
 // @namespace    Mountyhall
 // @description  Assistant Baroufle
 // @author       Dabihul, Rouletabille
-// @version      1.0.2
+// @version      1.0.3
 // @include      */mountyhall/MH_Play/Play_a_Action.php*id=43*
 // ==/UserScript==
 
@@ -921,13 +921,13 @@ function ajouteMelodie() {
 }
 
 function baroufle_saveMelodies() {
-	if (MH_le_baroufleur_json !== undefined)
+	if (typeof MH_le_baroufleur_json !== 'undefined')
 		baroufle_saveIntoMH();
 	window.localStorage.setItem('baroufleur.melodies', JSON.stringify(objMelodies));
 }
 
 function baroufle_saveMode() {
-	if (MH_le_baroufleur_json !== undefined)
+	if (typeof MH_le_baroufleur_json !== 'undefined')
 		baroufle_saveIntoMH();
 	window.localStorage.setItem("baroufleur.mode", modeClavier);
 }
@@ -981,7 +981,7 @@ if (BaroufleON) {
 		}
 	}
 
-	if (MH_le_baroufleur_json !== undefined) {
+	if (typeof MH_le_baroufleur_json !== 'undefined') {
 		// mode extension gérée par MH, configuration sauvée dans MH
 		if (MH_le_baroufleur_json === null) {
 			if (modeClavier != 0 || Object.keys(objMelodies).length > 0)
