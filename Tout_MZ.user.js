@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.8
+// @version     1.5.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.8';
+var MZ_latest = '1.5.9';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -11420,7 +11420,7 @@ function getTrollGuildeID(i) {
 	return -1;
 }
 
-function getTrollPosition(i) {
+function MZ_getTrollPosition(i) {
 	let tds = tr_trolls[i].childNodes;
 	let l = tds.length;
 	return [
@@ -11447,14 +11447,21 @@ function bddTrolls(limitH, limitV) {
 			continue;
 		}
 		tabDedoubTroll[troll_id] = true;
-		let trollPosition = getTrollPosition(i);
+		let trollPosition = MZ_getTrollPosition(i);
 		if (MZ_deltaH(myPosition, trollPosition) > limitH) {
 			continue;
 		}
 		if (MZ_deltaV(myPosition, trollPosition) > limitV) {
 			continue;
 		}
-		txt = `${txt}${troll_id};${positionToString(trollPosition)}\n`;
+		let position;
+		try {
+			position = positionToString(trollPosition);
+			txt = `${txt}${troll_id};${position}\n`;
+		} catch (e) {
+			console.log(`vue externe, erreur sur le troll ${troll_id}`);
+			console.log(e);
+		}
 	}
 	return `${txt}#FIN TROLLS\n`;
 }
@@ -12910,7 +12917,7 @@ function filtreMonstres() {
 	// Génère la liste des mobs engagés (si filtrés)
 	if (noEngages && !isEngagesComputed) {
 		for (let i = nbTrolls; i > 0; i--) {
-			let pos = getTrollPosition(i);
+			let pos = MZ_getTrollPosition(i);
 			if (!listeEngages[pos[0]]) {
 				listeEngages[pos[0]] = {};
 			}
@@ -13168,7 +13175,7 @@ function filtreTresors() {
 	let noEngages = saveCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
 	if (noEngages && !isEngagesComputed) {
 		for (let i = nbTrolls; i > 0; i--) {
-			let pos = getTrollPosition(i);
+			let pos = MZ_getTrollPosition(i);
 			if (!listeEngages[pos[2]]) {
 				listeEngages[pos[2]] = [];
 			}
