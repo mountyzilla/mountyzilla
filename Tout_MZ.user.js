@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.9
+// @version     1.5.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.9';
+var MZ_latest = '1.5.10';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -1147,6 +1147,11 @@ function appendText(node, text, bold, color = undefined) {
 	b.appendChild(t);
 	node.appendChild(b);
 	return t;
+}
+
+function replaceContentByText(node, texte) {
+	while (node.firstChild) node.removeChild(node.firstChild);
+	node.appendChild(document.createTextNode(texte));
 }
 
 function insertText(node, text, bold) {
@@ -2862,10 +2867,7 @@ function insertButtonCdmSmartphone(nextName, onClick, texte) {
 		if (pSpan.getElementsByTagName('span').length > 0) {
 			return false;
 		}
-		while (pSpan.firstChild) {
-			pSpan.removeChild(pSpan.firstChild);
-		}	// vider
-		pSpan.appendChild(document.createTextNode(texte));
+		replaceContentByText(pSpan, texte);
 	});
 	let tabNewInput = eNewDiv.getElementsByTagName('input');
 	if (!tabNewInput) {
@@ -2891,9 +2893,9 @@ function insertButtonCdm(nextName, onClick, texte) {
 	}
 
 	let nextNode = document.getElementsByName(nextName)[0];
-	let espace = document.createTextNode('\t');
-	insertBefore(nextNode, espace);
+	if (!nextNode) nextNode = document.getElementById(nextName);
 
+	/* version input/button
 	let button = document.createElement('input');
 	button.type = 'button';
 	button.className = 'mh_form_submit';
@@ -2904,7 +2906,18 @@ function insertButtonCdm(nextName, onClick, texte) {
 	if (onClick) {
 		button.onclick = onClick;
 	}
-	insertBefore(espace, button);
+	*/
+	/* version <a> */
+	let button = document.createElement('a');
+	button.href = '#';
+	button.classList.add('submit');
+	button.classList.add('ui-btn');
+	button.style.marginLeft = '3px';
+	button.appendChild(document.createTextNode(texte));
+	if (onClick) {
+		button.onclick = onClick;
+	}
+	insertBefore(nextNode, button);
 	return button;
 }
 
@@ -10472,7 +10485,7 @@ function MZ_comp_traiteCdMcomp() {
 		oContexteCdM.sendInfoCDM();
 		MZ_comp_addMessage(oContexteCdM, 'CdM envoyée vers la base MountyZilla !');
 	} else {
-		insertButtonCdm('as_Action', oContexteCdM.sendInfoCDM);
+		insertButtonCdm('termAction', oContexteCdM.sendInfoCDM);
 	}
 }
 
@@ -10554,6 +10567,8 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 				}
 				break;
 			case 'BR':
+			case '#comment':
+			case 'STYLE':
 				break;	// ignore
 			default:
 				s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
@@ -10571,7 +10586,21 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 	oRet.sendInfoCDM = function () {
 		MY_setValue('CDMID', 1 + parseInt(MY_getValue('CDMID')));
 		let buttonCDM = this;
-		let texte = '';
+		let setMsgResultat = function(texte) {
+			// logMZ('buttonCDM.parentNode.firstChild.nodeName=' + buttonCDM.parentNode.firstChild.nodeName);
+			switch (buttonCDM.nodeName) {
+				case 'INPUT':
+				case 'BUTTON':
+					buttonCDM.value = texte;
+					break;
+				default:
+					replaceContentByText(buttonCDM, texte);
+					break;
+			}
+			if (this.parentNode && this.parentNode.firstChild && this.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
+				replaceContentByText(this.parentNode.firstChild, texte);
+			}
+		}
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: URL_pageDispatcherV2,
@@ -10581,15 +10610,8 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 			},
 			trace: 'envoi CdM',
 			onload: function (responseDetails) {
-				texte = responseDetails.responseText;
-				buttonCDM.value = texte;
-				// logMZ('buttonCDM.parentNode.firstChild.nodeName=' + buttonCDM.parentNode.firstChild.nodeName);
-				if (buttonCDM.parentNode && buttonCDM.parentNode.firstChild && buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
-					buttonCDM.parentNode.firstChild.innerHTML = texte;
-				}
-				if (!isDEV) {
-					buttonCDM.disabled = true;
-				}
+				setMsgResultat(responseDetails.responseText);
+				if (!isDEV) buttonCDM.disabled = true;
 			},
 			onerror: function (responseDetails) {
 				let msgError = 'inconnue';
@@ -10599,11 +10621,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 				if (responseDetails.error) {
 					msgError = responseDetails.error;
 				}
-				msgError = `Erreur MZ ${msgError}`;
-				buttonCDM.value = msgError;
-				if (buttonCDM.parentNode.firstChild.nodeName == 'SPAN') {	// smartphone
-					buttonCDM.parentNode.firstChild.innerHTML = msgError;
-				}
+				setMsgResultat(`Erreur MZ ${msgError}`);
 			},
 		});
 	};
@@ -12522,10 +12540,7 @@ function retrieveCDMs() {
 			debugMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
 			if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
 				if (eltBoutonSuite) {
-					while (eltBoutonSuite.firstChild) {
-						eltBoutonSuite.removeChild(eltBoutonSuite.firstChild);
-					}	// vider
-					appendText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
+					replaceContentByText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
 					retrieveCDMs();	// lancer la suite
 				} else {
 					eltBoutonSuite = document.createElement('div');
@@ -12576,10 +12591,7 @@ function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la su
 		this.parentNode.removeChild(this);
 		return;
 	}
-	while (this.firstChild) {
-		this.removeChild(this.firstChild);
-	}	// vider
-	appendText(this, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
+	replaceContentByText(this,`en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
 	this.title = 'Shift-Click pour faire disparaitre ce bouton';
 	this.style.cursor = '';	// default
 	this.onclick = MZ_SupprBoutonCdMs;
