@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.11
+// @version     1.5.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.11';
+var MZ_latest = '1.5.12';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -11287,7 +11287,7 @@ function isMonstreLevelOutLimit(i, limitMin, limitMax) {
 function getMonstreNomNode(i) {
 	try {
 		let td = document.evaluate(
-			"./td/a[starts-with(@href, 'javascript:EMV')]/..",
+			"./td/a[starts-with(@href, 'javascript:PVM')]/..",
 			MZ_EtatCdMs.tr_monstres[i], null, 9, null
 		).singleNodeValue;
 		return td;
@@ -12880,6 +12880,10 @@ function computeTactique(begin, end) {
 			}
 			if (bShowTactique) {
 				let td = getMonstreNomNode(j);
+				if (!td) {
+					logMZ(`computeTactique, pas de <td> pour j=${j}`);
+					continue;
+				}
 				appendText(td, ' ');
 				td.appendChild(MZ_Tactique.createImage(id, nom));
 			}
