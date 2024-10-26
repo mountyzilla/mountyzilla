@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.10
+// @version     1.5.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.10';
+var MZ_latest = '1.5.11';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -10448,7 +10448,7 @@ function MZ_comp_traiteCdMcomp() {
 	//	cmd:	un tableau de chaines (éléments HTML <p>) ou de tableaux (les <TD> des lignes des tableaux HTML)
 	//	tstamp:	l'horodatage
 	let oContexteCdM = MZ_analyseCdM('msgEffet', true);	// analyse de la CdM, prépare l'envoi, prépare l'ajout de PV min/max selon blessure
-	oContexteCdM.nameBut = 'as_Action';	// nom du bouton avant lequel insérer le bouton ou les textes
+	oContexteCdM.nameBut = 'termAction';	// nom du bouton avant lequel insérer le bouton ou les textes
 	if (!oContexteCdM.ok) {
 		if (!oContexteCdM.error) {
 			oContexteCdM = MZ_analyseCdM('msgDiv', true);
@@ -10483,19 +10483,22 @@ function MZ_comp_traiteCdMcomp() {
 	// Envoi auto ou insertion bouton envoi (suivant option)
 	if (MY_getValue(`${numTroll}.AUTOCDM`) == 'true') {
 		oContexteCdM.sendInfoCDM();
-		MZ_comp_addMessage(oContexteCdM, 'CdM envoyée vers la base MountyZilla !');
+		MZ_comp_addMessage(oContexteCdM, 'CdM envoyée vers la base MountyZilla !', 'MZ_msgCdM');
 	} else {
 		insertButtonCdm('termAction', oContexteCdM.sendInfoCDM);
 	}
 }
 
-function MZ_comp_addMessage(oContexteCdM, msg) {
-	let eBefore = document.getElementsByName(oContexteCdM.nameBut)[0].parentNode;
+function MZ_comp_addMessage(oContexteCdM, msg, id) {
+	let eBefore = document.getElementsByName(oContexteCdM.nameBut)[0];
+	if (eBefore) eBefore = eBefore.parentNode;
+	else eBefore = document.getElementById(oContexteCdM.nameBut);
 	if (!eBefore) {
 		logMZ(`MZ_comp_addMessage, pas de ${oContexteCdM.nameBut}`);
 		return;
 	}
 	let p = document.createElement('p');
+	if (id) p.id = id;
 	p.style.color = 'green';
 	appendText(p, msg);
 	insertBefore(eBefore, p);
@@ -10587,6 +10590,14 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 		MY_setValue('CDMID', 1 + parseInt(MY_getValue('CDMID')));
 		let buttonCDM = this;
 		let setMsgResultat = function(texte) {
+			if (!buttonCDM.appendChild) {
+				buttonCDM = document.getElementById('MZ_msgCdM');
+				texte = `Envoi à MZ : ${texte}`;
+			}
+			if (!buttonCDM.appendChild) {
+				logMZ(`MZ setMsgResultat pas d'endroi où afficher le résultat qui est : ${texte}`);
+				return;
+			}
 			// logMZ('buttonCDM.parentNode.firstChild.nodeName=' + buttonCDM.parentNode.firstChild.nodeName);
 			switch (buttonCDM.nodeName) {
 				case 'INPUT':
@@ -11292,7 +11303,7 @@ function getMonstreNom(i) {
 function getMonstreNomByTR(tr, i = 'undef') {
 	try {
 		let nom = document.evaluate(
-			"./td/a[starts-with(@href, 'javascript:EMV')]/text()", tr, null, 2, null
+			"./td/a[starts-with(@href, 'javascript:PVM')]/text()", tr, null, 2, null
 		).stringValue;
 		return nom.replace(/&#(\d+);/g, function (match, dec) {
 			return String.fromCharCode(dec);
