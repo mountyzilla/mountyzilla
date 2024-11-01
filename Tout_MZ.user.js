@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.12
+// @version     1.5.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.12';
+var MZ_latest = '1.5.13';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6303,7 +6303,7 @@ function traiteMonstre() {
 	FF_XMLHttpRequest({
 		method: 'POST',
 		url: URL_MZgetCaracMonstre,
-		headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: `l=${JSON.stringify(tReq)}`,
 		trace: 'demande niveaux monstres V2, MonsterView',
 		onload: function (responseDetails) {
@@ -6598,7 +6598,7 @@ function do_scizEnhanceView() {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
@@ -6719,7 +6719,7 @@ function do_scizEnhanceView() {
 		if (ids.length > 0) FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ ids: ids }),
 			onload: function (responseDetails) {
 				try {
@@ -6788,7 +6788,7 @@ function do_scizEnhanceView() {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ ids: ids }),
 			onload: function (responseDetails) {
 				try {
@@ -6858,7 +6858,7 @@ function do_scizEnhanceView() {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ mobs: mobs }),
 			onload: function (responseDetails) {
 				try {
@@ -6912,7 +6912,7 @@ function do_scizEnhanceView() {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ pos_x: posX, pos_y: posY, pos_n: posN, view_h: viewH, view_v: viewV }),
 			onload: function (responseDetails) {
 				try {
@@ -6996,7 +6996,7 @@ function do_scizEnhanceView() {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ ids: ids }),
 			onload: function (responseDetails) {
 				try {
@@ -7115,7 +7115,7 @@ function do_scizBestiaire(monster) {
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-type': 'application/json' },
+			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ name: monster.name, age: monster.age }),
 			onload: function (responseDetails) {
 				try {
@@ -10617,7 +10617,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 			url: URL_pageDispatcherV2,
 			data: `cdm_json=${encodeURIComponent(JSON.stringify(oRet.oData))}`,
 			headers: {
-				'Content-type': 'application/x-www-form-urlencoded',
+				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			trace: 'envoi CdM',
 			onload: function (responseDetails) {
@@ -10779,7 +10779,7 @@ function sendCDM() {
 		method: 'POST',
 		url: URL_pageDispatcherV2,
 		data: `cdm_json=${encodeURIComponent(JSON.stringify(oData))}`,
-		headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		trace: 'envoi CdM msg du bot',
 		onload: function (responseDetails) {
 			buttonCDM.value = responseDetails.responseText;
@@ -12457,7 +12457,7 @@ function retrieveCDMs() {
 	FF_XMLHttpRequest({
 		method: 'POST',
 		url: URL_MZgetCaracMonstre,
-		headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		// data: 'l=' + tReq.join("\n"),
 		data: `l=${JSON.stringify(tReq)}`,
 		trace: 'demande niveaux monstres V2',
@@ -16720,163 +16720,225 @@ function MZ_doSearchCompoTanieres(event) {
 		return;
 	}
 	let url = `/mountyhall/MH_Play/Play_a_Action.php?type=L&id=-5&sub=rech`;
-	let postData = `type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=${escape(oInfo.monstre)}&as_Action=Action+en+cours...`
+	let postData = `type=L&id=-5&sub=rech&as_type=Composant&as_nom_base=${escape(oInfo.monstre)}&as_Action=Action+en+cours...`;
+	let nbCall = 0;
 	if (!event) {
 		postData = `${postData}&as_composant_morceau=${escape(oInfo.composant)}`;
 	}
+	let oCompos = {};
+	let msgErreur, msgWarning;
+	// ajouter un compo à l'objet oCompos
+	let addCompoQualite = function(compo, qualite) {
+		let oCompo = oCompos[compo];
+		if (oCompo == undefined) {
+			oCompo = {};
+			oCompos[compo] = oCompo;
+		}
+		let qty = oCompo[qualite];
+		if (qty == undefined) qty = 0;
+		oCompo[qualite] = ++qty;
+	}
+	// affichage d'un titre
+	let displayTitre = function(titre, color) {
+		let eTr = document.createElement('tr');
+		let eTd = document.createElement('td');
+		eTd.className = 'mh_tdpage';
+		eTd.style.color = color;
+		eTd.colSpan = 6;
+		eTd.appendChild(document.createTextNode(`[MZ] ${titre}`));
+		eTr.appendChild(eTd);
+		eTableTaniere.appendChild(eTr);
+	}
+	// affichage du résultat
+	let displayResults = function() {
+		while (eTableTaniere.rows.length > 0) {
+			eTableTaniere.deleteRow(0);
+		}
+		if (msgErreur) displayTitre(msgErreur, 'red');
+		if (msgWarning) displayTitre(msgWarning, 'purple');
+		debugMZ(`MZ_doSearchCompoTanieres réponse OK ${JSON.stringify(oCompos)}`);
+		// tri par nom de compo
+		let tabTri = [];
+		let nTotal = 0;
+		for (let compo in oCompos) {
+			tabTri.push(compo);
+			oQualites = oCompos[compo];
+			for (let qualite in oQualites) nTotal += oQualites[qualite];
+		}
+		if (tabTri.length == 0 && !(msgErreur || msgWarning))
+			displayTitre(`Pas de composant de ${oInfo.monstre} en tanière`, 'red');
+		else if (tabTri.length > 0)
+			displayTitre(`Vous avez ${nTotal} composants de ${oInfo.monstre} en tanière`, 'blue');
+		if (!tabTri.includes(oInfo.composant)) {
+			tabTri.push(oInfo.composant);
+		}
+		tabTri.sort();
+		eTr = document.createElement('tr');
+		eTr.className = 'mh_tdtitre';
+		let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
+		for (let qualite of tabQualite) {
+			let eTh = document.createElement('th');
+			eTh.appendChild(document.createTextNode(qualite));
+			if (qualite == '') {
+				eTh.style.width = '30%';
+			} else {
+				eTh.style.width = '14%';
+			}
+			eTh.style.border = 'solid black 1px';
+			eTr.appendChild(eTh);
+		}
+		eTableTaniere.appendChild(eTr);
+		for (let compo of tabTri) {
+			eTr = document.createElement('tr');
+			for (let qualite of tabQualite) {
+				eTd = document.createElement('td');
+				eTd.style.border = 'solid black 1px';
+				eTd.className = 'mh_tdpage';
+				if (oInfo.composant == compo && oInfo.qualite == qualite) {
+					eTd.style.background = 'white';
+				} else {
+				}
+				if (qualite == '') {
+					eTd.appendChild(document.createTextNode(compo));
+				} else if (oCompos[compo] && oCompos[compo][qualite]) {
+					eTd.appendChild(document.createTextNode(oCompos[compo][qualite]));
+					eTd.style.textAlign = 'right';
+				}
+				eTr.appendChild(eTd);
+			}
+			eTableTaniere.appendChild(eTr);
+		}
+	}
+	// fonction de traitement du retour du deuxième appel (qui reçoit du JSON avec la liste de compos
+	let callback2 = function (responseDetails) {
+		try {
+			if (responseDetails.status == 0) return;
+			let oReponse = JSON.parse(responseDetails.responseText);
+			//logMZ('compo taniere.onload2 ' + JSON.stringify(oReponse));
+			for (oCompoRep of oReponse) {
+				//console.log(JSON.stringify(oCompoRep));
+				let m = oCompoRep.value.nom.value.match(/> *(.*) d'une* (.*)de Qualité (.*) \[/i);
+				if (!m) {
+					logMZ(`MZ_doSearchCompoTanieres no match ${oCompoRep.value.nom.value}`);
+					continue;
+				}
+				addCompoQualite(m[1], m[3]);
+			}
+			displayResults();
+		} catch (exc) {
+			logMZ('compo taniere.onload2', exc);
+		}
+
+	};
+	// fonction de traitement du retour du premier appel (qui reçoit de l'HTML). Ne sert qu'à récupérer le code "cp"
+	let callback1 = function (responseDetails) {
+		try {
+			// logMZ('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+			if (responseDetails.status == 0) return;
+			let eStockAppendRows = responseDetails.responseXML.getElementById('stock-append-rows');
+			if (eStockAppendRows && eStockAppendRows.value) {
+				let url2 = '/mountyhall/MH_PageUtils/Services/json_stock.php?cp=' + eStockAppendRows.value;
+				// modification de l'history pour gérer le referer de l'appel AJAX JSON
+				let oldURL = document.URL;
+				window.history.replaceState(null, '', `https://${window.location.host}/mountyhall/MH_Play/Play_a_Action.php`);
+				FF_XMLHttpRequest({
+					method: 'GET',
+					url: url2,
+					trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
+					onload: callback2,
+				});
+				window.history.replaceState(null, '', oldURL);
+				return;
+			}
+			if (!eStockAppendRows) {
+				if (nbCall == 0) {
+					// Il faut le faire 2 fois pour récupérer le code cp
+					nbCall = 1;
+					FF_XMLHttpRequest({
+						method: 'POST',
+						HTML: true,
+						url: url,
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						data: postData,
+						trace: `recherche en tanière compos phase 1.5 ${oInfo.monstre}`,
+						onload: callback1,
+					});
+					return;
+				}
+				logMZ('pas de stock-append-rows');
+			} else {
+				logMZ(`réponseeMH : eStockAppendRows.value vide`);
+				msgErreur = 'Erreur à la récupération de la liste';
+				displayResults();
+			}
+			// la suite ne devrait plus être utile au 01/11/2024
+			let eDivRecherches = responseDetails.responseXML.getElementById('recherches');
+			if (!eDivRecherches) {
+				logMZ('MZ_doSearchCompoTanieres réponse sans DIV recherches');
+				return;
+			}
+			let bFound = false;
+			let nTotal = 0;
+			for (let eDiv of eDivRecherches.children) {
+				if (eDiv.tagName != 'DIV') {
+					continue;
+				}
+				let oTable = eDiv.getElementsByTagName('table')[0];
+				if (!oTable) {
+					continue;
+				}
+				for (let oTr of oTable.rows) {
+					for (let oTd of oTr.cells) {
+						let tabA = oTd.getElementsByTagName('a');
+						if (!tabA[0]) {
+							continue;
+						}
+						if (tabA[0].href.indexOf('TresorHistory.php') <= 0) {
+							continue;
+						}
+						let m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
+						if (!m) {
+							debugMZ(`MZ_doSearchCompoTanieres no match ${oTd.textContent}`);
+							continue;
+						}
+						addCompoQualite(m[1], m[3]);
+						nTotal++;
+						bFound = true;
+					}
+				}
+			}
+			if (!bFound) {
+				msgErreur = 'Pas de ';
+				if (!event) {
+					msgErreur += oInfo.composant;
+				} else {
+					msgErreur = `${sMsg}composant`;
+				}
+				msgErreur = `${msgErreur} de ${oInfo.monstre} en tanière`;
+			} else if (nTotal < 100) {
+				if (!event) {
+					msgWarning = `Vous avez au moins 100 composants de ${oInfo.monstre} en tanière.`;
+					msgWarning = `${msgWarning} La recherche a été restreinte aux composants de type ${oInfo.composant}`;
+				}
+			} else if (!event) {
+				msgErreur = `Vous avez au moins 100 ${oInfo.composant} de ${oInfo.monstre}. MZ met les pouces.`;
+			} else {
+				MZ_doSearchCompoTanieres(false);
+				return;
+			}
+			displayResults();
+		} catch (exc) {
+			logMZ('compo taniere .onload1', exc);
+		}
+	};
 	FF_XMLHttpRequest({
 		method: 'POST',
 		HTML: true,
 		url: url,
-		headers: { 'Content-type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: postData,
-		trace: `recherche en tanière compos ${oInfo.monstre}`,
-		onload: function (responseDetails) {
-			try {
-				// logMZ('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-				if (responseDetails.status == 0) {
-					return;
-				}
-				let eDivRecherches = responseDetails.responseXML.getElementById('recherches');
-				if (!eDivRecherches) {
-					logMZ('MZ_doSearchCompoTanieres réponse sans DIV recherches');
-					return;
-				}
-				let oCompos = {};
-				let bFound = false;
-				let nTotal = 0;
-				for (let eDiv of eDivRecherches.children) {
-					if (eDiv.tagName != 'DIV') {
-						continue;
-					}
-					let oTable = eDiv.getElementsByTagName('table')[0];
-					if (!oTable) {
-						continue;
-					}
-					for (let oTr of oTable.rows) {
-						for (let oTd of oTr.cells) {
-							let tabA = oTd.getElementsByTagName('a');
-							if (!tabA[0]) {
-								continue;
-							}
-							if (tabA[0].href.indexOf('TresorHistory.php') <= 0) {
-								continue;
-							}
-							let m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
-							if (!m) {
-								debugMZ(`MZ_doSearchCompoTanieres no match ${oTd.textContent}`);
-								continue;
-							}
-							let compo = m[1];
-							let monstre = m[2];
-							let qualite = m[3];
-							let oCompo = oCompos[compo];
-							if (oCompo == undefined) {
-								oCompo = {};
-								oCompos[compo] = oCompo;
-							}
-							let qty = oCompo[qualite];
-							if (qty == undefined) {
-								qty = 0;
-							}
-							oCompo[qualite] = ++qty;
-							nTotal++;
-							bFound = true;
-						}
-					}
-				}
-				while (eTableTaniere.rows.length > 0) {
-					eTableTaniere.deleteRow(0);
-				}
-				let eTr = document.createElement('tr');
-				let eTd = document.createElement('td');
-				eTd.className = 'mh_tdpage';
-				let bErreur = false;
-				let color = 'blue';
-				let sMsg = '';
-				if (!bFound) {
-					sMsg = 'Pas de ';
-					if (!event) {
-						sMsg = sMsg + oInfo.composant;
-					} else {
-						sMsg = `${sMsg}composant`;
-					}
-					sMsg = `${sMsg} de ${oInfo.monstre} en tanière`;
-					bErreur = true;
-					color = 'red';
-				} else if (nTotal < 100) {
-					if (!event) {
-						sMsg = `Vous avez au moins 100 composants de ${oInfo.monstre} en tanière.`;
-						sMsg = `${sMsg} La recherche a été restreinte aux composants de type ${oInfo.composant}`;
-						color = 'purple';
-					} else {
-						sMsg = `Composants de ${oInfo.monstre} en tanière`;
-					}
-					eTd.colSpan = 6;
-				} else if (!event) {
-					bErreur = true;
-					color = 'red';
-					sMsg = `Vous avez au moins 100 ${oInfo.composant} de ${oInfo.monstre}. MZ met les pouces.`;
-				} else {
-					MZ_doSearchCompoTanieres(false);
-					return;
-				}
-				eTd.style.color = color;
-				eTd.appendChild(document.createTextNode(`[MZ] ${sMsg}`));
-				eTr.appendChild(eTd);
-				eTableTaniere.appendChild(eTr);
-				if (bErreur) {
-					return;
-				}
-				debugMZ(`MZ_doSearchCompoTanieres réponse OK ${JSON.stringify(oCompos)}`);
-				// tri par nom de compo
-				let tabTri = [];
-				for (let compo in oCompos) {
-					tabTri.push(compo);
-				}
-				if (!tabTri.includes(oInfo.composant)) {
-					tabTri.push(oInfo.composant);
-				}
-				tabTri.sort();
-				eTr = document.createElement('tr');
-				eTr.className = 'mh_tdtitre';
-				let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
-				for (let qualite of tabQualite) {
-					let eTh = document.createElement('th');
-					eTh.appendChild(document.createTextNode(qualite));
-					if (qualite == '') {
-						eTh.style.width = '30%';
-					} else {
-						eTh.style.width = '14%';
-					}
-					eTh.style.border = 'solid black 1px';
-					eTr.appendChild(eTh);
-				}
-				eTableTaniere.appendChild(eTr);
-				for (let compo of tabTri) {
-					eTr = document.createElement('tr');
-					for (let qualite of tabQualite) {
-						eTd = document.createElement('td');
-						eTd.style.border = 'solid black 1px';
-						eTd.className = 'mh_tdpage';
-						if (oInfo.composant == compo && oInfo.qualite == qualite) {
-							eTd.style.background = 'white';
-						} else {
-						}
-						if (qualite == '') {
-							eTd.appendChild(document.createTextNode(compo));
-						} else if (oCompos[compo] && oCompos[compo][qualite]) {
-							eTd.appendChild(document.createTextNode(oCompos[compo][qualite]));
-							eTd.style.textAlign = 'right';
-						}
-						eTr.appendChild(eTd);
-					}
-					eTableTaniere.appendChild(eTr);
-				}
-			} catch (exc) {
-				logMZ('compo taniere .onload', exc);
-			}
-		},
+		trace: `recherche en tanière compos phase 1 ${oInfo.monstre}`,
+		onload: callback1,
 	});
 }
 
