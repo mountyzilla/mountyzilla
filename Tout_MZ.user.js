@@ -7298,24 +7298,6 @@ function do_scizSwitchEvents() {
 	}
 }
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x Missions ------------------------------------------------------- */
 
 /* TODO
@@ -7355,179 +7337,140 @@ function saveMission(num, obEtape) {
 	// logMZ('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
 }
 
-function addtroogle(tdLibelle, sRestrict) {
-	let img = document.createElement('img');
-	img.src = `${URL_MZimg}troogle.ico`;
-	img.alt = 'Troogle logo';
-	let a = document.createElement('a');
-	let url = `${URL_troogle}?utf8=${encodeURIComponent('✓')}`;	// hé oui, ce source est unicode
-	url = `${url}&entity_search[search]=${encodeURIComponent(sRestrict)}`;
-	url = `${url}&entity_search[position_x]=${MY_getValue(`${numTroll}.position.X`)}`;
-	url = `${url}&entity_search[position_y]=${MY_getValue(`${numTroll}.position.Y`)}`;
-	url = `${url}&entity_search[position_z]=${MY_getValue(`${numTroll}.position.N`)}`;
-	a.href = url;
-	a.title = 'Chercher sur Troogle';
-	a.target = 'troogle';
-	a.appendChild(img);
-	tdLibelle.appendChild(a);
-	tdLibelle.parentNode.style.verticalAlign = 'bottom';
-}
-
-function traiteMission() {
-	let numMission, tdLibelle;
+function parseMissionSteps() {
 	try {
-		let titreMission = document.getElementsByClassName('titre2')[0];
-		let missionForm = document.getElementsByName('ActionForm')[0];
-		numMission = titreMission.textContent.match(/\d+/)[0];
-		tdLibelle = document.evaluate(
-			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]", missionForm, null, 9, null
-		).singleNodeValue;
-	} catch (exc) {
-		logMZ('récupération mission', exc);
-		return;
-	}
-	if (!numMission) {
-		debugMZ('traiteMission pas de numMission, titreMission='.titreMission.outerHTML.replace(/</g, '‹')); return;
-	}
-	try {
-		if (!tdLibelle) {
+		let titreMission = $("h2")[0].textContent;
+		let idMission = titreMission.match(/\d+/)[0];
+		let validationFound = false;
+		var $missionLines = $("[name='ActionForm'] tr");
+		$missionLines.each(function () {
+			let $this = $(this);
+			let children = $this.children("td");
+			let stepNode = children[1];
+			let stepText = stepNode.textContent;
+			let validationText = children[2].textContent;
+			if (0 > validationText.indexOf("Valider")) {
+				// Etape déjà réalisée ou pas encore réalisée
+				return;
+			}
+			validationFound = true;
+			if (0 < stepText.indexOf("monstre")) {
+				let step = handleMonsterStep(stepText);
+				MZ_troogle.addTroogleLink(stepNode, step);
+				saveMission(idMission, step);
+				return;
+			}
+			if (0 < stepText.indexOf("du pouvoir")) {
+				let step = handlePowerStep(stepText);
+				saveMission(idMission, step);
+				return;
+			}
+			debugMZ(`Texte de mission non traité:${step}`);
+		});
+		if (!validationFound) {
 			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
-			debugMZ('traiteMission, la mission semble terminée');
-			saveMission(numMission, false);
-			return;
+			debugMZ('MZ_troogle.addTroogleLinks, la mission semble terminée');
+			saveMission(idMission, false);
 		}
-
-		let libelle = trim(tdLibelle.textContent.replace(/\n/g, ''));
-		let siMundidey = libelle.indexOf('Mundidey') != -1;
-		// debug Roule'
-		if (MY_DEBUG) {
-			for (let i = 0; i < tdLibelle.childNodes.length; i++) {
-				debugMZ(`traiteMission, tdLibelle.childNodes[${i}]=${tdLibelle.childNodes[i].textContent}`);
-			}
-		}
-		// let nbKills = 1;
-		if (libelle.indexOf('niveau égal à') != -1) {
-			let niveau, mod;
-			// exemples :
-			// L'équipe doit tuer 3 petits monstres (d'un niveau égal à 27 + ou - 1)
-			// L'équipe doit tuer 2 gros monstres (chaque monstre devant être d'un niveau égal à 44 au moins)
-			// L'équipe doit tuer un petit monstre (chaque monstre devant être d'un niveau égal à 29 + ou - 1) un Mundidey
-			// L'équipe doit tuer un monstre (ce monstre doit être d'un niveau égal à 44 au moins) un Mundidey
-			if (tdLibelle.childNodes.length == 1) {
-				// Roule' 08/01/52017 il n'y a plus de mise en forme. Un seul childNode
-				let m = libelle.match(/niveau égal à *(\d+) * au moins/);
-				if (m) {
-					niveau = Number(m[1]);
-					mod = 'plus';
-				} else {
-					m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
-					if (m) {
-						niveau = Number(m[1]);
-						mod = Number(m[2]);
-					} else {
-						logMZ(`traiteMission, échec analyse de ${libelle}`);
-						return;
-					}
-				}
-			} else {
-				// ancienne méthode (multi childnode)
-				// à supprimer un jour peut-être
-				if (tdLibelle.firstChild.nodeValue.indexOf('niveau égal à') == -1) {
-					// Étape de kill multiple de niveau donné
-					// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-					if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
-						mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-						niveau = Number(mod[0]);
-						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-						mod = mod.length > 1 ? Number(mod[1]) : 'plus';
-					} else {
-						niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
-						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-						mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-						mod = mod ? Number(mod[0]) : 'plus';
-					}
-				} else {
-					// Étape de kill unique de niveau donné
-					niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
-					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-					mod = mod ? Number(mod[0]) : 'plus';
-				}
-			}
-			// if (isDEV) {
-			// niveau = 35;	// pour les tests Roule
-			// window.alert('niveau forcé à 35 pour test');
-			// }
-			// debug Roule'
-			debugMZ(`traiteMission, save niveau=${niveau}, mod=${mod}, siMundidey=${siMundidey}, libelle=${libelle}`);
-			saveMission(numMission, {
-				type: 'Niveau',
-				niveau: niveau,
-				mod: mod,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			if (mod == 'plus') {
-				addtroogle(tdLibelle, `@monstre level:${niveau}..${niveau + 99}`);
-			} else {
-				addtroogle(tdLibelle, `@monstre level:${niveau - mod}..${niveau + mod}`);
-			}
-		} else if (libelle.indexOf('de la race') != -1) {
-			let race;
-			if (tdLibelle.firstChild.nodeValue.indexOf('de la race') == -1) {
-				// Étape de kill multiple de race donnée
-				// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-			} else {
-				// Étape de kill unique de race donnée
-				race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-			}
-			race = race.replace(/\"/g, '');
-			race = removeEnclosingSimpleCote(race);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Race',
-				race: race,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			addtroogle(tdLibelle, `@monstre ${race}`);
-		} else if (libelle.indexOf('de la famille') != -1) {
-			let famille;
-			if (tdLibelle.firstChild.nodeValue.indexOf('de la famille') == -1) {
-				// Étape de kill multiple de famille donnée
-				// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-			} else {
-				// Étape de kill unique de famille donnée
-				famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-			}
-			famille = famille.replace(/\"/g, '');
-			famille = removeEnclosingSimpleCote(famille);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Famille',
-				famille: famille,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			// Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
-			addtroogle(tdLibelle, `@monstre:${famille.toLowerCase().replace(/é/g, 'e').replace(/ï/g, 'i')}`);
-		} else if (libelle.indexOf('capacité spéciale') != -1) {
-			let pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
-			debugMZ('traiteMission étape capacité spéciale');
-			pouvoir = removeEnclosingSimpleCote(pouvoir);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Pouvoir',
-				pouvoir: pouvoir,
-				libelle: libelle
-			});
-		} else {
-			debugMZ('traiteMission étape pas pour troogle');
-			saveMission(numMission, false);
-		}
-	} catch (exc) {
-		logMZ('récupération étape mission', exc);
-		return;
+	} catch (e) {
+		warnMZ("Problème dans le traitement d'étape de mission", e);
 	}
 }
+
+function handlePowerStep(text) {
+	let powerExtract = /du pouvoir (.*)/i;
+	let pouvoir = powerExtract.exec(text)[1];
+	pouvoir = removeEnclosingSimpleCote(pouvoir);
+	return {
+		type: 'Pouvoir',
+		pouvoir: pouvoir,
+		libelle: text
+	};
+}
+
+function handleMonsterStep(text) {
+	let mission = {
+		type: 'Niveau',
+		niveau: 0,
+		mod: 'plus',
+		mundidey: text.indexOf('Mundidey') != -1,
+		libelle: text,
+		recherche: '@monstre'
+	};
+
+	let raceExtract = /de la race des "(.*?)"/i;
+	let match = raceExtract.exec(text);
+	if (match) {
+		mission.type = 'Race'
+		let race = removeEnclosingSimpleCote(trim(match[1]));
+		mission.recherche += ` ${race}`;
+	}
+
+	let familyExtract = /de la famille "(.*?)"/i;
+	match = familyExtract.exec(text);
+	if (match) {
+		mission.type = 'Famille'
+		let famille = trim(match[1]);
+		mission.recherche += `:${famille}`;
+	}
+
+	let minLevelExtract = /niveau.* (\d+) au moins/i;
+	match = minLevelExtract.exec(text);
+	if (match) {
+		mission.niveau = atoi(match[1]);
+	}
+
+	var levelRangeExtract = /niveau.* (\d+) +\+ ou - +(\d+)/i;
+	match = levelRangeExtract.exec(text);
+	if (match) {
+		mission.niveau = atoi(match[1]);
+		mission.mod = atoi(match[2]);
+	}
+	return mission;
+}
+
+function atoi(s) {
+	if (!s) return undefined; // à valider
+	s = s.trim();
+	while (s.charAt(0) == '0' || s.charAt(0) == ':') {
+		s = s.substring(1, s.length);
+		if (s.length == 0) return 0;
+	}
+	return parseInt(s, 10);
+}
+
+// Namespace MZ_troogle: isoler l'api liée à Troogle dans un objet et ne présenter que les méthodes
+// réellement publiques dans cet objet; les autres sont cachées dans le scope du bloc (évite de remplir la table des
+// fonctions visibles) (import Chrall)
+(function(MZ_troogle){
+
+	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param step objet étape de mission (cf handleMonsterStep)
+	MZ_troogle.addTroogleLink = function(node, step) {
+		let url = `http://troogle.iktomi.eu/entities/?entity_search[search]=${step.recherche} `;
+		if (0 < step.niveau) {
+			let max = 'plus' === step.mod ? 100 : step.niveau + step.mod;
+			let min = 'plus' === step.mod ? step.niveau : step.niveau - step.mod;
+			url += ` level:${min}..${max} `;
+		}
+		url += playerPositionParameters();
+		let $link = $("<a/>", {href: url, target: "troogle", style: "vertical-align:top"});
+		let $img = $("<img/>", { src: "https://mz.mh.raistlin.fr/mz/img/troogle.ico", style: "max-width: 1.5rem",
+			alt: "Rechercher sur Troogle", title: "Rechercher sur Troogle"})
+		$link.append($img);
+		$(node).append("  ").append($link);
+	}
+
+	// Search parameters for the current troll's position
+	function playerPositionParameters(){
+		let positionX = MY_getValue(`${numTroll}.position.X`);
+		let positionY = MY_getValue(`${numTroll}.position.Y`);
+		let positionN = MY_getValue(`${numTroll}.position.N`);
+		return `&entity_search[position_x]=${positionX}&entity_search[position_y]=${positionY}&entity_search[position_z]=${positionN}`;
+	}
+
+})(window.MZ_troogle = window.MZ_troogle || {});
 
 function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 	return x.replace(/'$/, '').replace(/^'/, '');
@@ -7535,27 +7478,9 @@ function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 
 function do_mission() {
 	start_script(60, 'do_mission_log');
-	traiteMission();
+	parseMissionSteps();
 	displayScriptTime(undefined, 'do_mission_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Données sur les trous de météorites ---------------------------- */
 
@@ -9767,6 +9692,7 @@ function do_option() {
 					string = `${string}<input type="hidden" name="qualite" value="${getQualite(infoComposant[3]) + 1}" />`;
 					string = `${string}<input type="hidden" name="q" value="min" />`;
 					string = `${string}<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" name="enter" value="Rechercher sur le Troc de l'Hydre" />`;
+					// TODO Kalamar: Cyclotrolls.be n'existe plus depuis belle lurette
 					string = `${string} &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" onClick="javascript:window.open(&quot;${URL_cyclotrolls}wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22${infoComposant[2]}%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>`;
 
 					string = `${string}</form>`;
@@ -17004,6 +16930,7 @@ function MZdo_hookCompoTanieres() {
 	document.body.onclick = hookSetCallback;
 	document.body.onkeypress = hookSetCallback;
 }
+
 
 /* --------------------------------- Dispatch --------------------------------- */
 
