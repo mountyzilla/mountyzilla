@@ -4068,9 +4068,6 @@ function analyseTactique(donneesMonstre, nom) {
 /** x~x Gestion des missions ------------------------------------------- */
 
 /*
- * This file is part of MountyZilla (http://mountyzilla.tilk.info/),
- * published under GNU License v2.
- *
  * Patch :
  * gestion des missions terminées
  */
@@ -4106,24 +4103,6 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 function do_mission_liste() {
 	checkLesMimis();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Gestion des actions -------------------------------------------- */
 
@@ -4726,23 +4705,6 @@ function do_actions() {
 	displayScriptTime(undefined, 'do_actions_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Pré-enchantement ----------------------------------------------- */
 /* 2013-08-19 : correction auto syntaxe alert */
@@ -4825,24 +4787,6 @@ function do_pre_enchant() {
 	displayScriptTime(undefined, 'do_pre_enchant_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x Enchantement --------------------------------------------------- */
 /* 2013-08-19 : correction auto syntaxe alert */
 
@@ -4896,45 +4840,9 @@ function do_enchant() {
 	displayScriptTime(undefined, 'do_enchant_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x MyEvent -------------------------------------------------------- */
 // Script désactivé en attendant la màj vers le nouveau système de missions.
 function do_myevent() { }
-
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Malus ---------------------------------------------------------- */
 /* v1.4 - 2014-01-06
@@ -5473,24 +5381,6 @@ function do_malus() {
 	}
 }
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x Mouches -------------------------------------------------------- */
 var mainTab, tr_mouches;
 
@@ -5656,24 +5546,6 @@ function do_mouches() {
 	initialiseMouches();
 	displayScriptTime(undefined, 'do_mouches_log');
 }
-
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Equipement Gowap ----------------------------------------------- */
 
@@ -6228,24 +6100,6 @@ function do_lieuTeleport() {
 	changeButtonValidate();
 	MZ_setCarteTP();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Infomonstre ---------------------------------------------------- */
 
@@ -7691,11 +7545,6 @@ function do_move() {
 	// }
 }
 
-/** *****************************************************************************
-* This file is part of Mountyzilla (http://mountyzilla.tilk.info/)             *
-* Mountyzilla is free software; provided under the GNU General Public License  *
-*******************************************************************************/
-
 /** x~x News ----------------------------------------------------------- */
 
 // Nombre de news à afficher & nb max de caractères par news:
@@ -8028,24 +7877,6 @@ function do_news() {
 	displayScriptTime(undefined, 'do_news_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x Tabcompo ------------------------------------------------------- */
 
 function initPopupTabcompo() {
@@ -8375,24 +8206,6 @@ function do_tancompo() {
 
 	displayScriptTime(undefined, 'do_tancompo_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x pjView --------------------------------------------------------- */
 
@@ -8958,24 +8771,6 @@ function do_pjview() {
 	treateEquipement();
 	toolTipInit();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Option --------------------------------------------------------- */
 
@@ -9692,7 +9487,7 @@ function do_option() {
 					string = `${string}<input type="hidden" name="qualite" value="${getQualite(infoComposant[3]) + 1}" />`;
 					string = `${string}<input type="hidden" name="q" value="min" />`;
 					string = `${string}<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" name="enter" value="Rechercher sur le Troc de l'Hydre" />`;
-					// TODO Kalamar: Cyclotrolls.be n'existe plus depuis belle lurette
+					// TODOKalamar: Cyclotrolls.be n'existe plus depuis belle lurette
 					string = `${string} &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" onClick="javascript:window.open(&quot;${URL_cyclotrolls}wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22${infoComposant[2]}%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>`;
 
 					string = `${string}</form>`;
@@ -9731,24 +9526,6 @@ function do_option() {
 	/* [zone]                     fin Obsolète ??                                  */
 	displayScriptTime(undefined, 'do_option_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Equip ---------------------------------------------------------- */
 
@@ -9876,24 +9653,6 @@ function do_equip() {
 
 	displayScriptTime(undefined, 'do_equip_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Diplo ---------------------------------------------------------- */
 
@@ -10340,24 +10099,6 @@ function do_diplo() {
 	}
 }
 
-/** *****************************************************************************
-*   This file is part of Mountyzilla.                                          *
-*                                                                              *
-*   Mountyzilla is free software; you can redistribute it and/or modify        *
-*   it under the terms of the GNU General Public License as published by       *
-*   the Free Software Foundation; either version 2 of the License, or          *
-*   (at your option) any later version.                                        *
-*                                                                              *
-*   Mountyzilla is distributed in the hope that it will be useful,             *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of             *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
-*   GNU General Public License for more details.                               *
-*                                                                              *
-*   You should have received a copy of the GNU General Public License          *
-*   along with Mountyzilla; if not, write to the Free Software                 *
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
-*******************************************************************************/
-
 /** x~x CdmComp -------------------------------------------------------- */
 // let cdm = '';	// Roule 11/03/2017 une variable globale de moins \o/
 
@@ -10594,24 +10335,6 @@ function do_cdmcomp() {
 	displayScriptTime(undefined, 'do_cdmcomp_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x CdmBot --------------------------------------------------------- */
 
 /* v0.2 by Dab - 2013-08-20
@@ -10760,24 +10483,6 @@ function MZ_traiteCdMmsg() {
 function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du bot
 	MZ_traiteCdMmsg();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Menu ----------------------------------------------------------- */
 // n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
@@ -10976,24 +10681,6 @@ function do_menu() {
 	// Ajout popup sur les raccourcis des actions
 	// MZ_initPopupFrameGauche();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Vue ------------------------------------------------------------ */
 
@@ -13954,24 +13641,6 @@ function do_vue() {
 }
 
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x profil2 -------------------------------------------------------- */
 
 /*                           Variables globales                           */
@@ -15933,24 +15602,6 @@ function do_profil2() {
 		avertissement(`Une erreur est survenue (do_profil2)`, null, null, exc);
 	}
 }
-
-/** *****************************************************************************
-*   This file is part of Mountyzilla.                                          *
-*                                                                              *
-*   Mountyzilla is free software; you can redistribute it and/or modify        *
-*   it under the terms of the GNU General Public License as published by       *
-*   the Free Software Foundation; either version 2 of the License, or          *
-*   (at your option) any later version.                                        *
-*                                                                              *
-*   Mountyzilla is distributed in the hope that it will be useful,             *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of             *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
-*   GNU General Public License for more details.                               *
-*                                                                              *
-*   You should have received a copy of the GNU General Public License          *
-*   along with Mountyzilla; if not, write to the Free Software                 *
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
-*******************************************************************************/
 
 /** x~x md5.js --------------------------------------------------------- */
 /*
