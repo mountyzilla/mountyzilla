@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.13
+// @version     1.5.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.13';
+var MZ_latest = '1.5.15';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -11182,7 +11182,7 @@ function savePosition() {
 	let pos = getPosition();
 	let x = pos[0], y = pos[1], n = pos[2];
 	if (isNaN(x) || isNaN(y) || isNaN(n)) {
-		logMZ(`erreur savePosition_log, pos=${JSON.stringfy(pos)}`);
+		logMZ(`erreur savePosition_log, pos=${JSON.stringify(pos)}`);
 	} else {
 		MY_setValue(`${numTroll}.position.X`, x);
 		MY_setValue(`${numTroll}.position.Y`, y);
@@ -11936,47 +11936,39 @@ function set2DViewSystem() {
 
 /** x~x Tableau d'Infos ------------------------------------------------ */
 function initialiseInfos() {
-	// DEBUG: prévoir désactivation complète du script si infoTab non trouvé
 	let infoTab = document.getElementById('infoTab'),
 		tbody = infoTab.tBodies[0],
 		thead = infoTab.createTHead(),
 		tr = appendTr(thead, 'mh_tdtitre'),
 		td = appendTdText(tr, 'INFORMATIONS', true),
 		span = document.createElement('span');
+	if (!infoTab) {
+		avertissement('Vue Position joueur : infoTab non trouvé');
+		return;
+	}
 
-	// Récupération de la position du joueur
+	let ePosition = document.getElementById('position');
+	if (!ePosition) {
+		avertissement('Vue Position joueur : element non trouvée');
+		return;
+	}
+	let oPosition = JSON.parse(ePosition.getAttribute('data-position'));
+	if (!oPosition) {
+		avertissement('Vue Position joueur : data non trouvée');
+		return;
+	}
 	try {
-		let strPos = document.evaluate(
-			".//b/text()[contains(.,'X = ') or contains(.,'X\u00A0=\u00A0')]",	// &nbsp; en vue smartphone
-			infoTab, null, 9, null
-		).singleNodeValue.nodeValue;
-		// ***INIT GLOBALE*** currentPosition
-		currentPosition = getIntegers(strPos);
-		debugMZ(`retrievePosition(): ${currentPosition}`);
+		currentPosition[0] = oPosition.x;
+		currentPosition[1] = oPosition.y;
+		currentPosition[2] = oPosition.n;
+		porteeVue = [];
+		porteeVue[0] = oPosition.vueH;
+		porteeVue[1] = oPosition.vueV;
+		porteeVue[2] = oPosition.porteeH;
+		porteeVue[3] = oPosition.porteeV;
 	} catch (exc) {
 		// Si on ne trouve pas le "X ="
 		logMZ('Vue Position joueur non trouvée', exc);
-	}
-
-	// Récupération des portées (max et limitée) de la vue
-	try {
-		let nodes = document.evaluate(
-			".//b/text()[contains(.,'horizontalement') " +
-			"or contains(.,'verticalement')]",
-			infoTab, null, 7, null
-		);
-		let array = [];
-		for (let i = 0; i < 4 && i < nodes.snapshotLength; i++) {
-			array.push(parseInt(nodes.snapshotItem(i).nodeValue));
-		}
-		// ***INIT GLOBALE*** porteeVue
-		porteeVue = array;
-		if (porteeVue.length < 4) {
-			porteeVue[2] = array[0];
-			porteeVue[3] = array[1];
-		}
-	} catch (exc) {
-		logMZ('Vue Portées Vue non trouvée', exc);
 	}
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
