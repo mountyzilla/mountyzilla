@@ -685,7 +685,7 @@ if (window.location.protocol.indexOf('https') === 0) {
 }
 
 // Roule 23/12/2016 mode dev
-var isDEV = true;
+var isDEV = false;
 if (window.localStorage.getItem('MZ_dev') ||
 	window.location.href.indexOf('rouletabille.mh.free.fr') > 0 ||
 	window.location.href.indexOf('mzdev.mh') >= 0) {
@@ -4759,12 +4759,7 @@ function treateEnchantement_pre() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let texte = trim(nodes.snapshotItem(i).nodeValue);
-		texte = texte.replace(" d'une ", " d'un ");
-		let compo = texte.substring(0, texte.indexOf(" d'un "));
-		let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
-		let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
-		let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
+		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
 		// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
@@ -4786,8 +4781,16 @@ function do_pre_enchant() {
 	displayScriptTime(undefined, 'do_pre_enchant_log');
 }
 
-/** x~x Enchantement --------------------------------------------------- */
-/* 2013-08-19 : correction auto syntaxe alert */
+function extractRequiredCompo(node) {
+	let texte = trim(node.textContent);
+	texte = texte.replace(" d'une ", " d'un ");
+	let compo = texte.substring(0, texte.indexOf(" d'un "));
+	let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
+	monstre = monstre.replace(/ Géante?/, "");
+	let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
+	let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
+	return {compo, monstre, qualite, localisation};
+}
 
 function treateEnchantement() {
 	let idEnchanteur = MY_getValue(`${numTroll}.enchantement.lastEnchanteur`);
@@ -4810,14 +4813,7 @@ function treateEnchantement() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let texte = trim(nodes.snapshotItem(i).nodeValue);
-		texte = texte.replace(" d'une ", " d'un ");
-		let compo = texte.substring(0, texte.indexOf(" d'un "));
-		let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
-		monstre = monstre.replace(/ Géante?/, "");
-		let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
-		let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
-		// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
+		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
 	MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${idEnchanteur};${MY_getValue(`${numTroll}.position.X`)};${MY_getValue(`${numTroll}.position.Y`)};${MY_getValue(`${numTroll}.position.N`)}`);
@@ -4839,6 +4835,25 @@ function do_enchant() {
 	displayScriptTime(undefined, 'do_enchant_log');
 }
 
+function lireEnchantementEncours() {
+    let cells = document.querySelectorAll("td.mh_tdtitre");
+	for (let i = 0; i < cells.length; i++) {
+		let cell = cells[i];
+		let idEquipement = cell.querySelector("a").text.split(/[\[\]]/)[1];
+		let components = cell.querySelectorAll("li");
+		for (let j = 0; j < components.length; j++) {
+			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
+			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
+		}
+	}
+	// TODO: purger enchantements clôturés
+}
+
+function do_lire_enchant_en_cours() {
+	start_script(60, 'do_lire_enchant_en_cours_log');
+	lireEnchantementEncours();
+	displayScriptTime(undefined, 'do_lire_enchant_en_cours_log');
+}
 /** x~x MyEvent -------------------------------------------------------- */
 // Script désactivé en attendant la màj vers le nouveau système de missions.
 function do_myevent() { }
@@ -7301,6 +7316,8 @@ function atoi(s) {
 	// @param node element html (conteneur) dans lequel le lien va être ajouté
 	// @param step objet étape de mission (cf handleMonsterStep)
 	MZ_troogle.addTroogleLink = function(node, step) {
+		console.log($);
+
 		let url = `http://troogle.iktomi.eu/entities/?entity_search[search]=${step.recherche} `;
 		if (0 < step.niveau) {
 			let max = 'plus' === step.mod ? 100 : step.niveau + step.mod;
@@ -16666,6 +16683,8 @@ try {
 		do_enchant();
 	} else if (isPage("MH_Lieux/Lieu_Enchanteur")) {
 		do_pre_enchant();
+	} else if (isPage("MH_Play/Play_e_enchantements")) {
+		do_lire_enchant_en_cours();
 	} else if (isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {	// 25/03/2024 MH_Play/Actions n'existe plus. À surveiller...
 		do_actions();
 	} else if (isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
