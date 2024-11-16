@@ -4839,14 +4839,33 @@ function lireEnchantementEncours() {
     let cells = document.querySelectorAll("td.mh_tdtitre");
 	for (let i = 0; i < cells.length; i++) {
 		let cell = cells[i];
-		let idEquipement = cell.querySelector("a").text.split(/[\[\]]/)[1];
+		let equipmentInfo = cell.querySelector("a").text.split(/[\[\]]/);
+		let idEquipement = equipmentInfo[1];
+		let nomEquipement = trim(equipmentInfo[2]);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
 		let components = cell.querySelectorAll("li");
 		for (let j = 0; j < components.length; j++) {
 			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
 			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
 		}
+
+		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
+		let enchanteurMatch = enchanteurText.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);
+		
+		let liste = MY_getValue(`${numTroll}.enchantement.liste`);
+		if (!liste || liste == "") {
+			MY_setValue(`${numTroll}.enchantement.liste`, idEquipement);
+		} else {
+			if (liste.indexOf(idEquipement) == -1) {
+				MY_setValue(`${numTroll}.enchantement.liste`, `${liste};${idEquipement}`);
+			}
+		}
+	
 	}
 	// TODO: purger enchantements clôturés
+	// TODO: isoler code lié aux enchantements dans un pseudo-module
+	// TODO: Liens vers Troogle et Troc depuis la liste des enchantements et supprimer le code obsolète dans la page des options
 }
 
 function do_lire_enchant_en_cours() {
@@ -9370,6 +9389,7 @@ function deleteEnchantement() {
 
 function do_option() {
 	start_script(712, 'do_option_log');
+	debugger;/*  */
 	let insertPoint = getFooter();
 	insertBefore(insertPoint, document.createElement('p'));
 	let ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
@@ -9429,10 +9449,6 @@ function do_option() {
 	ti.title = `Version ${GM_info.script.version}`;
 	insertOptionTable(insertPoint);
 
-	/* insertion enchantements ici
-	if(...)
-	insertEnchantementTable();
-	*/
 	insertBefore(insertPoint, document.createElement('p'));
 	ti = insertTitle(insertPoint, 'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
 	ti.onclick = function (e) {
@@ -9473,6 +9489,7 @@ function do_option() {
 		appendTdText(tr, 'Enchanteur', 1);
 		appendTdText(tr, 'Action', 1);
 
+		console.log("************************************");
 		let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
 		for (let i = 0; i < listeEquipement.length; i++) {
 			try {
