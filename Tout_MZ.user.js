@@ -561,7 +561,7 @@ Doc État et Callback pour l'utilisation par les scripts tiers
 **********************************************************/
 
 /** x~x Logging/debugging MZ ------------------------------------------- */
-var MY_DEBUG = false, MY_LOG = true;
+var MY_DEBUG = true, MY_LOG = true;
 
 function printMZ(print, check, obj, exc = undefined) {
 	// Wrapper logging MZ avec injection d'exception pour les devs.
@@ -658,7 +658,6 @@ var URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
 var URL_vue_cube = 'vueCube/vueCube.html';
 var URL_troc_mh = 'http://troc.mountyhall.com/search.php';
 var URL_cyclotrolls = 'http://www.cyclotrolls.be/';
-var URL_troogle = 'http://troogle.iktomi.eu/entities/';
 
 // URLs de test HTTPS
 var URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
@@ -686,7 +685,7 @@ if (window.location.protocol.indexOf('https') === 0) {
 }
 
 // Roule 23/12/2016 mode dev
-var isDEV = false;
+var isDEV = true;
 if (window.localStorage.getItem('MZ_dev') ||
 	window.location.href.indexOf('rouletabille.mh.free.fr') > 0 ||
 	window.location.href.indexOf('mzdev.mh') >= 0) {
