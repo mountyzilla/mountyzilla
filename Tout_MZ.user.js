@@ -656,8 +656,6 @@ var URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 var URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 var URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
 var URL_vue_cube = 'vueCube/vueCube.html';
-var URL_troc_mh = 'http://troc.mountyhall.com/search.php';
-var URL_cyclotrolls = 'http://www.cyclotrolls.be/';
 
 // URLs de test HTTPS
 var URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
@@ -4824,7 +4822,7 @@ function do_enchant() {
 }
 
 function lireEnchantementEncours() {
-    let cells = document.querySelectorAll("td.mh_tdtitre");
+	let cells = document.querySelectorAll("td.mh_tdtitre");
 	for (let i = 0; i < cells.length; i++) {
 		let cell = cells[i];
 		let equipmentInfo = cell.querySelector("a").text.split(/[\[\]]/);
@@ -4836,6 +4834,7 @@ function lireEnchantementEncours() {
 			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
 			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
 			MZ_troogle.addTroogleLink(components[j], `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
+			MZ_troc.addTrocLink(components[j], monstre, compo, qualite);
 		}
 
 		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
@@ -7348,7 +7347,7 @@ function atoi(s) {
 	MZ_troogle.addTroogleLink = function(node, text) {
 		let url = `${BASE_TROOGLE_SEARCH}${text} `;
 		url += playerPositionParameters();
-		let link = appendA(node, url, null, null);
+		let link = appendA(node, url);
 		link.target = 'Troogle';
 		let img = createImage(`${BASE_TROOGLE_URL}favicon.ico`, 'Rechercher sur Troogle', 'max-width: 1.5rem');
 		link.appendChild(img);
@@ -7363,6 +7362,29 @@ function atoi(s) {
 	}
 
 })(window.MZ_troogle = window.MZ_troogle || {});
+
+
+// Namespace MZ_troc: isoler l'api liée au Troc de l'Hydre
+(function(MZ_troc) {
+
+	const BASE_TROC_URL = 'https://troc.mountyhall.com/'; // search.php
+
+	// Ajoute un lien vers le Troc de l'Hydre
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param monster monstre pour lequel le composant est recherché
+	// @param part partie du monstre/composant
+	// @param quality qualité minimum (textuelle, sera convertie via qualiteNum)
+	MZ_troc.addTrocLink = function(node, monster, part, quality) {
+		quality = qualiteNum.indexOf(quality);
+		let url = `${BASE_TROC_URL}search.php?monster=${monster}&part=${part}&qualite=${quality}&q=min`;
+		let link = appendA(node, url);
+		link.target = 'Troc';
+		let img = createImage(`${BASE_TROC_URL}favicon.png`, "Rechercher sur le Troc de l'Hydre", 'max-width: 1.5rem');
+		link.appendChild(img);
+	}
+
+})(window.MZ_troc = window.MZ_troc || {});
+
 
 function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 	return x.replace(/'$/, '').replace(/^'/, '');
@@ -9471,94 +9493,6 @@ function do_option() {
 	insertCreditsTable(insertPoint);
 	insertBefore(insertPoint, document.createElement('p'));
 
-	/* [zone]                     Obsolète ??                                  */
-	if (MY_getValue(`${numTroll}.enchantement.liste`) &&
-		MY_getValue(`${numTroll}.enchantement.liste`) != "") {
-		insertTitle(insertPoint, 'Les Enchantements en cours');
-		let table = document.createElement('table');
-		table.setAttribute('width', '98%');
-		table.setAttribute('border', '0');
-		table.setAttribute('align', 'center');
-		table.setAttribute('cellpadding', '2');
-		table.setAttribute('cellspacing', '1');
-		table.setAttribute('class', 'mh_tdborder');
-
-		let tbody = document.createElement('tbody');
-		table.appendChild(tbody);
-
-		let tr = appendTr(tbody, 'mh_tdtitre');
-		appendTdText(tr, 'Equipement', 1);
-		appendTdText(tr, 'Composants', 1);
-		appendTdText(tr, 'Enchanteur', 1);
-		appendTdText(tr, 'Action', 1);
-
-		let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
-		for (let i = 0; i < listeEquipement.length; i++) {
-			try {
-				let idEquipement = listeEquipement[i];
-				let nomEquipement = MY_getValue(`${numTroll}.enchantement.${idEquipement}.objet`);
-				let infoEnchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`).split(";");
-				let ul = document.createElement('UL');
-				for (let j = 0; j < 3; j++) {
-					let k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
-					let v = MY_getValue(k);
-					if (v == null) { 	// protection Roule 26/08/2017
-						logMZ(`err infoComposant k=${k}, v is null`);
-						continue;
-					}
-					let infoComposant = v.split(';');
-					if (infoComposant.length < 5) {	// protection Roule 25/08/2017
-						logMZ(`err infoComposant k=${k}, v=${v}`);
-						continue;
-					}
-					let texte = infoComposant[4].replace("Ril ", "Œil ");
-					for (let kk = 5; kk < infoComposant.length; kk++) {
-						texte = `${texte};${infoComposant[kk].replace("Ril ", "Œil ")}`;
-					}
-					let li = appendLi(ul, texte);
-					let string = `<form action="${URL_troc_mh}" method="post" TARGET = "_blank">`;
-					string = `${string}<input type="hidden" name="monster" value="${infoComposant[2]}" />`;
-					string = `${string}<input type="hidden" name="part" value="${infoComposant[0]}" />`;
-					string = `${string}<input type="hidden" name="qualite" value="${getQualite(infoComposant[3]) + 1}" />`;
-					string = `${string}<input type="hidden" name="q" value="min" />`;
-					string = `${string}<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" name="enter" value="Rechercher sur le Troc de l'Hydre" />`;
-					// TODOKalamar: Cyclotrolls.be n'existe plus depuis belle lurette
-					string = `${string} &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" onClick="javascript:window.open(&quot;${URL_cyclotrolls}wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22${infoComposant[2]}%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>`;
-
-					string = `${string}</form>`;
-					// string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
-					// string+= '<input type="hidden" name="wiki" value="TroOGle" />';
-					// string+= '<input type="hidden" name="trooglephr" value="base:monstres tag:nom &quot;'+infoComposant[2]+'&quot;" />';
-					// string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grâce à Troogle" /></form>';
-					li.innerHTML = li.innerHTML + string;
-				}
-				tr = appendTr(tbody, 'mh_tdpage');
-
-				let td = appendTdText(tr, nomEquipement);
-				td.setAttribute('valign', 'center');
-
-				td = document.createElement('td');
-				td.appendChild(ul);
-				tr.appendChild(td);
-				td.setAttribute('valign', 'center');
-
-				td = appendTdText(tr, `Enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`);
-				td.setAttribute('valign', 'center');
-
-				td = document.createElement('td');
-				input = appendButton(td, 'Supprimer l\'enchantement', deleteEnchantement);
-				input.setAttribute('name', idEquipement);
-				tr.appendChild(td);
-				td.setAttribute('valign', 'center');
-			} catch (exc) {
-				avertissement(`Une erreur est survenue (do_option)`, null, null, exc);
-			}
-		}
-		insertBefore(insertPoint, table);
-		insertBefore(insertPoint, document.createElement('p'));
-	}
-
-	/* [zone]                     fin Obsolète ??                                  */
 	displayScriptTime(undefined, 'do_option_log');
 }
 
