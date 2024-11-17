@@ -1411,18 +1411,6 @@ function createImageSpan(url, alt, title, text, bold) {
 	return span;
 }
 
-// WARNING (gath) - non utilisé -> commenté
-// function createCase(titre, table, width = 120) {
-// 	let tr = appendTr(table, 'mh_tdpage');
-// 	let td = appendTdText(tr, titre, true);
-// 	td.className = 'mh_tdtitre';
-// 	td.width = width;
-
-// 	td = appendTdText(tr, '');
-// 	td.className = 'mh_tdpage';
-// 	return td;
-// }
-
 function getMyID(elt) {
 	let parent = elt.parentNode;
 	for (let i = 0; i < parent.childNodes.length; i++) {
@@ -4847,6 +4835,7 @@ function lireEnchantementEncours() {
 		for (let j = 0; j < components.length; j++) {
 			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
 			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
+			MZ_troogle.addTroogleLink(components[j], `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
 		}
 
 		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
@@ -4865,7 +4854,8 @@ function lireEnchantementEncours() {
 	}
 	// TODO: purger enchantements clôturés
 	// TODO: isoler code lié aux enchantements dans un pseudo-module
-	// TODO: Liens vers Troogle et Troc depuis la liste des enchantements et supprimer le code obsolète dans la page des options
+	// TODO: Liens vers Troogle et Troc depuis la liste des enchantements 
+	// TODO: supprimer le code obsolète dans la page des options
 }
 
 function do_lire_enchant_en_cours() {
@@ -7243,7 +7233,7 @@ function parseMissionSteps() {
 			validationFound = true;
 			if (0 < stepText.indexOf("monstre")) {
 				let step = handleMonsterStep(stepText);
-				MZ_troogle.addTroogleLink(stepNode, step);
+				MZ_troogle.addTroogleLinkToStep(stepNode, step);
 				saveMission(idMission, step);
 				return;
 			}
@@ -7256,7 +7246,7 @@ function parseMissionSteps() {
 		});
 		if (!validationFound) {
 			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
-			debugMZ('MZ_troogle.addTroogleLinks, la mission semble terminée');
+			debugMZ('MZ_troogle.addTroogleLinkToStep, la mission semble terminée');
 			saveMission(idMission, false);
 		}
 	} catch (e) {
@@ -7282,7 +7272,7 @@ function handleMonsterStep(text) {
 		mod: 'plus',
 		mundidey: text.indexOf('Mundidey') != -1,
 		libelle: text,
-		recherche: '@monstre'
+		recherche: MZ_troogle.SEARCH_MONSTER
 	};
 
 	let raceExtract = /de la race des "(.*?)"/i;
@@ -7316,6 +7306,7 @@ function handleMonsterStep(text) {
 	return mission;
 }
 
+// un ParseInt un peu plus résistant aux Strings un peu loose
 function atoi(s) {
 	if (!s) return undefined; // à valider
 	s = s.trim();
@@ -7331,27 +7322,39 @@ function atoi(s) {
 // fonctions visibles) (import Chrall)
 (function(MZ_troogle){
 
+	const BASE_TROOGLE_URL = `https://troogle.iktomi.eu/`;
+	const BASE_TROOGLE_SEARCH = `${BASE_TROOGLE_URL}entities/?entity_search[search]=`;
+
+	// Pseudo-constantes: 
+	// Types de recherche
+	Object.defineProperty(MZ_troogle, "SEARCH_MONSTER", { value: '@monstre', configurable: false, writable: false });
+
 	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
 	// @param node element html (conteneur) dans lequel le lien va être ajouté
 	// @param step objet étape de mission (cf handleMonsterStep)
-	MZ_troogle.addTroogleLink = function(node, step) {
-		console.log($);
-
-		let url = `http://troogle.iktomi.eu/entities/?entity_search[search]=${step.recherche} `;
+	MZ_troogle.addTroogleLinkToStep = function(node, step) {
+		let search = `${step.recherche} `;
 		if (0 < step.niveau) {
 			let max = 'plus' === step.mod ? 100 : step.niveau + step.mod;
 			let min = 'plus' === step.mod ? step.niveau : step.niveau - step.mod;
-			url += ` level:${min}..${max} `;
+			search += ` level:${min}..${max} `;
 		}
-		url += playerPositionParameters();
-		let $link = $("<a/>", {href: url, target: "troogle", style: "vertical-align:top"});
-		let $img = $("<img/>", { src: "https://mz.mh.raistlin.fr/mz/img/troogle.ico", style: "max-width: 1.5rem",
-			alt: "Rechercher sur Troogle", title: "Rechercher sur Troogle"})
-		$link.append($img);
-		$(node).append("  ").append($link);
+		MZ_troogle.addTroogleLink(node, search);
 	}
 
-	// Search parameters for the current troll's position
+	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param text texte de recherche (supposé correctement écrit)
+	MZ_troogle.addTroogleLink = function(node, text) {
+		let url = `${BASE_TROOGLE_SEARCH}${text} `;
+		url += playerPositionParameters();
+		let link = appendA(node, url, null, null);
+		link.target = 'Troogle';
+		let img = createImage(`${BASE_TROOGLE_URL}favicon.ico`, 'Rechercher sur Troogle', 'max-width: 1.5rem');
+		link.appendChild(img);
+	}
+
+	// Paramètres de recherche pour la position courante du troll actif
 	function playerPositionParameters(){
 		let positionX = MY_getValue(`${numTroll}.position.X`);
 		let positionY = MY_getValue(`${numTroll}.position.Y`);
@@ -9489,7 +9492,6 @@ function do_option() {
 		appendTdText(tr, 'Enchanteur', 1);
 		appendTdText(tr, 'Action', 1);
 
-		console.log("************************************");
 		let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
 		for (let i = 0; i < listeEquipement.length; i++) {
 			try {
