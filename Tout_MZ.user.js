@@ -4822,11 +4822,14 @@ function do_enchant() {
 }
 
 function lireEnchantementEncours() {
+	let enCours = [];
+	
 	let cells = document.querySelectorAll("td.mh_tdtitre");
 	for (let i = 0; i < cells.length; i++) {
 		let cell = cells[i];
 		let equipmentInfo = cell.querySelector("a").text.split(/[\[\]]/);
 		let idEquipement = equipmentInfo[1];
+		enCours.push(idEquipement);
 		let nomEquipement = trim(equipmentInfo[2]);
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
 		let components = cell.querySelectorAll("li");
@@ -4839,27 +4842,29 @@ function lireEnchantementEncours() {
 
 		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
 		let enchanteurMatch = enchanteurText.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
-		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);
-		
-		let liste = MY_getValue(`${numTroll}.enchantement.liste`);
-		if (!liste || liste == "") {
-			MY_setValue(`${numTroll}.enchantement.liste`, idEquipement);
-		} else {
-			if (liste.indexOf(idEquipement) == -1) {
-				MY_setValue(`${numTroll}.enchantement.liste`, `${liste};${idEquipement}`);
-			}
-		}
-	
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);		
 	}
-	// TODO: purger enchantements clôturés
-	// TODO: isoler code lié aux enchantements dans un pseudo-module
-	// TODO: Liens vers Troogle et Troc depuis la liste des enchantements 
-	// TODO: supprimer le code obsolète dans la page des options
+
+	let liste = MY_getValue(`${numTroll}.enchantement.liste`);
+	let listeEquipement = null == liste ? [] : liste.split(";");
+	MY_setValue(`${numTroll}.enchantement.liste`, enCours.join(';'));
+	for (const previous of listeEquipement) {
+		if (-1 == enCours.indexOf(previous)) {
+			debugMZ(`Suppression enchantement ${previous} du local storage`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.objet`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.enchanteur`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.0`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.1`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.2`);
+		}
+	}
+	// TODO: isoler code lié aux enchantements dans un pseudo-module & purger code obsolète
 }
 
 function do_lire_enchant_en_cours() {
 	start_script(60, 'do_lire_enchant_en_cours_log');
 	lireEnchantementEncours();
+
 	displayScriptTime(undefined, 'do_lire_enchant_en_cours_log');
 }
 /** x~x MyEvent -------------------------------------------------------- */
