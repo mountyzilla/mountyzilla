@@ -3259,7 +3259,7 @@ function computeCompoEnchantement() {
 		for (let j = 0; j < 3; j++) {
 			let k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
 			let v = MY_getValue(k);
-			let infoComposant = MY_getValue().split(';');
+			let infoComposant = v.split(';');
 			if (infoComposant.length < 5) {	// protection Roule 25/08/2017
 				logMZ(`err infoComposant k=${k}, v=${v}`);
 				continue;
