@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.16
+// @version     1.5.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.16';
+var MZ_latest = '1.5.17';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -656,9 +656,6 @@ var URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 var URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 var URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
 var URL_vue_cube = 'vueCube/vueCube.html';
-var URL_troc_mh = 'http://troc.mountyhall.com/search.php';
-var URL_cyclotrolls = 'http://www.cyclotrolls.be/';
-var URL_troogle = 'http://troogle.iktomi.eu/entities/';
 
 // URLs de test HTTPS
 var URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
@@ -1411,18 +1408,6 @@ function createImageSpan(url, alt, title, text, bold) {
 	appendText(span, text, bold);
 	return span;
 }
-
-// WARNING (gath) - non utilisé -> commenté
-// function createCase(titre, table, width = 120) {
-// 	let tr = appendTr(table, 'mh_tdpage');
-// 	let td = appendTdText(tr, titre, true);
-// 	td.className = 'mh_tdtitre';
-// 	td.width = width;
-
-// 	td = appendTdText(tr, '');
-// 	td.className = 'mh_tdpage';
-// 	return td;
-// }
 
 function getMyID(elt) {
 	let parent = elt.parentNode;
@@ -3274,7 +3259,7 @@ function computeCompoEnchantement() {
 		for (let j = 0; j < 3; j++) {
 			let k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
 			let v = MY_getValue(k);
-			let infoComposant = MY_getValue().split(';');
+			let infoComposant = v.split(';');
 			if (infoComposant.length < 5) {	// protection Roule 25/08/2017
 				logMZ(`err infoComposant k=${k}, v=${v}`);
 				continue;
@@ -4068,9 +4053,6 @@ function analyseTactique(donneesMonstre, nom) {
 /** x~x Gestion des missions ------------------------------------------- */
 
 /*
- * This file is part of MountyZilla (http://mountyzilla.tilk.info/),
- * published under GNU License v2.
- *
  * Patch :
  * gestion des missions terminées
  */
@@ -4106,24 +4088,6 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 function do_mission_liste() {
 	checkLesMimis();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Gestion des actions -------------------------------------------- */
 
@@ -4726,23 +4690,6 @@ function do_actions() {
 	displayScriptTime(undefined, 'do_actions_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Pré-enchantement ----------------------------------------------- */
 /* 2013-08-19 : correction auto syntaxe alert */
@@ -4798,12 +4745,7 @@ function treateEnchantement_pre() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let texte = trim(nodes.snapshotItem(i).nodeValue);
-		texte = texte.replace(" d'une ", " d'un ");
-		let compo = texte.substring(0, texte.indexOf(" d'un "));
-		let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
-		let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
-		let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
+		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
 		// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
@@ -4825,26 +4767,16 @@ function do_pre_enchant() {
 	displayScriptTime(undefined, 'do_pre_enchant_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
-/** x~x Enchantement --------------------------------------------------- */
-/* 2013-08-19 : correction auto syntaxe alert */
+function extractRequiredCompo(node) {
+	let texte = trim(node.textContent);
+	texte = texte.replace(" d'une ", " d'un ");
+	let compo = texte.substring(0, texte.indexOf(" d'un "));
+	let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
+	monstre = monstre.replace(/ Géante?/, "");
+	let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
+	let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
+	return {compo, monstre, qualite, localisation};
+}
 
 function treateEnchantement() {
 	let idEnchanteur = MY_getValue(`${numTroll}.enchantement.lastEnchanteur`);
@@ -4867,14 +4799,7 @@ function treateEnchantement() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let texte = trim(nodes.snapshotItem(i).nodeValue);
-		texte = texte.replace(" d'une ", " d'un ");
-		let compo = texte.substring(0, texte.indexOf(" d'un "));
-		let monstre = texte.substring(texte.indexOf(" d'un ") + 6, texte.indexOf(" d'au minimum"));
-		monstre = monstre.replace(/ Géante?/, "");
-		let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
-		let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
-		// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
+		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
 	MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${idEnchanteur};${MY_getValue(`${numTroll}.position.X`)};${MY_getValue(`${numTroll}.position.Y`)};${MY_getValue(`${numTroll}.position.N`)}`);
@@ -4896,45 +4821,55 @@ function do_enchant() {
 	displayScriptTime(undefined, 'do_enchant_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
+function lireEnchantementEncours() {
+	let enCours = [];
+	
+	let cells = document.querySelectorAll("td.mh_tdtitre");
+	for (let i = 0; i < cells.length; i++) {
+		let cell = cells[i];
+		let equipmentInfo = cell.querySelector("a").text.split(/[\[\]]/);
+		let idEquipement = equipmentInfo[1];
+		enCours.push(idEquipement);
+		let nomEquipement = trim(equipmentInfo[2]);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
+		let components = cell.querySelectorAll("li");
+		for (let j = 0; j < components.length; j++) {
+			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
+			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
+			MZ_troogle.addTroogleLink(components[j], `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
+			MZ_troc.addTrocLink(components[j], monstre, compo, qualite);
+		}
 
+		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
+		let enchanteurMatch = enchanteurText.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);		
+	}
+
+	let liste = MY_getValue(`${numTroll}.enchantement.liste`);
+	let listeEquipement = null == liste ? [] : liste.split(";");
+	MY_setValue(`${numTroll}.enchantement.liste`, enCours.join(';'));
+	for (const previous of listeEquipement) {
+		if (-1 == enCours.indexOf(previous)) {
+			debugMZ(`Suppression enchantement ${previous} du local storage`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.objet`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.enchanteur`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.0`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.1`);
+			MY_removeValue(`${numTroll}.enchantement.${previous}.composant.2`);
+		}
+	}
+	// TODO: isoler code lié aux enchantements dans un pseudo-module & purger code obsolète
+}
+
+function do_lire_enchant_en_cours() {
+	start_script(60, 'do_lire_enchant_en_cours_log');
+	lireEnchantementEncours();
+
+	displayScriptTime(undefined, 'do_lire_enchant_en_cours_log');
+}
 /** x~x MyEvent -------------------------------------------------------- */
 // Script désactivé en attendant la màj vers le nouveau système de missions.
 function do_myevent() { }
-
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Malus ---------------------------------------------------------- */
 /* v1.4 - 2014-01-06
@@ -5473,24 +5408,6 @@ function do_malus() {
 	}
 }
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x Mouches -------------------------------------------------------- */
 var mainTab, tr_mouches;
 
@@ -5656,24 +5573,6 @@ function do_mouches() {
 	initialiseMouches();
 	displayScriptTime(undefined, 'do_mouches_log');
 }
-
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
 
 /** x~x Equipement Gowap ----------------------------------------------- */
 
@@ -6228,24 +6127,6 @@ function do_lieuTeleport() {
 	changeButtonValidate();
 	MZ_setCarteTP();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Infomonstre ---------------------------------------------------- */
 
@@ -7298,24 +7179,6 @@ function do_scizSwitchEvents() {
 	}
 }
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x Missions ------------------------------------------------------- */
 
 /* TODO
@@ -7355,179 +7218,178 @@ function saveMission(num, obEtape) {
 	// logMZ('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
 }
 
-function addtroogle(tdLibelle, sRestrict) {
-	let img = document.createElement('img');
-	img.src = `${URL_MZimg}troogle.ico`;
-	img.alt = 'Troogle logo';
-	let a = document.createElement('a');
-	let url = `${URL_troogle}?utf8=${encodeURIComponent('✓')}`;	// hé oui, ce source est unicode
-	url = `${url}&entity_search[search]=${encodeURIComponent(sRestrict)}`;
-	url = `${url}&entity_search[position_x]=${MY_getValue(`${numTroll}.position.X`)}`;
-	url = `${url}&entity_search[position_y]=${MY_getValue(`${numTroll}.position.Y`)}`;
-	url = `${url}&entity_search[position_z]=${MY_getValue(`${numTroll}.position.N`)}`;
-	a.href = url;
-	a.title = 'Chercher sur Troogle';
-	a.target = 'troogle';
-	a.appendChild(img);
-	tdLibelle.appendChild(a);
-	tdLibelle.parentNode.style.verticalAlign = 'bottom';
-}
-
-function traiteMission() {
-	let numMission, tdLibelle;
+function parseMissionSteps() {
 	try {
-		let titreMission = document.getElementsByClassName('titre2')[0];
-		let missionForm = document.getElementsByName('ActionForm')[0];
-		numMission = titreMission.textContent.match(/\d+/)[0];
-		tdLibelle = document.evaluate(
-			"./table/tbody/tr/td/input[starts-with(@value,'Valider')]/../../td[2]", missionForm, null, 9, null
-		).singleNodeValue;
-	} catch (exc) {
-		logMZ('récupération mission', exc);
-		return;
-	}
-	if (!numMission) {
-		debugMZ('traiteMission pas de numMission, titreMission='.titreMission.outerHTML.replace(/</g, '‹')); return;
-	}
-	try {
-		if (!tdLibelle) {
+		let titreMission = $("h2")[0].textContent;
+		let idMission = titreMission.match(/\d+/)[0];
+		let validationFound = false;
+		var $missionLines = $("[name='ActionForm'] tr");
+		$missionLines.each(function () {
+			let $this = $(this);
+			let children = $this.children("td");
+			let stepNode = children[1];
+			let stepText = stepNode.textContent;
+			let validationText = children[2].textContent;
+			if (0 > validationText.indexOf("Valider")) {
+				// Etape déjà réalisée ou pas encore réalisée
+				return;
+			}
+			validationFound = true;
+			if (0 < stepText.indexOf("monstre")) {
+				let step = handleMonsterStep(stepText);
+				MZ_troogle.addTroogleLinkToStep(stepNode, step);
+				saveMission(idMission, step);
+				return;
+			}
+			if (0 < stepText.indexOf("du pouvoir")) {
+				let step = handlePowerStep(stepText);
+				saveMission(idMission, step);
+				return;
+			}
+			debugMZ(`Texte de mission non traité:${step}`);
+		});
+		if (!validationFound) {
 			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
-			debugMZ('traiteMission, la mission semble terminée');
-			saveMission(numMission, false);
-			return;
+			debugMZ('MZ_troogle.addTroogleLinkToStep, la mission semble terminée');
+			saveMission(idMission, false);
 		}
-
-		let libelle = trim(tdLibelle.textContent.replace(/\n/g, ''));
-		let siMundidey = libelle.indexOf('Mundidey') != -1;
-		// debug Roule'
-		if (MY_DEBUG) {
-			for (let i = 0; i < tdLibelle.childNodes.length; i++) {
-				debugMZ(`traiteMission, tdLibelle.childNodes[${i}]=${tdLibelle.childNodes[i].textContent}`);
-			}
-		}
-		// let nbKills = 1;
-		if (libelle.indexOf('niveau égal à') != -1) {
-			let niveau, mod;
-			// exemples :
-			// L'équipe doit tuer 3 petits monstres (d'un niveau égal à 27 + ou - 1)
-			// L'équipe doit tuer 2 gros monstres (chaque monstre devant être d'un niveau égal à 44 au moins)
-			// L'équipe doit tuer un petit monstre (chaque monstre devant être d'un niveau égal à 29 + ou - 1) un Mundidey
-			// L'équipe doit tuer un monstre (ce monstre doit être d'un niveau égal à 44 au moins) un Mundidey
-			if (tdLibelle.childNodes.length == 1) {
-				// Roule' 08/01/52017 il n'y a plus de mise en forme. Un seul childNode
-				let m = libelle.match(/niveau égal à *(\d+) * au moins/);
-				if (m) {
-					niveau = Number(m[1]);
-					mod = 'plus';
-				} else {
-					m = libelle.match(/niveau égal à *(\d+) *\+.*- *(\d+)/);
-					if (m) {
-						niveau = Number(m[1]);
-						mod = Number(m[2]);
-					} else {
-						logMZ(`traiteMission, échec analyse de ${libelle}`);
-						return;
-					}
-				}
-			} else {
-				// ancienne méthode (multi childnode)
-				// à supprimer un jour peut-être
-				if (tdLibelle.firstChild.nodeValue.indexOf('niveau égal à') == -1) {
-					// Étape de kill multiple de niveau donné
-					// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-					if (tdLibelle.childNodes.length <= 3) {	// Roule' 14/07/2016 le niveau n'est plus en gras, on n'a que 3 zones de texte
-						mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-						niveau = Number(mod[0]);
-						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-						mod = mod.length > 1 ? Number(mod[1]) : 'plus';
-					} else {
-						niveau = Number(tdLibelle.childNodes[3].firstChild.nodeValue);
-						// Modificateur de niveau : "niv +/- mod" ou bien "niv +"
-						mod = tdLibelle.childNodes[4].nodeValue.match(/\d+/);
-						mod = mod ? Number(mod[0]) : 'plus';
-					}
-				} else {
-					// Étape de kill unique de niveau donné
-					niveau = Number(tdLibelle.childNodes[1].firstChild.nodeValue);
-					mod = tdLibelle.childNodes[2].nodeValue.match(/\d+/);
-					mod = mod ? Number(mod[0]) : 'plus';
-				}
-			}
-			// if (isDEV) {
-			// niveau = 35;	// pour les tests Roule
-			// window.alert('niveau forcé à 35 pour test');
-			// }
-			// debug Roule'
-			debugMZ(`traiteMission, save niveau=${niveau}, mod=${mod}, siMundidey=${siMundidey}, libelle=${libelle}`);
-			saveMission(numMission, {
-				type: 'Niveau',
-				niveau: niveau,
-				mod: mod,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			if (mod == 'plus') {
-				addtroogle(tdLibelle, `@monstre level:${niveau}..${niveau + 99}`);
-			} else {
-				addtroogle(tdLibelle, `@monstre level:${niveau - mod}..${niveau + mod}`);
-			}
-		} else if (libelle.indexOf('de la race') != -1) {
-			let race;
-			if (tdLibelle.firstChild.nodeValue.indexOf('de la race') == -1) {
-				// Étape de kill multiple de race donnée
-				// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				race = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-			} else {
-				// Étape de kill unique de race donnée
-				race = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-			}
-			race = race.replace(/\"/g, '');
-			race = removeEnclosingSimpleCote(race);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Race',
-				race: race,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			addtroogle(tdLibelle, `@monstre ${race}`);
-		} else if (libelle.indexOf('de la famille') != -1) {
-			let famille;
-			if (tdLibelle.firstChild.nodeValue.indexOf('de la famille') == -1) {
-				// Étape de kill multiple de famille donnée
-				// nbKills = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-				famille = trim(tdLibelle.childNodes[3].firstChild.nodeValue);
-			} else {
-				// Étape de kill unique de famille donnée
-				famille = trim(tdLibelle.childNodes[1].firstChild.nodeValue);
-			}
-			famille = famille.replace(/\"/g, '');
-			famille = removeEnclosingSimpleCote(famille);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Famille',
-				famille: famille,
-				mundidey: siMundidey,
-				libelle: libelle
-			});
-			// Roule' 07/01/2017 À ce jour, pour les familles, Troogle a besoin de minuscules sans accent
-			addtroogle(tdLibelle, `@monstre:${famille.toLowerCase().replace(/é/g, 'e').replace(/ï/g, 'i')}`);
-		} else if (libelle.indexOf('capacité spéciale') != -1) {
-			let pouvoir = epure(trim(tdLibelle.childNodes[1].firstChild.nodeValue));
-			debugMZ('traiteMission étape capacité spéciale');
-			pouvoir = removeEnclosingSimpleCote(pouvoir);	// Roule 29/03/2019 Maintenant, on a des '
-			saveMission(numMission, {
-				type: 'Pouvoir',
-				pouvoir: pouvoir,
-				libelle: libelle
-			});
-		} else {
-			debugMZ('traiteMission étape pas pour troogle');
-			saveMission(numMission, false);
-		}
-	} catch (exc) {
-		logMZ('récupération étape mission', exc);
-		return;
+	} catch (e) {
+		warnMZ("Problème dans le traitement d'étape de mission", e);
 	}
 }
+
+function handlePowerStep(text) {
+	let powerExtract = /du pouvoir (.*)/i;
+	let pouvoir = powerExtract.exec(text)[1];
+	pouvoir = removeEnclosingSimpleCote(pouvoir);
+	return {
+		type: 'Pouvoir',
+		pouvoir: pouvoir,
+		libelle: text
+	};
+}
+
+function handleMonsterStep(text) {
+	let mission = {
+		type: 'Niveau',
+		niveau: 0,
+		mod: 'plus',
+		mundidey: text.indexOf('Mundidey') != -1,
+		libelle: text,
+		recherche: MZ_troogle.SEARCH_MONSTER
+	};
+
+	let raceExtract = /de la race des "(.*?)"/i;
+	let match = raceExtract.exec(text);
+	if (match) {
+		mission.type = 'Race'
+		let race = removeEnclosingSimpleCote(trim(match[1]));
+		mission.recherche += ` ${race}`;
+	}
+
+	let familyExtract = /de la famille "(.*?)"/i;
+	match = familyExtract.exec(text);
+	if (match) {
+		mission.type = 'Famille'
+		let famille = trim(match[1]);
+		mission.recherche += `:${famille}`;
+	}
+
+	let minLevelExtract = /niveau.* (\d+) au moins/i;
+	match = minLevelExtract.exec(text);
+	if (match) {
+		mission.niveau = atoi(match[1]);
+	}
+
+	var levelRangeExtract = /niveau.* (\d+) +\+ ou - +(\d+)/i;
+	match = levelRangeExtract.exec(text);
+	if (match) {
+		mission.niveau = atoi(match[1]);
+		mission.mod = atoi(match[2]);
+	}
+	return mission;
+}
+
+// un ParseInt un peu plus résistant aux Strings un peu loose
+function atoi(s) {
+	if (!s) return undefined; // à valider
+	s = s.trim();
+	while (s.charAt(0) == '0' || s.charAt(0) == ':') {
+		s = s.substring(1, s.length);
+		if (s.length == 0) return 0;
+	}
+	return parseInt(s, 10);
+}
+
+// Namespace MZ_troogle: isoler l'api liée à Troogle dans un objet et ne présenter que les méthodes
+// réellement publiques dans cet objet; les autres sont cachées dans le scope du bloc (évite de remplir la table des
+// fonctions visibles) (import Chrall)
+(function(MZ_troogle){
+
+	const BASE_TROOGLE_URL = `https://troogle.iktomi.eu/`;
+	const BASE_TROOGLE_SEARCH = `${BASE_TROOGLE_URL}entities/?entity_search[search]=`;
+
+	// Pseudo-constantes: 
+	// Types de recherche
+	Object.defineProperty(MZ_troogle, "SEARCH_MONSTER", { value: '@monstre', configurable: false, writable: false });
+
+	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param step objet étape de mission (cf handleMonsterStep)
+	MZ_troogle.addTroogleLinkToStep = function(node, step) {
+		let search = `${step.recherche} `;
+		if (0 < step.niveau) {
+			let max = 'plus' === step.mod ? 100 : step.niveau + step.mod;
+			let min = 'plus' === step.mod ? step.niveau : step.niveau - step.mod;
+			search += ` level:${min}..${max} `;
+		}
+		MZ_troogle.addTroogleLink(node, search);
+	}
+
+	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param text texte de recherche (supposé correctement écrit)
+	MZ_troogle.addTroogleLink = function(node, text) {
+		let url = `${BASE_TROOGLE_SEARCH}${text} `;
+		url += playerPositionParameters();
+		let link = appendA(node, url);
+		link.target = 'Troogle';
+		let img = createImage(`${BASE_TROOGLE_URL}favicon.ico`, 'Rechercher sur Troogle', 'max-width: 1.5rem');
+		link.appendChild(img);
+	}
+
+	// Paramètres de recherche pour la position courante du troll actif
+	function playerPositionParameters(){
+		let positionX = MY_getValue(`${numTroll}.position.X`);
+		let positionY = MY_getValue(`${numTroll}.position.Y`);
+		let positionN = MY_getValue(`${numTroll}.position.N`);
+		return `&entity_search[position_x]=${positionX}&entity_search[position_y]=${positionY}&entity_search[position_z]=${positionN}`;
+	}
+
+})(window.MZ_troogle = window.MZ_troogle || {});
+
+
+// Namespace MZ_troc: isoler l'api liée au Troc de l'Hydre
+(function(MZ_troc) {
+
+	const BASE_TROC_URL = 'https://troc.mountyhall.com/'; // search.php
+
+	// Ajoute un lien vers le Troc de l'Hydre
+	// @param node element html (conteneur) dans lequel le lien va être ajouté
+	// @param monster monstre pour lequel le composant est recherché
+	// @param part partie du monstre/composant
+	// @param quality qualité minimum (textuelle, sera convertie via qualiteNum)
+	MZ_troc.addTrocLink = function(node, monster, part, quality) {
+		quality = qualiteNum.indexOf(quality);
+		let url = `${BASE_TROC_URL}search.php?monster=${monster}&part=${part}&qualite=${quality}&q=min`;
+		let link = appendA(node, url);
+		link.target = 'Troc';
+		let img = createImage(`${BASE_TROC_URL}favicon.png`, "Rechercher sur le Troc de l'Hydre", 'max-width: 1.5rem');
+		link.appendChild(img);
+	}
+
+})(window.MZ_troc = window.MZ_troc || {});
+
 
 function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 	return x.replace(/'$/, '').replace(/^'/, '');
@@ -7535,27 +7397,9 @@ function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 
 function do_mission() {
 	start_script(60, 'do_mission_log');
-	traiteMission();
+	parseMissionSteps();
 	displayScriptTime(undefined, 'do_mission_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Données sur les trous de météorites ---------------------------- */
 
@@ -7765,11 +7609,6 @@ function do_move() {
 	//	changeButtonValidate();
 	// }
 }
-
-/** *****************************************************************************
-* This file is part of Mountyzilla (http://mountyzilla.tilk.info/)             *
-* Mountyzilla is free software; provided under the GNU General Public License  *
-*******************************************************************************/
 
 /** x~x News ----------------------------------------------------------- */
 
@@ -8103,24 +7942,6 @@ function do_news() {
 	displayScriptTime(undefined, 'do_news_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x Tabcompo ------------------------------------------------------- */
 
 function initPopupTabcompo() {
@@ -8450,24 +8271,6 @@ function do_tancompo() {
 
 	displayScriptTime(undefined, 'do_tancompo_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x pjView --------------------------------------------------------- */
 
@@ -9033,24 +8836,6 @@ function do_pjview() {
 	treateEquipement();
 	toolTipInit();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Option --------------------------------------------------------- */
 
@@ -9634,6 +9419,7 @@ function deleteEnchantement() {
 
 function do_option() {
 	start_script(712, 'do_option_log');
+	debugger;/*  */
 	let insertPoint = getFooter();
 	insertBefore(insertPoint, document.createElement('p'));
 	let ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
@@ -9693,10 +9479,6 @@ function do_option() {
 	ti.title = `Version ${GM_info.script.version}`;
 	insertOptionTable(insertPoint);
 
-	/* insertion enchantements ici
-	if(...)
-	insertEnchantementTable();
-	*/
 	insertBefore(insertPoint, document.createElement('p'));
 	ti = insertTitle(insertPoint, 'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
 	ti.onclick = function (e) {
@@ -9716,113 +9498,8 @@ function do_option() {
 	insertCreditsTable(insertPoint);
 	insertBefore(insertPoint, document.createElement('p'));
 
-	/* [zone]                     Obsolète ??                                  */
-	if (MY_getValue(`${numTroll}.enchantement.liste`) &&
-		MY_getValue(`${numTroll}.enchantement.liste`) != "") {
-		insertTitle(insertPoint, 'Les Enchantements en cours');
-		let table = document.createElement('table');
-		table.setAttribute('width', '98%');
-		table.setAttribute('border', '0');
-		table.setAttribute('align', 'center');
-		table.setAttribute('cellpadding', '2');
-		table.setAttribute('cellspacing', '1');
-		table.setAttribute('class', 'mh_tdborder');
-
-		let tbody = document.createElement('tbody');
-		table.appendChild(tbody);
-
-		let tr = appendTr(tbody, 'mh_tdtitre');
-		appendTdText(tr, 'Equipement', 1);
-		appendTdText(tr, 'Composants', 1);
-		appendTdText(tr, 'Enchanteur', 1);
-		appendTdText(tr, 'Action', 1);
-
-		let listeEquipement = MY_getValue(`${numTroll}.enchantement.liste`).split(";");
-		for (let i = 0; i < listeEquipement.length; i++) {
-			try {
-				let idEquipement = listeEquipement[i];
-				let nomEquipement = MY_getValue(`${numTroll}.enchantement.${idEquipement}.objet`);
-				let infoEnchanteur = MY_getValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`).split(";");
-				let ul = document.createElement('UL');
-				for (let j = 0; j < 3; j++) {
-					let k = `${numTroll}.enchantement.${idEquipement}.composant.${j}`;
-					let v = MY_getValue(k);
-					if (v == null) { 	// protection Roule 26/08/2017
-						logMZ(`err infoComposant k=${k}, v is null`);
-						continue;
-					}
-					let infoComposant = v.split(';');
-					if (infoComposant.length < 5) {	// protection Roule 25/08/2017
-						logMZ(`err infoComposant k=${k}, v=${v}`);
-						continue;
-					}
-					let texte = infoComposant[4].replace("Ril ", "Œil ");
-					for (let kk = 5; kk < infoComposant.length; kk++) {
-						texte = `${texte};${infoComposant[kk].replace("Ril ", "Œil ")}`;
-					}
-					let li = appendLi(ul, texte);
-					let string = `<form action="${URL_troc_mh}" method="post" TARGET = "_blank">`;
-					string = `${string}<input type="hidden" name="monster" value="${infoComposant[2]}" />`;
-					string = `${string}<input type="hidden" name="part" value="${infoComposant[0]}" />`;
-					string = `${string}<input type="hidden" name="qualite" value="${getQualite(infoComposant[3]) + 1}" />`;
-					string = `${string}<input type="hidden" name="q" value="min" />`;
-					string = `${string}<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" name="enter" value="Rechercher sur le Troc de l'Hydre" />`;
-					string = `${string} &nbsp; <input type="button" class="mh_form_submit" onMouseOver="this.style.cursor='hand';" onClick="javascript:window.open(&quot;${URL_cyclotrolls}wakka.php?wiki=TroOGle&trooglephr=base%3Amonstres+tag%3Anom+%22${infoComposant[2]}%22&quot;)" value="Localiser le monstre grâce à Troogle" /></form>`;
-
-					string = `${string}</form>`;
-					// string += '<form action="http://www.cyclotrolls.be/wakka.php" method="get" TARGET = "_blank">';
-					// string+= '<input type="hidden" name="wiki" value="TroOGle" />';
-					// string+= '<input type="hidden" name="trooglephr" value="base:monstres tag:nom &quot;'+infoComposant[2]+'&quot;" />';
-					// string+= '<input type="submit" class="mh_form_submit" onMouseOver="this.style.cursor=\'hand\';" name="enter" value="Localiser grâce à Troogle" /></form>';
-					li.innerHTML = li.innerHTML + string;
-				}
-				tr = appendTr(tbody, 'mh_tdpage');
-
-				let td = appendTdText(tr, nomEquipement);
-				td.setAttribute('valign', 'center');
-
-				td = document.createElement('td');
-				td.appendChild(ul);
-				tr.appendChild(td);
-				td.setAttribute('valign', 'center');
-
-				td = appendTdText(tr, `Enchanteur n°${infoEnchanteur[0]} (${infoEnchanteur[1]}|${infoEnchanteur[2]}|${infoEnchanteur[3]})`);
-				td.setAttribute('valign', 'center');
-
-				td = document.createElement('td');
-				input = appendButton(td, 'Supprimer l\'enchantement', deleteEnchantement);
-				input.setAttribute('name', idEquipement);
-				tr.appendChild(td);
-				td.setAttribute('valign', 'center');
-			} catch (exc) {
-				avertissement(`Une erreur est survenue (do_option)`, null, null, exc);
-			}
-		}
-		insertBefore(insertPoint, table);
-		insertBefore(insertPoint, document.createElement('p'));
-	}
-
-	/* [zone]                     fin Obsolète ??                                  */
 	displayScriptTime(undefined, 'do_option_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Equip ---------------------------------------------------------- */
 
@@ -9950,24 +9627,6 @@ function do_equip() {
 
 	displayScriptTime(undefined, 'do_equip_log');
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Diplo ---------------------------------------------------------- */
 
@@ -10414,24 +10073,6 @@ function do_diplo() {
 	}
 }
 
-/** *****************************************************************************
-*   This file is part of Mountyzilla.                                          *
-*                                                                              *
-*   Mountyzilla is free software; you can redistribute it and/or modify        *
-*   it under the terms of the GNU General Public License as published by       *
-*   the Free Software Foundation; either version 2 of the License, or          *
-*   (at your option) any later version.                                        *
-*                                                                              *
-*   Mountyzilla is distributed in the hope that it will be useful,             *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of             *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
-*   GNU General Public License for more details.                               *
-*                                                                              *
-*   You should have received a copy of the GNU General Public License          *
-*   along with Mountyzilla; if not, write to the Free Software                 *
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
-*******************************************************************************/
-
 /** x~x CdmComp -------------------------------------------------------- */
 // let cdm = '';	// Roule 11/03/2017 une variable globale de moins \o/
 
@@ -10668,24 +10309,6 @@ function do_cdmcomp() {
 	displayScriptTime(undefined, 'do_cdmcomp_log');
 }
 
-/** *******************************************************************************
-*    This file is part of Mountyzilla.                                           *
-*                                                                                *
-*    Mountyzilla is free software; you can redistribute it and/or modify         *
-*    it under the terms of the GNU General Public License as published by        *
-*    the Free Software Foundation; either version 2 of the License, or           *
-*    (at your option) any later version.                                         *
-*                                                                                *
-*    Mountyzilla is distributed in the hope that it will be useful,              *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*    GNU General Public License for more details.                                *
-*                                                                                *
-*    You should have received a copy of the GNU General Public License           *
-*    along with Mountyzilla; if not, write to the Free Software                  *
-*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*********************************************************************************/
-
 /** x~x CdmBot --------------------------------------------------------- */
 
 /* v0.2 by Dab - 2013-08-20
@@ -10834,24 +10457,6 @@ function MZ_traiteCdMmsg() {
 function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du bot
 	MZ_traiteCdMmsg();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Menu ----------------------------------------------------------- */
 // n'est lancé que sur refresh du volet de menu (activation ou [Refresh])
@@ -11050,24 +10655,6 @@ function do_menu() {
 	// Ajout popup sur les raccourcis des actions
 	// MZ_initPopupFrameGauche();
 }
-
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
 
 /** x~x Vue ------------------------------------------------------------ */
 
@@ -14028,24 +13615,6 @@ function do_vue() {
 }
 
 
-/** *****************************************************************************
-*  This file is part of Mountyzilla.                                           *
-*                                                                              *
-*  Mountyzilla is free software; you can redistribute it and/or modify         *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation; either version 2 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  Mountyzilla is distributed in the hope that it will be useful,              *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               *
-*  GNU General Public License for more details.                                *
-*                                                                              *
-*  You should have received a copy of the GNU General Public License           *
-*  along with Mountyzilla; if not, write to the Free Software                  *
-*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
-*******************************************************************************/
-
 /** x~x profil2 -------------------------------------------------------- */
 
 /*                           Variables globales                           */
@@ -16008,24 +15577,6 @@ function do_profil2() {
 	}
 }
 
-/** *****************************************************************************
-*   This file is part of Mountyzilla.                                          *
-*                                                                              *
-*   Mountyzilla is free software; you can redistribute it and/or modify        *
-*   it under the terms of the GNU General Public License as published by       *
-*   the Free Software Foundation; either version 2 of the License, or          *
-*   (at your option) any later version.                                        *
-*                                                                              *
-*   Mountyzilla is distributed in the hope that it will be useful,             *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of             *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
-*   GNU General Public License for more details.                               *
-*                                                                              *
-*   You should have received a copy of the GNU General Public License          *
-*   along with Mountyzilla; if not, write to the Free Software                 *
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA *
-*******************************************************************************/
-
 /** x~x md5.js --------------------------------------------------------- */
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
@@ -17005,6 +16556,7 @@ function MZdo_hookCompoTanieres() {
 	document.body.onkeypress = hookSetCallback;
 }
 
+
 /* --------------------------------- Dispatch --------------------------------- */
 
 // chargerScriptDev("libs");
@@ -17089,6 +16641,8 @@ try {
 		do_enchant();
 	} else if (isPage("MH_Lieux/Lieu_Enchanteur")) {
 		do_pre_enchant();
+	} else if (isPage("MH_Play/Play_e_enchantements")) {
+		do_lire_enchant_en_cours();
 	} else if (isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {	// 25/03/2024 MH_Play/Actions n'existe plus. À surveiller...
 		do_actions();
 	} else if (isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
