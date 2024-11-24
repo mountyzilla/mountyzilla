@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.17
+// @version     1.5.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.17';
+var MZ_latest = '1.5.18';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6431,7 +6431,7 @@ function scizPrettyPrintMushroom(m) {
 
 function scizPrettyPrintPortal(p) {
 	let res = '';
-	let html_nom = `<a href="javascript:EPV(${p.owner_id})" class="mh_trolls_1">${p.owner_nom}</a>`;
+	let html_nom = `<a href="javascript:PVT(${p.owner_id})" class="mh_trolls_1">${p.owner_nom}</a>`;
 	res = `${res}Portail de Téléportaion de ${html_nom} vers X = ${p.pos_x_dst} | Y = ${p.pos_y_dst} | N = ${p.pos_n_dst}`;
 	return res;
 }
@@ -6442,6 +6442,7 @@ function do_scizEnhanceView() {
 	// Ensure we have a JWT setup for the current user
 	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 	if (jwt === null || jwt === undefined || jwt.trim() === '') {
+		debugMZ(`SCIZ pas de jwt`);
 		return;
 	}
 
@@ -6532,11 +6533,11 @@ function do_scizEnhanceView() {
 							}
 							// Create the troll
 							let template = document.createElement('template');
-							let html_nom = `<a href="javascript:EPV(${t.id})" class="mh_trolls_1">${t.nom}</a>`;
+							let html_nom = `<a href="javascript:PVT(${t.id})" class="mh_trolls_1">${t.nom}</a>`;
 							if (!is_self) {
 								html_nom = `${html_nom} (HORS VUE)`;
 							}
-							let html_guilde = `<a href="javascript:EAV(${t.guilde_id},750,550)" class="mh_links">${t.guilde_nom}</a>`;
+							let html_guilde = `<a href="javascript:PVG(${t.guilde_id},750,550)" class="mh_links">${t.guilde_nom}</a>`;
 							template.innerHTML = `<tr class="mh_tdpage"><td>${distance}</td><td></td><td>${t.id}</td><td title="">${html_nom}</td><td>${html_guilde}</td><td>${t.niv}</td><td>${t.race}</td><td>${t.pos_x}</td><td>${t.pos_y}</td><td>${t.pos_n}</td></tr>`;
 							let troll = template.content.firstChild;
 							// Add the troll
@@ -6734,6 +6735,7 @@ function do_scizEnhanceView() {
 			});
 			mobs.push({ name: mob[1], age: mob[2] });
 		}
+		debugMZ(`SCIZ nb mob=${mobs.length}`);
 		// Check the list against the SCIZ bestiaire
 		let sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
 		FF_XMLHttpRequest({
@@ -6748,6 +6750,7 @@ function do_scizEnhanceView() {
 						return;
 					}
 					mobs = JSON.parse(responseDetails.responseText);
+					debugMZ(`SCIZ retour AJAX nbMob=${mobs.bestiaire.length}, ${responseDetails.responseText}`);
 					// Add the SCIZ icons
 					scizGlobal.monsters.forEach((m) => {
 						if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
@@ -7035,7 +7038,7 @@ function scizPrettyPrintEvent(e) {
 				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="mh_monstres">\$1</a></b>`);
 			} else {
 				// Troll
-				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:EPV('${b[0]}')" class="mh_trolls_1">\$1</a></b>`);
+				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:PVT('${b[0]}')" class="mh_trolls_1">\$1</a></b>`);
 			}
 		}
 	});
@@ -7807,7 +7810,7 @@ function afficherJubilaires(listeTrolls) {
 		span.style.whiteSpace = 'nowrap';
 		if (troll.num_troll == numTroll) span.style.backgroundColor = '#98FB98';
 		let a = document.createElement('a');
-		a.href = `javascript:EPV(${troll.num_troll})`;
+		a.href = `javascript:PVT(${troll.num_troll})`;
 		a.className = 'ui-link';
 		appendText(a, troll.nom_troll);
 		span.appendChild(a);
@@ -8288,6 +8291,8 @@ var freezed = false; // Booléen stockant l'état de freezing de la bulle
 var mh_caracs = {
 	'anneau de protection':
 		['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 3.00, 3.00],
+	'anneau magique':
+		['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 3.00, 3.00],
 	"armure d'anneaux":
 		['armure', 0, 0, 0, 0, -4, 8, 0, 0, 0, 90, 180, 0, 0, 0, 0.00, 50.00, 50.00],
 	'armure de bois':
@@ -8558,7 +8563,8 @@ function getTemplates(nomItem) {
 		tempFound = false;
 		for (let temp in mh_templates) {
 			// on teste la fin du nom contre chaque template
-			if (str.slice(-temp.length) != temp) {
+			if (str.slice(-temp.length) != temp.toLowerCase()) {
+				//if (str.substring(0, 4) == 'robe') debugMZ(`getTemplates no match ${str.slice(-temp.length)} -- ${temp}` );
 				continue;
 			}
 			tempFound = true;
@@ -8615,6 +8621,7 @@ function getCaracs(item) {
 	let templates = getTemplates(item);
 	if (!mh_caracs[templates[0]]) {
 		// Si l'item est inconnu
+		debugMZ(`MZ getCaracs inconnu nom=${item} découpé en ${JSON.stringify(templates)}`);
 		return [];
 	}
 	let caracs = clone(mh_caracs[templates[0]]);
@@ -8715,7 +8722,7 @@ function toolTipInit() {
 
 function getXY(evt) {
 	if (!freezed && DivInfo.style.visibility == 'visible') {
-		DivInfo.style.left = `${evt.pageX}px`;
+		DivInfo.style.left = `${evt.pageX + 20}px`;
 		DivInfo.style.top = `${evt.pageY + 10}px`;
 	}
 }
@@ -8804,10 +8811,17 @@ function treateEquipement() {
 		if (nodes.snapshotLength > 0) {
 			for (let i = 0; i < nodes.snapshotLength; i++) {
 				let node = nodes.snapshotItem(i);
-				let nom = node.firstChild.nodeValue.toLowerCase();
+				let nodeText = node.innerText;
+				if (!nodeText) {
+					logMZ(`treateEquipement pas de node.innertext pour ${node.outerHTML} `);
+					continue;
+				}
+				let nom = nodeText.toLowerCase();
+				/*
 				if (node.childNodes.length > 1 && node.childNodes[1].firstChild) {
 					nom = nom + node.childNodes[1].firstChild.nodeValue;
 				}
+				*/
 				nom = nom.trim();
 				// gestion winpostrophe
 				let c = String.fromCharCode(180);
@@ -8815,6 +8829,7 @@ function treateEquipement() {
 					nom = nom.replace(c, "'");
 				}
 				let arr = getCaracs(nom);
+				//logMZ(`treateEquipement nom=${nom}, carac=${JSON.stringify(arr)}`);
 				if (arr.length != 0) {
 					caracs = addArray(caracs, arr);
 					node.infos = getLine(arr);
@@ -9419,7 +9434,7 @@ function deleteEnchantement() {
 
 function do_option() {
 	start_script(712, 'do_option_log');
-	debugger;/*  */
+	/*debugger;/*  */
 	let insertPoint = getFooter();
 	insertBefore(insertPoint, document.createElement('p'));
 	let ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
@@ -13294,8 +13309,8 @@ function createTrollRow(infos, tr) {
 	td = appendTd(tr);	// ID
 	appendText(td, infos.id);
 	td = appendTd(tr);	// Nom
-	// <A HREF="javascript:EPV(1649)" CLASS='mh_trolls_1'>Krounch</A>
-	appendA(td, `javascript:EPV(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
+	// <A HREF="javascript:PVT(1649)" CLASS='mh_trolls_1'>Krounch</A>
+	appendA(td, `javascript:PVT(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
 	td = appendTd(tr);	// PA
 	td = appendTd(tr);	// PV
 	td = appendTd(tr);	// Guilde
@@ -13918,7 +13933,7 @@ function extractionDonnees() {
 	debugMZ(`ARM: ${arm}+(${armbp})+(${armbm}); ArmMoy:${armmoy}; arm/tour:${armtourD}; ArmMoyTour:${armmoytour}`);
 	// TODO : D d'armure non active
 	// Vue
-	vue = getUniqueIntValueBySelector('#carac #vue');
+	vue = getUniqueIntValueBySelector('#carac #vue_unit');
 	vuebp = getUniqueIntValueBySelector('#carac #vue_p');
 	vuebm = getUniqueIntValueBySelector('#carac #vue_m');
 	vuetotale = getUniqueIntValueBySelector('#carac #vue_tot');
@@ -16096,13 +16111,13 @@ function export_trolligion_analyse(oTroll, eChild1) {
 							logMZ(`a sans href ${eChild2.outerHTML}`);
 							break;
 						}
-						m = eChild2.href.match(/EPV\((\d+) *,/);
+						m = eChild2.href.match(/PVT\((\d+)\)/);
 						if (m) {
 							oTroll.id = parseInt(m[1]);
 							oTroll.nom = (eChild2.innerText || eChild2.textContent).trim();
 							break;
 						}
-						m = eChild2.href.match(/EAV\((\d+) *,/);
+						m = eChild2.href.match(/PVG\((\d+)\)/);
 						if (m) {
 							let idGuilde = parseInt(m[1]);
 							if (idGuilde > 1) {	// MH donne 1 comme idGuilde quand le Trõll n'est pas guildé
