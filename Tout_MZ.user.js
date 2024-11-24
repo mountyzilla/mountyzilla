@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.18
+// @version     1.5.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.18';
+var MZ_latest = '1.5.19';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6336,19 +6336,46 @@ function scizAddCSS() {
 			border-left: 1px solid black;
 			white-space: pre-wrap;
 		}
+		.info1{
+			position: relative;
+			cursor: pointer;
+			display: inline-block;
+		}
+		.info2{
+			left: 10px;
+			top: 20px;
+			padding-right: 5px!important;
+			position: absolute;
+			background-color: #ffffe1;
+			display: none;
+			padding: 2px;
+			border: 2px solid #808080;
+			z-index: 100;
+			text-align: left;
+		}
+		.info1:hover  .info2 {
+			display: inline;
+		}
 		`);
 }
 
-function scizCreateHoverable(height, display, callbackOnHover) {
+function scizCreateHoverable(height, monster, callback) {
+	let div1 = document.createElement('div');
+	div1.className = 'info1';
 	let img = document.createElement('img');
 	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
 	img.alt = 'SCIZ logo';
-	img.style = `height: ${height}px; cursor: pointer;`;
-	img.onmouseover = callbackOnHover;
-	let div = document.createElement('div');
-	div.style = `text-align: center;display: ${display}`;
-	div.appendChild(img);
-	return div;
+	img.style = `height: ${height}px;`;
+	div1.appendChild(img);
+	let div2 = document.createElement('pre');
+	div2.className = 'info2';
+	appendText(div2, 'Demande pas envoyée à SCIZ');
+	div1.appendChild(div2);
+	monster.icon = div1;
+	monster.popup = div2;
+	div1.setAttribute('data-monstre', monster.indx);
+	div1.addEventListener('mouseover', callback, false);
+	return div1;
 }
 
 function scizCreateClickable(height, display, callbackOnClick) {
@@ -6712,9 +6739,11 @@ function do_scizEnhanceView() {
 		let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
 		let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
 		let xPathMonster;
+		let iMonster = 0;
+		scizGlobal.monsters = [];
 		while (xPathMonster = xPathMonsters.iterateNext()) {
-			let mob = xPathMonster.children[4].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);
-			if (!mob) mob = xPathMonster.children[3].innerHTML.match(/([^<>]+?)\s*\[\s*(.+)\s*]/);	// cas smartphone
+			let mob = xPathMonster.children[4].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
+			if (!mob) mob = xPathMonster.children[3].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);	// cas smartphone
 			if (!mob) {
 				logMZ("do_scizEnhanceView recup des monstres, échec de l'analyse"
 					+ "\n" + xPathMonster.children[0].innerHTML
@@ -6731,11 +6760,13 @@ function do_scizEnhanceView() {
 				age: mob[2],
 				sciz_desc: null,
 				icon: null,
-				node: xPathMonster
+				node: xPathMonster,
+				indx: iMonster++,
 			});
 			mobs.push({ name: mob[1], age: mob[2] });
 		}
 		debugMZ(`SCIZ nb mob=${mobs.length}`);
+
 		// Check the list against the SCIZ bestiaire
 		let sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
 		FF_XMLHttpRequest({
@@ -6750,15 +6781,15 @@ function do_scizEnhanceView() {
 						return;
 					}
 					mobs = JSON.parse(responseDetails.responseText);
-					debugMZ(`SCIZ retour AJAX nbMob=${mobs.bestiaire.length}, ${responseDetails.responseText}`);
+					debugMZ(`SCIZ retour AJAX nbMob=${mobs.bestiaire.length}, nb global=${scizGlobal.monsters.length}`);
 					// Add the SCIZ icons
 					scizGlobal.monsters.forEach((m) => {
 						if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
-							let icon = scizCreateHoverable('15', 'inline', () => {
-								do_scizBestiaire(m);
-							});
-							m.icon = icon;
+							let icon = scizCreateHoverable('15', m, do_scizBestiaire);
 							m.node.children[4].appendChild(icon);
+							debugMZ(`SCIZ trouvé ${m.name} ${m.age}`);
+						} else {
+							debugMZ(`SCIZ pas trouvé ${m.name} ${m.age}`);
 						}
 					});
 				} catch (exc) {
@@ -6986,42 +7017,56 @@ function do_scizSwitchPortals() {
 	});
 }
 
-function do_scizBestiaire(monster) {
+function do_scizBestiaire() {
+	let iMonster = this.getAttribute('data-monstre');
+	if (iMonster === null || iMonster === undefined) {
+		logMZ('SCIZ do_scizBestiaire, pas de iMonstre');
+		replaceContentByText(this, 'Erreur SCIZ');
+		return;
+	}
+	let monster = scizGlobal.monsters[iMonster];
+	this.removeEventListener('mouseover', do_scizBestiaire, false);	// pas 2 fois
+	if (!monster) {
+		logMZ('SCIZ do_scizBestiaire, pas de monstre');
+		replaceContentByText(this, 'Erreur SCIZ');
+		return;
+	}
+	debugMZ(`SCIZ do_scizBestiaire node type monster.popup=${monster.popup.nodeType}`);
 	// Ensure we have a JWT setup for the current user
 	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 	if (jwt === null || jwt === undefined || jwt.trim() === '') {
+		replaceContentByText(monster.popup, 'Pas de JWT, voir Options/Pack Graphique');
 		return;
 	}
-	// Don't do anything if we already called the bestiary for this monster
-	if (monster.sciz_desc === null) {
-		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/bestiaire';
-		FF_XMLHttpRequest({
-			method: 'POST',
-			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ name: monster.name, age: monster.age }),
-			onload: function (responseDetails) {
-				try {
-					if (responseDetails.status !== 200) {
-						monster.sciz_desc = "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.";
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-					}
-					monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
-					// Add the tooltip (kind of)
-					if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
-						let abbr = document.createElement('abbr');
-						abbr.title = monster.sciz_desc.replace(/Blason.*/, '');
-						monster.icon.parentNode.replaceChild(abbr, monster.icon);
-						abbr.appendChild(monster.icon);
-					}
-				} catch (exc) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+	replaceContentByText(monster.popup, 'La chauve-souris va bientôt revenir...');
+	// Call SCIZ
+	let sciz_url = 'https://www.sciz.fr/api/bestiaire';
+	FF_XMLHttpRequest({
+		method: 'POST',
+		url: sciz_url,
+		headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
+		data: JSON.stringify({ name: monster.name, age: monster.age }),
+		onload: function (responseDetails) {
+			try {
+				if (responseDetails.status !== 200) {
+					replaceContentByText(monster.popup, "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.");
+					logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
 				}
+				monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
+				// Add the tooltip (kind of)
+				if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
+					replaceContentByText(monster.popup, monster.sciz_desc.replace(/Blason.*/, ''));
+					debugMZ(`SCIZ ajout data pour ${monster.name} ${monster.age}
+						${monster.sciz_desc.replace(/Blason.*/, '')}`);
+				} else {
+					replaceContentByText(monster.popup, "Pas d'info sur ce monstre");
+				}
+			} catch (exc) {
+				logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 			}
-		});
-	}
-}
+		}
+	});
+};
 
 /* SCIZ - Events */
 
