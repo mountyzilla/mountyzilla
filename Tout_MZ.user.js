@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.19
+// @version     1.5.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.19';
+var MZ_latest = '1.5.20';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -14653,10 +14653,16 @@ function traitementTalents() {
 	removeAllTalents();
 	let totalComp = injecteInfosBulles(trCompetence, 'competences');
 	let totalSort = injecteInfosBulles(trSorts, 'sortileges');
-	let comps = document.querySelector('#comp>div>h3.mh_tdtitre');
-	comps.innerHTML = comps.innerHTML.replace('Compétences', `Compétences (Total : ${totalComp}%)`);
-	let sorts = document.querySelector('#sort>div>h3.mh_tdtitre');
-	sorts.innerHTML = sorts.innerHTML.replace('Sortilèges', `Sortilèges (Total : ${totalSort}%)`);
+	let comps = document.getElementById('comp').querySelector('.mh_tdtitre');
+	if (comps)
+		comps.innerHTML = comps.innerHTML.replace('Compétences', `Compétences (Total : ${totalComp}%)`);
+	else
+		logMZ('erreur traitementTalents, pas de zone comp');
+	let sorts = document.getElementById('sort').querySelector('.mh_tdtitre');
+	if (sorts)
+		sorts.innerHTML = sorts.innerHTML.replace('Sortilèges', `Sortilèges (Total : ${totalSort}%)`);
+	else
+		logMZ('erreur traitementTalents, pas de zone sort');
 }
 
 function injecteInfosBulles(liste, fonction) {
@@ -15633,7 +15639,7 @@ function do_profil2() {
 		saveProfil();
 		displayScriptTime(undefined, 'do_profil2_log');
 	} catch (exc) {
-		avertissement(`Une erreur est survenue (do_profil2)`, null, null, exc);
+		avertissement(`MZ: Une erreur est survenue (do_profil2)`, null, null, exc);
 	}
 }
 
