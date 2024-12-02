@@ -9,7 +9,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  */
-;(function($){ // secure $ jQuery alias
+(function ($) { // secure $ jQuery alias
 
     /**
      * Adds the ability to manage elements scroll by dragging
@@ -56,9 +56,9 @@
      *  would not interfere as acceptPropagatedEvent is set to false.
      *
      */
-    $.fn.dragscrollable = function( options ){
+    $.fn.dragscrollable = function (options) {
         var settings = $.extend({
-            dragSelector:'>:first',
+            dragSelector: '>:first',
             acceptPropagatedEvent: true,
             preventDefault: true,
             which: 1,
@@ -66,12 +66,12 @@
             allowY: true
         }, options || {});
 
-        var dragscroll= {
-            startDrag: function(event, x, y) {
+        var dragscroll = {
+            startDrag: function (event, x, y) {
                 // Initial coordinates will be the last when dragging
                 event.data.lastCoord = {left: x, top: y};
             },
-            doDrag: function(event, x, y) {
+            doDrag: function (event, x, y) {
 // How much did the mouse move?
                 var delta = {
                     left: (x - event.data.lastCoord.left),
@@ -83,44 +83,44 @@
                 event.data.scrollable.scrollTop(event.data.scrollable.scrollTop() - delta.top);
 
                 // Save where the cursor is
-                event.data.lastCoord={ left: x, top: y };
+                event.data.lastCoord = {left: x, top: y};
             },
             /* ==========================================================
                Touch */
-            touchStartHandler: function(event) {
+            touchStartHandler: function (event) {
                 var touch = event.originalEvent.touches[0];
                 dragscroll.startDrag(event, touch.pageX, touch.pageY);
 
-                $.event.add( document, "touchend", dragscroll.touchEndHandler, event.data );
-                $.event.add( document, "touchmove",  dragscroll.touchMoveHandler, event.data );
+                $.event.add(document, "touchend", dragscroll.touchEndHandler, event.data);
+                $.event.add(document, "touchmove", dragscroll.touchMoveHandler, event.data);
             },
-            touchMoveHandler: function(event) {
+            touchMoveHandler: function (event) {
                 var touch = event.originalEvent.touches[0];
                 dragscroll.doDrag(event, touch.pageX, touch.pageY);
             },
-            touchEndHandler: function(event) {
-                $.event.remove( document, "touchmove", dragscroll.mouseMoveHandler);
-                $.event.remove( document, "touchend", dragscroll.mouseUpHandler);
+            touchEndHandler: function (event) {
+                $.event.remove(document, "touchmove", dragscroll.mouseMoveHandler);
+                $.event.remove(document, "touchend", dragscroll.mouseUpHandler);
             },
             /* ==========================================================
                 Mouse */
-            mouseDownHandler : function(event) {
+            mouseDownHandler: function (event) {
                 // mousedown, selected click, check propagation
-                if (event.which != event.data.which || (!event.data.acceptPropagatedEvent && event.target != this)){
+                if (event.which != event.data.which || (!event.data.acceptPropagatedEvent && event.target != this)) {
                     return false;
                 }
 
                 dragscroll.startDrag(event, event.clientX, event.clientY);
 
-                $.event.add( document, "mouseup", dragscroll.mouseUpHandler, event.data );
-                $.event.add( document, "mousemove",  dragscroll.mouseMoveHandler, event.data );
+                $.event.add(document, "mouseup", dragscroll.mouseUpHandler, event.data);
+                $.event.add(document, "mousemove", dragscroll.mouseMoveHandler, event.data);
 
                 if (event.data.preventDefault) {
                     event.preventDefault();
                     return false;
                 }
             },
-            mouseMoveHandler : function(event) { // User is dragging
+            mouseMoveHandler: function (event) { // User is dragging
                 dragscroll.doDrag(event, event.clientX, event.clientY);
 
                 if (event.data.preventDefault) {
@@ -128,9 +128,9 @@
                     return false;
                 }
             },
-            mouseUpHandler : function(event) { // Stop scrolling
-                $.event.remove( document, "mousemove", dragscroll.mouseMoveHandler);
-                $.event.remove( document, "mouseup", dragscroll.mouseUpHandler);
+            mouseUpHandler: function (event) { // Stop scrolling
+                $.event.remove(document, "mousemove", dragscroll.mouseMoveHandler);
+                $.event.remove(document, "mouseup", dragscroll.mouseUpHandler);
                 if (event.data.preventDefault) {
                     event.preventDefault();
                     return false;
@@ -139,23 +139,22 @@
         }
 
         // set up the initial events
-        this.each(function() {
+        this.each(function () {
             // closure object data for each scrollable element
             var data = {
-                scrollable : $(this),
-                acceptPropagatedEvent : settings.acceptPropagatedEvent,
-                preventDefault : settings.preventDefault,
+                scrollable: $(this),
+                acceptPropagatedEvent: settings.acceptPropagatedEvent,
+                preventDefault: settings.preventDefault,
                 which: settings.which
             };
             // Set mouse initiating event on the desired descendant
-            $(this).find(settings.dragSelector).bind('mousedown',  data, dragscroll.mouseDownHandler);
+            $(this).find(settings.dragSelector).bind('mousedown', data, dragscroll.mouseDownHandler);
             $(this).find(settings.dragSelector).bind('touchstart', data, dragscroll.touchStartHandler);
         });
     }; //end plugin dragscrollable
 
 
-})( jQuery ); // confine scope
-
+})(jQuery); // confine scope
 
 
 class Grid {
@@ -166,16 +165,26 @@ class Grid {
         this.centerN = n;
         this.horizontalRange = horizontalRange;
         this.verticalRange = verticalRange;
-        this.gridSize = 1 + 2 * this.horizontalRange;
+        this.gridSize = 3 + 2 * this.horizontalRange; // 2 lignes/colonnes en plus pour les cellules de coordonnées
 
         this.cells = new Array(this.gridSize);
     }
 
     convertToHtml(id) {
+        const borderIndex = this.gridSize - 1;
         let html = `<div id="${id}" style="display: grid; column-gap: 2px; row-gap: 2px; grid-template-columns: repeat(${this.gridSize}, 15rem);"> `;
         for (let i = 0; i < this.gridSize; i++) {
             let column = this.cells[i];
             for (let j = 0; j < this.gridSize; j++) {
+                if (0 === i || 0 === j || borderIndex === i || borderIndex === j) {
+                    if (i === j || i+j === borderIndex ) {
+                        html += this.emptyCell(i, j);
+                    } else {
+                        html += this.borderCell(i, j);
+                    }
+                    continue;
+                }
+
                 if (null == column) {
                     html += this.emptyCell(i, j);
                     continue;
@@ -194,22 +203,40 @@ class Grid {
 
     emptyCell(i, j) {
         const center = 1 + this.horizontalRange;
-        return `<div style="grid-row-start: ${i + 1}; grid-column-start: ${j + 1}" class="${cellStyle(center, center, i+1, j+1)}">&nbsp;</div>`;
+        return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}">&nbsp;</div>`;
+        // return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}">${this.indexToX(i)} ; ${this.indexToY(j)}</div>`;
+    }
+
+    borderCell(i, j) {
+        const center = 1 + this.horizontalRange;
+        const borderIndex = this.gridSize - 1;
+        const index = (0 === i) || borderIndex === i ? this.indexToY(j) : this.indexToX(i);
+        let borderClass = 0 === i ? "mz-grid-view-border-left" : "";
+        borderClass = borderIndex === i ? "mz-grid-view-border-right" : borderClass;
+        return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}"><span class="mz-grid-view-border ${borderClass}">${index}</span></div>`;
     }
 
     xToIndex(x) {
         return x - this.centerX + this.horizontalRange;
     }
 
+    indexToX(i) {
+        return i + this.centerX - this.horizontalRange;
+    }
+
     yToIndex(y) {
         return y - this.centerY + this.horizontalRange;
+    }
+
+    indexToY(i) {
+        return i + this.centerY - this.horizontalRange;
     }
 
     getCell(x, y) {
         let i = this.xToIndex(x);
         let j = this.yToIndex(y);
-        if (i > this.gridSize || i < 0
-            || j > this.gridSize || j < 0) {
+        if (i >= this.gridSize || i < 0
+            || j >= this.gridSize || j < 0) {
             // outside of the view range
             return null;
         }
@@ -239,6 +266,8 @@ class Grid {
         if (null == gridElements) {
             return;
         }
+        let here = this.getCell(this.centerX, this.centerY);
+        here.youAreHere = this.centerN;
         for (const element of gridElements) {
             let o = new CellObject(element);
             let cell = this.getCell(o.x, o.y)
@@ -265,7 +294,11 @@ class Cell {
     }
 
     convertToHtml(i, j, centerX, centerY) {
-        let html = `<div style="grid-row-start: ${i + 1}; grid-column-start: ${j + 1}" class="mz-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+        const id = this.youAreHere ? `id="you-are-here"` : "";
+        let html = `<div ${id} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+        if (null != this.youAreHere) {
+            html += `<span class="mz-grid-view-here">${this.youAreHere} : Vous êtes ici</span>`;
+        }
         if (null != this.monsters) {
             for (const monster of this.monsters) {
                 html += `<span class="mz-grid-view-monster">${monster.n} : ${monster.groupName}</span>`;
@@ -371,17 +404,21 @@ class CellObject {
 
 const style = document.createElement('style');
 style.appendChild(document.createTextNode(`
-.mz-grid-view-odd { background-color: teal; }
-.mz-grid-view-even { background-color: lightgreen; }
+.mz-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block;}
+.mz-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block;}
 .mz-grid-view-cell { padding: 0 0.5rem 0 0.5rem; }
-.mz-grid-view-monster { display:block; }
-.mz-grid-view-troll { display:block; }
+.mz-grid-view-border { display: block; font-weight: bold; text-align: center;}
+.mz-grid-view-border-left { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
+.mz-grid-view-border-right { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(90deg); top: 50%; left: 50%;}
+.mz-grid-view-here { display: block; font-weight: bold;}
+.mz-grid-view-troll { display: block; }
+.mz-grid-view-monster { display: block; }
 `));
 document.head.appendChild(style);
 
-g = new Grid(-52, -44, -41, 14, 7);
+g = new Grid(-51, -44, -41, 14, 7);
 g.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-html = g.convertToHtml("gridView");
-$('#infoTab').after(`<div id="gridScroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
+html = g.convertToHtml("mz-grid-view");
+$('#infoTab').after(`<div id="mz-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
 
- $('#gridScroll').dragscrollable({dragSelector:'div', acceptPropagatedEvent: false});
+$('#mz-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
