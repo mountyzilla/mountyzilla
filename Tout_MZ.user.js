@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.20
+// @version     1.5.21
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.20';
+var MZ_latest = '1.5.21';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -8498,17 +8498,19 @@ var mh_caracs = {
 		['armure', 0, 0, 0, 0, 0, 3, 0, 0, 0, 15, 30, 0, 0, 0, 0.00, 8.00, 8.00],
 	'turban':
 		['casque', 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 30, 15, 30, 0, 0.00, 2.50, 2.50],
-	'Couronne de ronces':
+	'couronne de ronces':
 		['casque', 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, 0, 5, 5],
-	'Oeil de sang':
+	'oeil de sang':
 		['talisman', 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 10, 20, -5, 0, 3, 3],
-	'Pendentif incandescent':
+	'pendentif incandescent':
 		['talisman', 0, -1, 0, -1, 3, 0, 0, 0, 0, 10, 20, 10, 20, 0, 0, 3, 3],
-	'Filet':
+	'filet':
 		['arme', 0, -1, 0, -1, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10],
-	'Menhir':
+	'menhir':
 		['arme', -4, 0, 0, 0, -5, 10, 0, -3, 0, 20, 40, 0, 0, 0, 0, 50, 50],
-	'Baton de mage':
+	'baton de mage':
+		['arme', 0, 8, 0, -2, 0, 0, 0, 0, 0, 0, 0, 15, 30, 0, 0, 10, 10],
+	'bâton de mage':
 		['arme', 0, 8, 0, -2, 0, 0, 0, 0, 0, 0, 0, 15, 30, 0, 0, 10, 10],
 };
 
@@ -8609,7 +8611,7 @@ function getTemplates(nomItem) {
 		for (let temp in mh_templates) {
 			// on teste la fin du nom contre chaque template
 			if (str.slice(-temp.length) != temp.toLowerCase()) {
-				//if (str.substring(0, 4) == 'robe') debugMZ(`getTemplates no match ${str.slice(-temp.length)} -- ${temp}` );
+				//if (str.substring(0, 4) == 'robe') debugMZ(`getTemplates no match ->${str.slice(-temp.length)}<-->${temp}<-` );
 				continue;
 			}
 			tempFound = true;
@@ -8810,19 +8812,14 @@ function treateEquipement() {
 	let caracs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	let nodes = document.evaluate(
 		"//td/b[text()='Equipement Utilisé']/../../" +
-		"td[2]/img[contains(@src,bullet)]",
+		"td[2]/*/li",
 		document, null, 7, null);
 	if (nodes.snapshotLength > 0) {
+		debugMZ('treateEquipement CSS de base nb equip ' + nodes.snapshotLength);
 		// Si CSS de base
 		for (let i = 0; i < nodes.snapshotLength; i++) {
-			let node = nodes.snapshotItem(i);
-			let next = node.nextSibling;
-			let nnext = next.nextSibling;
-			let nom = next.nodeValue.toLowerCase();
-			if (nnext.childNodes.length == 1) {
-				nom = nom + nnext.firstChild.nodeValue;
-			}
-			nom = nom.trim();
+			let li = nodes.snapshotItem(i);
+			nom = li.innerText.trim().toLowerCase();
 			// gestion winpostrophe
 			let c = String.fromCharCode(180);
 			while (nom.indexOf(c) != -1) {
@@ -8832,13 +8829,9 @@ function treateEquipement() {
 			if (arr.length > 0) {
 				faireLigne = true;
 				caracs = addArray(caracs, arr);
-				let span = document.createElement('span');
-				span.appendChild(next);
-				span.appendChild(nnext);
-				span.infos = getLine(arr);
-				span.onmouseover = showInfos;
-				span.onmouseout = hideInfos;
-				insertBefore(node.nextSibling, span);
+				li.infos = getLine(arr);
+				li.onmouseover = showInfos;
+				li.onmouseout = hideInfos;
 			}
 		}
 
