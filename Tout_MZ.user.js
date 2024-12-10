@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.21
+// @version     1.5.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.21';
+var MZ_latest = '1.5.22';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -16723,7 +16723,10 @@ try {
 		isPage('MH_Play/Play_e_follo.php') ||
 		MZ_fo_tresor ||
 		isPage('MH_Taniere/TanierePJ_o_Stock.php') ||
-		isPage('MH_Comptoirs/Comptoir_Recherche.php')) {
+		isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -3, service: 13 } }) ||	// compo en tanière
+		isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -5, sub: 'rech' } }) ||	// recherche en tanière
+		isPage('MH_Comptoirs/Comptoir_Recherche.php')
+		) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
