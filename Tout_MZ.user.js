@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.22
+// @version     1.5.23
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.22';
+var MZ_latest = '1.5.23';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -11006,7 +11006,7 @@ function bddMonstres(start, stop, limitH, limitV) {
 
 /** x~x Récup données Trolls ------------------------------------------- */
 
-// Roule 12/07/2017 détecte les colonnes à partir des titres. Mamoune vient de les faire bouger :(
+// Roule 12/07/2017 détecte les colonnes à partir des titres.
 var COL_TROLL_DIST = 0;	// celui-là, on le garde en dur
 
 function getTrollDistance(i) {
@@ -14175,10 +14175,10 @@ function setInfosCaracteristiques() {
 
 function setLienAnatrolliseur() {
 	let pTableAmelio = document.querySelector("#carac>div>p");
+	if (!pTableAmelio) pTableAmelio = document.querySelector("#carac>div>div>p");
+	if (!pTableAmelio) pTableAmelio = document.querySelector("#carac>div>div>div>p");
 	if (!pTableAmelio) {
-		pTableAmelio = document.querySelector("#carac>div>div>p");
-	}
-	if (!pTableAmelio) {
+		logMZ('Endroit où placer le lien anatroliseur non trouvé');
 		return;
 	}
 	pTableAmelio.appendChild(document.createTextNode(' - '));
