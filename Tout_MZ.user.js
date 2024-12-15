@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.23
+// @version     1.5.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.23';
+var MZ_latest = '1.5.24';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -977,6 +977,7 @@ function avertissement(txt, duree, bBloque, exc = undefined) {
 	div.style.left = `${10 + 0 * num}px`;
 	div.style.border = '4px solid red';
 	div.style.borderRadius = '4px';
+	div.style.paddingRight = '12px';
 	div.style.backgroundColor = 'rgb(229, 222, 203)';
 	div.style.zIndex = 2 + num;
 	div.style.cursor = 'pointer';
@@ -12483,7 +12484,7 @@ function computeVLC(begin, end) {
 /* appelé
 par updateTactique
 	par initialiseInfos
-		par do_vue
+		par do_vue_html
 par computeVLC
 	par computeMission
 		par filtreMonstres
@@ -13552,6 +13553,256 @@ function inversionCoord() {
 
 /*                             Partie principale                              */
 function do_vue() {
+	// test vue méthode pré ou post 2024
+	// dans la nouvelle vue, quand on passe ici, on a juste eu, par exemple, un "let json_monstres;"
+	if (document.body.id == 'p_mavue') {
+		do_vue_html();	// "ancienne" vue
+	} else {
+		avertissement(`MZ ne traite pas encore la nouvelle vue mais on y travaille`);
+		MZ_cVueJSON.initGlobal();
+	}
+}
+
+class MZ_cVueJSON {
+	// class en syntaxe ECMA. Un peu de modernité, que diable !
+	// classe "abstraite" dont héritent les classes spécifiques pour les monstres, trolls, etc.
+	// cette classe contient en "static" tout ce qu'il faut pour l' initialisations globales
+	// cette classe est instanciée une fois par tuype d'objet(monstre, trol, etc.)
+	// les propriétés principales sont des tableaux d'objets cLigneVueJSON (un tableau pour chaque type montre, troll, trésor, etc.)
+	// cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
+
+	// partie static : gestion globale
+	static oMonstres;
+	static oTrolls;
+	static oTresors;
+	static oChampignons;
+	static oLieux;
+	static oCenotaphes;
+	static MutationObserverConfig = {childList: true, subtree: true };
+
+	static initGlobal() {
+		// le constructeur de chaque instance va faire le boulot d'init
+		MZ_cVueJSON.oMonstres = new MZ_cVueJSON('monstres');
+		MZ_cVueJSON.oTrolls = new MZ_cVueJSON('trolls');
+		MZ_cVueJSON.oTresors = new MZ_cVueJSON('tresors');
+		MZ_cVueJSON.oChampignons = new MZ_cVueJSON('champignons');
+		MZ_cVueJSON.oLieux = new MZ_cVueJSON('lieux');
+		MZ_cVueJSON.oCenotaphes = new MZ_cVueJSON('cenotaphes');
+	}
+
+	// cette zone est spécifique à un type (monstre, troll, etc.)
+	nomBase;			// montres, trolls, etc.
+	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH répond
+	objets;				// objets de type MZ_cLigneVue. Attention, ça va être un "sparse array" car indexé par les ID
+	MH_ft;				// l'object footable
+	MH_json;			// les datas obetenues en JSON par MH en AJAX
+
+	// les éléments HTML
+	eltTable;
+	eltTrHead;
+	eltTrDist;
+	eltTrAction;
+	eltTrRef;
+	eltTrNom;
+	eltTrX;
+	eltTrY;
+	eltTrN;
+	// les index des colonnes *au début* (n'a plus de sens si on insère des colonnes
+	indxTdDist;
+	indxTdAction;
+	indxTdRef;
+	indxTdNom;
+	indxTdX;
+	indxTdY;
+	indxTdN;
+
+	constructor(nomBase) {
+		this.nomBase = nomBase;
+		this.eltTable = document.getElementById('VUE_' + this.nomBase);
+		// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
+		let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
+		this.mutationObserver = new MutationObserver(function () {
+			//logMZ('MZ_cVueJSON_log callback1 ' + oThis.nomBase);
+			oThis.load();
+			});
+		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
+		this.load();
+	}
+
+	initMHThings() {
+		// fait pointer les propriétés de l'object vers les variables globales "let" de MH
+		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
+		switch (this.nomBase) {
+			case 'monstres':
+				this.MH_ft = ft_monstres;
+				this.MH_json = json_monstres;
+				break;
+			case 'trolls':
+				this.MH_ft = ft_trolls;
+				this.MH_json = json_trolls;
+				break;
+			case 'tresors':
+				this.MH_ft = ft_tresors;
+				this.MH_json = json_tresors;
+				break;
+			case 'champignons':
+				this.MH_ft = ft_champignons;
+				this.MH_json = json_champignons;
+				break;
+			case 'lieux':
+				this.MH_ft = ft_lieux;
+				this.MH_json = json_lieux;
+				break;
+			case 'cenotaphes':
+				this.MH_ft = ft_cenotaphes;
+				this.MH_json = json_cenotaphes;
+				break;
+		}
+	}
+
+	load() {
+		//logMZ('MZ_cVueJSON_log callback2 ' + this.nomBase);
+		let done = true;
+		this.initMHThings();
+		// teste que notre tableau est rempli si le tableau MH est rempli
+		if (this.MH_json === undefined || this.objets !== undefined) return;
+
+		this.mutationObserver.disconnect();
+		this.mutationObserver = undefined;
+		//logMZ('MZ_cVueJSON_log il faut initialiser les ' + this.nomBase);
+		// trouver les indices des <td>
+		this.eltTrHead = this.eltTable.tHead.rows[0];
+		let nbCol = this.eltTrHead.cells.length;
+		//logMZ('MZ_cVueJSON_log nbCol=' + nbCol + ' pour ' + this.nomBase);
+		for (let iCol = 0; iCol < nbCol; iCol++) {
+			let td = this.eltTrHead.cells[iCol];
+			switch (td.innerText.toLowerCase()) {
+				case 'dist.':
+					// il y a 2 Dist., une visible, l'autre pas
+					if (td.style.display == 'none') break;
+					this.indxTdDist = iCol;
+					break;
+				case 'actions':
+					this.indxTdAction = iCol;
+					break;
+				case 'réf.':
+					this.indxTdRef = iCol;
+					break;
+				case 'nom':
+					this.indxTdNom = iCol;
+					break;
+				case 'x':
+					this.indxTdX = iCol;
+					break;
+				case 'y':
+					this.indxTdY = iCol;
+					break;
+				case 'n':
+					this.indxTdN = iCol;
+					break;
+			}
+		}
+		if (this.indxTdDist === undefined)   {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Dist'); return;}
+		if (this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
+		if (this.indxTdRef === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return;}
+		if (this.indxTdNom === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return;}
+		if (this.indxTdX === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return;}
+		if (this.indxTdY === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return;}
+		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
+
+		// faire un tableau de <tr> indexé par l'ID
+		//this.eltTBody = this.eltTable.tBody;
+		let rows = [];
+		for (let eTr of this.eltTable.tBodies[0].rows) {
+			if (eTr.cells.length < 5) continue;	// on peut avoir "no result"
+			let id = parseInt(eTr.cells[this.indxTdRef].innerText);
+			if (!isNaN(id) && id > 0) rows[id] = eTr;
+		}
+
+		// balayer le json_xxxx et créer nos objets par ligne
+		this.objets = [];
+		for (let oMH_JSON of this.MH_json) {
+			let oLigne;
+			switch (this.nomBase) {
+				case 'monstres':
+					oLigne = new MZ_cLigneMonstre();
+					break;
+				case 'trolls':
+					oLigne = new MZ_cLigneTroll();
+					break;
+				case 'tresors':
+					oLigne = new MZ_cLigneTresor();
+					break;
+				case 'champignons':
+					oLigne = new MZ_cLigneChampignon();
+					break;
+				case 'lieux':
+					oLigne = new MZ_cLigneLieu();
+					break;
+				case 'cenotaphes':
+					oLigne = new MZ_cLigneCenotaphe();
+					break;
+			}
+			// trouver le tr correspondant
+			let idMH = parseInt(oMH_JSON.value.id);
+			let eTr = rows[idMH];
+			if (eTr) {
+				oLigne.init(this, idMH, eTr);
+				this.objets[idMH] = oLigne;
+			}
+		}
+
+		logMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
+		//avertissement('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, count=' + this.MH_json.length);
+	}
+}
+
+class MZ_cLigneVue {
+	// les <td> initiaux (de MH). Ils peuvent bouger si on insère des colonnes mais ces variables restent valides
+	id;
+	eltTdDist;
+	eltTdAction;
+	eltTdRef;
+	eltTdNom;
+	eltTdX;
+	eltTdY;
+	eltTdN;
+
+	MZ_oVueJSON;	// pointeur vers l'objet pour le type (monstre, troll, etc.)
+
+	init(MZ_oVueJSON, id, eTr) {
+		this.MZ_oVueJSON = MZ_oVueJSON;
+		this.id = id;
+		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
+		this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction];
+		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
+		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
+		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
+		this.eltTdY = eTr.cells[MZ_oVueJSON.indxTdY];
+		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
+	}
+}
+
+class MZ_cLigneMonstre extends MZ_cLigneVue {
+	// c'est ici qu'on va mettre tout le code spécifiques aux monstres
+}
+
+class MZ_cLigneTroll extends MZ_cLigneVue {
+}
+
+class MZ_cLigneTresor extends MZ_cLigneVue {
+}
+
+class MZ_cLigneChampignon extends MZ_cLigneVue {
+}
+
+class MZ_cLigneLieu extends MZ_cLigneVue {
+}
+
+class MZ_cLigneCenotaphe extends MZ_cLigneVue {
+}
+
+function do_vue_html() {
 	let skip = [];
 	for (let type in typesAFetcher) {
 		let ok = fetchData(type);
