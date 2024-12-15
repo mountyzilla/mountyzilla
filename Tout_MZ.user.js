@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.24
+// @version     1.5.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.24';
+var MZ_latest = '1.5.25';
 var MZ_changeLog = [
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
@@ -6467,6 +6467,11 @@ function scizPrettyPrintPortal(p) {
 function do_scizEnhanceView() {
 	scizGlobal.treasures = [];
 
+	if (document.body.id != 'p_mavue') {
+		logMZ('SCIZ sur la nouvelle vue : pas enore fait');
+		return;
+	}
+
 	// Ensure we have a JWT setup for the current user
 	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 	if (jwt === null || jwt === undefined || jwt.trim() === '') {
@@ -11931,6 +11936,22 @@ function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue
 }
 
 /* [functions] Gestion de l'AFFICHAGE des CdMs */
+function basculeCDM2() {
+	// = Bascule l'affichage des popups CdM
+	let indx = this.getAttribute('data-indxMZ');
+	let oMonstre = MZ_cVueJSON.oMonstres.objets[indx];
+	if (!oMonstre) {
+		logMZ(`basculeCDM2_log, mauvais index ${indx}`);
+		return;
+	}
+	if (!document.getElementById(`popupCDM${oMonstre.id}`)) {
+		afficherCDM2(oMonstre.infoMZ);
+	} else {
+		cacherPopupCDM(`popupCDM${oMonstre.id}`);
+	}
+}
+
+/* [functions] Gestion de l'AFFICHAGE des CdMs */
 function basculeCDM(nom, id) {
 	// = Bascule l'affichage des popups CdM
 	if (MZ_EtatCdMs.listeCDM[id]) {
@@ -11995,9 +12016,12 @@ if (!isPage("MH_Play/Play_equipement")) {
 function afficherCDM(nom, id) {
 	// Crée la table de CdM du mob n° id
 	let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+	afficherCDM2(donneesMonstre);
+}
 
+function afficherCDM2(donneesMonstre) {
 	/* Début création table */
-	let table = createCDMTable(id, nom, donneesMonstre, removeTableFromClickEvent);
+	let table = createCDMTable(donneesMonstre.id, donneesMonstre.nom, donneesMonstre, removeTableFromClickEvent);
 
 	/* Ajout du titre avec gestion Drag & Drop */
 	let tr = table.firstChild;
@@ -12005,7 +12029,7 @@ function afficherCDM(nom, id) {
 	tr.onmousedown = startDrag;
 	tr.onmouseup = stopDrag;
 
-	table.id = `popupCDM${id}`;
+	table.id = `popupCDM${donneesMonstre.id}`;
 	table.style.position = 'fixed';
 	table.style.backgroundColor = 'rgb(229, 222, 203)';
 	table.style.zIndex = 1;
@@ -13558,7 +13582,7 @@ function do_vue() {
 	if (document.body.id == 'p_mavue') {
 		do_vue_html();	// "ancienne" vue
 	} else {
-		avertissement(`MZ ne traite pas encore la nouvelle vue mais on y travaille`);
+		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille');
 		MZ_cVueJSON.initGlobal();
 	}
 }
@@ -13572,7 +13596,7 @@ class MZ_cVueJSON {
 	// cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
 
 	// partie static : gestion globale
-	static oMonstres;
+	static oMonstres;	// classes MZ_cVueJSON
 	static oTrolls;
 	static oTresors;
 	static oChampignons;
@@ -13590,12 +13614,14 @@ class MZ_cVueJSON {
 		MZ_cVueJSON.oCenotaphes = new MZ_cVueJSON('cenotaphes');
 	}
 
+	// ----- fin partie statique -------------
+
 	// cette zone est spécifique à un type (monstre, troll, etc.)
-	nomBase;			// montres, trolls, etc.
+	nomBase;			// "montres", "trolls", etc.
 	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH répond
-	objets;				// objets de type MZ_cLigneVue. Attention, ça va être un "sparse array" car indexé par les ID
+	objets;				// objets de type (dérivé de) MZ_cLigneVue
 	MH_ft;				// l'object footable
-	MH_json;			// les datas obetenues en JSON par MH en AJAX
+	MH_json;			// les datas obtenues en JSON par MH en AJAX
 
 	// les éléments HTML
 	eltTable;
@@ -13607,7 +13633,7 @@ class MZ_cVueJSON {
 	eltTrX;
 	eltTrY;
 	eltTrN;
-	// les index des colonnes *au début* (n'a plus de sens si on insère des colonnes
+	// les index des colonnes
 	indxTdDist;
 	indxTdAction;
 	indxTdRef;
@@ -13632,35 +13658,43 @@ class MZ_cVueJSON {
 	initMHThings() {
 		// fait pointer les propriétés de l'object vers les variables globales "let" de MH
 		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
+		// on profite du swotch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
 		switch (this.nomBase) {
 			case 'monstres':
 				this.MH_ft = ft_monstres;
 				this.MH_json = json_monstres;
+				MZ_cLigneMonstre.MZ_oVueJSON = this;
 				break;
 			case 'trolls':
 				this.MH_ft = ft_trolls;
 				this.MH_json = json_trolls;
+				MZ_cLigneTroll.MZ_oVueJSON = this;
 				break;
 			case 'tresors':
 				this.MH_ft = ft_tresors;
 				this.MH_json = json_tresors;
+				MZ_cLigneTresor.MZ_oVueJSON = this;
 				break;
 			case 'champignons':
 				this.MH_ft = ft_champignons;
 				this.MH_json = json_champignons;
+				MZ_cLigneChampignon.MZ_oVueJSON = this;
 				break;
 			case 'lieux':
 				this.MH_ft = ft_lieux;
 				this.MH_json = json_lieux;
+				MZ_cLigneLieu.MZ_oVueJSON = this;
 				break;
 			case 'cenotaphes':
 				this.MH_ft = ft_cenotaphes;
 				this.MH_json = json_cenotaphes;
+				MZ_cLigneCenotaphe.MZ_oVueJSON = this;
 				break;
 		}
 	}
 
 	load() {
+		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
 		//logMZ('MZ_cVueJSON_log callback2 ' + this.nomBase);
 		let done = true;
 		this.initMHThings();
@@ -13670,7 +13704,7 @@ class MZ_cVueJSON {
 		this.mutationObserver.disconnect();
 		this.mutationObserver = undefined;
 		//logMZ('MZ_cVueJSON_log il faut initialiser les ' + this.nomBase);
-		// trouver les indices des <td>
+		// trouver les numéro de colonne pour chaque info (dist, ref, nom, etc.)
 		this.eltTrHead = this.eltTable.tHead.rows[0];
 		let nbCol = this.eltTrHead.cells.length;
 		//logMZ('MZ_cVueJSON_log nbCol=' + nbCol + ' pour ' + this.nomBase);
@@ -13711,7 +13745,6 @@ class MZ_cVueJSON {
 		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
 
 		// faire un tableau de <tr> indexé par l'ID
-		//this.eltTBody = this.eltTable.tBody;
 		let rows = [];
 		for (let eTr of this.eltTable.tBodies[0].rows) {
 			if (eTr.cells.length < 5) continue;	// on peut avoir "no result"
@@ -13748,18 +13781,63 @@ class MZ_cVueJSON {
 			let eTr = rows[idMH];
 			if (eTr) {
 				oLigne.init(this, idMH, eTr);
-				this.objets[idMH] = oLigne;
+				this.objets.push(oLigne);
 			}
+		}
+
+		switch (this.nomBase) {
+			case 'monstres':
+				MZ_cLigneMonstre.initGlobal();
+				break;
+			case 'trolls':
+				MZ_cLigneTroll.initGlobal();
+				break;
+			case 'tresors':
+				MZ_cLigneTresor.initGlobal();
+				break;
+			case 'champignons':
+				MZ_cLigneChampignon.initGlobal();
+				break;
+			case 'lieux':
+				MZ_cLigneLieu.initGlobal();
+				break;
+			case 'cenotaphes':
+				MZ_cLigneCenotaphe.initGlobal();
+				break;
 		}
 
 		logMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
 		//avertissement('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, count=' + this.MH_json.length);
 	}
+
+	insertColumn(indxAfter, title, width, callbackParam) {
+		// ajout d'une colonne au tableau
+		// c'est l'appelant qui doit savoir ce qu'il fait et ne pas appeler plusieurs fois cette fonction
+		// ça décale les indxTdxxxx
+		
+		if (this.indxTdDist > indxAfter) this.indxTdDist++;
+		if (this.indxTdAction > indxAfter) this.indxTdAction++;
+		if (this.indxTdRef > indxAfter) this.indxTdRef++;
+		if (this.indxTdNom > indxAfter) this.indxTdNom++;
+		if (this.indxTdX > indxAfter) this.indxTdX++;
+		if (this.indxTdY > indxAfter) this.indxTdY++;
+		if (this.indxTdN > indxAfter) this.indxTdN++;
+
+		let td = insertThText(this.eltTrHead.cells[indxAfter], title, false);
+		td.style.width = width;
+
+		for (let oMonstre of this.objets) {
+			// logMZ('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
+			oMonstre.insertColumn(callbackParam);
+		}
+	}
+
 }
 
 class MZ_cLigneVue {
-	// les <td> initiaux (de MH). Ils peuvent bouger si on insère des colonnes mais ces variables restent valides
+	// classe "abstraite". Ce sont les héritiers qui sont instanciés
 	id;
+	// les <td> initiaux (de MH). Ils peuvent bouger si on insère des colonnes mais ces variables restent valides
 	eltTdDist;
 	eltTdAction;
 	eltTdRef;
@@ -13767,11 +13845,11 @@ class MZ_cLigneVue {
 	eltTdX;
 	eltTdY;
 	eltTdN;
-
-	MZ_oVueJSON;	// pointeur vers l'objet pour le type (monstre, troll, etc.)
+	// les infos (ajouter des propriétés au fur et à mesure des besoins)
+	nom;
 
 	init(MZ_oVueJSON, id, eTr) {
-		this.MZ_oVueJSON = MZ_oVueJSON;
+		//this.MZ_oVueJSON = MZ_oVueJSON;
 		this.id = id;
 		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
 		this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction];
@@ -13780,26 +13858,227 @@ class MZ_cLigneVue {
 		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
 		this.eltTdY = eTr.cells[MZ_oVueJSON.indxTdY];
 		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
+		this.nom = this.eltTdNom.innerText.trim();
 	}
 }
 
 class MZ_cLigneMonstre extends MZ_cLigneVue {
-	// c'est ici qu'on va mettre tout le code spécifiques aux monstres
+	static MZ_oVueJSON;	// pointeur vers l'objet pour le type (monstre, troll, etc.)
+	// c'est ici qu'on met tout le code spécifique aux monstres
+
+	// zone MZ - niveaux
+	static colNiveauDone;
+	eltTdNiveau;	// le TD est créé même pour les lignes où le niveau n'a pas été obtenu
+	infoMZ;
+	nivMZ_no;	// par exemple gowaps
+	nivMZDone;
+	cssMZDone;
+
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+
+		let tReq = [];
+		let nbReq = 0;
+		let indx = -1;
+		for (let oMonstre of MZ_cLigneMonstre.MZ_oVueJSON.objets) {
+			indx++;
+			// ne pas demander pour les Gowaps
+			if (oMonstre.nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
+				oMonstre.nivMZ_no = true;
+				continue;
+			}
+			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
+			tReq.push({index: indx, id: oMonstre.id, nom: oMonstre.nom });
+			nbReq++;
+			if (nbReq >= 500) {
+				break;
+			}	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
+		}
+		logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
+		if (nbReq == 0) return;
+
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: URL_MZgetCaracMonstre,
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			data: `l=${JSON.stringify(tReq)}`,
+			trace: 'demande niveaux monstres V2',
+			onload: MZ_cLigneMonstre.receptionMZNiveauxAJAX,
+		});
+		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
+		MZ_Tactique.initPopup();
+	}
+	
+	static receptionMZNiveauxAJAX(responseDetails) {
+		let texte;
+		try {
+			// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+			if (responseDetails.status == 0) {
+				return;
+			}
+			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+			texte = responseDetails.responseText;
+			let infos = JSON.parse(texte);
+			//displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
+			if (infos.length == 0) {
+				return;
+			}
+
+			// ajouter les styles CSS pour les popup
+			if (!MZ_cLigneMonstre.cssMZDone) addStyleSheet(`
+			.MZtooltip { position: relative;color:red;text-align:center; }
+			.MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
+			.MZtooltip:hover .MZtooltiptext {visibility: visible;}
+			`);
+
+			if (!MZ_cLigneMonstre.colNiveauDone) {
+				// ajouter la colonne dans le HTML après Rèf
+				MZ_cLigneMonstre.MZ_oVueJSON.insertColumn(MZ_cLigneMonstre.MZ_oVueJSON.indxTdRef, 'Niv', '20px', 1);
+				MZ_cLigneMonstre.colNiveauDone = true;
+			}
+
+			for (let info of infos) {
+				if (info.index == undefined) continue;
+				let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[info.index];
+				if (!oMonstre) continue;
+				oMonstre.infoMZ = info;
+				let className = 'mh_tdpage';
+				let myColor = undefined;
+				if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
+					oMonstre.eltTdNiveau.className = "MZtooltip";
+					oMonstre.eltTdNiveau.style.color = "black";
+					oMonstre.eltTdNiveau.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
+				} else if (!(info && info.esq)) {
+					// debugMZ("pas d'esquive id=" + info.id + ", index=" + info.index);
+					oMonstre.eltTdNiveau.className = "MZtooltip";
+					oMonstre.eltTdNiveau.innerHTML = `${mkMinMaxHTML(info.niv)}<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>`;
+				} else {
+					oMonstre.eltTdNiveau.innerHTML = mkMinMaxHTML(info.niv);
+					myColor = MZ_CdMColorFromMode(info);
+					oMonstre.eltTdNiveau.style.cursor = 'pointer';
+					oMonstre.eltTdNiveau.setAttribute('data-indxMZ', info.index);
+					oMonstre.eltTdNiveau.onclick = basculeCDM2;
+					oMonstre.eltTdNom.appendChild(MZ_Tactique.createImage(oMonstre.id, oMonstre.nom));
+				}
+				oMonstre.eltTdNiveau.style.width = '20px';
+				MZ_EtatCdMs.listeCDM[info.id] = info;
+				if (myColor) {
+					oMonstre.eltTdNiveau.style.color = myColor;
+				}
+
+				/* Roule' à étudier plus tard, cette différence de style selon la diplo...
+				oMonstre.eltTdNiveau.onmouseover = function() {
+					this.className = 'mh_tdtitre';
+				};
+				oMonstre.eltTdNiveau.onmouseout = function() {
+					if(this.parentNode.diploActive=='oui') {
+						this.className = '';
+					} else {
+						this.className = 'mh_tdpage';
+					}
+				};
+				*/
+			}
+			// todo
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
+			//computeMission(prevLastIndexDone + 1, MZ_EtatCdMs.nbMonstres);
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant filtreMonstres`);
+			//filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres fin`);
+		} catch (exc) {
+			logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
+		}
+		return;
+		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
+		MZ_EtatCdMs.isCDMsRetrieved = true;
+		// afficher/supprimer le bouton pour demander la suite
+		let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
+		debugMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
+		if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
+			if (eltBoutonSuite) {
+				replaceContentByText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
+				retrieveCDMs();	// lancer la suite
+			} else {
+				eltBoutonSuite = document.createElement('div');
+				eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
+				eltBoutonSuite.style.position = 'fixed';
+				eltBoutonSuite.style.border = '1px solid black';
+				eltBoutonSuite.style.top = '10px';
+				eltBoutonSuite.style.right = '10px';
+				// eltBoutonSuite.style.backgroundColor = 'white';
+				eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
+				eltBoutonSuite.style.color = 'black';
+				eltBoutonSuite.style.fontSize = 'large';
+				eltBoutonSuite.style.padding = '5px';
+				eltBoutonSuite.style.borderRadius = '10px';
+				eltBoutonSuite.style.cursor = 'pointer';
+				eltBoutonSuite.style.zIndex = '500';
+				appendText(eltBoutonSuite, `${nbReq} CdM(s) récupérées`);
+				appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
+				appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
+				appendBr(eltBoutonSuite);
+				appendText(eltBoutonSuite, `des ${MZ_EtatCdMs.nbMonstres} monstres`);
+				eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
+				eltBoutonSuite.onclick = MZ_SuiteCdMs;
+				document.body.appendChild(eltBoutonSuite);
+			}
+		} else if (eltBoutonSuite) {
+			eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
+		}
+	}
+
+	insertColumn(param) {
+		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
+		switch (param) {
+			case 1:
+				this.insertColumnNiveau();
+		}
+	}
+
+	insertColumnNiveau() {
+		this.eltTdNiveau = insertTdText(this.eltTdRef, '-');
+		this.eltTdNiveau.style.display = 'table-cell';
+	}
 }
 
 class MZ_cLigneTroll extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		
+	}
 }
 
 class MZ_cLigneTresor extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		
+	}
 }
 
 class MZ_cLigneChampignon extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		
+	}
 }
 
 class MZ_cLigneLieu extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		
+	}
 }
 
 class MZ_cLigneCenotaphe extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static initGlobal() {
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		
+	}
 }
 
 function do_vue_html() {
