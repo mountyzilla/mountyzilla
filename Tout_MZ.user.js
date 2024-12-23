@@ -707,16 +707,18 @@ var MHicons = '/mountyhall/Images/Icones/';
 /** x~x Compatibilité Greasemonkey/ViolentMonkey ----------------------- */
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
 	GM_getValue === undefined;
-	logMZ('Fonctionnement dans Greasemonkey');
+	vue = isDesktopView() ? "desktop" : "mobile";
+	logMZ(`Fonctionnement dans Greasemonkey (vue ${vue})`);
 } catch (exc) {
 	GM_getValue = function (key) { };
 	GM_setValue = function (key, val) { };
 	GM_deleteValue = function (key) { };
 	GM_info = { script: { version: MZ_latest } };	// GM_info.script.version
+	vue = isDesktopView() ? "desktop" : "mobile";
 	if (typeof MH_mountyzilla_json !== "undefined")
-		logMZ('Fonctionnement intégré MH');
+		logMZ(`Fonctionnement intégré MH (vue ${vue})`);
 	else
-		logMZ('Fonctionnement hors Greasemonkey');
+		logMZ(`Fonctionnement hors Greasemonkey (vue ${vue})`);
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
@@ -894,7 +896,7 @@ function MZ_formatDateMS(d = new Date(), avec_ms = true) {
 
 /** x~x Interface utilisateur ------------------------------------------ */
 function isDesktopView() {
-	return document.getElementsByClassName('ui-mobile').length == 0;
+	return document.getElementsByTagName('nav').length == 0;
 }
 
 function replaceLinkMHtoMZ() {
@@ -13581,7 +13583,10 @@ function inversionCoord() {
 function do_vue() {
 	// test vue méthode pré ou post 2024
 	// dans la nouvelle vue, quand on passe ici, on a juste eu, par exemple, un "let json_monstres;"
-	if (document.body.id == 'p_mavue') {
+	node = document.evaluate(
+		"//p/text()[contains(., 'Cette page est obsolète.')]", document, null, 9, null
+	).singleNodeValue;
+	if (node) {
 		do_vue_html();	// "ancienne" vue
 	} else {
 		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille');
@@ -13739,7 +13744,7 @@ class MZ_cVueJSON {
 			}
 		}
 		if (this.indxTdDist === undefined)   {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Dist'); return;}
-		if (this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
+		if (isDesktopView() && this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
 		if (this.indxTdRef === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return;}
 		if (this.indxTdNom === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return;}
 		if (this.indxTdX === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return;}
@@ -13818,7 +13823,7 @@ class MZ_cVueJSON {
 		// ça décale les indxTdxxxx
 
 		if (this.indxTdDist > indxAfter) this.indxTdDist++;
-		if (this.indxTdAction > indxAfter) this.indxTdAction++;
+		if (isDesktopView() && this.indxTdAction > indxAfter) this.indxTdAction++;
 		if (this.indxTdRef > indxAfter) this.indxTdRef++;
 		if (this.indxTdNom > indxAfter) this.indxTdNom++;
 		if (this.indxTdX > indxAfter) this.indxTdX++;
@@ -13854,7 +13859,7 @@ class MZ_cLigneVue {
 		//this.MZ_oVueJSON = MZ_oVueJSON;
 		this.id = id;
 		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
-		this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction];
+		if (isDesktopView()) { this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction]; }
 		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
 		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
 		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
