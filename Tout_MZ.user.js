@@ -3653,7 +3653,7 @@ function getAnalyseTactique(id, nom) {
 	let ui_table = isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-all';
 	let ui_tr = isDesktopView() ? 'mh_tdtitre' : ' ui-bar-b';
 	let ui_size = isDesktopView() ? '' : ' font-size: smaller;';
-	let str = `<table class='${ui_table}' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203);${ui_size}'><tr class='${ui_tr}'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>`;
+	let str = `<table class='${ui_table}' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203);outline: thin solid;${ui_size}'><tr class='${ui_tr}'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>`;
 	let i;
 	for (i = 0; i < array.length; i++) {
 		if (array[i][1] == 100 && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
@@ -12034,6 +12034,7 @@ function afficherCDM2(donneesMonstre) {
 	tr.onmouseup = stopDrag;
 
 	table.id = `popupCDM${donneesMonstre.id}`;
+	table.style.outline = 'thin solid';
 	table.style.position = 'fixed';
 	table.style.backgroundColor = 'rgb(229, 222, 203)';
 	table.style.zIndex = 1;
