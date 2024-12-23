@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.5.25
+// @version     1.6.0
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.5.25';
+var MZ_latest = '1.6.0';
 var MZ_changeLog = [
+	"V1.6.x \t\t 23/12/2024",
+	"	- Adapations nouvelle vue",
 	"V1.5.x \t\t 23/09/2024",
 	"	- Multiples correctifs suites aux mises à jours MH",
 	"V1.4.11 \t\t 06/05/2024",
@@ -4824,7 +4826,7 @@ function do_enchant() {
 
 function lireEnchantementEncours() {
 	let enCours = [];
-	
+
 	let cells = document.querySelectorAll("td.mh_tdtitre");
 	for (let i = 0; i < cells.length; i++) {
 		let cell = cells[i];
@@ -4843,7 +4845,7 @@ function lireEnchantementEncours() {
 
 		let enchanteurText = cell.querySelectorAll("b")[2].textContent;
 		let enchanteurMatch = enchanteurText.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
-		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);		
+		MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);
 	}
 
 	let liste = MY_getValue(`${numTroll}.enchantement.liste`);
@@ -7383,7 +7385,7 @@ function atoi(s) {
 	const BASE_TROOGLE_URL = `https://troogle.iktomi.eu/`;
 	const BASE_TROOGLE_SEARCH = `${BASE_TROOGLE_URL}entities/?entity_search[search]=`;
 
-	// Pseudo-constantes: 
+	// Pseudo-constantes:
 	// Types de recherche
 	Object.defineProperty(MZ_troogle, "SEARCH_MONSTER", { value: '@monstre', configurable: false, writable: false });
 
@@ -13814,7 +13816,7 @@ class MZ_cVueJSON {
 		// ajout d'une colonne au tableau
 		// c'est l'appelant qui doit savoir ce qu'il fait et ne pas appeler plusieurs fois cette fonction
 		// ça décale les indxTdxxxx
-		
+
 		if (this.indxTdDist > indxAfter) this.indxTdDist++;
 		if (this.indxTdAction > indxAfter) this.indxTdAction++;
 		if (this.indxTdRef > indxAfter) this.indxTdRef++;
@@ -13908,7 +13910,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
 		MZ_Tactique.initPopup();
 	}
-	
+
 	static receptionMZNiveauxAJAX(responseDetails) {
 		let texte;
 		try {
@@ -14045,7 +14047,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		
+
 	}
 }
 
@@ -14053,7 +14055,7 @@ class MZ_cLigneTresor extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		
+
 	}
 }
 
@@ -14061,7 +14063,7 @@ class MZ_cLigneChampignon extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		
+
 	}
 }
 
@@ -14069,7 +14071,7 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		
+
 	}
 }
 
@@ -14077,7 +14079,7 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		
+
 	}
 }
 
