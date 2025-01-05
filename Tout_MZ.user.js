@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.0
+// @version     1.6.1
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.0';
+var MZ_latest = '1.6.1';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13669,32 +13669,32 @@ class MZ_cVueJSON {
 		// on profite du swotch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
 		switch (this.nomBase) {
 			case 'monstres':
-				this.MH_ft = ft_monstres;
+				this.MH_ft = VUE_monstres;  // id: table#VUE_monstres
 				this.MH_json = json_monstres;
 				MZ_cLigneMonstre.MZ_oVueJSON = this;
 				break;
 			case 'trolls':
-				this.MH_ft = ft_trolls;
+				this.MH_ft = VUE_trolls;  // id: table#VUE_trolls
 				this.MH_json = json_trolls;
 				MZ_cLigneTroll.MZ_oVueJSON = this;
 				break;
 			case 'tresors':
-				this.MH_ft = ft_tresors;
+				this.MH_ft = VUE_tresors;  // id: table#VUE_tresors
 				this.MH_json = json_tresors;
 				MZ_cLigneTresor.MZ_oVueJSON = this;
 				break;
 			case 'champignons':
-				this.MH_ft = ft_champignons;
+				this.MH_ft = VUE_champignons;  // id: table#VUE_champignons
 				this.MH_json = json_champignons;
 				MZ_cLigneChampignon.MZ_oVueJSON = this;
 				break;
 			case 'lieux':
-				this.MH_ft = ft_lieux;
+				this.MH_ft = VUE_lieux;  // id: table#VUE_lieux
 				this.MH_json = json_lieux;
 				MZ_cLigneLieu.MZ_oVueJSON = this;
 				break;
 			case 'cenotaphes':
-				this.MH_ft = ft_cenotaphes;
+				this.MH_ft = VUE_cenotaphes;  // id: table#VUE_cenotaphes
 				this.MH_json = json_cenotaphes;
 				MZ_cLigneCenotaphe.MZ_oVueJSON = this;
 				break;
