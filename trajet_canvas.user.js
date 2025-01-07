@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.42
+// @version 2.43
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -133,7 +133,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	else if((lien.indexOf("/mountyhall/MH_Play/Play_a_Action.php") != -1) 
 		&& (lien.indexOf("id=-3") != -1) 
 		&& (window.document.getElementsByTagName("body")[0].innerHTML.indexOf("Portail de T") != -1)) {
-		console.log('trajet lieu_tp');
+		window.console.log('trajet lieu_tp');
 		var sortie = null;
 		var page = "lieu_tp";
 	}
@@ -409,15 +409,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		////////////////////////////////////////////////////////////
 		function charge_trajet() {
+			//window.console.trace();
 			let data_gowap = MY_getValue("TRAJET_"+num_gow);
 			if(!data_gowap) {
 				//console.log('trajet_canvas pas de trajet pour suivant ' + num_gow);
 				return;
 			}
 			let param = data_gowap.split("/");
-			//window.console.log('charge_trajet TRAJET_' + num_gow + '=' + MY_getValue("TRAJET_"+num_gow) + ', on va splitter sur /');
+			//window.console.log('charge_trajet TRAJET_' + num_gow + '=' + data_gowap + ', on va splitter sur /');
 			if(param[0] != "zoom") {
-				console.log('trajet_canvas pas zoom en début de trajet pour suivant ' + num_gow);
+				window.console.log('trajet_canvas pas zoom en début de trajet pour suivant ' + num_gow);
 				return;
 			}
 			zoom = parseInt(param[1]);
@@ -462,8 +463,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				arret = [[-1, etapes.length]];
 			}
 			//if (num_gow == 5813233) window.console.log('trajet_canvas charge_trajet pour suivant ' + num_gow + '\netapes_ini=' + JSON.stringify(etapes_ini) + '\netapes=' + JSON.stringify(etapes) + '\narret=' + JSON.stringify(arret));
+			//window.console.log('trajet_canvas charge_trajet fin dla=' + dla);
 		}
 		function sauve_trajet() {
+			//window.console.trace();
 			let param = "zoom/"+zoom+"/typ_gow/"+typ_gow+"/dla/"+dla+"/t_enreg/";
 			for(var i = 0; i<etapes_ini.length; i++) {
 				param += etapes_ini[i][0]+(etapes_ini[i][3]? "e":"")+","+etapes_ini[i][1]+","+etapes_ini[i][2]+",";
@@ -476,7 +479,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			for(var i in arret) {
 				param += arret[i][0]+","+arret[i][1]+",";
 			}
-			//window.console.log('sauve_trajet ' + num_gow + ' ' + param);
+			//window.console.log('sauve_trajet TRAJET_' + num_gow + ' ' + param);
 			MY_setValue("TRAJET_"+num_gow,param);
 		}
 		function charge_opt_position() {
@@ -2701,13 +2704,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			if (cadre_dla) {
 				let t = document.getElementById('t_fo_profil');
-				for (ea of t.getElementsByTagName('a')) {
-					if (ea.href && ea.href.indexOf('EnterMonsterView') != -1) {
+				for (let ea of t.getElementsByTagName('a')) {
+					if (ea.href && ea.href.indexOf('PVM') != -1) {
 						num_gow = parseInt(ea.innerText, 10);
 						break;
 					}
 				}
-				if (num_gow != undefined && !isNaN(num_gow)) {
+				if (num_gow != undefined && !isNaN(num_gow) && num_gow != 0) {
 					//window.console.log('get id gowap, m=' + JSON.stringify(m) + ', num_gow=' + num_gow);
 					charge_trajet();
 					// Roule 07/09/2019 adaptation nouvelle présentation
@@ -2720,7 +2723,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					//window.console.log('texte durée=' + cadre_dla.innerText + ', dla=' + dla);
 					nb_ajout = etapes.length;
 					sauve_trajet();
+				} else {
+					window.console.log('trajet_canvas profil_gow ERREUR num_gow=' + num_gow);
 				}
+			} else {
+				window.console.log('trajet_canvas profil_gow ERREUR pas de cadre DLA');
 			}
 		}
 		else if(page == "lieu_tp") {
