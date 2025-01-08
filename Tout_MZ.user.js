@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.1
+// @version     1.6.2
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.1';
+var MZ_latest = '1.6.2';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13752,17 +13752,18 @@ class MZ_cVueJSON {
 		if (this.indxTdY === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return;}
 		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
 
-		// faire un tableau de <tr> indexé par l'ID
+		// faire un tableau de <tr> indexé ~~par l'ID~~ (id monstre retiré à cause des fumeux)
 		let rows = [];
-		for (let eTr of this.eltTable.tBodies[0].rows) {
+		for (let idx = 0; idx < this.eltTable.tBodies[0].rows.length; idx++) {
+			let eTr = this.eltTable.tBodies[0].rows[idx];
 			if (eTr.cells.length < 5) continue;	// on peut avoir "no result"
-			let id = parseInt(eTr.cells[this.indxTdRef].innerText);
-			if (!isNaN(id) && id > 0) rows[id] = eTr;
+			rows[idx] = eTr;
 		}
 
 		// balayer le json_xxxx et créer nos objets par ligne
 		this.objets = [];
-		for (let oMH_JSON of this.MH_json) {
+		for (let idx = 0; idx < this.MH_json.length; idx++) {
+			let oMH_JSON = this.MH_json[idx];
 			let oLigne;
 			switch (this.nomBase) {
 				case 'monstres':
@@ -13785,9 +13786,9 @@ class MZ_cVueJSON {
 					break;
 			}
 			// trouver le tr correspondant
-			let idMH = parseInt(oMH_JSON.value.id);
-			let eTr = rows[idMH];
+			let eTr = rows[idx];
 			if (eTr) {
+				let idMH = parseInt(oMH_JSON.value.id);
 				oLigne.init(this, idMH, eTr);
 				this.objets.push(oLigne);
 			}
@@ -13831,7 +13832,7 @@ class MZ_cVueJSON {
 		if (this.indxTdY > indxAfter) this.indxTdY++;
 		if (this.indxTdN > indxAfter) this.indxTdN++;
 
-		let td = insertThText(this.eltTrHead.cells[indxAfter], title, false);
+		let td = insertTdText(this.eltTrHead.cells[indxAfter], title, false);
 		td.style.width = width;
 
 		for (let oMonstre of this.objets) {
