@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.2
+// @version     1.6.3
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.2';
+var MZ_latest = '1.6.3';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13638,6 +13638,7 @@ class MZ_cVueJSON {
 	eltTrAction;
 	eltTrRef;
 	eltTrNom;
+	eltTrGuilde;
 	eltTrX;
 	eltTrY;
 	eltTrN;
@@ -13646,6 +13647,7 @@ class MZ_cVueJSON {
 	indxTdAction;
 	indxTdRef;
 	indxTdNom;
+	indxTdGuilde;
 	indxTdX;
 	indxTdY;
 	indxTdN;
@@ -13653,12 +13655,13 @@ class MZ_cVueJSON {
 	constructor(nomBase) {
 		this.nomBase = nomBase;
 		this.eltTable = document.getElementById('VUE_' + this.nomBase);
+		if (this.eltTable == null) { return; } // skip si pas présent
 		// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
 		let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
 		this.mutationObserver = new MutationObserver(function () {
 			//logMZ('MZ_cVueJSON_log callback1 ' + oThis.nomBase);
 			oThis.load();
-			});
+		});
 		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
 		this.load();
 	}
@@ -13733,6 +13736,9 @@ class MZ_cVueJSON {
 				case 'nom':
 					this.indxTdNom = iCol;
 					break;
+				case 'guilde':
+					this.indxTdGuilde = iCol;
+					break;
 				case 'x':
 					this.indxTdX = iCol;
 					break;
@@ -13748,6 +13754,7 @@ class MZ_cVueJSON {
 		if (isDesktopView() && this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
 		if (this.indxTdRef === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return;}
 		if (this.indxTdNom === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return;}
+		if (this.nomBase == "trolls" && this.indxTdGuilde === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Guilde'); return;}
 		if (this.indxTdX === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return;}
 		if (this.indxTdY === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return;}
 		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
@@ -13824,20 +13831,20 @@ class MZ_cVueJSON {
 		// c'est l'appelant qui doit savoir ce qu'il fait et ne pas appeler plusieurs fois cette fonction
 		// ça décale les indxTdxxxx
 
-		if (this.indxTdDist > indxAfter) this.indxTdDist++;
-		if (isDesktopView() && this.indxTdAction > indxAfter) this.indxTdAction++;
-		if (this.indxTdRef > indxAfter) this.indxTdRef++;
-		if (this.indxTdNom > indxAfter) this.indxTdNom++;
-		if (this.indxTdX > indxAfter) this.indxTdX++;
-		if (this.indxTdY > indxAfter) this.indxTdY++;
-		if (this.indxTdN > indxAfter) this.indxTdN++;
+		if (this.indxTdDist >= indxAfter) this.indxTdDist++;
+		if (isDesktopView() && this.indxTdAction >= indxAfter) this.indxTdAction++;
+		if (this.indxTdRef >= indxAfter) this.indxTdRef++;
+		if (this.indxTdNom >= indxAfter) this.indxTdNom++;
+		if (this.indxTdGuilde && this.indxTdGuilde >= indxAfter) this.indxTdGuilde++;
+		if (this.indxTdX >= indxAfter) this.indxTdX++;
+		if (this.indxTdY >= indxAfter) this.indxTdY++;
+		if (this.indxTdN >= indxAfter) this.indxTdN++;
 
 		let td = insertTdText(this.eltTrHead.cells[indxAfter], title, false);
-		td.style.width = width;
+		if (width != "") { td.style.width = width; }
 
-		for (let oMonstre of this.objets) {
-			// logMZ('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
-			oMonstre.insertColumn(callbackParam);
+		for (let oLigne of this.objets) {
+			oLigne.insertColumn(callbackParam);
 		}
 	}
 
@@ -13851,6 +13858,7 @@ class MZ_cLigneVue {
 	eltTdAction;
 	eltTdRef;
 	eltTdNom;
+	eltTdGuilde;
 	eltTdX;
 	eltTdY;
 	eltTdN;
@@ -13864,6 +13872,7 @@ class MZ_cLigneVue {
 		if (isDesktopView()) { this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction]; }
 		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
 		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
+		if (MZ_oVueJSON.indxTdGuilde) { this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde]; }
 		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
 		this.eltTdY = eTr.cells[MZ_oVueJSON.indxTdY];
 		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
@@ -13883,6 +13892,19 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	nivMZDone;
 	cssMZDone;
 
+	insertColumn(param) {
+		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
+		switch (param) {
+			case 1:
+				this.insertColumnNiveau();
+		}
+	}
+
+	insertColumnNiveau() {
+		this.eltTdNiveau = insertTdText(this.eltTdRef, '-');
+		this.eltTdNiveau.style.display = 'table-cell';
+	}
+
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 
@@ -13897,7 +13919,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				continue;
 			}
 			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
-			tReq.push({index: indx, id: oMonstre.id, nom: oMonstre.nom });
+			tReq.push({ index: indx, id: oMonstre.id, nom: oMonstre.nom });
 			nbReq++;
 			if (nbReq >= 500) {
 				break;
@@ -13919,26 +13941,25 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	}
 
 	static receptionMZNiveauxAJAX(responseDetails) {
+		// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+		if (responseDetails.status == 0) { return; }
 		let texte;
 		try {
-			// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-			if (responseDetails.status == 0) {
-				return;
-			}
 			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
 			texte = responseDetails.responseText;
 			let infos = JSON.parse(texte);
 			//displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
-			if (infos.length == 0) {
-				return;
-			}
+			if (infos.length == 0) { return; }
 
 			// ajouter les styles CSS pour les popup
-			if (!MZ_cLigneMonstre.cssMZDone) addStyleSheet(`
-			.MZtooltip { position: relative;color:red;text-align:center; }
-			.MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
-			.MZtooltip:hover .MZtooltiptext {visibility: visible;}
-			`);
+			if (!MZ_cLigneMonstre.cssMZDone) {
+				addStyleSheet(`
+				.MZtooltip { position: relative;color:red;text-align:center; }
+				.MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
+				.MZtooltip:hover .MZtooltiptext {visibility: visible;}
+				`);
+				MZ_cLigneMonstre.cssMZDone = true;
+			}
 
 			if (!MZ_cLigneMonstre.colNiveauDone) {
 				// ajouter la colonne dans le HTML après Rèf
@@ -13998,6 +14019,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
 		}
 		return;
+
 		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
 		MZ_EtatCdMs.isCDMsRetrieved = true;
 		// afficher/supprimer le bouton pour demander la suite
@@ -14035,26 +14057,80 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
 		}
 	}
+}
+
+class MZ_cLigneTroll extends MZ_cLigneVue {
+	static MZ_oVueJSON;
+	static colBtPVDone;
+	static colBtPADone;
+	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
+	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
 
 	insertColumn(param) {
 		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
 		switch (param) {
 			case 1:
-				this.insertColumnNiveau();
+				this.insertColumnBtPV();
+				break;
+			case 2:
+				this.insertColumnBtPA();
+				break;
 		}
 	}
 
-	insertColumnNiveau() {
-		this.eltTdNiveau = insertTdText(this.eltTdRef, '-');
-		this.eltTdNiveau.style.display = 'table-cell';
+	insertColumnBtPV() {
+		this.eltTdBtPV = insertTdText(this.eltTdGuilde, 'no PV');
+		this.eltTdBtPV.style.display = 'table-cell';
 	}
-}
 
-class MZ_cLigneTroll extends MZ_cLigneVue {
-	static MZ_oVueJSON;
+	insertColumnBtPA() {
+		this.eltTdBtPA = insertTdText(this.eltTdGuilde, 'no PA');
+		this.eltTdBtPA.style.display = 'table-cell';
+	}
+
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 
+		for (let iBricol = 1; ; iBricol++) {
+			let extClef = iBricol == 1 ? '' : iBricol;
+			let sInfo = MY_getValue(`${numTroll}.INFOSIT${extClef}`);
+			if (!sInfo || sInfo == '') { break; }
+
+			let data = sInfo.split('$');
+			if (data[0] != 'bricol') { continue; }
+
+			FF_XMLHttpRequest({
+				method: 'GET',
+				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
+				trace: `bricolTroll ${data[1]}`,
+				onload: MZ_cLigneTroll.receptionBricolTrollAJAX(data),
+			});
+			debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll ${data[1]}`);
+		}
+	}
+
+	static receptionBricolTrollAJAX(data) {
+		return; // todo: gath: a retirer pour tester puis quand c'est pret
+		return function(responseDetails) {
+			if (responseDetails.status == 0) { return; }
+			let btData = JSON.parse(responseDetails.responseText);
+			if (btData.error) {
+				avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
+				return;
+			}
+
+			if (!MZ_cLigneTroll.colBtPVDone) {
+				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PV', '', 1);
+				MZ_cLigneTroll.colBtPVDone = true;
+			}
+
+			if (!MZ_cLigneTroll.colBtPADone) {
+				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PA', '50px', 2);
+				MZ_cLigneTroll.colBtPADone = true;
+			}
+
+			putInfosTrolls(btData.data.trolls, data[1]); // todo: gath: à adapter
+		}
 	}
 }
 
