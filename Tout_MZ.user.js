@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.3
+// @version     1.6.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.3';
+var MZ_latest = '1.6.4';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13237,24 +13237,52 @@ function putScriptExterneOneIT(sInfo) {
 		}
 	}
 }
- */
+*/
 
-// Roule 07/11/2016 ATTENTION, il faudrait modifier ici (remplacer [0] par .pa, etc.)
-function corrigeBricolTrolls(infosTrolls) {
-	for (let i in infosTrolls) {
-		let pv = infosTrolls[i][0];
-		let pvmax = infosTrolls[i][1];
-		let pvmem = MY_getValue(`${i}.caracs.pv.max`);
-		if (pvmem && pvmem > pvmax) {
-			infosTrolls[i][1] = pvmem;
-			pvmax = pvmem;
-		}
-		if (pv > pvmax) {
-			let newpvmax = 5 * Math.ceil(pv / 5);
-			MY_setValue(`${i}.caracs.pv.max`, newpvmax);
-			infosTrolls[i][1] = newpvmax;
-		}
+function createPVTroll(infos, itName) {
+	let pv_cadre = document.createElement('div');
+	pv_cadre.className = "barre";
+	pv_cadre.title = `${infos.pv}/${infos.pv_max} PV le ${SQLDateToFrenchTime(infos.updated_at)}`;
+
+	let pv_jauge = document.createElement('div');
+	let pourcentVie = Math.floor(100 * infos.pv / infos.pv_max);
+	let dateLimite = new Date();
+	dateLimite.setDate(dateLimite.getDate() - 7);
+	if (infos.oUpdatedAt < dateLimite) {
+		pv_jauge.className = "barre-vie";
+		pv_jauge.style.backgroundColor = '#C8C8C8';	// infos de plus de 7 jours => grisé
+		pv_cadre.title = `${pv_cadre.title}\nLes informations sont trop vieilles pour être fiables`;
+	} else if (pourcentVie > 66) {
+		pv_jauge.className = "barre-vie full-vie";
+	} else if (pourcentVie > 33) {
+		pv_jauge.className = "barre-vie vie";
+	} else {
+		pv_jauge.className = "barre-vie vie-critique";
 	}
+	pv_jauge.style.width = `${pourcentVie}%`;
+	pv_cadre.appendChild(pv_jauge);
+	// return pv_cadre;
+
+	/* lien vers l'IT */
+	let lien = document.createElement('a');
+	// let nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
+	lien.href = `${URL_bricol + itName}/index.php`;
+	lien.target = '_blank';
+	lien.appendChild(pv_cadre);
+
+	return lien; // retourne le contenu de la case PV Bricol'Troll
+}
+
+function createPATroll(infos) {
+	let span = document.createElement('span');
+	span.title = `DLA : ${SQLDateToFrenchTime(infos.dla)}`;
+	appendText(span, `${infos.pa} PA`);
+	// logMZ('dla=' + infos.dla + ', SQLDateToObject(infos.dla)=' + SQLDateToObject(infos.dla) + ', now=' + Date.now());
+	if (infos.pa > 0 || SQLDateToObject(infos.dla) < Date.now()) {
+		// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
+		span.style.backgroundColor = '#B8EEB8';
+	}
+	return span;
 }
 
 // insère 2 TD avant nextTD avec les infos venant de l'IT
@@ -13480,9 +13508,6 @@ function putInfosTrolls(infosTrolls, itName) {
 				}
 			}
 		}
-
-		// Roule 07/11/2016 je ne suis pas trop fana de corriger les données de Bricol'Troll
-		// corrigeBricolTrolls(infosTrolls);
 
 		// supression des infos trop vieilles (un mois)
 		// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
@@ -13842,6 +13867,7 @@ class MZ_cVueJSON {
 
 		let td = insertTdText(this.eltTrHead.cells[indxAfter], title, false);
 		if (width != "") { td.style.width = width; }
+		td.style.display = "table-cell";
 
 		for (let oLigne of this.objets) {
 			oLigne.insertColumn(callbackParam);
@@ -14065,6 +14091,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static colBtPADone;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
+	cssBtDone;
 
 	insertColumn(param) {
 		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
@@ -14079,12 +14106,12 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	insertColumnBtPV() {
-		this.eltTdBtPV = insertTdText(this.eltTdGuilde, 'no PV');
+		this.eltTdBtPV = insertTdText(this.eltTdGuilde, '');
 		this.eltTdBtPV.style.display = 'table-cell';
 	}
 
 	insertColumnBtPA() {
-		this.eltTdBtPA = insertTdText(this.eltTdGuilde, 'no PA');
+		this.eltTdBtPA = insertTdText(this.eltTdGuilde, '');
 		this.eltTdBtPA.style.display = 'table-cell';
 	}
 
@@ -14110,7 +14137,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static receptionBricolTrollAJAX(data) {
-		return; // todo: gath: a retirer pour tester puis quand c'est pret
+		// todo: gath: reste a faire la visu des trolls hors de portée
 		return function(responseDetails) {
 			if (responseDetails.status == 0) { return; }
 			let btData = JSON.parse(responseDetails.responseText);
@@ -14119,17 +14146,28 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				return;
 			}
 
+			// ajouter les styles CSS pour les barres de vie
+			if (!MZ_cLigneTroll.cssBtDone) {
+				document.head.innerHTML += '<link rel="stylesheet" href="/mountyhall/libs/lifebar.css">';
+				MZ_cLigneTroll.cssBtDone = true;
+			}
+
 			if (!MZ_cLigneTroll.colBtPVDone) {
 				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PV', '', 1);
 				MZ_cLigneTroll.colBtPVDone = true;
 			}
 
 			if (!MZ_cLigneTroll.colBtPADone) {
-				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PA', '50px', 2);
+				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PA', '40px', 2);
 				MZ_cLigneTroll.colBtPADone = true;
 			}
 
-			putInfosTrolls(btData.data.trolls, data[1]); // todo: gath: à adapter
+			for (let oTroll of MZ_cLigneTroll.MZ_oVueJSON.objets) {
+				let infos = btData.data.trolls[oTroll.id];
+				if (!infos) { continue; }
+				oTroll.eltTdBtPV.appendChild(createPVTroll(infos, data[1]));
+				oTroll.eltTdBtPA.appendChild(createPATroll(infos));
+			}
 		}
 	}
 }
