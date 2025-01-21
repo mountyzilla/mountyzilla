@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.4
+// @version     1.6.5
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.4';
+var MZ_latest = '1.6.5';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -12715,24 +12715,17 @@ function filtreTrolls() {
 }
 
 /* [functions] Bulle PX Trolls */
-
 function initPXTroll() {
 	let bulle = document.createElement('div');
 	bulle.id = 'bulleTrollPX';
-	let ui_classes = isDesktopView() ? 'mh_textbox mh_tdtitre' : 'ui-body-a ui-corner-all';
-	bulle.className = `${ui_classes}`;
-	bulle.style =
-		'position: absolute;' +
-		'visibility: hidden;' +
-		'display: inline;' +
-		'z-index: 2;';
+	bulle.style.position = "absolute";
+	bulle.style.backgroundColor = "rgb(229, 222, 203)";
+	bulle.style.outline = "thin solid";
+	bulle.style.visibility = "hidden";
+	bulle.style.display = "inline";
+	bulle.style.zIndex = "2";
+	if (!isDesktopView()) { bulle.style.fontSize = "smaller"; }
 	document.body.appendChild(bulle);
-
-	for (let i = nbTrolls; i > 0; i--) {
-		let td_niv = getTrollNivNode(i);
-		td_niv.onmouseover = showPXTroll;
-		td_niv.onmouseout = hidePXTroll;
-	}
 }
 
 function showPXTroll(evt) {
@@ -13676,6 +13669,7 @@ class MZ_cVueJSON {
 	indxTdX;
 	indxTdY;
 	indxTdN;
+	indxTdNiv;
 
 	constructor(nomBase) {
 		this.nomBase = nomBase;
@@ -13773,16 +13767,20 @@ class MZ_cVueJSON {
 				case 'n':
 					this.indxTdN = iCol;
 					break;
+				case 'niv.':
+					this.indxTdNiv = iCol;
+					break;
 			}
 		}
 		if (this.indxTdDist === undefined)   {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Dist'); return;}
 		if (isDesktopView() && this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
 		if (this.indxTdRef === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return;}
 		if (this.indxTdNom === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return;}
-		if (this.nomBase == "trolls" && this.indxTdGuilde === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Guilde'); return;}
 		if (this.indxTdX === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return;}
 		if (this.indxTdY === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return;}
 		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
+		if (this.nomBase == "trolls" && this.indxTdGuilde === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Guilde'); return;}
+		if (this.nomBase == "trolls" && this.indxTdNiv === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Niveau'); return;}
 
 		// faire un tableau de <tr> indexé ~~par l'ID~~ (id monstre retiré à cause des fumeux)
 		let rows = [];
@@ -13860,10 +13858,11 @@ class MZ_cVueJSON {
 		if (isDesktopView() && this.indxTdAction >= indxAfter) this.indxTdAction++;
 		if (this.indxTdRef >= indxAfter) this.indxTdRef++;
 		if (this.indxTdNom >= indxAfter) this.indxTdNom++;
-		if (this.indxTdGuilde && this.indxTdGuilde >= indxAfter) this.indxTdGuilde++;
 		if (this.indxTdX >= indxAfter) this.indxTdX++;
 		if (this.indxTdY >= indxAfter) this.indxTdY++;
 		if (this.indxTdN >= indxAfter) this.indxTdN++;
+		if (this.indxTdGuilde && this.indxTdGuilde >= indxAfter) this.indxTdGuilde++;
+		if (this.indxTdNiv && this.indxTdNiv >= indxAfter) this.indxTdNiv++;
 
 		let td = insertTdText(this.eltTrHead.cells[indxAfter], title, false);
 		if (width != "") { td.style.width = width; }
@@ -13888,6 +13887,7 @@ class MZ_cLigneVue {
 	eltTdX;
 	eltTdY;
 	eltTdN;
+	eltTdNiv;
 	// les infos (ajouter des propriétés au fur et à mesure des besoins)
 	nom;
 
@@ -13902,6 +13902,7 @@ class MZ_cLigneVue {
 		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
 		this.eltTdY = eTr.cells[MZ_oVueJSON.indxTdY];
 		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
+		if (MZ_oVueJSON.indxTdNiv) { this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv]; }
 		this.nom = this.eltTdNom.innerText.trim();
 	}
 }
@@ -13927,7 +13928,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	}
 
 	insertColumnNiveau() {
-		this.eltTdNiveau = insertTdText(this.eltTdRef, '-');
+		this.eltTdNiveau = insertTdText(this.eltTdRef, '');
 		this.eltTdNiveau.style.display = 'table-cell';
 	}
 
@@ -14133,6 +14134,16 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				onload: MZ_cLigneTroll.receptionBricolTrollAJAX(data),
 			});
 			debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll ${data[1]}`);
+		}
+
+		initPXTroll();
+		MZ_cLigneTroll.processPX();
+	}
+
+	static processPX() {
+		for (let oTroll of MZ_cLigneTroll.MZ_oVueJSON.objets) {
+			oTroll.eltTdNiv.onmouseover = showPXTroll;
+			oTroll.eltTdNiv.onmouseout = hidePXTroll;
 		}
 	}
 
