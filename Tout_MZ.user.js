@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.5
+// @version     1.6.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.5';
+var MZ_latest = '1.6.6';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -5804,7 +5804,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 
 				this.oMZ_categorieSuivant = function (oSuivant, eTable, eDiv) {	// object
 					this.oMZ_tresor = function (row) {	// objet
-						this.id = parseInt(row.id.substring(3, 999));
+						this.id = parseInt(row.getAttribute('data-idtresor'));
 					};
 
 					this.eTableCategorie = eTable;
@@ -5816,6 +5816,9 @@ if (isPage("MH_Play/Play_e_follo")) {
 							let oTresor = new this.oMZ_tresor(row);
 							if (oTresor.id) this.tresors.push(oTresor);
 						}
+						//logMZ(`oMZ_categorieSuivant_log nb_row=${this.eTableTresors.rows.length}, nbtresor=${this.tresors.length} pour ${oSuivant.oJSON.id}`);
+					} else {
+						//logMZ(`oMZ_categorieSuivant_log pas de table trésor ${oSuivant.oJSON.id}`);
 					}
 				};
 
