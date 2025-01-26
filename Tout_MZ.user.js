@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.6
+// @version     1.6.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.6';
+var MZ_latest = '1.6.7';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -896,7 +896,10 @@ function MZ_formatDateMS(d = new Date(), avec_ms = true) {
 
 /** x~x Interface utilisateur ------------------------------------------ */
 function isDesktopView() {
-	return document.getElementsByTagName('nav').length == 0;
+	let nav = document.getElementsByTagName('nav');
+	if (nav.length == 0) { return true; }
+	// possible nav en desktop
+	return nav[0].className == "compact mh_h";
 }
 
 function replaceLinkMHtoMZ() {
@@ -1445,6 +1448,29 @@ function addStyleSheet(cssText) {
 		styleElt.appendChild(document.createTextNode(cssText));
 	}
 	document.getElementsByTagName('head')[0].appendChild(styleElt);
+}
+
+function createCollapsibleBloc(id, title) {
+	let outerDiv = document.createElement('div'),
+		input = document.createElement('input'),
+		label = document.createElement('label'),
+		labelH3 = document.createElement('h3'),
+		innerDiv = document.createElement('div');
+
+		outerDiv.id = id;
+		outerDiv.className = "mh_tdpage collapsible-wrap";
+		input.id = `mz_inner_${id}`;
+		input.className = "toggle";
+		input.type = "checkbox";
+		input.checked = true;
+		label.htmlFor = `mz_inner_${id}`;
+		label.className = "lbl-toggle mh_tdtitre";
+		labelH3.textContent = title;
+		label.appendChild(labelH3);
+		innerDiv.className = "collapsible-content";
+
+		outerDiv.append(input, label, innerDiv);
+		return [outerDiv, innerDiv];
 }
 
 /** x~x Fonctions de mise en forme du texte ---------------------------- */
@@ -9201,24 +9227,29 @@ function insertTitle(next, txt) {
 	return div;
 }
 
-function insertMainTable(next) {
+function insertMainTable(next, id, title) {
+	let outerDiv, innerDiv;
+	[outerDiv, innerDiv] = createCollapsibleBloc(id, title);
+
 	let table = document.createElement('table');
 	table.border = 0;
 	table.align = 'center';
 	table.cellPadding = 2;
 	table.cellSpacing = 1;
-	table.className = isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-bottom';
+	table.className = "collapsible-content-inner";
+	table.className += isDesktopView() ? ' mh_tdborder' : '';
 	let tbody = document.createElement('tbody');
 	table.appendChild(tbody);
+	innerDiv.appendChild(table);
 
 	if (isDesktopView()) {
 		table.style.maxWidth = '98%'
-		insertBefore(next, table);
+		insertBefore(next, outerDiv);
 	} else {
-		let div = document.createElement('div');
-		div.style.overflowX = "scroll";
-		div.appendChild(table);
-		insertBefore(next, div);
+		innerDiv.style.overflowX = "scroll";
+		let main = document.createElement("main");
+		main.appendChild(outerDiv);
+		insertBefore(next, main);
 	}
 	return tbody;
 }
@@ -9233,7 +9264,7 @@ function appendSubTable(node) {
 }
 
 function insertOptionTable(insertPt) {
-	let mainBody = insertMainTable(insertPt);
+	let mainBody = insertMainTable(insertPt, "opts", "Mountyzilla : Options");
 
 	/* Liens dans le Menu */
 	let tr = appendTr(mainBody, 'mh_tdtitre');
@@ -9406,7 +9437,7 @@ function insertOptionTable(insertPt) {
 }
 
 function insertCreditsTable(insertPt) {
-	let tbody = insertMainTable(insertPt);
+	let tbody = insertMainTable(insertPt, "creds", "Mountyzilla : Crédits");
 
 	let td = appendTdText(appendTr(tbody, 'mh_tdtitre'),
 		'Depuis son origine, nombreux sont ceux qui ont contribué à faire ' +
@@ -9487,8 +9518,10 @@ function do_option() {
 	start_script(712, 'do_option_log');
 	/*debugger;/*  */
 	let insertPoint = getFooter();
-	insertBefore(insertPoint, document.createElement('p'));
-	let ti = insertTitle(insertPoint, 'Mountyzilla : Options');	// 02/02/2017 SHIFT-Click pour copier la conf
+	insertOptionTable(insertPoint);
+	let ti = document.evaluate(
+		"//h3[contains(., 'Mountyzilla : Options')]", document, null, 9, null
+	).singleNodeValue;	// SHIFT-Click pour copier la conf
 	ti.onclick = function (e) {
 		let evt = e || window.event;
 		if (evt.shiftKey) {
@@ -9543,10 +9576,11 @@ function do_option() {
 		}
 	};
 	ti.title = `Version ${GM_info.script.version}`;
-	insertOptionTable(insertPoint);
 
-	insertBefore(insertPoint, document.createElement('p'));
-	ti = insertTitle(insertPoint, 'Mountyzilla : Crédits');	// 23/12/2016 SHIFT-Click pour passer en mode dev
+	insertCreditsTable(insertPoint);
+	ti = document.evaluate(
+		"//h3[contains(., 'Mountyzilla : Crédits')]", document, null, 9, null
+	).singleNodeValue;	// SHIFT-Click pour passer en mode dev
 	ti.onclick = function (e) {
 		let evt = e || window.event;
 		if (!evt.shiftKey) {
@@ -9561,8 +9595,6 @@ function do_option() {
 		}
 		document.location.href = document.location.href;
 	};
-	insertCreditsTable(insertPoint);
-	insertBefore(insertPoint, document.createElement('p'));
 
 	displayScriptTime(undefined, 'do_option_log');
 }
