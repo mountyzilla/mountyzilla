@@ -5830,7 +5830,7 @@ if (isPage("MH_Play/Play_e_follo")) {
 
 				this.oMZ_categorieSuivant = function (oSuivant, eTable, eDiv) {	// object
 					this.oMZ_tresor = function (row) {	// objet
-						this.id = parseInt(row.getAttribute('data-idtresor'));
+						this.id = parseInt(row.getAttribute('data-id'));
 					};
 
 					this.eTableCategorie = eTable;
