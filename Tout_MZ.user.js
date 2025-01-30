@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.8
+// @version     1.6.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.8';
+var MZ_latest = '1.6.9';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -9244,13 +9244,10 @@ function insertMainTable(next, id, title) {
 
 	if (isDesktopView()) {
 		table.style.maxWidth = '98%'
-		insertBefore(next, outerDiv);
 	} else {
 		innerDiv.style.overflowX = "scroll";
-		let main = document.createElement("main");
-		main.appendChild(outerDiv);
-		insertBefore(next, main);
 	}
+	insertBefore(next, outerDiv);
 	return tbody;
 }
 
@@ -9517,7 +9514,8 @@ function deleteEnchantement() {
 function do_option() {
 	start_script(712, 'do_option_log');
 	/*debugger;/*  */
-	let insertPoint = getFooter();
+	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	insertBefore(insertPoint, document.createElement('br'));
 	insertOptionTable(insertPoint);
 	let ti = document.evaluate(
 		"//h3[contains(., 'Mountyzilla : Options')]", document, null, 9, null
@@ -9577,6 +9575,7 @@ function do_option() {
 	};
 	ti.title = `Version ${GM_info.script.version}`;
 
+	insertBefore(insertPoint, document.createElement('br'));
 	insertCreditsTable(insertPoint);
 	ti = document.evaluate(
 		"//h3[contains(., 'Mountyzilla : Crédits')]", document, null, 9, null
@@ -9595,6 +9594,12 @@ function do_option() {
 		}
 		document.location.href = document.location.href;
 	};
+
+	// replace le bloc d'insertion en haut si smartphone
+	if (!isDesktopView()) {
+		let opts = document.getElementById('opts');
+		insertBefore(opts.previousElementSibling, insertPoint);
+	}
 
 	displayScriptTime(undefined, 'do_option_log');
 }
