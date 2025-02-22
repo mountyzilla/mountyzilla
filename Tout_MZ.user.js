@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.9
+// @version     1.6.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.9';
+var MZ_latest = '1.6.10';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -899,7 +899,7 @@ function isDesktopView() {
 	let nav = document.getElementsByTagName('nav');
 	if (nav.length == 0) { return true; }
 	// possible nav en desktop
-	return nav[0].className == "compact mh_h";
+	return nav[0].className == "compact mh_h" || nav[0].innerText.includes('|');
 }
 
 function replaceLinkMHtoMZ() {
@@ -10869,7 +10869,7 @@ function MZ_deltaV(pos1, pos2) {
 function savePosition() {
 	// Stocke la position (à jour) de la vue pour les autres scripts
 	// DEBUG: Lesquels et pourquoi?
-	let pos = getPosition();
+	let pos = getPosition(true);
 	let x = pos[0], y = pos[1], n = pos[2];
 	if (isNaN(x) || isNaN(y) || isNaN(n)) {
 		logMZ(`erreur savePosition_log, pos=${JSON.stringify(pos)}`);
@@ -10890,8 +10890,36 @@ function savePosition() {
  */
 
 /* [functions] Récup données Utilisateur */
-function getPosition() {
-	// Pour rétrocompatibilité
+function getPosition(raise=false) {
+	let callback = raise ? avertissement : debugMZ;
+	if (currentPosition.reduce((acc, curVal) => acc + curVal, 0) != 0) {
+		// Pour rétrocompatibilité
+		return currentPosition;
+	};
+
+	let ePosition = document.getElementById('position');
+	if (!ePosition) {
+		callback('Vue Position joueur : element non trouvée');
+		return [0, 0, 0];
+	}
+	let oPosition = JSON.parse(ePosition.getAttribute('data-position'));
+	if (!oPosition) {
+		callback('Vue Position joueur : data non trouvée');
+		return [0, 0, 0];
+	}
+	try {
+		currentPosition[0] = oPosition.x;
+		currentPosition[1] = oPosition.y;
+		currentPosition[2] = oPosition.n;
+		porteeVue = [];
+		porteeVue[0] = oPosition.vueH;
+		porteeVue[1] = oPosition.vueV;
+		porteeVue[2] = oPosition.porteeH;
+		porteeVue[3] = oPosition.porteeV;
+	} catch (exc) {
+		// Si on ne trouve pas le "X ="
+		logMZ('Vue Position joueur non trouvée', exc);
+	}
 	return currentPosition;
 }
 
@@ -11637,29 +11665,7 @@ function initialiseInfos() {
 		return;
 	}
 
-	let ePosition = document.getElementById('position');
-	if (!ePosition) {
-		avertissement('Vue Position joueur : element non trouvée');
-		return;
-	}
-	let oPosition = JSON.parse(ePosition.getAttribute('data-position'));
-	if (!oPosition) {
-		avertissement('Vue Position joueur : data non trouvée');
-		return;
-	}
-	try {
-		currentPosition[0] = oPosition.x;
-		currentPosition[1] = oPosition.y;
-		currentPosition[2] = oPosition.n;
-		porteeVue = [];
-		porteeVue[0] = oPosition.vueH;
-		porteeVue[1] = oPosition.vueV;
-		porteeVue[2] = oPosition.porteeH;
-		porteeVue[3] = oPosition.porteeV;
-	} catch (exc) {
-		// Si on ne trouve pas le "X ="
-		logMZ('Vue Position joueur non trouvée', exc);
-	}
+	getPosition(true)
 
 	infoTab.id = 'infoTab'; // Pour scripts externes
 	tbody.id = 'corpsInfoTab';
@@ -13184,76 +13190,6 @@ function computeLdP() {
 
 /** x~x Systèmes Tactiques --------------------------------------------- */
 
-function putScriptExterne() {
-	for (let iBricol = 1; ; iBricol++) {
-		let extClef = iBricol == 1 ? '' : iBricol;
-		let sInfo = MY_getValue(`${numTroll}.INFOSIT${extClef}`);
-		if (!sInfo) {
-			break;
-		}
-		putScriptExterneOneIT(sInfo);
-	}
-}
-
-function putScriptExterneOneIT(sInfo) {
-	if (!sInfo || sInfo == '' || !tr_trolls) {
-		return;
-	}
-
-	let nomit = sInfo.slice(0, sInfo.indexOf('$'));
-	if (nomit == 'bricol') {
-		let data = sInfo.split('$');
-		try {
-			// Roule' 07/11/2016. Travail avec Ratibus, remplacement du script par l'envoi de JSON
-			// appendNewScript(URL_bricol+data[1]
-			// +'/mz.php?login='+data[2]
-			// +'&password='+data[3]
-			// );
-			FF_XMLHttpRequest({
-				method: 'GET',
-				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
-				trace: 'bricolTroll',
-				onload: function (responseDetails) {
-					try {
-						if (responseDetails.status == 0) {
-							logMZ('status=0 à l\'appel bricol\'troll');
-							if (isHTTPS) {
-								avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut accepter le certificat2 de Raistlin (voir page d\'accueil)');
-							} else {
-								avertissement('<br />Erreur générale avec l\'interface Bricol\'Troll<');
-							}
-							return;
-						}
-						let ratibusData;
-						try {
-							ratibusData = JSON.parse(responseDetails.responseText);
-						} catch (e) { }
-						if (ratibusData === undefined) {
-							avertissement(`<br />Erreur à l'appel de l'interface Bricol'Troll. Code HTTP=${responseDetails.status}. Pas de JSON`);
-							return;
-						}
-						if (ratibusData.error) {
-							avertissement(`<br />Bricol'Troll (${data[1]}) a répondu :<br />${ratibusData.error}`);
-						} else {
-							putInfosTrolls(ratibusData.data.trolls, data[1]);
-						}
-					} catch (exc) {
-						logMZ('retour bricol\'troll', exc);
-						avertissement(`<br />Erreur dans la réponse de Bricol'Troll<br />${exc}<br />${responseDetails.responseText}`);
-					}
-				}
-			});
-		} catch (exc) {
-			if (isHTTPS) {
-				avertissement('<br />Pour utiliser l\'interface Bricol\'Troll en HTTPS, il faut autoriser le contenu mixte (voir page d\'accueil)');
-			} else {
-				logMZ('appel bricol\'troll', exc);
-				avertissement(`<br />Erreur générale avec l'interface Bricol'Troll<br />${exc}`);
-			}
-		}
-	}
-}
-
 /*
  * Roule 07/11/2016, on utilise mz_json qui envoie
  {
@@ -13318,67 +13254,13 @@ function createPATroll(infos) {
 	return span;
 }
 
-// insère 2 TD avant nextTD avec les infos venant de l'IT
-function addTdInfosTroll(infos, TR, itName) {
-	// inject lifebar css MH
-	document.head.innerHTML += '<link rel="stylesheet" href="/mountyhall/libs/lifebar.css">';
-
-	let pv_cadre = document.createElement('div');
-	pv_cadre.className = "barre";
-	pv_cadre.title = `${infos.pv}/${infos.pv_max} PV le ${SQLDateToFrenchTime(infos.updated_at)}`;
-
-	let pv_jauge = document.createElement('div');
-	let pourcentVie = Math.floor(100 * infos.pv / infos.pv_max);
-	let dateLimite = new Date();
-	dateLimite.setDate(dateLimite.getDate() - 7);
-	if (infos.oUpdatedAt < dateLimite) {
-		pv_jauge.className = "barre-vie";
-		pv_jauge.style.backgroundColor = '#C8C8C8';	// infos de plus de 7 jours => grisé
-		pv_cadre.title = `${pv_cadre.title}\nLes informations sont trop vieilles pour être fiables`;
-	} else if (pourcentVie > 66) {
-		pv_jauge.className = "barre-vie full-vie";
-	} else if (pourcentVie > 33) {
-		pv_jauge.className = "barre-vie vie";
-	} else {
-		pv_jauge.className = "barre-vie vie-critique";
-	}
-	pv_jauge.style.width = `${pourcentVie}%`;
-	pv_cadre.appendChild(pv_jauge);
-
-	if (MZ_cache_col_TrollNOM === undefined) {
-		MZ_cache_col_TrollNOM = MZ_find_col_titre(tr_trolls, 'nom');
-	}
-	let tdNom = TR.childNodes[MZ_cache_col_TrollNOM];
+function displayCamoTroll(infos) {
+	let img;
 	if (infos.camoufle || infos.invisible) {
 		let title = infos.camoufle ? "Camouflé" : "Invisible";
-		tdNom.appendChild(createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px'));
+		img = createImage('/mountyhall/Images/hidden.png', title, 'padding-left:2px');
 	}
-
-	/* lien vers l'IT */
-	let lien = document.createElement('a');
-	// let nomit = MY_getValue(numTroll+'.INFOSIT').split('$')[1];
-	lien.href = `${URL_bricol + itName}/index.php`;
-	lien.target = '_blank';
-	lien.appendChild(pv_cadre);
-	if (MZ_cache_col_TrollGUILDE === undefined) {
-		MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guild');
-	}
-	// logMZ('[MZd] MZ_cache_col_TrollGUILDE=' + MZ_cache_col_TrollGUILDE);
-	// let tdGuilde = TR.childNodes[MZ_cache_col_TrollGUILDE];
-	// insertTdElement(tdGuilde,lien);
-	TR.childNodes[MZ_cache_col_TrollGUILDE].appendChild(lien);
-
-	/* PAs dispos */
-	let span = document.createElement('span');
-	span.title = `DLA : ${SQLDateToFrenchTime(infos.dla)}`;
-	appendText(span, `${infos.pa} PA`);
-	// logMZ('dla=' + infos.dla + ', SQLDateToObject(infos.dla)=' + SQLDateToObject(infos.dla) + ', now=' + Date.now());
-	if (infos.pa > 0 || SQLDateToObject(infos.dla) < Date.now()) {
-		// surligner en verdâtre pour exprimer que ce Trõll peut jouer maintenant
-		span.style.backgroundColor = 'B8EEB8';
-	}
-	// insertTdElement(tdGuilde, span);
-	TR.childNodes[MZ_cache_col_TrollGUILDE + 1].appendChild(span);
+	return img;
 }
 
 function createTrollRowFromRef(infos, ref_tr) {
@@ -13397,7 +13279,7 @@ function createTrollRowFromRef(infos, ref_tr) {
 	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_ref', infos.id);
 	idx++; // name
 	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id).replace('r_name', infos.nom);
-	idx += 3; // guild (skip: pv, pa)
+	idx++; // guild
 	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_guild', infos.guilde ? infos.guilde : '');
 	if (desktopView) {
 		idx++;	// niv
@@ -13420,192 +13302,6 @@ function createTrollRowFromRef(infos, ref_tr) {
 	return tr;
 }
 
-function createTrollRow(infos, tr) {
-	if (tr) {
-		return createTrollRowFromRef(infos, tr);
-	}
-
-	// créer le tr si pas de ref disponible
-	tr = document.createElement('tr');
-	tr.className = 'mh_tdpage';
-	tr.style.color = 'cc7000';
-	let desktopView = isDesktopView();
-	let td = appendTd(tr);	// distance
-	appendText(td, infos.dist);
-	if (desktopView) {
-		td = appendTd(tr); // actions
-	}
-	td = appendTd(tr);	// ID
-	appendText(td, infos.id);
-	td = appendTd(tr);	// Nom
-	// <A HREF="javascript:PVT(1649)" CLASS='mh_trolls_1'>Krounch</A>
-	appendA(td, `javascript:PVT(${infos.id})`, 'mh_trolls_1 ui-link', infos.nom);
-	td = appendTd(tr);	// PA
-	td = appendTd(tr);	// PV
-	td = appendTd(tr);	// Guilde
-	if (infos.guilde !== undefined) {
-		// La réponse de Bricol'Troll ne contient pas la guilde des Trolls membrent de la cohorte
-		appendText(td, infos.guilde);
-	}
-	if (desktopView) {
-		td = appendTd(tr);	// Niveau
-		if (infos.niveau !== undefined) {
-			appendText(td, infos.niveau);
-		}
-		td.align = 'center';
-		td = appendTd(tr);	// Race
-		if (infos.race) {
-			appendText(td, infos.race);
-		}
-	} else {
-		td = appendTd(tr);	// Race + Niveau
-		let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
-		let race_niv = infos.race ? `${lettreRace[infos.race]}` : '';
-		race_niv = infos.niveau ? `${race_niv}${infos.niveau}` : race_niv;
-		appendText(td, race_niv);
-	}
-	td = appendTd(tr);	// X
-	if (infos.x !== undefined) {
-		appendText(td, infos.x);
-	}
-	td = appendTd(tr);	// Y
-	if (infos.y !== undefined) {
-		appendText(td, infos.y);
-	}
-	td = appendTd(tr);	// N
-	if (infos.n !== undefined) {
-		appendText(td, infos.n);
-	}
-
-	// récupération des colonnes cachées par VueContext
-	let ctx_cols = VueContext["tr_trolls"][0].children, tr_cols = tr.children;
-	// debugMZ(`cols == td ? ${cols.length == tr.children.length}`)  // normalement tjrs vrai
-	for (let i = 0; i < ctx_cols.length; i++) {
-		tr_cols[i].setAttribute("style", ctx_cols[i].style.cssText);
-	}
-	return tr;
-}
-
-var MZ_tabTrTrollById;
-function putInfosTrolls(infosTrolls, itName) {
-	try {
-		let ref_tr = undefined;
-		let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_pv', 'r_pa', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
-		isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
-		isDesktopView() ? ref_anchors.splice(8, 0, 'r_race') : '';
-		if (MZ_tabTrTrollById === undefined) {
-			MZ_tabTrTrollById = new Array();
-			// ajout des 2 colonnes dans la table HTML des Trõlls + construire le tableau MZ_tabTrTrollById
-			if (MZ_cache_col_TrollGUILDE === undefined) {
-				MZ_cache_col_TrollGUILDE = MZ_find_col_titre(tr_trolls, 'guilde');
-			}
-			let td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PA', false);
-			td.style.width = "50px";
-			td = insertThText(tr_trolls[0].childNodes[MZ_cache_col_TrollGUILDE + 2], 'PV', false);
-			for (let i = nbTrolls; i > 0; i--) {
-				let td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				td = insertTd(tr_trolls[i].childNodes[MZ_cache_col_TrollGUILDE]);
-				MZ_tabTrTrollById[getTrollID(i)] = tr_trolls[i];
-				if (ref_tr === undefined) {
-					// gath: on construit pour afficher les trolls hors-vue.
-					// Le premier troll visible (hors PNJ) est dupliqué puis
-					// ses attributs sont réinitilisés pour servir de référence
-					// (gère les cas de colonne invisible type 'guilde').
-					if (tr_trolls[i].innerText.includes('[PNJ]')) {
-						continue;
-					}
-
-					ref_tr = tr_trolls[i].cloneNode(true);
-					for (let j = 0, col; col = tr_trolls[i].cells[j]; j++) {
-						// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
-						let r_a = ref_anchors[j];
-						if (r_a == 'r_pa' || r_a == 'r_pv') {
-							// ref_tr.cells[j].innerHTML = "";
-							continue;
-						} else if (r_a == 'r_act') {
-							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_id, 'r_ref').replace(s_id, 'r_ref');
-						} else if (r_a == 'r_dist' || r_a == 'r_name' || r_a == 'r_guild') {
-							Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
-								img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
-							});
-							let s_id = isDesktopView() ? tr_trolls[i].cells[2].innerText : tr_trolls[i].cells[1].innerText;
-							let s_name = tr_trolls[i].cells[j].innerText.trim();
-							r_a == 'r_dist' ? ref_tr.cells[j].removeAttribute('id') : '';
-							ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
-						} else {
-							let s_txt = ref_tr.cells[j].innerText;
-							ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
-						}
-					}
-				}
-			}
-		}
-
-		// supression des infos trop vieilles (un mois)
-		// conversion de la date de mise à jour en objet date (on en a besoin 2 fois)
-		let dateLimite = new Date();
-		dateLimite.setMonth(dateLimite.getMonth() - 1);
-
-		// Roule 07/12/2016 ajout des Trolls invi/camou/hors de portée
-		let str = MY_getValue(`${numTroll}.INFOSIT`);
-		let affhv = false;
-		if (str) {
-			let arr = str.split('$');
-			affhv = arr[4] > 0;
-		}
-
-		let tBody = tr_trolls[0].parentNode;
-		if (tr_trolls[1] !== undefined) {
-			tBody = tr_trolls[1].parentNode;
-		}
-
-		// logMZ('nb Troll IT : ' + IDs.length);
-		let pos = getPosition();
-
-		// mise à jour des infos dans le HTML (et ajout de ligne si nécessaire)
-		for (let idTroll in infosTrolls) {
-			let infos = infosTrolls[idTroll];
-			infos.oUpdatedAt = SQLDateToObject(infos.updated_at);	// trop vieux
-			if (infos.oUpdatedAt < dateLimite) {
-				continue; // infos trop vieilles
-			}
-			if (idTroll == numTroll) {
-				continue; // pas nous-même
-			}
-			let tr;
-			if (idTroll in MZ_tabTrTrollById) {
-				// logMZ('putInfosTrolls, le Troll ' + idTroll + ' est déjà dans la table HTML');
-				tr = MZ_tabTrTrollById[idTroll];
-			} else {
-				if (!affhv) {
-					continue;
-				}
-				// logMZ('putInfosTrolls, le Troll ' + idTroll + ' doit être ajouté à la table HTML');
-				infos.dist = Math.max(Math.abs(pos[0] - infos.x), Math.abs(pos[1] - infos.y), Math.abs(pos[2] - infos.n));
-				// trouver où insérer ce Troll
-				let next = undefined;
-				for (let j = 0; j < tr_trolls.length; j++) {
-					let thisDist = parseInt(tr_trolls[j].cells[0].textContent);
-					if (thisDist > infos.dist) {
-						next = tr_trolls[j];
-						break;
-					}
-				}
-				tr = createTrollRow(infos, ref_tr);
-				(next !== undefined) ? insertBefore(next, tr) : tBody.appendChild(tr);
-				MZ_tabTrTrollById[idTroll] = tr;
-				tr_trolls[++nbTrolls] = tr;
-			}
-			if (!tr.done) {
-				addTdInfosTroll(infos, tr, itName);
-				tr.done = true;
-			}
-		}
-	} catch (exc) {
-		avertissement('Erreur de traitement des informations Bricol\'Troll', null, null, exc);
-	}
-}
 
 /** x~x Mode Tétalanvert! ------------------------------------------------- */
 
@@ -13618,7 +13314,7 @@ function calculeDistance(maPos, posArr) {
 }
 
 function inversionCoord() {
-	let maPos = getPosition();
+	let maPos = getPosition(true);
 	let listeOffsets = {
 		monstres: checkBoxLevels.checked ? 4 : 3,
 		trolls: 6,
@@ -13886,7 +13582,6 @@ class MZ_cVueJSON {
 		}
 
 		logMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
-		//avertissement('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, count=' + this.MH_json.length);
 	}
 
 	insertColumn(indxAfter, title, width, callbackParam) {
@@ -14130,9 +13825,65 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static colBtPVDone;
 	static colBtPADone;
+	static refTr;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
 	cssBtDone;
+
+	init(MZ_oVueJSON, id, eTr) {
+		this.id = id;
+		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
+		if (isDesktopView()) { this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction]; }
+		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
+		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
+		if (MZ_oVueJSON.indxTdGuilde) { this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde]; }
+		this.eltTdX = eTr.cells[MZ_oVueJSON.indxTdX];
+		this.eltTdY = eTr.cells[MZ_oVueJSON.indxTdY];
+		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
+		if (MZ_oVueJSON.indxTdNiv) { this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv]; }
+		this.nom = this.eltTdNom.innerText.trim();
+
+		if (!MZ_cLigneTroll.refTr) {
+			// gath: on construit pour afficher les trolls hors-vue (bricolTroll).
+			// Le premier troll visible (nous) est dupliqué puis
+			// ses attributs sont réinitilisés pour servir de référence
+			// (gère les cas de colonne invisible type 'guilde').
+			let ref_tr = eTr.cloneNode(true);
+			let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
+			isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
+			isDesktopView() ? ref_anchors.splice(6, 0, 'r_race') : '';
+			console.warn(ref_anchors);
+			for (let j = 0, col; col = ref_tr.cells[j]; j++) {
+				// [dist, [act,] ref, name, guild, niv, [race,] x, y , z]
+				let r_a = ref_anchors[j];
+				if (r_a == 'r_act') {
+					continue;
+				} else if (r_a == 'r_name') {
+					Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
+						img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
+					});
+					let s_id = this.id.toString(), s_name = this.nom.toString();
+					ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
+				} else {
+					let s_txt = ref_tr.cells[j].innerText;
+					ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
+				}
+			}
+			MZ_cLigneTroll.refTr = ref_tr;
+		}
+	}
+
+	initFromRef(infos) {
+		const ref_tr = MZ_cLigneTroll.refTr;
+		let id = parseInt(infos.id);
+		let eTr = createTrollRowFromRef(infos, ref_tr);
+		let allTr = MZ_cLigneTroll.MZ_oVueJSON.MH_ft.getElementsByTagName('tr');
+
+		insertAfter(allTr[allTr.length-1], eTr);
+		this.init(MZ_cLigneTroll.MZ_oVueJSON, id, eTr);
+		MZ_cLigneTroll.MZ_oVueJSON.objets.push(this);
+		// gath: inserer aussi dans `MZ_cLigneTroll.MZ_oVueJSON.MH_json` ?
+	}
 
 	insertColumn(param) {
 		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
@@ -14188,13 +13939,25 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static receptionBricolTrollAJAX(data) {
-		// todo: gath: reste a faire la visu des trolls hors de portée
 		return function(responseDetails) {
 			if (responseDetails.status == 0) { return; }
 			let btData = JSON.parse(responseDetails.responseText);
 			if (btData.error) {
 				avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
 				return;
+			}
+
+			if (data[4] > 0) {  // afficher les trolls hors-vue
+				let visibleTrolls = MZ_cLigneTroll.MZ_oVueJSON.objets.map(function (troll) {
+					return troll.id.toString()
+				});
+				for (let [idTroll, infos] of Object.entries(btData.data.trolls)) {
+					if (visibleTrolls.includes(idTroll)) { continue; }
+					let awayTroll = new MZ_cLigneTroll();
+					let maPos = getPosition(true), pos = [infos.x, infos.y, infos.n];
+					infos.dist = calculeDistance(maPos, pos);
+					awayTroll.initFromRef(infos);
+				}
 			}
 
 			// ajouter les styles CSS pour les barres de vie
@@ -14218,6 +13981,8 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				if (!infos) { continue; }
 				oTroll.eltTdBtPV.appendChild(createPVTroll(infos, data[1]));
 				oTroll.eltTdBtPA.appendChild(createPATroll(infos));
+				let camo = displayCamoTroll(infos);
+				if (camo) { oTroll.eltTdNom.appendChild(camo); }
 			}
 		}
 	}
@@ -14359,8 +14124,6 @@ function do_vue_html() {
 		if (getTalent("Lancer de Potions")) {
 			computeLdP();
 		}
-
-		putScriptExterne();
 
 		displayScriptTime(undefined, 'do_vue_log');
 	} catch (exc) {
