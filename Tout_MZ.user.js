@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.10
+// @version     1.6.11
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.10';
+var MZ_latest = '1.6.11';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13833,6 +13833,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
 		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
+		this.dist = parseInt(this.eltTdDist.innerText.trim());
 		if (isDesktopView()) { this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction]; }
 		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
 		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
@@ -13852,7 +13853,6 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
 			isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
 			isDesktopView() ? ref_anchors.splice(6, 0, 'r_race') : '';
-			console.warn(ref_anchors);
 			for (let j = 0, col; col = ref_tr.cells[j]; j++) {
 				// [dist, [act,] ref, name, guild, niv, [race,] x, y , z]
 				let r_a = ref_anchors[j];
@@ -13879,9 +13879,16 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		let eTr = createTrollRowFromRef(infos, ref_tr);
 		let allTr = MZ_cLigneTroll.MZ_oVueJSON.MH_ft.getElementsByTagName('tr');
 
-		insertAfter(allTr[allTr.length-1], eTr);
+		let insertAt = allTr.length-1;  // insert à la fin par défaut
+		for (const [idx, oTroll] of MZ_cLigneTroll.MZ_oVueJSON.objets.entries()) {
+			if (oTroll.dist > infos.dist) {
+				insertAt = idx;
+				break;
+			}
+		}
 		this.init(MZ_cLigneTroll.MZ_oVueJSON, id, eTr);
-		MZ_cLigneTroll.MZ_oVueJSON.objets.push(this);
+		MZ_cLigneTroll.MZ_oVueJSON.objets.splice(insertAt, 0, this);
+		insertAfter(allTr[insertAt], eTr);
 		// gath: inserer aussi dans `MZ_cLigneTroll.MZ_oVueJSON.MH_json` ?
 	}
 
