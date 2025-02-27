@@ -778,6 +778,28 @@ function MZ_getValueBoolean(key) {
 	}
 	return false;
 }
+// gath: sessionStorage utilisé comme cache
+// -> si besoin de reset cache, clore l'onglet
+function MY_setSessionValue(key, value, expirationInMin = 3) {
+	let expDate = new Date(new Date().getTime() + (60000 * expirationInMin))
+	let sessVal = {
+		data: value,
+		expirationDate: expDate.toISOString()
+	}
+	window.sessionStorage.setItem(key, JSON.stringify(sessVal));
+}
+function MY_getSessionValue(key) {
+	let strVal = window.sessionStorage.getItem(key)
+	if (strVal !== null) {
+		let value = JSON.parse(strVal)
+		let expirationDate = new Date(value.expirationDate)
+		if (expirationDate > new Date()) {
+			return value.data;
+		}
+	}
+	window.sessionStorage.removeItem(key);
+	return null;
+}
 
 /** x~x Variables globales utiles -------------------------------------- */
 // utilisé pour accès bdd (un peu partout) :
@@ -13923,8 +13945,15 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			if (!sInfo || sInfo == '') { break; }
 
 			let data = sInfo.split('$');
+			data.push(extClef);
 			if (data[0] != 'bricol') { continue; }
 
+			let btData = MY_getSessionValue(`MZ_bricolTroll${data[5]}_${numTroll}`);
+			if (btData) {
+				MZ_cLigneTroll.receptionBricolTrollAJAX(data)(btData);
+				debugMZ(`${MZ_formatDateMS()} données de cache pour bricolTroll ${data[1]}`);
+				continue;
+			}
 			FF_XMLHttpRequest({
 				method: 'GET',
 				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
@@ -13947,11 +13976,18 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 	static receptionBricolTrollAJAX(data) {
 		return function(responseDetails) {
-			if (responseDetails.status == 0) { return; }
-			let btData = JSON.parse(responseDetails.responseText);
-			if (btData.error) {
-				avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
-				return;
+			let btData;
+			try {
+				if (responseDetails.status == 0) { return; }
+				btData = JSON.parse(responseDetails.responseText);
+				if (btData.error) {
+					avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
+					return;
+				}
+				MY_setSessionValue(`MZ_bricolTroll${data[5]}_${numTroll}`, btData, 3);
+			} catch {
+				// si on est pas en XMLHttpRequest, alors ca vient du cache
+				btData = responseDetails;
 			}
 
 			if (data[4] > 0) {  // afficher les trolls hors-vue
