@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.11
+// @version     1.6.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -6235,7 +6235,16 @@ function traiteMonstre() {
 	if (g_nomMonstre.indexOf(']') != -1) {
 		g_nomMonstre = g_nomMonstre.slice(0, g_nomMonstre.indexOf(']') + 1);
 	}
-	g_idMonstre = texte.match(/[^\]]\].*\((\d+)\)/)[1];
+	let m = texte.match(/[^\]]\].*\((\d+)\)/);
+	if (!m || m.length == 0) {
+		// Les créatures floues n'ont pas de [xx]
+		m = texte.match(/\((\d+)\)/);
+	}
+	if (!m || m.length == 0) {
+		logMZ("traiteMonstre, impossible de trouver l'id du monstre dans le nom " + texte);
+		return;
+	}
+	g_idMonstre = m[1];
 	let tReq = [{ index: 1, id: Number(g_idMonstre), nom: g_nomMonstre }];	// "+" pour forcer du numérique
 	FF_XMLHttpRequest({
 		method: 'POST',
@@ -14720,7 +14729,7 @@ function setInfosEtatLieux() {
 
 function setInfosEtatPV() { // pour AM et Sacro
 	let
-		txt = `1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
+		txt = `[MZ] 1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
 		sec = Math.floor(15000 / pvtotal) % 60,
 		lifebar = document.querySelector("#pos .barre-vie"),
 		tr_line = document.querySelector("#pos #pv_courant").parentElement.parentElement.parentElement;
