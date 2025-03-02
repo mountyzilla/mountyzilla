@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.11';
+var MZ_latest = '1.6.12';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -1472,7 +1472,7 @@ function addStyleSheet(cssText) {
 	document.getElementsByTagName('head')[0].appendChild(styleElt);
 }
 
-function createCollapsibleBloc(id, title) {
+function createCollapsibleBloc(id, title, subTxt = undefined) {
 	let outerDiv = document.createElement('div'),
 		input = document.createElement('input'),
 		label = document.createElement('label'),
@@ -1490,6 +1490,14 @@ function createCollapsibleBloc(id, title) {
 		labelH3.textContent = title;
 		label.appendChild(labelH3);
 		innerDiv.className = "collapsible-content";
+
+		if (subTxt) {
+			let labelSpan = document.createElement('span');
+			labelSpan.textContent = subTxt;
+			labelSpan.style.fontSize = 'smaller';
+			labelSpan.style.float = 'right';
+			label.appendChild(labelSpan);
+		}
 
 		outerDiv.append(input, label, innerDiv);
 		return [outerDiv, innerDiv];
@@ -7888,7 +7896,8 @@ function traiterJubilaires() {
 				if (!listeTrolls || listeTrolls.length == 0) {
 					return;
 				}
-				afficherJubilaires(listeTrolls);
+				let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+				insertJubilaire(insertPoint, listeTrolls);
 			},
 		});
 	} catch (exc) {
@@ -7896,18 +7905,24 @@ function traiterJubilaires() {
 	}
 }
 
-function afficherJubilaires(listeTrolls) {
-	let footer = getFooter();
-	if (!footer) {
-		logMZ('afficherJubilaires_log, impossible de retrouver le footer');
-		return;
+function insertJubilaire(insertPt, listeTrolls) {
+	let mainBody;
+	let title = "Les Trõlls qui fêtent leur cycloversaire aujourd'hui";
+	let descr = 'Envoyez leur un message ou un cadeau !'
+
+	if (isDesktopView()) {
+		let p = document.createElement('p');
+		mainBody = appendTitledTable(p, title, descr);
+		insertBefore(insertPt, p);
+	} else {
+		insertBefore(insertPt, document.createElement('br'));
+		mainBody = insertMainTable(insertPt, "cyclo", title);
+		// replace le bloc d'insertion en haut si smartphone
+		let cyclo = document.getElementById('cyclo');
+		insertBefore(cyclo.previousElementSibling, insertPt);
 	}
-	let p = document.createElement('p');
-	let tbody = appendTitledTable(p,
-		"Les Trõlls qui fêtent leur cycloversaire aujourd'hui :",
-		'Envoyez leur un message ou un cadeau !'
-	);
-	let tr = appendTr(tbody, 'mh_tdpage');
+
+	let tr = appendTr(mainBody, 'mh_tdpage');
 	let td = appendTdCenter(tr);
 	let lastAge = undefined;
 	for (let troll of listeTrolls) {
@@ -7932,20 +7947,24 @@ function afficherJubilaires(listeTrolls) {
 		td.appendChild(span);
 		lastAge = troll.age;
 	}
-	insertBefore(footer, p);
 }
 
 /** x~x News MZ -------------------------------------------------------- */
 
 function traiterNouvelles() {
 	let news = new Array();
-	news.push(['2024-05-05', "Affichage d'une alerte à l'approche de la DLA dans l'onglet du navigateur (il faut activer l'option)."]);
-	news.push(['2024-05-06', 'Les jubilaires sont revenus. Merci pour votre patience pas infinie mais presque.']);
+	// gath: penser à insérer avant chaque news un espace insécable ' ' (<- ici)
+	// pour l'affichage smartphone (solution de feignasse, mais solution !)
+	news.push(['2024-05-05', " Affichage d'une alerte à l'approche de la DLA dans l'onglet du navigateur (il faut activer l'option)."]);
+	news.push(['2024-05-06', ' Les jubilaires sont revenus. Merci pour votre patience pas infinie mais presque.']);
 	let d2 = new Date();
 	if (d2.getMonth() == 0 && d2.getDate() < 10) {
 		news.push([new Date(d2.getFullYear(), 0, 1), `MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
 	}
-	afficherNouvelles(news);
+	let twoMonthAgo = ( d => new Date(d.setMonth(d.getMonth()-2)) )(new Date);
+	let recentNews = news.filter((n) => n[0] == null || new Date(n[0]) > twoMonthAgo);
+	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	insertNews(insertPoint, recentNews);
 }
 
 function getLatestChanges() {
@@ -7956,83 +7975,85 @@ function getLatestChanges() {
 	return changes.join('\n');
 }
 
-function afficherNouvelles(items) {
-	let footer = getFooter();
-	if (!footer) {
-		logMZ('afficherNouvelles, impossible de retrouver le footer');
+function insertNews(insertPt, listNews) {
+	if (listNews.length == 0) {
+		logMZ('insertNews, pas de nouvelles récentes de la part de MZ!');
 		return;
 	}
-	let p, tbody, tr;
-	p = document.createElement('p');
-	tbody = appendTitledTable(p, 'Les nouvelles de Mountyzilla');
-	for (let i = 0; i < items.length; i++) {
-		let color = undefined;
-		let d = undefined;
-		if (items[i][0] != null) {
-			d = new Date(items[i][0]);
-			// plus vieux que 2 mois => ne pas afficher
-			let d2 = new Date();
-			d2.setMonth(d2.getMonth() - 3);
-			if (d < d2) {
-				continue;
-			}
-			// afficher en rouge si moins de 15 jours
-			d2 = new Date();
-			d2.setDate(d2.getDate() - 15);
-			if (d > d2) {
-				color = 'red';
-			}
-		}
-		tr = appendTr(tbody, 'mh_tdpage');
-		if (color) {
-			tr.style.color = color;
-		}
-		let td = appendTdCenter(tr);
-		td.style.verticalAlign = 'top'; // semble sans effet
-		if (d) {
-			td.appendChild(document.createTextNode(d.toLocaleDateString('fr-FR')));
-		}
-		td = appendTd(tr);
-		td.appendChild(document.createTextNode(items[i][1]));
-	}
-	// astuce : tr reste undefined s'il n'y a pas de nouvelle à afficher
-	if (tr) insertBefore(footer, p);
-	if (items.length > 0) {
+	let mainBody;
+	let title = "Les nouvelles de Mountyzilla";
+
+	if (isDesktopView()) {
+		let p = document.createElement('p');
+		mainBody = appendTitledTable(p, title);
+		insertBefore(insertPt, p);
+	} else {
+		insertBefore(insertPt, document.createElement('br'));
+		mainBody = insertMainTable(insertPt, "news", title);
+		// replace le bloc d'insertion en haut si smartphone
+		let news = document.getElementById('news');
+		insertBefore(news.previousElementSibling, insertPt);
 	}
 
-	// changelog
-	p = document.createElement('p');
-	tbody = appendTitledTable(p, 'Changelog de Mountyzilla');
-	let div = document.createElement('div');
-	div.style.position = 'absolute';
-	div.style.right = 0;
-	div.style.top = 0;
-	div.style.paddingRight = '3px';
-	div.style.whiteSpace = 'nowrap';
-	appendText(div, `(version ${GM_info.script.version})`);
-	tbody.rows[0].cells[0].style.position = 'relative';
-	tbody.rows[0].cells[0].appendChild(div);
-	tbody.rows[0].cells[0].style.cursor = 'pointer';
-	tbody.rows[0].cells[0].style.minWidth = '400px';
-	tr = appendTr(tbody, 'mh_tdpage');
+	// afficher en rouge si moins de 15 jours
+	let twoWeeksAgo = ( d => new Date(d.setDate(d.getDate()-15)) )(new Date);
+	for (const [dt, txt] of listNews.values()) {
+		let tr = appendTr(mainBody, 'mh_tdpage');
+		let td = appendTdCenter(tr);
+		if (dt != null) {
+			let d = new Date(dt);
+			if (d > twoWeeksAgo) { tr.style.color = 'red'; }
+			td.appendChild(document.createTextNode(d.toLocaleDateString('fr-FR')));
+			td.style.verticalAlign = 'top';
+		}
+		td = appendTd(tr);
+		td.appendChild(document.createTextNode(txt));
+	}
+}
+
+function insertChangelog(insertPt) {
+	let mainBody;
+	let title = "Changelog de Mountyzilla";
+	let descr = `(version ${GM_info.script.version})`;
+
+	if (isDesktopView()) {
+		let p = document.createElement('p');
+		mainBody = appendTitledTable(p, title);
+		let div = document.createElement('div');
+		div.style.position = 'absolute';
+		div.style.right = 0;
+		div.style.top = 0;
+		div.style.paddingRight = '3px';
+		div.style.whiteSpace = 'nowrap';
+		appendText(div, descr);
+		mainBody.rows[0].cells[0].appendChild(div);
+		mainBody.rows[0].cells[0].style.position = 'relative';
+		mainBody.rows[0].cells[0].style.cursor = 'pointer';
+		mainBody.rows[0].cells[0].style.minWidth = '400px';
+		insertBefore(insertPt, p);
+	} else {
+		insertBefore(insertPt, document.createElement('br'));
+		mainBody = insertMainTable(insertPt, "changelog", title, descr);
+		// replace le bloc d'insertion en haut si smartphone
+		let changelog = document.getElementById('changelog');
+		insertBefore(changelog.previousElementSibling, insertPt);
+	}
+
+	let tr = appendTr(mainBody, 'mh_tdtitre');
 	let td = appendTd(tr);
 	td.colSpan = 2;
 	let pre = document.createElement('pre');
 	appendText(pre, getLatestChanges());
-	pre.id = 'mz_changelog'
+	pre.id = 'mz_pre_changelog'
 	pre.style.whiteSpace = 'pre-wrap';
+	pre.style.display = 'inherit';
 	td.appendChild(pre);
-	tbody.rows[0].cells[0].onclick = function () {
-		try {
-			tbody.rows[0].cells[0].onclick = undefined;
-			tbody.rows[0].cells[0].style.cursor = '';
-			let pre = document.getElementById('mz_changelog');
-			pre.innerText = MZ_changeLog.join('\n');
-		} catch (exc) {
-			logMZ('affichage changeLog', exc);
-		}
+	let switched = false;
+	mainBody.rows[0].cells[0].onclick = function () {
+		let pre = document.getElementById('mz_pre_changelog');
+		pre.innerText = switched ? getLatestChanges() : MZ_changeLog.join('\n');
+		switched = !switched;
 	};
-	insertBefore(footer, p);
 }
 
 /** x~x Main -------------------------------------------------------- */
@@ -8056,6 +8077,8 @@ function do_news() {
 
 	traiterJubilaires();
 	traiterNouvelles();
+	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	insertChangelog(insertPoint);
 
 	displayScriptTime(undefined, 'do_news_log');
 }
@@ -9258,9 +9281,9 @@ function insertTitle(next, txt) {
 	return div;
 }
 
-function insertMainTable(next, id, title) {
+function insertMainTable(next, id, title, subTxt = undefined) {
 	let outerDiv, innerDiv;
-	[outerDiv, innerDiv] = createCollapsibleBloc(id, title);
+	[outerDiv, innerDiv] = createCollapsibleBloc(id, title, subTxt);
 
 	let table = document.createElement('table');
 	table.border = 0;
@@ -9274,7 +9297,7 @@ function insertMainTable(next, id, title) {
 	innerDiv.appendChild(table);
 
 	if (isDesktopView()) {
-		table.style.maxWidth = '98%'
+		table.style.maxWidth = '98%';
 	} else {
 		innerDiv.style.overflowX = "scroll";
 	}
@@ -12011,7 +12034,7 @@ function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue
 	} else {
 		// afficher tous les td
 		for (let i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
-			getMonstreLevelNode(i).style.display = '';
+			getMonstreLevelNode(i).style.display = 'block';
 		}
 	}
 }
@@ -13957,7 +13980,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			data.push(extClef);
 			if (data[0] != 'bricol') { continue; }
 
-			let btData = MY_getSessionValue(`MZ_bricolTroll${data[5]}_${numTroll}`);
+			let btData = MY_getSessionValue(`MZ_${numTroll}_bricolTroll${data[5]}`);
 			if (btData) {
 				MZ_cLigneTroll.receptionBricolTrollAJAX(data)(btData);
 				debugMZ(`${MZ_formatDateMS()} données de cache pour bricolTroll ${data[1]}`);
@@ -13993,7 +14016,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 					avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
 					return;
 				}
-				MY_setSessionValue(`MZ_bricolTroll${data[5]}_${numTroll}`, btData, 3);
+				MY_setSessionValue(`MZ_${numTroll}_bricolTroll${data[5]}`, btData, 3);
 			} catch {
 				// si on est pas en XMLHttpRequest, alors ca vient du cache
 				btData = responseDetails;
@@ -14729,7 +14752,7 @@ function setInfosEtatLieux() {
 
 function setInfosEtatPV() { // pour AM et Sacro
 	let
-		txt = `[MZ] 1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
+		txt = `1 PV de perdu = +${Math.floor(250 / pvtotal)} min`,
 		sec = Math.floor(15000 / pvtotal) % 60,
 		lifebar = document.querySelector("#pos .barre-vie"),
 		tr_line = document.querySelector("#pos #pv_courant").parentElement.parentElement.parentElement;
@@ -14737,7 +14760,7 @@ function setInfosEtatPV() { // pour AM et Sacro
 		txt = `${txt} ${sec} sec`;
 	}
 	if (lifebar && isDesktopView()) {
-		lifebar.title = txt;
+		lifebar.title = `[MZ] ${txt}`;
 	} else {
 		tr_line = appendTrDetail(tr_line, '[MZ] Durée de blessure', txt);
 	}
