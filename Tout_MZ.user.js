@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.12
+// @version     1.6.13
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -15219,10 +15219,12 @@ function injecteInfosBulles(liste, fonction) {
 		if (oInfo.pieges) sousCompetences = oInfo.pieges;
 		if (oInfo.peintures) sousCompetences = oInfo.peintures;
 		let maitrise = oInfo.maitrise[nivMax];
+		let bonus = 0;
+		if (oInfo.bonus) bonus = oInfo.bonus;
 		if (node)
 			setInfos(node.parentNode, oInfo.nom, fonction, nivMax);
 		for (let niv = 1; niv <= nivMax; niv++)
-			setTalent(oInfo.nom, oInfo.maitrise[niv], niv, sousCompetences);
+			setTalent(oInfo.nom, oInfo.maitrise[niv] + bonus, niv, sousCompetences);
 		totalpc = totalpc + maitrise;
 
 	}
