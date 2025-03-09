@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.13
+// @version     1.6.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -10867,6 +10867,7 @@ var typesAFetcher = {
 	lieux: 1
 };
 
+// to be deleted à l'abandon de l'ancienne vue
 var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
 	nbMonstres: 0,
 	tr_monstres: [],
@@ -11036,7 +11037,7 @@ function getMonstreLevelNode(i) {
 }
 
 function isMonstreLevelOutLimit(i, limitMin, limitMax) {
-	if (!MZ_EtatCdMs.isCDMsRetrieved) {
+	if (!(MZ_EtatCdMs.isCDMsRetrieved || MZ_cLigneMonstre.isCDMsRetrieved)) {
 		return false;
 	}
 	let donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
@@ -12185,6 +12186,7 @@ function showPopupError(sHTML) {
 	divpopup.appendChild(divcroix);
 }
 
+// to be deleted à l'abandon de l'ancienne vue
 function retrieveCDMs() {
 	// Récupère les CdM disponibles dans la BDD
 	// Lancé uniquement sur toggleLevelColumn
@@ -12213,6 +12215,7 @@ function retrieveCDMs() {
 			break;
 		}	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 	}
+	debugMZ(`Envvoi MZ ${nbReq} IDs, nbMonstres=${MZ_EtatCdMs.nbMonstres}, lastIndexDone=${i}`);
 	MZ_EtatCdMs.lastIndexDone = i;
 	// let startAjaxCdM = new Date();  // WARNING (gath) - non utilisé -> commenté
 	logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
@@ -12359,6 +12362,7 @@ function MZ_CdMColorFromMode(info) {
 	}
 }
 
+// to be deleted à l'abandon de l'ancienne vue
 function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
 	let evt = e || window.event;
 	if (evt.shiftKey) {
@@ -13398,7 +13402,7 @@ function do_vue() {
 	if (node) {
 		do_vue_html();	// "ancienne" vue
 	} else {
-		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille');
+		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille parfois  ');
 		MZ_cVueJSON.initGlobal();
 	}
 }
@@ -13406,8 +13410,8 @@ function do_vue() {
 class MZ_cVueJSON {
 	// class en syntaxe ECMA. Un peu de modernité, que diable !
 	// classe "abstraite" dont héritent les classes spécifiques pour les monstres, trolls, etc.
-	// cette classe contient en "static" tout ce qu'il faut pour l' initialisations globales
-	// cette classe est instanciée une fois par tuype d'objet(monstre, trol, etc.)
+	// cette classe contient en "static" tout ce qu'il faut pour les initialisations globales
+	// cette classe (ses filles) est instanciée une fois par type d'objet(monstre, troll, etc.)
 	// les propriétés principales sont des tableaux d'objets cLigneVueJSON (un tableau pour chaque type montre, troll, trésor, etc.)
 	// cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
 
@@ -13434,7 +13438,7 @@ class MZ_cVueJSON {
 
 	// cette zone est spécifique à un type (monstre, troll, etc.)
 	nomBase;			// "montres", "trolls", etc.
-	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH répond
+	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH (pas MZ !) répond
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
 	MH_ft;				// l'object footable
 	MH_json;			// les datas obtenues en JSON par MH en AJAX
@@ -13478,7 +13482,7 @@ class MZ_cVueJSON {
 	initMHThings() {
 		// fait pointer les propriétés de l'object vers les variables globales "let" de MH
 		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
-		// on profite du swotch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
+		// on profite du switch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
 		switch (this.nomBase) {
 			case 'monstres':
 				this.MH_ft = VUE_monstres;  // id: table#VUE_monstres
@@ -13699,6 +13703,8 @@ class MZ_cLigneVue {
 class MZ_cLigneMonstre extends MZ_cLigneVue {
 	static MZ_oVueJSON;	// pointeur vers l'objet pour le type (monstre, troll, etc.)
 	// c'est ici qu'on met tout le code spécifique aux monstres
+	static lastIndexSent = -1;
+	static isCDMsRetrieved = false;
 
 	// zone MZ - niveaux
 	static colNiveauDone;
@@ -13722,13 +13728,18 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	}
 
 	static initGlobal() {
-		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		// cette fonction est appelée une fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		// todo ne lancer sendAJAXCdMRequest que si la case 'effacer les niveaux' n'est pas cochée
+		MZ_cLigneMonstre.sendAJAXCdMRequest();
+		MZ_Tactique.initPopup();
+	}
 
+	static sendAJAXCdMRequest() {
 		let tReq = [];
 		let nbReq = 0;
-		let indx = -1;
-		for (let oMonstre of MZ_cLigneMonstre.MZ_oVueJSON.objets) {
-			indx++;
+		let nbMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets.length;
+		for (let indx = MZ_cLigneMonstre.lastIndexSent + 1; indx < nbMonstre; indx++) {
+			let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[indx];
 			// ne pas demander pour les Gowaps
 			if (oMonstre.nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
 				oMonstre.nivMZ_no = true;
@@ -13737,11 +13748,13 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
 			tReq.push({ index: indx, id: oMonstre.id, nom: oMonstre.nom });
 			nbReq++;
-			if (nbReq >= 500) {
+			MZ_cLigneMonstre.lastIndexSent = indx;
+			if (nbReq >= 500) {	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 				break;
-			}	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
+			}
 		}
 		logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
+		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${nbMonstre}, lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}`);
 		if (nbReq == 0) return;
 
 		FF_XMLHttpRequest({
@@ -13753,13 +13766,32 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			onload: MZ_cLigneMonstre.receptionMZNiveauxAJAX,
 		});
 		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
-		MZ_Tactique.initPopup();
+	}
+
+	static getSuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
+		let evt = e || window.event;
+		if (evt.shiftKey) {
+			this.parentNode.removeChild(this);
+			return;
+		}
+		replaceContentByText(this,`en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cLigneMonstre.MZ_oVueJSON.objets.length}`);
+		this.style.cursor = '';	// default
+		this.onclick = MZ_cLigneMonstre.removeCdMButton;
+		MZ_cLigneMonstre.sendAJAXCdMRequest();
+	}
+
+	static removeCdMButton(e) {	// handler du click sur le bouton pendant l'attente de la récup, ne permet que la suppression du texte
+		let evt = e || window.event;
+		if (evt.shiftKey) {
+			this.parentNode.removeChild(this);
+		}
 	}
 
 	static receptionMZNiveauxAJAX(responseDetails) {
 		// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 		if (responseDetails.status == 0) { return; }
 		let texte;
+		let nbResult = 0;
 		try {
 			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
 			texte = responseDetails.responseText;
@@ -13807,6 +13839,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					oMonstre.eltTdNom.appendChild(MZ_Tactique.createImage(oMonstre.id, oMonstre.nom));
 				}
 				oMonstre.eltTdNiveau.style.width = '20px';
+				// to do migrer listeCDM vers l'objet MZ_cLigneMonstre
 				MZ_EtatCdMs.listeCDM[info.id] = info;
 				if (myColor) {
 					oMonstre.eltTdNiveau.style.color = myColor;
@@ -13824,6 +13857,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					}
 				};
 				*/
+				nbResult++;
 			}
 			// todo
 			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
@@ -13834,17 +13868,16 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		} catch (exc) {
 			logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
 		}
-		return;
 
 		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
-		MZ_EtatCdMs.isCDMsRetrieved = true;
+		MZ_cLigneMonstre.isCDMsRetrieved = true;
 		// afficher/supprimer le bouton pour demander la suite
 		let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
-		debugMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
-		if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
+		debugMZ(`lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}, nbMonstres=${MZ_cVueJSON.oMonstres.objets.length}, eltBoutonSuite=${eltBoutonSuite}`);
+		if (MZ_cLigneMonstre.lastIndexSent < (MZ_cVueJSON.oMonstres.objets.length - 1)) {
 			if (eltBoutonSuite) {
-				replaceContentByText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
-				retrieveCDMs();	// lancer la suite
+				replaceContentByText(eltBoutonSuite, `en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cVueJSON.oMonstres.objets.length}`);
+				MZ_cLigneMonstre.sendAJAXCdMRequest();	// lancer la suite
 			} else {
 				eltBoutonSuite = document.createElement('div');
 				eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
@@ -13860,13 +13893,13 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				eltBoutonSuite.style.borderRadius = '10px';
 				eltBoutonSuite.style.cursor = 'pointer';
 				eltBoutonSuite.style.zIndex = '500';
-				appendText(eltBoutonSuite, `${nbReq} CdM(s) récupérées`);
+				appendText(eltBoutonSuite, `${nbResult} CdM(s) récupérées`);
 				appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
 				appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
 				appendBr(eltBoutonSuite);
-				appendText(eltBoutonSuite, `des ${MZ_EtatCdMs.nbMonstres} monstres`);
+				appendText(eltBoutonSuite, `des ${MZ_cVueJSON.oMonstres.objets.length - (MZ_cLigneMonstre.lastIndexSent + 1)} monstres restants`);
 				eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
-				eltBoutonSuite.onclick = MZ_SuiteCdMs;
+				eltBoutonSuite.onclick = MZ_cLigneMonstre.getSuiteCdMs;
 				document.body.appendChild(eltBoutonSuite);
 			}
 		} else if (eltBoutonSuite) {
