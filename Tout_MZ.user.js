@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.14
+// @version     1.6.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.14';
+var MZ_latest = '1.6.15';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -454,7 +454,7 @@ var MZ_changeLog = [
 	"V1.2.10.4 \t 12/12/2016",
 	"	- Correction bug à la récupération d'une erreur interface Bricoll'Troll",
 	"V1.2.10.3 \t 09/12/2016",
-	"	- Adaptation à une modification du HTML MH (voir set2DViewSystem)",
+	"	- Adaptation à une modification du HTML MH (voir MZ_cVueExterne.set2DViewSystem)",
 	"V1.2.10.2 \t 09/12/2016",
 	"	- positionnement des Trõlls camou/invi à la bonne position par rapport à la distance",
 	"V1.2.10.1 \t 08/12/2016",
@@ -11492,220 +11492,222 @@ function synchroniseFiltres() {
 
 /** x~x Initialisation: Ajout des Boutons ------------------------------ */
 
-function getVueScript() {
-	try {
-		let limitH, eLimitH = document.getElementById('MZvueExtMaxH');
-		if (eLimitH) {
-			limitH = eLimitH.value;
-		}
-		if (limitH != '') {
-			limitH = parseInt(limitH);
-		}
-		let limitV, eLimitV = document.getElementById('MZvueExtMaxV');
-		if (eLimitV) {
-			limitV = eLimitV.value;
-		}
-		if (limitV != '') {
-			limitV = parseInt(limitV);
-		}
-		let porteeVueExt;
-		if (limitH == '' || limitH == 0) {
-			MY_removeValue('MZ_VueExtMaxH');
-			porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
-			limitH = 999;
-		} else {
-			MY_setValue('MZ_VueExtMaxH', limitH);
-			porteeVueExt = limitH;
-		}
-		if (limitV == '' || limitV == 0) {
-			MY_removeValue('MZ_VueExtMaxV');
-			limitV = 999;
-		} else {
-			MY_setValue('MZ_VueExtMaxV', limitV);
-		}
-		let txt = `${bddTrolls(limitH, limitV) +
-			bddMonstres(null, null, limitH, limitV) +
-			bddChampignons(limitH, limitV) +
-			bddTresors(null, null, null, limitH, limitV) +
-			bddLieux(null, null, limitH, limitV)
-			}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
-			}\n#FIN ORIGINE\n`;
-		debugMZ(`getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
-		logMZ(`fin getVueScript`);
-		return txt;
-	} catch (exc) {
-		avertissement("[getVueScript] Erreur d'export vers Vue externe", null, null, exc);
-	}
-}
-
-/** x~x Menu Vue 2D ---------------------------------------------------- */
-var vue2Ddata = {
-	'Bricol\' Vue': {
-		url: `${URL_bricol_mountyhall}vue_form.php`,
-		paramid: 'vue',
-		func: getVueScript,
-		extra_params: {
-			mode: 'vue_SP_Vue2',
-			screen_width: window.screen.width
-		}
-	},
-	'Vue du CCM': {
-		url: URL_vue_CCM,
-		paramid: 'vue',
-		func: getVueScript,
-		extra_params: {
-			id: `${numTroll};${positionToString(getPosition())}`
-		}
-	},
-	'Vue Gloumfs 2D': {
-		url: URL_vue_Gloumfs2D,
-		paramid: 'vue_mountyzilla',
-		func: getVueScript,
-		extra_params: {}
-	},
-	'Vue Gloumfs 3D': {
-		url: URL_vue_Gloumfs3D,
-		paramid: 'vue_mountyzilla',
-		func: getVueScript,
-		extra_params: {}
-	},
-	'Grouky Vue!': {
-		url: URL_vue_Grouky,
-		paramid: 'vue',
-		func: getVueScript,
-		extra_params: {
-			type_vue: 'V5b1'
-		}
-	},
-	'Cube': {
-		noform: true,
-		func: function () {
-			MZ_AnalyseVue.openVueExterne(`${URL_MZ}/${URL_vue_cube}`);
-		},
-		extra_params: {},
-	},
-
-	/* 'DEBUG': {
-		url: 'http://weblocal/testeur.php',
-		paramid: 'vue',
-		func: getVueScript,
-		extra_params: {}
-	},*/
-};
-
-function refresh2DViewButton() {
-	// = EventListener menu+bouton vue 2D
-	let vueext = document.getElementById('selectVue2D').value;
-	MY_setValue('VUEEXT', vueext);
-	let oParamVue = vue2Ddata[vueext];
-	let form = document.getElementById('viewForm');
-	form.innerHTML = '';
-	form.method = 'post';
-	form.action = oParamVue.url;
-	form.target = '_blank';
-	if (oParamVue.paramid) {
-		appendHidden(form, oParamVue.paramid, '');
-	}
-	for (let key in oParamVue.extra_params) {
-		appendHidden(form, key, oParamVue.extra_params[key]);
-	}
-	if (oParamVue.noform) {
-		appendButton(form, 'Voir', oParamVue.func);
-	} else {
-		appendSubmit(form, 'Voir',
-			() => {
-				logMZ('click voir vue externe');
-				document.getElementsByName(oParamVue.paramid)[0].value =
-					oParamVue.func();
+// Encapsulation du code pour les vues externes
+class MZ_cVueExterne {
+	static vue2Ddata = {
+		'Bricol\' Vue': {
+			url: `${URL_bricol_mountyhall}vue_form.php`,
+			paramid: 'vue',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {
+				mode: 'vue_SP_Vue2',
+				screen_width: window.screen.width
 			}
-		);
+		},
+		'Vue du CCM': {
+			url: URL_vue_CCM,
+			paramid: 'vue',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {
+				id: `${numTroll};${positionToString(getPosition())}`
+			}
+		},
+		'Vue Gloumfs 2D': {
+			url: URL_vue_Gloumfs2D,
+			paramid: 'vue_mountyzilla',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {}
+		},
+		'Vue Gloumfs 3D': {
+			url: URL_vue_Gloumfs3D,
+			paramid: 'vue_mountyzilla',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {}
+		},
+		'Grouky Vue!': {
+			url: URL_vue_Grouky,
+			paramid: 'vue',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {
+				type_vue: 'V5b1'
+			}
+		},
+		'Cube': {
+			noform: true,
+			func: function () {
+				MZ_AnalyseVue.openVueExterne(`${URL_MZ}/${URL_vue_cube}`);
+			},
+			extra_params: {},
+		},
+
+		/* 'DEBUG': {
+			url: 'http://weblocal/testeur.php',
+			paramid: 'vue',
+			func: MZ_cVueExterne.getVueScript,
+			extra_params: {}
+		},*/
+	};
+
+	static getVueScript() {
+		try {
+			let limitH, eLimitH = document.getElementById('MZvueExtMaxH');
+			if (eLimitH) {
+				limitH = eLimitH.value;
+			}
+			if (limitH != '') {
+				limitH = parseInt(limitH);
+			}
+			let limitV, eLimitV = document.getElementById('MZvueExtMaxV');
+			if (eLimitV) {
+				limitV = eLimitV.value;
+			}
+			if (limitV != '') {
+				limitV = parseInt(limitV);
+			}
+			let porteeVueExt;
+			if (limitH == '' || limitH == 0) {
+				MY_removeValue('MZ_VueExtMaxH');
+				porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
+				limitH = 999;
+			} else {
+				MY_setValue('MZ_VueExtMaxH', limitH);
+				porteeVueExt = limitH;
+			}
+			if (limitV == '' || limitV == 0) {
+				MY_removeValue('MZ_VueExtMaxV');
+				limitV = 999;
+			} else {
+				MY_setValue('MZ_VueExtMaxV', limitV);
+			}
+			let txt;
+			if (MZ_cVueJSON.oMonstres) {
+				// vue "nouvelle"
+				txt = MZ_cVueJSON.oTrolls.getData4Vue2D(limitH, limitV);
+				txt += MZ_cVueJSON.oMonstres.getData4Vue2D(limitH, limitV);
+				txt += MZ_cVueJSON.oChampignons.getData4Vue2D(limitH, limitV);
+				txt += MZ_cVueJSON.oTresors.getData4Vue2D(limitH, limitV);
+				txt += MZ_cVueJSON.oLieux.getData4Vue2D(limitH, limitV);
+				txt += `#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
+					}\n#FIN ORIGINE\n`;
+			} else {
+				// to be deleted à l'abandon de l'ancienne vue
+				txt = `${bddTrolls(limitH, limitV) +
+					bddMonstres(null, null, limitH, limitV) +
+					bddChampignons(limitH, limitV) +
+					bddTresors(null, null, null, limitH, limitV) +
+					bddLieux(null, null, limitH, limitV)
+					}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
+					}\n#FIN ORIGINE\n`;
+			}
+			//logMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`); // xxx
+			debugMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
+			logMZ(`fin MZ_cVueExterne.getVueScript`);
+			return txt;
+		} catch (exc) {
+			avertissement("[MZ_cVueExterne.getVueScript] Erreur d'export vers Vue externe", null, null, exc);
+		}
+	}
+
+	static refresh2DViewButton() {
+		// = EventListener menu+bouton vue 2D
+		let vueext = document.getElementById('selectVue2D').value;
+		MY_setValue('VUEEXT', vueext);
+		let oParamVue = MZ_cVueExterne.vue2Ddata[vueext];
+		let form = document.getElementById('viewForm');
+		form.innerHTML = '';
+		form.method = 'post';
+		form.action = oParamVue.url;
+		form.target = '_blank';
+		if (oParamVue.paramid) {
+			appendHidden(form, oParamVue.paramid, '');
+		}
+		for (let key in oParamVue.extra_params) {
+			appendHidden(form, key, oParamVue.extra_params[key]);
+		}
+		if (oParamVue.noform) {
+			appendButton(form, 'Voir', oParamVue.func);
+		} else {
+			appendSubmit(form, 'Voir',
+				() => {
+					logMZ('click voir vue externe');
+					document.getElementsByName(oParamVue.paramid)[0].value =
+						oParamVue.func();
+				}
+			);
+		}
+	}
+
+	static set2DViewSystem() {
+		// Initialise le système de vue 2D
+		try {
+			// Recherche du point d'insertion
+			let center = document.getElementById('MHTitreH2');
+			if (!center) {
+				avertissement("Erreur d'initialisation du système de vue 2D", null, null, exc);
+				return;
+			}
+
+			// Récupération de la dernière vue utilisée
+			let vueext = MY_getValue('VUEEXT');
+			if (!vueext || !MZ_cVueExterne.vue2Ddata[vueext]) {
+				// sinon, la vue Bricol'Trolls est employée par défaut
+				vueext = 'Bricol\' Vue';
+			}
+
+			// Création du sélecteur de vue externe
+			let selectVue2D = document.createElement('select');
+			selectVue2D.id = 'selectVue2D';
+			selectVue2D.className = 'SelectboxV2';
+			// logMZ('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(MZ_cVueExterne.vue2Ddata).length + ' types de vue, troll n°' + numTroll);
+			for (let view in MZ_cVueExterne.vue2Ddata) {
+				appendOption(selectVue2D, view, view);
+			}
+			selectVue2D.value = vueext;
+			selectVue2D.onchange = MZ_cVueExterne.refresh2DViewButton;
+
+			// Création du formulaire d'envoi (vide, le submit est géré via handler)
+			let form = document.createElement('form');
+			form.id = 'viewForm';
+
+			// Insertion du système de vue
+			let table = document.createElement('table');
+			let tr = appendTr(table);
+			let stylesEspacement = { paddingLeft: '1px', paddingRight: '1px', whiteSpace: 'nowrap' };
+			let td = appendTd(tr, stylesEspacement);
+			td.appendChild(selectVue2D);	//.style.marginRight = '2px';
+			appendTdText(tr, 'Limiter à ', false, stylesEspacement);
+			td = appendTd(tr, stylesEspacement);
+			appendTextbox(td, 'input', 'MZvueExtMaxH', 3, 3, MY_getValue('MZ_VueExtMaxH'), 'MZvueExtMaxH');
+			appendTdText(tr, ' cases horizontales et ', false, stylesEspacement);
+			td = appendTd(tr, stylesEspacement);
+			appendTextbox(td, 'input', 'MZvueExtMaxV', 3, 3, MY_getValue('MZ_VueExtMaxV'), 'MZvueExtMaxV');
+			appendTdText(tr, ' cases verticales', false, stylesEspacement);
+			td = appendTd(tr, stylesEspacement);
+			// Roule : fontSize à 0 enlève le texte du bouton !!!! Qu'est-ce que c'est que le "bug de l'extra character" ?
+			//td.style.fontSize = '0px'; // gère le bug de l'extra character
+			td.appendChild(form);
+			if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
+				let eDiv = document.createElement('div');
+				eDiv.appendChild(table);
+				eDiv.style.witdth = '100%';
+				eDiv.style.textAlign = 'center';
+				table.style.width = '180px';
+				table.style.margin = '0 auto';
+				center.parentNode.insertBefore(eDiv, center.nextSibling);
+			} else {	// ancienne méthode
+				center.insertBefore(table, center.firstChild);
+				insertBr(center.childNodes[1]);
+			}
+
+			// Appelle le handler pour initialiser le bouton de submit
+			MZ_cVueExterne.refresh2DViewButton();
+			logMZ('fin préparation des vues externes');
+		} catch (exc) {
+			avertissement("Erreur de traitement du système de vue externe", null, null, exc);
+		}
 	}
 }
 
-function set2DViewSystem() {
-	// Initialise le système de vue 2D
-	// Recherche du point d'insertion
-	let center;
-	try {
-		// Roule 09/03/2019, encore un changement MH, je fais suivre comme je peux
-		center = document.getElementById('MHTitreH2');
-		// version initiale "pré-Roule"
-		if (!center) {
-			center = document.evaluate(
-				"//h2[@id='MHTitreH2']/following-sibling::center", document, null, 9, null
-			).singleNodeValue;
-		}
-		// Roule 09/12/2016 J'ai remplacé following-sibling::center par following-sibling::div suite à une modification MH
-		if (!center) {
-			center = document.evaluate(
-				"//h2[@id='MHTitreH2']/following-sibling::div", document, null, 9, null
-			).singleNodeValue;
-		}
-	} catch (exc) {
-		avertissement("Erreur d'initialisation du système de vue 2D", null, null, exc);
-		return;
-	}
-
-	// Récupération de la dernière vue utilisée
-	let vueext = MY_getValue('VUEEXT');
-	if (!vueext || !vue2Ddata[vueext]) {
-		// sinon, la vue Bricol'Trolls est employée par défaut
-		vueext = 'Bricol\' Vue';
-	}
-
-	try {
-		// Création du sélecteur de vue externe
-		let selectVue2D = document.createElement('select');
-		selectVue2D.id = 'selectVue2D';
-		selectVue2D.className = 'SelectboxV2';
-		// logMZ('[MZd ' + GM_info.script.version + '] préparation ' + Object.keys(vue2Ddata).length + ' types de vue, troll n°' + numTroll);
-		for (let view in vue2Ddata) {
-			appendOption(selectVue2D, view, view);
-		}
-		selectVue2D.value = vueext;
-		selectVue2D.onchange = refresh2DViewButton;
-
-		// Création du formulaire d'envoi (vide, le submit est géré via handler)
-		let form = document.createElement('form');
-		form.id = 'viewForm';
-
-		// Insertion du système de vue
-		let table = document.createElement('table');
-		let tr = appendTr(table);
-		let stylesEspacement = { paddingLeft: '1px', paddingRight: '1px', whiteSpace: 'nowrap' };
-		let td = appendTd(tr, stylesEspacement);
-		td.appendChild(selectVue2D);	//.style.marginRight = '2px';
-		appendTdText(tr, 'Limiter à ', false, stylesEspacement);
-		td = appendTd(tr, stylesEspacement);
-		appendTextbox(td, 'input', 'MZvueExtMaxH', 3, 3, MY_getValue('MZ_VueExtMaxH'), 'MZvueExtMaxH');
-		appendTdText(tr, ' cases horizontales et ', false, stylesEspacement);
-		td = appendTd(tr, stylesEspacement);
-		appendTextbox(td, 'input', 'MZvueExtMaxV', 3, 3, MY_getValue('MZ_VueExtMaxV'), 'MZvueExtMaxV');
-		appendTdText(tr, ' cases verticales', false, stylesEspacement);
-		td = appendTd(tr, stylesEspacement);
-		// Roule : fontSize à 0 enlève le texte du bouton !!!! Qu'est-ce que c'est que le "bug de l'extra character" ?
-		//td.style.fontSize = '0px'; // gère le bug de l'extra character
-		td.appendChild(form);
-		if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
-			let eDiv = document.createElement('div');
-			eDiv.appendChild(table);
-			eDiv.style.witdth = '100%';
-			eDiv.style.textAlign = 'center';
-			table.style.width = '180px';
-			table.style.margin = '0 auto';
-			center.parentNode.insertBefore(eDiv, center.nextSibling);
-		} else {	// ancienne méthode
-			center.insertBefore(table, center.firstChild);
-			insertBr(center.childNodes[1]);
-		}
-
-		// Appelle le handler pour initialiser le bouton de submit
-		refresh2DViewButton();
-		logMZ('fin préparation des vues externes');
-	} catch (exc) {
-		avertissement("Erreur de traitement du système de vue externe", null, null, exc);
-	}
-}
 
 /** x~x Tableau d'Infos ------------------------------------------------ */
 function initialiseInfos() {
@@ -13433,6 +13435,11 @@ class MZ_cVueJSON {
 		MZ_cVueJSON.oLieux = new MZ_cVueJSON('lieux');
 		MZ_cVueJSON.oCenotaphes = new MZ_cVueJSON('cenotaphes');
 	}
+	
+	static allLoaded() {
+		// fonction apellée quand tous les blocs sont chargés
+		MZ_cVueExterne.set2DViewSystem();
+	}
 
 	// ----- fin partie statique -------------
 
@@ -13442,6 +13449,7 @@ class MZ_cVueJSON {
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
 	MH_ft;				// l'object footable
 	MH_json;			// les datas obtenues en JSON par MH en AJAX
+	loaded = false;
 
 	// les éléments HTML
 	eltTable;
@@ -13527,6 +13535,7 @@ class MZ_cVueJSON {
 
 		this.mutationObserver.disconnect();
 		this.mutationObserver = undefined;
+		this.loaded = true;
 		//logMZ('MZ_cVueJSON_log il faut initialiser les ' + this.nomBase);
 		// trouver les numéro de colonne pour chaque info (dist, ref, nom, etc.)
 		this.eltTrHead = this.eltTable.tHead.rows[0];
@@ -13639,6 +13648,22 @@ class MZ_cVueJSON {
 				break;
 		}
 
+		let allLoaded = true;
+		for (let o of [
+			MZ_cVueJSON.oMonstres,
+			MZ_cVueJSON.oTrolls,
+			MZ_cVueJSON.oTresors,
+			MZ_cVueJSON.oChampignons,
+			MZ_cVueJSON.oLieux,
+			MZ_cVueJSON.oCenotaphes,
+			]) {
+			if (!o.loaded) {
+				allLoaded = false;
+				break;
+			}
+		}
+		if (allLoaded) MZ_cVueJSON.allLoaded();
+
 		logMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
 	}
 
@@ -13666,6 +13691,19 @@ class MZ_cVueJSON {
 		}
 	}
 
+	getData4Vue2D(limitH, limitV) {
+		let txt = '#DEBUT ' + this.nomBase.toUpperCase() + "\n";
+		for (let o of this.objets) {
+			txt += o.id + ';';
+			if (this.nomBase != 'trolls')
+				txt += o.nom + ';';
+			txt += parseInt(o.eltTdX.innerText) + ';';
+			txt += parseInt(o.eltTdY.innerText) + ';';
+			txt += parseInt(o.eltTdN.innerText) + "\n";
+		}
+		txt += '#FIN ' + this.nomBase.toUpperCase() + "\n";
+		return txt;
+	}
 }
 
 class MZ_cLigneVue {
@@ -14128,6 +14166,7 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 	}
 }
 
+// to be deleted à l'abandon de l'ancienne vue
 function do_vue_html() {
 	let skip = [];
 	for (let type in typesAFetcher) {
@@ -14185,7 +14224,7 @@ function do_vue_html() {
 		}
 
 		ajoutDesFiltres();
-		set2DViewSystem();
+		MZ_cVueExterne.set2DViewSystem();
 		// putBoutonTroogle();
 		putBoutonPXMP();
 
