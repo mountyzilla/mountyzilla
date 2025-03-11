@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.16
+// @version     1.6.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.16';
+var MZ_latest = '1.6.17';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -11701,7 +11701,7 @@ class MZ_cVueExterne {
 
 			// Appelle le handler pour initialiser le bouton de submit
 			MZ_cVueExterne.refresh2DViewButton();
-			logMZ('fin préparation des vues externes');
+			debugMZ('fin préparation des vues externes');
 		} catch (exc) {
 			avertissement("Erreur de traitement du système de vue externe", null, null, exc);
 		}
@@ -13404,7 +13404,7 @@ function do_vue() {
 	if (node) {
 		do_vue_html();	// "ancienne" vue
 	} else {
-		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille parfois  ');
+		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille. Parfois.  ');
 		MZ_cVueJSON.initGlobal();
 	}
 }
@@ -13438,14 +13438,14 @@ class MZ_cVueJSON {
 	}
 	
 	static allLoaded() {
-		// fonction apellée quand tous les blocs sont chargés
+		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
 		if (MZ_cVueJSON.callbacks !== undefined)
 			for (let callback of MZ_cVueJSON.callbacks)
 				try {
 					callback();
 				} catch (exc) {
-					logMZ("Erreur à l'appel d'une callback", exc);
+					logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
 				}
 	}
 
@@ -13492,7 +13492,10 @@ class MZ_cVueJSON {
 	constructor(nomBase) {
 		this.nomBase = nomBase;
 		this.eltTable = document.getElementById('VUE_' + this.nomBase);
-		if (this.eltTable == null) { return; } // skip si pas présent
+		if (this.eltTable == null) { 
+			logMZ("MZ_cVueJSON_log constructor pas d'élément" + 'VUE_' + this.nomBase);
+			return;
+		} // skip si pas présent
 		// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
 		let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
 		this.mutationObserver = new MutationObserver(function () {
@@ -13500,6 +13503,12 @@ class MZ_cVueJSON {
 			oThis.load();
 		});
 		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
+
+		this.load();
+	}
+
+	load() {
+		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
 
 		// faire pointer les propriétés de l'object vers les variables globales "let" de MH
 		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
@@ -13539,14 +13548,11 @@ class MZ_cVueJSON {
 				break;
 		}
 
-		this.load();
-	}
-
-	load() {
-		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
-
 		// teste que notre tableau est rempli si le tableau MH est rempli
-		if (this.MH_json === undefined || this.objets !== undefined) return;
+		if (this.MH_json === undefined || this.objets !== undefined) {
+			debugMZ("MZ_cVueJSON_log load " + this.nomBase + " this.MH_json=" + this.MH_json + ", this.objets=" + this.objets);
+			return;
+		}
 
 		this.mutationObserver.disconnect();
 		this.mutationObserver = undefined;
@@ -13673,13 +13679,14 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.oCenotaphes,
 			]) {
 			if (o === undefined || !o.loaded) {
+				if (o) debugMZ("MZ_cVueJSON.load, " + o.nomBase + " not loaded");
 				allLoaded = false;
 				break;
 			}
 		}
 		if (allLoaded) MZ_cVueJSON.allLoaded();
 
-		logMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
+		debugMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
 	}
 
 	insertColumn(indxAfter, title, width, callbackParam) {
