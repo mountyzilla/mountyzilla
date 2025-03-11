@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.15
+// @version     1.6.16
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.15';
+var MZ_latest = '1.6.16';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13425,6 +13425,7 @@ class MZ_cVueJSON {
 	static oLieux;
 	static oCenotaphes;
 	static MutationObserverConfig = {childList: true, subtree: true };
+	static callbacks;
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13439,6 +13440,21 @@ class MZ_cVueJSON {
 	static allLoaded() {
 		// fonction apellée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
+		if (MZ_cVueJSON.callbacks !== undefined)
+			for (let callback of MZ_cVueJSON.callbacks)
+				try {
+					callback();
+				} catch (exc) {
+					logMZ("Erreur à l'appel d'une callback", exc);
+				}
+	}
+
+	static registerCallback(callback) {
+		// permet aux autres script d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé)
+		if (MZ_cVueJSON.callbacks === undefined)
+			MZ_cVueJSON.callbacks = [callback];
+		else
+			MZ_cVueJSON.callbacks.push(callback);
 	}
 
 	// ----- fin partie statique -------------
@@ -13484,16 +13500,15 @@ class MZ_cVueJSON {
 			oThis.load();
 		});
 		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
-		this.load();
-	}
 
-	initMHThings() {
-		// fait pointer les propriétés de l'object vers les variables globales "let" de MH
+		// faire pointer les propriétés de l'object vers les variables globales "let" de MH
 		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
 		// on profite du switch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
 		switch (this.nomBase) {
 			case 'monstres':
-				this.MH_ft = VUE_monstres;  // id: table#VUE_monstres
+				// VUE_monstres est une VARIABLE GLOBALE définie par MH qui pointe vers table#VUE_monstres
+				this.MH_ft = VUE_monstres;
+				// json_monstres est une VARIABLE GLOBALE définie par MH et remplie au moment du retour AJAX de la vue des monstres
 				this.MH_json = json_monstres;
 				MZ_cLigneMonstre.MZ_oVueJSON = this;
 				break;
@@ -13523,13 +13538,13 @@ class MZ_cVueJSON {
 				MZ_cLigneCenotaphe.MZ_oVueJSON = this;
 				break;
 		}
+
+		this.load();
 	}
 
 	load() {
 		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
-		//logMZ('MZ_cVueJSON_log callback2 ' + this.nomBase);
-		let done = true;
-		this.initMHThings();
+
 		// teste que notre tableau est rempli si le tableau MH est rempli
 		if (this.MH_json === undefined || this.objets !== undefined) return;
 
@@ -13657,7 +13672,7 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.oLieux,
 			MZ_cVueJSON.oCenotaphes,
 			]) {
-			if (!o.loaded) {
+			if (o === undefined || !o.loaded) {
 				allLoaded = false;
 				break;
 			}
@@ -13707,7 +13722,7 @@ class MZ_cVueJSON {
 }
 
 class MZ_cLigneVue {
-	// classe "abstraite". Ce sont les héritiers qui sont instanciés
+	// classe "abstraite". Ce sont les classes filles qui sont instanciés
 	id;
 	// les <td> initiaux (de MH). Ils peuvent bouger si on insère des colonnes mais ces variables restent valides
 	eltTdDist;
