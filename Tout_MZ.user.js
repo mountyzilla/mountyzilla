@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.17
+// @version     1.6.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.17';
+var MZ_latest = '1.6.18';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6206,10 +6206,17 @@ function traiteMonstre() {
 		).singleNodeValue;
 		texte = (nodeTitre != null) ? nodeTitre.firstChild.nodeValue : texte;
 		if (texte == "" || texte.includes("existe pas")) {
-			let tabEventDescription = document.getElementsByClassName('monstre');
-			console.log(tabEventDescription);
-			if (tabEventDescription[0] != undefined) {
-				let eltNom = tabEventDescription[0];
+			let tabEventDescription = document.getElementsByClassName('mh_tdpage MORT');
+			if (tabEventDescription.length == 0) {
+				logMZ('traiteMonstre, impossible de trouver le nom du monstre');
+				return;
+			}
+			for (let event of tabEventDescription) {
+				let monstreMort = event.getElementsByClassName('monstre');
+				if (monstreMort.length == 0) {
+					continue;
+				}
+				let eltNom = monstreMort[0];
 				texte = eltNom.textContent;
 				// logMZ('traiteMonstre, nom sans id=' + texte);
 				// find next textElement
@@ -6228,9 +6235,6 @@ function traiteMonstre() {
 					texte = `${texte} ${eSibling.textContent.replace(/[ .]/g, '')}`;
 					break;
 				}
-			} else {
-				logMZ('traiteMonstre, impossible de trouver le nom du monstre');
-				return;
 			}
 		}
 		// logMZ('traiteMonstre, nom=' + texte);
