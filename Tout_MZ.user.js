@@ -1479,28 +1479,28 @@ function createCollapsibleBloc(id, title, subTxt = undefined) {
 		labelH3 = document.createElement('h3'),
 		innerDiv = document.createElement('div');
 
-		outerDiv.id = id;
-		outerDiv.className = "mh_tdpage collapsible-wrap";
-		input.id = `mz_inner_${id}`;
-		input.className = "toggle";
-		input.type = "checkbox";
-		input.checked = true;
-		label.htmlFor = `mz_inner_${id}`;
-		label.className = "lbl-toggle mh_tdtitre";
-		labelH3.textContent = title;
-		label.appendChild(labelH3);
-		innerDiv.className = "collapsible-content";
+	outerDiv.id = id;
+	outerDiv.className = "mh_tdpage collapsible-wrap";
+	input.id = `mz_inner_${id}`;
+	input.className = "toggle";
+	input.type = "checkbox";
+	input.checked = true;
+	label.htmlFor = `mz_inner_${id}`;
+	label.className = "lbl-toggle mh_tdtitre";
+	labelH3.textContent = title;
+	label.appendChild(labelH3);
+	innerDiv.className = "collapsible-content";
 
-		if (subTxt) {
-			let labelSpan = document.createElement('span');
-			labelSpan.textContent = subTxt;
-			labelSpan.style.fontSize = 'smaller';
-			labelSpan.style.float = 'right';
-			label.appendChild(labelSpan);
-		}
+	if (subTxt) {
+		let labelSpan = document.createElement('span');
+		labelSpan.textContent = subTxt;
+		labelSpan.style.fontSize = 'smaller';
+		labelSpan.style.float = 'right';
+		label.appendChild(labelSpan);
+	}
 
-		outerDiv.append(input, label, innerDiv);
-		return [outerDiv, innerDiv];
+	outerDiv.append(input, label, innerDiv);
+	return [outerDiv, innerDiv];
 }
 
 /** x~x Fonctions de mise en forme du texte ---------------------------- */
@@ -4806,7 +4806,7 @@ function treateEnchantement_pre() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
+		let { compo, monstre, qualite, localisation } = extractRequiredCompo(nodes.snapshotItem(i));
 		// avertissement(compo+" ["+localisation+"] "+monstre+" "+qualite);
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
@@ -4836,7 +4836,7 @@ function extractRequiredCompo(node) {
 	monstre = monstre.replace(/ Géante?/, "");
 	let qualite = texte.substring(texte.indexOf("Qualité ") + 8, texte.indexOf(" ["));
 	let localisation = texte.substring(texte.indexOf("[") + 1, texte.indexOf("]"));
-	return {compo, monstre, qualite, localisation};
+	return { compo, monstre, qualite, localisation };
 }
 
 function treateEnchantement() {
@@ -4860,7 +4860,7 @@ function treateEnchantement() {
 		return;
 	}
 	for (let i = 0; i < 3; i++) {
-		let {compo, monstre, qualite, localisation} = extractRequiredCompo(nodes.snapshotItem(i));
+		let { compo, monstre, qualite, localisation } = extractRequiredCompo(nodes.snapshotItem(i));
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${i}`, `${compo};${localisation};${monstre.replace(/ Géante?/, "")};${qualite};${trim(nodes.snapshotItem(i).nodeValue)}`);
 	}
 	MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${idEnchanteur};${MY_getValue(`${numTroll}.position.X`)};${MY_getValue(`${numTroll}.position.Y`)};${MY_getValue(`${numTroll}.position.N`)}`);
@@ -4895,7 +4895,7 @@ function lireEnchantementEncours() {
 		MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
 		let components = cell.querySelectorAll("li");
 		for (let j = 0; j < components.length; j++) {
-			let {compo, monstre, qualite, localisation} = extractRequiredCompo(components[j]);
+			let { compo, monstre, qualite, localisation } = extractRequiredCompo(components[j]);
 			MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
 			MZ_troogle.addTroogleLink(components[j], `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
 			MZ_troc.addTrocLink(components[j], monstre, compo, qualite);
@@ -7450,7 +7450,7 @@ function atoi(s) {
 // Namespace MZ_troogle: isoler l'api liée à Troogle dans un objet et ne présenter que les méthodes
 // réellement publiques dans cet objet; les autres sont cachées dans le scope du bloc (évite de remplir la table des
 // fonctions visibles) (import Chrall)
-(function(MZ_troogle){
+(function (MZ_troogle) {
 
 	const BASE_TROOGLE_URL = `https://troogle.iktomi.eu/`;
 	const BASE_TROOGLE_SEARCH = `${BASE_TROOGLE_URL}entities/?entity_search[search]=`;
@@ -7462,7 +7462,7 @@ function atoi(s) {
 	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
 	// @param node element html (conteneur) dans lequel le lien va être ajouté
 	// @param step objet étape de mission (cf handleMonsterStep)
-	MZ_troogle.addTroogleLinkToStep = function(node, step) {
+	MZ_troogle.addTroogleLinkToStep = function (node, step) {
 		let search = `${step.recherche} `;
 		if (0 < step.niveau) {
 			let max = 'plus' === step.mod ? 100 : step.niveau + step.mod;
@@ -7475,7 +7475,7 @@ function atoi(s) {
 	// Ajoute un lien vers Troogle en ajoutant la position courante du troll dans les paramètres
 	// @param node element html (conteneur) dans lequel le lien va être ajouté
 	// @param text texte de recherche (supposé correctement écrit)
-	MZ_troogle.addTroogleLink = function(node, text) {
+	MZ_troogle.addTroogleLink = function (node, text) {
 		let url = `${BASE_TROOGLE_SEARCH}${text} `;
 		url += playerPositionParameters();
 		let link = appendA(node, url);
@@ -7485,7 +7485,7 @@ function atoi(s) {
 	}
 
 	// Paramètres de recherche pour la position courante du troll actif
-	function playerPositionParameters(){
+	function playerPositionParameters() {
 		let positionX = MY_getValue(`${numTroll}.position.X`);
 		let positionY = MY_getValue(`${numTroll}.position.Y`);
 		let positionN = MY_getValue(`${numTroll}.position.N`);
@@ -7496,7 +7496,7 @@ function atoi(s) {
 
 
 // Namespace MZ_troc: isoler l'api liée au Troc de l'Hydre
-(function(MZ_troc) {
+(function (MZ_troc) {
 
 	const BASE_TROC_URL = 'https://troc.mountyhall.com/'; // search.php
 
@@ -7505,7 +7505,7 @@ function atoi(s) {
 	// @param monster monstre pour lequel le composant est recherché
 	// @param part partie du monstre/composant
 	// @param quality qualité minimum (textuelle, sera convertie via qualiteNum)
-	MZ_troc.addTrocLink = function(node, monster, part, quality) {
+	MZ_troc.addTrocLink = function (node, monster, part, quality) {
 		quality = qualiteNum.indexOf(quality);
 		let url = `${BASE_TROC_URL}search.php?monster=${monster}&part=${part}&qualite=${quality}&q=min`;
 		let link = appendA(node, url);
@@ -7896,7 +7896,7 @@ function traiterJubilaires() {
 				if (!listeTrolls || listeTrolls.length == 0) {
 					return;
 				}
-				let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+				let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
 				insertJubilaire(insertPoint, listeTrolls);
 			},
 		});
@@ -7959,11 +7959,11 @@ function traiterNouvelles() {
 	news.push(['2024-05-06', ' Les jubilaires sont revenus. Merci pour votre patience pas infinie mais presque.']);
 	let d2 = new Date();
 	if (d2.getMonth() == 0 && d2.getDate() < 10) {
-		news.push([new Date(d2.getFullYear(), 0, 1), `MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
+		news.push([new Date(d2.getFullYear(), 0, 1), ` MZ vous souhaite bonne chasse pour ${d2.getFullYear()}`]);
 	}
-	let twoMonthAgo = ( d => new Date(d.setMonth(d.getMonth()-2)) )(new Date);
+	let twoMonthAgo = (d => new Date(d.setMonth(d.getMonth() - 2)))(new Date);
 	let recentNews = news.filter((n) => n[0] == null || new Date(n[0]) > twoMonthAgo);
-	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
 	insertNews(insertPoint, recentNews);
 }
 
@@ -7996,7 +7996,7 @@ function insertNews(insertPt, listNews) {
 	}
 
 	// afficher en rouge si moins de 15 jours
-	let twoWeeksAgo = ( d => new Date(d.setDate(d.getDate()-15)) )(new Date);
+	let twoWeeksAgo = (d => new Date(d.setDate(d.getDate() - 15)))(new Date);
 	for (const [dt, txt] of listNews.values()) {
 		let tr = appendTr(mainBody, 'mh_tdpage');
 		let td = appendTdCenter(tr);
@@ -8077,7 +8077,7 @@ function do_news() {
 
 	traiterJubilaires();
 	traiterNouvelles();
-	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
 	insertChangelog(insertPoint);
 
 	displayScriptTime(undefined, 'do_news_log');
@@ -9568,7 +9568,7 @@ function deleteEnchantement() {
 function do_option() {
 	start_script(712, 'do_option_log');
 	/*debugger;/*  */
-	let insertPoint = isDesktopView() ? getFooter(): document.getElementsByTagName('main')[0].lastElementChild;
+	let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
 	insertBefore(insertPoint, document.createElement('br'));
 	insertOptionTable(insertPoint);
 	let ti = document.evaluate(
@@ -10387,7 +10387,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 	oRet.sendInfoCDM = function () {
 		MY_setValue('CDMID', 1 + parseInt(MY_getValue('CDMID')));
 		let buttonCDM = this;
-		let setMsgResultat = function(texte) {
+		let setMsgResultat = function (texte) {
 			if (!buttonCDM.appendChild) {
 				buttonCDM = document.getElementById('MZ_msgCdM');
 				texte = `Envoi à MZ : ${texte}`;
@@ -10945,7 +10945,7 @@ function savePosition() {
  */
 
 /* [functions] Récup données Utilisateur */
-function getPosition(raise=false) {
+function getPosition(raise = false) {
 	let callback = raise ? avertissement : debugMZ;
 	if (currentPosition.reduce((acc, curVal) => acc + curVal, 0) != 0) {
 		// Pour rétrocompatibilité
@@ -12371,7 +12371,7 @@ function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la su
 		this.parentNode.removeChild(this);
 		return;
 	}
-	replaceContentByText(this,`en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
+	replaceContentByText(this, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
 	this.title = 'Shift-Click pour faire disparaitre ce bouton';
 	this.style.cursor = '';	// default
 	this.onclick = MZ_SupprBoutonCdMs;
@@ -13424,7 +13424,7 @@ class MZ_cVueJSON {
 	static oChampignons;
 	static oLieux;
 	static oCenotaphes;
-	static MutationObserverConfig = {childList: true, subtree: true };
+	static MutationObserverConfig = { childList: true, subtree: true };
 	static callbacks;
 
 	static initGlobal() {
@@ -13436,7 +13436,7 @@ class MZ_cVueJSON {
 		MZ_cVueJSON.oLieux = new MZ_cVueJSON('lieux');
 		MZ_cVueJSON.oCenotaphes = new MZ_cVueJSON('cenotaphes');
 	}
-	
+
 	static allLoaded() {
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
@@ -13492,7 +13492,7 @@ class MZ_cVueJSON {
 	constructor(nomBase) {
 		this.nomBase = nomBase;
 		this.eltTable = document.getElementById('VUE_' + this.nomBase);
-		if (this.eltTable == null) { 
+		if (this.eltTable == null) {
 			logMZ("MZ_cVueJSON_log constructor pas d'élément" + 'VUE_' + this.nomBase);
 			return;
 		} // skip si pas présent
@@ -13596,15 +13596,15 @@ class MZ_cVueJSON {
 					break;
 			}
 		}
-		if (this.indxTdDist === undefined)   {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Dist'); return;}
-		if (isDesktopView() && this.indxTdAction === undefined) {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return;}
-		if (this.indxTdRef === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return;}
-		if (this.indxTdNom === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return;}
-		if (this.indxTdX === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return;}
-		if (this.indxTdY === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return;}
-		if (this.indxTdN === undefined)      {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return;}
-		if (this.nomBase == "trolls" && this.indxTdGuilde === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Guilde'); return;}
-		if (this.nomBase == "trolls" && this.indxTdNiv === undefined)    {logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Niveau'); return;}
+		if (this.indxTdDist === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Dist'); return; }
+		if (isDesktopView() && this.indxTdAction === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Action'); return; }
+		if (this.indxTdRef === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Ref'); return; }
+		if (this.indxTdNom === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Nom'); return; }
+		if (this.indxTdX === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne X'); return; }
+		if (this.indxTdY === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Y'); return; }
+		if (this.indxTdN === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne N'); return; }
+		if (this.nomBase == "trolls" && this.indxTdGuilde === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Guilde'); return; }
+		if (this.nomBase == "trolls" && this.indxTdNiv === undefined) { logMZ('MZ_cVueJSON ' + this.nomBase + ' pas de colonne Niveau'); return; }
 
 		// faire un tableau de <tr> indexé ~~par l'ID~~ (id monstre retiré à cause des fumeux)
 		let rows = [];
@@ -13677,7 +13677,7 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.oChampignons,
 			MZ_cVueJSON.oLieux,
 			MZ_cVueJSON.oCenotaphes,
-			]) {
+		]) {
 			if (o === undefined || !o.loaded) {
 				if (o) debugMZ("MZ_cVueJSON.load, " + o.nomBase + " not loaded");
 				allLoaded = false;
@@ -13834,7 +13834,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			this.parentNode.removeChild(this);
 			return;
 		}
-		replaceContentByText(this,`en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cLigneMonstre.MZ_oVueJSON.objets.length}`);
+		replaceContentByText(this, `en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cLigneMonstre.MZ_oVueJSON.objets.length}`);
 		this.style.cursor = '';	// default
 		this.onclick = MZ_cLigneMonstre.removeCdMButton;
 		MZ_cLigneMonstre.sendAJAXCdMRequest();
@@ -14026,7 +14026,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		let eTr = createTrollRowFromRef(infos, ref_tr);
 		let allTr = MZ_cLigneTroll.MZ_oVueJSON.MH_ft.getElementsByTagName('tr');
 
-		let insertAt = allTr.length-1;  // insert à la fin par défaut
+		let insertAt = allTr.length - 1;  // insert à la fin par défaut
 		for (const [idx, oTroll] of MZ_cLigneTroll.MZ_oVueJSON.objets.entries()) {
 			if (oTroll.dist > infos.dist) {
 				insertAt = idx;
@@ -14100,7 +14100,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static receptionBricolTrollAJAX(data) {
-		return function(responseDetails) {
+		return function (responseDetails) {
 			let btData;
 			try {
 				if (responseDetails.status == 0) { return; }
@@ -16969,7 +16969,7 @@ function MZ_doSearchCompoTanieres(event) {
 	let oCompos = {};
 	let msgErreur, msgWarning;
 	// ajouter un compo à l'objet oCompos
-	let addCompoQualite = function(compo, qualite) {
+	let addCompoQualite = function (compo, qualite) {
 		let oCompo = oCompos[compo];
 		if (oCompo == undefined) {
 			oCompo = {};
@@ -16980,7 +16980,7 @@ function MZ_doSearchCompoTanieres(event) {
 		oCompo[qualite] = ++qty;
 	}
 	// affichage d'un titre
-	let displayTitre = function(titre, color) {
+	let displayTitre = function (titre, color) {
 		let eTr = document.createElement('tr');
 		let eTd = document.createElement('td');
 		eTd.className = 'mh_tdpage';
@@ -16991,7 +16991,7 @@ function MZ_doSearchCompoTanieres(event) {
 		eTableTaniere.appendChild(eTr);
 	}
 	// affichage du résultat
-	let displayResults = function() {
+	let displayResults = function () {
 		while (eTableTaniere.rows.length > 0) {
 			eTableTaniere.deleteRow(0);
 		}
@@ -17364,7 +17364,7 @@ try {
 		isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -3, service: 13 } }) ||	// compo en tanière
 		isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -5, sub: 'rech' } }) ||	// recherche en tanière
 		isPage('MH_Comptoirs/Comptoir_Recherche.php')
-		) {
+	) {
 		MZdo_hookCompoTanieres();
 	}
 	if (document.body.dataset.MZ_Etat === undefined) {	// si l'état a été positionné par quelqu'un d'autre, laisser tel quel
