@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.19
+// @version     1.6.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.19';
+var MZ_latest = '1.6.20';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -922,6 +922,10 @@ function isDesktopView() {
 	if (nav.length == 0) { return true; }
 	// possible nav en desktop
 	return nav[0].className == "compact mh_h" || nav[0].innerText.includes('|');
+}
+
+function isSmartphoneBrowser() {
+	return navigator.userAgentData.mobile;
 }
 
 function replaceLinkMHtoMZ() {
@@ -9379,8 +9383,8 @@ function insertOptionTable(insertPt) {
 
 	tr = appendTr(tbody);
 	td = appendTd(tr);
-	appendCheckBoxBlock(td, 'highlightSameXYN', "Réhausse des lignes de tableau", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
-	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement au survol des coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
+	appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une grotte", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
+	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 
 	/* Interface Tactique */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -13427,6 +13431,7 @@ class MZ_cVueJSON {
 	static oCenotaphes;
 	static MutationObserverConfig = { childList: true, subtree: true };
 	static callbacks;
+	static cssHighlightDone;
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13462,7 +13467,13 @@ class MZ_cVueJSON {
 
 	static initHighlightSameXYN() {
 		if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
-		addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
+
+		// ajouter les styles CSS pour la mise en valeur des lignes de vue
+		if (!MZ_cVueJSON.cssHighlightDone) {
+			addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: rgba(255, 255, 255, 0.5); }");
+			MZ_cVueJSON.cssHighlightDone = true;
+		}
+
 
 		let coordsOnly = MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true';
 		let toggleFn = function (e) {
@@ -13470,7 +13481,7 @@ class MZ_cVueJSON {
 			$(`tr[data-xyn='${tr.getAttribute("data-xyn")}']`).toggleClass(e.data.class);
 		};
 
-		// rebalayage des tableaux qui peuvent avoir été modifiés par les callbacks utiisateurs
+		// rebalayage des tableaux qui peuvent avoir été modifiés par les callbacks utilisateurs
 		for (let o of [
 			MZ_cVueJSON.oMonstres,
 			MZ_cVueJSON.oTrolls,
@@ -13488,8 +13499,13 @@ class MZ_cVueJSON {
 				tr.setAttribute('data-xyn', `${tdX.innerText};${tdY.innerText};${tdN.innerText}`);
 
 				for (let td of coordsOnly ? [tdX, tdY, tdN] : tr.cells) {
-					$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
-					$(td).on("click", { class: "xyn-sel" }, toggleFn);
+					if (isSmartphoneBrowser()) {
+						$(td).on("touchstart", { class: "xyn-sel" }, toggleFn);
+					} else {
+						$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
+						$(td).on("click", { class: "xyn-sel" }, toggleFn);
+					}
+
 				}
 			}
 		}
@@ -14010,10 +14026,10 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static colBtPVDone;
 	static colBtPADone;
+	static cssBtDone;
 	static refTr;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
-	cssBtDone;
 
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
