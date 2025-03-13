@@ -11690,18 +11690,15 @@ class MZ_cVueExterne {
 			// Roule : fontSize à 0 enlève le texte du bouton !!!! Qu'est-ce que c'est que le "bug de l'extra character" ?
 			//td.style.fontSize = '0px'; // gère le bug de l'extra character
 			td.appendChild(form);
-			if (center.id == 'MHTitreH2') {	// 09/03/2019 nouvelle méthode
-				let eDiv = document.createElement('div');
-				eDiv.appendChild(table);
-				eDiv.style.witdth = '100%';
-				eDiv.style.textAlign = 'center';
-				table.style.width = '180px';
-				table.style.margin = '0 auto';
-				center.parentNode.insertBefore(eDiv, center.nextSibling);
-			} else {	// ancienne méthode
-				center.insertBefore(table, center.firstChild);
-				insertBr(center.childNodes[1]);
-			}
+			let eDiv = document.createElement('div');
+			eDiv.appendChild(table);
+			eDiv.style.witdth = '100%';
+			eDiv.style.textAlign = 'center';
+			if (!isDesktopView()) { eDiv.style.overflowX = "scroll"; }
+			table.style.width = '180px';
+			table.style.margin = '0 auto';
+			center.parentNode.insertBefore(eDiv, center.nextSibling);
+
 
 			// Appelle le handler pour initialiser le bouton de submit
 			MZ_cVueExterne.refresh2DViewButton();
