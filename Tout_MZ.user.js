@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.18
+// @version     1.6.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.18';
+var MZ_latest = '1.6.19';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13451,6 +13451,8 @@ class MZ_cVueJSON {
 				} catch (exc) {
 					logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
 				}
+
+		MZ_cVueJSON.initHighlightSameXYN();
 	}
 
 	static registerCallback(callback) {
@@ -13459,6 +13461,41 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.callbacks = [callback];
 		else
 			MZ_cVueJSON.callbacks.push(callback);
+	}
+
+	static initHighlightSameXYN() {
+		if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
+		addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
+
+		let coordsOnly = MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true';
+		let toggleFn = function (e) {
+			let tr = this.parentNode;
+			$(`tr[data-xyn='${tr.getAttribute("data-xyn")}']`).toggleClass(e.data.class);
+		};
+
+		// rebalayage des tableaux qui peuvent avoir été modifiés par les callbacks utiisateurs
+		for (let o of [
+			MZ_cVueJSON.oMonstres,
+			MZ_cVueJSON.oTrolls,
+			MZ_cVueJSON.oTresors,
+			MZ_cVueJSON.oChampignons,
+			MZ_cVueJSON.oLieux,
+			MZ_cVueJSON.oCenotaphes,
+		]) {
+			for (let idx = 0; idx < o.eltTable.tBodies[0].rows.length; idx++) {
+				let tr = o.eltTable.tBodies[0].rows[idx];
+				if (tr.cells.length < 5) continue;	// on peut avoir "no result"
+				let tdX = tr.cells[o.indxTdX],
+						tdY = tr.cells[o.indxTdY],
+						tdN = tr.cells[o.indxTdN];
+				tr.setAttribute('data-xyn', `${tdX.innerText};${tdY.innerText};${tdN.innerText}`);
+
+				for (let td of coordsOnly ? [tdX, tdY, tdN] : tr.cells) {
+					$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
+					$(td).on("click", { class: "xyn-sel" }, toggleFn);
+				}
+			}
+		}
 	}
 
 	// ----- fin partie statique -------------
