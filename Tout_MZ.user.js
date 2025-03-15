@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.21
+// @version     1.6.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.21';
+var MZ_latest = '1.6.22';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6334,6 +6334,52 @@ function do_infomonstre() {
 }
 
 /** x~x Highlight same XYN --------------------------------------------- */
+class MZ_cHighlightSameXYN {
+	static initDone = false;
+	static skipProcess = true;
+	static coordsOnly = false;
+
+	static init() {
+		if (MZ_cHighlightSameXYN.initDone) { return; }
+		MZ_cHighlightSameXYN.initDone = true;
+		if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') { return; }
+
+		MZ_cHighlightSameXYN.skipProcess = false;
+		MZ_cHighlightSameXYN.coordsOnly = MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true';
+		addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: rgba(255, 255, 255, 0.5); }");
+	}
+
+	static processVue(oVue) {
+		if (MZ_cHighlightSameXYN.skipProcess) { return; }
+
+		let toggleFn = function (e) {
+			let tr = this.parentNode;
+			$(`tr[data-xyn='${tr.getAttribute("data-xyn")}']`).toggleClass(e.data.class);
+		};
+
+		// rebalayage des tableaux qui peuvent avoir été modifiés par les callbacks utilisateurs
+		for (let tr of oVue.eltTable.tBodies[0].rows) {
+			// let tr = oVue.eltTable.tBodies[0].rows[idx];
+			if (tr.cells.length < 5) continue;	// on peut avoir "no result"
+			let tdX = tr.cells[oVue.indxTdX],
+					tdY = tr.cells[oVue.indxTdY],
+					tdN = tr.cells[oVue.indxTdN];
+			tr.setAttribute('data-xyn', `${tdX.innerText};${tdY.innerText};${tdN.innerText}`);
+
+			for (let td of MZ_cHighlightSameXYN.coordsOnly ? [tdX, tdY, tdN] : tr.cells) {
+				if (isSmartphoneBrowser()) {
+					$(td).on("touchstart", { class: "xyn-sel" }, toggleFn);
+				} else {
+					$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
+					$(td).on("click", { class: "xyn-sel" }, toggleFn);
+				}
+
+			}
+		}
+	}
+}
+
+// to be deleted à l'abandon de l'ancienne vue
 function do_highlightSameXYN() {
 	if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
 
@@ -9389,7 +9435,7 @@ function insertOptionTable(insertPt) {
 
 	tr = appendTr(tbody);
 	td = appendTd(tr);
-	appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une grotte", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
+	appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une caverne", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
 	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 
 	/* Interface Tactique */
@@ -13459,58 +13505,11 @@ class MZ_cVueJSON {
 				logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
 			}
 		}
-		MZ_cVueJSON.initHighlightSameXYN();
 	}
 
 	static registerCallback(callback) {
 		// permet aux autres script d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé)
 		MZ_cVueJSON.callbacks.push(callback);
-	}
-
-	static initHighlightSameXYN() {
-		if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
-
-		// ajouter les styles CSS pour la mise en valeur des lignes de vue
-		if (!MZ_cVueJSON.cssHighlightDone) {
-			addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: rgba(255, 255, 255, 0.5); }");
-			MZ_cVueJSON.cssHighlightDone = true;
-		}
-
-
-		let coordsOnly = MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true';
-		let toggleFn = function (e) {
-			let tr = this.parentNode;
-			$(`tr[data-xyn='${tr.getAttribute("data-xyn")}']`).toggleClass(e.data.class);
-		};
-
-		// rebalayage des tableaux qui peuvent avoir été modifiés par les callbacks utilisateurs
-		for (let o of [
-			MZ_cVueJSON.oMonstres,
-			MZ_cVueJSON.oTrolls,
-			MZ_cVueJSON.oTresors,
-			MZ_cVueJSON.oChampignons,
-			MZ_cVueJSON.oLieux,
-			MZ_cVueJSON.oCenotaphes,
-		]) {
-			for (let idx = 0; idx < o.eltTable.tBodies[0].rows.length; idx++) {
-				let tr = o.eltTable.tBodies[0].rows[idx];
-				if (tr.cells.length < 5) continue;	// on peut avoir "no result"
-				let tdX = tr.cells[o.indxTdX],
-						tdY = tr.cells[o.indxTdY],
-						tdN = tr.cells[o.indxTdN];
-				tr.setAttribute('data-xyn', `${tdX.innerText};${tdY.innerText};${tdN.innerText}`);
-
-				for (let td of coordsOnly ? [tdX, tdY, tdN] : tr.cells) {
-					if (isSmartphoneBrowser()) {
-						$(td).on("touchstart", { class: "xyn-sel" }, toggleFn);
-					} else {
-						$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
-						$(td).on("click", { class: "xyn-sel" }, toggleFn);
-					}
-
-				}
-			}
-		}
 	}
 
 	// ----- fin partie statique -------------
@@ -13560,6 +13559,7 @@ class MZ_cVueJSON {
 		});
 		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
 
+		MZ_cHighlightSameXYN.init();
 		this.load();
 	}
 
@@ -13848,6 +13848,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		// todo ne lancer sendAJAXCdMRequest que si la case 'effacer les niveaux' n'est pas cochée
 		MZ_cLigneMonstre.sendAJAXCdMRequest();
 		MZ_Tactique.initPopup();
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
 	}
 
 	static sendAJAXCdMRequest() {
@@ -14146,6 +14147,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 		initPXTroll();
 		MZ_cLigneTroll.processPX();
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 	}
 
 	static processPX() {
@@ -14216,7 +14218,7 @@ class MZ_cLigneTresor extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneTresor.MZ_oVueJSON);
 	}
 }
 
@@ -14224,7 +14226,7 @@ class MZ_cLigneChampignon extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneChampignon.MZ_oVueJSON);
 	}
 }
 
@@ -14232,7 +14234,7 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
 	}
 }
 
@@ -14240,7 +14242,7 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneCenotaphe.MZ_oVueJSON);
 	}
 }
 
