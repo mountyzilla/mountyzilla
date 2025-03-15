@@ -13436,8 +13436,7 @@ class MZ_cVueJSON {
 	static oLieux;
 	static oCenotaphes;
 	static MutationObserverConfig = { childList: true, subtree: true };
-	static callbacks;
-	static cssHighlightDone;
+	static callbacks = [];
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13452,23 +13451,20 @@ class MZ_cVueJSON {
 	static allLoaded() {
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
-		if (MZ_cVueJSON.callbacks !== undefined)
-			for (let callback of MZ_cVueJSON.callbacks)
-				try {
-					callback();
-				} catch (exc) {
-					logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
-				}
-
+		for (let callback of MZ_cVueJSON.callbacks) {
+			console.warn('callbacks', MZ_cVueJSON.callbacks);
+			try {
+				callback();
+			} catch (exc) {
+				logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
+			}
+		}
 		MZ_cVueJSON.initHighlightSameXYN();
 	}
 
 	static registerCallback(callback) {
 		// permet aux autres script d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé)
-		if (MZ_cVueJSON.callbacks === undefined)
-			MZ_cVueJSON.callbacks = [callback];
-		else
-			MZ_cVueJSON.callbacks.push(callback);
+		MZ_cVueJSON.callbacks.push(callback);
 	}
 
 	static initHighlightSameXYN() {
