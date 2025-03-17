@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.22
+// @version     1.6.23
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.22';
+var MZ_latest = '1.6.23';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13461,7 +13461,8 @@ function do_vue() {
 	if (node) {
 		do_vue_html();	// "ancienne" vue
 	} else {
-		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille. Parfois.  ');
+		if (isDesktopView())
+			avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille. Parfois.  ');
 		MZ_cVueJSON.initGlobal();
 	}
 }
@@ -14000,13 +14001,18 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
 				eltBoutonSuite.style.position = 'fixed';
 				eltBoutonSuite.style.border = '1px solid black';
-				eltBoutonSuite.style.top = '10px';
-				eltBoutonSuite.style.right = '10px';
-				// eltBoutonSuite.style.backgroundColor = 'white';
+				if (isDesktopView()) {
+					eltBoutonSuite.style.top = '10px';
+					eltBoutonSuite.style.right = '10px';
+					eltBoutonSuite.style.fontSize = 'large';
+					eltBoutonSuite.style.padding = '5px';
+				} else {
+					eltBoutonSuite.style.top = '30px';
+					eltBoutonSuite.style.right = '1px';
+					eltBoutonSuite.style.fontSize = 'small';
+				}
 				eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
 				eltBoutonSuite.style.color = 'black';
-				eltBoutonSuite.style.fontSize = 'large';
-				eltBoutonSuite.style.padding = '5px';
 				eltBoutonSuite.style.borderRadius = '10px';
 				eltBoutonSuite.style.cursor = 'pointer';
 				eltBoutonSuite.style.zIndex = '500';
