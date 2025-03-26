@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.23
+// @version     1.6.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.23';
+var MZ_latest = '1.6.24';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6349,6 +6349,18 @@ class MZ_cHighlightSameXYN {
 		addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: rgba(255, 255, 255, 0.5); }");
 	}
 
+	static defineOptions(tbody) {
+		tr = appendTr(tbody);
+		td = appendTd(tr);
+		appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une caverne", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
+		appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
+	}
+
+	static saveOptions() {
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYN', document.getElementById('highlightSameXYN').checked);
+		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYNCOORDSONLY', document.getElementById('highlightSameXYNCoordsOnly').checked);
+	}
+
 	static processVue(oVue) {
 		if (MZ_cHighlightSameXYN.skipProcess) { return; }
 
@@ -9146,8 +9158,7 @@ function saveAll() {
 
 		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
-		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYN', document.getElementById('highlightSameXYN').checked);
-		MZ_setOrRemoveValue('HIGHLIGHTSAMEXYNCOORDSONLY', document.getElementById('highlightSameXYNCoordsOnly').checked);
+		MZ_cHighlightSameXYN.saveOptions();
 
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
@@ -9433,10 +9444,7 @@ function insertOptionTable(insertPt) {
 	td = appendTd(tr);
 	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
 
-	tr = appendTr(tbody);
-	td = appendTd(tr);
-	appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une caverne", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
-	appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
+	MZ_cHighlightSameXYN.defineOptions(tbody);
 
 	/* Interface Tactique */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -13462,7 +13470,7 @@ function do_vue() {
 		do_vue_html();	// "ancienne" vue
 	} else {
 		if (isDesktopView())
-			avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue. On y travaille. Parfois.  ');
+			avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue! On y travaille (parfois)...  ');
 		MZ_cVueJSON.initGlobal();
 	}
 }
