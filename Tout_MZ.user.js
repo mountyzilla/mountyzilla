@@ -6350,8 +6350,8 @@ class MZ_cHighlightSameXYN {
 	}
 
 	static defineOptions(tbody) {
-		tr = appendTr(tbody);
-		td = appendTd(tr);
+		let tr = appendTr(tbody),
+			td = appendTd(tr);
 		appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une caverne", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
 		appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 	}
