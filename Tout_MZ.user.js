@@ -1000,6 +1000,7 @@ function avertissement(txt, duree, bBloque, exc = undefined) {
 	let d = duree ? ` pour (${duree} ms)` : '';
 	let print_stack = MY_getValue('PRINTSTACK') == 'true';
 	let excDetails = (exc && !print_stack) ? ' - Plus de détails en console (F12)' : '';
+	let mobileMargin = isDesktopView() ? 0 : 30;
 	logMZ(`Avertissement: ${txt}${d}`, exc);
 	if (!duree) {
 		duree = 15000;
@@ -1012,10 +1013,10 @@ function avertissement(txt, duree, bBloque, exc = undefined) {
 	div.setAttribute('name', 'avertissement');
 	div.className = 'mh_textbox ui-content';
 	div.style.position = 'fixed';
-	div.style.top = `${10 + 45 * num}px`;
-	div.style.left = `${10 + 0 * num}px`;
+	div.style.top = `${10 + mobileMargin + 45 * num}px`;
+	div.style.marginInline = `${10 + 0 * num}px`;
 	div.style.border = '4px solid red';
-	div.style.borderRadius = '4px';
+	div.style.borderRadius = '7px';
 	div.style.paddingRight = '12px';
 	div.style.backgroundColor = 'rgb(229, 222, 203)';
 	div.style.zIndex = 2 + num;
@@ -1043,7 +1044,7 @@ function avertissement(txt, duree, bBloque, exc = undefined) {
 	divcroix.style.fontSize = 'inherit';
 	divcroix.style.cursor = 'pointer';
 	divcroix.style.zIndex = 2 + num;
-	divcroix.innerHTML = 'X';
+	divcroix.innerHTML = ' × ';
 	div.appendChild(divcroix);
 
 	document.body.appendChild(div);
@@ -6385,7 +6386,6 @@ class MZ_cHighlightSameXYN {
 					$(td).on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
 					$(td).on("click", { class: "xyn-sel" }, toggleFn);
 				}
-
 			}
 		}
 	}
@@ -13469,8 +13469,7 @@ function do_vue() {
 	if (node) {
 		do_vue_html();	// "ancienne" vue
 	} else {
-		if (isDesktopView())
-			avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue! On y travaille (parfois)...  ');
+		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue! On y travaille (parfois)...  ');
 		MZ_cVueJSON.initGlobal();
 	}
 }
