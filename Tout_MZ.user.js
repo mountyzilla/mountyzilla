@@ -9148,13 +9148,14 @@ function saveAll() {
 
 		MZ_setOrRemoveValue('VUEEXT', document.getElementById('vueext').value);
 
-		let maxcdm = parseInt(document.getElementById('maxcdm').value);
-		if (maxcdm) {
-			MZ_setOrRemoveValue(`${numTroll}.MAXCDM`, maxcdm);
-		} else {
-			MY_removeValue(`${numTroll}.MAXCDM`);
-			document.getElementById('maxcdm').value = '';
-		}
+		// gath: inutilisé, à supprimer ?
+		// let maxcdm = parseInt(document.getElementById('maxcdm').value);
+		// if (maxcdm) {
+		// 	MZ_setOrRemoveValue(`${numTroll}.MAXCDM`, maxcdm);
+		// } else {
+		// 	MY_removeValue(`${numTroll}.MAXCDM`);
+		// 	document.getElementById('maxcdm').value = '';
+		// }
 
 		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
@@ -9434,12 +9435,13 @@ function insertOptionTable(insertPt) {
 		select.value = MY_getValue('VUEEXT');
 	}
 
+	tr = appendTr(tbody);
 	td = appendTd(tr);
 	appendCheckBoxBlock(td, 'noInfoEM', "Masquer les informations à propos de l'écriture magique", MY_getValue('NOINFOEM') == 'true');
 
-	tr = appendTr(tbody);
-	td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
-	appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(`${numTroll}.MAXCDM`));
+	// gath: inutilisé, à supprimer ?
+	// td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
+	// appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(`${numTroll}.MAXCDM`));
 
 	td = appendTd(tr);
 	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
@@ -13866,6 +13868,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		for (let indx = MZ_cLigneMonstre.lastIndexSent + 1; indx < nbMonstre; indx++) {
 			let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[indx];
 			// ne pas demander pour les Gowaps
+			MZ_cLigneMonstre.lastIndexSent = indx;
 			if (oMonstre.nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
 				oMonstre.nivMZ_no = true;
 				continue;
@@ -13873,7 +13876,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
 			tReq.push({ index: indx, id: oMonstre.id, nom: oMonstre.nom });
 			nbReq++;
-			MZ_cLigneMonstre.lastIndexSent = indx;
 			if (nbReq >= 500) {	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 				break;
 			}
