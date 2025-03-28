@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.24
+// @version     1.6.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.24';
+var MZ_latest = '1.6.25';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -7952,29 +7952,44 @@ function showHttpsErrorContenuMixte() {
 
 function traiterJubilaires() {
 	try {
-		let URL_anniv = URL_MZ + '/jubilaires.json?v=';
-		// forcer le fichier a être rafraîchi au changement de jour
-		let dNow = new Date();
-		URL_anniv += dNow.getMonth() + '.' + dNow.getDate();
+		let dNow = new Date(); // forcer le fichier a être rafraîchi au changement de jour
+		let URL_anniv = URL_MZ + '/jubilaires.json?v=' + dNow.getMonth() + '.' + dNow.getDate();
+
+		let cyclovData = MY_getSessionValue(`MZ_jubilaires`);
+		if (cyclovData) {
+			receptionJubilaireAJAX(cyclovData);
+			debugMZ(`${MZ_formatDateMS()} données de cache pour jubilaires`);
+			return;
+		}
 		FF_XMLHttpRequest({
 			method: 'GET',
 			url: URL_anniv,
-			onload: function (responseDetails) {
-				if (responseDetails.status == 0) {
-					logMZ(`status=0 à l'appel jubilaires, réponse=${responseDetails.responseText}`);
-					return;
-				}
-				let listeTrolls = JSON.parse(responseDetails.responseText);
-				if (!listeTrolls || listeTrolls.length == 0) {
-					return;
-				}
-				let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
-				insertJubilaire(insertPoint, listeTrolls);
-			},
+			onload: receptionJubilaireAJAX,
 		});
 	} catch (exc) {
 		avertissement(`Une erreur est survenue (Jubilaires)`, null, null, exc);
 	}
+}
+
+function receptionJubilaireAJAX(responseDetails) {
+	let cyclovData;
+	try {
+		if (responseDetails.status == 0) {
+			logMZ(`status=0 à l'appel jubilaires, réponse=${responseDetails.responseText}`);
+			return;
+		}
+		cyclovData = JSON.parse(responseDetails.responseText);
+		if (!cyclovData || cyclovData.length == 0) { return; }
+		let now = new Date(), midnight = new Date();
+		midnight.setHours(23, 59, 59, 999);
+		MY_setSessionValue(`MZ_jubilaires`, cyclovData, Math.floor((midnight-now)/1000/60));
+	} catch {
+		// si on est pas en XMLHttpRequest, alors ca vient du cache
+		cyclovData = responseDetails;
+	}
+
+	let insertPoint = isDesktopView() ? getFooter() : document.getElementsByTagName('main')[0].lastElementChild;
+	insertJubilaire(insertPoint, cyclovData);
 }
 
 function insertJubilaire(insertPt, listeTrolls) {
