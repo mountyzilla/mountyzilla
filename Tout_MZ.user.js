@@ -9422,6 +9422,7 @@ function insertOptionTable(insertPt) {
 	select.id = 'vueext';
 	td.appendChild(select);
 	let listeVues2D = [
+		'---',
 		'Bricol\' Vue',
 		'Vue du CCM',
 		'Vue Gloumfs 2D',
@@ -11720,8 +11721,9 @@ class MZ_cVueExterne {
 			// Récupération de la dernière vue utilisée
 			let vueext = MY_getValue('VUEEXT');
 			if (!vueext || !MZ_cVueExterne.vue2Ddata[vueext]) {
-				// sinon, la vue Bricol'Trolls est employée par défaut
-				vueext = 'Bricol\' Vue';
+				// pas de vue par défaut
+				debugMZ('vue externe: désactivée');
+				return;
 			}
 
 			// Création du sélecteur de vue externe
