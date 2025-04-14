@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.26
+// @version     1.6.27
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.26';
+var MZ_latest = '1.6.27';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13959,6 +13959,17 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				MZ_cLigneMonstre.colNiveauDone = true;
 			}
 
+			// préparation missions
+			let obMissions;
+			let strMiss = MY_getValue(`${numTroll}.MISSIONS`);
+			if (strMiss) {
+				try {
+					obMissions = JSON.parse(strMiss);
+				} catch (exc) {
+					logMZ(`MZ_cLigneMonstre:::receptionMZNiveauxAJAX_log`, exc);
+				}
+			}
+
 			for (let info of infos) {
 				if (info.index == undefined) continue;
 				let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[info.index];
@@ -13987,6 +13998,176 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				MZ_EtatCdMs.listeCDM[info.id] = info;
 				if (myColor) {
 					oMonstre.eltTdNiveau.style.color = myColor;
+				}
+
+				// icône "voir le caché"
+				if (info.vlc) {
+					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}oeil.png`, "Voit le caché"));
+				}
+
+				// précision sur les phoenix
+				if (info.gen) {
+					let imgPh, txtPh;
+					switch (info.gen) {
+						case 1:
+							imgPh = `${URL_MZimg}Phoenix1.png`;
+							txtPh = 'Phœnix de première génération';
+							break;
+						case 2:
+							imgPh = `${URL_MZimg}Phoenix2.png`;
+							txtPh = 'Phœnix de deuxième génération';
+							break;
+						case 3:
+							imgPh = `${URL_MZimg}Phoenix3.png`;
+							txtPh = 'Phœnix de troisième génération';
+							break;
+						case 23:
+							imgPh = `${URL_MZimg}Phoenix23.png`;
+							txtPh = 'Phœnix de deuxième ou troisième génération';
+							break;
+					}
+					let img = oMonstre.eltTdNom.appendChild(createImage(imgPh, txtPh));
+					img.style.height = '15px';
+					img.style.width = 'auto';
+				}
+
+				// missions
+				let mess = '';
+				let bPeutEtreIcone = false;
+				if (obMissions) for (let num in obMissions) {
+					let mobMission = false;
+					let mobMissionPeutEtre = undefined;
+					switch (obMissions[num].type) {
+						case 'Race':
+							let race = epure(obMissions[num].race.toLowerCase());
+							let nom = epure(info.nom.toLowerCase());
+							if (nom.indexOf(race) != -1) {
+								if (race == 'crasc') {
+									if (nom.indexOf('medius') != -1) {
+										// pas éligible
+									} else if (nom.indexOf('maexus') != -1) {
+										// pas éligible
+									} else if (nom.indexOf('parasitus') != -1) {
+										if (nom.match(/^crasc parasitus \[/ui)) {
+											// on ne peut pas savoir
+											mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+												'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+										} else {
+											// c'est un monstre de la race des Crasc Parasitus
+											mobMission = false;
+										}
+									} else {
+										mobMission = true;
+									}
+								} else if (race == 'crasc parasitus') {
+									if (nom.match(/^crasc parasitus \[/ui)) {
+										// on ne peut pas savoir
+										mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+											'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+									} else {
+										// c'est un monstre de la race des Crasc Parasitus
+										mobMission = true;
+									}
+								} else if (race == 'shai') {
+									if (nom.match(/abishai/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == 'ombre') {
+									if (nom.match(/roche/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == "geck'oo") {
+									if (nom.match(/majestueux/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == "bouj'dla") {
+									if (nom.match(/placide/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else {
+									mobMission = true;
+								}
+							}
+							break;
+						case 'Niveau':
+							let minMimi, maxMimi;
+							let nivMimi = Number(obMissions[num].niveau);
+							let mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
+							if (isNaN(mod)) {
+								minMimi = nivMimi;
+								maxMimi = nivMimi + 999999;
+							} else {
+								minMimi = nivMimi - mod;
+								maxMimi = nivMimi + mod;
+							}
+							if (!info.niv) break;
+							if (donneesMonstre.niv.max && donneesMonstre.niv.min) {
+								if (donneesMonstre.niv.max <= maxMimi && donneesMonstre.niv.min >= minMimi) {
+									mobMission = true;
+								} else if (!(donneesMonstre.niv.max < minMimi || donneesMonstre.niv.min > maxMimi)) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+									if (isDEV) {
+										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${donneesMonstre.niv.min}, ${donneesMonstre.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
+									}
+								}
+							} else if (donneesMonstre.niv.max) {
+								if (donneesMonstre.niv.max >= minMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							} else if (donneesMonstre.niv.min) {
+								if (donneesMonstre.niv.min <= maxMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							}
+							break;
+						case 'Famille':
+							donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
+							if (donneesMonstre && donneesMonstre.fam) {
+								let familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
+								let familleMob = epure(donneesMonstre.fam.toLowerCase());
+								if (familleMob.indexOf(familleMimi) != -1) {
+									mobMission = true;
+								}
+							}
+							break;
+						case 'Pouvoir':
+							donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
+							if (donneesMonstre && donneesMonstre.pouv) {
+								let pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
+								let pvrMob = epure(donneesMonstre.pouv.toLowerCase());
+								if (pvrMob.indexOf(pvrMimi) != -1) {
+									mobMission = true;
+								}
+							}
+					}
+					if (mobMission) {
+						mess = mess + (mess ? '\n\n' : '');
+						mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
+					} else if (mobMissionPeutEtre !== undefined) {
+						mess = mess + (mess ? '\n\n' : '');
+						mess = `${mess}${mobMissionPeutEtre}\n`;
+						bPeutEtreIcone = true;
+						mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
+					}
+				}
+				if (mess) {
+					let td = getMonstreNomNode(i);
+					appendText(td, ' ');
+					let myURL;
+					if (bPeutEtreIcone) {
+						myURL = `${URL_MZimg}missionX.png`;
+					} else {
+						myURL = urlImg;
+					}
+					td.appendChild(createImage(myURL, mess));
 				}
 
 				/* Roule' à étudier plus tard, cette différence de style selon la diplo...
