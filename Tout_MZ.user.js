@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.27
+// @version     1.6.28
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.27';
+var MZ_latest = '1.6.28';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -14035,11 +14035,12 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				let mess = '';
 				let bPeutEtreIcone = false;
 				if (obMissions) for (let num in obMissions) {
+					let oMission = obMissions[num];
 					let mobMission = false;
 					let mobMissionPeutEtre = undefined;
-					switch (obMissions[num].type) {
+					switch (oMission.type) {
 						case 'Race':
-							let race = epure(obMissions[num].race.toLowerCase());
+							let race = epure(oMission.race.toLowerCase());
 							let nom = epure(info.nom.toLowerCase());
 							if (nom.indexOf(race) != -1) {
 								if (race == 'crasc') {
@@ -14099,8 +14100,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 							break;
 						case 'Niveau':
 							let minMimi, maxMimi;
-							let nivMimi = Number(obMissions[num].niveau);
-							let mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
+							let nivMimi = Number(oMission.niveau);
+							let mod = oMission.mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
 							if (isNaN(mod)) {
 								minMimi = nivMimi;
 								maxMimi = nivMimi + 999999;
@@ -14109,40 +14110,38 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 								maxMimi = nivMimi + mod;
 							}
 							if (!info.niv) break;
-							if (donneesMonstre.niv.max && donneesMonstre.niv.min) {
-								if (donneesMonstre.niv.max <= maxMimi && donneesMonstre.niv.min >= minMimi) {
+							if (info.niv.max && info.niv.min) {
+								if (info.niv.max <= maxMimi && info.niv.min >= minMimi) {
 									mobMission = true;
-								} else if (!(donneesMonstre.niv.max < minMimi || donneesMonstre.niv.min > maxMimi)) {
+								} else if (!(info.niv.max < minMimi || info.niv.min > maxMimi)) {
 									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
 									if (isDEV) {
-										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${donneesMonstre.niv.min}, ${donneesMonstre.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
+										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${info.niv.min}, ${info.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
 									}
 								}
-							} else if (donneesMonstre.niv.max) {
-								if (donneesMonstre.niv.max >= minMimi) {
+							} else if (info.niv.max) {
+								if (info.niv.max >= minMimi) {
 									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
 								}
-							} else if (donneesMonstre.niv.min) {
-								if (donneesMonstre.niv.min <= maxMimi) {
+							} else if (info.niv.min) {
+								if (info.niv.min <= maxMimi) {
 									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
 								}
 							}
 							break;
 						case 'Famille':
-							donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-							if (donneesMonstre && donneesMonstre.fam) {
-								let familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
-								let familleMob = epure(donneesMonstre.fam.toLowerCase());
+							if (info && info.fam) {
+								let familleMimi = epure(oMission.famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
+								let familleMob = epure(info.fam.toLowerCase());
 								if (familleMob.indexOf(familleMimi) != -1) {
 									mobMission = true;
 								}
 							}
 							break;
 						case 'Pouvoir':
-							donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-							if (donneesMonstre && donneesMonstre.pouv) {
-								let pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
-								let pvrMob = epure(donneesMonstre.pouv.toLowerCase());
+							if (info && info.pouv) {
+								let pvrMimi = epure(oMission.pouvoir.toLowerCase());
+								let pvrMob = epure(info.pouv.toLowerCase());
 								if (pvrMob.indexOf(pvrMimi) != -1) {
 									mobMission = true;
 								}
@@ -14150,24 +14149,22 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					}
 					if (mobMission) {
 						mess = mess + (mess ? '\n\n' : '');
-						mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
+						mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
 					} else if (mobMissionPeutEtre !== undefined) {
 						mess = mess + (mess ? '\n\n' : '');
 						mess = `${mess}${mobMissionPeutEtre}\n`;
 						bPeutEtreIcone = true;
-						mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
+						mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
 					}
 				}
 				if (mess) {
-					let td = getMonstreNomNode(i);
-					appendText(td, ' ');
 					let myURL;
 					if (bPeutEtreIcone) {
 						myURL = `${URL_MZimg}missionX.png`;
 					} else {
-						myURL = urlImg;
+						myURL = `${URL_MZimg}mission.png`;
 					}
-					td.appendChild(createImage(myURL, mess));
+					oMonstre.eltTdNom.appendChild(createImage(myURL, mess));
 				}
 
 				/* Roule' à étudier plus tard, cette différence de style selon la diplo...
