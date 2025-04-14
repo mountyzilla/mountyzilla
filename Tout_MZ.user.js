@@ -10800,7 +10800,7 @@ function initRaccourcis() {
 
 	/* Création du menu des Raccourcis */
 	menuRac = document.createElement('div');
-	menuRac.className = 'mh_textbox';
+	menuRac.className = 'mh_tdpage';
 	menuRac.style =
 		'position:fixed; top:10px; left:10px;' +
 		'max-width:190px;' +
