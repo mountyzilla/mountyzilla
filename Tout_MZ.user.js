@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.28
+// @version     1.6.29
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.28';
+var MZ_latest = '1.6.29';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -3485,13 +3485,16 @@ if (typeof isPage != "function") {
 		return window.location.pathname.indexOf(`/mountyhall/${url}`) == 0;
 	}
 }
-function isPageWithParam(filters) {
+function isPageWithParam(filters, trace) {
+	if (trace) logMZ(`isPageWithParam ${JSON.stringify(filters)}`);
 	if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 	if (filters.body_id && document.body.id != filters.body_id) return false;
 	if (filters.params) {
 		let paramsGET = new URLSearchParams(window.location.search);
-		for (let param in filters.params)
+		for (let param in filters.params) {
+			if (trace) logMZ(`isPageWithParam ${param} get=${paramsGET.get(param)} vFilter=${filters.params[param]}`);
 			if (paramsGET.get(param) != filters.params[param]) return false;
+		}
 	}
 	if (filters.ids)
 		for (let id of filters.ids)
@@ -4129,12 +4132,10 @@ function analyseTactique(donneesMonstre, nom) {
  * gestion des missions terminées
  */
 
-function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
-	let titresMimis, obMissions;
+function checkLesMimis() {	// supprimer les missions finies de numTroll.MISSIONS
+	let liens, obMissions;
 	try {
-		titresMimis = document.evaluate(
-			"//h3/a[contains(@href,'Mission_')]", document, null, 7, null
-		);
+		liens = document.getElementsByTagName('a');
 		obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
 	} catch (exc) {
 		logMZ('mission_liste initialisation', exc);
@@ -4142,18 +4143,28 @@ function checkLesMimis() {	// supprimer les missions finie de numTroll.MISSIONS
 	}
 
 	let enCours = {};
-	debugMZ(`checkLesMimis nb=${titresMimis.snapshotLength}`);
-	for (let i = 0; i < titresMimis.snapshotLength; i++) {
-		debugMZ(`checkLesMimis text=${titresMimis.snapshotItem(i).textContent}`);
-		let num = titresMimis.snapshotItem(i).textContent.match(/\d+/)[0];
-		enCours[num] = true;
+	for (let a of liens) {
+		let href = a.href;
+		debugMZ(`checkLesMimisLog text=${a.innertext}, href=${href}`);
+		if (!href) continue;
+		if (!href.match(/Play_a_Action/)) continue;
+		if (!href.match(/type=A/)) continue;
+		if (!href.match(/id=-7/)) continue;
+		let num = href.match(/mi=(\d+)/);
+		if (!num) continue;
+		if (!num[1]) continue
+		//logMZ(`checkLesMimisLog num=${JSON.stringify(num)}`);
+		enCours[num[1]] = true;
 	}
+	//logMZ(`Missions en cours : ${JSON.stringify(enCours)}`);
 
 	for (let numMimi in obMissions) {
 		if (!enCours[numMimi]) {
 			delete obMissions[numMimi];
+			logMZ(`La mission ${numMimi} semble être finie`);
 		}
 	}
+	//logMZ(`Liste des missions : ${JSON.stringify(obMissions)}`);
 	MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 }
 
@@ -7380,16 +7391,13 @@ function do_scizSwitchEvents() {
 /** x~x Missions ------------------------------------------------------- */
 
 /* TODO
- * MZ2.0 : gérer le nettoyage des missions terminées via script principal
- *		Roule 01/01/2017 : c'est fait dans do_mission_liste
- *
  * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
  */
 function isArray(a) {
 	return Boolean(a) && a.constructor === Array;
 }
 
-function saveMission(num, obEtape) {
+function saveMission(num, obEtape, trace) {
 	let obMissions;
 	if (MY_getValue(`${numTroll}.MISSIONS`)) {
 		try {
@@ -7408,20 +7416,25 @@ function saveMission(num, obEtape) {
 	}	// protection
 	// logMZ('saveMission, obEtape=' + obEtape);	// debug roule
 	if (obEtape) {
+		if (trace) logMZ(`saveMissionLog add mission ${num} ${JSON.stringify(obEtape)}`);
 		obMissions[num] = obEtape;
 	} else if (obMissions[num]) {
+		if (trace) logMZ(`saveMissionLog delete mission ${num}`);
 		delete obMissions[num];
+	} else if (trace) {
+		if (trace) logMZ(`saveMissionLog delete (déjà absente) mission ${num}`);
 	}
 	MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
-	// logMZ('JSON MISSION (after) = ' + MY_getValue(numTroll+'.MISSIONS'));
+	if (trace) logMZ(`saveMissionLog JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
 }
 
 function parseMissionSteps() {
 	try {
-		let titreMission = $("h2")[0].textContent;
+		let titreMission = document.getElementsByTagName('h1')[0].innerText;
+		//console.log('parseMissionStepsLog ' + titreMission);
 		let idMission = titreMission.match(/\d+/)[0];
 		let validationFound = false;
-		var $missionLines = $("[name='ActionForm'] tr");
+		var $missionLines = $("form tr");
 		$missionLines.each(function () {
 			let $this = $(this);
 			let children = $this.children("td");
@@ -17270,10 +17283,14 @@ function MZ_doSearchCompoTanieres(event) {
 		// tri par nom de compo
 		let tabTri = [];
 		let nTotal = 0;
+		let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
 		for (let compo in oCompos) {
 			tabTri.push(compo);
-			oQualites = oCompos[compo];
-			for (let qualite in oQualites) nTotal += oQualites[qualite];
+			let oQualites = oCompos[compo];
+			for (let qualite of tabQualite) {
+				let n = oQualites[qualite];
+				if (n) nTotal += n;
+			}
 		}
 		if (tabTri.length == 0 && !(msgErreur || msgWarning))
 			displayTitre(`Pas de composant de ${oInfo.monstre} en tanière`, 'red');
@@ -17286,7 +17303,6 @@ function MZ_doSearchCompoTanieres(event) {
 		tabTri.sort();
 		eTr = document.createElement('tr');
 		eTr.className = 'mh_tdtitre';
-		let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
 		for (let qualite of tabQualite) {
 			let eTh = document.createElement('th');
 			eTh.appendChild(document.createTextNode(qualite));
@@ -17585,8 +17601,6 @@ try {
 		do_move();
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
 		do_move();
-	} else if (isPage("MH_Missions/Mission_Etape")) {
-		do_mission();
 	} else if (isPage("View/MonsterView")) {
 		do_infomonstre();
 		do_scizOverwriteEvents(); /* SCIZ */
@@ -17612,7 +17626,9 @@ try {
 		do_lire_enchant_en_cours();
 	} else if (isPage("MH_Play/Actions") || isPage("Messagerie/ViewMessageBot")) {	// 25/03/2024 MH_Play/Actions n'existe plus. À surveiller...
 		do_actions();
-	} else if (isPage('MH_Missions/Mission_Liste.php')) { // Roule 28/03/2016 je n'ai pas vu l'utilité et ça bloque... && MY_getValue(numTroll+'.MISSIONS')) {
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -7, etapes: ''}})) {
+		do_mission();
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -7}})) {
 		do_mission_liste();
 	} else if (isPage('MH_Play/Play_action')) {
 		do_actions();
