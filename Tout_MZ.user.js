@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.30
+// @version     1.6.31
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.30';
+var MZ_latest = '1.6.31';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -14071,7 +14071,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 		MZ_cLigneMonstre.applyFiltre(oConfig);
 
-		console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
+		//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
 		if (oConfig.empty) oConfig = undefined;
 		MZ_SauvegardeMH.setZone('filtreMonstre', oConfig);
 	}
@@ -17249,6 +17249,7 @@ function testBoolLocalStorage() {
 }
 
 /* --------------------------------- Création liste trolligion --------------------------------- */
+/* désactivé, la structure de la page MH a changé
 function export_trolligion() {
 	let txt = '';
 	try {
@@ -17460,6 +17461,7 @@ function do_trolligion() {
 	divpopup.appendChild(img);
 	document.body.appendChild(divpopup);
 }
+*/
 
 function do_memoPA() {
 	let t = document.body.innerText;
@@ -17692,6 +17694,7 @@ function MZ_doSearchCompoTanieres(event) {
 		let tabQualite = ['', 'Très Bonne', 'Bonne', 'Moyenne', 'Mauvaise', 'Très Mauvaise'];
 		for (let compo in oCompos) {
 			tabTri.push(compo);
+			//console.log('push1 compo ' + compo);
 			let oQualites = oCompos[compo];
 			for (let qualite of tabQualite) {
 				let n = oQualites[qualite];
@@ -17704,7 +17707,9 @@ function MZ_doSearchCompoTanieres(event) {
 			displayTitre(`Vous avez ${nTotal} composants de ${oInfo.monstre} en tanière`, 'blue');
 		let compoLC = oInfo.composant.toLowerCase();
 		if (!tabTri.includes(compoLC)) {
-			tabTri.push(oInfo.compoLC);
+			tabTri.push(compoLC);
+			oCompos[compoLC] = {nom: oInfo.composant};
+			//console.log('push2 compo ' + compoLC);
 		}
 		tabTri.sort();
 		eTr = document.createElement('tr');
@@ -18042,8 +18047,8 @@ try {
 		do_profil2();
 	} else if (isPage('MH_Play/Play_profil2')) {
 		do_profil2();
-	} else if (isPage('View/TrolligionView.php')) {
-		do_trolligion();
+	//} else if (isPage('View/TrolligionView.php')) {	// désactivé, la structure de la page a changé
+	//	do_trolligion();
 	} else if (isPage('View/TresorHistory.php')) {
 		MZ_CompoTanieresPrepare();
 	} else if (MY_DEBUG) {
