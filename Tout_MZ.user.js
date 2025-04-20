@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.31
+// @version     1.6.32
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.31';
+var MZ_latest = '1.6.32';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6623,7 +6623,7 @@ function do_scizEnhanceView() {
 	scizGlobal.treasures = [];
 
 	if (document.body.id != 'p_mavue') {
-		logMZ('SCIZ sur la nouvelle vue : pas enore fait');
+		logMZ('SCIZ sur la nouvelle vue : pas encore fait');
 		return;
 	}
 
@@ -6639,6 +6639,10 @@ function do_scizEnhanceView() {
 
 	// Retrieve position and view
 	let pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
+	if (!pos) {
+		warnMZ('do_scizEnhanceView, pas de pos, on arrête le traitement SCIZ');
+		return;
+	}
 	let posX = parseInt(pos[1]);
 	let posY = parseInt(pos[2]);
 	let posN = parseInt(pos[3]);
@@ -13553,18 +13557,19 @@ class MZ_cVueJSON {
 	}
 
 	static registerCallback(callback) {
-		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé, mais pas le retour AJAX MZ)
+		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé, mais PAS le retour AJAX MZ avec les infos sur les monstres)
 		MZ_cVueJSON.callbacksFinMH.push(callback);
 	}
 
 	static registerCallbackMZ(callback) {
-		// permet aux autres script d'être notifiés quand la vue est finie (tout reçu de MH, le retour MZ a été traité et les cibles des missions traitées)
+		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH, le retour MZ a été traité et les cibles des missions traitées)
+		// utilisé aussi pour rafraichir le filtre des monstres pour niveau, famille et mission
 		MZ_cVueJSON.callbacksFinMZ.push(callback);
 	}
 
 	// ----- fin partie statique -------------
 
-	// cette zone est spécifique à un type (monstre, troll, etc.)
+	// cette zone est spécifique à un bloc (monstre, troll, etc.)
 	nomBase;			// "montres", "trolls", etc.
 	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH (pas MZ !) répond
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
@@ -13572,19 +13577,13 @@ class MZ_cVueJSON {
 	MH_json;			// les datas obtenues en JSON par MH en AJAX
 	initSpecificBloc;	// adrese d'une fonction pour les initialisations spécifiques à un bloc (filtres)
 	loaded = false;
+	cLigneClass;
+	nomFiltre;
 
 	// les éléments HTML
 	eltDiv;	// la div de tout le bloc
 	eltTable;
 	eltTrHead;
-	eltTrDist;
-	eltTrAction;
-	eltTrRef;
-	eltTrNom;
-	eltTrGuilde;
-	eltTrX;
-	eltTrY;
-	eltTrN;
 	// les index des colonnes
 	indxTdDist;
 	indxTdAction;
@@ -13595,6 +13594,9 @@ class MZ_cVueJSON {
 	indxTdY;
 	indxTdN;
 	indxTdNiv;
+	// filtres
+	eltDivShowFiltre;
+	eltParamFiltre;
 
 	constructor(nomBase) {
 		this.nomBase = nomBase;
@@ -13628,35 +13630,36 @@ class MZ_cVueJSON {
 				this.MH_ft = VUE_monstres;
 				// json_monstres est une VARIABLE GLOBALE définie par MH et remplie au moment du retour AJAX de la vue des monstres
 				this.MH_json = json_monstres;
-				MZ_cLigneMonstre.MZ_oVueJSON = this;
-				//this.initSpecificBloc = MZ_cLigneMonstre.initGlobalBloc;
+				this.cLigneClass = MZ_cLigneMonstre;
 				break;
 			case 'trolls':
 				this.MH_ft = VUE_trolls;  // id: table#VUE_trolls
 				this.MH_json = json_trolls;
-				MZ_cLigneTroll.MZ_oVueJSON = this;
+				this.cLigneClass = MZ_cLigneTroll;
 				break;
 			case 'tresors':
 				this.MH_ft = VUE_tresors;  // id: table#VUE_tresors
 				this.MH_json = json_tresors;
-				MZ_cLigneTresor.MZ_oVueJSON = this;
+				this.cLigneClass = MZ_cLigneTresor;
 				break;
 			case 'champignons':
 				this.MH_ft = VUE_champignons;  // id: table#VUE_champignons
 				this.MH_json = json_champignons;
-				MZ_cLigneChampignon.MZ_oVueJSON = this;
+				this.cLigneClass = MZ_cLigneChampignon;
 				break;
 			case 'lieux':
 				this.MH_ft = VUE_lieux;  // id: table#VUE_lieux
 				this.MH_json = json_lieux;
-				MZ_cLigneLieu.MZ_oVueJSON = this;
+				this.cLigneClass = MZ_cLigneLieu;
 				break;
 			case 'cenotaphes':
 				this.MH_ft = VUE_cenotaphes;  // id: table#VUE_cenotaphes
 				this.MH_json = json_cenotaphes;
-				MZ_cLigneCenotaphe.MZ_oVueJSON = this;
+				this.cLigneClass = MZ_cLigneCenotaphe;
 				break;
 		}
+		this.cLigneClass.MZ_oVueJSON = this;
+		//console.log('load ' + this.nomBase, this.cLigneClass, this.cLigneClass.MZ_oVueJSON, this.cLigneClass.MZ_oVueJSON.nomBase);
 
 		// teste que notre tableau est rempli si le tableau MH est rempli
 		if (this.MH_json === undefined || this.objets !== undefined) {
@@ -13729,26 +13732,7 @@ class MZ_cVueJSON {
 		for (let idx = 0; idx < this.MH_json.length; idx++) {
 			let oMH_JSON = this.MH_json[idx];
 			let oLigne;
-			switch (this.nomBase) {
-				case 'monstres':
-					oLigne = new MZ_cLigneMonstre();
-					break;
-				case 'trolls':
-					oLigne = new MZ_cLigneTroll();
-					break;
-				case 'tresors':
-					oLigne = new MZ_cLigneTresor();
-					break;
-				case 'champignons':
-					oLigne = new MZ_cLigneChampignon();
-					break;
-				case 'lieux':
-					oLigne = new MZ_cLigneLieu();
-					break;
-				case 'cenotaphes':
-					oLigne = new MZ_cLigneCenotaphe();
-					break;
-			}
+			oLigne = new this.cLigneClass();
 			// trouver le tr correspondant
 			let eTr = rows[idx];
 			if (eTr) {
@@ -13758,26 +13742,7 @@ class MZ_cVueJSON {
 			}
 		}
 
-		switch (this.nomBase) {
-			case 'monstres':
-				MZ_cLigneMonstre.initGlobal();
-				break;
-			case 'trolls':
-				MZ_cLigneTroll.initGlobal();
-				break;
-			case 'tresors':
-				MZ_cLigneTresor.initGlobal();
-				break;
-			case 'champignons':
-				MZ_cLigneChampignon.initGlobal();
-				break;
-			case 'lieux':
-				MZ_cLigneLieu.initGlobal();
-				break;
-			case 'cenotaphes':
-				MZ_cLigneCenotaphe.initGlobal();
-				break;
-		}
+		this.cLigneClass.initGlobal();
 
 		let allMHLoaded = true;
 		for (let o of [
@@ -13837,11 +13802,123 @@ class MZ_cVueJSON {
 		return txt;
 	}
 
-	/*
 	initFiltre() {
-		// function utilitaire appelée par les classes filles
+		// function utilitaire appelée par les classes MZ_cLigneVue
+		this.nomFiltre = 'filtre' + this.nomBase.charAt(0).toUpperCase() + this.nomBase.slice(1);
+		let oConfig = MZ_SauvegardeMH.getZone(this.nomFiltre);
+		if (oConfig === undefined) oConfig = {empty: true};
+		this.eltDivShowFiltre = document.createElement('div');
+		this.eltDivShowFiltre.style.display = 'inline-block';
+		this.eltDivShowFiltre.style.paddingLeft = '7px';
+		this.eltDivShowFiltre.style.paddingRight = '7px';
+		this.eltDivShowFiltre.style.cursor = 'default';
+		this.eltDivShowFiltre.onclick = MZ_cLigneVue.stopPropagation;
+
+		this.eltParamFiltre = document.createElement('div');
+
+		let btn = appendButton(this.eltDivShowFiltre, 'Filtrer');
+		btn.id = 'MZ_btnFiltre' + this.nomBase;
+		let varThis = this;	// pour passer this aux callbacks
+		btn.onclick = function () {
+			varThis.eltParamFiltre.style.display = 'block';
+			btn.style.display = 'none';
+		};
+		if (!oConfig.empty) btn.value = 'Modifier le filtre';
+
+		let eltNav = this.eltDiv.children[2];
+		if ((!eltNav) || eltNav.tagName != 'LABEL') eltNav = this.eltDiv.children[1]; // smartphone
+		if ((!eltNav) || eltNav.tagName != 'LABEL') {
+			warnMZ('filtre ' + this.nomBase + ', impossible de trouver les blocs dans la vue, filtre impossible');
+			return;
+		}
+		eltNav.insertBefore(this.eltDivShowFiltre, null);
+
+		if (this.cLigneClass.nomsFiltres) {
+			this.eltParamFiltre.appendChild(document.createTextNode('CACHER : '));
+			for (let nomfiltre in this.cLigneClass.nomsFiltres) {
+				let oNom = this.cLigneClass.nomsFiltres[nomfiltre];
+				let chk = appendCheckBoxSpan(this.eltParamFiltre, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+				if (oNom.infobulle) chk.parentNode.title = oNom.infobulle;
+				if (oConfig[nomfiltre]) chk.checked = true;
+			}
+		}
+
+		let div2 = document.createElement('div');
+		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
+		let btn2 = appendButton(this.eltDivShowFiltre, 'Nom du ' + this.nomBase.substring(0, this.nomBase.length-1)  + ':');
+		btn2.style.marginRight = '3px';
+		div2.appendChild(btn2);
+
+		let textbox = appendTextbox(div2, 'text', 'MZ_Nom' + this.nomFiltre, 15, 30);
+		if (this.cLigneClass.modifFiltre)
+			textbox.onchange = this.cLigneClass.modifFiltre;
+		else
+			textbox.onchange = function() {
+				let oConfig = {};
+				let nom = document.getElementById('MZ_Nom' + varThis.nomFiltre).value;
+				if (nom.trim() != '') {
+					oConfig.nom = nom;
+				} else {
+					oConfig = {empty: true};
+				}
+				varThis.applyFiltre(oConfig);
+
+				//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
+				if (oConfig.empty) oConfig = undefined;
+				MZ_SauvegardeMH.setZone(varThis.nomFiltre, oConfig);
+			};
+		textbox.style.marginRight = '5px';
+		if (oConfig.nom) textbox.value = oConfig.nom;
+
+		if (this.cLigneClass.initOtherFiltre) this.cLigneClass.initOtherFiltre(div2, oConfig);
+
+		this.eltParamFiltre.appendChild(div2);
+
+		this.eltParamFiltre.style.display = 'none';
+		let divTable = this.eltDiv.children[3];
+		if (!divTable) divTable = this.eltDiv.children[2];	// cas smartphone
+		divTable.insertBefore(this.eltParamFiltre, divTable.firstChild);
+
+		this.applyFiltre(oConfig);
+
+		//console.log('fin MZ_cLigneMonstre.initGlobal');
 	}
-	*/
+
+	applyFiltre(oConfig) {
+		//Display
+		let eltDisplay = document.getElementById('MZ_disp' + this.nomFiltre);
+		if (oConfig === undefined) oConfig = {empty: true};
+		if (!oConfig.empty) {
+			if (!eltDisplay) {
+				eltDisplay = document.createElement('div');
+				eltDisplay.style.display = 'inline-block';
+				eltDisplay.style.marginLeft = '5px';
+				eltDisplay.id = 'MZ_disp' + this.nomFiltre;
+				this.eltDivShowFiltre.appendChild(eltDisplay);
+			}
+			let tabCaches = [];
+			// pour la beauté de la chose, il y a des blancs insécables
+			if (this.cLigneClass.nomsFiltres) {
+				for (let nomfiltre in this.cLigneClass.nomsFiltres) {
+					let oNom = this.cLigneClass.nomsFiltres[nomfiltre];
+					if (oConfig[nomfiltre]) tabCaches.push(oNom.libelle);
+				}
+			}
+			if (oConfig.nom) tabCaches.push('Nom autre que ' + oConfig.nom);
+			if (this.cLigneClass.displayOtherFiltre)
+				tabCaches = tabCaches.concat(this.cLigneClass.displayOtherFiltre(oConfig));
+			if (eltDisplay.firstChild) eltDisplay.removeChild(eltDisplay.firstChild);
+			eltDisplay.appendChild(document.createTextNode('[MZ] Sont cachés : ' + tabCaches.join(', ')));
+		} else if (eltDisplay) {
+			this.eltDivShowFiltre.removeChild(eltDisplay);
+		}
+		// filtre (spécifique à chaque bloc)
+		if (this.cLigneClass.applyFiltreBloc)
+			this.cLigneClass.applyFiltreBloc(oConfig);
+		else
+			// cas générique, Nom uniquement
+			MZ_cLigneVue.applyFiltreGenerique(oConfig, this.objets);
+	}
 }
 
 class MZ_cLigneVue {
@@ -13904,6 +13981,63 @@ class MZ_cLigneVue {
 		parent.appendChild(select);
 		return select;
 	}
+
+	// version de applyFiltre génétique qui ne traite que le filtre sur le nom
+	static applyFiltreGenerique(oConfig, objets) {
+		// Filtre
+		if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
+		for (let oLigne of objets) {
+			let cache = false;
+			if ((!cache) && oConfig.nom) {
+				if (oLigne.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
+			}
+			let prevDisplay = oLigne.eltTdDist.parentNode.style.display;
+			//console.log('applyFiltreGenerique nom=' + oLigne.nom + ', cache=' + cache);
+			if (cache && prevDisplay != 'none')
+				oLigne.eltTdDist.parentNode.style.display = 'none';
+			else if ((!cache) && prevDisplay == 'none')
+				oLigne.eltTdDist.parentNode.style.display = 'table-row';
+		}
+	}
+
+/* à supprimer
+		let nivMin = parseInt(document.getElementById('MZ_nivMinMonstres').value, 10);
+		if (!isNaN(nivMin)) {
+			oConfig.nivMin = nivMin;
+			bSomething = true;
+		} else delete oConfig.nivMin;
+		let nivMax = parseInt(document.getElementById('MZ_nivMaxMonstres').value, 10);
+		if (!isNaN(nivMax)) {
+			if (oConfig.nivMin !== undefined && oConfig.nivMin > nivMax) {
+				oConfig.nivMax = oConfig.nivMin;
+				oConfig.nivMin = nivMax;
+			} else {
+				oConfig.nivMax = nivMax;
+			}
+			bSomething = true;
+		} else delete oConfig.nivMax;
+
+		let nom = document.getElementById('MZ_Nom' + MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre).value;
+		if (nom.trim() != '') {
+			oConfig.nom = nom;
+			bSomething = true;
+		} else delete oConfig.nom;
+		let famille = document.getElementById('MZ_FamilleMonstres').value;
+		if (famille == 'Humanoïde') famille = 'Humanoide';	// **sight**
+		if (famille && famille != '0') {	// firefox nous donne "0" dans le texte de la listbox est vide
+			oConfig.famille = famille;
+			bSomething = true;
+		} else delete oConfig.famille;
+
+		if (!bSomething) oConfig = {empty: true};
+
+		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(oConfig);
+
+		//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
+		if (oConfig.empty) oConfig = undefined;
+		MZ_SauvegardeMH.setZone(MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre, oConfig);
+	}
+	*/
 }
 
 class MZ_cLigneMonstre extends MZ_cLigneVue {
@@ -13912,8 +14046,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	static lastIndexSent = -1;
 	static isCDMsRetrieved = false;
 	// filtre
-	static eltDivShowFiltre;
-	static eltParamFiltre;
 	static checkBoxGowapsA;
 	static checkBoxGowapsS;
 	static checkBoxEngages;
@@ -13957,45 +14089,10 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_Tactique.initPopup();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
 
-		// gestion des filtres
-		let oConfig = MZ_SauvegardeMH.getZone('filtreMonstre');
-		if (oConfig === undefined) oConfig = {empty: true};
-		MZ_cLigneMonstre.eltDivShowFiltre = document.createElement('div');
-		MZ_cLigneMonstre.eltDivShowFiltre.style.display = 'inline-block';
-		MZ_cLigneMonstre.eltDivShowFiltre.style.paddingLeft = '7px';
-		MZ_cLigneMonstre.eltDivShowFiltre.style.paddingRight = '7px';
-		MZ_cLigneMonstre.eltDivShowFiltre.style.cursor = 'default';
-		MZ_cLigneMonstre.eltDivShowFiltre.onclick = MZ_cLigneVue.stopPropagation;
+		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
+	}
 
-		let btn = appendButton(MZ_cLigneMonstre.eltDivShowFiltre, 'Filtrer');
-		btn.id = 'MZ_btnFiltreMonstre';
-		btn.onclick = MZ_cLigneMonstre.DisplayFiltre;
-		if (!oConfig.empty) btn.value = 'Modifier le filtre';
-
-		let eltTitre = MZ_cLigneMonstre.MZ_oVueJSON.eltDiv.children[2];
-		eltTitre.insertBefore(MZ_cLigneMonstre.eltDivShowFiltre, null);
-
-		MZ_cLigneMonstre.eltParamFiltre = document.createElement('div');
-		MZ_cLigneMonstre.eltParamFiltre.appendChild(document.createTextNode('CACHER : '));
-
-		for (let nomfiltre in MZ_cLigneMonstre.nomsFiltres) {
-			let oNom = MZ_cLigneMonstre.nomsFiltres[nomfiltre];
-			let chk = appendCheckBoxSpan(MZ_cLigneMonstre.eltParamFiltre, 'MZ_chkMonstre' + nomfiltre, MZ_cLigneMonstre.modifFiltre, oNom.libelle).firstChild;
-			if (oNom.infobulle) chk.parentNode.title = oNom.infobulle;
-			if (oConfig[nomfiltre]) chk.checked = true;
-		}
-
-		let div2 = document.createElement('div');
-		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
-		let btn2 = appendButton(MZ_cLigneMonstre.eltDivShowFiltre, 'Nom du monstre:');
-		btn2.style.marginRight = '3px';
-		div2.appendChild(btn2);
-
-		let textbox = appendTextbox(div2, 'text', 'MZ_NomMonstre', 15, 30);
-		textbox.onchange = MZ_cLigneMonstre.modifFiltre;
-		textbox.style.marginRight = '5px';
-		if (oConfig.nom) textbox.value = oConfig.nom;
-
+	static initOtherFiltre(div2, oConfig) {
 		appendText(div2, 'Niveau Min :');
 		let textboxNiveauMin = MZ_cLigneVue.ajoutFiltreNombre(div2, 'MZ_nivMinMonstres', MZ_cLigneMonstre.modifFiltre, oConfig.nivMin);
 		textboxNiveauMin.style.marginRight = '5px';
@@ -14009,23 +14106,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			, MZ_cLigneMonstre.listeFamilleAvecTrema
 			, oConfig.famille);
 		comboBoxFamille.style.marginRight = '5px';
-
-		MZ_cLigneMonstre.eltParamFiltre.appendChild(div2);
-
-		MZ_cLigneMonstre.eltParamFiltre.style.display = 'none';
-		let divTable = MZ_cLigneMonstre.MZ_oVueJSON.eltDiv.children[3];
-		divTable.insertBefore(MZ_cLigneMonstre.eltParamFiltre, divTable.firstChild);
-
-
-		MZ_cLigneMonstre.applyFiltre(oConfig);
-
-		//console.log('fin MZ_cLigneMonstre.initGlobal');
-	}
-
-	static DisplayFiltre() {
-		let btn = document.getElementById('MZ_btnFiltreMonstre');
-		MZ_cLigneMonstre.eltParamFiltre.style.display = 'block';
-		btn.style.display = 'none';
 	}
 
 	static modifFiltre() {
@@ -14055,7 +14135,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			bSomething = true;
 		} else delete oConfig.nivMax;
 
-		let nom = document.getElementById('MZ_NomMonstre').value;
+		let nom = document.getElementById('MZ_Nom' + MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre).value;
 		if (nom.trim() != '') {
 			oConfig.nom = nom;
 			bSomething = true;
@@ -14069,45 +14149,28 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 		if (!bSomething) oConfig = {empty: true};
 
-		MZ_cLigneMonstre.applyFiltre(oConfig);
+		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(oConfig);
 
 		//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
 		if (oConfig.empty) oConfig = undefined;
-		MZ_SauvegardeMH.setZone('filtreMonstre', oConfig);
+		MZ_SauvegardeMH.setZone(MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre, oConfig);
 	}
 
 	static applyFiltreNu() {
-		MZ_cLigneMonstre.applyFiltre(MZ_SauvegardeMH.getZone('filtreMonstre'));
+		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(MZ_SauvegardeMH.getZone('filtreMonstres'));
 	}
 
-	static applyFiltre(oConfig) {
-		//Display
-		let eltDisplay = document.getElementById('MZ_dispFiltrMonstre');
-		if (!oConfig.empty) {
-			if (!eltDisplay) {
-				eltDisplay = document.createElement('div');
-				eltDisplay.style.display = 'inline-block';
-				eltDisplay.style.marginLeft = '5px';
-				eltDisplay.id = 'MZ_dispFiltrMonstre';
-				MZ_cLigneMonstre.eltDivShowFiltre.appendChild(eltDisplay);
-			}
-			let tabCaches = [];
-			// pour la beauté de la chose, il y a des blancs insécables
-			for (let nomfiltre in MZ_cLigneMonstre.nomsFiltres) {
-				let oNom = MZ_cLigneMonstre.nomsFiltres[nomfiltre];
-				if (oConfig[nomfiltre]) tabCaches.push(oNom.libelle);
-			}
-			if (oConfig.nom) tabCaches.push('Nom autre que ' + oConfig.nom);
-			if (oConfig.famille) tabCaches.push('Famille autre que ' + oConfig.famille);
-			let msgNiv = [];
-			if (oConfig.nivMin !== undefined) msgNiv.push('<' + oConfig.nivMin);
-			if (oConfig.nivMax !== undefined) msgNiv.push('>' + oConfig.nivMax);
-			if (msgNiv.length > 0) tabCaches.push('Niveau ' + msgNiv.join(' ou '));
-			if (eltDisplay.firstChild) eltDisplay.removeChild(eltDisplay.firstChild);
-			eltDisplay.appendChild(document.createTextNode('[MZ] Sont cachés : ' + tabCaches.join(', ')));
-		} else if (eltDisplay) {
-			MZ_cLigneMonstre.eltDivShowFiltre.removeChild(eltDisplay);
-		}
+	static displayOtherFiltre(oConfig) {
+		let tabCaches = [];
+		if (oConfig.famille) tabCaches.push('Famille autre que ' + oConfig.famille);
+		let msgNiv = [];
+		if (oConfig.nivMin !== undefined) msgNiv.push('<' + oConfig.nivMin);
+		if (oConfig.nivMax !== undefined) msgNiv.push('>' + oConfig.nivMax);
+		if (msgNiv.length > 0) tabCaches.push('Niveau ' + msgNiv.join(' ou '));
+		return tabCaches;
+	}
+
+	static applyFiltreBloc(oConfig) {
 		// Filtre
 		let bHideEg = oConfig.engage;
 		if (bHideEg && ((!MZ_cVueJSON.oTrolls) || MZ_cVueJSON.oTrolls.objets === undefined)) {
@@ -14687,6 +14750,74 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		initPXTroll();
 		MZ_cLigneTroll.processPX();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
+		MZ_cLigneTroll.MZ_oVueJSON.initFiltre();
+	}
+
+	static initOtherFiltre(div2, oConfig) {
+		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
+		let btn2 = appendButton(MZ_cLigneTroll.MZ_oVueJSON.eltDivShowFiltre, 'Nom de la guilde:');
+		btn2.style.marginRight = '3px';
+		div2.appendChild(btn2);
+
+		let textbox = appendTextbox(div2, 'text', 'MZ_GuileTroll', 15, 30);
+		textbox.onchange = MZ_cLigneTroll.modifFiltre;
+		textbox.style.marginRight = '5px';
+		if (oConfig.guilde) textbox.value = oConfig.guilde;
+	}
+
+	static modifFiltre() {
+		let oConfig = {};
+		let bSomething = false;
+		let nom = document.getElementById('MZ_Nom' + MZ_cLigneTroll.MZ_oVueJSON.nomFiltre).value;
+		if (nom.trim() != '') {
+			oConfig.nom = nom;
+			bSomething = true;
+		} else delete oConfig.nom;
+		let guilde = document.getElementById('MZ_GuileTroll').value.trim();
+		if (guilde != '') {
+			oConfig.guilde = guilde;
+			bSomething = true;
+		} else delete oConfig.guilde;
+
+		if (!bSomething) oConfig = {empty: true};
+
+		MZ_cLigneTroll.MZ_oVueJSON.applyFiltre(oConfig);
+
+		//console.log('[MZ] filtre vue set config troll ' + JSON.stringify(oConfig));
+		if (oConfig.empty) oConfig = undefined;
+		MZ_SauvegardeMH.setZone(MZ_cLigneTroll.MZ_oVueJSON.nomFiltre, oConfig);
+	}
+
+	static displayOtherFiltre(oConfig) {
+		let tabCaches = [];
+		if (oConfig.guilde) tabCaches.push('Guilde autre que ' + oConfig.guilde);
+		let msgNiv = [];
+		if (oConfig.nivMin !== undefined) msgNiv.push('<' + oConfig.nivMin);
+		if (oConfig.nivMax !== undefined) msgNiv.push('>' + oConfig.nivMax);
+		if (msgNiv.length > 0) tabCaches.push('Niveau ' + msgNiv.join(' ou '));
+		return tabCaches;
+	}
+
+	static applyFiltreBloc(oConfig) {
+		// Filtre
+		if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
+		if (oConfig.guilde) oConfig.guilde = oConfig.guilde.toLowerCase();
+		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			let cache = false;
+			if ((!cache) && oConfig.nom) {
+				if (oLigne.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
+			}
+			if ((!cache) && oConfig.guilde) {
+				let guilde = oLigne.eltTdGuilde.innerText;
+				if (guilde.toLowerCase().indexOf(oConfig.guilde) == -1) cache = true;
+			}
+			let prevDisplay = oLigne.eltTdDist.parentNode.style.display;
+			//console.log('applyFiltreGenerique nom=' + oLigne.nom + ', cache=' + cache);
+			if (cache && prevDisplay != 'none')
+				oLigne.eltTdDist.parentNode.style.display = 'none';
+			else if ((!cache) && prevDisplay == 'none')
+				oLigne.eltTdDist.parentNode.style.display = 'table-row';
+		}
 	}
 
 	static processPX() {
@@ -14758,6 +14889,7 @@ class MZ_cLigneTresor extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTresor.MZ_oVueJSON);
+		MZ_cLigneTresor.MZ_oVueJSON.initFiltre();
 	}
 }
 
@@ -14774,6 +14906,7 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
+		MZ_cLigneLieu.MZ_oVueJSON.initFiltre();
 	}
 }
 
