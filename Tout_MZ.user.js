@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.32
+// @version     1.6.33
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.32';
+var MZ_latest = '1.6.33';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -14635,6 +14635,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static refTr;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
+	eltEnvoi;
 
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
@@ -14707,6 +14708,9 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			case 2:
 				this.insertColumnBtPA();
 				break;
+			case 3:
+				this.insertColumnEnvoi();
+				break;
 		}
 	}
 
@@ -14718,6 +14722,14 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	insertColumnBtPA() {
 		this.eltTdBtPA = insertTdText(this.eltTdGuilde, '');
 		this.eltTdBtPA.style.display = 'table-cell';
+	}
+
+	insertColumnEnvoi() {
+		this.eltEnvoi = insertTd(this.eltTdNom);
+		this.eltEnvoi.style.display = 'table-cell';
+		let input = document.createElement('input');
+		input.type = 'checkbox';
+		this.eltEnvoi.appendChild(input);
 	}
 
 	static initGlobal() {
@@ -14755,14 +14767,54 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 	static initOtherFiltre(div2, oConfig) {
 		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
-		let btn2 = appendButton(MZ_cLigneTroll.MZ_oVueJSON.eltDivShowFiltre, 'Nom de la guilde:');
-		btn2.style.marginRight = '3px';
-		div2.appendChild(btn2);
+		let btnGuilde = appendButton(div2, 'Nom de la guilde:');
+		btnGuilde.style.marginRight = '3px';
 
-		let textbox = appendTextbox(div2, 'text', 'MZ_GuileTroll', 15, 30);
-		textbox.onchange = MZ_cLigneTroll.modifFiltre;
-		textbox.style.marginRight = '5px';
-		if (oConfig.guilde) textbox.value = oConfig.guilde;
+		let txtboxGuilde = appendTextbox(div2, 'text', 'MZ_GuileTroll', 15, 30);
+		txtboxGuilde.onchange = MZ_cLigneTroll.modifFiltre;
+		txtboxGuilde.style.marginRight = '5px';
+		if (oConfig.guilde) txtboxGuilde.value = oConfig.guilde;
+
+		let btnEnvoi = appendButton(MZ_cLigneTroll.MZ_oVueJSON.eltDivShowFiltre, 'Envoyer...');
+		btnEnvoi.style.marginLeft = '5px';
+		btnEnvoi.onclick = function() {
+			// Ajout de la colonne des CheckBoxes
+			MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdNom, '', '17px', 3);
+			// Ajout des boutons
+			let btnPX = insertButton(btnEnvoi, 'Envoyer des PX', MZ_cLigneTroll.envoi);
+			btnPX.style.marginLeft = '5px';
+			btnPX.setAttribute('data-role', 'px');
+			let btnMP = insertButton(btnEnvoi, 'Envoyer un MP', MZ_cLigneTroll.envoi);
+			btnMP.style.marginLeft = '5px';
+			btnMP.setAttribute('data-role', 'mp');
+			btnEnvoi.parentNode.removeChild(btnEnvoi);
+		};
+	}
+
+	static envoi(e) {
+		// liste des ID
+		let listID = [];
+		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			let td = oLigne.eltEnvoi;
+			if (!td) continue;
+			if (!td.firstChild) continue;
+			if (!td.firstChild.checked) continue;
+			listID.push(oLigne.id);
+		}
+		if (listID.length == 0) {
+			alert('[MZ] Il faut cocher des cases pour  choisir les Trõlls destinataires');
+			return;
+		}
+		switch (e.target.getAttribute('data-role')) {
+			case 'px':
+				window.open(`./Play_a_Action.php?type=A&id=9&dest=${listID.join(',')}`, 'Contenu');
+				break;
+			case 'mp':
+				window.open(`../Messagerie/MH_Messagerie.php?cat=3&dest=${listID.join(',')}`, 'Contenu');
+				break;
+			default:
+				warnMZ("Mauvais mode d'envoi", e.target);
+		}
 	}
 
 	static modifFiltre() {
