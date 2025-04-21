@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.33
+// @version     1.6.34
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.33';
+var MZ_latest = '1.6.34';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13126,6 +13126,8 @@ function refreshDiplo() {
 	appliqueDiplo();
 }
 
+// à déplacer en tant que méthode statique dans la classe MZ_cLigneTroll
+// pour l'instant, ça renseigne la variable globale Diplo (burk)
 function computeDiplo() {
 	// On extrait les données de couleur et on les stocke par id
 	// Ordre de préséance :
@@ -14090,6 +14092,95 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
 
 		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
+
+		/* peut être pas. En attente de voir si c'est fait coté MH
+		if (getTalent("Projectile Magique")) {
+			computeActionDistante(0,
+				getPortee(
+					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
+				),
+				{ Monstres: 1, Trolls: 1 },
+				'Attaquer',
+				`${MHicons}S_Fire05.png`,
+				'Cible à portée de Projo'
+			);
+		}
+		if (getTalent("Charger")) {
+			computeActionDistante(1,
+				getPortee(
+					Math.ceil(MY_getValue(`${numTroll}.caracs.pv`) / 10) +
+					MY_getValue(`${numTroll}.caracs.regeneration`)
+				),
+				{ Monstres: 1, Trolls: 1 },
+				'Attaquer',
+				`${MHicons}E_Metal09.png`,
+				'Cible à portée de Charge'
+			);
+		}
+		if (getTalent("Télékinésie")) {
+			computeActionDistante(0,
+				Math.floor((
+					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
+				) / 2),
+				{ Tresors: 1 },
+				'Telek',
+				`${MHicons}S_Magic04.png`,
+				'Trésor à portée de Télékinésie'
+			);
+		}
+		if (getTalent("Lancer de Potions")) {
+			computeActionDistante(0,
+				2 + Math.floor((
+					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
+					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
+				) / 5),
+				{ Monstres: 1, Trolls: 1 },
+				'self',
+				`${MHicons}P_Red01.png`,
+				'Cible à portée de Lancer de Potions'
+			);
+		}
+		*/
+		// diplo
+		if (isDiploRaw) computeDiplo();
+		// ceci permet de retirer la diplo (non implémenté dans la nouvelle vue)
+		let aAppliquer = Diplo;
+		if (false) {//checkBoxDiplo.checked) {
+			// Pour retour à l'affichage basique sur désactivation de la diplo
+			aAppliquer = {
+				Guilde: {},
+				Troll: {},
+				Monstre: {}
+			};
+		}
+		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
+			let nom =oLigne.nom.toLowerCase();
+			let tr = oLigne.eltTdNom.parentNode;
+			if (aAppliquer.Monstre[oLigne.id]) {
+				tr.className = '';
+				tr.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
+				tr.diploActive = 'oui';
+				let descr = aAppliquer.Monstre[oLigne.id].titre;
+				if (descr) {
+					oLigne.eltTdNom.title = descr;
+				}
+			} else if (aAppliquer.mythiques &&
+					nom.match(/^[^\[]*liche/) ||
+					nom.match(/^[^\[]*hydre/) ||
+					nom.match(/^[^\[]*balrog/) ||
+					nom.match(/^[^\[]*beholder/) ||
+					nom.match(/^[^\[]*sidoine/)) {
+				tr.className = '';
+				tr.style.backgroundColor = aAppliquer.mythiques;
+				tr.diploActive = 'oui';
+				oLigne.eltTdNom.title = 'Monstre Mythique';
+			} else {
+				tr.className = 'mh_tdpage';
+				tr.diploActive = '';
+			}
+		}
 	}
 
 	static initOtherFiltre(div2, oConfig) {
@@ -14636,6 +14727,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
 	eltEnvoi;
+	idGuilde;
 
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
@@ -14732,6 +14824,18 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		this.eltEnvoi.appendChild(input);
 	}
 
+	getGuildeID() {
+		if (this.idGuilde !== undefined) return idGuilde;
+		let eltA = this.eltTdNom.getElementsByTagName('a')[0];
+		this.idGuilde = 0;
+		if (eltA) {
+			let href = eltA.href;
+			this.idGuilde = parseInt(href.substring(href.indexOf('(') + 1, href.indexOf(',')));
+			if (isNaN(this.idGuilde)) this.idGuilde = 0;
+		}
+		return this.idGuilde;
+	}
+
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 
@@ -14763,6 +14867,42 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		MZ_cLigneTroll.processPX();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 		MZ_cLigneTroll.MZ_oVueJSON.initFiltre();
+
+		// diplo
+		if (isDiploRaw) computeDiplo();
+		// ceci permet de retirer la diplo (non implémenté dans la nouvelle vue)
+		let aAppliquer = Diplo;
+		if (false) {//checkBoxDiplo.checked) {
+			// Pour retour à l'affichage basique sur désactivation de la diplo
+			aAppliquer = {
+				Guilde: {},
+				Troll: {},
+				Monstre: {}
+			};
+		}
+		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			let idG = oLigne.getGuildeID();
+			let tr = oLigne.eltTdNom.parentNode;
+			// logMZ('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
+			if (aAppliquer.Troll[oLigne.id]) {
+				tr.classList.remove('mh_tdpage');
+				let descr = aAppliquer.Troll[oLigne.id].titre;
+				if (descr) {
+					oLigne.eltTdNom.title = descr;
+				}
+				tr.style.backgroundColor = aAppliquer.Troll[oLigne.id].couleur;
+			} else if (idG > 0 && aAppliquer.Guilde[idG]) {
+				tr.classList.remove('mh_tdpage');
+				let descr = aAppliquer.Guilde[idG].titre;
+				if (descr) {
+					oLigne.eltTdNom.title = descr;
+				}
+				tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+			} else {
+				tr.classList.add('mh_tdpage');	// ne fait rien si déjà là
+				oLigne.eltTdNom.removeAttribute('title');
+			}
+		}
 	}
 
 	static initOtherFiltre(div2, oConfig) {
