@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.34
+// @version     1.6.35
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.34';
+var MZ_latest = '1.6.35';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -10034,7 +10034,9 @@ function fetchDiploGuilde() {
 					continue;
 				}
 				let ligne = form.getElementsByTagName('table')[0].rows;
-				let titre = trim(h3.textContent);
+				// je n'ai pas trouvé ça tout seul
+				// https://medium.com/@roxeteer/javascript-one-liner-to-get-elements-text-content-without-its-child-nodes-8e59269d1e71
+				let titre = trim([].reduce.call(h3.childNodes, function(a, b) { return a + (b.nodeType === 3 ? b.textContent : ''); }, ''));
 				// On laisse la gestion des couleurs à setChoixCouleurs:
 				let couleur = document.getElementById(AE + i).value;
 				diploGuilde[AE + i] = {
@@ -15886,6 +15888,7 @@ function minParPVsac(fat, bm) {
 	// fatigue = 'fat', sans et avec un bm de fatigue = 'bm'
 	let out = [];
 	out[0] = fat > 4 ? Math.floor(120 / (fat * (1 + Math.floor(fat / 10)))) : 30;
+	if (out[0] == 0) out[0] = 1;
 	if (bm && bm > 0) {
 		let totalfat = fat + bm;
 		// en principe inutile pour des bm fat >= 15 mais bon...
@@ -16006,10 +16009,12 @@ function setAccel() {
 		skip = true;
 	}
 
+	/* désactivé, ça n'arrive plus
 	if (!skip && fat > 30) {
 		appendText(insertPt, 'Vous êtes trop fatigué pour accélérer.');
 		skip = true;
 	}
+	// */
 
 	// Setup lastDLAZone
 	if (overDLA) {
@@ -16075,7 +16080,6 @@ function setAccel() {
 	let nbsp = '\u00A0';
 	let desktopView = isDesktopView();
 	if (desktopView) {
-		appendHr(insertPt);
 		table = document.createElement('table');
 		table.className = 'mh_tdborder';
 		table.border = 0;
@@ -16084,17 +16088,18 @@ function setAccel() {
 		table.style.textAlign = "center";
 		tbody = document.createElement('tbody');
 		table.appendChild(tbody);
-		insertPt.appendChild(table);
+		tr = document.createElement('tr');
+		document.querySelector('#pos').insertBefore(table, null);
 		ligneTour = appendTr(tbody, 'mh_tdtitre');
 		ligneTour.style.fontWeight = "bold";
-		let td = appendTdText(ligneTour, 'Tour :', true);
+		let td = appendTdText(ligneTour, 'Tour :', true);
 		td.align = 'left';
 		ligneFat = appendTr(tbody, 'mh_tdpage');
-		td = appendTdText(ligneFat, 'Fatigue :', true);
+		td = appendTdText(ligneFat, 'Fatigue :', true);
 		td.className = 'mh_tdtitre';
 		td.align = 'left';
 		ligneMin = appendTr(tbody, 'mh_tdpage');
-		td = appendTdText(ligneMin, '1 PV =', true);
+		td = appendTdText(ligneMin, '1 PV =', true);
 		td.className = 'mh_tdtitre';
 		td.align = 'left';
 	} else {
