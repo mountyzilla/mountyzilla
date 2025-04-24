@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.35
+// @version     1.6.36
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.35';
+var MZ_latest = '1.6.36';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6402,7 +6402,7 @@ class MZ_cHighlightSameXYN {
 	}
 }
 
-// to be deleted à l'abandon de l'ancienne vue
+// to be deleted à l'abandon de l'ancienne vue (et c'est fait en vanilla dans la nouvelle vue 😛)
 function do_highlightSameXYN() {
 	if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
 
@@ -6619,12 +6619,15 @@ function scizPrettyPrintPortal(p) {
 	return res;
 }
 
+// quand l'ancienne vue aura disparu, ce sera bien de découper en 6 partie par bloc et faire autant que callback que nécessaire
 function do_scizEnhanceView() {
 	scizGlobal.treasures = [];
+	let vue2 = false;	// to be deleted quand on n'aura plus que la nouvelle vue
 
 	if (document.body.id != 'p_mavue') {
-		logMZ('SCIZ sur la nouvelle vue : pas encore fait');
-		return;
+		//logMZ('SCIZ sur la nouvelle vue : pas encore fait');
+		//return;
+		vue2 = true;
 	}
 
 	// Ensure we have a JWT setup for the current user
@@ -6637,34 +6640,62 @@ function do_scizEnhanceView() {
 	// Add our CSS
 	scizAddCSS();
 
-	// Retrieve position and view
-	let pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
-	if (!pos) {
-		warnMZ('do_scizEnhanceView, pas de pos, on arrête le traitement SCIZ');
-		return;
+	let oPosTroll;
+	if (vue2) {
+		// Retrieve position and view
+		let pos = document.getElementById('position');
+		if (!pos) {
+			warnMZ('do_scizEnhanceView_log, pas de pos, on arrête le traitement SCIZ');
+			return;
+		}
+		oPosTroll = JSON.parse(pos.getAttribute('data-position'));
+	} else {
+		// Retrieve position and view
+		oPosTroll = {};
+		let pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
+		if (!pos) {
+			warnMZ('do_scizEnhanceView_log, pas de pos, on arrête le traitement SCIZ');
+			return;
+		}
+		oPosTroll.x = parseInt(pos[1]);
+		oPosTroll.y = parseInt(pos[2]);
+		oPosTroll.n = parseInt(pos[3]);
+		oPosTroll.vueH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
+		oPosTroll.vueV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
 	}
-	let posX = parseInt(pos[1]);
-	let posY = parseInt(pos[2]);
-	let posN = parseInt(pos[3]);
-	let viewH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
-	let viewV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
+	//console.log('do_scizEnhanceView_log oPosTroll=' + JSON.stringify(oPosTroll));
 
 	/* SCIZ View - TROLLS */
 	let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
+	let xPathTrollQuery;
+	let xPathTrolls;
+	let xPathTroll;
 	if (cbx !== '0') {
 		// Retrieve trolls
-		let xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
-		let xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
-		let xPathTroll;
-		while (xPathTroll = xPathTrolls.iterateNext()) {
-			if (xPathTroll.children[2]) scizGlobal.trolls.push({
-				id: parseInt(xPathTroll.children[2].innerHTML),
-				name: xPathTroll.children[3].innerHTML,
-				sciz_desc: null,
-				node: xPathTroll,
-				displayed: false,
-				caracs: null,
-			});
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+				scizGlobal.trolls.push({
+					id: oLigne.id,
+					name: oLigne.nom,
+					sciz_desc: null,
+					node: oLigne.eltTdNom.parentNode,
+					displayed: false,
+					caracs: null,
+				});
+			}
+		} else {
+			xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
+			xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
+			while (xPathTroll = xPathTrolls.iterateNext()) {
+				if (xPathTroll.children[2]) scizGlobal.trolls.push({
+					id: parseInt(xPathTroll.children[2].innerHTML),
+					name: xPathTroll.children[3].innerHTML,
+					sciz_desc: null,
+					node: xPathTroll,
+					displayed: false,
+					caracs: null,
+				});
+			}
 		}
 
 		// Call SCIZ
@@ -6698,14 +6729,14 @@ function do_scizEnhanceView() {
 								break;
 							}
 						}
-						if (!found) {
+						if ((!found) && !vue2) {
 							// Special case of itself
 							let is_self = false;
 							if (parseInt(numTroll) === t.id) {
 								is_self = true;
-								t.pos_x = posX;
-								t.pos_y = posY;
-								t.pos_n = posN;
+								t.pos_x = oPosTroll.x;
+								t.pos_y = oPosTroll.y;
+								t.pos_n = oPosTroll.n;
 								// Don't display the user itself if he does not want to
 								cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`);
 								if (cbx === '0') {
@@ -6713,7 +6744,7 @@ function do_scizEnhanceView() {
 								}
 							}
 							// Find the right index
-							let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+							let distance = Math.max(Math.abs(t.pos_x - oPosTroll.x), Math.abs(t.pos_y - oPosTroll.y), Math.abs(t.pos_n - oPosTroll.n));
 							xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
 							while (xPathTroll = xPathTrolls.iterateNext()) {
 								if (is_self) {
@@ -6741,7 +6772,7 @@ function do_scizEnhanceView() {
 							} else {
 								document.evaluate("//*/table[@id='VueTROLL']/tbody", document, null, 0, null).iterateNext().appendChild(troll);
 							}
-							//console.log(`MZ do_scizEnhanceView set tr_trolls[${nbTrolls+1}] `);
+							//console.log(`MZ do_scizEnhanceView_log set tr_trolls[${nbTrolls+1}] `);
 							tr_trolls[++nbTrolls] = troll;
 						}
 					});
@@ -6759,32 +6790,51 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve treasures
 		let ids = [];
-		let xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-		let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+		let xPathTreasureQuery;
+		let xPathTreasures
 		let xPathTreasure;
-		while (xPathTreasure = xPathTreasures.iterateNext()) {
-			let xPathRef = document.evaluate("//td[@class='ref']", xPathTreasure, null, 0, null).iterateNext();
-			let xPathNom = document.evaluate("//td[@class='nom']", xPathTreasure, null, 0, null).iterateNext();
-			let oTres = {
-				id: parseInt(xPathRef.innerHTML),
-				type: xPathNom.innerHTML,
-				sciz_desc: null,
-				buried: xPathNom.innerHTML.includes('Enterré'),
-				node: xPathTreasure,
-			};
-			if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
-				logMZ("do_scizEnhanceView recup des trésors, échec de l'analyse"
-					+ "\n" + xPathTreasure.children[0].innerHTML
-					+ "\n" + xPathTreasure.children[1].innerHTML
-					+ "\n" + xPathTreasure.children[2].innerHTML
-					+ "\n" + xPathTreasure.children[3].innerHTML
-				);
-				continue;
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+				let oTres = {
+					id: oLigne.id,
+					type: oLigne.nom,
+					sciz_desc: null,
+					buried: oLigne.nom.includes('Enterré'),
+					node: oLigne.eltTdNom.parentNode,
+				};
+				scizGlobal.treasures.push(oTres);
+				ids.push(oTres.id);
+				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
+					break;
+				}
 			}
-			scizGlobal.treasures.push(oTres);
-			ids.push(oTres.id);
-			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
-				break;
+		} else {
+			xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+			xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+			while (xPathTreasure = xPathTreasures.iterateNext()) {
+				let xPathRef = document.evaluate("//td[@class='ref']", xPathTreasure, null, 0, null).iterateNext();
+				let xPathNom = document.evaluate("//td[@class='nom']", xPathTreasure, null, 0, null).iterateNext();
+				let oTres = {
+					id: parseInt(xPathRef.innerHTML),
+					type: xPathNom.innerHTML,
+					sciz_desc: null,
+					buried: xPathNom.innerHTML.includes('Enterré'),
+					node: xPathTreasure,
+				};
+				if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
+					logMZ("do_scizEnhanceView_log recup des trésors, échec de l'analyse"
+						+ "\n" + xPathTreasure.children[0].innerHTML
+						+ "\n" + xPathTreasure.children[1].innerHTML
+						+ "\n" + xPathTreasure.children[2].innerHTML
+						+ "\n" + xPathTreasure.children[3].innerHTML
+					);
+					continue;
+				}
+				scizGlobal.treasures.push(oTres);
+				ids.push(oTres.id);
+				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
+					break;
+				}
 			}
 		}
 
@@ -6834,7 +6884,6 @@ function do_scizEnhanceView() {
 			}
 		});
 	}
-
 
 	/* SCIZ View - MUSHROOMS */
 	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
@@ -6906,29 +6955,49 @@ function do_scizEnhanceView() {
 		let xPathMonster;
 		let iMonster = 0;
 		scizGlobal.monsters = [];
-		while (xPathMonster = xPathMonsters.iterateNext()) {
-			let mob = xPathMonster.children[4].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
-			if (!mob) mob = xPathMonster.children[3].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);	// cas smartphone
-			if (!mob) {
-				logMZ("do_scizEnhanceView recup des monstres, échec de l'analyse"
-					+ "\n" + xPathMonster.children[0].innerHTML
-					+ "\n" + xPathMonster.children[1].innerHTML
-					+ "\n" + xPathMonster.children[2].innerHTML
-					+ "\n" + xPathMonster.children[3].innerHTML
-					+ "\n" + xPathMonster.children[4].innerHTML
-				);
-				continue;
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
+				let mob = oLigne.nom.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
+				if (!mob) {
+					logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse pour " + oLigne.nom);
+					continue;
+				}
+				scizGlobal.monsters.push({
+					id: oLigne.id,
+					name: mob[1],
+					age: mob[2],
+					sciz_desc: null,
+					icon: null,
+					node: oLigne.eltTdNom.parentNode,
+					indx: iMonster++,
+				});
+				mobs.push({ name: mob[1], age: mob[2] });
 			}
-			scizGlobal.monsters.push({
-				id: parseInt(xPathMonster.children[2].innerHTML),
-				name: mob[1],
-				age: mob[2],
-				sciz_desc: null,
-				icon: null,
-				node: xPathMonster,
-				indx: iMonster++,
-			});
-			mobs.push({ name: mob[1], age: mob[2] });
+		} else {
+			while (xPathMonster = xPathMonsters.iterateNext()) {
+				let mob = xPathMonster.children[4].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
+				if (!mob) mob = xPathMonster.children[3].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);	// cas smartphone
+				if (!mob) {
+					logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse"
+						+ "\n" + xPathMonster.children[0].innerHTML
+						+ "\n" + xPathMonster.children[1].innerHTML
+						+ "\n" + xPathMonster.children[2].innerHTML
+						+ "\n" + xPathMonster.children[3].innerHTML
+						+ "\n" + xPathMonster.children[4].innerHTML
+					);
+					continue;
+				}
+				scizGlobal.monsters.push({
+					id: parseInt(xPathMonster.children[2].innerHTML),
+					name: mob[1],
+					age: mob[2],
+					sciz_desc: null,
+					icon: null,
+					node: xPathMonster,
+					indx: iMonster++,
+				});
+				mobs.push({ name: mob[1], age: mob[2] });
+			}
 		}
 		debugMZ(`SCIZ nb mob=${mobs.length}`);
 
@@ -6993,7 +7062,7 @@ function do_scizEnhanceView() {
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ pos_x: posX, pos_y: posY, pos_n: posN, view_h: viewH, view_v: viewV }),
+			data: JSON.stringify({ pos_x: oPosTroll.x, pos_y: oPosTroll.y, pos_n: oPosTroll.n, view_h: oPosTroll.vueH, view_v: oPosTroll.vueV }),
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
@@ -7018,7 +7087,7 @@ function do_scizEnhanceView() {
 						}
 						if (!found) {
 							// Find the right index
-							let distance = Math.max(Math.abs(t.pos_x - posX), Math.abs(t.pos_y - posY), Math.abs(t.pos_n - posN));
+							let distance = Math.max(Math.abs(t.pos_x - oPosTroll.x), Math.abs(t.pos_y - oPosTroll.y), Math.abs(t.pos_n - oPosTroll.n));
 							xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
 							while (xPathPlace = xPathPlaces.iterateNext()) {
 								if (parseInt(xPathPlace.children[0].innerHTML) > distance) {
@@ -13508,9 +13577,11 @@ function do_vue() {
 	).singleNodeValue;
 	if (node) {
 		do_vue_html();	// "ancienne" vue
+		do_scizEnhanceView(); /* SCIZ */
+		do_highlightSameXYN();
 	} else {
 		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue! On y travaille (parfois)...  ');
-		MZ_cVueJSON.initGlobal();
+		MZ_cVueJSON.initGlobal();	// inclut SCIZ et SameXYN
 	}
 }
 
@@ -13546,6 +13617,7 @@ class MZ_cVueJSON {
 	static allMHLoaded() {
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
+		do_scizEnhanceView();
 		for (let callback of MZ_cVueJSON.callbacksFinMH) {
 			try {
 				callback();
@@ -13939,7 +14011,7 @@ class MZ_cLigneVue {
 	eltTdN;
 	eltTdNiv;
 	// les infos (ajouter des propriétés au fur et à mesure des besoins)
-	nom;	// nom complet, y compris template, âge, taggage pour les monstres, par exemple
+	nom;	// nom complet, y compris template, âge, marquage pour les monstres, par exemple
 
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
@@ -15223,7 +15295,7 @@ function do_vue_html() {
 		// gath: on garde le message sympa plutôt qu'ajouter un '- Plus d'infos
 		// en console (F12)' sans ame !
 		avertissement(`Une erreur est survenue. Seriez-vous sous l'effet d'un Fumeux ?`);
-		logMZ('do_vue', exc);
+		logMZ('do_vue_log', exc);
 	}
 }
 
@@ -18332,8 +18404,6 @@ try {
 		do_tancompo();
 	} else if (isPage("MH_Play/Play_vue")) {
 		do_vue();
-		do_scizEnhanceView(); /* SCIZ */
-		do_highlightSameXYN();
 	} else if (isPage("MH_Play/Play_news")) {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
