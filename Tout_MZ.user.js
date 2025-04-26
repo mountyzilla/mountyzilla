@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.36
+// @version     1.6.37
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.36';
+var MZ_latest = '1.6.37';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6678,7 +6678,7 @@ function do_scizEnhanceView() {
 					id: oLigne.id,
 					name: oLigne.nom,
 					sciz_desc: null,
-					node: oLigne.eltTdNom.parentNode,
+					nodeNom: oLigne.eltTdNom,
 					displayed: false,
 					caracs: null,
 				});
@@ -6691,7 +6691,7 @@ function do_scizEnhanceView() {
 					id: parseInt(xPathTroll.children[2].innerHTML),
 					name: xPathTroll.children[3].innerHTML,
 					sciz_desc: null,
-					node: xPathTroll,
+					nodeNom: xPathTroll.children[3],
 					displayed: false,
 					caracs: null,
 				});
@@ -6722,12 +6722,16 @@ function do_scizEnhanceView() {
 							found = false;
 							if (scizGlobal.trolls[i].id === t.id) {
 								// PrettyPrint
-								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].node.children[3].innerHTML + scizPrettyPrintTroll(t);
+								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].nodeNom.innerHTML + scizPrettyPrintTroll(t);
 								// Store caracs
 								scizGlobal.trolls[i].caracs = t.caracs;
 								found = true;
 								break;
 							}
+						}
+						if ((!found) && vue2) {
+							// à faire, ajout de ligne
+							logMZ(`Il y a le Tõll ${t.id} ${t.nom} en ${t.pos_x} ${t.pos_y} ${t.pos_n} pas encore traité dans la nouvelle vue`);
 						}
 						if ((!found) && !vue2) {
 							// Special case of itself
@@ -6765,7 +6769,7 @@ function do_scizEnhanceView() {
 							let troll = template.content.firstChild;
 							// Add the troll
 							scizGlobal.trolls.push({
-								id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), node: troll, displayed: false, caracs: t.caracs
+								id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), nodeNom: troll.children[3], displayed: false, caracs: t.caracs
 							});
 							if (xPathTroll !== null) {
 								xPathTroll.parentNode.insertBefore(troll, xPathTroll);
@@ -6788,29 +6792,27 @@ function do_scizEnhanceView() {
 	/* SCIZ View - TREASURES */
 	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`);
 	if (cbx !== '0') {
-		// Retrieve treasures
+		// Retrieve treasures - Au 25/04/2025, ça ne fonctionne pas, le serveur SCIZ renvoi de l'HTML (contenu vide) et pas du JSON
 		let ids = [];
-		let xPathTreasureQuery;
-		let xPathTreasures
-		let xPathTreasure;
 		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			for (let oLigne of MZ_cVueJSON.oTresors.objets) {
 				let oTres = {
 					id: oLigne.id,
 					type: oLigne.nom,
 					sciz_desc: null,
 					buried: oLigne.nom.includes('Enterré'),
-					node: oLigne.eltTdNom.parentNode,
+					nodeNom: oLigne.eltTdNom,
 				};
 				scizGlobal.treasures.push(oTres);
-				ids.push(oTres.id);
+				ids.push(oLigne.id);
 				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
 					break;
 				}
 			}
 		} else {
-			xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-			xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+			let xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
+			let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
+			let xPathTreasure;
 			while (xPathTreasure = xPathTreasures.iterateNext()) {
 				let xPathRef = document.evaluate("//td[@class='ref']", xPathTreasure, null, 0, null).iterateNext();
 				let xPathNom = document.evaluate("//td[@class='nom']", xPathTreasure, null, 0, null).iterateNext();
@@ -6819,7 +6821,7 @@ function do_scizEnhanceView() {
 					type: xPathNom.innerHTML,
 					sciz_desc: null,
 					buried: xPathNom.innerHTML.includes('Enterré'),
-					node: xPathTreasure,
+					nodeNom: xPathTreasure.children[3],
 				};
 				if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
 					logMZ("do_scizEnhanceView_log recup des trésors, échec de l'analyse"
@@ -6871,7 +6873,7 @@ function do_scizEnhanceView() {
 								// Store the SCIZ treasure desc
 								scizGlobal.treasures[i].sciz_desc = t;
 								// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
-								scizGlobal.treasures[i].type = scizGlobal.treasures[i].node.children[3].firstChild.textContent;
+								scizGlobal.treasures[i].type = scizGlobal.treasures[i].nodeNom.firstChild.textContent;
 								break;
 							}
 						}
@@ -6887,22 +6889,38 @@ function do_scizEnhanceView() {
 
 	/* SCIZ View - MUSHROOMS */
 	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
-	let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
-	let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
-	if (cbx !== '0' && !xPathMushrooms) {
+	if (cbx !== '0') {
 		// Retrieve mushrooms
 		let ids = [];
-		let xPathMushroom;
-		while (xPathMushroom = xPathMushrooms.iterateNext()) {
-			scizGlobal.mushrooms.push({
-				id: parseInt(xPathMushroom.children[2].innerHTML),
-				type: xPathMushroom.children[3].innerHTML,
-				sciz_desc: null,
-				node: xPathMushroom,
-			});
-			ids.push(xPathMushroom.children[2].innerHTML);
-			if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
-				break;
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oChampignons.objets) {
+				let oChampi = {
+					id: oLigne.id,
+					type: oLigne.nom,
+					sciz_desc: null,
+					nodeNom: oLigne.eltTdNom,
+				};
+				scizGlobal.mushrooms.push(oChampi);
+				ids.push(oLigne.id);
+				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
+					break;
+				}
+			}
+		} else {
+			let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
+			let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
+			let xPathMushroom;
+			while (xPathMushroom = xPathMushrooms.iterateNext()) {
+				scizGlobal.mushrooms.push({
+					id: parseInt(xPathMushroom.children[2].innerHTML),
+					type: xPathMushroom.children[3].innerHTML,
+					sciz_desc: null,
+					nodeNom: xPathMushroom.children[3],
+				});
+				ids.push(xPathMushroom.children[2].innerHTML);
+				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
+					break;
+				}
 			}
 		}
 
@@ -6950,9 +6968,6 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve monsters
 		let mobs = [];
-		let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
-		let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
-		let xPathMonster;
 		let iMonster = 0;
 		scizGlobal.monsters = [];
 		if (vue2) {
@@ -6968,12 +6983,15 @@ function do_scizEnhanceView() {
 					age: mob[2],
 					sciz_desc: null,
 					icon: null,
-					node: oLigne.eltTdNom.parentNode,
+					nodeNom: oLigne.eltTdNom,
 					indx: iMonster++,
 				});
 				mobs.push({ name: mob[1], age: mob[2] });
 			}
 		} else {
+			let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
+			let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
+			let xPathMonster;
 			while (xPathMonster = xPathMonsters.iterateNext()) {
 				let mob = xPathMonster.children[4].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
 				if (!mob) mob = xPathMonster.children[3].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);	// cas smartphone
@@ -6993,7 +7011,7 @@ function do_scizEnhanceView() {
 					age: mob[2],
 					sciz_desc: null,
 					icon: null,
-					node: xPathMonster,
+					nodeNom: xPathMonster.children[4],
 					indx: iMonster++,
 				});
 				mobs.push({ name: mob[1], age: mob[2] });
@@ -7020,7 +7038,11 @@ function do_scizEnhanceView() {
 					scizGlobal.monsters.forEach((m) => {
 						if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
 							let icon = scizCreateHoverable('15', m, do_scizBestiaire);
-							m.node.children[4].appendChild(icon);
+							if (vue2) {
+								m.nodeNom.appendChild(icon);
+							} else {
+								m.nodeNom.appendChild(icon);
+							}
 							debugMZ(`SCIZ trouvé ${m.name} ${m.age}`);
 						} else {
 							debugMZ(`SCIZ pas trouvé ${m.name} ${m.age}`);
@@ -7038,22 +7060,39 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve traps
 		let ids = [];
-		let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-		let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+		let xPathPlaceQuery;
+		let xPathPlaces;
 		let xPathPlace;
-		while (xPathPlace = xPathPlaces.iterateNext()) {
-			let trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
-			if (trap === null) {
-				continue;
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+				let trap = oLigne.eltTdNom.innerHTML.match(/Piège\s+à\s+/);
+				if (trap === null) continue;
+				scizGlobal.traps.push({
+					id: oLigne.id,
+					type: oLigne.nom,
+					hidden: oLigne.nom.includes('Caché'),
+					sciz_desc: null,
+					nodeNom: oLigne.eltTdNom,
+				});
+				//ids.push(oLigne.id);	// ne sert à rien
 			}
-			scizGlobal.traps.push({
-				id: parseInt(xPathPlace.children[2].innerHTML),
-				type: xPathPlace.children[3].innerHTML,
-				hidden: xPathPlace.children[3].innerHTML.includes('Caché'),
-				sciz_desc: null,
-				node: xPathPlace
-			});
-			ids.push(xPathPlace.children[2].innerHTML);
+		} else {
+			xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+			xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+			while (xPathPlace = xPathPlaces.iterateNext()) {
+				let trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
+				if (trap === null) {
+					continue;
+				}
+				scizGlobal.traps.push({
+					id: parseInt(xPathPlace.children[2].innerHTML),
+					type: xPathPlace.children[3].innerHTML,
+					hidden: xPathPlace.children[3].innerHTML.includes('Caché'),
+					sciz_desc: null,
+					node: xPathPlace.children[3],
+				});
+				ids.push(xPathPlace.children[2].innerHTML);
+			}
 		}
 
 		// Call SCIZ
@@ -7080,12 +7119,16 @@ function do_scizEnhanceView() {
 							if (scizGlobal.traps[i].id === t.id) {
 								scizGlobal.traps[i].sciz_desc = scizPrettyPrintTrap(t);
 								// Adapt the sciz type (delete the hidden marker, the do_scizSwitchTraps will handle it)
-								scizGlobal.traps[i].type = scizGlobal.traps[i].node.children[3].firstChild.textContent;
+								scizGlobal.traps[i].type = scizGlobal.traps[i].nodeNom.firstChild.textContent;
 								found = true;
 								break;
 							}
 						}
-						if (!found) {
+						if ((vue2 && !found)) {
+							// à faire : vue2
+							logMZ(`Il y a un piège en ${t.pos_x} ${t.pos_y} ${t.pos_n} pas encore traité dans la nouvelle vue`);
+						}
+						if (((!vue2) && !found)) {
 							// Find the right index
 							let distance = Math.max(Math.abs(t.pos_x - oPosTroll.x), Math.abs(t.pos_y - oPosTroll.y), Math.abs(t.pos_n - oPosTroll.n));
 							xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
@@ -7124,22 +7167,37 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve portals
 		let ids = [];
-		let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-		let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
-		let xPathPlace;
-		while (xPathPlace = xPathPlaces.iterateNext()) {
-			let portal = xPathPlace.children[3].innerHTML.match(/Portail/);
-			if (portal === null) {
-				continue;
+		if (vue2) {
+			for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+				let portal = oLigne.nom.match(/Portail/);
+				if (portal === null) continue;
+				scizGlobal.portals.push({
+					id: oLigne.id,
+					type: oLigne.nom,
+					sciz_desc: null,
+					nodeNom: oLigne.eltTdNom,
+				});
+				ids.push(oLigne.id.toString());	// le serveur SCIZ n'accepte que des ids sous forme de chaine. Va savoir pourquoi
 			}
-			scizGlobal.portals.push({
-				id: parseInt(xPathPlace.children[2].innerHTML),
-				type: xPathPlace.children[3].innerHTML,
-				sciz_desc: null,
-				node: xPathPlace
-			});
-			ids.push(xPathPlace.children[2].innerHTML);
+		} else {
+			let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
+			let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
+			let xPathPlace;
+			while (xPathPlace = xPathPlaces.iterateNext()) {
+				let portal = xPathPlace.children[3].innerHTML.match(/Portail/);
+				if (portal === null) {
+					continue;
+				}
+				scizGlobal.portals.push({
+					id: parseInt(xPathPlace.children[2].innerHTML),
+					type: xPathPlace.children[3].innerHTML,
+					sciz_desc: null,
+					nodeNom: xPathPlace.children[3],
+				});
+				ids.push(xPathPlace.children[2].innerHTML);
+			}
 		}
+
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/portals';
 		FF_XMLHttpRequest({
@@ -7184,15 +7242,15 @@ function do_scizSwitchTrolls() {
 			t.displayed = !t.displayed;
 			// Do the switch
 			if (t.displayed) {
-				t.node.children[3].innerHTML = t.sciz_desc;
+				t.nodeNom.innerHTML = t.sciz_desc;
 				if (t.caracs !== null) {
 					icon.title = t.caracs;
 				}
 			} else {
-				t.node.children[3].innerHTML = t.name;
+				t.nodeNom.innerHTML = t.name;
 			}
 			// Add the SCIZ switcher
-			t.node.children[3].appendChild(icon);
+			t.nodeNom.appendChild(icon);
 		}
 	});
 }
@@ -7201,13 +7259,13 @@ function do_scizSwitchTreasures() {
 	scizGlobal.treasures.forEach((t) => {
 		if (t.sciz_desc !== null) {
 			// Do the switch
-			let currentDesc = t.node.children[3].firstChild.textContent;
-			t.node.children[3].innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
+			let currentDesc = t.nodeNom.firstChild.textContent;
+			t.nodeNom.innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
 			if (t.buried) {
-				t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
+				t.nodeNom.innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
 			}
 			// Add the SCIZ switcher
-			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
+			t.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
 		}
 	});
 }
@@ -7216,10 +7274,10 @@ function do_scizSwitchMushrooms() {
 	scizGlobal.mushrooms.forEach((m) => {
 		if (m.sciz_desc !== null) {
 			// Do the switch
-			let currentDesc = m.node.children[3].firstChild.textContent;
-			m.node.children[3].innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
+			let currentDesc = m.nodeNom.firstChild.textContent;
+			m.nodeNom.innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 			// Add the SCIZ switcher
-			m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchMushrooms));
+			m.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchMushrooms));
 		}
 	});
 }
@@ -7228,13 +7286,13 @@ function do_scizSwitchTraps() {
 	scizGlobal.traps.forEach((t) => {
 		if (t.sciz_desc !== null) {
 			// Do the switch
-			let currentDesc = t.node.children[3].firstChild.textContent;
-			t.node.children[3].innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
+			let currentDesc = t.nodeNom.firstChild.textContent;
+			t.nodeNom.innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
 			if (t.hidden) {
-				t.node.children[3].innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Caché]" title="Caché" width="15" height="15">';
+				t.nodeNom.innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Caché]" title="Caché" width="15" height="15">';
 			}
 			// Add the SCIZ switcher
-			t.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTraps));
+			t.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTraps));
 		}
 	});
 }
@@ -7243,10 +7301,10 @@ function do_scizSwitchPortals() {
 	scizGlobal.portals.forEach((m) => {
 		if (m.sciz_desc !== null) {
 			// Do the switch
-			let currentDesc = m.node.children[3].firstChild.textContent;
-			m.node.children[3].innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
+			let currentDesc = m.nodeNom.firstChild.textContent;
+			m.nodeNom.innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 			// Add the SCIZ switcher
-			m.node.children[3].appendChild(scizCreateClickable('15', 'inline', do_scizSwitchPortals));
+			m.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchPortals));
 		}
 	});
 }
