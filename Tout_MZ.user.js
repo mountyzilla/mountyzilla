@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.37
+// @version     1.6.38
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.37';
+var MZ_latest = '1.6.38';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6643,12 +6643,8 @@ function do_scizEnhanceView() {
 	let oPosTroll;
 	if (vue2) {
 		// Retrieve position and view
-		let pos = document.getElementById('position');
-		if (!pos) {
-			warnMZ('do_scizEnhanceView_log, pas de pos, on arrête le traitement SCIZ');
-			return;
-		}
-		oPosTroll = JSON.parse(pos.getAttribute('data-position'));
+		MZ_cVueJSON.loadPosTroll();
+		oPosTroll = MZ_cVueJSON.oPosTroll;
 	} else {
 		// Retrieve position and view
 		oPosTroll = {};
@@ -6676,7 +6672,7 @@ function do_scizEnhanceView() {
 			for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
 				scizGlobal.trolls.push({
 					id: oLigne.id,
-					name: oLigne.nom,
+					name: oLigne.eltTdNom.innerHTML,
 					sciz_desc: null,
 					nodeNom: oLigne.eltTdNom,
 					displayed: false,
@@ -6718,20 +6714,25 @@ function do_scizEnhanceView() {
 					// Look for trolls to enhanced
 					let found = false;
 					trolls.trolls.forEach((t) => {
-						for (let i = 0; i < scizGlobal.trolls.length; i++) {
+						for (let oTrollSCIZ of scizGlobal.trolls) {
 							found = false;
-							if (scizGlobal.trolls[i].id === t.id) {
-								// PrettyPrint
-								scizGlobal.trolls[i].sciz_desc = scizGlobal.trolls[i].nodeNom.innerHTML + scizPrettyPrintTroll(t);
-								// Store caracs
-								scizGlobal.trolls[i].caracs = t.caracs;
-								found = true;
-								break;
-							}
+							if (oTrollSCIZ.id !== t.id) continue;
+							// PrettyPrint
+							oTrollSCIZ.sciz_desc = oTrollSCIZ.nodeNom.innerHTML + scizPrettyPrintTroll(t);
+							// Store caracs
+							oTrollSCIZ.caracs = t.caracs;
+							found = true;
+							break;
 						}
 						if ((!found) && vue2) {
-							// à faire, ajout de ligne
-							logMZ(`Il y a le Tõll ${t.id} ${t.nom} en ${t.pos_x} ${t.pos_y} ${t.pos_n} pas encore traité dans la nouvelle vue`);
+							// ajout de ligne dans le bloc Trolls
+							if (t.id==68481) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60}	// test Roule'
+							//logMZ(`SCIZ Ajout Trõll ${JSON.stringify(t)}`);
+							let oTrollMZ = MZ_cLigneTroll.addLigne(t.id, t.nom, t.pos_x, t.pos_y, t.pos_n, t.guilde_id, t.guilde_nom, t.niv, t.race, oPosTroll);
+							html_nom = oTrollMZ.eltTdNom.innerHTML;
+							scizGlobal.trolls.push({
+								id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), nodeNom: oTrollMZ.eltTdNom, displayed: false, caracs: t.caracs
+							});
 						}
 						if ((!found) && !vue2) {
 							// Special case of itself
@@ -13625,7 +13626,6 @@ function inversionCoord() {
 	}
 }
 
-
 /*                             Partie principale                              */
 function do_vue() {
 	// test vue méthode pré ou post 2024
@@ -13638,7 +13638,7 @@ function do_vue() {
 		do_scizEnhanceView(); /* SCIZ */
 		do_highlightSameXYN();
 	} else {
-		avertissement('Il y a encore beaucoup à faire pour intégrer MZ à la nouvelle vue! On y travaille (parfois)...  ');
+		avertissement('Il y a encore à faire pour intégrer MZ à la nouvelle vue! On avance...  ');
 		MZ_cVueJSON.initGlobal();	// inclut SCIZ et SameXYN
 	}
 }
@@ -13661,6 +13661,7 @@ class MZ_cVueJSON {
 	static MutationObserverConfig = { childList: true, subtree: true };
 	static callbacksFinMH = [];
 	static callbacksFinMZ = [];
+	static oPosTroll;
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13680,7 +13681,7 @@ class MZ_cVueJSON {
 			try {
 				callback();
 			} catch (exc) {
-				logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
+				logMZ("MZ_cVueJSON_log Erreur à l'appel d'une callback", exc);
 			}
 		}
 	}
@@ -13699,6 +13700,21 @@ class MZ_cVueJSON {
 		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH, le retour MZ a été traité et les cibles des missions traitées)
 		// utilisé aussi pour rafraichir le filtre des monstres pour niveau, famille et mission
 		MZ_cVueJSON.callbacksFinMZ.push(callback);
+	}
+
+	static loadPosTroll() {	// chargement de MZ_cVueJSON.oPosTroll
+		if (MZ_cVueJSON.oPosTroll !== undefined) return;
+		let pos = document.getElementById('position');
+		if (!pos) {
+			warnMZ('MZ_cVueJSON_log loadPosTroll_log, pas de position du Troll');
+			return;
+		}
+		let txt = pos.getAttribute('data-position');
+		try {
+			MZ_cVueJSON.oPosTroll = JSON.parse(txt);
+		} catch (exc) {
+			logMZ("MZ_cVueJSON_log loadPosTroll_log Erreur à l'analyse de la position du Trõll", txt, exc);
+		}
 	}
 
 	// ----- fin partie statique -------------
@@ -14070,6 +14086,9 @@ class MZ_cLigneVue {
 	eltTdNiv;
 	// les infos (ajouter des propriétés au fur et à mesure des besoins)
 	nom;	// nom complet, y compris template, âge, marquage pour les monstres, par exemple
+	distH;
+	distV;
+	dist;
 
 	init(MZ_oVueJSON, id, eTr) {
 		this.id = id;
@@ -14083,6 +14102,20 @@ class MZ_cLigneVue {
 		this.eltTdN = eTr.cells[MZ_oVueJSON.indxTdN];
 		if (MZ_oVueJSON.indxTdNiv) { this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv]; }
 		this.nom = this.eltTdNom.innerText.trim();
+	}
+
+	loadDist() {
+		if (this.dist !== undefined) return;
+		try {
+			MZ_cVueJSON.loadPosTroll();
+			this.distH = Math.max(
+				Math.abs(parseInt(this.eltTdX.innerHTML) - MZ_cVueJSON.oPosTroll.x),
+				Math.abs(parseInt(this.eltTdY.innerHTML) - MZ_cVueJSON.oPosTroll.y));
+			this.distV = parseInt(this.eltTdN.innerHTML) - MZ_cVueJSON.oPosTroll.n;
+			this.dist = Math.max(this.distH, Math.abs(this.distV));
+		} catch (exc) {
+			logMZ("MZ_cLigneVue_log loadDist_log Erreur au calcul de la distance", exc);
+		}
 	}
 
 	static stopPropagation(event) {
@@ -14133,45 +14166,6 @@ class MZ_cLigneVue {
 				oLigne.eltTdDist.parentNode.style.display = 'table-row';
 		}
 	}
-
-/* à supprimer
-		let nivMin = parseInt(document.getElementById('MZ_nivMinMonstres').value, 10);
-		if (!isNaN(nivMin)) {
-			oConfig.nivMin = nivMin;
-			bSomething = true;
-		} else delete oConfig.nivMin;
-		let nivMax = parseInt(document.getElementById('MZ_nivMaxMonstres').value, 10);
-		if (!isNaN(nivMax)) {
-			if (oConfig.nivMin !== undefined && oConfig.nivMin > nivMax) {
-				oConfig.nivMax = oConfig.nivMin;
-				oConfig.nivMin = nivMax;
-			} else {
-				oConfig.nivMax = nivMax;
-			}
-			bSomething = true;
-		} else delete oConfig.nivMax;
-
-		let nom = document.getElementById('MZ_Nom' + MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre).value;
-		if (nom.trim() != '') {
-			oConfig.nom = nom;
-			bSomething = true;
-		} else delete oConfig.nom;
-		let famille = document.getElementById('MZ_FamilleMonstres').value;
-		if (famille == 'Humanoïde') famille = 'Humanoide';	// **sight**
-		if (famille && famille != '0') {	// firefox nous donne "0" dans le texte de la listbox est vide
-			oConfig.famille = famille;
-			bSomething = true;
-		} else delete oConfig.famille;
-
-		if (!bSomething) oConfig = {empty: true};
-
-		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(oConfig);
-
-		//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
-		if (oConfig.empty) oConfig = undefined;
-		MZ_SauvegardeMH.setZone(MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre, oConfig);
-	}
-	*/
 }
 
 class MZ_cLigneMonstre extends MZ_cLigneVue {
@@ -15017,21 +15011,19 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			let tr = oLigne.eltTdNom.parentNode;
 			// logMZ('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
 			if (aAppliquer.Troll[oLigne.id]) {
-				tr.classList.remove('mh_tdpage');
 				let descr = aAppliquer.Troll[oLigne.id].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
 				}
-				tr.style.backgroundColor = aAppliquer.Troll[oLigne.id].couleur;
+				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Troll[oLigne.id].couleur;
 			} else if (idG > 0 && aAppliquer.Guilde[idG]) {
-				tr.classList.remove('mh_tdpage');
 				let descr = aAppliquer.Guilde[idG].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
 				}
-				tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
 			} else {
-				tr.classList.add('mh_tdpage');	// ne fait rien si déjà là
+				for (let td of tr.children) td.style.backgroundColor = '';
 				oLigne.eltTdNom.removeAttribute('title');
 			}
 		}
@@ -15205,6 +15197,124 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				if (camo) { oTroll.eltTdNom.appendChild(camo); }
 			}
 		}
+	}
+
+	static addLigne(id, nom, x, y, n, guildeId, guildeNom, niv, race) {
+		let hv;
+		let oModele = MZ_cVueJSON.oTrolls.objets[0];
+		if (!oModele) {
+			logMZ(`pas de Troll, impossible d'ajouter ` + nom);
+			return;
+		}
+		let oTrollMZ = new MZ_cLigneTroll();
+		if (MZ_cVueJSON.oTrolls.objets.length > 0) {
+			hv = oModele.eltTdDist.classList.contains('hv');
+		}
+		let tr = document.createElement('tr');
+		tr.className = 'mh_tdpage';
+		tr.setAttribute('data-xyn', `${x};${y};${n}`);
+		let html_nom = `<a href="javascript:PVT(${id})" class="mh_trolls_1">${nom}</a>`;
+		oTrollMZ.eltTdDist = document.createElement('td');
+		if (oModele)
+			oTrollMZ.eltTdDist.classList = oModele.eltTdDist.classList;
+		else
+			oTrollMZ.eltTdDist.className = 'dist footable-first-visible';
+		let distance;
+		MZ_cVueJSON.loadPosTroll();
+		if (MZ_cVueJSON.oPosTroll) {
+			let distanceH;
+			let distanceV;
+			distanceH = Math.max(
+				Math.abs(x - MZ_cVueJSON.oPosTroll.x),
+				Math.abs(y - MZ_cVueJSON.oPosTroll.y));
+			distanceV = n - MZ_cVueJSON.oPosTroll.n;
+			distance = Math.max(distanceH, Math.abs(distanceV));
+			let codeDistance = distanceH.toString() + (distanceV+100).toString();
+			oTrollMZ.eltTdDist.setAttribute('data-sort-value', codeDistance);
+			if (hv) {
+				let txt = `${distanceH}|`;
+				if (distanceV >= 10) {
+					txt += '+' + distanceV;
+				} else if (distanceV > 0) {
+					txt += '\u2007+' + distanceV; // espace qui a la même largeur qu'un chiffre
+				} else if(distanceV == 0) {
+					txt +=  '\u2007\u20070';
+				} else if (distanceV > -10) {
+					txt += '\u2007\u2212' + Math.abs(distanceV); // signe moins qui a la même largeur qu'un chiffre
+				} else {
+					txt += '\u2212' + Math.abs(distanceV);
+				}
+				oTrollMZ.eltTdDist.appendChild(document.createTextNode(txt));
+			} else {
+				oTrollMZ.eltTdDist.appendChild(document.createTextNode(distance));
+			}
+		}
+		oTrollMZ.eltTdAction = document.createElement('td');
+		oTrollMZ.eltTdRef= document.createElement('td');
+		oTrollMZ.eltTdRef.style.textAlign = 'right';
+		oTrollMZ.eltTdRef.appendChild(document.createTextNode(id));
+		oTrollMZ.eltTdNom= document.createElement('td');
+		let a = document.createElement('a');
+		a.clasName = 'troll';
+		a.href = `javascript:PVT(${id})`;
+		a.appendChild(document.createTextNode(nom));
+		oTrollMZ.eltTdNom.appendChild(a);
+		oTrollMZ.eltTdGuilde = document.createElement('td');
+		if (guildeId) {
+			a = document.createElement('a');
+			a.href = `javascript:PVG(${guildeId})`;
+			a.appendChild(document.createTextNode(guildeNom));
+			oTrollMZ.eltTdGuilde.appendChild(a);
+		}
+		oTrollMZ.eltTdNiv = document.createElement('td');
+		if (niv) oTrollMZ.eltTdNiv.appendChild(document.createTextNode(niv));
+		oTrollMZ.eltTdNiv.style.textAlign = 'right';
+		oTrollMZ.eltTdRace = document.createElement('td');
+		if (race) oTrollMZ.eltTdRace.appendChild(document.createTextNode(race));
+		oTrollMZ.eltTdX = document.createElement('td');
+		oTrollMZ.eltTdX.appendChild(document.createTextNode(x));
+		oTrollMZ.eltTdX.style.textAlign = 'right';
+		oTrollMZ.eltTdY = document.createElement('td');
+		oTrollMZ.eltTdY.appendChild(document.createTextNode(y));
+		oTrollMZ.eltTdY.style.textAlign = 'right';
+		oTrollMZ.eltTdN = document.createElement('td');
+		oTrollMZ.eltTdN.appendChild(document.createTextNode(n));
+		oTrollMZ.eltTdN.style.textAlign = 'right';
+		for (let e of [
+			oTrollMZ.eltTdDist,
+			oTrollMZ.eltTdAction,
+			oTrollMZ.eltTdRef,
+			oTrollMZ.eltTdNom,
+			oTrollMZ.eltTdGuilde,
+			oTrollMZ.eltTdNiv,
+			oTrollMZ.eltTdRace,
+			oTrollMZ.eltTdX,
+			oTrollMZ.eltTdY,
+			oTrollMZ.eltTdN]) {
+			e.style.display = 'table-cell';
+			tr.appendChild(e);
+		}
+		// l'insérer à la bonne place
+		let oGreater;
+		for (let oOther of MZ_cVueJSON.oTrolls.objets) {
+			oOther.loadDist();
+			if (oOther.dist < distance) continue;
+			if (oOther.dist > distance) {
+				oGreater = oOther;
+				break;
+			}
+			if (oOther.id < id) continue;
+			if (oOther.id > id) {
+				oGreater = oOther;
+				break;
+			}
+			warnMZ("addLigne ajout d'un Troll préexistant, ça ne devrait pas arriver", id, nom);
+			return oOther;
+		}
+		// Ajout en fin si oGreater est undefined
+		oModele.eltTdDist.parentNode.parentNode.insertBefore(tr, oGreater ? oGreater.eltTdNom.parentNode : undefined);
+		MZ_cVueJSON.oTrolls.objets.push(oTrollMZ);
+		return oTrollMZ;
 	}
 }
 
