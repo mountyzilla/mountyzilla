@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.39
+// @version     1.6.40
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.39';
+var MZ_latest = '1.6.40';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -14131,9 +14131,9 @@ class MZ_cLigneVue {
 			return;
 		}
 		logMZ(`loadXYN from eltTds ${this.nom}`);
-		x = parseInt(this.eltTdX.innerText);
-		y = parseInt(this.eltTdY.innerText);
-		n = parseInt(this.eltTdN.innerText);
+		this.x = parseInt(this.eltTdX.innerText);
+		this.y = parseInt(this.eltTdY.innerText);
+		this.n = parseInt(this.eltTdN.innerText);
 	}
 
 	loadDist() {
