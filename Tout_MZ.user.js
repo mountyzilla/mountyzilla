@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.41
+// @version     1.6.42
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.41';
+var MZ_latest = '1.6.42';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6285,7 +6285,7 @@ function traiteMonstre() {
 		url: URL_MZgetCaracMonstre,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: `l=${JSON.stringify(tReq)}`,
-		//trace: 'demande niveaux monstres V2, MonsterView',
+		trace: 'demande niveaux monstres V2, MonsterView',
 		onload: function (responseDetails) {
 			try {
 				// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
@@ -7445,7 +7445,7 @@ function do_scizOverwriteEvents() {
 		method: 'GET',
 		url: sciz_url,
 		headers: { Authorization: jwt },
-		// trace: 'Appel à SCIZ pour l'entité ' + id,
+		trace: `Appel à SCIZ pour l'entité ${id}`,
 		onload: function (responseDetails) {
 			try {
 				if (responseDetails.status == 0) {
@@ -10654,7 +10654,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
-			//trace: 'envoi CdM',
+			trace: 'envoi CdM',
 			onload: function (responseDetails) {
 				setMsgResultat(responseDetails.responseText);
 				if (!isDEV) buttonCDM.disabled = true;
@@ -10797,7 +10797,7 @@ function sendCDM() {
 		url: URL_pageDispatcherV2,
 		data: `cdm_json=${encodeURIComponent(JSON.stringify(oData))}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		//trace: 'envoi CdM msg du bot',
+		trace: 'envoi CdM msg du bot',
 		onload: function (responseDetails) {
 			buttonCDM.value = responseDetails.responseText;
 			buttonCDM.disabled = true;
@@ -12464,7 +12464,7 @@ function retrieveCDMs() {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		// data: 'l=' + tReq.join("\n"),
 		data: `l=${JSON.stringify(tReq)}`,
-		//trace: 'demande niveaux monstres V2',
+		trace: 'demande niveaux monstres V2',
 		onload: function (responseDetails) {
 			let texte;
 			try {
@@ -14630,7 +14630,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			url: URL_MZgetCaracMonstre,
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			data: `l=${JSON.stringify(tReq)}`,
-			//trace: 'demande niveaux monstres V2',
+			trace: 'demande niveaux monstres V2',
 			onload: MZ_cLigneMonstre.receptionMZNiveauxAJAX,
 		});
 		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
@@ -15110,7 +15110,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			FF_XMLHttpRequest({
 				method: 'GET',
 				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
-				//trace: `bricolTroll ${data[1]}`,
+				trace: `bricolTroll ${data[1]}`,
 				onload: MZ_cLigneTroll.receptionBricolTrollAJAX(data),
 			});
 			debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll ${data[1]}`);
@@ -15320,6 +15320,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 			if (!MZ_cLigneTroll.colBtPVDone) {
 				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PV', '', 1);
+				logMZ(`insert colonne PV`);
 				MZ_cLigneTroll.colBtPVDone = true;
 			}
 
@@ -15340,6 +15341,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static addLigne(id, nom, x, y, n, guildeId, guildeNom, niv, race) {
+		logMZ(`addLigne Troll ${id} colBtPVDone=${MZ_cLigneTroll.colBtPVDone}`);
 		let oModele = MZ_cVueJSON.oTrolls.objets[0];
 		let oNouvelleLigne = new MZ_cLigneTroll();
 		if (!MZ_cLigneVue.addLigne(id, nom, x, y, n, oNouvelleLigne, oModele)) return;
@@ -15365,11 +15367,9 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		oNouvelleLigne.eltTdNiv.style.textAlign = 'right';
 		oNouvelleLigne.eltTdRace = document.createElement('td');
 		if (race) oNouvelleLigne.eltTdRace.appendChild(document.createTextNode(race));
-		let tabTd = [
-			oNouvelleLigne.eltTdDist,
-			oNouvelleLigne.eltTdAction,
-			oNouvelleLigne.eltTdRef,
-		];
+		let tabTd = [oNouvelleLigne.eltTdDist];
+		if (isDesktopView()) tabTd.push(oNouvelleLigne.eltTdAction);
+		tabTd.push(oNouvelleLigne.eltTdRef);
 		if (MZ_cLigneTroll.colEnvoiDone) {
 			oNouvelleLigne.eltEnvoi = document.createElement('td');
 			this.fillColumnEnvoi();
@@ -15386,8 +15386,9 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		}
 		tabTd.splice(tabTd.length, 0, 
 			oNouvelleLigne.eltTdGuilde,
-			oNouvelleLigne.eltTdNiv,
-			oNouvelleLigne.eltTdRace,
+			oNouvelleLigne.eltTdNiv);
+		if (isDesktopView()) tabTd.push(oNouvelleLigne.eltTdRace);
+		tabTd.splice(tabTd.length, 0, 
 			oNouvelleLigne.eltTdX,
 			oNouvelleLigne.eltTdY,
 			oNouvelleLigne.eltTdN);
@@ -18453,7 +18454,7 @@ function MZ_doSearchCompoTanieres(event) {
 				FF_XMLHttpRequest({
 					method: 'GET',
 					url: url2,
-					//trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
+					trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
 					onload: callback2,
 				});
 				window.history.replaceState(null, '', oldURL);
@@ -18469,7 +18470,7 @@ function MZ_doSearchCompoTanieres(event) {
 						url: url,
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 						data: postData,
-						//trace: `recherche en tanière compos phase 1.5 ${oInfo.monstre}`,
+						trace: `recherche en tanière compos phase 1.5 ${oInfo.monstre}`,
 						onload: callback1,
 					});
 					return;
@@ -18546,7 +18547,7 @@ function MZ_doSearchCompoTanieres(event) {
 		url: url,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: postData,
-		//trace: `recherche en tanière compos phase 1 ${oInfo.monstre}`,
+		trace: `recherche en tanière compos phase 1 ${oInfo.monstre}`,
 		onload: callback1,
 	});
 }
