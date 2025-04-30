@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.40
+// @version     1.6.41
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.40';
+var MZ_latest = '1.6.41';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6285,7 +6285,7 @@ function traiteMonstre() {
 		url: URL_MZgetCaracMonstre,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: `l=${JSON.stringify(tReq)}`,
-		trace: 'demande niveaux monstres V2, MonsterView',
+		//trace: 'demande niveaux monstres V2, MonsterView',
 		onload: function (responseDetails) {
 			try {
 				// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
@@ -10654,7 +10654,7 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
-			trace: 'envoi CdM',
+			//trace: 'envoi CdM',
 			onload: function (responseDetails) {
 				setMsgResultat(responseDetails.responseText);
 				if (!isDEV) buttonCDM.disabled = true;
@@ -10797,7 +10797,7 @@ function sendCDM() {
 		url: URL_pageDispatcherV2,
 		data: `cdm_json=${encodeURIComponent(JSON.stringify(oData))}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		trace: 'envoi CdM msg du bot',
+		//trace: 'envoi CdM msg du bot',
 		onload: function (responseDetails) {
 			buttonCDM.value = responseDetails.responseText;
 			buttonCDM.disabled = true;
@@ -10859,8 +10859,9 @@ let menuRac, mainIco;
 
 function updateNumTroll() {
 	let eltId = document.getElementById('id');
+	if (!eltId) eltId = document.getElementById('footer');	// cas smartphone
 	if (!eltId) {
-		warnMZ(`updateNumTroll_log: numéro Troll introuvable (desktop)`);
+		warnMZ(`updateNumTroll_log: numéro Troll introuvable`);
 		return null;
 	}
 	let l_numTroll = parseInt(eltId.getAttribute('data-id'));
@@ -12463,7 +12464,7 @@ function retrieveCDMs() {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		// data: 'l=' + tReq.join("\n"),
 		data: `l=${JSON.stringify(tReq)}`,
-		trace: 'demande niveaux monstres V2',
+		//trace: 'demande niveaux monstres V2',
 		onload: function (responseDetails) {
 			let texte;
 			try {
@@ -13562,6 +13563,7 @@ function displayCamoTroll(infos) {
 	return img;
 }
 
+/*
 function createTrollRowFromRef(infos, ref_tr) {
 	let tr = ref_tr.cloneNode(true);
 	tr.style.color = 'cc7000';
@@ -13600,7 +13602,7 @@ function createTrollRowFromRef(infos, ref_tr) {
 	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_n', infos.n);
 	return tr;
 }
-
+*/
 
 /** x~x Mode Tétalanvert! ------------------------------------------------- */
 
@@ -14128,12 +14130,13 @@ class MZ_cLigneVue {
 			this.x = parseInt(t[0]);
 			this.y = parseInt(t[1]);
 			this.n = parseInt(t[2]);
+			//logMZ(`loadXYN from data-xyn ${this.nom} ${this.x}, ${this.y}, ${this.n}, `);
 			return;
 		}
-		logMZ(`loadXYN from eltTds ${this.nom}`);
 		this.x = parseInt(this.eltTdX.innerText);
 		this.y = parseInt(this.eltTdY.innerText);
 		this.n = parseInt(this.eltTdN.innerText);
+		//logMZ(`loadXYN from eltTds ${this.nom} ${this.x}, ${this.y}, ${this.n}, `);
 	}
 
 	loadDist() {
@@ -14200,7 +14203,7 @@ class MZ_cLigneVue {
 		}
 	}
 
-	static 	addLigne(id, nom, x, y, n, oNouvelleLigne, oModele) {
+	static addLigne(id, nom, x, y, n, oNouvelleLigne, oModele) {
 		// version générique
 		// crée le tr
 		// gère les td communs : distance, id, nom (pas le remplissage), x, y, n
@@ -14260,25 +14263,33 @@ class MZ_cLigneVue {
 		oNouvelleLigne.eltTdN.appendChild(document.createTextNode(n));
 		oNouvelleLigne.eltTdN.style.textAlign = 'right';
 		// l'insérer à la bonne place
-		let oGreater;
-		for (let oOther of oNouvelleLigne.constructor.MZ_oVueJSON.objets) {
+		let idx;
+		let oOther;
+		let found;
+		for ([idx, oOther] of oNouvelleLigne.constructor.MZ_oVueJSON.objets.entries()) {
 			//logMZ(JSON.stringify(oOther));
 			oOther.loadDist();
 			if (oOther.dist < oNouvelleLigne.dist) continue;
-			if (oOther.dist > oNouvelleLigne.dist) {
-				oGreater = oOther;
-				break;
-			}
+			if (oOther.dist > oNouvelleLigne.dist) {found = true; break;}
+			if (oOther.x < oNouvelleLigne.x) continue;
+			if (oOther.x > oNouvelleLigne.x) {found = true; break;}
+			if (oOther.y < oNouvelleLigne.y) continue;
+			if (oOther.y > oNouvelleLigne.y) {found = true; break;}
+			if (oOther.n < oNouvelleLigne.n) continue;
+			if (oOther.n > oNouvelleLigne.n) {found = true; break;}
 			if (oOther.id < id) continue;
-			if (oOther.id > id) {
-				oGreater = oOther;
-				break;
-			}
-			warnMZ("addLigne_log ajout d'une ligne préexistante, ça ne devrait pas arriver", id, nom);
+			if (oOther.id > id) {found = true; break;}
+			warnMZ(`addLigne_log ajout d'une ligne préexistante, ça ne devrait pas arriver ${id} ${nom}`);
 			return false;
 		}
-		// Ajout en fin si oGreater est undefined
-		oNouvelleLigne.constructor.MZ_oVueJSON.eltTable.tBodies[0].insertBefore(oNouvelleLigne.eltTr, oGreater ? oGreater.eltTr : undefined);
+		if (found) {
+			oNouvelleLigne.constructor.MZ_oVueJSON.eltTable.tBodies[0].insertBefore(oNouvelleLigne.eltTr, oOther.eltTr);
+			oNouvelleLigne.constructor.MZ_oVueJSON.objets.splice(idx, 0, oNouvelleLigne);
+		} else {
+			// Ajout en fin
+			oNouvelleLigne.constructor.MZ_oVueJSON.eltTable.tBodies[0].insertBefore(oNouvelleLigne.eltTr, undefined);
+			oNouvelleLigne.constructor.MZ_oVueJSON.objets.push(oNouvelleLigne);
+		}
 		return true;
 	}
 }
@@ -14610,7 +14621,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				break;
 			}
 		}
-		logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
+		//logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
 		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${nbMonstre}, lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}`);
 		if (nbReq == 0) return;
 
@@ -14619,7 +14630,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			url: URL_MZgetCaracMonstre,
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			data: `l=${JSON.stringify(tReq)}`,
-			trace: 'demande niveaux monstres V2',
+			//trace: 'demande niveaux monstres V2',
 			onload: MZ_cLigneMonstre.receptionMZNiveauxAJAX,
 		});
 		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
@@ -14962,7 +14973,8 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static colBtPVDone;
 	static colBtPADone;
 	static cssBtDone;
-	static refTr;
+	static colEnvoiDone;
+	//static refTr;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
 	eltTdGuilde;
@@ -14975,6 +14987,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde];
 		this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv];
 
+		/*
 		if (!MZ_cLigneTroll.refTr) {
 			// gath: on construit pour afficher les trolls hors-vue (bricolTroll).
 			// Le premier troll visible (nous) est dupliqué puis
@@ -15002,8 +15015,10 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			}
 			MZ_cLigneTroll.refTr = ref_tr;
 		}
+		*/
 	}
 
+	/* to be deleted
 	initFromRef(infos) {
 		const ref_tr = MZ_cLigneTroll.refTr;
 		let id = parseInt(infos.id);
@@ -15022,6 +15037,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		insertAfter(allTr[insertAt], eTr);
 		// gath: inserer aussi dans `MZ_cLigneTroll.MZ_oVueJSON.MH_json` ?
 	}
+	*/
 
 	insertColumn(param) {
 		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
@@ -15049,8 +15065,13 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	insertColumnEnvoi() {
+		MZ_cLigneTroll.colEnvoiDone = true;
 		this.eltEnvoi = insertTd(this.eltTdNom);
 		this.eltEnvoi.style.display = 'table-cell';
+		this.fillColumnEnvoi();
+	}
+
+	fillColumnEnvoi() {
 		let input = document.createElement('input');
 		input.type = 'checkbox';
 		this.eltEnvoi.appendChild(input);
@@ -15089,7 +15110,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			FF_XMLHttpRequest({
 				method: 'GET',
 				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
-				trace: `bricolTroll ${data[1]}`,
+				//trace: `bricolTroll ${data[1]}`,
 				onload: MZ_cLigneTroll.receptionBricolTrollAJAX(data),
 			});
 			debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll ${data[1]}`);
@@ -15151,17 +15172,17 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			// Ajout de la colonne des CheckBoxes
 			MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdNom, '', '17px', 3);
 			// Ajout des boutons
-			let btnPX = insertButton(btnEnvoi, 'Envoyer des PX', MZ_cLigneTroll.envoi);
+			let btnPX = insertButton(btnEnvoi, 'Envoyer des PX', MZ_cLigneTroll.envoiPX_MP);
 			btnPX.style.marginLeft = '5px';
 			btnPX.setAttribute('data-role', 'px');
-			let btnMP = insertButton(btnEnvoi, 'Envoyer un MP', MZ_cLigneTroll.envoi);
+			let btnMP = insertButton(btnEnvoi, 'Envoyer un MP', MZ_cLigneTroll.envoiPX_MP);
 			btnMP.style.marginLeft = '5px';
 			btnMP.setAttribute('data-role', 'mp');
 			btnEnvoi.parentNode.removeChild(btnEnvoi);
 		};
 	}
 
-	static envoi(e) {
+	static envoiPX_MP(e) {
 		// liste des ID
 		let listID = [];
 		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
@@ -15271,10 +15292,23 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				});
 				for (let [idTroll, infos] of Object.entries(btData.data.trolls)) {
 					if (visibleTrolls.includes(idTroll)) { continue; }
+					/*
 					let awayTroll = new MZ_cLigneTroll();
 					let maPos = getPosition(true), pos = [infos.x, infos.y, infos.n];
 					infos.dist = calculeDistance(maPos, pos);
 					awayTroll.initFromRef(infos);
+					*/
+					//logMZ('receptionBricolTrollAJAX', infos);
+					MZ_cLigneTroll.addLigne(
+						infos.id,
+						infos.nom,
+						infos.x,
+						infos.y,
+						infos.n,
+						undefined,	// id de guilde inconnu ?
+						infos.guilde,
+						infos.niveau,
+						infos.race);
 				}
 			}
 
@@ -15316,32 +15350,52 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		a.appendChild(document.createTextNode(nom));
 		oNouvelleLigne.eltTdNom.appendChild(a);
 		oNouvelleLigne.eltTdGuilde = document.createElement('td');
-		if (guildeId) {
-			a = document.createElement('a');
-			a.href = `javascript:PVG(${guildeId})`;
-			a.appendChild(document.createTextNode(guildeNom));
-			oNouvelleLigne.eltTdGuilde.appendChild(a);
+		if (guildeNom !== undefined) {
+			if (guildeId) {
+				a = document.createElement('a');
+				a.href = `javascript:PVG(${guildeId})`;
+				a.appendChild(document.createTextNode(guildeNom));
+				oNouvelleLigne.eltTdGuilde.appendChild(a);
+			} else {
+				oNouvelleLigne.eltTdGuilde.appendChild(document.createTextNode(guildeNom));
+			}
 		}
 		oNouvelleLigne.eltTdNiv = document.createElement('td');
 		if (niv) oNouvelleLigne.eltTdNiv.appendChild(document.createTextNode(niv));
 		oNouvelleLigne.eltTdNiv.style.textAlign = 'right';
 		oNouvelleLigne.eltTdRace = document.createElement('td');
 		if (race) oNouvelleLigne.eltTdRace.appendChild(document.createTextNode(race));
-		for (let e of [
+		let tabTd = [
 			oNouvelleLigne.eltTdDist,
 			oNouvelleLigne.eltTdAction,
 			oNouvelleLigne.eltTdRef,
-			oNouvelleLigne.eltTdNom,
+		];
+		if (MZ_cLigneTroll.colEnvoiDone) {
+			oNouvelleLigne.eltEnvoi = document.createElement('td');
+			this.fillColumnEnvoi();
+			tabTd.push(oNouvelleLigne.eltEnvoi);
+		}
+		tabTd.push(oNouvelleLigne.eltTdNom);
+		if (MZ_cLigneTroll.colBtPVDone) {
+			oNouvelleLigne.eltTdBtPV = document.createElement('td');
+			tabTd.push(oNouvelleLigne.eltTdBtPV);
+		}
+		if (MZ_cLigneTroll.colBtPADone) {
+			oNouvelleLigne.eltTdBtPA = document.createElement('td');
+			tabTd.push(oNouvelleLigne.eltTdBtPA);
+		}
+		tabTd.splice(tabTd.length, 0, 
 			oNouvelleLigne.eltTdGuilde,
 			oNouvelleLigne.eltTdNiv,
 			oNouvelleLigne.eltTdRace,
 			oNouvelleLigne.eltTdX,
 			oNouvelleLigne.eltTdY,
-			oNouvelleLigne.eltTdN]) {
+			oNouvelleLigne.eltTdN);
+		for (let e of tabTd) {
 			e.style.display = 'table-cell';
 			oNouvelleLigne.eltTr.appendChild(e);
 		}
-		MZ_cVueJSON.oTrolls.objets.push(oNouvelleLigne);
+		// todo appliquer la diplo
 		return oNouvelleLigne;
 	}
 }
@@ -15387,7 +15441,6 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 			e.style.display = 'table-cell';
 			oNouvelleLigne.eltTr.appendChild(e);
 		}
-		MZ_cVueJSON.oLieux.objets.push(oNouvelleLigne);
 		return oNouvelleLigne;
 	}
 }
@@ -18400,7 +18453,7 @@ function MZ_doSearchCompoTanieres(event) {
 				FF_XMLHttpRequest({
 					method: 'GET',
 					url: url2,
-					trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
+					//trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
 					onload: callback2,
 				});
 				window.history.replaceState(null, '', oldURL);
@@ -18416,7 +18469,7 @@ function MZ_doSearchCompoTanieres(event) {
 						url: url,
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 						data: postData,
-						trace: `recherche en tanière compos phase 1.5 ${oInfo.monstre}`,
+						//trace: `recherche en tanière compos phase 1.5 ${oInfo.monstre}`,
 						onload: callback1,
 					});
 					return;
@@ -18493,7 +18546,7 @@ function MZ_doSearchCompoTanieres(event) {
 		url: url,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: postData,
-		trace: `recherche en tanière compos phase 1 ${oInfo.monstre}`,
+		//trace: `recherche en tanière compos phase 1 ${oInfo.monstre}`,
 		onload: callback1,
 	});
 }
