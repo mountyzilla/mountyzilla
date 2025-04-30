@@ -13700,7 +13700,6 @@ class MZ_cVueJSON {
 
 	static MZLoaded() {
 		// fonction appelée quand tous les blocs venant de MH sont chargés, le retour MZ est chargé et le calcul des cibles de mission est fait
-		
 	}
 
 	static registerCallback(callback) {
@@ -14238,7 +14237,7 @@ class MZ_cLigneVue {
 			} else if (oNouvelleLigne.distV > 0) {
 				txt += '\u2007+' + oNouvelleLigne.distV; // espace qui a la même largeur qu'un chiffre
 			} else if(oNouvelleLigne.distV == 0) {
-				txt +=  '\u2007\u20070';
+				txt += '\u2007\u20070';
 			} else if (oNouvelleLigne.distV > -10) {
 				txt += '\u2007\u2212' + Math.abs(oNouvelleLigne.distV); // signe moins qui a la même largeur qu'un chiffre
 			} else {
@@ -14249,23 +14248,22 @@ class MZ_cLigneVue {
 			oNouvelleLigne.eltTdDist.appendChild(document.createTextNode(oNouvelleLigne.dist));
 		}
 		oNouvelleLigne.eltTdRef= document.createElement('td');
-		oNouvelleLigne.eltTdRef.style.textAlign = 'right';
+		oNouvelleLigne.eltTdRef.className = 'ref';
 		oNouvelleLigne.eltTdRef.appendChild(document.createTextNode(id));
 		oNouvelleLigne.eltTdAction = document.createElement('td');
+		oNouvelleLigne.eltTdAction.className = 'actions';
 		oNouvelleLigne.eltTdNom= document.createElement('td');
 		oNouvelleLigne.eltTdX = document.createElement('td');
 		oNouvelleLigne.eltTdX.appendChild(document.createTextNode(x));
-		oNouvelleLigne.eltTdX.style.textAlign = 'right';
+		oNouvelleLigne.eltTdX.className = 'x';
 		oNouvelleLigne.eltTdY = document.createElement('td');
 		oNouvelleLigne.eltTdY.appendChild(document.createTextNode(y));
-		oNouvelleLigne.eltTdY.style.textAlign = 'right';
+		oNouvelleLigne.eltTdY.className = 'y';
 		oNouvelleLigne.eltTdN = document.createElement('td');
 		oNouvelleLigne.eltTdN.appendChild(document.createTextNode(n));
-		oNouvelleLigne.eltTdN.style.textAlign = 'right';
+		oNouvelleLigne.eltTdN.className = 'n footable-last-visible';
 		// l'insérer à la bonne place
-		let idx;
-		let oOther;
-		let found;
+		let idx, oOther, found;
 		for ([idx, oOther] of oNouvelleLigne.constructor.MZ_oVueJSON.objets.entries()) {
 			//logMZ(JSON.stringify(oOther));
 			oOther.loadDist();
@@ -14568,8 +14566,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			}
 			if ((!cache)
 				&& nivMin !== undefined
-				&& oMonstre.infoMZ 
-				&& oMonstre.infoMZ.niv 
+				&& oMonstre.infoMZ
+				&& oMonstre.infoMZ.niv
 				&& oMonstre.infoMZ.niv.max
 				&& oMonstre.infoMZ.niv.max < nivMin) cache = true;
 			if ((!cache)
@@ -15345,9 +15343,8 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		let oModele = MZ_cVueJSON.oTrolls.objets[0];
 		let oNouvelleLigne = new MZ_cLigneTroll();
 		if (!MZ_cLigneVue.addLigne(id, nom, x, y, n, oNouvelleLigne, oModele)) return;
-		let html_nom = `<a href="javascript:PVT(${id})" class="mh_trolls_1">${nom}</a>`;
 		let a = document.createElement('a');
-		a.clasName = 'troll';
+		a.className = 'troll';
 		a.href = `javascript:PVT(${id})`;
 		a.appendChild(document.createTextNode(nom));
 		oNouvelleLigne.eltTdNom.appendChild(a);
@@ -15362,11 +15359,18 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				oNouvelleLigne.eltTdGuilde.appendChild(document.createTextNode(guildeNom));
 			}
 		}
+		niv = niv ? niv : '';
 		oNouvelleLigne.eltTdNiv = document.createElement('td');
-		if (niv) oNouvelleLigne.eltTdNiv.appendChild(document.createTextNode(niv));
-		oNouvelleLigne.eltTdNiv.style.textAlign = 'right';
-		oNouvelleLigne.eltTdRace = document.createElement('td');
-		if (race) oNouvelleLigne.eltTdRace.appendChild(document.createTextNode(race));
+		oNouvelleLigne.eltTdNiv.className = isDesktopView() ? 'niv' : 'niv race';
+		if (isDesktopView()) {
+			oNouvelleLigne.eltTdRace = document.createElement('td');
+			oNouvelleLigne.eltTdRace.className = 'race';
+			if (race) oNouvelleLigne.eltTdRace.appendChild(document.createTextNode(race));
+		} else {
+			let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
+			niv = race ? `${lettreRace[race]}${niv}` : niv;
+		}
+		oNouvelleLigne.eltTdNiv.appendChild(document.createTextNode(niv));
 		let tabTd = [oNouvelleLigne.eltTdDist];
 		if (isDesktopView()) tabTd.push(oNouvelleLigne.eltTdAction);
 		tabTd.push(oNouvelleLigne.eltTdRef);
@@ -15384,11 +15388,11 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			oNouvelleLigne.eltTdBtPA = document.createElement('td');
 			tabTd.push(oNouvelleLigne.eltTdBtPA);
 		}
-		tabTd.splice(tabTd.length, 0, 
+		tabTd.splice(tabTd.length, 0,
 			oNouvelleLigne.eltTdGuilde,
 			oNouvelleLigne.eltTdNiv);
 		if (isDesktopView()) tabTd.push(oNouvelleLigne.eltTdRace);
-		tabTd.splice(tabTd.length, 0, 
+		tabTd.splice(tabTd.length, 0,
 			oNouvelleLigne.eltTdX,
 			oNouvelleLigne.eltTdY,
 			oNouvelleLigne.eltTdN);
