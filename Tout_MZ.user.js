@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.43
+// @version     1.6.44
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.43';
+var MZ_latest = '1.6.44';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13674,6 +13674,7 @@ class MZ_cVueJSON {
 	static callbacksFinMH = [];
 	static callbacksFinMZ = [];
 	static oPosTroll;
+	static initDone;
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13779,7 +13780,7 @@ class MZ_cVueJSON {
 		this.load();
 	}
 
-	load() {
+	async load() {
 		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
 
 		// faire pointer les propriétés de l'object vers les variables globales "let" de MH
@@ -13903,7 +13904,15 @@ class MZ_cVueJSON {
 			}
 		}
 
-		this.cLigneClass.initGlobal();
+		// gath': on empeche d'init une sous-classe avant l'initialisation globale de cVue
+		while (true) {
+			if (!MZ_cVueJSON.initDone) {
+				await new Promise(r => setTimeout(r, 10));
+				continue;
+			}
+			this.cLigneClass.initGlobal();
+			break;
+		}
 
 		let allMHLoaded = true;
 		for (let o of [
@@ -14048,8 +14057,6 @@ class MZ_cVueJSON {
 		divTable.insertBefore(this.eltParamFiltre, divTable.firstChild);
 
 		this.applyFiltre(oConfig);
-
-		//console.log('fin MZ_cLigneMonstre.initGlobal');
 	}
 
 	applyFiltre(oConfig) {
