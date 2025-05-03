@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.46
+// @version     1.6.47
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.46';
+var MZ_latest = '1.6.47';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6569,8 +6569,8 @@ function scizPrettyPrintTroll(t) {
 	res = `${res}${t.pdv} / ${t.pdv_max}`;
 	res = `${res}<div class="sciz-troll-view-block">DLA ${t.dla}</div>`; // DLA
 	res = `${res}<div class="sciz-troll-view-block"><= ${t.pa} PA</div>`; // PA
-	res = `${res}<div class="sciz-troll-view-block">Fatigue ${`  ${t.fatigue}`.slice(-3)}</div>`; // Fatigue
-	res = `${res}<div class="sciz-troll-view-block">Conc ${` ${t.concentration}`.slice(-2)}%</div>`; // Concentration
+	res = `${res}<div class="sciz-troll-view-block">Fatigue ${`${t.fatigue}`.slice(-3)}</div>`; // Fatigue
+	res = `${res}<div class="sciz-troll-view-block">Conc ${`${t.concentration}`.slice(-2)}%</div>`; // Concentration
 	res = `${res}</div>`;
 	return res;
 }
@@ -6614,7 +6614,7 @@ function scizPrettyPrintMushroom(m) {
 
 function scizPrettyPrintPortal(p) {
 	let res = '';
-	let html_nom = `<a href="javascript:PVT(${p.owner_id})" class="mh_trolls_1">${p.owner_nom}</a>`;
+	let html_nom = `<a href="javascript:PVT(${p.owner_id})" class="troll">${p.owner_nom}</a>`;
 	res = `${res}Portail de Téléportaion de ${html_nom} vers X = ${p.pos_x_dst} | Y = ${p.pos_y_dst} | N = ${p.pos_n_dst}`;
 	return res;
 }
@@ -6763,7 +6763,7 @@ function do_scizEnhanceView() {
 							}
 							// Create the troll
 							let template = document.createElement('template');
-							let html_nom = `<a href="javascript:PVT(${t.id})" class="mh_trolls_1">${t.nom}</a>`;
+							let html_nom = `<a href="javascript:PVT(${t.id})" class="troll">${t.nom}</a>`;
 							if (!is_self) {
 								html_nom = `${html_nom} (HORS VUE)`;
 							}
@@ -7368,20 +7368,23 @@ function do_scizBestiaire() {
 /* SCIZ - Events */
 
 function scizPrettyPrintEvent(e) {
-	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, ''); // Delete date
+	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, '');  // Delete date
+	e.message = e.message.replace(/\n\s*\n*/, '<details><p style="padding-left: 10px;">');  // cdm compacte
 	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
+	if (e.message.includes('<details>')) {
+		e.message += '</p><summary><i>Afficher plus d\'informations...</i></summary></details>';
+	}
 	let beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
 	beings.forEach((b) => {
-		if (b[0] && b[1]) {
-			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			if (b[0].toString().length > 6) {
-				// Mob
-				b[1] = b[1].replace(/^une?\s/g, '');
-				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="mh_monstres">\$1</a></b>`);
-			} else {
-				// Troll
-				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:PVT('${b[0]}')" class="mh_trolls_1">\$1</a></b>`);
-			}
+		if (!b[0] || !b[1]) { return; }
+		b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		if (b[0].toString().length > 6) {
+			// Mob
+			b[1] = b[1].replace(/^une?\s/g, '');
+			e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="monstre">\$1</a></b>`);
+		} else {
+			// Troll
+			e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:PVT('${b[0]}')" class="troll">\$1</a></b>`);
 		}
 	});
 	return e;
