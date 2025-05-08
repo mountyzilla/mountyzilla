@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.47
+// @version     1.6.48
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.47';
+var MZ_latest = '1.6.48';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -2943,7 +2943,7 @@ function insertButtonCdmSmartphone(nextName, onClick, texte) {
 
 function insertButtonCdm(nextName, onClick, texte) {
 	if (texte == null) {
-		texte = 'Participer au bestiaire';
+		texte = 'Participer au bestiaire MZ';
 	}
 	if (insertButtonCdmSmartphone(nextName, onClick, texte)) {
 		return;
@@ -2951,6 +2951,7 @@ function insertButtonCdm(nextName, onClick, texte) {
 
 	let nextNode = document.getElementsByName(nextName)[0];
 	if (!nextNode) nextNode = document.getElementById(nextName);
+	if (!nextNode) nextNode = document.getElementsByTagName('tfoot')[0].getElementsByTagName('a')[0];
 
 	/* version input/button
 	let button = document.createElement('input');
@@ -10542,26 +10543,7 @@ function MZ_comp_addMessage(oContexteCdM, msg, id) {
 	insertBefore(eBefore, p);
 }
 
-function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
-	let eltCdM = document.getElementById(idHTMLCdM);
-	let oRet = {};
-	if (!eltCdM) {
-		oRet.ok = false;
-		if (!bIgnoreEltAbsent) {
-			oRet.error = `Pas d'elt ${idHTMLCdM}`;
-		}
-		return oRet;
-	}
-
-	// le contexte contiendra
-	// txtHeure : le texte de l'heure de la CdM
-	// trBlessure : le <tr> de la ligne "blessure"
-	// txtBlessure : le texte donnant le % de blessure
-	// txtPv : le texte donnant les PV
-	// ok : 1 si on a bien reconnu une CdM
-	// oData : les data à envoyer en JSON au serveur MZ
-	oRet.oData = {};
-	oRet.oData.tabCdM = new Array();
+function MZ_analyseTextCdM(eltCdM, oRet) {	// enrichi oRet
 	for (let iElt = 0; iElt < eltCdM.childNodes.length; iElt++) { // eHTML of msgEffet.childNodes) { for...of pas supporté par IE et Edge
 		let eHTML = eltCdM.childNodes[iElt];
 		let s = undefined;
@@ -10607,19 +10589,49 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 					oRet.oData.tabCdM.push(tabTd);
 				}
 				break;
+			case 'DIV':
+				MZ_analyseTextCdM(eHTML, oRet);
+				break;
 			case 'BR':
 			case '#comment':
 			case 'STYLE':
+			case 'SCRIPT':
 				break;	// ignore
+			case 'A':
+				if (eHTML.title == 'Copier le texte') break;
+				// pas de break : continuer comme tag inconnu
 			default:
 				s = eHTML.innerText || eHTML.textContent;	// récupération du contenu texte d'un élément HTML
 				if (s != '') {
 					oRet.oData.tabCdM.push(s);
 				}
-				logMZ(`MZ_analyseCdM, type d'élément non traité : ${eHTML.nodeName} ${s}`);
+				logMZ(`MZ_analyseCdM_log, type d'élément non traité : ${eHTML.nodeName} ${eHTML.outerHTML}`);
 				break;
 		}
 	}
+}
+
+function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
+	let eltCdM = document.getElementById(idHTMLCdM);
+	let oRet = {};
+	if (!eltCdM) {
+		oRet.ok = false;
+		if (!bIgnoreEltAbsent) {
+			oRet.error = `Pas d'elt ${idHTMLCdM}`;
+		}
+		return oRet;
+	}
+
+	// le contexte contiendra
+	// txtHeure : le texte de l'heure de la CdM
+	// trBlessure : le <tr> de la ligne "blessure"
+	// txtBlessure : le texte donnant le % de blessure
+	// txtPv : le texte donnant les PV
+	// ok : 1 si on a bien reconnu une CdM
+	// oData : les data à envoyer en JSON au serveur MZ
+	oRet.oData = {};
+	oRet.oData.tabCdM = new Array();
+	MZ_analyseTextCdM(eltCdM, oRet);
 	oRet.oData.idTroll = numTroll;
 
 	// préparation de l'envoi d'une CdM issue de compte-rendu de compétence
