@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.48
+// @version     1.6.49
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.48';
+var MZ_latest = '1.6.49';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6517,6 +6517,7 @@ function scizAddCSS() {
 }
 
 function scizCreateHoverable(height, monster, callback) {
+	// utilisé seulement pour les monstres : le survol de la souris déclenche l'appel AJAX
 	let div1 = document.createElement('div');
 	div1.className = 'info1';
 	let img = document.createElement('img');
@@ -7318,18 +7319,18 @@ function do_scizSwitchPortals() {
 function do_scizBestiaire() {
 	let iMonster = this.getAttribute('data-monstre');
 	if (iMonster === null || iMonster === undefined) {
-		logMZ('SCIZ do_scizBestiaire, pas de iMonstre');
+		logMZ('SCIZ do_scizBestiaire_log, pas de iMonstre');
 		replaceContentByText(this, 'Erreur SCIZ');
 		return;
 	}
 	let monster = scizGlobal.monsters[iMonster];
 	this.removeEventListener('mouseover', do_scizBestiaire, false);	// pas 2 fois
 	if (!monster) {
-		logMZ('SCIZ do_scizBestiaire, pas de monstre');
+		logMZ('SCIZ do_scizBestiaire_log, pas de monstre');
 		replaceContentByText(this, 'Erreur SCIZ');
 		return;
 	}
-	debugMZ(`SCIZ do_scizBestiaire node type monster.popup=${monster.popup.nodeType}`);
+	debugMZ(`SCIZ do_scizBestiaire_log node type monster.popup=${monster.popup.nodeType}`);
 	// Ensure we have a JWT setup for the current user
 	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 	if (jwt === null || jwt === undefined || jwt.trim() === '') {
@@ -7581,7 +7582,7 @@ function parseMissionSteps() {
 			let stepNode = children[1];
 			let stepText = stepNode.textContent;
 			let validationText = children[2].textContent;
-			if (0 > validationText.indexOf("Valider")) {
+			if (0 > validationText.indexOf("Valid")) {
 				// Etape déjà réalisée ou pas encore réalisée
 				return;
 			}
@@ -11855,6 +11856,9 @@ class MZ_cVueExterne {
 			//logMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`); // xxx
 			debugMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
 			logMZ(`fin MZ_cVueExterne.getVueScript`);
+			//logMZ(`MZ_cVueExterne.getVueScript nbTrolls=${MZ_cVueJSON.oTrolls.objets.length}`);
+			//logMZ(`MZ_cVueExterne.getVueScript nbMonstres=${MZ_cVueJSON.oMonstres.objets.length}`);
+			//logMZ(txt);
 			return txt;
 		} catch (exc) {
 			avertissement("[MZ_cVueExterne.getVueScript] Erreur d'export vers Vue externe", null, null, exc);
