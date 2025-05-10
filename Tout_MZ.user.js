@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.49
+// @version     1.6.50
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.49';
+var MZ_latest = '1.6.50';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -7582,7 +7582,7 @@ function parseMissionSteps() {
 			let stepNode = children[1];
 			let stepText = stepNode.textContent;
 			let validationText = children[2].textContent;
-			if (0 > validationText.indexOf("Valid")) {
+			if (0 > validationText.indexOf("valid")) {
 				// Etape déjà réalisée ou pas encore réalisée
 				return;
 			}
