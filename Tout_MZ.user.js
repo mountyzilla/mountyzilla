@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.50
+// @version     1.6.51
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.50';
+var MZ_latest = '1.6.51';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -7582,7 +7582,7 @@ function parseMissionSteps() {
 			let stepNode = children[1];
 			let stepText = stepNode.textContent;
 			let validationText = children[2].textContent;
-			if (0 > validationText.indexOf("valid")) {
+			if (0 > validationText.toLowerCase().indexOf("valid")) {
 				// Etape déjà réalisée ou pas encore réalisée
 				return;
 			}
@@ -7631,20 +7631,22 @@ function handleMonsterStep(text) {
 		recherche: MZ_troogle.SEARCH_MONSTER
 	};
 
-	let raceExtract = /de la race des "(.*?)"/i;
+	let raceExtract = /de la race des (.*)/i;
 	let match = raceExtract.exec(text);
 	if (match) {
 		mission.type = 'Race'
 		let race = removeEnclosingSimpleCote(trim(match[1]));
 		mission.recherche += ` ${race}`;
+		mission.race = race;
 	}
 
-	let familyExtract = /de la famille "(.*?)"/i;
+	let familyExtract = /de la famille (.*)/i;
 	match = familyExtract.exec(text);
 	if (match) {
 		mission.type = 'Famille'
 		let famille = trim(match[1]);
 		mission.recherche += `:${famille}`;
+		mission.famille = famille;
 	}
 
 	let minLevelExtract = /niveau.* (\d+) au moins/i;
@@ -7702,7 +7704,7 @@ function atoi(s) {
 	// @param node element html (conteneur) dans lequel le lien va être ajouté
 	// @param text texte de recherche (supposé correctement écrit)
 	MZ_troogle.addTroogleLink = function (node, text) {
-		let url = `${BASE_TROOGLE_SEARCH}${text} `;
+		let url = `${BASE_TROOGLE_SEARCH}${encodeURIComponent(text)} `;
 		url += playerPositionParameters();
 		let link = appendA(node, url);
 		link.target = 'Troogle';
