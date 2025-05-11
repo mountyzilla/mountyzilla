@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.51
+// @version     1.6.52
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.51';
+var MZ_latest = '1.6.52';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -11855,12 +11855,7 @@ class MZ_cVueExterne {
 					}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
 					}\n#FIN ORIGINE\n`;
 			}
-			//logMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`); // xxx
 			debugMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
-			logMZ(`fin MZ_cVueExterne.getVueScript`);
-			//logMZ(`MZ_cVueExterne.getVueScript nbTrolls=${MZ_cVueJSON.oTrolls.objets.length}`);
-			//logMZ(`MZ_cVueExterne.getVueScript nbMonstres=${MZ_cVueJSON.oMonstres.objets.length}`);
-			//logMZ(txt);
 			return txt;
 		} catch (exc) {
 			avertissement("[MZ_cVueExterne.getVueScript] Erreur d'export vers Vue externe", null, null, exc);
@@ -13982,11 +13977,14 @@ class MZ_cVueJSON {
 
 	getData4Vue2D(limitH, limitV) {
 		let txt = '#DEBUT ' + this.nomBase.toUpperCase() + "\n";
+		let myPosition = getPosition();
 		for (let o of this.objets) {
+			o.loadXYN();
+			if (Math.max(Math.abs(myPosition[0] - o.x), Math.abs(myPosition[1] - o.y)) > limitH) continue;
+			if (Math.abs(myPosition[2] - o.n) > limitV) continue;
 			txt += o.id + ';';
 			if (this.nomBase != 'trolls')
 				txt += o.nom + ';';
-			o.loadXYN();
 			txt += o.x + ';';
 			txt += o.y + ';';
 			txt += o.n + "\n";
@@ -14459,7 +14457,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					nom.match(/^[^\[]*beholder/) ||
 					nom.match(/^[^\[]*sidoine/)) {
 				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
+				for (let td of tr.children) if (oLigne.id && aAppliquer.Monstre[oLigne.id]) td.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
 				tr.style.backgroundColor = aAppliquer.mythiques;
 				tr.diploActive = 'oui';
 				oLigne.eltTdNom.title = 'Monstre Mythique';
@@ -15374,7 +15372,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static addLigne(id, nom, x, y, n, guildeId, guildeNom, niv, race) {
-		logMZ(`addLigne Troll ${id} colBtPVDone=${MZ_cLigneTroll.colBtPVDone}`);
+		//logMZ(`addLigne Troll ${id} colBtPVDone=${MZ_cLigneTroll.colBtPVDone}`);
 		let oModele = MZ_cVueJSON.oTrolls.objets[0];
 		let oNouvelleLigne = new MZ_cLigneTroll();
 		if (!MZ_cLigneVue.addLigne(id, nom, x, y, n, oNouvelleLigne, oModele)) return;
