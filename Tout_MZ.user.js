@@ -14016,7 +14016,20 @@ class MZ_cVueJSON {
 			varThis.eltParamFiltre.style.display = btnShow ? 'none' : 'block';
 			btnShow = !btnShow;
 		};
-		if (!oConfig.empty) btn.value = 'Modifier le filtre';
+		if (!oConfig.empty) {
+			btn.value = 'Modifier le filtre';
+			let btnTrash = appendButton(this.eltDivShowFiltre, '🗑');
+			btnTrash.id = 'MZ_btnTrash' + this.nomBase;
+			btnTrash.title = 'Supprimer le filtre';
+			btnTrash.onclick = function() {
+				varThis.eltParamFiltre.style.display = 'none';
+				btnShow = false;
+				oConfig = {empty: true};
+				MZ_SauvegardeMH.setZone(varThis.nomFiltre, oConfig);
+				varThis.applyFiltre(oConfig);
+				btnTrash.parentNode.removeChild(btnTrash);
+			}
+		}
 
 		let eltNav = this.eltDiv.children[2];
 		if ((!eltNav) || eltNav.tagName != 'LABEL') eltNav = this.eltDiv.children[1]; // smartphone
@@ -14076,10 +14089,10 @@ class MZ_cVueJSON {
 		if (!divTable) divTable = this.eltDiv.children[2];	// cas smartphone
 		divTable.insertBefore(this.eltParamFiltre, divTable.firstChild);
 
-		this.applyFiltre(oConfig);
+		this.applyFiltre(oConfig, true);
 	}
 
-	applyFiltre(oConfig) {
+	applyFiltre(oConfig, noSave) {
 		//Display
 		let eltDisplay = document.getElementById('MZ_disp' + this.nomFiltre);
 		if (oConfig === undefined) oConfig = {empty: true};
@@ -14107,6 +14120,10 @@ class MZ_cVueJSON {
 		} else if (eltDisplay) {
 			this.eltDivShowFiltre.removeChild(eltDisplay);
 		}
+		// gestion des boutons
+		
+		// save
+		if (!noSave) MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
 		// filtre (spécifique à chaque bloc)
 		if (this.cLigneClass.applyFiltreBloc)
 			this.cLigneClass.applyFiltreBloc(oConfig);
@@ -15286,7 +15303,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				if (guilde.toLowerCase().indexOf(oConfig.guilde) == -1) cache = true;
 			}
 			let prevDisplay = oLigne.eltTr.style.display;
-			//console.log('applyFiltreGenerique nom=' + oLigne.nom + ', cache=' + cache);
+			//console.log('applyFiltreGenerique_log nom=' + oLigne.nom + ', cache=' + cache);
 			if (cache && prevDisplay != 'none')
 				oLigne.eltTr.style.display = 'none';
 			else if ((!cache) && prevDisplay == 'none')
