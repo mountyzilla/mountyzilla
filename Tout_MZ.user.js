@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.52
+// @version     1.6.53
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.52';
+var MZ_latest = '1.6.53';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -11855,10 +11855,10 @@ class MZ_cVueExterne {
 					}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
 					}\n#FIN ORIGINE\n`;
 			}
-			debugMZ(`MZ_cVueExterne.getVueScript nbTrolls=${nbTrolls}, txt=${txt}`);
+			//logMZ(`MZ_cVueExterne.getVueScript_log nbTrolls=${nbTrolls}`, txt);
 			return txt;
 		} catch (exc) {
-			avertissement("[MZ_cVueExterne.getVueScript] Erreur d'export vers Vue externe", null, null, exc);
+			avertissement("[MZ_cVueExterne.getVueScript_log] Erreur d'export vers Vue externe", null, null, exc);
 		}
 	}
 
@@ -13984,7 +13984,8 @@ class MZ_cVueJSON {
 			if (Math.abs(myPosition[2] - o.n) > limitV) continue;
 			txt += o.id + ';';
 			if (this.nomBase != 'trolls')
-				txt += o.nom + ';';
+				// exclure les char. non valides en iso-latin-1 et le ";". C'est approximatif
+				txt += o.nom.replace(/[^\u0020-\u003A\u003C-\u007F\u00A0-\u00FF]/g, '¿') + ';';
 			txt += o.x + ';';
 			txt += o.y + ';';
 			txt += o.n + "\n";
