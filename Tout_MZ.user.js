@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.56
+// @version     1.6.57
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.56';
+var MZ_latest = '1.6.57';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13397,11 +13397,11 @@ function appliqueDiplo() {
 				getMonstreNomNode(i).title = descr;
 			}
 		} else if (aAppliquer.mythiques &&
-			(nom.indexOf('liche') == 0 ||
-				nom.indexOf('hydre') == 0 ||
-				nom.indexOf('balrog') == 0 ||
-				nom.indexOf('beholder') == 0 ||
-				nom.indexOf('sidoine') == 0)) {
+			(nom.indexOf('liche') >= 0 ||
+				nom.indexOf('hydre') >= 0 ||
+				nom.indexOf('balrog') >= 0 ||
+				nom.indexOf('beholder') >= 0 ||
+				nom.indexOf('sidoine') >= 0)) {
 			//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
 			for (let td of tr.children) td.style.backgroundColor = aAppliquer.mythiques;
 			tr.style.backgroundColor = aAppliquer.mythiques;
@@ -13772,9 +13772,10 @@ class MZ_cVueJSON {
 
 	// cette zone est spécifique à un bloc (monstre, troll, etc.)
 	nomBase;			// "montres", "trolls", etc.
+	existe;
 	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH (pas MZ !) répond
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
-	MH_ft;				// l'object footable
+	//MH_ft;				// l'object footable - non utilisé
 	MH_json;			// les datas obtenues en JSON par MH en AJAX
 	initSpecificBloc;	// adrese d'une fonction pour les initialisations spécifiques à un bloc (filtres)
 	loaded = false;
@@ -13807,6 +13808,11 @@ class MZ_cVueJSON {
 		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.constructor_log ' + nomBase);
 		this.nomBase = nomBase;
 		this.eltDiv = document.getElementById(this.nomBase);
+		// en mode smartphone, on peut n'avoir qu'un seul type. Il faut ignorer les autres blocs (qui n'existent pas)
+		if (!this.eltDiv) {
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.constructor_log ${this.nomBase} n'existe pas`);
+			return;
+		}
 		this.eltTable = document.getElementById('VUE_' + this.nomBase);
 		if (this.eltTable == null) {
 			logMZ("MZ_cVueJSON_log constructor pas d'élément" + 'VUE_' + this.nomBase);
@@ -13816,48 +13822,55 @@ class MZ_cVueJSON {
 	}
 
 	load() {
+		// en mode smartphone, on peut n'avoir qu'un seul type. Il faut ignorer les autres blocs (qui n'existent pas)
+		if (!this.eltDiv) return;
 		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.load_log ' + this.nomBase);
 		// cette fonction est en général appelée 2 fois
 		//	- à la création de l'objet
 		//	- à la réception du retour AJAX MH grâce au mutationObserver
-		// le test (this.MH_json === undefined || this.objets) permet de ne faire vraiement le boulot qu'une fois
+		// le test (this.MH_json === undefined || this.objets) permet de ne faire vraiment le boulot qu'une fois
 
 		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
-
 		// faire pointer les propriétés de l'object vers les variables globales "let" de MH
 		// Roule : je n'ai pas trouvé de façon de récupérer les variables globales "let" en forgeant leurs noms. À vot' bon cœur
 		// on profite du switch pour initialiser les propriété statiques des classes dérivées de MZ_cLigneVue
 		switch (this.nomBase) {
 			case 'monstres':
 				// VUE_monstres est une VARIABLE GLOBALE définie par MH qui pointe vers table#VUE_monstres
-				this.MH_ft = VUE_monstres;
+				//this.MH_ft = VUE_monstres; // non utilisé
 				// json_monstres est une VARIABLE GLOBALE définie par MH et remplie au moment du retour AJAX de la vue des monstres
 				this.MH_json = json_monstres;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneMonstre;
 				break;
 			case 'trolls':
-				this.MH_ft = VUE_trolls;  // id: table#VUE_trolls
+				//this.MH_ft = VUE_trolls;  // id: table#VUE_trolls - non utilisé
 				this.MH_json = json_trolls;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneTroll;
 				break;
 			case 'tresors':
-				this.MH_ft = VUE_tresors;  // id: table#VUE_tresors
+				//this.MH_ft = VUE_tresors;  // id: table#VUE_tresors - non utilisé
 				this.MH_json = json_tresors;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneTresor;
 				break;
 			case 'champignons':
-				this.MH_ft = VUE_champignons;  // id: table#VUE_champignons
+				//this.MH_ft = VUE_champignons;  // id: table#VUE_champignons - non utilisé
 				this.MH_json = json_champignons;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneChampignon;
 				break;
 			case 'lieux':
-				this.MH_ft = VUE_lieux;  // id: table#VUE_lieux
+				//this.MH_ft = VUE_lieux;  // id: table#VUE_lieux - non utilisé
 				this.MH_json = json_lieux;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneLieu;
 				break;
 			case 'cenotaphes':
-				this.MH_ft = VUE_cenotaphes;  // id: table#VUE_cenotaphes
+				//this.MH_ft = VUE_cenotaphes;  // id: table#VUE_cenotaphes - non utilisé
 				this.MH_json = json_cenotaphes;
+				this.existe = true;
 				this.cLigneClass = MZ_cLigneCenotaphe;
 				break;
 		}
@@ -13967,8 +13980,8 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.oLieux,
 			MZ_cVueJSON.oCenotaphes,
 		]) {
-			if (o === undefined || !o.loaded) {
-				if (o) debugMZ("MZ_cVueJSON.load_log, " + o.nomBase + " not loaded");
+			if (o === undefined || (o.existe && !o.loaded)) {
+				if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${o.nomBase} existe=${o.existe}, loaded=${o.loaded}`);
 				allMHLoaded = false;
 				break;
 			}
@@ -14519,7 +14532,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					nom.match(/^[^\[]*beholder/) ||
 					nom.match(/^[^\[]*sidoine/)) {
 				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) if (oLigne.id && aAppliquer.Monstre[oLigne.id]) td.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
+				for (let td of tr.children) td.style.backgroundColor = aAppliquer.mythiques;
 				tr.style.backgroundColor = aAppliquer.mythiques;
 				tr.diploActive = 'oui';
 				oLigne.eltTdNom.title = 'Monstre Mythique';
@@ -15140,27 +15153,6 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		*/
 	}
 
-	/* to be deleted
-	initFromRef(infos) {
-		const ref_tr = MZ_cLigneTroll.refTr;
-		let id = parseInt(infos.id);
-		let eTr = createTrollRowFromRef(infos, ref_tr);
-		let allTr = MZ_cLigneTroll.MZ_oVueJSON.MH_ft.getElementsByTagName('tr');
-
-		let insertAt = allTr.length - 1;  // insert à la fin par défaut
-		for (const [idx, oTroll] of MZ_cLigneTroll.MZ_oVueJSON.objets.entries()) {
-			if (oTroll.dist > infos.dist) {
-				insertAt = idx;
-				break;
-			}
-		}
-		this.init(MZ_cLigneTroll.MZ_oVueJSON, id, eTr);
-		MZ_cLigneTroll.MZ_oVueJSON.objets.splice(insertAt, 0, this);
-		insertAfter(allTr[insertAt], eTr);
-		// gath: inserer aussi dans `MZ_cLigneTroll.MZ_oVueJSON.MH_json` ?
-	}
-	*/
-
 	insertColumn(param) {
 		// c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
 		switch (param) {
@@ -15255,11 +15247,12 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				Monstre: {}
 			};
 		}
+		//logMZ(`initGlobal Trolls aAppliquer ${JSON.stringify(aAppliquer)}`);
 		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
 			let idG = oLigne.getGuildeID();
 			let tr = oLigne.eltTr;
-			// logMZ('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
 			if (aAppliquer.Troll[oLigne.id]) {
+				//logMZ(`initGlobal Trolls aAppliquer id=${oLigne.id}`);
 				let descr = aAppliquer.Troll[oLigne.id].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
