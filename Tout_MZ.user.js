@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.55
+// @version     1.6.56
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.55';
+var MZ_latest = '1.6.56';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -11903,6 +11903,7 @@ class MZ_cVueExterne {
 	}
 
 	static set2DViewSystem() {
+		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueExterne.set2DViewSystem`);
 		// Initialise le système de vue 2D
 		try {
 			// Recherche du point d'insertion
@@ -13704,6 +13705,7 @@ class MZ_cVueJSON {
 	static callbacksFinMZ = [];
 	static oPosTroll;
 	static initDone;
+	static debugEnchainements = false;
 
 	static initGlobal() {
 		// le constructeur de chaque instance va faire le boulot d'init
@@ -13713,10 +13715,17 @@ class MZ_cVueJSON {
 		MZ_cVueJSON.oChampignons = new MZ_cVueJSON('champignons');
 		MZ_cVueJSON.oLieux = new MZ_cVueJSON('lieux');
 		MZ_cVueJSON.oCenotaphes = new MZ_cVueJSON('cenotaphes');
+		MZ_cVueJSON.oMonstres.load();
+		MZ_cVueJSON.oTrolls.load();
+		MZ_cVueJSON.oTresors.load();
+		MZ_cVueJSON.oChampignons.load();
+		MZ_cVueJSON.oLieux.load();
+		MZ_cVueJSON.oCenotaphes.load();
 		MZ_cVueJSON.initDone = true;
 	}
 
 	static allMHLoaded() {
+		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.allMHLoaded_log');
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
 		do_scizEnhanceView();
@@ -13795,26 +13804,24 @@ class MZ_cVueJSON {
 	txtFiltreNom;
 
 	constructor(nomBase) {
+		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.constructor_log ' + nomBase);
 		this.nomBase = nomBase;
 		this.eltDiv = document.getElementById(this.nomBase);
 		this.eltTable = document.getElementById('VUE_' + this.nomBase);
 		if (this.eltTable == null) {
 			logMZ("MZ_cVueJSON_log constructor pas d'élément" + 'VUE_' + this.nomBase);
 			return;
-		} // skip si pas présent
-		// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
-		let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
-		this.mutationObserver = new MutationObserver(function () {
-			//logMZ('MZ_cVueJSON_log callback1 ' + oThis.nomBase);
-			oThis.load();
-		});
-		this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
-
+		}
 		MZ_cHighlightSameXYN.init();
-		this.load();
 	}
 
-	async load() {
+	load() {
+		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.load_log ' + this.nomBase);
+		// cette fonction est en général appelée 2 fois
+		//	- à la création de l'objet
+		//	- à la réception du retour AJAX MH grâce au mutationObserver
+		// le test (this.MH_json === undefined || this.objets) permet de ne faire vraiement le boulot qu'une fois
+
 		// crée des objects dérivés de MZ_cLigneVue et les stocke dans le tableau this.objets
 
 		// faire pointer les propriétés de l'object vers les variables globales "let" de MH
@@ -13855,13 +13862,24 @@ class MZ_cVueJSON {
 				break;
 		}
 		this.cLigneClass.MZ_oVueJSON = this;
-		//console.log('load ' + this.nomBase, this.cLigneClass, this.cLigneClass.MZ_oVueJSON, this.cLigneClass.MZ_oVueJSON.nomBase);
+		//console.log('load_log ' + this.nomBase, this.cLigneClass, this.cLigneClass.MZ_oVueJSON, this.cLigneClass.MZ_oVueJSON.nomBase);
 
 		// teste que notre tableau est rempli si le tableau MH est rempli
 		if (this.MH_json === undefined || this.objets !== undefined) {
-			debugMZ("MZ_cVueJSON_log load " + this.nomBase + " this.MH_json=" + this.MH_json + ", this.objets=" + this.objets);
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log avorté car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
+			if (!this.mutationObserver) {
+				// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
+				let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
+				this.mutationObserver = new MutationObserver(function () {
+					//logMZ('MZ_cVueJSON_log callback1 ' + oThis.nomBase);
+					oThis.load();
+				});
+				if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log arme un mutationObserver`);
+				this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
+			}
 			return;
 		}
+		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log continue car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
 
 		this.mutationObserver.disconnect();
 		this.mutationObserver = undefined;
@@ -13938,15 +13956,7 @@ class MZ_cVueJSON {
 			}
 		}
 
-		// gath': on empeche d'init une sous-classe avant l'initialisation globale de cVue
-		while (true) {
-			if (!MZ_cVueJSON.initDone) {
-				await new Promise(r => setTimeout(r, 10));
-				continue;
-			}
-			this.cLigneClass.initGlobal();
-			break;
-		}
+		this.cLigneClass.initGlobal();
 
 		let allMHLoaded = true;
 		for (let o of [
@@ -13958,14 +13968,13 @@ class MZ_cVueJSON {
 			MZ_cVueJSON.oCenotaphes,
 		]) {
 			if (o === undefined || !o.loaded) {
-				if (o) debugMZ("MZ_cVueJSON.load, " + o.nomBase + " not loaded");
+				if (o) debugMZ("MZ_cVueJSON.load_log, " + o.nomBase + " not loaded");
 				allMHLoaded = false;
 				break;
 			}
 		}
+		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON_log load ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
 		if (allMHLoaded) MZ_cVueJSON.allMHLoaded();
-
-		debugMZ('MZ_cVueJSON_log init ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
 	}
 
 	insertColumn(indxAfter, title, width, callbackParam) {
