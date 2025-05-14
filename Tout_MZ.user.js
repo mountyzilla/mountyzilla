@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.54
+// @version     1.6.55
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.54';
+var MZ_latest = '1.6.55';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -905,6 +905,9 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 		request.responseType = 'document';
 	}
 	request.send(MY_XHR_Ob.data);
+	if (MY_XHR_Ob.trace) {
+		logMZ(`XMLHttp.send ${MZ_formatDateMS()} envoi AJAX ${MY_XHR_Ob.trace}`);
+	}
 }
 
 // rend une chaine affichant date et heure et milliseconds (maintenant si le paramètre est absent)
@@ -11835,14 +11838,22 @@ class MZ_cVueExterne {
 			} else {
 				MY_setValue('MZ_VueExtMaxV', limitV);
 			}
+			let avecFiltre = false;
+			let eAvecFiltre = document.getElementById('MZVueExtFiltre');
+			if (eAvecFiltre) avecFiltre = eAvecFiltre.checked;
+			if (avecFiltre) {
+				MY_setValue('MZ_VueExtFiltre', 1);
+			} else {
+				MY_removeValue('MZ_VueExtFiltre');
+			}
 			let txt;
 			if (MZ_cVueJSON.oMonstres) {
 				// vue "nouvelle"
-				txt = MZ_cVueJSON.oTrolls.getData4Vue2D(limitH, limitV);
-				txt += MZ_cVueJSON.oMonstres.getData4Vue2D(limitH, limitV);
-				txt += MZ_cVueJSON.oChampignons.getData4Vue2D(limitH, limitV);
-				txt += MZ_cVueJSON.oTresors.getData4Vue2D(limitH, limitV);
-				txt += MZ_cVueJSON.oLieux.getData4Vue2D(limitH, limitV);
+				txt = MZ_cVueJSON.oTrolls.getData4Vue2D(limitH, limitV, avecFiltre);
+				txt += MZ_cVueJSON.oMonstres.getData4Vue2D(limitH, limitV, avecFiltre);
+				txt += MZ_cVueJSON.oChampignons.getData4Vue2D(limitH, limitV, avecFiltre);
+				txt += MZ_cVueJSON.oTresors.getData4Vue2D(limitH, limitV, avecFiltre);
+				txt += MZ_cVueJSON.oLieux.getData4Vue2D(limitH, limitV, avecFiltre);
 				txt += `#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
 					}\n#FIN ORIGINE\n`;
 			} else {
@@ -11933,13 +11944,15 @@ class MZ_cVueExterne {
 			appendTdText(tr, 'Limiter à ', false, stylesEspacement);
 			td = appendTd(tr, stylesEspacement);
 			appendTextbox(td, 'input', 'MZvueExtMaxH', 3, 3, MY_getValue('MZ_VueExtMaxH'), 'MZvueExtMaxH');
-			appendTdText(tr, ' cases horizontales et ', false, stylesEspacement);
+			appendTdText(tr, ' cases horiz. et ', false, stylesEspacement);
 			td = appendTd(tr, stylesEspacement);
 			appendTextbox(td, 'input', 'MZvueExtMaxV', 3, 3, MY_getValue('MZ_VueExtMaxV'), 'MZvueExtMaxV');
-			appendTdText(tr, ' cases verticales', false, stylesEspacement);
+			appendTdText(tr, ' cases vert.', false, stylesEspacement);
 			td = appendTd(tr, stylesEspacement);
-			// Roule : fontSize à 0 enlève le texte du bouton !!!! Qu'est-ce que c'est que le "bug de l'extra character" ?
-			//td.style.fontSize = '0px'; // gère le bug de l'extra character
+			let ck = appendCheckBoxSpan(td, 'MZVueExtFiltre', null, 'avec filtre');
+			ck.style.marginLeft = '3px';
+			ck.style.marginRight = '3px';
+			td = appendTd(tr, stylesEspacement);
 			td.appendChild(form);
 			let eDiv = document.createElement('div');
 			eDiv.appendChild(table);
@@ -11949,6 +11962,7 @@ class MZ_cVueExterne {
 			table.style.width = '180px';
 			table.style.margin = '0 auto';
 			center.parentNode.insertBefore(eDiv, center.nextSibling);
+			if (MY_getValue('MZ_VueExtFiltre')) document.getElementById('MZVueExtFiltre').checked = true;
 
 			// Appelle le handler pour initialiser le bouton de submit
 			MZ_cVueExterne.refresh2DViewButton();
@@ -13978,10 +13992,11 @@ class MZ_cVueJSON {
 		}
 	}
 
-	getData4Vue2D(limitH, limitV) {
+	getData4Vue2D(limitH, limitV, avecFiltre) {
 		let txt = '#DEBUT ' + this.nomBase.toUpperCase() + "\n";
 		let myPosition = getPosition();
 		for (let o of this.objets) {
+			if (avecFiltre && o.eltTr.style.display == 'none') continue;
 			o.loadXYN();
 			if (Math.max(Math.abs(myPosition[0] - o.x), Math.abs(myPosition[1] - o.y)) > limitH) continue;
 			if (Math.abs(myPosition[2] - o.n) > limitV) continue;
@@ -14525,7 +14540,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		btn2.style.marginRight = '3px';
 		let textboxNom = appendTextbox(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'text', 'MZ_cacheMonstre', 15, 30, oConfig.nomCache);
 		textboxNom.onchange = MZ_cLigneMonstre.modifFiltre;
-		
 		textboxNom.style.marginRight = '5px';
 		textboxNom.style.marginLeft = '10px';
 	}
