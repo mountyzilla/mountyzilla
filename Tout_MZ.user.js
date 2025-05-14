@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.53
+// @version     1.6.54
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.53';
+var MZ_latest = '1.6.54';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -11950,7 +11950,6 @@ class MZ_cVueExterne {
 			table.style.margin = '0 auto';
 			center.parentNode.insertBefore(eDiv, center.nextSibling);
 
-
 			// Appelle le handler pour initialiser le bouton de submit
 			MZ_cVueExterne.refresh2DViewButton();
 			debugMZ('fin préparation des vues externes');
@@ -13775,7 +13774,11 @@ class MZ_cVueJSON {
 	indxTdNiv;
 	// filtres
 	eltDivShowFiltre;
-	eltParamFiltre;
+	eltParamFiltreCache;
+	eltParamFiltreRestr;
+	btnFiltre;
+	btnRazFiltre;
+	txtFiltreNom;
 
 	constructor(nomBase) {
 		this.nomBase = nomBase;
@@ -14006,18 +14009,26 @@ class MZ_cVueJSON {
 		this.eltDivShowFiltre.style.cursor = 'default';
 		this.eltDivShowFiltre.onclick = MZ_cLigneVue.stopPropagation;
 
-		this.eltParamFiltre = document.createElement('div');
-		this.eltParamFiltre.className = "collapsible-content-inner";
+		let eltParamFiltre = document.createElement('div');
+		eltParamFiltre.className = "collapsible-content-inner";
 
-		let btn = appendButton(this.eltDivShowFiltre, 'Filtrer');
-		btn.id = 'MZ_btnFiltre' + this.nomBase;
+		this.btnFiltre = appendButton(this.eltDivShowFiltre, 'Filtrer');
+		//this.btnFiltre.id = 'MZ_btnFiltre' + this.nomBase;
 		let varThis = this;	// pour passer this aux callbacks
-		let btnShow = false;
-		btn.onclick = function () {
-			varThis.eltParamFiltre.style.display = btnShow ? 'none' : 'block';
-			btnShow = !btnShow;
+		this.btnFiltre.onclick = function () {
+			eltParamFiltre.style.display = (eltParamFiltre.style.display == 'none') ? 'block' : 'none';
 		};
-		if (!oConfig.empty) btn.value = 'Modifier le filtre';
+		this.eltParamFiltreCache = document.createElement('div');
+		eltParamFiltre.appendChild(this.eltParamFiltreCache);
+		this.btnRazFiltre = appendButton(this.eltDivShowFiltre, '🗑');
+		//this.btnRazFiltre.id = 'MZ_btnTrash' + this.nomBase;
+		this.btnRazFiltre.title = 'Supprimer le filtre';
+		this.btnRazFiltre.onclick = function() {
+			oConfig = {empty: true};
+			varThis.txtFiltreNom.value = '';
+			if (varThis.cLigneClass.razFiltre) varThis.cLigneClass.razFiltre();
+			varThis.applyFiltre(oConfig);
+		}
 
 		let eltNav = this.eltDiv.children[2];
 		if ((!eltNav) || eltNav.tagName != 'LABEL') eltNav = this.eltDiv.children[1]; // smartphone
@@ -14026,32 +14037,51 @@ class MZ_cVueJSON {
 			return;
 		}
 		eltNav.insertBefore(this.eltDivShowFiltre, null);
+		eltNav.insertBefore(this.eltDivShowFiltre, null);
 
+		this.eltParamFiltreRestr = document.createElement('div');
+		//this.eltParamFiltreRestr.id = `dlo_${this.nomBase}`
 		if (this.cLigneClass.nomsFiltres) {
-			let img = document.createElement('img');
-			img.style.padding = '0px 5px 5px 5px';
-			img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBmaWxsPSIjMDAwMDAwIiB3aWR0aD0iMTZweCIgaGVpZ2h0PSIxNnB4IiB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTSAzLjcxODc1IDIuMjgxMjUgTCAyLjI4MTI1IDMuNzE4NzUgTCA4LjUgOS45MDYyNSBMIDE5LjU5Mzc1IDIxIEwgMjEuNSAyMi45Mzc1IEwgMjguMjgxMjUgMjkuNzE4NzUgTCAyOS43MTg3NSAyOC4yODEyNSBMIDIzLjUgMjIuMDYyNSBDIDI3LjczNDM3NSAxOS45NjQ4NDQgMzAuNTc0MjE5IDE2Ljg1MTU2MyAzMC43NSAxNi42NTYyNSBMIDMxLjM0Mzc1IDE2IEwgMzAuNzUgMTUuMzQzNzUgQyAzMC40ODA0NjkgMTUuMDQyOTY5IDI0LjA4NTkzOCA4IDE2IDggQyAxNC4wNDI5NjkgOCAxMi4xOTUzMTMgOC40Mjk2ODggMTAuNSA5LjA2MjUgWiBNIDE2IDEwIEMgMTguMTUyMzQ0IDEwIDIwLjE4NzUgMTAuNjA1NDY5IDIyIDExLjQzNzUgQyAyMi42NDQ1MzEgMTIuNTE1NjI1IDIzIDEzLjczNDM3NSAyMyAxNSBDIDIzIDE2LjgxNjQwNiAyMi4yOTY4NzUgMTguNDc2NTYzIDIxLjE1NjI1IDE5LjcxODc1IEwgMTguMzEyNSAxNi44NzUgQyAxOC43MzA0NjkgMTYuMzYzMjgxIDE5IDE1LjcxNDg0NCAxOSAxNSBDIDE5IDEzLjM0Mzc1IDE3LjY1NjI1IDEyIDE2IDEyIEMgMTUuMjg1MTU2IDEyIDE0LjYzNjcxOSAxMi4yNjk1MzEgMTQuMTI1IDEyLjY4NzUgTCAxMi4wOTM3NSAxMC42NTYyNSBDIDEzLjMzNTkzOCAxMC4yNzM0MzggMTQuNjM2NzE5IDEwIDE2IDEwIFogTSA2LjY4NzUgMTAuOTA2MjUgQyAzLjQ4MDQ2OSAxMi44Nzg5MDYgMS4zOTg0MzggMTUuMTc1NzgxIDEuMjUgMTUuMzQzNzUgTCAwLjY1NjI1IDE2IEwgMS4yNSAxNi42NTYyNSBDIDEuNTA3ODEzIDE2Ljk0NTMxMyA3LjQyOTY4OCAyMy40MjU3ODEgMTUuMDYyNSAyMy45Mzc1IEMgMTUuMzcxMDk0IDIzLjk2ODc1IDE1LjY4MzU5NCAyNCAxNiAyNCBDIDE2LjMxNjQwNiAyNCAxNi42Mjg5MDYgMjMuOTY4NzUgMTYuOTM3NSAyMy45Mzc1IEMgMTcuNzYxNzE5IDIzLjg4MjgxMyAxOC41NjY0MDYgMjMuNzczNDM4IDE5LjM0Mzc1IDIzLjU5Mzc1IEwgMTcuNTYyNSAyMS44MTI1IEMgMTcuMDU0Njg4IDIxLjkyOTY4OCAxNi41MzkwNjMgMjIgMTYgMjIgQyAxMi4xNDA2MjUgMjIgOSAxOC44NTkzNzUgOSAxNSBDIDkgMTQuNDY4NzUgOS4wNzAzMTMgMTMuOTQ5MjE5IDkuMTg3NSAxMy40Mzc1IFogTSA3LjI1IDEyLjkzNzUgQyA3LjA4OTg0NCAxMy42MTMyODEgNyAxNC4zMDA3ODEgNyAxNSBDIDcgMTYuNzM4MjgxIDcuNDg4MjgxIDE4LjMzOTg0NCA4LjM0Mzc1IDE5LjcxODc1IEMgNi4wNTQ2ODggMTguNDA2MjUgNC4zMDQ2ODggMTYuODY3MTg4IDMuNDA2MjUgMTYgQyA0LjE1MjM0NCAxNS4yNzczNDQgNS40OTYwOTQgMTQuMDc4MTI1IDcuMjUgMTIuOTM3NSBaIE0gMjQuNzUgMTIuOTM3NSBDIDI2LjUwMzkwNiAxNC4wNzgxMjUgMjcuODQzNzUgMTUuMjc3MzQ0IDI4LjU5Mzc1IDE2IEMgMjcuNjk1MzEzIDE2Ljg2NzE4OCAyNS45MTc5NjkgMTguNDM3NSAyMy42MjUgMTkuNzUgQyAyNC40ODQzNzUgMTguMzcxMDk0IDI1IDE2LjczODI4MSAyNSAxNSBDIDI1IDE0LjMwMDc4MSAyNC45MTAxNTYgMTMuNjA5Mzc1IDI0Ljc1IDEyLjkzNzUgWiIvPjwvc3ZnPg==';
-			this.eltParamFiltre.appendChild(img);
+			let imgDone = false;
+			let imgRestrDone = false;
 			for (let nomfiltre in this.cLigneClass.nomsFiltres) {
 				let oNom = this.cLigneClass.nomsFiltres[nomfiltre];
-				let chk = appendCheckBoxSpan(this.eltParamFiltre, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+				let chk;
+				if (oNom.restr) {
+					if (!imgRestrDone) {
+						let img = document.createElement('img');
+						img.style.padding = '0px 5px 5px 5px';
+						img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAEFJREFUOI1jYBgFjLgkWBgY/iPz/+BRi6ERXTM+cbwKiBXDcC66GBZ5fpgYEx7f4AMfMUQo8gIxCnCJUz8aRyAAAK6PHU00uNpOAAAAAElFTkSuQmCC';
+						this.eltParamFiltreRestr.appendChild(img);
+						imgRestrDone = true;
+						imgRestrDone = true;
+					}
+					chk = appendCheckBoxSpan(this.eltParamFiltreRestr, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+				} else {
+					if (!imgDone) {
+						let img = document.createElement('img');
+						img.style.padding = '0px 5px 5px 5px';
+						img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBmaWxsPSIjMDAwMDAwIiB3aWR0aD0iMTZweCIgaGVpZ2h0PSIxNnB4IiB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTSAzLjcxODc1IDIuMjgxMjUgTCAyLjI4MTI1IDMuNzE4NzUgTCA4LjUgOS45MDYyNSBMIDE5LjU5Mzc1IDIxIEwgMjEuNSAyMi45Mzc1IEwgMjguMjgxMjUgMjkuNzE4NzUgTCAyOS43MTg3NSAyOC4yODEyNSBMIDIzLjUgMjIuMDYyNSBDIDI3LjczNDM3NSAxOS45NjQ4NDQgMzAuNTc0MjE5IDE2Ljg1MTU2MyAzMC43NSAxNi42NTYyNSBMIDMxLjM0Mzc1IDE2IEwgMzAuNzUgMTUuMzQzNzUgQyAzMC40ODA0NjkgMTUuMDQyOTY5IDI0LjA4NTkzOCA4IDE2IDggQyAxNC4wNDI5NjkgOCAxMi4xOTUzMTMgOC40Mjk2ODggMTAuNSA5LjA2MjUgWiBNIDE2IDEwIEMgMTguMTUyMzQ0IDEwIDIwLjE4NzUgMTAuNjA1NDY5IDIyIDExLjQzNzUgQyAyMi42NDQ1MzEgMTIuNTE1NjI1IDIzIDEzLjczNDM3NSAyMyAxNSBDIDIzIDE2LjgxNjQwNiAyMi4yOTY4NzUgMTguNDc2NTYzIDIxLjE1NjI1IDE5LjcxODc1IEwgMTguMzEyNSAxNi44NzUgQyAxOC43MzA0NjkgMTYuMzYzMjgxIDE5IDE1LjcxNDg0NCAxOSAxNSBDIDE5IDEzLjM0Mzc1IDE3LjY1NjI1IDEyIDE2IDEyIEMgMTUuMjg1MTU2IDEyIDE0LjYzNjcxOSAxMi4yNjk1MzEgMTQuMTI1IDEyLjY4NzUgTCAxMi4wOTM3NSAxMC42NTYyNSBDIDEzLjMzNTkzOCAxMC4yNzM0MzggMTQuNjM2NzE5IDEwIDE2IDEwIFogTSA2LjY4NzUgMTAuOTA2MjUgQyAzLjQ4MDQ2OSAxMi44Nzg5MDYgMS4zOTg0MzggMTUuMTc1NzgxIDEuMjUgMTUuMzQzNzUgTCAwLjY1NjI1IDE2IEwgMS4yNSAxNi42NTYyNSBDIDEuNTA3ODEzIDE2Ljk0NTMxMyA3LjQyOTY4OCAyMy40MjU3ODEgMTUuMDYyNSAyMy45Mzc1IEMgMTUuMzcxMDk0IDIzLjk2ODc1IDE1LjY4MzU5NCAyNCAxNiAyNCBDIDE2LjMxNjQwNiAyNCAxNi42Mjg5MDYgMjMuOTY4NzUgMTYuOTM3NSAyMy45Mzc1IEMgMTcuNzYxNzE5IDIzLjg4MjgxMyAxOC41NjY0MDYgMjMuNzczNDM4IDE5LjM0Mzc1IDIzLjU5Mzc1IEwgMTcuNTYyNSAyMS44MTI1IEMgMTcuMDU0Njg4IDIxLjkyOTY4OCAxNi41MzkwNjMgMjIgMTYgMjIgQyAxMi4xNDA2MjUgMjIgOSAxOC44NTkzNzUgOSAxNSBDIDkgMTQuNDY4NzUgOS4wNzAzMTMgMTMuOTQ5MjE5IDkuMTg3NSAxMy40Mzc1IFogTSA3LjI1IDEyLjkzNzUgQyA3LjA4OTg0NCAxMy42MTMyODEgNyAxNC4zMDA3ODEgNyAxNSBDIDcgMTYuNzM4MjgxIDcuNDg4MjgxIDE4LjMzOTg0NCA4LjM0Mzc1IDE5LjcxODc1IEMgNi4wNTQ2ODggMTguNDA2MjUgNC4zMDQ2ODggMTYuODY3MTg4IDMuNDA2MjUgMTYgQyA0LjE1MjM0NCAxNS4yNzczNDQgNS40OTYwOTQgMTQuMDc4MTI1IDcuMjUgMTIuOTM3NSBaIE0gMjQuNzUgMTIuOTM3NSBDIDI2LjUwMzkwNiAxNC4wNzgxMjUgMjcuODQzNzUgMTUuMjc3MzQ0IDI4LjU5Mzc1IDE2IEMgMjcuNjk1MzEzIDE2Ljg2NzE4OCAyNS45MTc5NjkgMTguNDM3NSAyMy42MjUgMTkuNzUgQyAyNC40ODQzNzUgMTguMzcxMDk0IDI1IDE2LjczODI4MSAyNSAxNSBDIDI1IDE0LjMwMDc4MSAyNC45MTAxNTYgMTMuNjA5Mzc1IDI0Ljc1IDEyLjkzNzUgWiIvPjwvc3ZnPg==';
+						this.eltParamFiltreCache.appendChild(img);
+						imgDone = true;
+					}
+					chk = appendCheckBoxSpan(this.eltParamFiltreCache, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+				}
 				if (oNom.infobulle) chk.parentNode.title = oNom.infobulle;
 				if (oConfig[nomfiltre]) chk.checked = true;
 			}
 		}
 
-		let div2 = document.createElement('div');
-		div2.id = `dlo_${this.nomBase}`
 		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
-		let btn2 = appendButton(this.eltDivShowFiltre, 'Nom du ' + this.nomBase.substring(0, this.nomBase.length-1) + ':');
+		let btn2 = appendButton(this.eltParamFiltreRestr, 'Nom du ' + this.nomBase.substring(0, this.nomBase.length-1) + ':');
 		btn2.style.marginRight = '3px';
-		div2.appendChild(btn2);
+		//this.eltParamFiltreRestr.appendChild(btn2);
 
-		let textbox = appendTextbox(div2, 'text', 'MZ_Nom' + this.nomFiltre, 15, 30);
+		this.txtFiltreNom = appendTextbox(this.eltParamFiltreRestr, 'text', 'MZ_Nom' + this.nomFiltre, 15, 30);
 		if (this.cLigneClass.modifFiltre)
-			textbox.onchange = this.cLigneClass.modifFiltre;
+			this.txtFiltreNom.onchange = this.cLigneClass.modifFiltre;
 		else
-			textbox.onchange = function() {
+			this.txtFiltreNom.onchange = function() {
 				let oConfig = {};
 				let nom = document.getElementById('MZ_Nom' + varThis.nomFiltre).value;
 				if (nom.trim() != '') {
@@ -14065,26 +14095,28 @@ class MZ_cVueJSON {
 				if (oConfig.empty) oConfig = undefined;
 				MZ_SauvegardeMH.setZone(varThis.nomFiltre, oConfig);
 			};
-		textbox.style.marginRight = '5px';
-		if (oConfig.nom) textbox.value = oConfig.nom;
+		this.txtFiltreNom.style.marginRight = '5px';
+		if (oConfig.nom) this.txtFiltreNom.value = oConfig.nom;
 
-		if (this.cLigneClass.initOtherFiltre) this.cLigneClass.initOtherFiltre(div2, oConfig);
+		if (this.cLigneClass.initOtherFiltre) this.cLigneClass.initOtherFiltre(this.eltParamFiltreRestr, oConfig);
 
-		this.eltParamFiltre.appendChild(div2);
+		eltParamFiltre.appendChild(this.eltParamFiltreRestr);
 
-		this.eltParamFiltre.style.display = 'none';
+		eltParamFiltre.style.display = 'none';
 		let divTable = this.eltDiv.children[3];
 		if (!divTable) divTable = this.eltDiv.children[2];	// cas smartphone
-		divTable.insertBefore(this.eltParamFiltre, divTable.firstChild);
+		divTable.insertBefore(eltParamFiltre, divTable.firstChild);
 
-		this.applyFiltre(oConfig);
+		this.applyFiltre(oConfig, true);
 	}
 
-	applyFiltre(oConfig) {
+	applyFiltre(oConfig, noSave) {
 		//Display
 		let eltDisplay = document.getElementById('MZ_disp' + this.nomFiltre);
 		if (oConfig === undefined) oConfig = {empty: true};
 		if (!oConfig.empty) {
+			this.btnFiltre.value = 'Modifier le filtre';
+			this.btnRazFiltre.style.display = 'inline-block';
 			if (!eltDisplay) {
 				eltDisplay = document.createElement('div');
 				eltDisplay.style.display = 'inline-block';
@@ -14105,9 +14137,14 @@ class MZ_cVueJSON {
 				tabCaches = tabCaches.concat(this.cLigneClass.displayOtherFiltre(oConfig));
 			if (eltDisplay.firstChild) eltDisplay.removeChild(eltDisplay.firstChild);
 			eltDisplay.appendChild(document.createTextNode('[MZ] Sont cachés : ' + tabCaches.join(', ')));
-		} else if (eltDisplay) {
-			this.eltDivShowFiltre.removeChild(eltDisplay);
+		} else  {
+			this.btnFiltre.value = 'Filtre';
+			this.btnRazFiltre.style.display = 'none';
+			if (eltDisplay) this.eltDivShowFiltre.removeChild(eltDisplay);
 		}
+
+		// save
+		if (!noSave) MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
 		// filtre (spécifique à chaque bloc)
 		if (this.cLigneClass.applyFiltreBloc)
 			this.cLigneClass.applyFiltreBloc(oConfig);
@@ -14332,16 +14369,16 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	static lastIndexSent = -1;
 	static isCDMsRetrieved = false;
 	// filtre
-	static checkBoxGowapsA;
-	static checkBoxGowapsS;
-	static checkBoxEngages;
-	static checkBoxNonmiss;
+	//static checkBoxGowapsA;
+	//static checkBoxGowapsS;
+	//static checkBoxEngages;
+	//static checkBoxNonmiss;
 	static listPosTroll;
 	static nomsFiltres = {
 		gowapA: {libelle: 'Les Gowaps Apprivoisés'},
 		gowapS: {libelle: 'Les Gowaps Sauvages'},
 		engage: {libelle: 'Les Engagés', infobulle: 'Les monstres ayant au moins un Trõll sur la même case'},
-		nonmis: {libelle: 'Les pas-mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active"},
+		nonmis: {libelle: 'Mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active", restr: true},
 	};
 	static listeFamille = ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant'];
 	static listeFamilleAvecTrema = ['Animal', 'Insecte', 'Démon', 'Humanoïde', 'Monstre', 'Mort-Vivant'];
@@ -14483,6 +14520,14 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			, MZ_cLigneMonstre.listeFamilleAvecTrema
 			, oConfig.famille);
 		comboBoxFamille.style.marginRight = '5px';
+		comboBoxFamille.style.marginLeft = '3px';
+		let btn2 = appendButton(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'Nom du monstre:');
+		btn2.style.marginRight = '3px';
+		let textboxNom = appendTextbox(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'text', 'MZ_cacheMonstre', 15, 30, oConfig.nomCache);
+		textboxNom.onchange = MZ_cLigneMonstre.modifFiltre;
+		
+		textboxNom.style.marginRight = '5px';
+		textboxNom.style.marginLeft = '10px';
 	}
 
 	static modifFiltre() {
@@ -14524,6 +14569,12 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			bSomething = true;
 		} else delete oConfig.famille;
 
+		nom = document.getElementById('MZ_cacheMonstre').value;
+		if (nom.trim() != '') {
+			oConfig.nomCache = nom;
+			bSomething = true;
+		} else delete oConfig.nomCache;
+
 		if (!bSomething) oConfig = {empty: true};
 
 		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(oConfig);
@@ -14537,6 +14588,14 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(MZ_SauvegardeMH.getZone('filtreMonstres'));
 	}
 
+	static razFiltre() {
+		document.getElementById('MZ_nivMinMonstres').value = '';
+		document.getElementById('MZ_nivMaxMonstres').value = '';
+		document.getElementById('MZ_FamilleMonstres').value = '';
+		for (let nomfiltre in MZ_cLigneMonstre.nomsFiltres)
+			document.getElementById('MZ_chkMonstre' + nomfiltre).checked = false;
+	}
+
 	static displayOtherFiltre(oConfig) {
 		let tabCaches = [];
 		if (oConfig.famille) tabCaches.push('Famille autre que ' + oConfig.famille);
@@ -14544,12 +14603,14 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		if (oConfig.nivMin !== undefined) msgNiv.push('<' + oConfig.nivMin);
 		if (oConfig.nivMax !== undefined) msgNiv.push('>' + oConfig.nivMax);
 		if (msgNiv.length > 0) tabCaches.push('Niveau ' + msgNiv.join(' ou '));
+		if (oConfig.nomCache) tabCaches.push('Nom : ' + oConfig.nomCache);
 		return tabCaches;
 	}
 
 	static applyFiltreBloc(oConfig) {
 		// Filtre
 		let bHideEg = oConfig.engage;
+		//logMZ('applyFiltreBloc Monstre oConfig=', oConfig);
 		if (bHideEg && ((!MZ_cVueJSON.oTrolls) || MZ_cVueJSON.oTrolls.objets === undefined)) {
 			// Ça arrive quand on applique le filtre ici avant que la page ait reçu le retour JSON MH pour les Trolls
 			// on relancera quand tout sera reçu
@@ -14565,6 +14626,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		let nivMax = oConfig.nivMax;
 		let nonmis = oConfig.nonmis;
 		let famille = oConfig.famille;
+		let nomCache;
+		if (oConfig.nomCache) nomCache = oConfig.nomCache.toLowerCase();
 		if ((nivMin !== undefined || nivMax !== undefined || nonmis || famille)
 			&& !(MZ_cLigneMonstre.isCDMsRetrieved)) {
 			if (MZ_cLigneMonstre.nbRetry++ < 5)	// protection
@@ -14625,6 +14688,10 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						let nomSansFlou = oMonstre.nom.substring(0, indx).trim();
 						if ((MZ_cLigneMonstre.listeFamille.includes(nomSansFlou)) && nomSansFlou != famille) cache = true;
 					}
+				}
+			if ((!cache)
+				&& nomCache) {
+				if (oMonstre.nom.toLowerCase().indexOf(nomCache) != -1) cache = true;
 				}
 			let prevDisplay = oMonstre.eltTr.style.display;
 			if (cache && prevDisplay != 'none')
@@ -15287,12 +15354,16 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				if (guilde.toLowerCase().indexOf(oConfig.guilde) == -1) cache = true;
 			}
 			let prevDisplay = oLigne.eltTr.style.display;
-			//console.log('applyFiltreGenerique nom=' + oLigne.nom + ', cache=' + cache);
+			//console.log('applyFiltreGenerique_log nom=' + oLigne.nom + ', cache=' + cache);
 			if (cache && prevDisplay != 'none')
 				oLigne.eltTr.style.display = 'none';
 			else if ((!cache) && prevDisplay == 'none')
 				oLigne.eltTr.style.display = 'table-row';
 		}
+	}
+
+	static razFiltre() {
+		document.getElementById('MZ_GuileTroll').value = '';
 	}
 
 	static processPX() {
@@ -15352,7 +15423,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 			if (!MZ_cLigneTroll.colBtPVDone) {
 				MZ_cLigneTroll.MZ_oVueJSON.insertColumn(MZ_cLigneTroll.MZ_oVueJSON.indxTdGuilde, 'PV', '', 1);
-				logMZ(`insert colonne PV`);
+				//logMZ(`insert colonne PV`);
 				MZ_cLigneTroll.colBtPVDone = true;
 			}
 
