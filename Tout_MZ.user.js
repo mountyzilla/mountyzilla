@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.57
+// @version     1.6.58
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.57';
+var MZ_latest = '1.6.58';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -15193,11 +15193,11 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 	getGuildeID() {
 		if (this.idGuilde !== undefined) return idGuilde;
-		let eltA = this.eltTdNom.getElementsByTagName('a')[0];
+		let eltA = this.eltTdGuilde.getElementsByTagName('a')[0];
 		this.idGuilde = 0;
 		if (eltA) {
 			let href = eltA.href;
-			this.idGuilde = parseInt(href.substring(href.indexOf('(') + 1, href.indexOf(',')));
+			this.idGuilde = parseInt(href.substring(href.indexOf('(') + 1, href.indexOf(')')));
 			if (isNaN(this.idGuilde)) this.idGuilde = 0;
 		}
 		return this.idGuilde;
