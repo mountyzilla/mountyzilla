@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.58
+// @version     1.6.59
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.58';
+var MZ_latest = '1.6.59';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13894,8 +13894,10 @@ class MZ_cVueJSON {
 		}
 		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log continue car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
 
-		this.mutationObserver.disconnect();
-		this.mutationObserver = undefined;
+		if (this.mutationObserver) {
+			this.mutationObserver.disconnect();
+			this.mutationObserver = undefined;
+		}
 		this.loaded = true;
 		//logMZ('MZ_cVueJSON_log il faut initialiser les ' + this.nomBase);
 		// trouver les numéro de colonne pour chaque info (dist, ref, nom, etc.)

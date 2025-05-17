@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.43
+// @version 2.44
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -231,6 +231,105 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		imag.title = "Ajouter une destination gowap";
 		addEvent(imag, "click", aj_fav_gow, true);
 		document.getElementById("action_lieu").childNodes[2].appendChild(imag);
+	}
+	else if(lien.indexOf("/mountyhall/MH_Play/Play_vue") != -1) {
+		// trajet_canvas ne fonctionne qu'avec MZ pour ce qui est de l'outil de copie de coord
+		class TRAJCANVAS_bloc {
+			static instances = [];
+			static eltImag;
+
+			static doViewCallback() {
+				TRAJCANVAS_bloc.eltImag = document.createElement("img");
+				TRAJCANVAS_bloc.eltImag.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMAgMAAAArG7R0AAAAAXNSR0IArs4c6QAAAAlQTFRFXAByVA0Lyqp4QnItCgAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH2wcTCTMHIX+pMQAAAC9JREFUCNdjYACBUAaGwFWuDGGrpjJIZqYwSGUuYZBaBcShSxjYVk0AY8ZVDiB1AP9ZC3P9zCaoAAAAAElFTkSuQmCC";
+				TRAJCANVAS_bloc.eltImag.style.cursor = 'pointer';
+				TRAJCANVAS_bloc.eltImag.style.position = 'absolute';
+				TRAJCANVAS_bloc.eltImag.style.top = '2px';
+				TRAJCANVAS_bloc.eltImag.style.left = '2px';
+				TRAJCANVAS_bloc.eltImag.style.display = 'none';
+				TRAJCANVAS_bloc.eltImag.title = 'Ajouter une destination gowap (trajet canvas)';
+				addEvent(TRAJCANVAS_bloc.eltImag, 'click', TRAJCANVAS_bloc.ajoutFavori, true);
+
+				for (let oBloc of [
+				MZ_cVueJSON.oMonstres,
+				MZ_cVueJSON.oTrolls,
+				MZ_cVueJSON.oTresors,
+				MZ_cVueJSON.oChampignons,
+				MZ_cVueJSON.oLieux,
+				MZ_cVueJSON.oCenotaphes,
+				]) {
+					TRAJCANVAS_bloc.instances.push(new TRAJCANVAS_bloc(oBloc));
+				}
+				//console.log(`TRAJCANVAS_bloc.doViewCallback`);
+			}
+
+			static showTete() {
+				TRAJCANVAS_bloc.eltImag.style.display = 'block';
+				this.appendChild(TRAJCANVAS_bloc.eltImag);
+			}
+
+			static hideTete() {
+				TRAJCANVAS_bloc.eltImag.style.display = 'none';
+			}
+
+			static ajoutFavori() {
+				let pos = this.parentNode.getAttribute('data-trajcanv-xyn');
+				//console.log(`TRAJCANVAS_bloc.ajoutFavori`, pos);
+				pos = pos.split(';');
+				let maintenant = new Date();
+				let prevDest = MY_getValue("favori_gow");
+				let done = false;
+				if(!prevDest) {
+					MY_setValue("favori_gow", "vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+pos[0]+"/"+pos[1]+"/"+pos[2]+"/");
+					done = true;
+				} else {
+					let param = prevDest.split("/");
+					let nb_fav = Math.floor(param.length/4);
+					if (param.length > 3) {
+						done = true;
+						for (let i=0; i<nb_fav; i++) {
+							if(parseInt(param[4*i+1]) == pos[0] && parseInt(param[4*i+2]) == pos[1] && parseInt(param[4*i+3]) == pos[2]) {
+								done = false;
+								break;
+							}
+						}
+					}
+					if (done) MY_setValue("favori_gow", prevDest+"vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+pos[0]+"/"+pos[1]+"/"+pos[2]+"/");
+				}
+				let eltMsg = document.createElement('div');
+				let msg;
+				if (done) msg = 'La loc ' + pos.join('|') + ' a été ajoutée aux destinations favorites';
+				else msg = 'La loc ' + pos.join('|') + " n'a pas été ajoutée car elle existe déjà";
+				eltMsg.appendChild(document.createTextNode(msg));
+				eltMsg.style.position = 'absolute';
+				eltMsg.style.top = '30px';
+				eltMsg.style.left = '-1px';
+				eltMsg.style.padding = '3px';
+				eltMsg.style.backgroundColor  = done ? 'blue' : 'red';
+				eltMsg.style.color = 'white';
+				eltMsg.style.zIndex = '1000';
+				eltMsg.style.opacity = 1;
+				this.parentNode.appendChild(eltMsg);
+				setTimeout(function() {
+					eltMsg.parentNode.removeChild(eltMsg);
+				}, 5000);
+			}
+
+			//-- fin zone static
+			oBlocMZ;
+			constructor(oBlocMZ) {
+				if (!oBlocMZ) return;
+				this.oBlocMZ = oBlocMZ;
+				for (let oLigne of oBlocMZ.objets) {
+					oLigne.loadXYN();
+					if (!oLigne.x) continue;
+					oLigne.eltTdDist.setAttribute('data-trajcanv-xyn', oLigne.x + ';' + oLigne.y + ';' + oLigne.n);
+					oLigne.eltTdDist.style.position = 'relative';
+					addEvent(oLigne.eltTdDist, "mouseenter", TRAJCANVAS_bloc.showTete);
+					addEvent(oLigne.eltTdDist, "mouseleave", TRAJCANVAS_bloc.hideTete);
+				}
+			}
+		}
+		MZ_cVueJSON.registerCallback(TRAJCANVAS_bloc.doViewCallback);
 	}
 	if(page) {
 		function aj_opt(ref,desc,val) {
