@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.45
+// @version 2.46
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -265,7 +265,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				]) {
 					TRAJCANVAS_bloc.instances.push(new TRAJCANVAS_bloc(oBloc));
 				}
-				console.log(`TRAJCANVAS_bloc.doViewCallback`);
+				//console.log(`TRAJCANVAS_bloc.doViewCallback`);
 			}
 
 			static showTete() {
@@ -335,7 +335,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					addEvent(oLigne.eltTdDist, "mouseenter", TRAJCANVAS_bloc.showTete);
 					addEvent(oLigne.eltTdDist, "mouseleave", TRAJCANVAS_bloc.hideTete);
 				}
-				console.log(`TRAJCANVAS_bloc.constructor ${oBlocMZ.nomBase}`);
+				//console.log(`TRAJCANVAS_bloc.constructor ${oBlocMZ.nomBase}`);
 			}
 		}
 		MZ_cVueJSON.registerCallback(TRAJCANVAS_bloc.doViewCallback);
