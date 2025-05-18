@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.44
+// @version 2.45
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -18,10 +18,16 @@
 //	tenir compte de la profondeur pour la détection des collisions gowap-trou (voir calc_inter())
 //	réécrire en mode objet
 
-//var MY_DEBUG = true;
+//let MY_DEBUG = true;
+
+'use strict';
 
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
-	var ie = (window.attachEvent)? true:false;
+	let aj_noeud = false, t_enreg, t_prev, point_surligne, nbs, xcase, ycase, liste_etapes, suppr_surligne;
+	let ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
+	let noeud_courant = 0;
+	let choix_ini = false;
+	let ie = (window.attachEvent)? true:false;
 	if("function" != typeof isPage) {
 		function isPage(url) {
 			return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
@@ -77,24 +83,24 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		else {
 			function MY_getValue(nom) {
-				var dc = document.cookie;
-				var prefix = nom + "=";
-				var begin = dc.indexOf("; " + prefix);
+				let dc = document.cookie;
+				let prefix = nom + "=";
+				let begin = dc.indexOf("; " + prefix);
 				if (begin == -1) {
 					begin = dc.indexOf(prefix);
 					if (begin != 0) return "";
 				}
 				else
 					begin += 2;
-				var end = document.cookie.indexOf(";", begin);
+				let end = document.cookie.indexOf(";", begin);
 				if (end == -1)
 					end = dc.length;
 				return unescape(dc.substring(begin + prefix.length, end));
 			}
 			function MY_setValue(nom,valeur) {
-				var expdate = new Date ();
+				let expdate = new Date ();
 				expdate.setTime (expdate.getTime() + (24 * 60 * 60 * 1000 * 31));
-				var curCookie = nom + "=" + escape(valeur) + "; expires="+expdate.toGMTString();
+				let curCookie = nom + "=" + escape(valeur) + "; expires="+expdate.toGMTString();
 				document.cookie = curCookie;
 			}
 		}
@@ -115,12 +121,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 	}
 
-	var lien = window.self.location.toString();
-	var MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
-	var MZ_fo_profil = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_profil']});
-	var MZ_fo_newordre = isPageWithParam({url: 'MH_Play/Play_a_Action', names:['gus_ordre', 'type', 'id_target']});
+	let lien = window.self.location.toString();
+	let MZ_fo_ordres = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_ordre']});
+	let MZ_fo_profil = isPageWithParam({url: 'MH_Play/Play_a_Action', ids:['t_fo_profil']});
+	let MZ_fo_newordre = isPageWithParam({url: 'MH_Play/Play_a_Action', names:['gus_ordre', 'type', 'id_target']});
 	//console.log('trajet MZ_fo_newordre=' + MZ_fo_newordre);
-	var page = "";
+	let page = "";
 	if(MZ_fo_ordres) {
 		page = "trajet";
 	}
@@ -134,8 +140,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		&& (lien.indexOf("id=-3") != -1) 
 		&& (window.document.getElementsByTagName("body")[0].innerHTML.indexOf("Portail de T") != -1)) {
 		window.console.log('trajet lieu_tp');
-		var sortie = null;
-		var page = "lieu_tp";
+		let sortie = null;
+		let page = "lieu_tp";
 	}
 	else if(MZ_fo_newordre) {
 		page = "action_ordre";
@@ -143,21 +149,21 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	else if(lien.indexOf("/mountyhall/MH_Play/Play_vue.php") != -1) {
 	// else if(true) {
 		function aj_fav_gow() {
-			var pt, x2, y2, n2;
+			let pt, x2, y2, n2;
 			pt = this.parentNode.parentNode.childNodes[3].innerHTML.split("_");
 			x2 = parseInt(pt[2]);
 			y2 = parseInt(pt[3]);
 			n2 = parseInt(pt[4]);
-			var maintenant = new Date();
+			let maintenant = new Date();
 			if(!MY_getValue("favori_gow")) {
 				MY_setValue("favori_gow", "vue-"+maintenant.getDate()+"-"+(maintenant.getMonth()+1)+"-"+maintenant.getFullYear()+"/"+x2+"/"+y2+"/"+n2+"/");
 			}
 			else {
-				var texte = MY_getValue("favori_gow");
-				var param = texte.split("/");
-				var nb_fav = Math.floor(param.length/4);
+				let texte = MY_getValue("favori_gow");
+				let param = texte.split("/");
+				let nb_fav = Math.floor(param.length/4);
 				if (param.length > 3) {
-					for (var i=0; i<nb_fav; i++) {
+					for (let i=0; i<nb_fav; i++) {
 						if(parseInt(param[4*i+1]) == x2 && parseInt(param[4*i+2]) == y2 && parseInt(param[4*i+3]) == n2) return;
 					}
 				}
@@ -166,7 +172,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			document.getElementById("action_lieu").style.display = "none";
 		}
 		if(!document.getElementById("action_lieu")) {
-			var tableau_tete = new Array();
+			let tableau_tete = new Array();
 			tableau_tete[1] = document.getElementById('VueMONSTRE');
 			tableau_tete[2] = document.getElementById('VueTROLL');
 			tableau_tete[3] = document.getElementById('VueTRESOR');
@@ -176,11 +182,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			function prepare_click(num) {
 				if(!tableau_tete[num]) return;
 				if ( !tableau_tete[num].getElementsByTagName("tbody")[0] ) return; // ajout par Vapulabehemot (82169) le 10/07/2015
-				var tableau = tableau_tete[num].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-				var nb = tableau.length;
+				let tableau = tableau_tete[num].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+				let nb = tableau.length;
 				//console.log('trajet canvas ajout tête ' + tableau_tete[num].id + ', nb=' + nb);
 				if(nb > 0) { // correction par Vapulabehemot (82169) le 10/07/2015
-					for (var i = 0; i < nb; i++) { // correction par Vapulabehemot (82169) le 10/07/2015
+					for (let i = 0; i < nb; i++) { // correction par Vapulabehemot (82169) le 10/07/2015
 						addEvent(tableau[i].childNodes[0], "click", function(event) { affiche_action(this, event); }, true); // correction par Vapulabehemot (82169) le 30/08/2013
 						tableau[i].childNodes[0].style.cursor = "pointer"; // correction par Vapulabehemot (82169) le 30/08/2013
 						tableau[i].childNodes[0].id = num+"_"+i+"_"; // correction par Vapulabehemot (82169) le 30/08/2013
@@ -188,10 +194,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				}
 			}
 			function affiche_action(cible, evt) {
-				var ligne = cible.parentNode;
-				var nb = ligne.childNodes.length;
-				var ref = cible.id+ligne.childNodes[nb-3].innerHTML+"_"+ligne.childNodes[nb-2].innerHTML+"_"+ligne.childNodes[nb-1].innerHTML;
-				var cadre = document.getElementById("action_lieu");
+				let ligne = cible.parentNode;
+				let nb = ligne.childNodes.length;
+				let ref = cible.id+ligne.childNodes[nb-3].innerHTML+"_"+ligne.childNodes[nb-2].innerHTML+"_"+ligne.childNodes[nb-1].innerHTML;
+				let cadre = document.getElementById("action_lieu");
 				//console.log('trajet canvas affiche_action cadre display=' + cadre.style.display + ', contenu action_coord=' + document.getElementById("action_coord").innerHTML);
 				if (cadre.style.display == "none" || document.getElementById("action_coord").innerHTML != ref) {
 					document.getElementById("action_coord").innerHTML = ref;
@@ -204,7 +210,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					cadre.style.display = "none";
 				}
 			}
-			var nvdiv = document.createElement("div");
+			let nvdiv = document.createElement("div");
 			nvdiv.id = "action_lieu";
 			nvdiv.className = "mh_tdtitre";
 			nvdiv.style.display = "none";
@@ -214,17 +220,17 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			nvdiv.appendChild(document.createElement("span"));
 			nvdiv.appendChild(document.createElement("span"));
 			nvdiv.appendChild(document.createElement("span"));
-			var nvsp = document.createElement("span");
+			let nvsp = document.createElement("span");
 			nvsp.id = "action_coord"
 			nvsp.style.display = "none";
 			nvdiv.appendChild(nvsp);
 			document.body.appendChild(nvdiv);
 
-			for(var i=1; i<7; i++) {
+			for(let i=1; i<7; i++) {
 				prepare_click(i);
 			}
 		}
-		var imag = document.createElement("img");
+		let imag = document.createElement("img");
 		imag.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMAgMAAAArG7R0AAAAAXNSR0IArs4c6QAAAAlQTFRFXAByVA0Lyqp4QnItCgAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH2wcTCTMHIX+pMQAAAC9JREFUCNdjYACBUAaGwFWuDGGrpjJIZqYwSGUuYZBaBcShSxjYVk0AY8ZVDiB1AP9ZC3P9zCaoAAAAAElFTkSuQmCC";
 		imag.style.cursor = "pointer";
 		imag.id = "avec_gowap";
@@ -259,12 +265,14 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				]) {
 					TRAJCANVAS_bloc.instances.push(new TRAJCANVAS_bloc(oBloc));
 				}
-				//console.log(`TRAJCANVAS_bloc.doViewCallback`);
+				console.log(`TRAJCANVAS_bloc.doViewCallback`);
 			}
 
 			static showTete() {
+				//console.log(`TRAJCANVAS_bloc.showTete début`);
 				TRAJCANVAS_bloc.eltImag.style.display = 'block';
 				this.appendChild(TRAJCANVAS_bloc.eltImag);
+				//console.log(`TRAJCANVAS_bloc.showTete fin`);
 			}
 
 			static hideTete() {
@@ -273,7 +281,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			static ajoutFavori() {
 				let pos = this.parentNode.getAttribute('data-trajcanv-xyn');
-				//console.log(`TRAJCANVAS_bloc.ajoutFavori`, pos);
+				console.log(`TRAJCANVAS_bloc.ajoutFavori`, pos);
 				pos = pos.split(';');
 				let maintenant = new Date();
 				let prevDest = MY_getValue("favori_gow");
@@ -327,20 +335,22 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					addEvent(oLigne.eltTdDist, "mouseenter", TRAJCANVAS_bloc.showTete);
 					addEvent(oLigne.eltTdDist, "mouseleave", TRAJCANVAS_bloc.hideTete);
 				}
+				console.log(`TRAJCANVAS_bloc.constructor ${oBlocMZ.nomBase}`);
 			}
 		}
 		MZ_cVueJSON.registerCallback(TRAJCANVAS_bloc.doViewCallback);
 	}
+	//console.log(`trajet_canvas page=${page}`);
 	if(page) {
 		function aj_opt(ref,desc,val) {
-			nvspan = aligne();
-			choix = document.createElement("input");
+			let nvspan = aligne();
+			let choix = document.createElement("input");
 			choix.id = ref;
 			choix.type = "checkbox";
 			choix.checked = val;
 			choix.title = desc;
 			choix.setAttribute('data-role', 'none');
-			etik = document.createElement("label");
+			let etik = document.createElement("label");
 			etik.appendChild(document.createTextNode(desc));
 			etik.htmlFor = ref;
 			nvspan.appendChild(choix);
@@ -348,22 +358,22 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return nvspan;
 		}
 		function bloc(ref) {
-			nvdiv = document.createElement("div");
+			let nvdiv = document.createElement("div");
 			nvdiv.id = ref;
 			return nvdiv;
 		}
 		function enligne(ref) {
-			nvspan = document.createElement("span");
+			let nvspan = document.createElement("span");
 			nvspan.id = ref;
 			return nvspan;
 		}
 		function aligne() {
-			nspan = document.createElement("span");
+			let nspan = document.createElement("span");
 			nspan.className = "aligne";
 			return nspan;
 		}
 		function aj_entree(ref,val) {
-			entree = document.createElement("input");
+			let entree = document.createElement("input");
 			entree.id = ref;
 			entree.name = ref;
 			entree.className = "TextboxV2";
@@ -375,7 +385,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return entree;
 		}
 		function get_opt(ref) {
-			val = document.getElementById(ref).value;
+			let val = document.getElementById(ref).value;
 			if(!val) {
 				val = 0;
 			}
@@ -394,12 +404,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			tablo.splice(rg,1);
 		}
 		function creer_canvas(ref) {
-			var dessin = document.createElement("canvas");
+			let dessin = document.createElement("canvas");
 			dessin.id = ref;
 			return dessin;
 		}
 		function creer_icone(lx, ly, desc, clique) {
-			var dessin = document.createElement("canvas");
+			let dessin = document.createElement("canvas");
 			dessin.width = lx;
 			dessin.height = ly;
 			dessin.className = "a_cliquer";
@@ -408,7 +418,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return dessin;
 		}
 		function dessine_svg(trace, chemin) {
-			for(var i in chemin) {
+			for(let i in chemin) {
 				if(chemin[i][0] == 0) {
 					trace.moveTo(chemin[i][1], chemin[i][2]);
 				}
@@ -424,10 +434,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function creer_glissiere(ref, val) {
-			var div_gliss = bloc("choix_zoom_"+ref);
+			let div_gliss = bloc("choix_zoom_"+ref);
 			div_gliss.appendChild(document.createTextNode("Zoom : "));
 			div_gliss.className = "choix_zoom";
-			dessin = creer_canvas("glissiere_"+ref);
+			let dessin = creer_canvas("glissiere_"+ref);
 			dessin.width = 104;
 			dessin.height = 12;
 			addEvent(dessin, "mousedown", ini_glisse, true);
@@ -447,9 +457,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return div_gliss;
 		}
 		function dessine_glissiere(ref, val) {
-			dessin = haut.getElementById("glissiere_"+ref);
+			let dessin = haut.getElementById("glissiere_"+ref);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.clearRect(0, 0,104, 12);
 				ctx.fillStyle = "rgb(0,0,0)";
 				ctx.fillRect(0,0,2,12);
@@ -476,7 +486,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			haut.body.appendChild(bloc("bulle_trajet"));
 			bulle = haut.getElementById("bulle_trajet");
 			bulle.className = "mh_tdtitre";
-			nvdiv = bloc("mobile_bulleVue");
+			let nvdiv = bloc("mobile_bulleVue");
 			nvdiv.className = "bulle_haut_gow";
 			nvdiv.appendChild(enligne("bulle_haut_gow"));
 			bulle.appendChild(nvdiv);
@@ -486,16 +496,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 		function declare_css() {
 			if(haut.getElementById("css_gow")) return;
-			css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, #MZ_carte_cartegogo { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; white-space: nowrap;}\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
+			let css = "#carte_trajet { position: relative; text-align: left; }\ndiv#carte_gowap, #MZ_carte_cartegogo { display: none; }\ndiv.mh_tdpage#cadre_liste, div.mh_tdpage#bulle_desc_gow  { display: block !important; }\n#trou, #trajet, #surligne, #danger, #cadre_liste {\n	position: absolute;\n	top: 0px;\n	left: 0px;\n}\n#cadre_liste {\n	padding: 10px 20px 5px 10px;\n}\n.etape {\n	width: 100%;\n	border: 1px solid #000;\n	padding: 1px 5px 1px 5px;\n	margin: -1px 0px 0px 0px;\n}\nlabel {\n	cursor: pointer;\n}\n.etape_surlignee {\n	width: 100%;\n	border : 2px solid #ff2222;\n	padding: 1px 5px 0px 5px;\n	margin: -2px -1px -1px -1px;\n}\n.etape canvas, .etape_surlignee canvas {\n	position: relative; float: right;\n	margin-left:10px; margin-right: -3px; margin-top : 2px;\n}\n.a_cliquer  {\n	cursor: pointer;\n}\n#aj_noeud { cursor : pointer; }\n#trou_fav, #trace_fav { position: absolute; top: 20px; left: 0px; }\n.choix_zoom { position: relative; margin-left:30px; margin-top:3px; }\n#glissiere_gow, #glissiere_fav { position: relative; }\n\n#bulle_trajet { \n	visibility:hidden;\n	position:absolute; z-index:3100;\n	width:400px;\n	border-width:1px; border-style:solid; border-color:#a1927f;\n}\n#mobile_bulleVue { cursor:move; }\n.bulle_haut  { font-weight:bold; text-align:left; padding:2px; }\n#bulle_desc_gow { font-size:11px; padding:2px; white-space: nowrap;}\n\n#gestion_fav_gow { position:absolute; padding: 1px; border-with:1px; border-style:solid; min-width:300px; z-index:3000; }\n#titre_gow, .fav, .fav_dessus { min-height:15px; }\n.fav  { margin:0; margin:0 0 -1px 0; padding: 1px 1px 1px 1px; border : 1px solid #a1927f; }\n.fav_dessus { margin:-1px; margin:-1px -1px -2px -1px; padding: 0px 1px 0px 1px; border : 2px solid #a1927f; }\n#gestion_fav_gow .a_cliquer { position: relative; float: right; margin-left: 2px; }\n#gestion_fav_gow { display: block !important; }\n#cadre_fav { position: relative; }\n#bulle_zoom { display:block !important; visibility: hidden; position: absolute; z-index: 3500;  border : 1px solid  #a1927f; }";
 
-			var node = document.createElement("style");
+			let node = document.createElement("style");
 			node.type = "text/css";
 			node.id = "css_gow";
 			node.appendChild(document.createTextNode(css));
 			haut.getElementsByTagName("head")[0].appendChild(node);
 		}
 		function bouton(ref,desc) {
-			entree = document.createElement("input");
+			let entree = document.createElement("input");
 			entree.type = "button"
 			entree.id = ref;
 			entree.value = desc;
@@ -531,15 +541,15 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			etapes_ini = new Array();
 			if(coord.length > 1) {
 				nb_ini = Math.floor(coord.length/3);
-				for(var i = 0; i<nb_ini; i++) {
+				for(let i = 0; i<nb_ini; i++) {
 					etapes_ini.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2]), coord[3*i].match(/^\d+e$/g) !== null]);
 				}
 			}
 			etapes = new Array();
 			coord = param[9].split(",");
 			if(coord.length > 1) {
-				nb_coord = Math.floor(coord.length/3);
-				for(var i = 0; i<nb_coord; i++) {
+				let nb_coord = Math.floor(coord.length/3);
+				for(let i = 0; i<nb_coord; i++) {
 					etapes.push([parseInt(coord[3*i]), parseInt(coord[3*i+1]), parseInt(coord[3*i+2])]);
 				}
 			}
@@ -549,8 +559,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(param.length > 10) {
 				param = param[11].split(",");
 				if(param.length > 1) {
-					nb_a = Math.floor(param.length/2);
-					for(var i=0; i<nb_a; i++) {
+					let nb_a = Math.floor(param.length/2);
+					for(let i=0; i<nb_a; i++) {
 						arret.push([parseInt(param[2*i]), parseInt(param[2*i+1])]);
 					}
 				}
@@ -567,15 +577,17 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function sauve_trajet() {
 			//window.console.trace();
 			let param = "zoom/"+zoom+"/typ_gow/"+typ_gow+"/dla/"+dla+"/t_enreg/";
-			for(var i = 0; i<etapes_ini.length; i++) {
+			for(let i = 0; i<etapes_ini.length; i++) {
 				param += etapes_ini[i][0]+(etapes_ini[i][3]? "e":"")+","+etapes_ini[i][1]+","+etapes_ini[i][2]+",";
 			}
 			param += "/t_prev/";
-			for(var i = 0; i<nb_ajout; i++) {
+			for(let i = 0; i<nb_ajout; i++) {
+				if (!Array.isArray(etapes[i])) continue;
 				param += etapes[i][0]+","+etapes[i][1]+","+etapes[i][2]+",";
 			}
 			param += "/arret/"
-			for(var i in arret) {
+			for(let i in arret) {
+				if (!Array.isArray(arret[i])) continue;
 				param += arret[i][0]+","+arret[i][1]+",";
 			}
 			//window.console.log('sauve_trajet TRAJET_' + num_gow + ' ' + param);
@@ -583,7 +595,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function charge_opt_position() {
 			if(MY_getValue("OPT_POSITION_GOWAP")) {
-				param = MY_getValue("OPT_POSITION_GOWAP").split("/");
+				let param = MY_getValue("OPT_POSITION_GOWAP").split("/");
 				zoom = parseInt(param[1]);
 				TC_coeff = zoom/50.0; // ajout par Vapulabehemot (82169) le 10/07/2015
 				//window.console.log('charge_opt_position ' + param.join('/') + ', zoom=' + zoom + ', TC_coeff=' + TC_coeff);
@@ -596,9 +608,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		////////////////////////////////////////////////////////////
 		function ini_canvas() {
-			trajet = bloc("carte_trajet");
+			let trajet = bloc("carte_trajet");
 
-			dessin = creer_canvas("trou");
+			let dessin = creer_canvas("trou");
 			dessin.className = "mh_tdpage";
 			trajet.appendChild(dessin);
 			trajet.appendChild(creer_canvas("trajet"));
@@ -614,30 +626,31 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			trajet.appendChild(creer_glissiere("gow", zoom));
 
-			cadre_liste = bloc("cadre_liste");
+			let cadre_liste = bloc("cadre_liste");
 			cadre_liste.className = "mh_tdpage";
 			//cadre_liste.style.display = 'none';
 			cadre_liste.appendChild(bloc("liste_etapes"));
 
 			cadre_liste.appendChild(document.createElement("br"));
 			cadre_liste.appendChild(document.createTextNode("Type de gowap : "));
-			etik = ["Rapide", "Normal", "Lent"]; val = [6, 4, 3];
-			sel = document.createElement('select');
+			let etik = ["Rapide", "Normal", "Lent"];
+			let val = [6, 4, 3];
+			let sel = document.createElement('select');
 			sel.name = "selgow";
 			sel.id = "selgow";
-			for(var i=0; i<etik.length; i++) {
-				option=document.createElement('option');
-				option.value = val[i];
-				option.appendChild(document.createTextNode(etik[i]));
-				sel.appendChild(option);
+			for(let i=0; i<etik.length; i++) {
+				let optio = document.createElement('option');
+				optio.value = val[i];
+				optio.appendChild(document.createTextNode(etik[i]));
+				sel.appendChild(optio);
 			}
 			sel.value = typ_gow;
 			addEvent(sel, "keyup", change_gow, true);
 			addEvent(sel, "change", change_gow, true);
 			cadre_liste.appendChild(sel);
 
-			nvdiv = bloc("ligne_fav");
-			choix = document.createElement("select");
+			let nvdiv = bloc("ligne_fav");
+			let choix = document.createElement("select");
 			choix.id = "sel_fav";
 			addEvent(choix, "mouseover", surligne_fav, true);
 			addEvent(choix, "mouseout", efface_surligne, true);
@@ -647,7 +660,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			nvdiv.appendChild(dessin);
 			dessin = dessin = creer_icone(21, 21, "Gérer les destinations favorites", ini_gestion);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(50,50,50)";
 				ctx.fillStyle = "rgb(220,220,220)";
 				ctx.lineWidth = "1";
@@ -661,7 +674,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			cadre_liste.appendChild(bloc("inserer_etape"));
 
-			aj = bouton("aj_etape", "Ajouter une étape ");
+			let aj = bouton("aj_etape", "Ajouter une étape ");
 			addEvent(aj, "click", alterne_ajout, true);
 			cadre_liste.appendChild(aj);
 			if(nb_ini > 0) {
@@ -680,7 +693,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			footer1.parentNode.insertBefore(trajet,footer1);
 		}
 		function inserer_fav() {
-			ref = parseInt(document.getElementById("sel_fav").value);
+			let ref = parseInt(document.getElementById("sel_fav").value);
 			if(ref == -2) return;
 			etapes[nb_ajout] = (ref == -1)? soi:[favori[ref][1], favori[ref][2], favori[ref][3]];
 
@@ -704,17 +717,17 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function surligne_fav() {
 			if(page != "trajet") return;
-			var val = parseInt(this.value);
+			let val = parseInt(this.value);
 			if(val == -2) return;
-			dessin = document.getElementById("surligne");
+			let dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 
 			if(choix_ini) {
-				var debut = depart
+				let debut = depart
 			}
 			else {
-				var debut = (nb_ajout > 0)? etapes[nb_ajout-1]:depart
+				let debut = (nb_ajout > 0)? etapes[nb_ajout-1]:depart
 			}
 			trace_trajet(couleur_surligne, "surligne", debut, [(val == -1)? soi:[favori[val][1], favori[val][2], favori[val][3]]], true);
 		}
@@ -756,11 +769,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function trace_trou() {
 			document.getElementById("carte_trajet").style.height = (200*TC_coeff+2*decalv+10)+"px";
-			dessin = document.getElementById("trou");
+			let dessin = document.getElementById("trou");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let  ctx = dessin.getContext('2d');
 
 				//repere
 				ctx.beginPath();
@@ -770,7 +783,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 				//trous
 				ctx.fillStyle = couleur_trou;
-				for(var i in position_trous) {
+				for(let i in position_trous) {
 					ctx.beginPath();
 					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), TC_coeff*position_trous[i][3], 0, Math.PI*2,  true);
 					ctx.fill();
@@ -778,12 +791,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_trou_fav() {
-			dessin = haut.getElementById("trou_fav");
+			let dessin = haut.getElementById("trou_fav");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 
 				//repere
 				ctx.beginPath();
@@ -796,7 +809,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 				//trous
 				ctx.fillStyle = "rgb(200,0,0)";
-				for(var i in position_trous) {
+				for(let i in position_trous) {
 					ctx.beginPath();
 					ctx.arc(coord_x(position_trous[i][0]), coord_y(position_trous[i][1]), TC_coeff*position_trous[i][3], 0, Math.PI*2,  true);
 					ctx.fill();
@@ -804,9 +817,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_position(pos) {
-			dessin = document.getElementById("trou");
+			let dessin = document.getElementById("trou");
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgba(0,0,0,0.6)";
 				ctx.lineWidth = 2;
 				ctx.beginPath();
@@ -815,9 +828,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_sortie(pos) {
-			dessin = document.getElementById("trou");
+			let dessin = document.getElementById("trou");
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgba(0,0,0,0.6)";
 				ctx.lineWidth = 2;
 				ctx.strokeRect(coord_x(pos[0]-2.5), coord_y(pos[1]+2.5), 5*TC_coeff, 5*TC_coeff)
@@ -829,7 +842,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function trace_trajet_prev() {
 			sauve_trajet();
 			if(choix_ini) {
-				dessin = document.getElementById("trajet");
+				let dessin = document.getElementById("trajet");
 				dessin.width = 200*TC_coeff+2*decalh;
 				dessin.height = 200*TC_coeff+2*decalv;
 			}
@@ -839,17 +852,18 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			calc_dist();
 		}
 		function trace_trajet(couleur, ou, ref, noeuds, refaire) {
-			var dessin = document.getElementById(ou);
-			var dx, dy, x_inter, y_inter;
+			//console.trace(`trajet_canvas, trace_trajet_log couleur=${couleur}`);
+			let dessin = document.getElementById(ou);
+			let dx, dy, x_inter, y_inter;
 			if(refaire) {
 				dessin.width = 200*TC_coeff+2*decalh;
 				dessin.height = 200*TC_coeff+2*decalv;
 			}
 
-			var pts = [[ref[0], ref[1]]];
-			var nb_etape = noeuds.length;
+			let pts = [[ref[0], ref[1]]];
+			let nb_etape = noeuds.length;
 			if(nb_etape == 0) return;
-			for(var i=0; i< nb_etape; i++) {
+			for(let i=0; i< nb_etape; i++) {
 				if (!noeuds[i]) {
 					window.console.log('trace_trajet_log, noeuds vide pour i=' + i + ', noeuds=' + JSON.stringify(noeuds));
 					return;	// Roule' 14/11/2018 protection
@@ -871,20 +885,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ref = noeuds[i];
 			}
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.lineWidth = TC_coeff;
 				ctx.lineCap = "round";
 				ctx.lineJoin = "round";
 				ctx.strokeStyle = couleur;
 				ctx.beginPath();
-				var nb_pts = pts.length;
+				let nb_pts = pts.length;
 				ctx.moveTo(coord_x(pts[0][0]), coord_y(pts[0][1]));
-				for (var i=1; i<nb_pts; i++) {
+				for (let i=1; i<nb_pts; i++) {
 					ctx.lineTo(coord_x(pts[i][0]), coord_y(pts[i][1]));
 				}
 				ctx.stroke();
 				ctx.fillStyle = couleur;
-				for (var i=0; i<nb_etape; i++) {
+				for (let i=0; i<nb_etape; i++) {
 					if(noeuds[i][3]) {
 						ctx.fillRect(coord_x(noeuds[i][0])-TC_coeff, coord_y(noeuds[i][1])-TC_coeff, 2*TC_coeff, 2*TC_coeff);
 					}
@@ -903,23 +917,25 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			retrace_fav = false;
 		}
 		function place_fav() {
-			dessin = haut.getElementById("trace_fav");
+			let dessin = haut.getElementById("trace_fav");
 			dessin.width = 4*zoom_fav+2*decalh;
 			dessin.height = 4*zoom_fav+2*decalv;
 
 			if (nb_fav == 0) return;
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
-				var mini = favori[0][3], maxi = favori[0][3], couleur;
-				for (var i=1; i<nb_fav; i++) {
+				let ctx = dessin.getContext('2d');
+				let mini = favori[0][3], maxi = favori[0][3], couleur;
+				for (let i=1; i<nb_fav; i++) {
 					if(mini > favori[i][3]) mini = favori[i][3];
 					if(maxi < favori[i][3]) maxi = favori[i][3];
 				}
-				var delta = maxi-mini;
+				let delta = maxi-mini;
 				if(!delta) delta = 1;
 
-				for (var i=0; i<nb_fav; i++) {
-					trace_point(ctx, coord_x(favori[i][1]), coord_y(favori[i][2]), "rgb(50,"+(150-Math.round(100.0*(maxi-favori[i][3])/delta))+","+(50+Math.round(100.0*(maxi-favori[i][3])/delta))+")")
+				for (let i=0; i<nb_fav; i++) {
+					let couleur = "rgb(50,"+(150-Math.round(100.0*(maxi-favori[i][3])/delta))+","+(50+Math.round(100.0*(maxi-favori[i][3])/delta))+")";
+					console.log(`trajet_canvas place_fav point couleur=${couleur} maxi=${maxi} delta=${delta} favori[${i}]=${JSON.stringify(favori[i])}`);
+					trace_point(ctx, coord_x(favori[i][1]), coord_y(favori[i][2]), couleur)
 				}
 				if(nv_pt !== null) {
 					trace_point(ctx, coord_x(nv_pt[0]), coord_y(nv_pt[1]), "rgba(0,0,0,0.5)")
@@ -927,6 +943,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function trace_point(trace, xx, yy, couleur) {
+			//console.log(`trajet_canvas trace_point_log couleur=${couleur}`);
 			trace.strokeStyle = couleur;
 			trace.fillStyle = couleur;
 			trace.lineWidth = TC_coeff;
@@ -948,7 +965,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function ini_glisse(evt) {
 			if(this.id == "glissiere_gow") {
-				xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
+				let xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
 				zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
 				trace_glissiere();
 				document.getElementById("val_zoom_gow").innerHTML = zoom+"%";
@@ -970,7 +987,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				this.style.cursor = "e-resize";
 			}
 			if(this.id == "glissiere_fav") {
-				xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
+				let xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
 				zoom_fav = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
 				MY_setValue("zoom_fav", zoom_fav)
 				trace_glissiere_fav();
@@ -979,6 +996,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function sur_curseur(evt) {
+			let xpage, ypage, xpos, ypos, val;
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
@@ -992,7 +1010,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ypos = evt.pageY;
 			}
 			if(this.id == "glissiere_gow") {
-				curseur = Math.min(100,Math.max(0,Math.round(zoom/2.0)-25))+2;
+				let curseur = Math.min(100,Math.max(0,Math.round(zoom/2.0)-25))+2;
 				this.style.cursor = (xpage <= (curseur+2) && xpage >= (curseur-2)) ? "e-resize":"pointer";
 				val = Math.min(250,Math.max(50,(xpage+23.0)*2.0))+"%";
 			}
@@ -1000,7 +1018,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				this.style.cursor = "pointer"; // ajout par Vapulabehemot (82169) le 10/07/2015
 				val = Math.min(250,Math.max(50,(xpage+23.0)*2.0))+"%";
 			}
-			var bulle_zoom = haut.getElementById("bulle_zoom")
+			let bulle_zoom = haut.getElementById("bulle_zoom")
 			bulle_zoom.style.top = (ypos+3)+'px';
 			bulle_zoom.style.left = (xpos+16)+'px';
 			bulle_zoom.style.visibility = "visible";
@@ -1008,7 +1026,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function glisse(evt) {
 			if(glissable) {
-				xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
+				let xpage = (evt.offsetX)? evt.offsetX:evt.layerX;
 				zoom = Math.min(250,Math.max(50,(xpage+23.0)*2.0));
 
 				trace_glissiere();
@@ -1043,8 +1061,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function afficher_position(evt) {
-			var xpage = 0, ypage = 0, xpos = 0, ypos = 0;
-
+			let xpage = 0, ypage = 0, xpos = 0, ypos = 0;
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
@@ -1066,9 +1083,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			bulle.style.visibility = "visible";
 
 			document.getElementById("bulle_haut_gow").innerHTML = "x = "+Math.round(xcase)+", y = "+Math.round(ycase);
-			desc = document.getElementById("bulle_desc_gow");
+			let desc = document.getElementById("bulle_desc_gow");
 			desc.innerHTML = "";
-			for(var i in position_trous) {
+			for(let i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
 					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
@@ -1095,13 +1112,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			else {
 				document.getElementById("etape_depart").className = "etape";
-				nb_liste = choix_ini? nb_tt:nb_ajout;
-				for (var i=0; i<nb_liste; i++) {
+				let nb_liste = choix_ini? nb_tt:nb_ajout;
+				for (let i=0; i<nb_liste; i++) {
 					document.getElementById("etape_"+i).className = "etape";
 				}
-				sur_etape = false;
+				let sur_etape = false;
 				if(choix_ini) {
-					for (var i = nb_ini-1; i>=0; i--) {
+					for (let i = nb_ini-1; i>=0; i--) {
 						if(Math.round(xcase) == etapes_tt[i][0] && Math.round(ycase) == etapes_tt[i][1]) {
 							desc.appendChild(document.createTextNode(pile_etape_ini(i)));
 							desc.appendChild(document.createElement("br"));
@@ -1112,7 +1129,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					}
 				}
 				else {
-					for (var i = nb_ajout-1; i>=0; i--) {
+					for (let i = nb_ajout-1; i>=0; i--) {
 						if(Math.round(xcase) == etapes[i][0] && Math.round(ycase) == etapes[i][1]) {
 
 							desc.appendChild(document.createTextNode(pile_etape(i)));
@@ -1125,22 +1142,22 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				}
 
 				if(!sur_etape) {
-					etape_listee =  new Array();
-					for(var i in ligne_v) {
+					let etape_listee =  new Array();
+					for(let i in ligne_v) {
 						if(xcase == ligne_v[i][1] && ycase >= ligne_v[i][2] && ycase <= ligne_v[i][3] && !etape_listee[ligne_v[i][0]]) {
 							desc.appendChild(document.createTextNode(transition_etape(ligne_v[i][0], xcase, ycase)));
 							desc.appendChild(document.createElement("br"));
 							etape_listee[ligne_v[i][0]] = true;
 						}
 					}
-					for(var i in ligne_h) {
+					for(let i in ligne_h) {
 						if(ycase == ligne_h[i][3] && xcase >= ligne_h[i][1] && xcase <= ligne_h[i][2] && !etape_listee[ligne_h[i][0]]) {
 							desc.appendChild(document.createTextNode(transition_etape(ligne_h[i][0], xcase, ycase)));
 							desc.appendChild(document.createElement("br"));
 							etape_listee[ligne_h[i][0]] = true;
 						}
 					}
-					for(var i in ligne_d) {
+					for(let i in ligne_d) {
 						if(xcase >= ligne_d[i][2] && xcase <= ligne_d[i][3] && !etape_listee[ligne_d[i][0]]) {
 							equation = ycase-ligne_d[i][1]*xcase-ligne_d[i][4];
 							if(equation == 0) {
@@ -1155,7 +1172,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function afficher_fav(evt) {
-			var xpage = 0, ypage = 0, xpos = 0, ypos = 0, xs, ys;
+			let xpage = 0, ypage = 0, xpos = 0, ypos = 0, xs, ys;
 
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
@@ -1176,9 +1193,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			bulle.style.visibility = "visible";
 
 			haut.getElementById("bulle_haut_gow").innerHTML = "x = "+Math.round(xcase)+", y = "+Math.round(ycase);
-			desc = haut.getElementById("bulle_desc_gow");
+			let desc = haut.getElementById("bulle_desc_gow");
 			desc.innerHTML = "";
-			for(var i in position_trous) {
+			for(let i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
 					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
@@ -1187,7 +1204,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				}
 			}
 
-			for(var i=0; i<nb_fav; i++) {
+			for(let i=0; i<nb_fav; i++) {
 				if(xcase == favori[i][1] && ycase == favori[i][2]) {
 					haut.getElementById("fav_gow_"+i).className = "fav_dessus";
 					desc.appendChild(document.createTextNode(protege_texte(favori[i][0]+" (n = "+favori[i][3]+")")));
@@ -1199,7 +1216,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function afficher_position_suivant(evt) {
-			var xpage = 0, ypage = 0, xpos = 0, ypos = 0;
+			let xpage = 0, ypage = 0, xpos = 0, ypos = 0;
 
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
@@ -1221,9 +1238,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			bulle.style.left = (xpos+16)+'px';
 			bulle.style.visibility = 'visible';
 			document.getElementById("bulle_haut_gow").innerHTML = "x = "+Math.round(xcase)+", y = "+Math.round(ycase);
-			desc = document.getElementById("bulle_desc_gow");
+			let desc = document.getElementById("bulle_desc_gow");
 			desc.innerHTML = "";
-			for(var i in position_trous) {
+			for(let i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
 					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
@@ -1233,7 +1250,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			xcase = Math.round(xcase);
 			ycase = Math.round(ycase);
-			for (var i in suivants) {
+			//console.log(`trajet_canvas afficher_position_suivant typeof suivants = ${typeof suivants}`);
+			for (let i in suivants) {
+				if (!Array.isArray(suivants[i])) {
+					//console.log(`trajet_canvas afficher_position_suivant suivants[${i}] pas array`);
+					continue;
+				}
 				if(Math.abs(suivants[i][2] - xcase) <= 4 && Math.abs(suivants[i][3] - ycase) <= 4 ) {
 					desc.appendChild(document.createTextNode(suivants[i][1]+", x=" + suivants[i][2] + ", y=" + suivants[i][3] + ", n="+suivants[i][4]))
 					desc.appendChild(document.createElement("br"));;
@@ -1241,7 +1263,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function afficher_teleport(evt) {
-			var xpage = 0, ypage = 0, xpos = 0, ypos = 0;
+			let xpage = 0, ypage = 0, xpos = 0, ypos = 0;
 
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
@@ -1262,9 +1284,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			bulle.style.visibility = 'visible';
 
 			document.getElementById("bulle_haut_gow").innerHTML = "x = "+Math.round(xcase)+", y = "+Math.round(ycase);
-			desc = document.getElementById("bulle_desc_gow");
+			let desc = document.getElementById("bulle_desc_gow");
 			desc.innerHTML = "";
-			for(var i in position_trous) {
+			for(let i in position_trous) {
 				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
 					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
@@ -1327,6 +1349,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return texte;
 		}
 		function start_v(evt){
+			let xpage, ypage, xpos, ypos;
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
 				ypage = evt.offsetY;
@@ -1340,10 +1363,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				ypos = evt.pageY;
 			}
 
-			xcase = Math.round((xpage-decalh)/TC_coeff-100.0);
-			ycase = Math.round(100.0-(ypage-decalv)/TC_coeff);
+			let xcase = Math.round((xpage-decalh)/TC_coeff-100.0);
+			let ycase = Math.round(100.0-(ypage-decalv)/TC_coeff);
 
-			for (var i = nb_ajout-1; i>=0; i--) {
+			for (let i = nb_ajout-1; i>=0; i--) {
 				if(xcase == etapes[i][0] && ycase == etapes[i][1]) {
 					bougeable = true;
 					noeud_courant = i;
@@ -1361,6 +1384,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			liste_etapes.appendChild(aj_depart());
 
+			let noeuds, nb_liste;
 			if(choix_ini) {
 				noeuds = etapes_tt;
 				nb_liste = nb_tt;
@@ -1370,13 +1394,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				nb_liste = nb_ajout;
 			}
 
-			for (var i=0 ; i<nb_liste; i++) {
+			for (let i=0 ; i<nb_liste; i++) {
 				liste_etapes.appendChild(aj_liste(i, noeuds[i]));
 			}
 			prepare_inserer();
 		}
 		function aj_depart() {
-			nvdiv = bloc("depart");
+			let nvdiv = bloc("depart");
 			nvdiv.appendChild(document.createTextNode("Départ"));
 			nvdiv.className = "etape";
 			nvdiv.id = "etape_depart";
@@ -1387,14 +1411,14 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return nvdiv;
 		}
 		function aj_liste(rg, pt) {
-			nvdiv = bloc("etape_"+rg);
+			let nvdiv = bloc("etape_"+rg);
 			nvdiv.className = "etape";
 			nvdiv.appendChild(document.createTextNode("Etape n°"+(rg+1)+(choix_ini? " ("+["Déplacement","Ebrouissage","Filature"][pt[3]]+")":"")));
 			if(!choix_ini) {
-				dessin = dessin = creer_icone(12, 12, "Supprimer l'étape", effacer_noeud);
+				let dessin = creer_icone(12, 12, "Supprimer l'étape", effacer_noeud);
 				dessin.id = "efface_"+rg
 				if (dessin.getContext){
-					var ctx = dessin.getContext('2d');
+					let ctx = dessin.getContext('2d');
 					ctx.lineCap = "round";
 					ctx.lineWidth = 2;
 					ctx.strokeStyle = "rgb(220,50,50)";
@@ -1406,7 +1430,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				nvdiv.appendChild(dessin);
 			}
 			if(cadrable) {
-				dessin = dessine_copie();
+				let dessin = dessine_copie();
 				addEvent(dessin, "click", copier_action, true);
 				nvdiv.appendChild(dessin);
 			}
@@ -1415,7 +1439,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					nvdiv.appendChild(aj_monter(rg));
 				}
 				else {
-					dessin = document.createElement("canvas");
+					let dessin = document.createElement("canvas");
 					dessin.width = 11;
 					dessin.height = 12;
 					nvdiv.appendChild(dessin);
@@ -1441,7 +1465,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return nvdiv;
 		}
 		function copier_action() {
-			var ref = parseInt(this.parentNode.id.split("_")[1]);
+			let ref = parseInt(this.parentNode.id.split("_")[1]);
 			copier_xxx(choix_ini? etapes_tt[ref]:etapes[ref]);
 		}
 		function copier_depart() {
@@ -1449,20 +1473,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function copier_xxx(xyn, doc) {
 			if(!cadrable) return;
-			bas = doc ? doc : window.parent.frames[1].document;
+			let bas = doc ? doc : window.parent.frames[1].document;
 			//console.log('copier_depart_log, id body frame1=' + bas.body.id);
 			//if(bas.body.id != 'p_ajoutdunordre') return;
-			typ_ordre = quel_ordre(bas.forms[0]);
+			let typ_ordre = quel_ordre(bas.forms[0]);
 			if(typ_ordre != 1 && typ_ordre != 7) return;
 			bas.getElementsByName('gus_x')[0].value = xyn[0];
 			bas.getElementsByName('gus_y')[0].value = xyn[1];
 			bas.getElementsByName('gus_n')[0].value = xyn[2];
 		}
 		function aj_monter(num) {
-			dessin = dessin = creer_icone(11, 12, "Monter", monter_etape);
+			let dessin = creer_icone(11, 12, "Monter", monter_etape);
 			dessin.id = "monter_"+num;
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.fillStyle = "rgb(100,170,100)";
 				dessine_svg(ctx, data_svg["monter"]);
 				ctx.fill();
@@ -1472,10 +1496,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return dessin;
 		}
 		function aj_descendre(num) {
-			dessin = creer_icone(11, 12, "Descendre", descendre_etape);
+			let dessin = creer_icone(11, 12, "Descendre", descendre_etape);
 			dessin.id = "descendre_"+num
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.fillStyle = "rgb(100,170,100)";
 				dessine_svg(ctx, data_svg["descendre"]);
 				ctx.fill();
@@ -1485,13 +1509,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return dessin;
 		}
 		function aj_danger(num) {
-			dessin = creer_canvas("danger_"+num);
+			let dessin = creer_canvas("danger_"+num);
 			dessin.width = 19;
 			dessin.height = 20;
 			dessin.title = "Attention trous!";
 			dessin.style.visibility = "hidden";
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.beginPath();
 				ctx.strokeStyle = "rgb(170,60,60)";
 				ctx.fillStyle = "rgb(255,255,255)";
@@ -1520,23 +1544,23 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function surligne_monte() {
 			ini_suppr();
-			rg = parseInt(this.id.split("_")[1])
-			temp = suppr_surligne[rg];
+			let rg = parseInt(this.id.split("_")[1])
+			let temp = suppr_surligne[rg];
 			suppr_surligne[rg] = suppr_surligne[rg-1];
 			suppr_surligne[rg-1] = temp;
 			trace_trajet(couleur_surligne, "surligne", depart, suppr_surligne, true);
 		}
 		function surligne_descend() {
 			ini_suppr();
-			rg = parseInt(this.id.split("_")[1])
-			temp = suppr_surligne[rg];
+			let rg = parseInt(this.id.split("_")[1])
+			let temp = suppr_surligne[rg];
 			suppr_surligne[rg] = suppr_surligne[rg+1];
 			suppr_surligne[rg+1] = temp;
 			trace_trajet(couleur_surligne, "surligne", depart, suppr_surligne, true);
 		}
 		function surligne_point() {
-			var ref = this.id;
-			var couleur = "rgba(0,0,0,0.8)";
+			let ref = this.id;
+			let couleur = "rgba(0,0,0,0.8)";
 			if(ref == "etape_depart") {
 				point_surligne = depart;
 			} else if (page == "suivants") {	// Roule 25/10/2019 pour surlignage position suivant
@@ -1545,12 +1569,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			} else {
 				point_surligne = choix_ini? etapes_tt[parseInt(ref.split("_")[1])]:etapes[parseInt(ref.split("_")[1])];
 			}
-			var dessin = document.getElementById("surligne");
+			let dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 			dessin.style.display = '';	// default
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				if(point_surligne[3] == 1) {
 					ctx.fillStyle = couleur;
 					ctx.strokeStyle = couleur;
@@ -1565,52 +1589,54 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function surligne_trajet() {
-			var val = parseInt(this.value);
+			let val = parseInt(this.value);
+			let trajet_surligne;
 			if(parseInt(val) == 0) {
 				trajet_surligne = [depart, etapes[0]];
 			}
 			else {
 				trajet_surligne = [etapes[parseInt(val-1)], etapes[parseInt(val)]];
 			}
-			dessin = document.getElementById("surligne");
+			let dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
-			milieu = [Math.floor((trajet_surligne[0][0]+trajet_surligne[1][0])/2), Math.floor((trajet_surligne[0][1]+trajet_surligne[1][1])/2), Math.floor((trajet_surligne[0][2]+trajet_surligne[1][2])/2), ]
+			let milieu = [Math.floor((trajet_surligne[0][0]+trajet_surligne[1][0])/2), Math.floor((trajet_surligne[0][1]+trajet_surligne[1][1])/2), Math.floor((trajet_surligne[0][2]+trajet_surligne[1][2])/2), ]
 			trace_trajet(couleur_surligne, "surligne", trajet_surligne[0], [milieu, trajet_surligne[1]], true);
 		}
 		function efface_surligne() {
-			var dessin = document.getElementById("surligne");
+			let dessin = document.getElementById("surligne");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 			dessin.style.display = 'none';
 		}
 		function prepare_inserer() {
-			inserer = document.getElementById("inserer_etape");
+			let inserer = document.getElementById("inserer_etape");
 			inserer.innerHTML = "";
 			if(nb_ajout > 0) {
-				etik = ["Départ -> Etape n°1"]; val = [0];
-				for (var i = 1; i<nb_ajout; i++) {
+				let etik = ["Départ -> Etape n°1"];
+				let val = [0];
+				for (let i = 1; i<nb_ajout; i++) {
 					etik.push("Etape n°"+i+" -> "+(i+1));
 					val.push(i);
 				}
 
-				entree=document.createElement('select');
+				let entree=document.createElement('select');
 				entree.name="sel_ins";
 				entree.id="sel_ins";
-				for(var i=0; i<etik.length; i++) {
-					option=document.createElement('option');
-					option.value=val[i];
-					option.appendChild(document.createTextNode(etik[i]));
-					addEvent(option, "mouseover", surligne_trajet, true);
-					addEvent(option, "mouseout", efface_surligne, true);
-					entree.appendChild(option);
+				for(let i=0; i<etik.length; i++) {
+					let optio=document.createElement('option');
+					optio.value=val[i];
+					optio.appendChild(document.createTextNode(etik[i]));
+					addEvent(optio, "mouseover", surligne_trajet, true);
+					addEvent(optio, "mouseout", efface_surligne, true);
+					entree.appendChild(optio);
 				}
 				entree.value = 0;
 				addEvent(entree, "mouseover", surligne_trajet, true);
 				addEvent(entree, "mouseout", efface_surligne, true);
 				inserer.appendChild(entree);
 
-				aj = bouton("ins", "Insérer une étape ");
+				let aj = bouton("ins", "Insérer une étape ");
 				addEvent(aj, "click", inserer_milieu, true);
 				inserer.appendChild(aj);
 			}
@@ -1630,8 +1656,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_trajet_prev();
 		}
 		function inserer_milieu() {
-			rang = get_opt("sel_ins");
-			ref = (rang == 0)? depart:etapes[rang-1];
+			let rang = get_opt("sel_ins");
+			let ref = (rang == 0)? depart:etapes[rang-1];
 			inserer_noeud(rang,[Math.floor((ref[0]+etapes[rang][0])/2.0), Math.floor((ref[1]+etapes[rang][1])/2.0), Math.floor((ref[2]+etapes[rang][2])/2.0)]);
 		}
 		function inserer_noeud(rg, val) {
@@ -1641,23 +1667,23 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_trajet_prev();
 		}
 		function monter_etape() {
-			rg = parseInt(this.id.split("_")[1]);
-			temp = etapes[rg];
+			let rg = parseInt(this.id.split("_")[1]);
+			let temp = etapes[rg];
 			etapes[rg] = etapes[rg-1]
 			etapes[rg-1] = temp
 			lister_etapes();
 			trace_trajet_prev();
 		}
 		function descendre_etape() {
-			rg = parseInt(this.id.split("_")[1]);
-			temp = etapes[rg];
+			let rg = parseInt(this.id.split("_")[1]);
+			let temp = etapes[rg];
 			etapes[rg] = etapes[rg+1]
 			etapes[rg+1] = temp
 			lister_etapes();
 			trace_trajet_prev();
 		}
 		function effacer_noeud() {
-			rang = parseInt(this.id.split("_")[1]);
+			let rang = parseInt(this.id.split("_")[1]);
 			effacer_tableau(etapes, rang);
 			nb_ajout--;
 			if(nb_ajout == 0) {
@@ -1667,22 +1693,24 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_trajet_prev();
 		}
 		function calc_dist() {
-			ligne_h = new Array(); ligne_v = new Array(); ligne_d = new Array();
-			var ref = depart;
-			var dx, dy, dh, signe, x_inter, y_inter, d, nb_dla, danger, text_dist;
-			distances = [[0, 0]];
+			let ligne_h = new Array();
+			let ligne_v = new Array();
+			let ligne_d = new Array();
+			let ref = depart;
+			let dx, dy, dh, signe, x_inter, y_inter, d, nb_dla, danger, text_dist, noeuds;
+			let distances = [[0, 0]];
 			if(choix_ini) {
 				noeuds = etapes_tt;
 			}
 			else {
 				noeuds = etapes;
 			}
-			var dessin = document.getElementById("danger");
+			let dessin = document.getElementById("danger");
 			dessin.width = 200*TC_coeff+2*decalh;
 			dessin.height = 200*TC_coeff+2*decalv;
 
-			var nb_etape = noeuds.length;
-			for(var i=0; i<nb_etape; i++) {
+			let nb_etape = noeuds.length;
+			for(let i=0; i<nb_etape; i++) {
 				dx = noeuds[i][0] - ref[0];
 				dy = noeuds[i][1] - ref[1];
 				dh = Math.max(Math.abs(dx), Math.abs(dy));
@@ -1733,9 +1761,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					trace_trajet(couleur_danger, "danger", ref, [noeuds[i]], false);
 
 					if (dessin.getContext){
-						var ctx = dessin.getContext('2d');
+						let ctx = dessin.getContext('2d');
 						ctx.fillStyle = couleur_chute;
-						for (var j in chute) {
+						for (let j in chute) {
 							ctx.beginPath();
 							ctx.arc(coord_x(chute[j][0]), coord_y(chute[j][1]), TC_coeff*0.50, 0, Math.PI*2,  true);
 							ctx.fill();
@@ -1769,10 +1797,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function calc_inter(x0,y0,px,py,tmax) {
-			var res = false, a = 0, b = 0, c = 0, delta = 0, t0 = 0, t1 = 0;
+			let res = false, a = 0, b = 0, c = 0, delta = 0, t0 = 0, t1 = 0;
 			//window.console.log('verif collision gowap-trou [x0=' + x0 + ',y0=' + y0 + ', px=' + px + ', py=' + py + ', tmax=' + tmax + ']');
 
-			for(var k in position_trous) {
+			for(let k in position_trous) {
 				a = parseFloat(px*px+py*py);
 				b = parseFloat((x0-position_trous[k][0])*px+(y0-position_trous[k][1])*py);
 				c = parseFloat((x0-position_trous[k][0])*(x0-position_trous[k][0])+(y0-position_trous[k][1])*(y0-position_trous[k][1])-position_trous[k][2]);
@@ -1784,7 +1812,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 						// Roule' 10/10/2016 J'ai déplacé le flag res=true à l'intérieur de la boucle for ci-dessous car il y avait de fausses détections
 						//res = true;
 						//window.console.log('***** collision gowap-trou [x0=' + x0 + ',y0=' + y0 + ', px=' + px + ', py=' + py + ', tmax=' + tmax + ']');
-						for(var l=Math.max(0,t0); l<=Math.min(tmax,t1); l++) {
+						for(let l=Math.max(0,t0); l<=Math.min(tmax,t1); l++) {
 							//window.console.log('***** collision gowap-trou en ' + (x0+l*px) + ', ' + (y0+l*py));
 							res = true;
 							chute.push([x0+l*px, y0+l*py]);
@@ -1795,16 +1823,16 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return res;
 		}
 		function format_tps(tps) {
-			var jours = Math.floor(tps/1440);
-			var heures = tps%1440;
-			var minutes = heures%60
+			let jours = Math.floor(tps/1440);
+			let heures = tps%1440;
+			let minutes = heures%60
 			heures = Math.floor(heures/60);
 			return (jours? jours+"jr ":"")+heures+"h "+minutes+"mn";
 		}
 		function ini_trajet() {
 			depart = [MZ_analyse_page_ordre_suivant.result.x, MZ_analyse_page_ordre_suivant.result.y, MZ_analyse_page_ordre_suivant.result.n];	// variable globale "depart"
 			if(cadrable) {	// placer le petit double rectangle cliquable permettant de copier la loc vers la frame du bas
-				var dessin = dessine_copie();
+				let dessin = dessine_copie();
 				dessin.style.marginLeft = "4px";
 				addEvent(dessin, "click", copier_depart, true);
 				if (MZ_analyse_page_ordre_suivant.result.eltPos) MZ_analyse_page_ordre_suivant.result.eltPos.appendChild(dessin);
@@ -1815,10 +1843,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			charge_trajet();	// chargement de certaines (!) variables globales à partir du LocalStorage
 			introspection();	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
 
-			var ind_a = -1;
+			let ind_a = -1;
 			etapes_ini = new Array(); arret = new Array(); nb_ini = 0;
-			for(var i=0; i<MZ_analyse_page_ordre_suivant.result.ordres.length; i++) {
-				var thisOrdre = MZ_analyse_page_ordre_suivant.result.ordres[i];
+			for(let i=0; i<MZ_analyse_page_ordre_suivant.result.ordres.length; i++) {
+				let thisOrdre = MZ_analyse_page_ordre_suivant.result.ordres[i];
 				if (thisOrdre.x !== undefined) {	// c'est un déplacement (ou ébrouage)
 					etapes_ini.push([thisOrdre.x, thisOrdre.y, thisOrdre.n, (thisOrdre.ordre.substring(0, 11) != "Déplacement")]);
 					nb_ini++;
@@ -1826,7 +1854,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					//arret.push([-1, nb_ini]); ind_a = nb_ini;
 					if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
 				} else {
-					point = thisOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
+					let point = thisOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
 					if(point) {	// si le suivant suit le Troll, on peut dessiner sa trajectoire
 						//MZ_analyse_page_ordre_suivant.result.eltPos('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
 						//window.console.log('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
@@ -1841,7 +1869,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			if(ind_a != nb_ini) arret.push([-1, nb_ini]);
 
-			nb_a = arret.length;
 			nb_ajout = etapes.length;
 			calc_etapes();
 
@@ -1850,12 +1877,14 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_glissiere();
 			echelle_trajet() ;
 			creer_bulle_trajet();
-			lister_etapes(); charger_fav(); lister_fav();
+			lister_etapes();
+			charger_fav();
+			lister_fav();
 			trace_trajet_prev();
 		}
 		function introspection() {	// chargement de la variable globale "soi" : tableau [x, y, n, idTroll]
 			if(window.parent && window.parent.parent && window.parent.parent.frames.length > 1) {
-				var pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X *= *(-?\d+) *\| *Y *= *(-?\d+) *\| *N *= *(-?\d+)/);
+				let pos = (window.parent.parent.frames[0].document.getElementById('DLA_xyn').textContent).match(/X *= *(-?\d+) *\| *Y *= *(-?\d+) *\| *N *= *(-?\d+)/);
 				if(pos) {
 					soi = [parseInt(pos[1]), parseInt(pos[2]), parseInt(pos[3]), window.parent.parent.frames[0].document.getElementsByTagName('a')[0].textContent];
 				} else {
@@ -1864,12 +1893,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function calc_etapes() {
-			var continu = true, deb = 0, fin = 0, dx, dy, dn, dxa, dya, dna, inter, suivre = false;
-			ref = depart;
-			for(var i in arret) {
+			let continu = true, deb = 0, fin = 0, dx, dy, dn, dxa, dya, dna, inter, suivre = false;
+			let ref = depart;
+			for(let i in arret) {
 				fin = arret[i][1];
 				if(deb != fin) {
-					for(var j=deb; j<fin; j++) {
+					for(let j=deb; j<fin; j++) {
 						etapes_tt.push([etapes_ini[j][0], etapes_ini[j][1], etapes_ini[j][2], etapes_ini[j][3]? 1:0]);
 					}
 					ref = etapes_ini[fin-1];
@@ -1898,46 +1927,59 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function echelle_position() {
 			trace_trou();
 			//window.console.log('echelle_position suivants=' + JSON.stringify(suivants));
-			for(var i in suivants) {
+			for(let i in suivants) {
 				// suivants[i] : [(0)num_gow, (1)nom, (2)x, (3)y, (4)n, (5)etapes_ini, (6)etapes, (7)arret];
 				//gowap_debug = suivants[i][0];
 				//if (gowap_debug == 5813233) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivants[i]));
+				if (!Array.isArray(suivants[i])) continue;
 				trace_position([suivants[i][2], suivants[i][3]]);
-				aleatoire = 50+Math.round(155.0*i/nbs);
+				let aleatoire = 50+Math.round(155.0*i/nbs);
+				//console.log(`trajet_canvas echelle_position aleatoire=${aleatoire}, i=${i}, nbs=${nbs}`);
 				//if(t_prev && suivants[i][6]) {
 				if(t_prev && suivants[i][6] && suivants[i][6] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
 					trace_trajet("rgba(0,"+aleatoire+",0,0.6)", "trou", [suivants[i][2], suivants[i][3]], suivants[i][6], false);
 				}
 				//if(t_enreg && suivants[i][5]) {
 				if(t_enreg && suivants[i][5] && suivants[i][5] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
+					if (!Array.isArray(suivants[i])) {
+						let msg = 'null ?';
+						try {
+							msg = suivants[i].substring(0, 60);
+						} catch(e) {}
+						console.log(`trajet_canvas echelle_position suivants[i]=${msg}`);
+						return;
+					}
 					trace_reel(aleatoire, "trou", [suivants[i][2], suivants[i][3]], suivants[i][5], suivants[i][7], false);
 				}
 			}
 		}
-		//var gowap_debug = 0;
+		//let gowap_debug = 0;
 		function trace_reel(couleur, ou, ref, noeuds, transition, refaire) {
-			//window.console.log("trace_reel\ncouleur=" + JSON.stringify(couleur) + "\nou=" + JSON.stringify(ou) + "\nref=" + JSON.stringify(ref) + "\nnoeuds=" + JSON.stringify(noeuds) + "\ntransition=" + JSON.stringify(transition) + "\nrefaire=" + JSON.stringify(refaire));
-			var continu = true, deb = 0, fin = 0, dx, dy, dxa, dya, inter, suivre = false;
-			for(var i in transition) {
+			let coulNum = parseInt(couleur);
+			if (isNaN(coulNum)) coulNum = 0;
+			//window.console.log(`trajet_canvas trace_reel_log\ncouleur=${JSON.stringify(couleur)}\ncoulNul=${JSON.stringify(coulNum)}\nou=${JSON.stringify(ou)}\nref=${JSON.stringify(ref)}\nnoeuds=${JSON.stringify(noeuds)}\ntransition=${JSON.stringify(transition)}\nrefaire=${JSON.stringify(refaire)}`);
+			let continu = true, deb = 0, fin = 0, dx, dy, dxa, dya, inter, suivre = false;
+			for(let i in transition) {
 				fin = transition[i][1];
 				//if (gowap_debug == 5811849) {
-				//	window.console.log('trace_reel, transition(' + i + ')=' + JSON.stringify(transition[i]));
-				//	window.console.log('trace_reel, couleur=' + couleur + ', deb=' + deb + ', fin=' + fin + ', suivre=' + suivre + ', ref=' + JSON.stringify(ref) + ', soi=' + JSON.stringify(soi));
+				//	window.console.log('trace_reel_log, transition(' + i + ')=' + JSON.stringify(transition[i]));
+				//	window.console.log('trace_reel_log, coulNum=' + coulNum + ', deb=' + deb + ', fin=' + fin + ', suivre=' + suivre + ', ref=' + JSON.stringify(ref) + ', soi=' + JSON.stringify(soi));
 				//}
 				if(deb != fin && suivre) {
-					trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [noeuds[deb]], refaire);
-					//if (gowap_debug == 5813233) window.console.log('trace_reel, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
+					trace_trajet("rgba("+coulNum+",0,"+coulNum+(continu? ",0.6)":",0.2)"), ou, ref, [noeuds[deb]], refaire);
+					//if (gowap_debug == 5813233) window.console.log('trace_reel_log, trace1 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([noeuds[deb]]));
 					ref = noeuds[deb];
 					deb++;
 					suivre = false;
 				}
 				if((deb != fin) && ref) {	// Roule' 14/11/2018 ajout de la protection sur "ref"
-					var points = new Array();
-					for(var j=deb; j<fin; j++) {
+					let points = new Array();
+					for(let j=deb; j<fin; j++) {
 						points.push(noeuds[j]);
 					}
-					trace_trajet("rgba(0,0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, points, refaire);
-					//if (gowap_debug == 5813233) window.console.log('trace_reel, trace2 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify(points));
+					//window.console.log(`trajet_canvas trace_reel_log avant appel trace_trajet coulNum=${JSON.stringify(coulNum)}, coulNum envoyée=${"rgba(0,0,"+coulNum+(continu? ",0.6)":",0.2)")}`);
+					trace_trajet("rgba(0,0,"+coulNum+(continu? ",0.6)":",0.2)"), ou, ref, points, refaire);
+					//if (gowap_debug == 5813233) window.console.log('trace_reel_log, trace2 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify(points));
 					ref = noeuds[fin-1];
 				}
 				if(transition[i][0] != -1 && soi) {
@@ -1947,8 +1989,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					dya = Math.max(Math.abs(dy)-transition[i][0], 0);
 					if(dxa >0 || dya >0) {
 						inter = [ref[0]+((dx>0)? dxa:-dxa), ref[1]+((dy>0)? dya:-dya)];
-						trace_trajet("rgba("+couleur+",0,"+couleur+(continu? ",0.6)":",0.2)"), ou, ref, [inter], refaire);
-						//if (gowap_debug == 5813233) window.console.log('trace_reel, trace3 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([inter]));
+						trace_trajet("rgba("+coulNum+",0,"+coulNum+(continu? ",0.6)":",0.2)"), ou, ref, [inter], refaire);
+						//if (gowap_debug == 5813233) window.console.log('trace_reel_log, trace3 ref=' + JSON.stringify(ref) + ', points=' + JSON.stringify([inter]));
 						ref = inter;
 						suivre = true;
 					}
@@ -2059,13 +2101,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function ini_tableau() {
 			etapes = new Array();
-			for(var i in etapes_ini) {
+			for(let i in etapes_ini) {
 				etapes[i] = etapes_ini[i];
 			}
 		}
 		function ini_suppr() {
 			suppr_surligne = new Array();
-			for(var i in etapes) {
+			for(let i in etapes) {
 				suppr_surligne[i] = etapes[i];
 			}
 		}
@@ -2073,7 +2115,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		//destinations favorites
 		function dessine_fermer(dessin) {
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.lineCap = "round"
 				ctx.strokeStyle = "rgb(80,80,80)";
 				ctx.lineWidth = "1.5";
@@ -2083,7 +2125,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function creer_bulle_zoom() {
 			if(haut.getElementById("bulle_zoom")) return;
-			var bulle_fav = bloc("bulle_zoom");
+			let bulle_fav = bloc("bulle_zoom");
 			bulle_fav.className = "mh_tdpage";
 			haut.body.appendChild(bulle_fav);
 		}
@@ -2091,7 +2133,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			TC_coeff = zoom_fav/50.0;
 			haut.getElementById("liste_fav_gow").style.marginLeft = (4*zoom_fav+2*decalh+5)+"px";
 			haut.getElementById("cadre_fav").style.minHeight = (4*zoom_fav+2*decalv+40)+"px";
-			var gestion = haut.getElementById("gestion_fav_gow");
+			let gestion = haut.getElementById("gestion_fav_gow");
 			gestion.style.left = Math.max(1, haut.body.clientWidth+haut.body.scrollLeft-2-gestion.offsetWidth)+"px";
 
 			trace_trou_fav();
@@ -2105,20 +2147,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			if (!haut.getElementById("gestion_fav_gow")) {
 				declare_css();
-				gestion = bloc("gestion_fav_gow");
+				let gestion = bloc("gestion_fav_gow");
 				gestion.className = "mh_tdpage";
 
-				var nvdiv = bloc("titre_fav");
+				let nvdiv = bloc("titre_fav");
 				nvdiv.className = "mh_tdtitre";
 				nvdiv.appendChild(document.createTextNode("Gestion des destinations favorites"));
-				var fermer = creer_icone(15, 15, "Fermer", function() { this.parentNode.parentNode.style.visibility = "hidden" });
+				let fermer = creer_icone(15, 15, "Fermer", function() { this.parentNode.parentNode.style.visibility = "hidden" });
 				dessine_fermer(fermer);
 				nvdiv.appendChild(fermer);
 				gestion.appendChild(nvdiv);
-				var carte_fav = bloc("cadre_fav");
+				let carte_fav = bloc("cadre_fav");
 
 				carte_fav.appendChild(creer_canvas("trou_fav"));
-				var dessin = creer_canvas("trace_fav");
+				let dessin = creer_canvas("trace_fav");
 				//addEvent(haut, "mouseup", drop, true); // suppression par Vapulabehemot (82169) le 10/07/2015
 				//addEvent(haut, "mousemove", glisse, true); // suppression par Vapulabehemot (82169) le 10/07/2015
 				addEvent(dessin, "mousemove", afficher_fav, true);
@@ -2142,27 +2184,27 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			gerer_fav(); echelle_fav(); poser_fav(); creer_bulle_trajet();
 		}
 		function gerer_fav() {
-			var gestion = haut.getElementById("gestion_fav_gow");
+			let gestion = haut.getElementById("gestion_fav_gow");
 			gestion.style.visibility = "visible";
 
-			var liste_fav = haut.getElementById("liste_fav_gow");
+			let liste_fav = haut.getElementById("liste_fav_gow");
 			liste_fav.innerHTML = "";
-			for(var i=0; i<nb_fav; i++) {
+			for(let i=0; i<nb_fav; i++) {
 				liste_fav.appendChild(bloc("fav_gow_"+i));
 				aff_fav(i);
 			}
 			aj_edit();
 		}
 		function poser_fav() {
-			var gestion = haut.getElementById("gestion_fav_gow");
+			let gestion = haut.getElementById("gestion_fav_gow");
 			if(page == "action_ordre") {
 				//let scroll = haut.body.scrollTop;
 				let scroll = (haut.defaultView.pageYOffset || haut.documentElement.scrollTop || haut.body.scrollTop || 0);
 				gestion.style.top = (haut.body.clientHeight+scroll-2-gestion.offsetHeight)+"px";
 			}
 			else {
-				var noeud = document.getElementById("ligne_fav");
-				var ecart = noeud.offsetHeight+1;
+				let noeud = document.getElementById("ligne_fav");
+				let ecart = noeud.offsetHeight+1;
 				while(noeud.offsetParent) {
 					ecart += noeud.offsetTop;
 					noeud = noeud.offsetParent;
@@ -2172,15 +2214,15 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			gestion.style.left = Math.max(1, haut.body.clientWidth+haut.body.scrollLeft-2-gestion.offsetWidth)+"px";
 		}
 		function aff_fav(rg) {
-			var fav = haut.getElementById("fav_gow_"+rg);
+			let fav = haut.getElementById("fav_gow_"+rg);
 			fav.innerHTML = "";
 			fav.className = "fav";
-			var texte = protege_texte(favori[rg][0])+" ("+favori[rg][1]+", "+favori[rg][2]+", "+favori[rg][3]+")";
+			let texte = protege_texte(favori[rg][0])+" ("+favori[rg][1]+", "+favori[rg][2]+", "+favori[rg][3]+")";
 			fav.appendChild(document.createTextNode(texte));
 
-			dessin = creer_icone(11, 12, "Supprimer "+texte, effacer_fav);
+			let dessin = creer_icone(11, 12, "Supprimer "+texte, effacer_fav);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(200,100,100)";
 				ctx.lineCap = "round";
 				ctx.lineWidth = "2";
@@ -2191,10 +2233,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			dessin = creer_icone(12, 12, "Editer "+texte, editer_fav);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(30,30,30)";
 				ctx.fillStyle = "rgb(180,180,180)";
-				var echelle = 12.0/21.0;
+				let echelle = 12.0/21.0;
 				ctx.scale(echelle, echelle);
 				ctx.lineWidth = "1";
 				dessine_svg(ctx, data_svg["param"]);
@@ -2205,7 +2247,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			dessin = creer_icone(11, 12, "Descendre "+texte, descendre_fav);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.fillStyle = "rgb(100,170,100)";
 				dessine_svg(ctx, data_svg["descendre"]);
 				ctx.fill();
@@ -2215,7 +2257,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			dessin = creer_icone(11, 12, "Monter "+texte, monter_fav);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.fillStyle = "rgb(100,170,100)";
 				dessine_svg(ctx, data_svg["monter"]);
 				ctx.fill();
@@ -2224,17 +2266,17 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(rg == 0) dessin.style.visibility = "hidden";
 		}
 		function monter_fav() {
-			var ref = parseInt(this.parentNode.id.split("_")[2])
+			let ref = parseInt(this.parentNode.id.split("_")[2])
 
-			var temp = favori[ref-1];
+			let temp = favori[ref-1];
 			favori[ref-1] = favori[ref];
 			favori[ref] = temp;
 			sauver_fav(); lister_fav(); gerer_fav();
 		}
 		function descendre_fav() {
-			var ref = parseInt(this.parentNode.id.split("_")[2]);
+			let ref = parseInt(this.parentNode.id.split("_")[2]);
 
-			var temp = favori[ref+1];
+			let temp = favori[ref+1];
 			favori[ref+1] = favori[ref];
 			favori[ref] = temp;
 			sauver_fav(); lister_fav(); gerer_fav();
@@ -2247,11 +2289,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_fav();
 		}
 		function editer_fav() {
-			var rg = parseInt(this.parentNode.id.split("_")[2]);
-			var fav = haut.getElementById("fav_gow_"+rg);
+			let rg = parseInt(this.parentNode.id.split("_")[2]);
+			let fav = haut.getElementById("fav_gow_"+rg);
 			fav.innerHTML = "";
 			fav.appendChild(document.createTextNode("Description : "));
-			entree = document.createElement("input");
+			let entree = document.createElement("input");
 			entree.maxLength = "40";
 			entree.size = "40";
 			entree.className = "TextareaboxV2";
@@ -2264,13 +2306,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			fav.appendChild(document.createTextNode(" N = "));
 			fav.appendChild(nvl_entree());
 
-			for (var i=0; i<4; i++) {
+			for (let i=0; i<4; i++) {
 				fav.getElementsByTagName("input")[i].value = favori[rg][i];
 			}
 
-			dessin = creer_icone(20, 20, "Annuler", annuler_edit);
+			let dessin = creer_icone(20, 20, "Annuler", annuler_edit);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(120,50,50)";
 				ctx.lineCap = "round";
 				ctx.lineWidth = "3";
@@ -2282,7 +2324,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 
 			dessin = creer_icone(21, 21, "Valider", valider_edit);
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(50,120,50)";
 				ctx.lineWidth = "4";
 				ctx.arc(10, 10, 7.5, 0, Math.PI*2,  true);
@@ -2292,11 +2334,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			fav.appendChild(dessin);
 		}
 		function aj_edit() {
-			var fav = bloc("fav_gow_"+nb_fav);
+			let fav = bloc("fav_gow_"+nb_fav);
 			fav.appendChild(document.createElement("br"));
 			fav.appendChild(document.createElement("br"));
 			fav.appendChild(document.createTextNode("Description : "));
-			entree = document.createElement("input");
+			let entree = document.createElement("input");
 			entree.maxLength = "40";
 			entree.size = "40";
 			entree.className = "TextareaboxV2";
@@ -2309,19 +2351,19 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			fav.appendChild(document.createTextNode(" N = "));
 			fav.appendChild(nvl_entree());
 
-			dessin = dessine_plus();
+			let dessin = dessine_plus();
 			addEvent(dessin, "click", aj_fav, true);
 			fav.appendChild(dessin);
 
 			haut.getElementById("liste_fav_gow").appendChild(fav);
 		}
 		function dessine_plus() {
-			var dessin = document.createElement("canvas");
+			let dessin = document.createElement("canvas");
 			dessin.width = 21;
 			dessin.height = 21;
 
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.lineCap = "round"
 				ctx.strokeStyle = "rgb(50,120,50)";
 				ctx.lineWidth = "2.5";
@@ -2334,11 +2376,11 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return dessin;
 		}
 		function dessine_copie() {
-			var dessin = document.createElement("canvas");
+			let dessin = document.createElement("canvas");
 			dessin.width = 12;
 			dessin.height = 12;
 			if (dessin.getContext){
-				var ctx = dessin.getContext('2d');
+				let ctx = dessin.getContext('2d');
 				ctx.strokeStyle = "rgb(0,0,0)";
 				ctx.fillStyle = "rgb(250,250,250)";
 				ctx.lineWidth = "1";
@@ -2354,9 +2396,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 		function aj_fav() {
 			if(nb_fav > 0 && haut.getElementById("fav_gow_"+(nb_fav-1)).getElementsByTagName("canvas").length > 3) haut.getElementById("fav_gow_"+(nb_fav-1)).getElementsByTagName("canvas")[2].style.visibility = "visible";
-			var xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
-			var yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
-			var nn = entier(this.parentNode.getElementsByTagName("input")[3].value);
+			let xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
+			let yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
+			let nn = entier(this.parentNode.getElementsByTagName("input")[3].value);
 			favori[nb_fav] = [protege(this.parentNode.getElementsByTagName("input")[0].value), xx, yy, nn];
 			nb_fav++;
 			nv_pt = null;
@@ -2366,7 +2408,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_fav();
 		}
 		function aj_pos(evt) {
-			var xpage = 0, ypage = 0, xpos = 0, ypos = 0, xs, ys;
+			let xpage = 0, ypage = 0, xpos = 0, ypos = 0, xs, ys;
 
 			if (evt.offsetX) {
 				xpage = evt.offsetX;
@@ -2384,7 +2426,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			xcase = Math.round(50*(xpage-decalh)/zoom_fav-100.0);
 			ycase = Math.round(100.0-50*(ypage-decalv)/zoom_fav);
 
-			var ligne = haut.getElementById("fav_gow_"+nb_fav);
+			let ligne = haut.getElementById("fav_gow_"+nb_fav);
 			ligne.getElementsByTagName("input")[1].value = xcase;
 			ligne.getElementsByTagName("input")[2].value = ycase;
 			nv_pt = [xcase, ycase];
@@ -2392,7 +2434,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			retrace_fav = true;
 		}
 		function nvl_entree() {
-			var entree = document.createElement("input");
+			let entree = document.createElement("input");
 			entree.maxLength = "4";
 			entree.size = "8";
 			entree.className = "TextareaboxV2";
@@ -2401,10 +2443,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return entree;
 		}
 		function valider_edit() {
-			var ref = parseInt(this.parentNode.id.split("_")[2]);
-			var xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
-			var yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
-			var nn = entier(this.parentNode.getElementsByTagName("input")[3].value);
+			let ref = parseInt(this.parentNode.id.split("_")[2]);
+			let xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
+			let yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
+			let nn = entier(this.parentNode.getElementsByTagName("input")[3].value);
 			retrace_fav = (retrace_fav || favori[ref][1] != xx || favori[ref][2] != yy);
 			favori[ref] = [protege(this.parentNode.getElementsByTagName("input")[0].value), xx, yy, nn];
 			nv_pt = null;
@@ -2413,8 +2455,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			if(retrace_fav) trace_fav();
 		}
 		function modif_edit() {
-			var xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
-			var yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
+			let xx = entier(this.parentNode.getElementsByTagName("input")[1].value);
+			let yy = entier(this.parentNode.getElementsByTagName("input")[2].value);
 			if(nv_pt === null || nv_pt[1] != xx || nv_pt[2] != yy) {
 				nv_pt = [xx, yy];
 				trace_fav();
@@ -2461,12 +2503,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			else { return; }
 
-			choix_fav = -2;
+			//choix_fav = -2;	// semble ne servir à rien
 		}
 		function remplir_liste(noeud) {
 			noeud.innerHTML = "";
 
-			var opt = document.createElement("option");
+			let opt = document.createElement("option");
 			opt.innerHTML = "Destinations favorites";
 			opt.value = -2;
 			noeud.appendChild(opt);
@@ -2478,7 +2520,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				addEvent(opt, "mouseout", efface_surligne, true);
 				noeud.appendChild(opt);
 			}
-			for (var i=0; i<nb_fav; i++) {
+			for (let i=0; i<nb_fav; i++) {
 				opt = document.createElement("option");
 				opt.innerHTML = protege_sel(favori[i][0])+" ("+favori[i][1]+", "+favori[i][2]+", "+favori[i][3]+")";
 				opt.value = i
@@ -2488,18 +2530,18 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function ini_fav() {
-			var nvdiv = bloc("div_fav");
+			let nvdiv = bloc("div_fav");
 			nvdiv.className = "mh_tdpage";
-			var choix = document.createElement("select");
+			let choix = document.createElement("select");
 			choix.id = "sel_fav";
 			choix.style.verticalAlign = "top";
 			addEvent(choix, "keyup", changer_fav, true);
 			addEvent(choix, "change", changer_fav, true);
 			nvdiv.appendChild(choix);
 			if(cadrable) {
-				var dessin = creer_icone(21, 21, "Gerer les destinations favorites", ini_gestion);
+				let dessin = creer_icone(21, 21, "Gerer les destinations favorites", ini_gestion);
 				if (dessin.getContext){
-					var ctx = dessin.getContext('2d');
+					let ctx = dessin.getContext('2d');
 					ctx.strokeStyle = "rgb(50,50,50)";
 					ctx.fillStyle = "rgb(220,220,220)";
 					ctx.lineWidth = "1";
@@ -2517,19 +2559,19 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			nvdiv.style.padding = "1px";
 
 			document.body.appendChild(nvdiv);
-			introspection(); charger_fav(); lister_fav();
-
+			introspection();
+			charger_fav();
+			lister_fav();
 		}
 		function changer_fav() {
-			choix_fav = parseInt(this.value);
+			let choix_fav = parseInt(this.value);
 			if(choix_fav == -2) {
 				return;
 			}
 
 			if(choix_fav == -1) {
 				copier_xxx(soi, document);
-			}
-			else {
+			} else {
 				charger_fav()
 				if (favori[choix_fav]) {
 					copier_xxx(favori[choix_fav].slice(1, 4), document);
@@ -2537,18 +2579,18 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function sauver_fav() {
-			var texte = "";
-			for (var i=0; i<nb_fav; i++) {
+			let texte = "";
+			for (let i=0; i<nb_fav; i++) {
 				texte += favori[i][0]+"/"+favori[i][1]+"/"+favori[i][2]+"/"+favori[i][3]+"/";
 			}
 			MY_setValue("favori_gow", texte);
 		}
 		function charger_fav() {
 			if(!MY_getValue("favori_gow")) return;
-			var param = MY_getValue("favori_gow").split("/");
+			let param = MY_getValue("favori_gow").split("/");
 			nb_fav = Math.floor(param.length/4);
 			if (param.length > 3) {
-				for (var i=0; i<nb_fav; i++) {
+				for (let i=0; i<nb_fav; i++) {
 					favori[i] = [param[4*i], parseInt(param[4*i+1]), parseInt(param[4*i+2]), parseInt(param[4*i+3])];
 				}
 			}
@@ -2559,8 +2601,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			return -1;
 		}
 		////////////////////////////////////////////////////////////
-		var TC_coeff=2, decalv=30, decalh=30
-		var position_trous = [[-70.5, -7.5, 2, 1.5, -69]
+		let TC_coeff=2, decalv=30, decalh=30
+		let position_trous = [[-70.5, -7.5, 2, 1.5, -69]
 			, [-66.5, -37.5, 2, 1.5, -69]
 			, [-63.5, 8.5, 2, 1.5, -69]
 			, [-59.5, -32.5, 2, 1.5, -69]
@@ -2582,14 +2624,14 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			, [56.5, 23.5, 75, 8.7, -99]
 			, [64, 70, 0.25, 0.8, -59]
 			, [74.5, 31.5, 2, 1.5, -69]];
-		var etapes = new Array(), etapes_ini = new Array(), etapes_tt = new Array(), depart = new Array(), chute = new Array(); var arret = new Array(), favori = new Array();
-		var nb_ini = 0, nb_ajout = 0, nb_fav = 0, nb_tt = 0;
-		var bulle = null, haut = null, bas = null,  soi = null, nv_pt = null, suivre = null;
-		var bougeable = false, glissable = false, retrace_fav = false;
-		var zoom = 100.0, zoom_fav = 100.0, dla = 0, typ_gow = 4;
-		var num_gow = 0;
-		var couleur_surligne = "rgb(180,80,180)", couleur_prev = "rgba(0,200,0,0.5)", couleur_reel = "150", couleur_danger = "rgba(255,150,150,1)", couleur_chute = "rgb(100,0,0)", couleur_trou = "rgb(200,0,0)";
-		var data_svg = new Array();
+		let etapes = new Array(), etapes_ini = new Array(), etapes_tt = new Array(), depart = new Array(), chute = new Array(); let arret = new Array(), favori = new Array();
+		let nb_ini = 0, nb_ajout = 0, nb_fav = 0, nb_tt = 0;
+		let bulle = null, haut = null, soi = null, nv_pt = null, suivre = null;
+		let bougeable = false, glissable = false, retrace_fav = false;
+		let zoom = 100.0, zoom_fav = 100.0, dla = 0, typ_gow = 4;
+		let num_gow = 0;
+		let couleur_surligne = "rgb(180,80,180)", couleur_prev = "rgba(0,200,0,0.5)", couleur_reel = "150", couleur_danger = "rgba(255,150,150,1)", couleur_chute = "rgb(100,0,0)", couleur_trou = "rgb(200,0,0)";
+		let data_svg = new Array();
 
 		data_svg["fermer"] = [[3,7, 7, 6.5],[0,4.5, 4.5],[1,9.5, 9.5],[0,9.5, 4.5],[1,4.5, 9.5]];
 		data_svg["param"] = [[0, 2.69,15.81], [2, 4.037,14.58, 6.07,17.356, 5.21,18.24], [1, 3.35,20.11], [2, 5.53,22.31, 9.31,17.555 ,7.51,15.78], [1, 15.78,7.49], [2, 18,9.5, 22.05,5.02, 20.21,3.14], [1, 18.21,5.07 ], [2, 16.84,6.41, 14.72,4.1, 15.95,2.9], [1, 18.01,0.93], [2, 15.63,-1.34, 11.42,3.33, 13.46,5.26], [1, 5.17,13.48], [2, 2.88,11.66, -1.11,15.77, 0.82,17.65]];
@@ -2599,9 +2641,9 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		data_svg["suppr"] = [[0,0,0],[1,10,11],[0,10,0],[1,0,11]];
 		data_svg["annuler"] = [[0, 1,1], [1, 18,18], [0, 19,1], [1, 1,18]];
 
-		var cadrable = window.parent && window.parent.frames.length > 1 && window.parent.frames[0].document;
+		let cadrable = window.parent && window.parent.frames.length > 1 && window.parent.frames[0].document;
 
-	var MZ_analyse_page_ordre_suivant;
+	let MZ_analyse_page_ordre_suivant;
 	if (MZ_analyse_page_ordre_suivant === undefined && MZ_fo_ordres) {
 		if("function" != typeof debugMZ) {
 			function debugMZ(x) {
@@ -2706,7 +2748,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	//console.log('trajet canvas : page=' + page);
 		if (MZ_analyse_page_suivants) {
 			introspection();	// charger soi
-			for (oSuivant of MZ_analyse_page_suivants.suivants) {
+			for (let oSuivant of MZ_analyse_page_suivants.suivants) {
 				if (!oSuivant.oJSON.ordres) continue;
 				zoom = undefined;
 				TC_coeff = undefined;
@@ -2733,7 +2775,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 						//arret.push([-1, nb_ini]); ind_a = nb_ini;
 						if ( nb_ini!=0 ) {arret.push([-1, nb_ini]); ind_a = nb_ini;} // correction par Vapulabehemot (82169) le 31/08/2013 
 					} else {
-						point = oOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
+						let point = oOrdre.ordre.match(/Suivre[\u00a0 ](.+) \(\d+\) à une distance de (\d+) case/);
 						if(point) {	// si le suivant suit le Troll, on peut dessiner sa trajectoire
 							//MZ_analyse_page_ordre_suivant.result.eltPos('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
 							//window.console.log('trajet_canvas, reco suivre, soi=' + JSON.stringify(soi) + ', point=' + JSON.stringify(point));
@@ -2754,13 +2796,10 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		}
 
 		if(page == "trajet") {
-			var ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
-			var noeud_courant = 0;
-			var aj_noeud = false, choix_ini = false;
 			for (let ef of document.getElementsByTagName('form')) {
 				if (ef.action) {
 					//console.log('action=' + ef.action);
-					m = ef.action.match(/id_target=(\d+)/);
+					let m = ef.action.match(/id_target=(\d+)/);
 					if (m) {
 						//console.log('m=' + JSON.stringify(m));
 						num_gow = parseInt(m[1], 10);
@@ -2774,21 +2813,21 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		else if(page == "suivants"){
-			var suivants = new Array();
-			var nbs = 0;
-			var nb_liste = 0;
-			var t_enreg = false, t_prev = false;
+			let suivants = new Array();
+			nbs = 0;
+			let nb_liste = 0;
+			let t_enreg = false, t_prev = false;
 			haut = document;
 			ini_position();
 		}
 		else if(page == "profil_gow") {
-			partd = document.getElementsByTagName('td');
+			let partd = document.getElementsByTagName('td');
 			//curr = 0;
-			cadre_dla = null;
-			for (i=0;i<partd.length;i++) {
+			let cadre_dla = null;
+			for (let i=0;i<partd.length;i++) {
 				if (partd[i].className == "mh_tdpage_fo") {
 					// Roule 07/09/2019 adaptation nouvelle présentation
-					var tx = partd[i].innerText;
+					let tx = partd[i].innerText;
 					//window.console.log('curr=' + curr + ', partd[' + i + ']=' + tx);
 					//curr++;
 					// if(curr == 2) {
@@ -2814,7 +2853,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 					charge_trajet();
 					// Roule 07/09/2019 adaptation nouvelle présentation
 					//duree = cadre_dla.getElementsByTagName('p')[0].innerHTML.match(/\d+/g);
-					duree = cadre_dla.innerText.match(/\d+/g);
+					let duree = cadre_dla.innerText.match(/\d+/g);
 					if (duree.length == 1)	// cas d'un suivant avec une durée de tour multiple exact d'heures
 						dla = parseInt(duree[0])*60;
 					else
@@ -2830,12 +2869,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		else if(page == "lieu_tp") {
-			var sortie = null;
+			let sortie = null;
 			haut = document;
 			ini_teleport();
 		}
 		else if (page == "action_ordre") {
-			typ_ordre = quel_ordre(document.forms[0]);
+			let typ_ordre = quel_ordre(document.forms[0]);
 			if(typ_ordre == 1 || typ_ordre == 7) {
 				ini_fav();
 			}
