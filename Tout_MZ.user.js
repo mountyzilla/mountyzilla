@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.60
+// @version     1.6.61
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.60';
+var MZ_latest = '1.6.61';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -894,7 +894,7 @@ function FF_XMLHttpRequest(MY_XHR_Ob) {
 				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`);
 			}
 
-			/* DEBUG: Ajouter à request les pptés de MY_XHR_Ob à transmettre */
+			request.oXHR = MY_XHR_Ob;	// permet à la fonction onload de modifier le message de trace
 			MY_XHR_Ob.onload(request);
 			if (MY_XHR_Ob.trace) {
 				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} fin traitement retour AJAX ${MY_XHR_Ob.trace}`);
@@ -7558,7 +7558,7 @@ function saveMission(num, obEtape, trace) {
 	if (obMissions == undefined) {
 		obMissions = new Object();
 	}	// protection
-	// logMZ('saveMission, obEtape=' + obEtape);	// debug roule
+	// logMZ('saveMission_log, obEtape=' + obEtape);	// debug roule
 	if (obEtape) {
 		if (trace) logMZ(`saveMissionLog add mission ${num} ${JSON.stringify(obEtape)}`);
 		obMissions[num] = obEtape;
@@ -7569,7 +7569,9 @@ function saveMission(num, obEtape, trace) {
 		if (trace) logMZ(`saveMissionLog delete (déjà absente) mission ${num}`);
 	}
 	MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
-	if (trace) logMZ(`saveMissionLog JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
+	//debugMission réactiver le if (trace)
+	//if (trace) 
+		logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
 }
 
 function parseMissionSteps() {
@@ -7605,7 +7607,8 @@ function parseMissionSteps() {
 		});
 		if (!validationFound) {
 			// S'il n'y a plus d'étape en cours (=mission finie), on supprime
-			debugMZ('MZ_troogle.addTroogleLinkToStep, la mission semble terminée');
+			//debugMission repasser logMZ => debugMZ
+			logMZ('parseMissionSteps_log, la mission semble terminée');
 			saveMission(idMission, false);
 		}
 	} catch (e) {
@@ -7634,8 +7637,8 @@ function handleMonsterStep(text) {
 		recherche: MZ_troogle.SEARCH_MONSTER
 	};
 
-	let raceExtract = /de la race des (.*)/i;
-	let match = raceExtract.exec(text);
+	//let raceExtract = /de la race des (.*)/i;
+	let match = (/de la race des (.*)/i).exec(text);
 	if (match) {
 		mission.type = 'Race'
 		let race = removeEnclosingSimpleCote(trim(match[1]));
@@ -7643,11 +7646,13 @@ function handleMonsterStep(text) {
 		mission.race = race;
 	}
 
-	let familyExtract = /de la famille (.*)/i;
-	match = familyExtract.exec(text);
+	//let familyExtract = /de la famille (.*)/i;
+	match = (/de la famille des (.*)/i).exec(text);
+	if (!match)
+		match = (/de la famille (.*)/i).exec(text);
 	if (match) {
 		mission.type = 'Famille'
-		let famille = trim(match[1]);
+		let famille = removeEnclosingSimpleCote(trim(match[1]));
 		mission.recherche += `:${famille}`;
 		mission.famille = famille;
 	}
@@ -13772,7 +13777,6 @@ class MZ_cVueJSON {
 
 	// cette zone est spécifique à un bloc (monstre, troll, etc.)
 	nomBase;			// "montres", "trolls", etc.
-	existe;
 	mutationObserver;	// surveillance des tableaux pour l'appel d'une callback quand l'AJAX MH (pas MZ !) répond
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
 	//MH_ft;				// l'object footable - non utilisé
@@ -13840,37 +13844,31 @@ class MZ_cVueJSON {
 				//this.MH_ft = VUE_monstres; // non utilisé
 				// json_monstres est une VARIABLE GLOBALE définie par MH et remplie au moment du retour AJAX de la vue des monstres
 				this.MH_json = json_monstres;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneMonstre;
 				break;
 			case 'trolls':
 				//this.MH_ft = VUE_trolls;  // id: table#VUE_trolls - non utilisé
 				this.MH_json = json_trolls;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneTroll;
 				break;
 			case 'tresors':
 				//this.MH_ft = VUE_tresors;  // id: table#VUE_tresors - non utilisé
 				this.MH_json = json_tresors;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneTresor;
 				break;
 			case 'champignons':
 				//this.MH_ft = VUE_champignons;  // id: table#VUE_champignons - non utilisé
 				this.MH_json = json_champignons;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneChampignon;
 				break;
 			case 'lieux':
 				//this.MH_ft = VUE_lieux;  // id: table#VUE_lieux - non utilisé
 				this.MH_json = json_lieux;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneLieu;
 				break;
 			case 'cenotaphes':
 				//this.MH_ft = VUE_cenotaphes;  // id: table#VUE_cenotaphes - non utilisé
 				this.MH_json = json_cenotaphes;
-				this.existe = true;
 				this.cLigneClass = MZ_cLigneCenotaphe;
 				break;
 		}
@@ -13898,8 +13896,6 @@ class MZ_cVueJSON {
 			this.mutationObserver.disconnect();
 			this.mutationObserver = undefined;
 		}
-		this.loaded = true;
-		//logMZ('MZ_cVueJSON_log il faut initialiser les ' + this.nomBase);
 		// trouver les numéro de colonne pour chaque info (dist, ref, nom, etc.)
 		this.eltTrHead = this.eltTable.tHead.rows[0];
 		let nbCol = this.eltTrHead.cells.length;
@@ -13972,24 +13968,44 @@ class MZ_cVueJSON {
 		}
 
 		this.cLigneClass.initGlobal();
+		this.loaded = true;
 
 		let allMHLoaded = true;
-		for (let o of [
+		let tBloc = [
 			MZ_cVueJSON.oMonstres,
 			MZ_cVueJSON.oTrolls,
 			MZ_cVueJSON.oTresors,
 			MZ_cVueJSON.oChampignons,
 			MZ_cVueJSON.oLieux,
 			MZ_cVueJSON.oCenotaphes,
-		]) {
-			if (o === undefined || (o.existe && !o.loaded)) {
-				if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${o.nomBase} existe=${o.existe}, loaded=${o.loaded}`);
+		];
+		for (let o of tBloc) {
+			if (o === undefined || (o.eltTable && !o.loaded)) {
+				if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded}`);
 				allMHLoaded = false;
 				break;
 			}
 		}
 		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON_log load ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
-		if (allMHLoaded) MZ_cVueJSON.allMHLoaded();
+		if (allMHLoaded) {
+			// debugging cas où on retrouve MZ_cVueJSON.oTrolls.objets  undefined
+			for (let o of tBloc) {
+				if (o && !Array.isArray(o.objets)) {
+					for (let o2 of tBloc) {
+						if (o2) {
+							logMZ(`${o2.nomBase} : existe=${o2.eltTable!=null}, loaded=${o2.loaded}, typeof objets=${typeof objets}`);
+						} else {
+							logMZ('un des blocs est indéfini');
+						}
+					}
+					let msg = `MZ_cVueJSON.load_log erreur allMHLoaded incohérent, this.nomBase=${this.nomBase}`;
+					console.trace(`[MZ] ${msg}`);
+					if (numTroll == 91305) alert(msg);
+					return;
+				}
+			}
+			MZ_cVueJSON.allMHLoaded();
+		}
 	}
 
 	insertColumn(indxAfter, title, width, callbackParam) {
@@ -14417,7 +14433,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		gowapA: {libelle: 'Les Gowaps Apprivoisés'},
 		gowapS: {libelle: 'Les Gowaps Sauvages'},
 		engage: {libelle: 'Les Engagés', infobulle: 'Les monstres ayant au moins un Trõll sur la même case'},
-		nonmis: {libelle: 'Mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active", restr: true},
+		nonmis: {libelle: 'Autres que mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active", restr: true},
 	};
 	static listeFamille = ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant'];
 	static listeFamilleAvecTrema = ['Animal', 'Insecte', 'Démon', 'Humanoïde', 'Monstre', 'Mort-Vivant'];
@@ -14739,9 +14755,14 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		}
 	}
 
-	static sendAJAXCdMRequest() {
+	static sendAJAXCdMRequest(bFull) {
 		let tReq = [];
 		let nbReq = 0;
+		let nbMax = 500;
+		if (!bFull && MH_mountyzilla_json.general) {
+			nbMax = MH_mountyzilla_json.general.maxRecupCdM;
+			if (nbMax == undefined) nbMax = 500;
+		}
 		let nbMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets.length;
 		for (let indx = MZ_cLigneMonstre.lastIndexSent + 1; indx < nbMonstre; indx++) {
 			let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[indx];
@@ -14754,7 +14775,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
 			tReq.push({ index: indx, id: oMonstre.id, nom: oMonstre.nom });
 			nbReq++;
-			if (nbReq >= 500) {	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
+			if (nbReq >= nbMax) {	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
 				break;
 			}
 		}
@@ -14802,6 +14823,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			texte = responseDetails.responseText;
 			let infos = JSON.parse(texte);
 			//displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
+			responseDetails.oXHR.trace = `${infos.length} demandes niveaux monstres V2`;
 			if (infos.length == 0) { return; }
 
 			// ajouter les styles CSS pour les popup
