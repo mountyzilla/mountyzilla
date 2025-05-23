@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.62
+// @version     1.6.63
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.62';
+var MZ_latest = '1.6.63';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -708,7 +708,7 @@ var MHicons = '/mountyhall/Images/Icones/';
 try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une exception
 	GM_getValue === undefined;
 	vue = isDesktopView() ? "desktop" : "mobile";
-	logMZ(`Fonctionnement dans Greasemonkey (vue ${vue})`);
+	logMZ(`Fonctionnement dans Greasemonkey (vue ${vue}, ${location.protocol}//${location.host}${location.pathname})`);
 } catch (exc) {
 	GM_getValue = function (key) { };
 	GM_setValue = function (key, val) { };
@@ -716,9 +716,9 @@ try {	// à partir du 11/07/2018, (GM_getValue === undefined) provoque une excep
 	GM_info = { script: { version: MZ_latest } };	// GM_info.script.version
 	vue = isDesktopView() ? "desktop" : "mobile";
 	if (typeof MH_mountyzilla_json !== "undefined")
-		logMZ(`Fonctionnement intégré MH (vue ${vue})`);
+		logMZ(`Fonctionnement intégré MH (vue ${vue}, ${location.protocol}//${location.host}${location.pathname})`);
 	else
-		logMZ(`Fonctionnement hors Greasemonkey (vue ${vue})`);
+		logMZ(`Fonctionnement hors Greasemonkey (vue ${vue}, ${location.protocol}//${location.host}${location.pathname})`);
 }
 
 /* Utilisation de la gestion de l'enregistrement des données de
@@ -14146,8 +14146,8 @@ class MZ_cVueJSON {
 				}
 				varThis.applyFiltre(oConfig);
 
-				//console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
 				if (oConfig.empty) oConfig = undefined;
+				//console.log(`[MZ] vue set config filtre ${varThis.nomFiltre} ${JSON.stringify(oConfig)}`);
 				MZ_SauvegardeMH.setZone(varThis.nomFiltre, oConfig);
 			};
 		this.txtFiltreNom.style.marginRight = '5px';
@@ -14199,7 +14199,12 @@ class MZ_cVueJSON {
 		}
 
 		// save
-		if (!noSave) MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
+		if (!noSave) {
+			if (oConfig.empty) 
+				MZ_SauvegardeMH.setZone(this.nomFiltre, undefined);
+			else
+				MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
+		}
 		// filtre (spécifique à chaque bloc)
 		if (this.cLigneClass.applyFiltreBloc)
 			this.cLigneClass.applyFiltreBloc(oConfig);
@@ -18367,6 +18372,8 @@ class MZ_SauvegardeMH {
 			delete MZ_SauvegardeMH.oConfig[zone];
 		else
 			MZ_SauvegardeMH.oConfig[zone] = value;
+		if (Object.keys(MZ_SauvegardeMH.oConfig).length == 0)
+			MZ_SauvegardeMH.oConfig = null;
 		if (typeof MH_mountyzilla_json !== 'undefined') {
 			MH_mountyzilla_json = MZ_SauvegardeMH.oConfig;
 			if (!no_save) MZ_SauvegardeMH.saveIntoMH();
