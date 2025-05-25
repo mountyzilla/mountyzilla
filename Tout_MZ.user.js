@@ -13690,6 +13690,8 @@ function do_vue() {
 	}
 }
 
+if (typeof MH_mountyzilla_json === "undefined") var MH_mountyzilla_json = {};
+
 class MZ_cVueJSON {
 	// class en syntaxe ECMA. Un peu de modernité, que diable !
 	// classe "abstraite" dont héritent les classes spécifiques pour les monstres, trolls, etc.
