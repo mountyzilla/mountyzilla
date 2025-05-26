@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.64
+// @version     1.6.65
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -13689,8 +13689,6 @@ function do_vue() {
 			<br>Si quelque chose manque, le signaler <a href="https://www.mountyhall.com/Forum/display_topic_threads.php?ThreadID=2809627#2809627" target="_blank">sur le forum</a>   `);
 	}
 }
-
-if (typeof MH_mountyzilla_json === "undefined") var MH_mountyzilla_json = {};
 
 class MZ_cVueJSON {
 	// class en syntaxe ECMA. Un peu de modernité, que diable !
