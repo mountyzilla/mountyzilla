@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.65
+// @version     1.6.66
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.63';
+var MZ_latest = '1.6.66';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -14765,7 +14765,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		let tReq = [];
 		let nbReq = 0;
 		let nbMax = 500;
-		if (!bFull && MH_mountyzilla_json && MH_mountyzilla_json.general) {
+		if (!bFull && (typeof MH_mountyzilla_json != 'undefined') && MH_mountyzilla_json && MH_mountyzilla_json.general) {
 			nbMax = MH_mountyzilla_json.general.maxRecupCdM;
 			if (nbMax == undefined) nbMax = 500;
 		}
