@@ -404,11 +404,11 @@ class CellObject {
 
 const style = document.createElement('style');
 style.appendChild(document.createTextNode(`
-.mz-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block;}
-.mz-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block;}
+.mz-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
+.mz-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
 .mz-grid-view-cell { padding: 0 0.5rem 0 0.5rem; }
 .mz-grid-view-border { display: block; font-weight: bold; text-align: center;}
-.mz-grid-view-border-left { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
+.mz-grid-view-border-left { translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
 .mz-grid-view-border-right { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(90deg); top: 50%; left: 50%;}
 .mz-grid-view-here { display: block; font-weight: bold;}
 .mz-grid-view-troll { display: block; }
