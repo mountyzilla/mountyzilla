@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.66
+// @version     1.6.67
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.66';
+var MZ_latest = '1.6.67';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -9325,7 +9325,10 @@ function saveAll() {
 		saveLinks();
 		refreshLinks();
 
-		MZ_setOrRemoveValue('VUEEXT', document.getElementById('vueext').value);
+		// Roule : supprimé, à enlever
+		//MZ_setOrRemoveValue('VUEEXT', document.getElementById('vueext').value);
+
+		MZ_setOrRemoveValue(`${numTroll}.HIDEVUEEXTERN`, !document.getElementById('hidevueextern').checked);
 
 		// gath: inutilisé, à supprimer ?
 		// let maxcdm = parseInt(document.getElementById('maxcdm').value);
@@ -9596,24 +9599,8 @@ function insertOptionTable(insertPt) {
 	tbody = appendSubTable(td);
 
 	tr = appendTr(tbody);
-	td = appendTdText(tr, 'Vue externe : ');
-	let select = document.createElement('select');
-	select.id = 'vueext';
-	td.appendChild(select);
-	let listeVues2D = [
-		'---',
-		'Bricol\' Vue',
-		'Vue du CCM',
-		'Vue Gloumfs 2D',
-		'Vue Gloumfs 3D',
-		'Grouky Vue!'
-	];
-	for (let i = 0; i < listeVues2D.length; i++) {
-		appendOption(select, listeVues2D[i], listeVues2D[i]);
-	}
-	if (MY_getValue('VUEEXT')) {
-		select.value = MY_getValue('VUEEXT');
-	}
+	td = appendTd(tr);
+	appendCheckBoxBlock(td, 'hidevueextern', 'Utiliser la vue externe', MY_getValue(`${numTroll}.HIDEVUEEXTERN`) != 'true');
 
 	tr = appendTr(tbody);
 	td = appendTd(tr);
@@ -11911,6 +11898,10 @@ class MZ_cVueExterne {
 		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueExterne.set2DViewSystem`);
 		// Initialise le système de vue 2D
 		try {
+			if (MY_getValue(`${numTroll}.HIDEVUEEXTERN`)) {
+				logMZ('vue externe désactivée');
+				return;
+			}
 			// Recherche du point d'insertion
 			let center = document.getElementById('MHTitreH2');
 			if (!center) {
@@ -11920,9 +11911,11 @@ class MZ_cVueExterne {
 
 			// Récupération de la dernière vue utilisée
 			let vueext = MY_getValue('VUEEXT');
-			if (!vueext || !MZ_cVueExterne.vue2Ddata[vueext]) {
-				// pas de vue par défaut
-				debugMZ('vue externe: désactivée');
+			// vue par défaut (celle que Roule préfère ;)
+			if (!vueext) vueext = "Bricol' Vue";
+			// protection contre mauvaise valeur (ne devrait pas arriver)
+			if (!MZ_cVueExterne.vue2Ddata[vueext]) {
+				logMZ(`vue externe non valide: ${vueext}`);
 				return;
 			}
 
@@ -13685,8 +13678,6 @@ function do_vue() {
 			<br>Si quelque chose manque dans la nouvelle vue, le signaler <a href="https://www.mountyhall.com/Forum/display_topic_threads.php?ThreadID=2809627#2809627" target="_blank">sur le forum</a>   `);
 	} else {
 		MZ_cVueJSON.initGlobal();	// inclut SCIZ et SameXYN
-		avertissement(`MZ et SCIZ sont intégrés dans cette nouvelle vue   
-			<br>Si quelque chose manque, le signaler <a href="https://www.mountyhall.com/Forum/display_topic_threads.php?ThreadID=2809627#2809627" target="_blank">sur le forum</a>   `);
 	}
 }
 
@@ -13935,7 +13926,19 @@ class MZ_cVueJSON {
 			}
 		}
 		if (this.indxTdDist === undefined) { logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Dist'); return; }
-		if (isDesktopView() && this.indxTdAction === undefined) { logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Action'); return; }
+		if (isDesktopView() && this.indxTdAction === undefined) {
+			logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Action');
+			if (this.nomBase == 'monstres') {
+				avertissement(`[MZ] Pas d'enrichissement de la vue car la case «  Menu d'actions contextuelles » du formulaire de limitation de la vue n'est pas cochée  `);
+				let fHide = function() {document.getElementsByName('avertissement')[0].style.display = 'none';};
+				let fShow = function() {document.getElementsByName('avertissement')[0].style.display = 'block';};
+				setTimeout(fHide, 500);
+				setTimeout(fShow, 1000);
+				setTimeout(fHide, 1500);
+				setTimeout(fShow, 2000);
+			}
+			return;
+		}
 		if (this.indxTdRef === undefined) { logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Ref'); return; }
 		if (this.indxTdNom === undefined) { logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Nom'); return; }
 		if (this.indxTdX === undefined) { logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne X'); return; }
