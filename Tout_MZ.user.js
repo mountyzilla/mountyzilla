@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.68
+// @version     1.6.69
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.68';
+var MZ_latest = '1.6.69';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6627,13 +6627,6 @@ function scizPrettyPrintPortal(p) {
 // quand l'ancienne vue aura disparu, ce sera bien de découper en 6 partie par bloc et faire autant que callback que nécessaire
 function do_scizEnhanceView() {
 	scizGlobal.treasures = [];
-	let vue2 = false;	// to be deleted quand on n'aura plus que la nouvelle vue
-
-	if (document.body.id != 'p_mavue') {
-		//logMZ('SCIZ sur la nouvelle vue : pas encore fait');
-		//return;
-		vue2 = true;
-	}
 
 	// Ensure we have a JWT setup for the current user
 	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
@@ -6646,24 +6639,9 @@ function do_scizEnhanceView() {
 	scizAddCSS();
 
 	let oPosTroll;
-	if (vue2) {
-		// Retrieve position and view
-		MZ_cVueJSON.loadPosTroll();
-		oPosTroll = MZ_cVueJSON.oPosTroll;
-	} else {
-		// Retrieve position and view
-		oPosTroll = {};
-		let pos = document.body.innerHTML.match(/X\s*=\s*(-?\d+)\s*,\s*Y\s*=\s*(-?\d+)\s*,\s*N\s*=\s*(-?\d+)/);
-		if (!pos) {
-			warnMZ('do_scizEnhanceView_log, pas de pos, on arrête le traitement SCIZ');
-			return;
-		}
-		oPosTroll.x = parseInt(pos[1]);
-		oPosTroll.y = parseInt(pos[2]);
-		oPosTroll.n = parseInt(pos[3]);
-		oPosTroll.vueH = parseInt(document.body.innerHTML.match(/(\d+)\s*cases?\s*horizontalement/)[1]);
-		oPosTroll.vueV = parseInt(document.body.innerHTML.match(/(\d+)\s*verticalement/)[1]);
-	}
+	// Retrieve position and view
+	MZ_cVueJSON.loadPosTroll();
+	oPosTroll = MZ_cVueJSON.oPosTroll;
 	//console.log('do_scizEnhanceView_log oPosTroll=' + JSON.stringify(oPosTroll));
 
 	/* SCIZ View - TROLLS */
@@ -6673,30 +6651,15 @@ function do_scizEnhanceView() {
 	let xPathTroll;
 	if (cbx !== '0') {
 		// Retrieve trolls
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
-				scizGlobal.trolls.push({
-					id: oLigne.id,
-					name: oLigne.eltTdNom.innerHTML,
-					sciz_desc: null,
-					nodeNom: oLigne.eltTdNom,
-					displayed: false,
-					caracs: null,
-				});
-			}
-		} else {
-			xPathTrollQuery = "//*/table[@id='VueTROLL']/tbody/tr";
-			xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
-			while (xPathTroll = xPathTrolls.iterateNext()) {
-				if (xPathTroll.children[2]) scizGlobal.trolls.push({
-					id: parseInt(xPathTroll.children[2].innerHTML),
-					name: xPathTroll.children[3].innerHTML,
-					sciz_desc: null,
-					nodeNom: xPathTroll.children[3],
-					displayed: false,
-					caracs: null,
-				});
-			}
+		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			scizGlobal.trolls.push({
+				id: oLigne.id,
+				name: oLigne.eltTdNom.innerHTML,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+				displayed: false,
+				caracs: null,
+			});
 		}
 
 		// Call SCIZ
@@ -6729,7 +6692,7 @@ function do_scizEnhanceView() {
 							found = true;
 							break;
 						}
-						if ((!found) && vue2) {
+						if (!found) {
 							// ajout de ligne dans le bloc Trolls
 							//if (t.id==68481 && numTroll==91305) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60;}	// test Roule'
 							//logMZ(`SCIZ Ajout Trõll ${JSON.stringify(t)}`);
@@ -6740,52 +6703,6 @@ function do_scizEnhanceView() {
 									id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), nodeNom: oLigne.eltTdNom, displayed: false, caracs: t.caracs
 								});
 							}
-						}
-						if ((!found) && !vue2) {
-							// Special case of itself
-							let is_self = false;
-							if (parseInt(numTroll) === t.id) {
-								is_self = true;
-								t.pos_x = oPosTroll.x;
-								t.pos_y = oPosTroll.y;
-								t.pos_n = oPosTroll.n;
-								// Don't display the user itself if he does not want to
-								cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_USER`);
-								if (cbx === '0') {
-									return;
-								}
-							}
-							// Find the right index
-							let distance = Math.max(Math.abs(t.pos_x - oPosTroll.x), Math.abs(t.pos_y - oPosTroll.y), Math.abs(t.pos_n - oPosTroll.n));
-							xPathTrolls = document.evaluate(xPathTrollQuery, document, null, 0, null);
-							while (xPathTroll = xPathTrolls.iterateNext()) {
-								if (is_self) {
-									break;
-								}
-								if (parseInt(xPathTroll.children[0].innerHTML) > distance) {
-									break;
-								}
-							}
-							// Create the troll
-							let template = document.createElement('template');
-							let html_nom = `<a href="javascript:PVT(${t.id})" class="troll">${t.nom}</a>`;
-							if (!is_self) {
-								html_nom = `${html_nom} (HORS VUE)`;
-							}
-							let html_guilde = `<a href="javascript:PVG(${t.guilde_id},750,550)" class="mh_links">${t.guilde_nom}</a>`;
-							template.innerHTML = `<tr class="mh_tdpage"><td>${distance}</td><td></td><td>${t.id}</td><td title="">${html_nom}</td><td>${html_guilde}</td><td>${t.niv}</td><td>${t.race}</td><td>${t.pos_x}</td><td>${t.pos_y}</td><td>${t.pos_n}</td></tr>`;
-							let troll = template.content.firstChild;
-							// Add the troll
-							scizGlobal.trolls.push({
-								id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), nodeNom: troll.children[3], displayed: false, caracs: t.caracs
-							});
-							if (xPathTroll !== null) {
-								xPathTroll.parentNode.insertBefore(troll, xPathTroll);
-							} else {
-								document.evaluate("//*/table[@id='VueTROLL']/tbody", document, null, 0, null).iterateNext().appendChild(troll);
-							}
-							//console.log(`MZ do_scizEnhanceView_log set tr_trolls[${nbTrolls+1}] `);
-							tr_trolls[++nbTrolls] = troll;
 						}
 					});
 				} catch (exc) {
@@ -6802,49 +6719,18 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve treasures - Au 25/04/2025, ça ne fonctionne pas, le serveur SCIZ renvoi de l'HTML (contenu vide) et pas du JSON
 		let ids = [];
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oTresors.objets) {
-				let oTres = {
-					id: oLigne.id,
-					type: oLigne.nom,
-					sciz_desc: null,
-					buried: oLigne.nom.includes('Enterré'),
-					nodeNom: oLigne.eltTdNom,
-				};
-				scizGlobal.treasures.push(oTres);
-				ids.push(oLigne.id);
-				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
-					break;
-				}
-			}
-		} else {
-			let xPathTreasureQuery = "//*/table[@id='VueTRESOR']/tbody/tr";
-			let xPathTreasures = document.evaluate(xPathTreasureQuery, document, null, 0, null);
-			let xPathTreasure;
-			while (xPathTreasure = xPathTreasures.iterateNext()) {
-				let xPathRef = document.evaluate("//td[@class='ref']", xPathTreasure, null, 0, null).iterateNext();
-				let xPathNom = document.evaluate("//td[@class='nom']", xPathTreasure, null, 0, null).iterateNext();
-				let oTres = {
-					id: parseInt(xPathRef.innerHTML),
-					type: xPathNom.innerHTML,
-					sciz_desc: null,
-					buried: xPathNom.innerHTML.includes('Enterré'),
-					nodeNom: xPathTreasure.children[3],
-				};
-				if (oTres.id === null || oTres.id == 0 || isNaN(oTres.id)) {
-					logMZ("do_scizEnhanceView_log recup des trésors, échec de l'analyse"
-						+ "\n" + xPathTreasure.children[0].innerHTML
-						+ "\n" + xPathTreasure.children[1].innerHTML
-						+ "\n" + xPathTreasure.children[2].innerHTML
-						+ "\n" + xPathTreasure.children[3].innerHTML
-					);
-					continue;
-				}
-				scizGlobal.treasures.push(oTres);
-				ids.push(oTres.id);
-				if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
-					break;
-				}
+		for (let oLigne of MZ_cVueJSON.oTresors.objets) {
+			let oTres = {
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				buried: oLigne.nom.includes('Enterré'),
+				nodeNom: oLigne.eltTdNom,
+			};
+			scizGlobal.treasures.push(oTres);
+			ids.push(oLigne.id);
+			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
+				break;
 			}
 		}
 
@@ -6900,35 +6786,17 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve mushrooms
 		let ids = [];
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oChampignons.objets) {
-				let oChampi = {
-					id: oLigne.id,
-					type: oLigne.nom,
-					sciz_desc: null,
-					nodeNom: oLigne.eltTdNom,
-				};
-				scizGlobal.mushrooms.push(oChampi);
-				ids.push(oLigne.id);
-				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
-					break;
-				}
-			}
-		} else {
-			let xPathMushroomQuery = "//*/table[@id='VueCHAMPIGNON']/tbody/tr";
-			let xPathMushrooms = document.evaluate(xPathMushroomQuery, document, null, 0, null);
-			let xPathMushroom;
-			while (xPathMushroom = xPathMushrooms.iterateNext()) {
-				scizGlobal.mushrooms.push({
-					id: parseInt(xPathMushroom.children[2].innerHTML),
-					type: xPathMushroom.children[3].innerHTML,
-					sciz_desc: null,
-					nodeNom: xPathMushroom.children[3],
-				});
-				ids.push(xPathMushroom.children[2].innerHTML);
-				if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
-					break;
-				}
+		for (let oLigne of MZ_cVueJSON.oChampignons.objets) {
+			let oChampi = {
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			};
+			scizGlobal.mushrooms.push(oChampi);
+			ids.push(oLigne.id);
+			if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
+				break;
 			}
 		}
 
@@ -6978,52 +6846,22 @@ function do_scizEnhanceView() {
 		let mobs = [];
 		let iMonster = 0;
 		scizGlobal.monsters = [];
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
-				let mob = oLigne.nom.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
-				if (!mob) {
-					logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse pour " + oLigne.nom);
-					continue;
-				}
-				scizGlobal.monsters.push({
-					id: oLigne.id,
-					name: mob[1],
-					age: mob[2],
-					sciz_desc: null,
-					icon: null,
-					nodeNom: oLigne.eltTdNom,
-					indx: iMonster++,
-				});
-				mobs.push({ name: mob[1], age: mob[2] });
+		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
+			let mob = oLigne.nom.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
+			if (!mob) {
+				logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse pour " + oLigne.nom);
+				continue;
 			}
-		} else {
-			let xPathMonsterQuery = "//*/table[@id='VueMONSTRE']/tbody/tr";
-			let xPathMonsters = document.evaluate(xPathMonsterQuery, document, null, 0, null);
-			let xPathMonster;
-			while (xPathMonster = xPathMonsters.iterateNext()) {
-				let mob = xPathMonster.children[4].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
-				if (!mob) mob = xPathMonster.children[3].innerHTML.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);	// cas smartphone
-				if (!mob) {
-					logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse"
-						+ "\n" + xPathMonster.children[0].innerHTML
-						+ "\n" + xPathMonster.children[1].innerHTML
-						+ "\n" + xPathMonster.children[2].innerHTML
-						+ "\n" + xPathMonster.children[3].innerHTML
-						+ "\n" + xPathMonster.children[4].innerHTML
-					);
-					continue;
-				}
-				scizGlobal.monsters.push({
-					id: parseInt(xPathMonster.children[2].innerHTML),
-					name: mob[1],
-					age: mob[2],
-					sciz_desc: null,
-					icon: null,
-					nodeNom: xPathMonster.children[4],
-					indx: iMonster++,
-				});
-				mobs.push({ name: mob[1], age: mob[2] });
-			}
+			scizGlobal.monsters.push({
+				id: oLigne.id,
+				name: mob[1],
+				age: mob[2],
+				sciz_desc: null,
+				icon: null,
+				nodeNom: oLigne.eltTdNom,
+				indx: iMonster++,
+			});
+			mobs.push({ name: mob[1], age: mob[2] });
 		}
 		debugMZ(`SCIZ nb mob=${mobs.length}`);
 
@@ -7046,11 +6884,7 @@ function do_scizEnhanceView() {
 					scizGlobal.monsters.forEach((m) => {
 						if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
 							let icon = scizCreateHoverable('15', m, do_scizBestiaire);
-							if (vue2) {
-								m.nodeNom.appendChild(icon);
-							} else {
-								m.nodeNom.appendChild(icon);
-							}
+							m.nodeNom.appendChild(icon);
 							debugMZ(`SCIZ trouvé ${m.name} ${m.age}`);
 						} else {
 							debugMZ(`SCIZ pas trouvé ${m.name} ${m.age}`);
@@ -7071,36 +6905,17 @@ function do_scizEnhanceView() {
 		let xPathPlaceQuery;
 		let xPathPlaces;
 		let xPathPlace;
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oLieux.objets) {
-				let trap = oLigne.eltTdNom.innerHTML.match(/Piège\s+à\s+/);
-				if (trap === null) continue;
-				scizGlobal.traps.push({
-					id: oLigne.id,
-					type: oLigne.nom,
-					hidden: oLigne.nom.includes('Caché'),
-					sciz_desc: null,
-					nodeNom: oLigne.eltTdNom,
-				});
-				//ids.push(oLigne.id);	// ne sert à rien
-			}
-		} else {
-			xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-			xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
-			while (xPathPlace = xPathPlaces.iterateNext()) {
-				let trap = xPathPlace.children[3].innerHTML.match(/Piège\s+à\s+/);
-				if (trap === null) {
-					continue;
-				}
-				scizGlobal.traps.push({
-					id: parseInt(xPathPlace.children[2].innerHTML),
-					type: xPathPlace.children[3].innerHTML,
-					hidden: xPathPlace.children[3].innerHTML.includes('Caché'),
-					sciz_desc: null,
-					node: xPathPlace.children[3],
-				});
-				ids.push(xPathPlace.children[2].innerHTML);
-			}
+		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+			let trap = oLigne.eltTdNom.innerHTML.match(/Piège\s+à\s+/);
+			if (trap === null) continue;
+			scizGlobal.traps.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				hidden: oLigne.nom.includes('Caché'),
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			});
+			//ids.push(oLigne.id);	// ne sert à rien
 		}
 
 		// Call SCIZ
@@ -7131,36 +6946,12 @@ function do_scizEnhanceView() {
 								break;
 							}
 						}
-						if ((vue2 && !found)) {
+						if (!found) {
 							//logMZ(`Il y a un piège ${JSON.stringify(t)}`);
 							let oLigne = MZ_cLigneLieu.addLigne(t.id, `Piège à ${t.type}`, t.pos_x, t.pos_y, t.pos_n);
 							scizGlobal.traps.push({
 								id: t.id, type: `Piège à ${t.type}`, hidden: true, sciz_desc: scizPrettyPrintTrap(t), node: oLigne.eltTr, nodeNom: oLigne.eltTdNom,
 							});
-						}
-						if (((!vue2) && !found)) {
-							// Find the right index
-							let distance = Math.max(Math.abs(t.pos_x - oPosTroll.x), Math.abs(t.pos_y - oPosTroll.y), Math.abs(t.pos_n - oPosTroll.n));
-							xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
-							while (xPathPlace = xPathPlaces.iterateNext()) {
-								if (parseInt(xPathPlace.children[0].innerHTML) > distance) {
-									break;
-								}
-							}
-							// Create the trap
-							let template = document.createElement('template');
-							template.innerHTML = `<tr class="mh_tdpage"><td>${distance}</td><td></td><td>${t.id}</td><td>Piège à ${t.type
-								}</td><td>${t.pos_x}</td><td>${t.pos_y}</td><td>${t.pos_n}</td></tr>`;
-							let trap = template.content.firstChild;
-							// Add the hidden trap
-							scizGlobal.traps.push({
-								id: t.id, type: `Piège à ${t.type}`, hidden: true, sciz_desc: scizPrettyPrintTrap(t), node: trap
-							});
-							if (xPathPlace !== null) {
-								xPathPlace.parentNode.insertBefore(trap, xPathPlace);
-							} else {
-								document.evaluate("//*/table[@id='VueLIEU']/tbody", document, null, 0, null).iterateNext().appendChild(trap);
-							}
 						}
 					});
 				} catch (exc) {
@@ -7177,35 +6968,16 @@ function do_scizEnhanceView() {
 	if (cbx !== '0') {
 		// Retrieve portals
 		let ids = [];
-		if (vue2) {
-			for (let oLigne of MZ_cVueJSON.oLieux.objets) {
-				let portal = oLigne.nom.match(/Portail/);
-				if (portal === null) continue;
-				scizGlobal.portals.push({
-					id: oLigne.id,
-					type: oLigne.nom,
-					sciz_desc: null,
-					nodeNom: oLigne.eltTdNom,
-				});
-				ids.push(oLigne.id.toString());	// le serveur SCIZ n'accepte que des ids sous forme de chaine. Va savoir pourquoi
-			}
-		} else {
-			let xPathPlaceQuery = "//*/table[@id='VueLIEU']/tbody/tr";
-			let xPathPlaces = document.evaluate(xPathPlaceQuery, document, null, 0, null);
-			let xPathPlace;
-			while (xPathPlace = xPathPlaces.iterateNext()) {
-				let portal = xPathPlace.children[3].innerHTML.match(/Portail/);
-				if (portal === null) {
-					continue;
-				}
-				scizGlobal.portals.push({
-					id: parseInt(xPathPlace.children[2].innerHTML),
-					type: xPathPlace.children[3].innerHTML,
-					sciz_desc: null,
-					nodeNom: xPathPlace.children[3],
-				});
-				ids.push(xPathPlace.children[2].innerHTML);
-			}
+		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+			let portal = oLigne.nom.match(/Portail/);
+			if (portal === null) continue;
+			scizGlobal.portals.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			});
+			ids.push(oLigne.id.toString());	// le serveur SCIZ n'accepte que des ids sous forme de chaine. Va savoir pourquoi
 		}
 
 		// Call SCIZ
