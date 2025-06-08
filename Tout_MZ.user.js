@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.67
+// @version     1.6.68
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.67';
+var MZ_latest = '1.6.68';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -7570,7 +7570,7 @@ function saveMission(num, obEtape, trace) {
 	}
 	MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 	//debugMission réactiver le if (trace)
-	//if (trace) 
+	//if (trace)
 		logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
 }
 
@@ -12070,171 +12070,6 @@ function toggleTableauInfos(firstRun) {
 	}
 }
 
-/* [functions] Filtres */
-function prepareFiltrage(ref, width) {
-	if (!isDesktopView()) {
-		return false; // gath: skip si version mobile
-	}
-	// = Initialise le filtre 'ref'
-	let tdTitre;
-	try {
-		tdTitre = document.getElementById(`vue_toggle_selector_${ref.toLowerCase()}`).parentNode;
-	} catch (exc) {
-		warnMZ(`[prepareFiltrage] Référence filtrage ${ref} non trouvée`, exc);
-		return false;
-	}
-	if (width) {
-		tdTitre.width = `${width}px`;
-	}
-	// Ajout du tr de Filtrage (masqué)
-	let tbody = tdTitre.parentNode.parentNode;
-	let tr = appendTr(tbody, 'mh_tdpage');
-	tr.style.display = 'none';
-	tr.id = `trFiltre${ref}`;
-	let td = appendTd(tr);
-	td.colSpan = 5;
-	// Ajout du bouton de gestion de Filtrage
-	let tdBtn = insertAfterTd(tdTitre);
-	tdBtn.id = `tdInsert${ref}`;
-	let btn = appendButton(tdBtn, 'Filtrer');
-	btn.id = `btnFiltre${ref}`;
-	btn.onclick = function () {
-		debutFiltrage(ref);
-	};
-	return td;
-}
-
-function debutFiltrage(ref) {
-	// = Handler de début de filtrage (filtre 'ref')
-	let e = document.getElementById(`trFiltre${ref}`);
-	if (e) {
-		e.style.display = '';
-	}
-	let btn = document.getElementById(`btnFiltre${ref}`);
-	if (btn) {
-		btn.value = 'Annuler Filtre';
-		btn.onclick = function () {
-			finFiltrage(ref);
-		};
-	}
-}
-
-function finFiltrage(ref) {
-	// = Handler de fin de filtrage (filtre 'ref')
-	/* On réassigne le bouton 'Filtrer' */
-	document.getElementById(`trFiltre${ref}`).style.display = 'none';
-	let btn = document.getElementById(`btnFiltre${ref}`);
-	btn.value = 'Filtrer';
-	btn.onclick = function () {
-		debutFiltrage(ref);
-	};
-
-	/* Réinitialisation filtres */
-	document.getElementById(`str${ref}`).value = '';
-	switch (ref) {
-		case 'Monstres':
-			document.getElementById('nivMinMonstres').value = 0;
-			document.getElementById('nivMaxMonstres').value = 0;
-			document.getElementById('FamilleMonstres').value = 0;
-			break;
-		case 'Trolls':
-			document.getElementById('strGuildes').value = '';
-	}
-
-	/* Nettoyage (=lance le filtre) */
-	// Ici this = MZ.global = sandBox de travail de MZ
-	// Roule 11/03/2016, ne fonctionne plus, il faut traiter les cas
-	// this['filtre'+ref]();
-	switch (ref) {
-		case 'Monstres':
-			filtreMonstres();
-			break;
-		case 'Trolls':
-			filtreTrolls();
-			break;
-		case 'Tresors':
-			filtreTresors();
-			break;
-		case 'Lieux':
-			filtreLieux();
-			break;
-		default:
-			logMZ(`cas incongru dans finFiltrage : ${ref}`);
-			break;
-	}
-}
-
-function ajoutFiltreStr(td, nomBouton, id, onClick) {
-	let bouton = appendButton(td, nomBouton, onClick);
-	appendText(td, '\u00a0');
-	let textbox = appendTextbox(td, 'text', id, 15, 30);
-	textbox.onkeypress = function (event) {
-		try {
-			if (event.keyCode == 13) {
-				event.preventDefault();
-				bouton.click();
-			}
-		} catch (exc) {
-			avertissement(`Une erreur est survenue (ajoutFiltreStr)`, null, null, exc);
-		}
-	};
-}
-
-function ajoutFiltreMenu(tr, id, onChange, liste) {
-	let select = document.createElement('select');
-	select.id = id;
-	select.onchange = onChange;
-	appendOption(select, 0, 'Aucun');
-	if (liste == undefined) {
-		for (let i = 1; i <= 60; i++) {
-			appendOption(select, i, i);
-		}
-	} else {
-		liste.forEach((f) => {
-			appendOption(select, f, f);
-		});
-	}
-	tr.appendChild(select);
-	return select;
-}
-
-function ajoutDesFiltres() {
-	/* Monstres */
-	let td = prepareFiltrage('Monstres', 150);
-	if (td) {
-		ajoutFiltreStr(td, 'Nom du monstre:', 'strMonstres', filtreMonstres);
-		appendText(td, '\u00a0\u00a0\u00a0');
-		appendText(td, 'Niveau Min: ');
-		comboBoxNiveauMin = ajoutFiltreMenu(td, 'nivMinMonstres', filtreMonstres);
-		appendText(td, '\u00a0');
-		appendText(td, 'Niveau Max: ');
-		comboBoxNiveauMax = ajoutFiltreMenu(td, 'nivMaxMonstres', filtreMonstres);
-		appendText(td, '\u00a0');
-		appendText(td, 'Famille: ');
-		comboBoxFamille = ajoutFiltreMenu(td, 'FamilleMonstres', filtreMonstres, ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant']);
-	}
-
-	/* Trõlls */
-	td = prepareFiltrage('Trolls', 70);
-	if (td) {
-		ajoutFiltreStr(td, 'Nom du trõll:', 'strTrolls', filtreTrolls);
-		appendText(td, '\u00a0\u00a0\u00a0');
-		ajoutFiltreStr(td, 'Nom de guilde:', 'strGuildes', filtreTrolls);
-	}
-
-	/* Trésors */
-	td = prepareFiltrage('Tresors', 75);
-	if (td) {
-		ajoutFiltreStr(td, 'Nom du trésor:', 'strTresors', filtreTresors);
-	}
-
-	/* Lieux */
-	td = prepareFiltrage('Lieux', 70);
-	if (td) {
-		ajoutFiltreStr(td, 'Nom du lieu:', 'strLieux', filtreLieux);
-	}
-}
-
 /** x~x Fonctions Monstres --------------------------------------------- */
 
 function MZ_insertStyleNth(eStyle, newCol, newStyle, maxCol) {	// DOMElement du style, numéro de colonne insérée, Style supplémentaire, nombre max de col (pas grave si c'est beaucoup plus grand)
@@ -14101,37 +13936,24 @@ class MZ_cVueJSON {
 		//this.eltParamFiltreRestr.id = `dlo_${this.nomBase}`
 		if (this.cLigneClass.nomsFiltres) {
 			let imgDone = false;
-			let imgRestrDone = false;
 			for (let nomfiltre in this.cLigneClass.nomsFiltres) {
 				let oNom = this.cLigneClass.nomsFiltres[nomfiltre];
 				let chk;
-				if (oNom.restr) {
-					if (!imgRestrDone) {
-						let img = document.createElement('img');
-						img.style.padding = '0px 5px 5px 5px';
-						img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAEFJREFUOI1jYBgFjLgkWBgY/iPz/+BRi6ERXTM+cbwKiBXDcC66GBZ5fpgYEx7f4AMfMUQo8gIxCnCJUz8aRyAAAK6PHU00uNpOAAAAAElFTkSuQmCC';
-						this.eltParamFiltreRestr.appendChild(img);
-						imgRestrDone = true;
-						imgRestrDone = true;
-					}
-					chk = appendCheckBoxSpan(this.eltParamFiltreRestr, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
-				} else {
-					if (!imgDone) {
-						let img = document.createElement('img');
-						img.style.padding = '0px 5px 5px 5px';
-						img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBmaWxsPSIjMDAwMDAwIiB3aWR0aD0iMTZweCIgaGVpZ2h0PSIxNnB4IiB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTSAzLjcxODc1IDIuMjgxMjUgTCAyLjI4MTI1IDMuNzE4NzUgTCA4LjUgOS45MDYyNSBMIDE5LjU5Mzc1IDIxIEwgMjEuNSAyMi45Mzc1IEwgMjguMjgxMjUgMjkuNzE4NzUgTCAyOS43MTg3NSAyOC4yODEyNSBMIDIzLjUgMjIuMDYyNSBDIDI3LjczNDM3NSAxOS45NjQ4NDQgMzAuNTc0MjE5IDE2Ljg1MTU2MyAzMC43NSAxNi42NTYyNSBMIDMxLjM0Mzc1IDE2IEwgMzAuNzUgMTUuMzQzNzUgQyAzMC40ODA0NjkgMTUuMDQyOTY5IDI0LjA4NTkzOCA4IDE2IDggQyAxNC4wNDI5NjkgOCAxMi4xOTUzMTMgOC40Mjk2ODggMTAuNSA5LjA2MjUgWiBNIDE2IDEwIEMgMTguMTUyMzQ0IDEwIDIwLjE4NzUgMTAuNjA1NDY5IDIyIDExLjQzNzUgQyAyMi42NDQ1MzEgMTIuNTE1NjI1IDIzIDEzLjczNDM3NSAyMyAxNSBDIDIzIDE2LjgxNjQwNiAyMi4yOTY4NzUgMTguNDc2NTYzIDIxLjE1NjI1IDE5LjcxODc1IEwgMTguMzEyNSAxNi44NzUgQyAxOC43MzA0NjkgMTYuMzYzMjgxIDE5IDE1LjcxNDg0NCAxOSAxNSBDIDE5IDEzLjM0Mzc1IDE3LjY1NjI1IDEyIDE2IDEyIEMgMTUuMjg1MTU2IDEyIDE0LjYzNjcxOSAxMi4yNjk1MzEgMTQuMTI1IDEyLjY4NzUgTCAxMi4wOTM3NSAxMC42NTYyNSBDIDEzLjMzNTkzOCAxMC4yNzM0MzggMTQuNjM2NzE5IDEwIDE2IDEwIFogTSA2LjY4NzUgMTAuOTA2MjUgQyAzLjQ4MDQ2OSAxMi44Nzg5MDYgMS4zOTg0MzggMTUuMTc1NzgxIDEuMjUgMTUuMzQzNzUgTCAwLjY1NjI1IDE2IEwgMS4yNSAxNi42NTYyNSBDIDEuNTA3ODEzIDE2Ljk0NTMxMyA3LjQyOTY4OCAyMy40MjU3ODEgMTUuMDYyNSAyMy45Mzc1IEMgMTUuMzcxMDk0IDIzLjk2ODc1IDE1LjY4MzU5NCAyNCAxNiAyNCBDIDE2LjMxNjQwNiAyNCAxNi42Mjg5MDYgMjMuOTY4NzUgMTYuOTM3NSAyMy45Mzc1IEMgMTcuNzYxNzE5IDIzLjg4MjgxMyAxOC41NjY0MDYgMjMuNzczNDM4IDE5LjM0Mzc1IDIzLjU5Mzc1IEwgMTcuNTYyNSAyMS44MTI1IEMgMTcuMDU0Njg4IDIxLjkyOTY4OCAxNi41MzkwNjMgMjIgMTYgMjIgQyAxMi4xNDA2MjUgMjIgOSAxOC44NTkzNzUgOSAxNSBDIDkgMTQuNDY4NzUgOS4wNzAzMTMgMTMuOTQ5MjE5IDkuMTg3NSAxMy40Mzc1IFogTSA3LjI1IDEyLjkzNzUgQyA3LjA4OTg0NCAxMy42MTMyODEgNyAxNC4zMDA3ODEgNyAxNSBDIDcgMTYuNzM4MjgxIDcuNDg4MjgxIDE4LjMzOTg0NCA4LjM0Mzc1IDE5LjcxODc1IEMgNi4wNTQ2ODggMTguNDA2MjUgNC4zMDQ2ODggMTYuODY3MTg4IDMuNDA2MjUgMTYgQyA0LjE1MjM0NCAxNS4yNzczNDQgNS40OTYwOTQgMTQuMDc4MTI1IDcuMjUgMTIuOTM3NSBaIE0gMjQuNzUgMTIuOTM3NSBDIDI2LjUwMzkwNiAxNC4wNzgxMjUgMjcuODQzNzUgMTUuMjc3MzQ0IDI4LjU5Mzc1IDE2IEMgMjcuNjk1MzEzIDE2Ljg2NzE4OCAyNS45MTc5NjkgMTguNDM3NSAyMy42MjUgMTkuNzUgQyAyNC40ODQzNzUgMTguMzcxMDk0IDI1IDE2LjczODI4MSAyNSAxNSBDIDI1IDE0LjMwMDc4MSAyNC45MTAxNTYgMTMuNjA5Mzc1IDI0Ljc1IDEyLjkzNzUgWiIvPjwvc3ZnPg==';
-						this.eltParamFiltreCache.appendChild(img);
-						imgDone = true;
-					}
-					chk = appendCheckBoxSpan(this.eltParamFiltreCache, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+				if (!imgDone) {
+					let img = document.createElement('img');
+					img.style.padding = '0px 5px 5px 5px';
+					img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBmaWxsPSIjMDAwMDAwIiB3aWR0aD0iMTZweCIgaGVpZ2h0PSIxNnB4IiB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTSAzLjcxODc1IDIuMjgxMjUgTCAyLjI4MTI1IDMuNzE4NzUgTCA4LjUgOS45MDYyNSBMIDE5LjU5Mzc1IDIxIEwgMjEuNSAyMi45Mzc1IEwgMjguMjgxMjUgMjkuNzE4NzUgTCAyOS43MTg3NSAyOC4yODEyNSBMIDIzLjUgMjIuMDYyNSBDIDI3LjczNDM3NSAxOS45NjQ4NDQgMzAuNTc0MjE5IDE2Ljg1MTU2MyAzMC43NSAxNi42NTYyNSBMIDMxLjM0Mzc1IDE2IEwgMzAuNzUgMTUuMzQzNzUgQyAzMC40ODA0NjkgMTUuMDQyOTY5IDI0LjA4NTkzOCA4IDE2IDggQyAxNC4wNDI5NjkgOCAxMi4xOTUzMTMgOC40Mjk2ODggMTAuNSA5LjA2MjUgWiBNIDE2IDEwIEMgMTguMTUyMzQ0IDEwIDIwLjE4NzUgMTAuNjA1NDY5IDIyIDExLjQzNzUgQyAyMi42NDQ1MzEgMTIuNTE1NjI1IDIzIDEzLjczNDM3NSAyMyAxNSBDIDIzIDE2LjgxNjQwNiAyMi4yOTY4NzUgMTguNDc2NTYzIDIxLjE1NjI1IDE5LjcxODc1IEwgMTguMzEyNSAxNi44NzUgQyAxOC43MzA0NjkgMTYuMzYzMjgxIDE5IDE1LjcxNDg0NCAxOSAxNSBDIDE5IDEzLjM0Mzc1IDE3LjY1NjI1IDEyIDE2IDEyIEMgMTUuMjg1MTU2IDEyIDE0LjYzNjcxOSAxMi4yNjk1MzEgMTQuMTI1IDEyLjY4NzUgTCAxMi4wOTM3NSAxMC42NTYyNSBDIDEzLjMzNTkzOCAxMC4yNzM0MzggMTQuNjM2NzE5IDEwIDE2IDEwIFogTSA2LjY4NzUgMTAuOTA2MjUgQyAzLjQ4MDQ2OSAxMi44Nzg5MDYgMS4zOTg0MzggMTUuMTc1NzgxIDEuMjUgMTUuMzQzNzUgTCAwLjY1NjI1IDE2IEwgMS4yNSAxNi42NTYyNSBDIDEuNTA3ODEzIDE2Ljk0NTMxMyA3LjQyOTY4OCAyMy40MjU3ODEgMTUuMDYyNSAyMy45Mzc1IEMgMTUuMzcxMDk0IDIzLjk2ODc1IDE1LjY4MzU5NCAyNCAxNiAyNCBDIDE2LjMxNjQwNiAyNCAxNi42Mjg5MDYgMjMuOTY4NzUgMTYuOTM3NSAyMy45Mzc1IEMgMTcuNzYxNzE5IDIzLjg4MjgxMyAxOC41NjY0MDYgMjMuNzczNDM4IDE5LjM0Mzc1IDIzLjU5Mzc1IEwgMTcuNTYyNSAyMS44MTI1IEMgMTcuMDU0Njg4IDIxLjkyOTY4OCAxNi41MzkwNjMgMjIgMTYgMjIgQyAxMi4xNDA2MjUgMjIgOSAxOC44NTkzNzUgOSAxNSBDIDkgMTQuNDY4NzUgOS4wNzAzMTMgMTMuOTQ5MjE5IDkuMTg3NSAxMy40Mzc1IFogTSA3LjI1IDEyLjkzNzUgQyA3LjA4OTg0NCAxMy42MTMyODEgNyAxNC4zMDA3ODEgNyAxNSBDIDcgMTYuNzM4MjgxIDcuNDg4MjgxIDE4LjMzOTg0NCA4LjM0Mzc1IDE5LjcxODc1IEMgNi4wNTQ2ODggMTguNDA2MjUgNC4zMDQ2ODggMTYuODY3MTg4IDMuNDA2MjUgMTYgQyA0LjE1MjM0NCAxNS4yNzczNDQgNS40OTYwOTQgMTQuMDc4MTI1IDcuMjUgMTIuOTM3NSBaIE0gMjQuNzUgMTIuOTM3NSBDIDI2LjUwMzkwNiAxNC4wNzgxMjUgMjcuODQzNzUgMTUuMjc3MzQ0IDI4LjU5Mzc1IDE2IEMgMjcuNjk1MzEzIDE2Ljg2NzE4OCAyNS45MTc5NjkgMTguNDM3NSAyMy42MjUgMTkuNzUgQyAyNC40ODQzNzUgMTguMzcxMDk0IDI1IDE2LjczODI4MSAyNSAxNSBDIDI1IDE0LjMwMDc4MSAyNC45MTAxNTYgMTMuNjA5Mzc1IDI0Ljc1IDEyLjkzNzUgWiIvPjwvc3ZnPg==';
+					this.eltParamFiltreCache.appendChild(img);
+					imgDone = true;
 				}
+				chk = appendCheckBoxSpan(this.eltParamFiltreCache, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
 				if (oNom.infobulle) chk.parentNode.title = oNom.infobulle;
 				if (oConfig[nomfiltre]) chk.checked = true;
 			}
 		}
 
 		// ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
-		let btn2 = appendButton(this.eltParamFiltreRestr, 'Nom du ' + this.nomBase.substring(0, this.nomBase.length-1) + ':');
+		let btn2 = appendButton(this.eltParamFiltreRestr, 'Afficher le ' + this.nomBase.substring(0, this.nomBase.length-1) + ':');
 		btn2.style.marginRight = '3px';
 		//this.eltParamFiltreRestr.appendChild(btn2);
 
@@ -14203,7 +14025,7 @@ class MZ_cVueJSON {
 
 		// save
 		if (!noSave) {
-			if (oConfig.empty) 
+			if (oConfig.empty)
 				MZ_SauvegardeMH.setZone(this.nomFiltre, undefined);
 			else
 				MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
@@ -14298,8 +14120,7 @@ class MZ_cLigneVue {
 		if (id) input.id = id;
 		input.type = 'number';
 		input.onchange = onChange;
-		if (length) input.size = length;
-		else input.size = 3;
+		input.style.width = "40px";
 		if (value) input.value = value;
 		parent.appendChild(input);
 		return input;
@@ -14441,7 +14262,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		gowapA: {libelle: 'Les Gowaps Apprivoisés'},
 		gowapS: {libelle: 'Les Gowaps Sauvages'},
 		engage: {libelle: 'Les Engagés', infobulle: 'Les monstres ayant au moins un Trõll sur la même case'},
-		nonmis: {libelle: 'Autres que mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active", restr: true},
+		nonmis: {libelle: 'Hors mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active"},
 	};
 	static listeFamille = ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant'];
 	static listeFamilleAvecTrema = ['Animal', 'Insecte', 'Démon', 'Humanoïde', 'Monstre', 'Mort-Vivant'];
@@ -14584,12 +14405,11 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			, oConfig.famille);
 		comboBoxFamille.style.marginRight = '5px';
 		comboBoxFamille.style.marginLeft = '3px';
-		let btn2 = appendButton(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'Nom du monstre:');
+		let btn2 = appendButton(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'Cacher le monstre:');
 		btn2.style.marginRight = '3px';
 		let textboxNom = appendTextbox(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'text', 'MZ_cacheMonstre', 15, 30, oConfig.nomCache);
 		textboxNom.onchange = MZ_cLigneMonstre.modifFiltre;
 		textboxNom.style.marginRight = '5px';
-		textboxNom.style.marginLeft = '10px';
 	}
 
 	static modifFiltre() {
@@ -15043,7 +14863,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						//mess = mess + (mess ? '\n\n' : '');
 						//mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
 						oMonstre.eltTdNom.appendChild(createImage(
-							`${URL_MZimg}mission.png`, 
+							`${URL_MZimg}mission.png`,
 							`Mission ${num} :\n${oMission.libelle}`));
 						oMonstre.cibleMission = true;
 					} else if (mobMissionPeutEtre !== undefined) {
@@ -15054,7 +14874,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
 						*/
 						oMonstre.eltTdNom.appendChild(createImage(
-							`${URL_MZimg}missionX.png`, 
+							`${URL_MZimg}missionX.png`,
 							`Mission ${num} :\n${oMission.libelle}\n${mobMissionPeutEtre}`));
 						oMonstre.cibleMission = true;
 					}
@@ -15321,7 +15141,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		let btnGuilde = appendButton(div2, 'Nom de la guilde:');
 		btnGuilde.style.marginRight = '3px';
 
-		let txtboxGuilde = appendTextbox(div2, 'text', 'MZ_GuileTroll', 15, 30);
+		let txtboxGuilde = appendTextbox(div2, 'text', 'MZ_GuildeTroll', 15, 30);
 		txtboxGuilde.onchange = MZ_cLigneTroll.modifFiltre;
 		txtboxGuilde.style.marginRight = '5px';
 		if (oConfig.guilde) txtboxGuilde.value = oConfig.guilde;
@@ -15376,7 +15196,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			oConfig.nom = nom;
 			bSomething = true;
 		} else delete oConfig.nom;
-		let guilde = document.getElementById('MZ_GuileTroll').value.trim();
+		let guilde = document.getElementById('MZ_GuildeTroll').value.trim();
 		if (guilde != '') {
 			oConfig.guilde = guilde;
 			bSomething = true;
@@ -15424,7 +15244,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	static razFiltre() {
-		document.getElementById('MZ_GuileTroll').value = '';
+		document.getElementById('MZ_GuildeTroll').value = '';
 	}
 
 	static processPX() {
