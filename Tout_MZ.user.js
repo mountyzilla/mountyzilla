@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.70
+// @version     1.6.71
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.70';
+var MZ_latest = '1.6.71';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6469,13 +6469,13 @@ class MZ_cSCIZ {
 	static portals = [];
 
 	static init() {
-		if (MZ_cSCIZ.initDone) { return; }
+		if (MZ_cSCIZ.initDone) { return this; }
 		MZ_cSCIZ.initDone = true;
 		// Ensure we have a JWT setup for the current user
 		let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
 		if (jwt === null || jwt === undefined || jwt.trim() === '') {
 			debugMZ(`SCIZ pas de jwt`);
-			return;
+			return this;
 		}
 		MZ_cVueJSON.loadPosTroll();
 		MZ_cSCIZ.jwt = jwt;
@@ -6526,6 +6526,7 @@ class MZ_cSCIZ {
 			display: inline;
 		}
 		`);
+		return this;
 	}
 
 	/* utils */
@@ -6575,6 +6576,29 @@ class MZ_cSCIZ {
 
 	/* pretty print */
 
+	static _printEvent(e) {
+		e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, '');  // Delete date
+		e.message = e.message.replace(/\n\s*\n*/, '<details><p style="padding-left: 10px;">');  // cdm compacte
+		e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
+		if (e.message.includes('<details>')) {
+			e.message += '</p><summary><i>Afficher plus d\'informations...</i></summary></details>';
+		}
+		let beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
+		beings.forEach((b) => {
+			if (!b[0] || !b[1]) { return; }
+			b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			if (b[0].toString().length > 6) {
+				// Mob
+				b[1] = b[1].replace(/^une?\s/g, '');
+				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="monstre">\$1</a></b>`);
+			} else {
+				// Troll
+				e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:PVT('${b[0]}')" class="troll">\$1</a></b>`);
+			}
+		});
+		return e;
+	}
+
 	static _printTroll(t) {
 		let res = `<div style="float:right;margin-right:10px;${isDesktopView() ? '' : 'font-size:smaller;'}">`;
 		// Life progress bar
@@ -6619,7 +6643,132 @@ class MZ_cSCIZ {
 		return res;
 	}
 
+	/* events */
+
+	static _doSwitchEvents() {
+		let bMaskSCIZ = false;
+		MZ_cSCIZ.events.forEach((e) => {
+			let currentType = e.node.children[1].innerHTML;
+			if (currentType === e.type) {
+				e.node.children[1].innerHTML = e.sciz_type !== null ? e.sciz_type : e.type;
+			} else {
+				e.node.children[1].innerHTML = e.type;
+				bMaskSCIZ = true;
+			}
+			let currentDesc = e.node.children[2].innerHTML;
+			e.node.children[2].innerHTML = currentDesc === e.desc ? e.sciz_desc !== null ? e.sciz_desc : e.desc : e.desc;
+		});
+		bMaskSCIZ ? MY_setValue('SCIZ_SHOW_EVENTS', 'no') : MY_removeValue('SCIZ_SHOW_EVENTS');
+	}
+
+	static _overwriteEvents() {
+		// Ensure we have a JWT setup for the current user
+		if (MZ_cSCIZ.jwt == '') return;
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`);
+		if (cbx === '0') return;
+
+		MZ_cSCIZ.events = [];  // reset events
+		let eventTableNode = null;
+
+		// Retrieve being ID
+		let url = new URL(window.location.href);
+		let id = url.searchParams.get('ai_IDPJ');
+		id = !id ? numTroll : id;
+
+		// Check for advanced profil
+		let advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
+		let xPathQuery = advanced ? "//*/table[@id='events']/tbody/tr" : "//*/tr[contains(@class, 'mh_tdpage')]";
+
+		// Retrieve local events
+		let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
+		let xPathEvent;
+		while (xPathEvent = xPathEvents.iterateNext()) {
+			MZ_cSCIZ.events.push({
+				time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
+				type: xPathEvent.children[1].innerHTML,
+				desc: xPathEvent.children[2].innerHTML,
+				sciz_type: null,
+				sciz_desc: null,
+				node: xPathEvent,
+			});
+			if (eventTableNode === null) eventTableNode = xPathEvent.parentNode.parentNode;
+		}
+
+		let startTime = Math.min.apply(Math, MZ_cSCIZ.events.map((e) => { return e.time; })) - MZ_cSCIZ.setup.eventsMaxMatchingInterval;
+		let endTime = Math.max.apply(Math, MZ_cSCIZ.events.map((e) => { return e.time; })) + MZ_cSCIZ.setup.eventsMaxMatchingInterval;
+
+		// Check if events have been found in the page
+		if (MZ_cSCIZ.events.length < 1) {
+			logMZ('ERREUR - MZ/SCIZ - Aucun événement trouvé sur la page...');
+			return;
+		}
+
+		// Call SCIZ
+		let sciz_url = `https://www.sciz.fr/api/hook/events/${id}/${startTime}/${endTime}`;
+		let eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
+		sciz_url = sciz_url + (eventType !== null && eventType !== '' ? `/${eventType.split(' ')[0]}` : ''); // Only the first word used for filtering ("MORT par monstre" => "MORT");
+		FF_XMLHttpRequest({
+			method: 'GET',
+			url: sciz_url,
+			headers: { Authorization: MZ_cSCIZ.jwt },
+			trace: `Appel à SCIZ pour l'entité ${id}`,
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status == 0) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let events = JSON.parse(responseDetails.responseText);
+					if (events.events.length < 1) {
+						// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+						return;
+					}
+					// Read if switch to SCIZ view or not
+					let bViewSCIZ = MY_getValue('SCIZ_SHOW_EVENTS') !== 'no';
+					// Look for events to overwrite (based on timestamps)
+					events.events.forEach((e) => {
+						if (!e.message.includes(id)) return; // Exclude any event we were not looking for...
+						let t = Date.parse(StringToDate(e.time));
+						// Look for the best event matching and not already replaced
+						let i = -1;
+						let lastDelta = Infinity;
+						for (let j = 0; j < MZ_cSCIZ.events.length; j++) {
+							if (MZ_cSCIZ.events[j].sciz_desc !== null) continue;
+							let delta = Math.abs(t - MZ_cSCIZ.events[j].time);
+							if (delta <= MZ_cSCIZ.setup.eventsMaxMatchingInterval && delta < lastDelta) {
+								lastDelta = delta;
+								i = j;
+							}
+						}
+						if (i <= -1) return;
+						// PrettyPrint
+						e = MZ_cSCIZ._printEvent(e);
+						// Store the SCIZ event and icon
+						let div = MZ_cSCIZ._createIcon('25', 'block', e.icon);
+						MZ_cSCIZ.events[i].sciz_type = div.outerHTML;
+						MZ_cSCIZ.events[i].sciz_desc = e.message;
+						// Actual display overwrite
+						MZ_cSCIZ.events[i].node.children[1].setAttribute("valign", "middle");
+						MZ_cSCIZ.events[i].node.children[2].setAttribute("valign", "middle");
+						if (bViewSCIZ) {
+							MZ_cSCIZ.events[i].node.children[1].innerHTML = MZ_cSCIZ.events[i].sciz_type;
+							MZ_cSCIZ.events[i].node.children[2].innerHTML = MZ_cSCIZ.events[i].sciz_desc;
+						}
+					});
+					// Add the switch button
+					if (eventTableNode !== null) {
+						let div = MZ_cSCIZ._createClickable('50', 'block', MZ_cSCIZ._doSwitchEvents);
+						eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
+					}
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+			}
+		});
+	}
+
 	/* view */
+
 	static _doBestiaire() {
 		let iMonster = this.getAttribute('data-monstre');
 		if (iMonster === null || iMonster === undefined) {
@@ -6794,7 +6943,7 @@ class MZ_cSCIZ {
 						//logMZ(`SCIZ Ajout Trõll ${JSON.stringify(t)}`);
 						let oLigne = MZ_cLigneTroll.addLigne(t.id, t.nom, t.pos_x, t.pos_y, t.pos_n, t.guilde_id, t.guilde_nom, t.niv, t.race);
 						if (oLigne) {
-							html_nom = oLigne.eltTdNom.innerHTML;
+							let html_nom = oLigne.eltTdNom.innerHTML;
 							MZ_cSCIZ.trolls.push({
 								id: t.id, name: html_nom, sciz_desc: html_nom + MZ_cSCIZ._printTroll(t), nodeNom: oLigne.eltTdNom, displayed: false, caracs: t.caracs
 							});
@@ -7103,168 +7252,6 @@ class MZ_cSCIZ {
 				MZ_cSCIZ._doSwitchPortals();
 			}
 		});
-	}
-}
-
-/* SCIZ - Events */
-
-function scizPrettyPrintEvent(e) {
-	e.message = e.message.replace(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}\s[0-9]{2}h[0-9]{2}:[0-9]{2}/g, '');  // Delete date
-	e.message = e.message.replace(/\n\s*\n*/, '<details><p style="padding-left: 10px;">');  // cdm compacte
-	e.message = e.message.replace(/\n\s*\n*/g, '<br/>');
-	if (e.message.includes('<details>')) {
-		e.message += '</p><summary><i>Afficher plus d\'informations...</i></summary></details>';
-	}
-	let beings = [[e.att_id, e.att_nom], [e.def_id, e.def_nom], [e.mob_id, e.mob_nom], [e.owner_id, e.owner_nom], [e.troll_id, e.troll_nom]];
-	beings.forEach((b) => {
-		if (!b[0] || !b[1]) { return; }
-		b[1] = b[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		if (b[0].toString().length > 6) {
-			// Mob
-			b[1] = b[1].replace(/^une?\s/g, '');
-			e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="/mountyhall/View/MonsterView.php?ai_IDPJ=${b[0]}" rel="modal:open" class="monstre">\$1</a></b>`);
-		} else {
-			// Troll
-			e.message = e.message.replace(new RegExp(`(${b[1]})`, 'gi'), `<b><a href="javascript:PVT('${b[0]}')" class="troll">\$1</a></b>`);
-		}
-	});
-	return e;
-}
-
-function do_scizOverwriteEvents() {
-	MZ_cSCIZ.events = [];
-	let eventTableNode = null;
-
-	// Ensure we have a JWT setup for the current user
-	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
-	let cbx = MY_getValue(`${numTroll}.SCIZ_CB_EVENTS`);
-	if (jwt === null || jwt === undefined || jwt.trim() === '' || cbx === '0') {
-		return;
-	}
-
-	// Retrieve being ID
-	let url = new URL(window.location.href);
-	let id = url.searchParams.get('ai_IDPJ');
-	id = !id ? numTroll : id;
-
-	// Check for advanced profil
-	let advanced = document.querySelector("[href*='MH_Style_ProfilAvance.css']") !== null;
-	let xPathQuery = advanced ? "//*/table[@id='events']/tbody/tr" : "//*/tr[contains(@class, 'mh_tdpage')]";
-
-	// Retrieve local events
-	let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
-	let xPathEvent;
-	while (xPathEvent = xPathEvents.iterateNext()) {
-		MZ_cSCIZ.events.push({
-			time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
-			type: xPathEvent.children[1].innerHTML,
-			desc: xPathEvent.children[2].innerHTML,
-			sciz_type: null,
-			sciz_desc: null,
-			node: xPathEvent,
-		});
-		if (eventTableNode === null) {
-			eventTableNode = xPathEvent.parentNode.parentNode;
-		}
-	}
-
-	let startTime = Math.min.apply(Math, MZ_cSCIZ.events.map((e) => {
-		return e.time;
-	})) - MZ_cSCIZ.setup.eventsMaxMatchingInterval;
-	let endTime = Math.max.apply(Math, MZ_cSCIZ.events.map((e) => {
-		return e.time;
-	})) + MZ_cSCIZ.setup.eventsMaxMatchingInterval;
-
-	// Check if events have been found in the page
-	if (MZ_cSCIZ.events.length < 1) {
-		logMZ('ERREUR - MZ/SCIZ - Aucun événement trouvé sur la page...');
-		return;
-	}
-
-	// Call SCIZ
-	let sciz_url = `https://www.sciz.fr/api/hook/events/${id}/${startTime}/${endTime}`;
-	let eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
-	sciz_url = sciz_url + (eventType !== null && eventType !== '' ? `/${eventType.split(' ')[0]}` : ''); // Only the first word used for filtering ("MORT par monstre" => "MORT");
-	FF_XMLHttpRequest({
-		method: 'GET',
-		url: sciz_url,
-		headers: { Authorization: jwt },
-		trace: `Appel à SCIZ pour l'entité ${id}`,
-		onload: function (responseDetails) {
-			try {
-				if (responseDetails.status == 0) {
-					logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-					return;
-				}
-				let events = JSON.parse(responseDetails.responseText);
-				if (events.events.length < 1) {
-					// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
-					return;
-				}
-				// Read if switch to SCIZ view or not
-				let bViewSCIZ = MY_getValue('SCIZ_view') !== 'no';
-				// Look for events to overwrite (based on timestamps)
-				events.events.forEach((e) => {
-					if (e.message.includes(id)) { // Exclude any event we were not looking for...
-						let t = Date.parse(StringToDate(e.time));
-						// Look for the best event matching and not already replaced
-						let i = -1;
-						let lastDelta = Infinity;
-						for (let j = 0; j < MZ_cSCIZ.events.length; j++) {
-							if (MZ_cSCIZ.events[j].sciz_desc === null) {
-								let delta = Math.abs(t - MZ_cSCIZ.events[j].time);
-								if (delta <= MZ_cSCIZ.setup.eventsMaxMatchingInterval && delta < lastDelta) {
-									lastDelta = delta;
-									i = j;
-								}
-							}
-						}
-						if (i > -1) {
-							// PrettyPrint
-							e = scizPrettyPrintEvent(e);
-							// Store the SCIZ event and icon
-							let div = MZ_cSCIZ._createIcon('25', 'block', e.icon);
-							MZ_cSCIZ.events[i].sciz_type = div.outerHTML;
-							MZ_cSCIZ.events[i].sciz_desc = e.message;
-							// Actual display overwrite
-							MZ_cSCIZ.events[i].node.children[1].setAttribute("valign", "middle");
-							MZ_cSCIZ.events[i].node.children[2].setAttribute("valign", "middle");
-							if (bViewSCIZ) {
-								MZ_cSCIZ.events[i].node.children[1].innerHTML = MZ_cSCIZ.events[i].sciz_type;
-								MZ_cSCIZ.events[i].node.children[2].innerHTML = MZ_cSCIZ.events[i].sciz_desc;
-							}
-						}
-					}
-				});
-				// Add the switch button
-				if (eventTableNode !== null) {
-					let div = scizCreateClickable('50', 'block', do_scizSwitchEvents);
-					eventTableNode.parentNode.insertBefore(div, eventTableNode.nextSibling);
-				}
-			} catch (exc) {
-				logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-			}
-		}
-	});
-}
-
-function do_scizSwitchEvents() {
-	let bMaskSCIZ = false;
-	MZ_cSCIZ.events.forEach((e) => {
-		let currentType = e.node.children[1].innerHTML;
-		if (currentType === e.type) {
-			e.node.children[1].innerHTML = e.sciz_type !== null ? e.sciz_type : e.type;
-		} else {
-			e.node.children[1].innerHTML = e.type;
-			bMaskSCIZ = true;
-		}
-		let currentDesc = e.node.children[2].innerHTML;
-		e.node.children[2].innerHTML = currentDesc === e.desc ? e.sciz_desc !== null ? e.sciz_desc : e.desc : e.desc;
-	});
-	if (bMaskSCIZ) {
-		MY_setValue('SCIZ_view', 'no');
-	} else {
-		MY_removeValue('SCIZ_view');
 	}
 }
 
@@ -18402,7 +18389,7 @@ try {
 		do_option();
 		// showEssaiCartes();
 	} else if (isPage("View/PJView_Events")) {
-		do_scizOverwriteEvents(); /* SCIZ */
+		MZ_cSCIZ.init()._overwriteEvents()
 	} else if (isPage("View/PJView")) {
 		do_pjview();
 	} else if (isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
@@ -18412,14 +18399,14 @@ try {
 	} else if (isPage("MH_Play/Play_news")) {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
-		do_scizOverwriteEvents(); /* SCIZ */
+		MZ_cSCIZ.init()._overwriteEvents()
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 12 } })) {
 		do_move();
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
 		do_move();
 	} else if (isPage("View/MonsterView")) {
 		do_infomonstre();
-		do_scizOverwriteEvents(); /* SCIZ */
+		MZ_cSCIZ.init()._overwriteEvents()
 	} else if (isPage("MH_Play/Play_e_follo.php")) {
 		do_listegowap();
 	} else if (isPage("MH_Lieux/Lieu_Description.php")) {
