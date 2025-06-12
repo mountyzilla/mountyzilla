@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.69
+// @version     1.6.70
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.69';
+var MZ_latest = '1.6.70';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6452,25 +6452,34 @@ function do_highlightSameXYN() {
 
 /** x~x SCIZ ----------------------------------------------------------- */
 
-var scizSetup = {
-	eventsMaxMatchingInterval: 5000, // Maximum interval (seconds) for matching some events
-	viewMaxEnhancedTreasure: 100, // Maximum number of treasures to enhanced in the view
-	viewMaxEnhancedMushroom: 100 // Maximum number of treasures to enhanced in the view
-};
+class MZ_cSCIZ {
+	static initDone = false;
+	static jwt = '';
+	static setup = {
+		eventsMaxMatchingInterval: 5000, // Maximum interval (seconds) for matching some events
+		viewMaxEnhancedTreasure: 100,    // Maximum number of treasures to enhance in the view
+		viewMaxEnhancedMushroom: 100     // Maximum number of treasures to enhance in the view
+	};
+	static events = [];
+	static trolls = [];
+	static treasures = [];
+	static monsters = [];
+	static traps = [];
+	static mushrooms = [];
+	static portals = [];
 
-var scizGlobal = {
-	events: [],
-	trolls: [],
-	treasures: [],
-	monsters: [],
-	traps: [],
-	mushrooms: [],
-	portals: []
-};
-
-function scizAddCSS() {
-	// SCIZ style
-	addStyleSheet(`
+	static init() {
+		if (MZ_cSCIZ.initDone) { return; }
+		MZ_cSCIZ.initDone = true;
+		// Ensure we have a JWT setup for the current user
+		let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
+		if (jwt === null || jwt === undefined || jwt.trim() === '') {
+			debugMZ(`SCIZ pas de jwt`);
+			return;
+		}
+		MZ_cVueJSON.loadPosTroll();
+		MZ_cSCIZ.jwt = jwt;
+		addStyleSheet(`
 		.sciz-progress-bar-wrapper {
 			width: 75px;
 			margin-right: 5px;
@@ -6517,342 +6526,163 @@ function scizAddCSS() {
 			display: inline;
 		}
 		`);
-}
-
-function scizCreateHoverable(height, monster, callback) {
-	// utilisé seulement pour les monstres : le survol de la souris déclenche l'appel AJAX
-	let div1 = document.createElement('div');
-	div1.className = 'info1';
-	let img = document.createElement('img');
-	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
-	img.alt = 'SCIZ logo';
-	img.style = `height: ${height}px;`;
-	div1.appendChild(img);
-	let div2 = document.createElement('pre');
-	div2.className = 'info2';
-	appendText(div2, 'Demande pas envoyée à SCIZ');
-	div1.appendChild(div2);
-	monster.icon = div1;
-	monster.popup = div2;
-	div1.setAttribute('data-monstre', monster.indx);
-	div1.addEventListener('mouseover', callback, false);
-	return div1;
-}
-
-function scizCreateClickable(height, display, callbackOnClick) {
-	let img = document.createElement('img');
-	img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
-	img.alt = 'SCIZ logo';
-	img.style = `height: ${height}px; cursor: pointer;`;
-	img.onclick = callbackOnClick;
-	let div = document.createElement('div');
-	div.style = `text-align: center;display: ${display}`;
-	div.appendChild(img);
-	return div;
-}
-
-function scizCreateIcon(height, display, icon) {
-	let img = document.createElement('img');
-	img.src = `https://www.sciz.fr/static/${icon}`;
-	img.alt = 'SCIZ icon';
-	img.style = `height: ${height}px;`;
-	let div = document.createElement('div');
-	div.style = `text-align: center;display: ${display}`;
-	div.appendChild(img);
-	return div;
-}
-
-/* SCIZ - View */
-
-function scizPrettyPrintTroll(t) {
-	let res = '<div style="float:right;margin-right:10px">';
-	// Life progress bar
-	let pbPercent = t.pdv !== null && t.pdv_max !== null ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
-	let pbColor = pbPercent === -1 ? '#424242' : pbPercent < 40 ? '#ff5252' : pbPercent < 80 ? '#fb8c00' : '#4caf50';
-	t.pdv_max = t.pdv_max === null ? '?' : t.pdv_max;
-	res = `${res}<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ${pbColor};;width: ${pbPercent}%;"></span></div></div>`;
-	res = `${res}${t.pdv} / ${t.pdv_max}`;
-	res = `${res}<div class="sciz-troll-view-block">DLA ${t.dla}</div>`; // DLA
-	res = `${res}<div class="sciz-troll-view-block"><= ${t.pa} PA</div>`; // PA
-	res = `${res}<div class="sciz-troll-view-block">Fatigue ${`${t.fatigue}`.slice(-3)}</div>`; // Fatigue
-	res = `${res}<div class="sciz-troll-view-block">Conc ${`${t.concentration}`.slice(-2)}%</div>`; // Concentration
-	res = `${res}</div>`;
-	return res;
-}
-
-function scizPrettyPrintTreasure(t) {
-	let res = '';
-	res = res + /* t.type + ' - ' + */ t.nom;
-	if (t.templates) {
-		res = `${res} <b>${t.templates}</b>`;
-	}
-	if (t.mithril) {
-		res = `${res} <b>en Mithril</b>`;
-	}
-	if (t.effet) {
-		res = `${res} (${t.effet})`;
-	}
-	return res;
-}
-
-function scizPrettyPrintTrap(t) {
-	let res = '<span style="color:#990000">';
-	res = `${res}Piège à ${t.type} `;
-	if (t.mm) {
-		res = `${res}(MM ${t.mm}) `;
-	}
-	if (t.creation_datetime) {
-		res = `${res} - ${t.creation_datetime} `;
-	}
-	res = `${res}</span>`;
-	return res;
-}
-
-function scizPrettyPrintMushroom(m) {
-	let res = '';
-	res = res + m.nom;
-	if (m.qualite) {
-		res = `${res} <b>${m.qualite}</b>`;
-	}
-	return res;
-}
-
-function scizPrettyPrintPortal(p) {
-	let res = '';
-	let html_nom = `<a href="javascript:PVT(${p.owner_id})" class="troll">${p.owner_nom}</a>`;
-	res = `${res}Portail de Téléportaion de ${html_nom} vers X = ${p.pos_x_dst} | Y = ${p.pos_y_dst} | N = ${p.pos_n_dst}`;
-	return res;
-}
-
-// quand l'ancienne vue aura disparu, ce sera bien de découper en 6 partie par bloc et faire autant que callback que nécessaire
-function do_scizEnhanceView() {
-	scizGlobal.treasures = [];
-
-	// Ensure we have a JWT setup for the current user
-	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
-	if (jwt === null || jwt === undefined || jwt.trim() === '') {
-		debugMZ(`SCIZ pas de jwt`);
-		return;
 	}
 
-	// Add our CSS
-	scizAddCSS();
+	/* utils */
 
-	let oPosTroll;
-	// Retrieve position and view
-	MZ_cVueJSON.loadPosTroll();
-	oPosTroll = MZ_cVueJSON.oPosTroll;
-	//console.log('do_scizEnhanceView_log oPosTroll=' + JSON.stringify(oPosTroll));
+	static _createHoverable(height, monster, callback) {
+		// utilisé seulement pour les monstres : le survol de la souris déclenche l'appel AJAX
+		let div1 = document.createElement('div');
+		div1.className = 'info1';
+		let img = document.createElement('img');
+		img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
+		img.alt = 'SCIZ logo';
+		img.style = `height: ${height}px;`;
+		div1.appendChild(img);
+		let div2 = document.createElement('pre');
+		div2.className = 'info2';
+		appendText(div2, 'Demande pas envoyée à SCIZ');
+		div1.appendChild(div2);
+		monster.icon = div1;
+		monster.popup = div2;
+		div1.setAttribute('data-monstre', monster.indx);
+		div1.addEventListener('mouseover', callback, false);
+		return div1;
+	}
 
-	/* SCIZ View - TROLLS */
-	let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
-	let xPathTrollQuery;
-	let xPathTrolls;
-	let xPathTroll;
-	if (cbx !== '0') {
-		// Retrieve trolls
-		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
-			scizGlobal.trolls.push({
-				id: oLigne.id,
-				name: oLigne.eltTdNom.innerHTML,
-				sciz_desc: null,
-				nodeNom: oLigne.eltTdNom,
-				displayed: false,
-				caracs: null,
-			});
+	static _createClickable(height, display, callbackOnClick) {
+		let img = document.createElement('img');
+		img.src = 'https://www.sciz.fr/static/sciz-logo-quarter.png';
+		img.alt = 'SCIZ logo';
+		img.style = `height: ${height}px; cursor: pointer;`;
+		img.onclick = callbackOnClick;
+		let div = document.createElement('div');
+		div.style = `text-align: center;display: ${display}`;
+		div.appendChild(img);
+		return div;
+	}
+
+	static _createIcon(height, display, icon) {
+		let img = document.createElement('img');
+		img.src = `https://www.sciz.fr/static/${icon}`;
+		img.alt = 'SCIZ icon';
+		img.style = `height: ${height}px;`;
+		let div = document.createElement('div');
+		div.style = `text-align: center;display: ${display}`;
+		div.appendChild(img);
+		return div;
+	}
+
+	/* pretty print */
+
+	static _printTroll(t) {
+		let res = `<div style="float:right;margin-right:10px;${isDesktopView() ? '' : 'font-size:smaller;'}">`;
+		// Life progress bar
+		let pbPercent = t.pdv !== null && t.pdv_max !== null ? Math.min(100, t.pdv / t.pdv_max * 100) : -1;
+		let pbColor = pbPercent === -1 ? '#424242' : pbPercent < 40 ? '#ff5252' : pbPercent < 80 ? '#fb8c00' : '#4caf50';
+		t.pdv_max = t.pdv_max === null ? '?' : t.pdv_max;
+		res = `${res}<div class="sciz-progress-bar-wrapper"><div class="sciz-progress-bar"><span class="sciz-progress-bar-fill" style="background-color: ${pbColor};;width: ${pbPercent}%;"></span></div></div>`;
+		res = `${res}${t.pdv} / ${t.pdv_max}`;
+		res = `${res}<div class="sciz-troll-view-block">DLA ${t.dla}</div>`; // DLA
+		res = `${res}<div class="sciz-troll-view-block"><= ${t.pa} PA</div>`; // PA
+		res = `${res}<div class="sciz-troll-view-block">Fatigue ${`${t.fatigue}`.slice(-3)}</div>`; // Fatigue
+		res = `${res}<div class="sciz-troll-view-block">Conc ${`${t.concentration}`.slice(-2)}%</div>`; // Concentration
+		res = `${res}</div>`;
+		return res;
+	}
+
+	static _printTreasure(t) {
+		let res = `${t.nom}`;
+		res = t.templates ? `${res} <b>${t.templates}</b>` : res;
+		res = t.mithril ? `${res} <b>en Mithril</b>` : res;
+		res = t.effet ? `${res} (${t.effet})` : res;
+		return res;
+	}
+
+	static _printTrap(t) {
+		let res = '<span style="color:#990000">Piège à ${t.type} ';
+		res = t.mm ? `${res}(MM ${t.mm}) ` : res;
+		res = t.creation_datetime ? `${res} - ${t.creation_datetime} ` : res;
+		res = `${res}</span>`;
+		return res;
+	}
+
+	static _printMushroom(m) {
+		let res = `${m.nom}`;
+		res = m.qualite ? `${res} <b>${m.qualite}</b>` : res;
+		return res;
+	}
+
+	static _printPortal(p) {
+		let html_nom = `<a href="javascript:PVT(${p.owner_id})" class="troll">${p.owner_nom}</a>`;
+		let res = `Portail de Téléportaion de ${html_nom} vers X = ${p.pos_x_dst} | Y = ${p.pos_y_dst} | N = ${p.pos_n_dst}`;
+		return res;
+	}
+
+	/* view */
+	static _doBestiaire() {
+		let iMonster = this.getAttribute('data-monstre');
+		if (iMonster === null || iMonster === undefined) {
+			logMZ('SCIZ _doBestiaire_log, pas de iMonstre');
+			replaceContentByText(this, 'Erreur SCIZ');
+			return;
 		}
-
+		let monster = MZ_cSCIZ.monsters[iMonster];
+		this.removeEventListener('mouseover', MZ_cSCIZ._doBestiaire, false);	// pas 2 fois
+		if (!monster) {
+			logMZ('SCIZ _doBestiaire_log, pas de monstre');
+			replaceContentByText(this, 'Erreur SCIZ');
+			return;
+		}
+		debugMZ(`SCIZ _doBestiaire_log node type monster.popup=${monster.popup.nodeType}`);
+		// Ensure we have a JWT setup for the current user
+		if (MZ_cSCIZ.jwt == '') return;
+		replaceContentByText(monster.popup, 'La chauve-souris va bientôt revenir...');
 		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/hook/trolls';
+		let sciz_url = 'https://www.sciz.fr/api/bestiaire';
 		FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			data: JSON.stringify({ name: monster.name, age: monster.age }),
 			onload: function (responseDetails) {
 				try {
 					if (responseDetails.status !== 200) {
+						replaceContentByText(monster.popup, "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.");
 						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-						return;
 					}
-					let trolls = JSON.parse(responseDetails.responseText);
-					if (trolls.trolls.length < 1) {
-						// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
-						return;
+					monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
+					// Add the tooltip (kind of)
+					if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
+						replaceContentByText(monster.popup, monster.sciz_desc.replace(/Blason.*/, ''));
+						debugMZ(`SCIZ ajout data pour ${monster.name} ${monster.age}
+							${monster.sciz_desc.replace(/Blason.*/, '')}`);
+					} else {
+						replaceContentByText(monster.popup, "Pas d'info sur ce monstre");
 					}
-					// Look for trolls to enhanced
-					let found = false;
-					trolls.trolls.forEach((t) => {
-						for (let oTrollSCIZ of scizGlobal.trolls) {
-							found = false;
-							if (oTrollSCIZ.id !== t.id) continue;
-							// PrettyPrint
-							oTrollSCIZ.sciz_desc = oTrollSCIZ.nodeNom.innerHTML + scizPrettyPrintTroll(t);
-							// Store caracs
-							oTrollSCIZ.caracs = t.caracs;
-							found = true;
-							break;
-						}
-						if (!found) {
-							// ajout de ligne dans le bloc Trolls
-							//if (t.id==68481 && numTroll==91305) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60;}	// test Roule'
-							//logMZ(`SCIZ Ajout Trõll ${JSON.stringify(t)}`);
-							let oLigne = MZ_cLigneTroll.addLigne(t.id, t.nom, t.pos_x, t.pos_y, t.pos_n, t.guilde_id, t.guilde_nom, t.niv, t.race);
-							if (oLigne) {
-								html_nom = oLigne.eltTdNom.innerHTML;
-								scizGlobal.trolls.push({
-									id: t.id, name: html_nom, sciz_desc: html_nom + scizPrettyPrintTroll(t), nodeNom: oLigne.eltTdNom, displayed: false, caracs: t.caracs
-								});
-							}
-						}
-					});
 				} catch (exc) {
 					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
 				}
-				// Do the display overwrite and add the switches
-				do_scizSwitchTrolls();
 			}
 		});
-	}
+	};
 
-	/* SCIZ View - TREASURES */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`);
-	if (cbx !== '0') {
-		// Retrieve treasures - Au 25/04/2025, ça ne fonctionne pas, le serveur SCIZ renvoi de l'HTML (contenu vide) et pas du JSON
-		let ids = [];
-		for (let oLigne of MZ_cVueJSON.oTresors.objets) {
-			let oTres = {
-				id: oLigne.id,
-				type: oLigne.nom,
-				sciz_desc: null,
-				buried: oLigne.nom.includes('Enterré'),
-				nodeNom: oLigne.eltTdNom,
-			};
-			scizGlobal.treasures.push(oTres);
-			ids.push(oLigne.id);
-			if (scizGlobal.treasures.length >= scizSetup.viewMaxEnhancedTreasure) {
-				break;
-			}
-		}
+	static processMonsters() {
+		if (MZ_cSCIZ.jwt == '') return;
 
-		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/hook/treasures';
-		if (ids.length > 0) FF_XMLHttpRequest({
-			method: 'POST',
-			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ ids: ids }),
-			onload: function (responseDetails) {
-				try {
-					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-						return;
-					}
-					let treasures;
-					try {
-						treasures = JSON.parse(responseDetails.responseText);
-					} catch (e) {
-						//logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ trésors en échec', e);
-						return;
-					}
-					if (treasures.treasures.length < 1) {
-						// logMZ('DEBUG - MZ/SCIZ - Aucun trésor trouvé dans la base SCIZ...');
-						return;
-					}
-					// Look for treasures to enhanced
-					treasures.treasures.forEach((t) => {
-						for (let i = 0; i < scizGlobal.treasures.length; i++) {
-							if (scizGlobal.treasures[i].id === t.id) {
-								// PrettyPrint
-								t = scizPrettyPrintTreasure(t);
-								// Store the SCIZ treasure desc
-								scizGlobal.treasures[i].sciz_desc = t;
-								// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
-								scizGlobal.treasures[i].type = scizGlobal.treasures[i].nodeNom.firstChild.textContent;
-								break;
-							}
-						}
-					});
-				} catch (exc) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-				}
-				// Do the display overwrite and add the switches
-				do_scizSwitchTreasures();
-			}
-		});
-	}
-
-	/* SCIZ View - MUSHROOMS */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
-	if (cbx !== '0') {
-		// Retrieve mushrooms
-		let ids = [];
-		for (let oLigne of MZ_cVueJSON.oChampignons.objets) {
-			let oChampi = {
-				id: oLigne.id,
-				type: oLigne.nom,
-				sciz_desc: null,
-				nodeNom: oLigne.eltTdNom,
-			};
-			scizGlobal.mushrooms.push(oChampi);
-			ids.push(oLigne.id);
-			if (scizGlobal.mushrooms.length >= scizSetup.viewMaxEnhancedMushroom) {
-				break;
-			}
-		}
-
-		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
-		FF_XMLHttpRequest({
-			method: 'POST',
-			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ ids: ids }),
-			onload: function (responseDetails) {
-				try {
-					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-						return;
-					}
-					let mushrooms = JSON.parse(responseDetails.responseText);
-					if (mushrooms.mushrooms.length < 1) {
-						// logMZ('DEBUG - MZ/SCIZ - Aucun champignon trouvé dans la base SCIZ...');
-						return;
-					}
-					// Look for mushrooms to enhanced
-					mushrooms.mushrooms.forEach((m) => {
-						for (let i = 0; i < scizGlobal.mushrooms.length; i++) {
-							if (scizGlobal.mushrooms[i].id === m.id) {
-								// PrettyPrint
-								m = scizPrettyPrintMushroom(m);
-								// Store the SCIZ mushroom desc
-								scizGlobal.mushrooms[i].sciz_desc = m;
-								break;
-							}
-						}
-					});
-				} catch (exc) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-				}
-				// Do the display overwrite and add the switches
-				do_scizSwitchMushrooms();
-			}
-		});
-	}
-
-	/* SCIZ View - BESTIAIRE */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`);
-	if (cbx !== '0') {
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_BESTIAIRE`);
+		if (cbx === '0') return;
 		// Retrieve monsters
+		MZ_cSCIZ.monsters = [];  // reset view
 		let mobs = [];
 		let iMonster = 0;
-		scizGlobal.monsters = [];
 		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
 			let mob = oLigne.nom.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
 			if (!mob) {
 				logMZ("do_scizEnhanceView_log recup des monstres, échec de l'analyse pour " + oLigne.nom);
 				continue;
 			}
-			scizGlobal.monsters.push({
+			MZ_cSCIZ.monsters.push({
 				id: oLigne.id,
 				name: mob[1],
 				age: mob[2],
@@ -6867,10 +6697,10 @@ function do_scizEnhanceView() {
 
 		// Check the list against the SCIZ bestiaire
 		let sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
-		FF_XMLHttpRequest({
+		if (mobs.length > 0) FF_XMLHttpRequest({
 			method: 'POST',
 			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
 			data: JSON.stringify({ mobs: mobs }),
 			onload: function (responseDetails) {
 				try {
@@ -6879,11 +6709,11 @@ function do_scizEnhanceView() {
 						return;
 					}
 					mobs = JSON.parse(responseDetails.responseText);
-					debugMZ(`SCIZ retour AJAX nbMob=${mobs.bestiaire.length}, nb global=${scizGlobal.monsters.length}`);
+					debugMZ(`SCIZ retour AJAX nbMob=${mobs.bestiaire.length}, nb global=${MZ_cSCIZ.monsters.length}`);
 					// Add the SCIZ icons
-					scizGlobal.monsters.forEach((m) => {
+					MZ_cSCIZ.monsters.forEach((m) => {
 						if (mobs.bestiaire.includes(`${m.name} ${m.age}`)) {
-							let icon = scizCreateHoverable('15', m, do_scizBestiaire);
+							let icon = MZ_cSCIZ._createHoverable('15', m, MZ_cSCIZ._doBestiaire);
 							m.nodeNom.appendChild(icon);
 							debugMZ(`SCIZ trouvé ${m.name} ${m.age}`);
 						} else {
@@ -6897,130 +6727,10 @@ function do_scizEnhanceView() {
 		});
 	}
 
-	/* SCIZ View - TRAPS */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`);
-	if (cbx !== '0') {
-		// Retrieve traps
-		let ids = [];
-		let xPathPlaceQuery;
-		let xPathPlaces;
-		let xPathPlace;
-		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
-			let trap = oLigne.eltTdNom.innerHTML.match(/Piège\s+à\s+/);
-			if (trap === null) continue;
-			scizGlobal.traps.push({
-				id: oLigne.id,
-				type: oLigne.nom,
-				hidden: oLigne.nom.includes('Caché'),
-				sciz_desc: null,
-				nodeNom: oLigne.eltTdNom,
-			});
-			//ids.push(oLigne.id);	// ne sert à rien
-		}
-
-		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/hook/traps';
-		FF_XMLHttpRequest({
-			method: 'POST',
-			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ pos_x: oPosTroll.x, pos_y: oPosTroll.y, pos_n: oPosTroll.n, view_h: oPosTroll.vueH, view_v: oPosTroll.vueV }),
-			onload: function (responseDetails) {
-				try {
-					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-						return;
-					}
-					let traps = JSON.parse(responseDetails.responseText);
-					//if (numTroll == 91305) traps.traps.push({id:42, pos_x:50, pos_y:-99, pos_n:-74, type:'feu', mm:42, creation_datetime: '2025-04-01 12:12:00'});	// test Roule'
-					if (traps.traps.length < 1) return;
-					// Look for traps to enhanced
-					traps.traps.forEach((t) => {
-						let found = false;
-						for (let i = 0; i < scizGlobal.traps.length; i++) {
-							if (scizGlobal.traps[i].id === t.id) {
-								scizGlobal.traps[i].sciz_desc = scizPrettyPrintTrap(t);
-								// Adapt the sciz type (delete the hidden marker, the do_scizSwitchTraps will handle it)
-								scizGlobal.traps[i].type = scizGlobal.traps[i].nodeNom.firstChild.textContent;
-								found = true;
-								break;
-							}
-						}
-						if (!found) {
-							//logMZ(`Il y a un piège ${JSON.stringify(t)}`);
-							let oLigne = MZ_cLigneLieu.addLigne(t.id, `Piège à ${t.type}`, t.pos_x, t.pos_y, t.pos_n);
-							scizGlobal.traps.push({
-								id: t.id, type: `Piège à ${t.type}`, hidden: true, sciz_desc: scizPrettyPrintTrap(t), node: oLigne.eltTr, nodeNom: oLigne.eltTdNom,
-							});
-						}
-					});
-				} catch (exc) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-				}
-				// Do the display overwrite and add the switches
-				do_scizSwitchTraps();
-			}
-		});
-	}
-
-	/* SCIZ View - PORTALS */
-	cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`);
-	if (cbx !== '0') {
-		// Retrieve portals
-		let ids = [];
-		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
-			let portal = oLigne.nom.match(/Portail/);
-			if (portal === null) continue;
-			scizGlobal.portals.push({
-				id: oLigne.id,
-				type: oLigne.nom,
-				sciz_desc: null,
-				nodeNom: oLigne.eltTdNom,
-			});
-			ids.push(oLigne.id.toString());	// le serveur SCIZ n'accepte que des ids sous forme de chaine. Va savoir pourquoi
-		}
-
-		// Call SCIZ
-		let sciz_url = 'https://www.sciz.fr/api/hook/portals';
-		FF_XMLHttpRequest({
-			method: 'POST',
-			url: sciz_url,
-			headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-			data: JSON.stringify({ ids: ids }),
-			onload: function (responseDetails) {
-				try {
-					if (responseDetails.status !== 200) {
-						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-						return;
-					}
-					let portals = JSON.parse(responseDetails.responseText);
-					if (portals.portals.length < 1) {
-						// logMZ('DEBUG - MZ/SCIZ - Aucun portail trouvé dans la base SCIZ...');
-						return;
-					}
-					// Look for treasures to enhanced
-					portals.portals.forEach((t) => {
-						for (let i = 0; i < scizGlobal.portals.length; i++) {
-							if (scizGlobal.portals[i].id === t.id) {
-								scizGlobal.portals[i].sciz_desc = scizPrettyPrintPortal(t);
-								break;
-							}
-						}
-					});
-				} catch (exc) {
-					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-				}
-				// Do the display overwrite and add the switches
-				do_scizSwitchPortals();
-			}
-		});
-	}
-}
-
-function do_scizSwitchTrolls() {
-	scizGlobal.trolls.forEach((t) => {
-		if (t.sciz_desc !== null) {
-			let icon = scizCreateClickable('15', 'inline', do_scizSwitchTrolls);
+	static _doSwitchTrolls() {
+		MZ_cSCIZ.trolls.forEach((t) => {
+			if (t.sciz_desc === null) return;
+			let icon = MZ_cSCIZ._createClickable('15', 'inline', MZ_cSCIZ._doSwitchTrolls);
 			t.displayed = !t.displayed;
 			// Do the switch
 			if (t.displayed) {
@@ -7033,13 +6743,75 @@ function do_scizSwitchTrolls() {
 			}
 			// Add the SCIZ switcher
 			t.nodeNom.appendChild(icon);
-		}
-	});
-}
+		});
+	}
 
-function do_scizSwitchTreasures() {
-	scizGlobal.treasures.forEach((t) => {
-		if (t.sciz_desc !== null) {
+	static processTrolls() {
+		if (MZ_cSCIZ.jwt == '') return;
+
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
+		if (cbx === '0') return;
+		// Retrieve trolls
+		MZ_cSCIZ.trolls = [];  // reset view
+		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
+			MZ_cSCIZ.trolls.push({
+				id: oLigne.id,
+				name: oLigne.eltTdNom.innerHTML,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+				displayed: false,
+				caracs: null,
+			});
+		}
+
+		// Call SCIZ
+		let sciz_url = 'https://www.sciz.fr/api/hook/trolls';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let trolls = JSON.parse(responseDetails.responseText);
+					if (trolls.trolls.length < 1) {
+						// logMZ('DEBUG - MZ/SCIZ - Aucun événement trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for trolls to enhance
+					trolls.trolls.forEach((t) => {
+						for (let oTrollSCIZ of MZ_cSCIZ.trolls) {
+							if (oTrollSCIZ.id !== t.id) continue;
+							oTrollSCIZ.sciz_desc = oTrollSCIZ.nodeNom.innerHTML + MZ_cSCIZ._printTroll(t);  // PrettyPrint
+							oTrollSCIZ.caracs = t.caracs;  // Store caracs
+							return;  // break foreach
+						}
+						// ajout de ligne dans le bloc Trolls
+						//if (t.id==68481 && numTroll==91305) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60;}	// test Roule'
+						//logMZ(`SCIZ Ajout Trõll ${JSON.stringify(t)}`);
+						let oLigne = MZ_cLigneTroll.addLigne(t.id, t.nom, t.pos_x, t.pos_y, t.pos_n, t.guilde_id, t.guilde_nom, t.niv, t.race);
+						if (oLigne) {
+							html_nom = oLigne.eltTdNom.innerHTML;
+							MZ_cSCIZ.trolls.push({
+								id: t.id, name: html_nom, sciz_desc: html_nom + MZ_cSCIZ._printTroll(t), nodeNom: oLigne.eltTdNom, displayed: false, caracs: t.caracs
+							});
+						}
+					});
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+				// Do the display overwrite and add the switches
+				MZ_cSCIZ._doSwitchTrolls();
+			}
+		});
+	}
+
+	static _doSwitchTreasures() {
+		MZ_cSCIZ.treasures.forEach((t) => {
+			if (t.sciz_desc === null) return;
 			// Do the switch
 			let currentDesc = t.nodeNom.firstChild.textContent;
 			t.nodeNom.innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
@@ -7047,26 +6819,153 @@ function do_scizSwitchTreasures() {
 				t.nodeNom.innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Enterré]" title="Enterré" width="15" height="15">';
 			}
 			// Add the SCIZ switcher
-			t.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTreasures));
-		}
-	});
-}
+			t.nodeNom.appendChild(MZ_cSCIZ._createClickable('15', 'inline', MZ_cSCIZ._doSwitchTreasures));
+		});
+	}
 
-function do_scizSwitchMushrooms() {
-	scizGlobal.mushrooms.forEach((m) => {
-		if (m.sciz_desc !== null) {
+	static processTreasures() {
+		if (MZ_cSCIZ.jwt == '') return;
+
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TREASURES`);
+		if (cbx === '0') return;
+		// Retrieve treasures
+		MZ_cSCIZ.treasures = [];  // reset view
+		let ids = [];
+		for (let oLigne of MZ_cVueJSON.oTresors.objets) {
+			MZ_cSCIZ.treasures.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				buried: oLigne.nom.includes('Enterré'),
+				nodeNom: oLigne.eltTdNom,
+			});
+			ids.push(oLigne.id);
+			if (MZ_cSCIZ.treasures.length >= MZ_cSCIZ.setup.viewMaxEnhancedTreasure) {
+				break;
+			}
+		}
+
+		// Call SCIZ
+		let sciz_url = 'https://www.sciz.fr/api/hook/treasures';
+		if (ids.length > 0) FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			data: JSON.stringify({ ids: ids }),
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let treasures;
+					try {
+						treasures = JSON.parse(responseDetails.responseText);
+					} catch (e) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ trésors en échec', e);
+						return;
+					}
+					if (treasures.treasures.length < 1) {
+						// logMZ('DEBUG - MZ/SCIZ - Aucun trésor trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for treasures to enhance
+					treasures.treasures.forEach((t) => {
+						for (let i = 0; i < MZ_cSCIZ.treasures.length; i++) {
+							if (MZ_cSCIZ.treasures[i].id === t.id) {
+								// PrettyPrint
+								t = MZ_cSCIZ._printTreasure(t);
+								// Store the SCIZ treasure desc
+								MZ_cSCIZ.treasures[i].sciz_desc = t;
+								// Adapt the sciz type (delete the buried marker, the do_scizSwitchTreasures will handle it)
+								MZ_cSCIZ.treasures[i].type = MZ_cSCIZ.treasures[i].nodeNom.firstChild.textContent;
+								return;  // break foreach
+							}
+						}
+					});
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+				// Do the display overwrite and add the switches
+				MZ_cSCIZ._doSwitchTreasures();
+			}
+		});
+	}
+
+	static _doSwitchMushrooms() {
+		MZ_cSCIZ.mushrooms.forEach((m) => {
+			if (m.sciz_desc === null) return;
 			// Do the switch
 			let currentDesc = m.nodeNom.firstChild.textContent;
 			m.nodeNom.innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 			// Add the SCIZ switcher
-			m.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchMushrooms));
-		}
-	});
-}
+			m.nodeNom.appendChild(MZ_cSCIZ._createClickable('15', 'inline', MZ_cSCIZ._doSwitchMushrooms));
+		});
+	}
 
-function do_scizSwitchTraps() {
-	scizGlobal.traps.forEach((t) => {
-		if (t.sciz_desc !== null) {
+	static processMushrooms() {
+		if (MZ_cSCIZ.jwt == '') return;
+
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_MUSHROOMS`);
+		if (cbx === '0') return;
+		// Retrieve mushrooms
+		MZ_cSCIZ.mushrooms = [];  // reset view
+		let ids = [];
+		for (let oLigne of MZ_cVueJSON.oChampignons.objets) {
+			MZ_cSCIZ.mushrooms.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			});
+			ids.push(oLigne.id);
+			if (MZ_cSCIZ.mushrooms.length >= MZ_cSCIZ.setup.viewMaxEnhancedMushroom) {
+				break;
+			}
+		}
+
+		// Call SCIZ
+		let sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
+		if (ids.length > 0) FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			data: JSON.stringify({ ids: ids }),
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let mushrooms = JSON.parse(responseDetails.responseText);
+					if (mushrooms.mushrooms.length < 1) {
+						// logMZ('DEBUG - MZ/SCIZ - Aucun champignon trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for mushrooms to enhance
+					mushrooms.mushrooms.forEach((m) => {
+						for (let i = 0; i < MZ_cSCIZ.mushrooms.length; i++) {
+							if (MZ_cSCIZ.mushrooms[i].id === m.id) {
+								// PrettyPrint
+								m = MZ_cSCIZ._printMushroom(m);
+								// Store the SCIZ mushroom desc
+								MZ_cSCIZ.mushrooms[i].sciz_desc = m;
+								return;  // break foreach
+							}
+						}
+					});
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+				// Do the display overwrite and add the switches
+				MZ_cSCIZ._doSwitchMushrooms();
+			}
+		});
+	}
+
+	static _doSwitchTraps() {
+		MZ_cSCIZ.traps.forEach((t) => {
+			if (t.sciz_desc === null) return;
 			// Do the switch
 			let currentDesc = t.nodeNom.firstChild.textContent;
 			t.nodeNom.innerHTML = currentDesc === t.type ? t.sciz_desc !== null ? t.sciz_desc : t.type : t.type;
@@ -7074,73 +6973,138 @@ function do_scizSwitchTraps() {
 				t.nodeNom.innerHTML += '<img src="/mountyhall/Images/hidden.png" alt="[Caché]" title="Caché" width="15" height="15">';
 			}
 			// Add the SCIZ switcher
-			t.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchTraps));
-		}
-	});
-}
+			t.nodeNom.appendChild(MZ_cSCIZ._createClickable('15', 'inline', MZ_cSCIZ._doSwitchTraps));
+		});
+	}
 
-function do_scizSwitchPortals() {
-	scizGlobal.portals.forEach((m) => {
-		if (m.sciz_desc !== null) {
+	static processTraps() {
+		if (MZ_cSCIZ.jwt == '') return;
+
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TRAPS`);
+		if (cbx === '0') return;
+		// Retrieve traps
+		MZ_cSCIZ.traps = [];  // reset view
+		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+			let trap = oLigne.eltTdNom.innerHTML.match(/Piège\s+à\s+/);
+			if (trap === null) continue;
+			MZ_cSCIZ.traps.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				hidden: oLigne.nom.includes('Caché'),
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			});
+		}
+
+		// Call SCIZ
+		let oPosTroll = MZ_cVueJSON.oPosTroll;
+		let sciz_url = 'https://www.sciz.fr/api/hook/traps';
+		FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			data: JSON.stringify({ pos_x: oPosTroll.x, pos_y: oPosTroll.y, pos_n: oPosTroll.n, view_h: oPosTroll.vueH, view_v: oPosTroll.vueV }),
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let traps = JSON.parse(responseDetails.responseText);
+					//if (numTroll == 91305) traps.traps.push({id:42, pos_x:50, pos_y:-99, pos_n:-74, type:'feu', mm:42, creation_datetime: '2025-04-01 12:12:00'});	// test Roule'
+					if (traps.traps.length < 1) return;
+					// Look for traps to enhance
+					traps.traps.forEach((t) => {
+						for (let i = 0; i < MZ_cSCIZ.traps.length; i++) {
+							if (MZ_cSCIZ.traps[i].id === t.id) {
+								MZ_cSCIZ.traps[i].sciz_desc = MZ_cSCIZ._printTrap(t);
+								// Adapt the sciz type (delete the hidden marker, the do_scizSwitchTraps will handle it)
+								MZ_cSCIZ.traps[i].type = MZ_cSCIZ.traps[i].nodeNom.firstChild.textContent;
+								return;  // break foreach
+							}
+						}
+						//logMZ(`Il y a un piège ${JSON.stringify(t)}`);
+						let oLigne = MZ_cLigneLieu.addLigne(t.id, `Piège à ${t.type}`, t.pos_x, t.pos_y, t.pos_n);
+						MZ_cSCIZ.traps.push({
+							id: t.id, type: `Piège à ${t.type}`, hidden: true, sciz_desc: MZ_cSCIZ._printTrap(t), node: oLigne.eltTr, nodeNom: oLigne.eltTdNom,
+						});
+					});
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+				// Do the display overwrite and add the switches
+				MZ_cSCIZ._doSwitchTraps();
+			}
+		});
+	}
+
+	static _doSwitchPortals() {
+		MZ_cSCIZ.portals.forEach((m) => {
+			if (m.sciz_desc === null) return;
 			// Do the switch
 			let currentDesc = m.nodeNom.firstChild.textContent;
 			m.nodeNom.innerHTML = currentDesc === m.type ? m.sciz_desc !== null ? m.sciz_desc : m.type : m.type;
 			// Add the SCIZ switcher
-			m.nodeNom.appendChild(scizCreateClickable('15', 'inline', do_scizSwitchPortals));
-		}
-	});
-}
+			m.nodeNom.appendChild(MZ_cSCIZ._createClickable('15', 'inline', MZ_cSCIZ._doSwitchPortals));
+		});
+	}
 
-function do_scizBestiaire() {
-	let iMonster = this.getAttribute('data-monstre');
-	if (iMonster === null || iMonster === undefined) {
-		logMZ('SCIZ do_scizBestiaire_log, pas de iMonstre');
-		replaceContentByText(this, 'Erreur SCIZ');
-		return;
-	}
-	let monster = scizGlobal.monsters[iMonster];
-	this.removeEventListener('mouseover', do_scizBestiaire, false);	// pas 2 fois
-	if (!monster) {
-		logMZ('SCIZ do_scizBestiaire_log, pas de monstre');
-		replaceContentByText(this, 'Erreur SCIZ');
-		return;
-	}
-	debugMZ(`SCIZ do_scizBestiaire_log node type monster.popup=${monster.popup.nodeType}`);
-	// Ensure we have a JWT setup for the current user
-	let jwt = MY_getValue(`${numTroll}.SCIZJWT`);
-	if (jwt === null || jwt === undefined || jwt.trim() === '') {
-		replaceContentByText(monster.popup, 'Pas de JWT, voir Options/Pack Graphique');
-		return;
-	}
-	replaceContentByText(monster.popup, 'La chauve-souris va bientôt revenir...');
-	// Call SCIZ
-	let sciz_url = 'https://www.sciz.fr/api/bestiaire';
-	FF_XMLHttpRequest({
-		method: 'POST',
-		url: sciz_url,
-		headers: { 'Authorization': jwt, 'Content-Type': 'application/json' },
-		data: JSON.stringify({ name: monster.name, age: monster.age }),
-		onload: function (responseDetails) {
-			try {
-				if (responseDetails.status !== 200) {
-					replaceContentByText(monster.popup, "Problème de JWT SCIZ, désactiver l'option Mountyzilla si non utilisée.");
-					logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
-				}
-				monster.sciz_desc = JSON.parse(responseDetails.responseText).bestiaire;
-				// Add the tooltip (kind of)
-				if (monster.sciz_desc !== null && monster.sciz_desc !== undefined) {
-					replaceContentByText(monster.popup, monster.sciz_desc.replace(/Blason.*/, ''));
-					debugMZ(`SCIZ ajout data pour ${monster.name} ${monster.age}
-						${monster.sciz_desc.replace(/Blason.*/, '')}`);
-				} else {
-					replaceContentByText(monster.popup, "Pas d'info sur ce monstre");
-				}
-			} catch (exc) {
-				logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
-			}
+	static processPortals() {
+		if (MZ_cSCIZ.jwt == '') return;
+
+		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_PORTALS`);
+		if (cbx === '0') return;
+		// Retrieve portals
+		MZ_cSCIZ.portals = [];  // reset view
+		let ids = [];
+		for (let oLigne of MZ_cVueJSON.oLieux.objets) {
+			let portal = oLigne.nom.match(/Portail/);
+			if (portal === null) continue;
+			MZ_cSCIZ.portals.push({
+				id: oLigne.id,
+				type: oLigne.nom,
+				sciz_desc: null,
+				nodeNom: oLigne.eltTdNom,
+			});
+			ids.push(oLigne.id.toString());	// le serveur SCIZ n'accepte que des ids sous forme de chaine. Va savoir pourquoi
 		}
-	});
-};
+
+		// Call SCIZ
+		let sciz_url = 'https://www.sciz.fr/api/hook/portals';
+		if (ids.length > 0) FF_XMLHttpRequest({
+			method: 'POST',
+			url: sciz_url,
+			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
+			data: JSON.stringify({ ids: ids }),
+			onload: function (responseDetails) {
+				try {
+					if (responseDetails.status !== 200) {
+						logMZ('ERREUR - MZ/SCIZ - Appel à SCIZ en échec...', responseDetails);
+						return;
+					}
+					let portals = JSON.parse(responseDetails.responseText);
+					if (portals.portals.length < 1) {
+						// logMZ('DEBUG - MZ/SCIZ - Aucun portail trouvé dans la base SCIZ...');
+						return;
+					}
+					// Look for treasures to enhance
+					portals.portals.forEach((t) => {
+						for (let i = 0; i < MZ_cSCIZ.portals.length; i++) {
+							if (MZ_cSCIZ.portals[i].id === t.id) {
+								MZ_cSCIZ.portals[i].sciz_desc = MZ_cSCIZ._printPortal(t);
+								return;  // break foreach
+							}
+						}
+					});
+				} catch (exc) {
+					logMZ('ERREUR - MZ/SCIZ - Stacktrace', exc);
+				}
+				// Do the display overwrite and add the switches
+				MZ_cSCIZ._doSwitchPortals();
+			}
+		});
+	}
+}
 
 /* SCIZ - Events */
 
@@ -7168,7 +7132,7 @@ function scizPrettyPrintEvent(e) {
 }
 
 function do_scizOverwriteEvents() {
-	scizGlobal.events = [];
+	MZ_cSCIZ.events = [];
 	let eventTableNode = null;
 
 	// Ensure we have a JWT setup for the current user
@@ -7191,7 +7155,7 @@ function do_scizOverwriteEvents() {
 	let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 	let xPathEvent;
 	while (xPathEvent = xPathEvents.iterateNext()) {
-		scizGlobal.events.push({
+		MZ_cSCIZ.events.push({
 			time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
 			type: xPathEvent.children[1].innerHTML,
 			desc: xPathEvent.children[2].innerHTML,
@@ -7204,15 +7168,15 @@ function do_scizOverwriteEvents() {
 		}
 	}
 
-	let startTime = Math.min.apply(Math, scizGlobal.events.map((e) => {
+	let startTime = Math.min.apply(Math, MZ_cSCIZ.events.map((e) => {
 		return e.time;
-	})) - scizSetup.eventsMaxMatchingInterval;
-	let endTime = Math.max.apply(Math, scizGlobal.events.map((e) => {
+	})) - MZ_cSCIZ.setup.eventsMaxMatchingInterval;
+	let endTime = Math.max.apply(Math, MZ_cSCIZ.events.map((e) => {
 		return e.time;
-	})) + scizSetup.eventsMaxMatchingInterval;
+	})) + MZ_cSCIZ.setup.eventsMaxMatchingInterval;
 
 	// Check if events have been found in the page
-	if (scizGlobal.events.length < 1) {
+	if (MZ_cSCIZ.events.length < 1) {
 		logMZ('ERREUR - MZ/SCIZ - Aucun événement trouvé sur la page...');
 		return;
 	}
@@ -7246,10 +7210,10 @@ function do_scizOverwriteEvents() {
 						// Look for the best event matching and not already replaced
 						let i = -1;
 						let lastDelta = Infinity;
-						for (let j = 0; j < scizGlobal.events.length; j++) {
-							if (scizGlobal.events[j].sciz_desc === null) {
-								let delta = Math.abs(t - scizGlobal.events[j].time);
-								if (delta <= scizSetup.eventsMaxMatchingInterval && delta < lastDelta) {
+						for (let j = 0; j < MZ_cSCIZ.events.length; j++) {
+							if (MZ_cSCIZ.events[j].sciz_desc === null) {
+								let delta = Math.abs(t - MZ_cSCIZ.events[j].time);
+								if (delta <= MZ_cSCIZ.setup.eventsMaxMatchingInterval && delta < lastDelta) {
 									lastDelta = delta;
 									i = j;
 								}
@@ -7259,15 +7223,15 @@ function do_scizOverwriteEvents() {
 							// PrettyPrint
 							e = scizPrettyPrintEvent(e);
 							// Store the SCIZ event and icon
-							let div = scizCreateIcon('25', 'block', e.icon);
-							scizGlobal.events[i].sciz_type = div.outerHTML;
-							scizGlobal.events[i].sciz_desc = e.message;
+							let div = MZ_cSCIZ._createIcon('25', 'block', e.icon);
+							MZ_cSCIZ.events[i].sciz_type = div.outerHTML;
+							MZ_cSCIZ.events[i].sciz_desc = e.message;
 							// Actual display overwrite
-							scizGlobal.events[i].node.children[1].setAttribute("valign", "middle");
-							scizGlobal.events[i].node.children[2].setAttribute("valign", "middle");
+							MZ_cSCIZ.events[i].node.children[1].setAttribute("valign", "middle");
+							MZ_cSCIZ.events[i].node.children[2].setAttribute("valign", "middle");
 							if (bViewSCIZ) {
-								scizGlobal.events[i].node.children[1].innerHTML = scizGlobal.events[i].sciz_type;
-								scizGlobal.events[i].node.children[2].innerHTML = scizGlobal.events[i].sciz_desc;
+								MZ_cSCIZ.events[i].node.children[1].innerHTML = MZ_cSCIZ.events[i].sciz_type;
+								MZ_cSCIZ.events[i].node.children[2].innerHTML = MZ_cSCIZ.events[i].sciz_desc;
 							}
 						}
 					}
@@ -7286,7 +7250,7 @@ function do_scizOverwriteEvents() {
 
 function do_scizSwitchEvents() {
 	let bMaskSCIZ = false;
-	scizGlobal.events.forEach((e) => {
+	MZ_cSCIZ.events.forEach((e) => {
 		let currentType = e.node.children[1].innerHTML;
 		if (currentType === e.type) {
 			e.node.children[1].innerHTML = e.sciz_type !== null ? e.sciz_type : e.type;
@@ -13331,7 +13295,7 @@ class MZ_cVueJSON {
 		if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.allMHLoaded_log');
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
-		do_scizEnhanceView();
+		// do_scizEnhanceView();
 		for (let callback of MZ_cVueJSON.callbacksFinMH) {
 			try {
 				callback();
@@ -13421,6 +13385,7 @@ class MZ_cVueJSON {
 			return;
 		}
 		MZ_cHighlightSameXYN.init();
+		MZ_cSCIZ.init();
 	}
 
 	load() {
@@ -14067,6 +14032,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_cLigneMonstre.sendAJAXCdMRequest();
 		MZ_Tactique.initPopup();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
+		MZ_cSCIZ.processMonsters();
 
 		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
 
@@ -14870,6 +14836,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		initPXTroll();
 		MZ_cLigneTroll.processPX();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
+		MZ_cSCIZ.processTrolls();
 		MZ_cLigneTroll.MZ_oVueJSON.initFiltre();
 
 		// diplo
@@ -15168,6 +15135,7 @@ class MZ_cLigneTresor extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTresor.MZ_oVueJSON);
+		MZ_cSCIZ.processTreasures();
 		MZ_cLigneTresor.MZ_oVueJSON.initFiltre();
 	}
 }
@@ -15177,6 +15145,7 @@ class MZ_cLigneChampignon extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneChampignon.MZ_oVueJSON);
+		MZ_cSCIZ.processMushrooms();
 	}
 }
 
@@ -15185,6 +15154,8 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
+		MZ_cSCIZ.processTraps();
+		MZ_cSCIZ.processPortals();
 		MZ_cLigneLieu.MZ_oVueJSON.initFiltre();
 	}
 
