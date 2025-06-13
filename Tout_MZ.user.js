@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.71
+// @version     1.6.72
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.71';
+var MZ_latest = '1.6.72';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6884,13 +6884,12 @@ class MZ_cSCIZ {
 			// Do the switch
 			if (t.displayed) {
 				t.nodeNom.innerHTML = t.sciz_desc;
-				if (t.caracs !== null) {
-					icon.title = t.caracs;
-				}
+				if (t.caracs !== null) icon.title = t.caracs;
 			} else {
 				t.nodeNom.innerHTML = t.name;
 			}
 			// Add the SCIZ switcher
+			t.displayed ? MY_removeValue('SCIZ_SHOW_TROLLS') : MY_setValue('SCIZ_SHOW_TROLLS', 'no');
 			t.nodeNom.appendChild(icon);
 		});
 	}
@@ -6902,13 +6901,15 @@ class MZ_cSCIZ {
 		if (cbx === '0') return;
 		// Retrieve trolls
 		MZ_cSCIZ.trolls = [];  // reset view
+		// Read if switch to SCIZ view or not
+		let bViewSCIZ = MY_getValue('SCIZ_SHOW_TROLLS') == 'no';
 		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
 			MZ_cSCIZ.trolls.push({
 				id: oLigne.id,
 				name: oLigne.eltTdNom.innerHTML,
 				sciz_desc: null,
 				nodeNom: oLigne.eltTdNom,
-				displayed: false,
+				displayed: bViewSCIZ,
 				caracs: null,
 			});
 		}
@@ -6945,7 +6946,7 @@ class MZ_cSCIZ {
 						if (oLigne) {
 							let html_nom = oLigne.eltTdNom.innerHTML;
 							MZ_cSCIZ.trolls.push({
-								id: t.id, name: html_nom, sciz_desc: html_nom + MZ_cSCIZ._printTroll(t), nodeNom: oLigne.eltTdNom, displayed: false, caracs: t.caracs
+								id: t.id, name: html_nom, sciz_desc: html_nom + MZ_cSCIZ._printTroll(t), nodeNom: oLigne.eltTdNom, displayed: bViewSCIZ, caracs: t.caracs
 							});
 						}
 					});
