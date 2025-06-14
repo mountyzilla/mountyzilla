@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.72
+// @version     1.6.73
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.72';
+var MZ_latest = '1.6.73';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6406,50 +6406,6 @@ class MZ_cHighlightSameXYN {
 	}
 }
 
-// to be deleted à l'abandon de l'ancienne vue (et c'est fait en vanilla dans la nouvelle vue 😛)
-function do_highlightSameXYN() {
-	if (MY_getValue('HIGHLIGHTSAMEXYN') != 'true') return;
-
-	addStyleSheet("tr.xyn td, tr.xyn-sel td { background-color: beige; }");
-
-	// Vu que jQuery est disponible, il serait dommage de ne pas en tirer
-	// parti, même si les perfs ne sont pas miraculeuses...
-	// En pratique, ce serait vraiment beaucoup plus ch... de coder ça en
-	// vanilla, alors tant pis.
-	// Le principe: On marque chaque ligne de tableau avec un attribut
-	// calculé à partir de ses coordonnées, puis on associe à chaque case
-	// (ou uniquement à celles de coordonnées) un traitement de bascule de
-	// style sur survol ou click souris qui va s'appliquer à toutes les
-	// cellules (de tous les tableaux) comportant le même attribut.
-
-	let toggleFn = function (e) {
-		let tr = $(this).parent("tr");
-		$(`tr[data-xyn='${tr.attr("data-xyn")}']`).toggleClass(e.data.class);
-	};
-
-	$.each(MZ_AnalyseVue.sectionList, function (_, section) {
-		let tableSpec = `table#${section}`,
-			nthChild = $(`${tableSpec} tr.mh_tdtitre th:contains("X")`).index(),
-			xSel = `td:nth-child(${nthChild + 1})`,
-			ySel = `td:nth-child(${nthChild + 2})`,
-			nSel = `td:nth-child(${nthChild + 3})`;
-		$(`${tableSpec} tr.mh_tdpage`).each(function (i, e) {
-			let tr = $(e),
-				tdX = tr.find(xSel),
-				tdY = tr.find(ySel),
-				tdN = tr.find(nSel);
-			tr.attr("data-xyn", [tdX.text(), tdY.text(), tdN.text()].join(";"));
-			$.each(
-				(MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true') ? [tdX, tdY, tdN] : tr.find("td"),
-				function (i, e) {
-					let td = $(e);
-					td.on("mouseenter mouseleave", { class: "xyn" }, toggleFn);
-					td.on("click", { class: "xyn-sel" }, toggleFn);
-				});
-		});
-	});
-}
-
 /** x~x SCIZ ----------------------------------------------------------- */
 
 class MZ_cSCIZ {
@@ -7294,7 +7250,7 @@ function saveMission(num, obEtape, trace) {
 	}
 	MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 	//debugMission réactiver le if (trace)
-	//if (trace)
+	if (trace)
 		logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
 }
 
@@ -10966,18 +10922,6 @@ function getVue() {
 
 // Roule 11/03/2016
 /* [functions] Récup données monstres, trolls, etc. */
-function getXxxDistance(xxx, i) {
-	return MZ_getDistanceAvecSplit(VueContext[`tr_${xxx.toLowerCase()}`][i].cells[0].textContent);
-}
-function getXxxPosition(xxx, i) {
-	let tds = VueContext[`tr_${xxx.toLowerCase()}`][i].childNodes;
-	let l = tds.length;
-	return [
-		parseInt(tds[l - 3].textContent),
-		parseInt(tds[l - 2].textContent),
-		parseInt(tds[l - 1].textContent)
-	];
-}
 
 
 /* [functions] Récup données monstres */
@@ -11262,147 +11206,9 @@ function MZ_getDistanceAvecSplit(cellTxt) {
 	return Math.max(dH, dV);
 }
 
-function getTresorID(i) {
-	let tds = tr_tresors[i].childNodes;
-	let l = tds.length;
-	return trim(tr_tresors[i].cells[l - 5].textContent);
-}
-
-function getTresorNom(i) {
-	let tds = tr_tresors[i].childNodes;
-	let l = tds.length;
-	// Utilisation de textContent pour régler le "bug de Pollux"
-	return trim(tr_tresors[i].cells[l - 4].textContent).replace(/&#(\d+);/g, function (match, dec) {
-		return String.fromCharCode(dec);
-	});
-}
-
-function getTresorPosition(i) {
-	let tds = tr_tresors[i].childNodes;
-	let l = tds.length;
-	return [
-		parseInt(tds[l - 3].textContent),
-		parseInt(tds[l - 2].textContent),
-		parseInt(tds[l - 1].textContent),
-	];
-}
-
-function bddTresors(dmin, start, stop, limitH, limitV) {
-	// On retire les trésors proches (dmin) pour Troogle à cause de leur description
-	dmin = dmin || 0;
-	start = start || 1;
-	stop = stop || nbTresors;
-	stop = Math.min(nbTresors, stop);
-	let myPosition = getPosition();
-	let txt = '';
-	for (let i = start; i <= stop; i++) {
-		let tresorPosition = getTresorPosition(i);
-		// debugMZ('bddTresors, i=' + i + ', ' + getTresorID(i)+';'+ getTresorNom(i)+';'+ positionToString(tresorPosition) + ', dmin=' + dmin + ', start=' + start + ', stop=' + stop + ', limitH=' + limitH + ', limitV=' + limitV + ', MZ_deltaH=' + MZ_deltaH(myPosition, tresorPosition) + ', MZ_deltaV=' + MZ_deltaV(myPosition, tresorPosition) + ', distance=' + getTresorDistance(i));
-		if (MZ_deltaH(myPosition, tresorPosition) > limitH) {
-			continue;
-		}
-		if (MZ_deltaV(myPosition, tresorPosition) > limitV) {
-			continue;
-		}
-		if (getTresorDistance(i) >= dmin) {
-			txt = `${txt}${getTresorID(i)};${getTresorNom(i).replace(/[\u2000-\u{FFFFF}]/ug, '?')};${positionToString(tresorPosition)}\n`;
-		}
-	}
-	return txt ? `#DEBUT TRESORS\n${txt}#FIN TRESORS\n` : '';
-}
-
-/** x~x Récup données Champignons -------------------------------------- */
-// DEBUG: Pas de colonne "Référence" sur serveur de test
-function getChampignonNom(i) {
-	return trim(tr_champignons[i].cells[2].textContent);
-}
-
-function getChampignonPosition(i) {
-	let tds = tr_champignons[i].childNodes;
-	let l = tds.length;
-	return [
-		parseInt(tds[l - 3].textContent),
-		parseInt(tds[l - 2].textContent),
-		parseInt(tds[l - 1].textContent)
-	];
-}
-
-function bddChampignons(limitH, limitV) {
-	let myPosition = getPosition();
-	let txt = '';
-	for (let i = 1; i <= nbChampignons; i++) {
-		let champignonPosition = getChampignonPosition(i);
-		if (MZ_deltaH(myPosition, champignonPosition) > limitH) {
-			continue;
-		}
-		if (MZ_deltaV(myPosition, champignonPosition) > limitV) {
-			continue;
-		}
-		txt = `${txt};${ // Les champis n'ont pas de Référence
-			getChampignonNom(i)};${positionToString(champignonPosition)}\n`;
-	}
-	return txt ? `#DEBUT CHAMPIGNONS\n${txt}#FIN CHAMPIGNONS\n` : '';
-}
-
-/* [functions] Récup données Lieux */
-function getLieuDistance(i) {
-	return MZ_getDistanceAvecSplit(tr_tresors[i].cells[0].firstChild.nodeValue);
-}
-
-function getLieuID(i) {
-	return parseInt(tr_lieux[i].cells[2].textContent);
-}
-
-function getLieuNom(i) {
-	// Conversion ASCII pour éviter les bugs des Vues externes
-	return trim(tr_lieux[i].cells[3].textContent);
-}
-
-function getLieuPosition(i) {
-	let tds = tr_lieux[i].childNodes;
-	let l = tds.length;
-	return [
-		parseInt(tds[l - 3].textContent),
-		parseInt(tds[l - 2].textContent),
-		parseInt(tds[l - 1].textContent)
-	];
-}
-
-// function appendLieux(txt) {
-// 	for (let i = 1; i < nbLieux + 1; i++) {
-//		// gath: 'x_lieux' is not defined
-// 		let tds = x_lieux[i].childNodes;
-// 		txt = `${txt}${tds[1].firstChild.nodeValue};${getLieuNom(i)};${tds[3].firstChild.nodeValue};${tds[4].firstChild.nodeValue};${tds[5].firstChild.nodeValue}\n`;
-// 	}
-// 	return txt;
-// }
-
-// function getLieux() {
-// 	let vue = getVue();
-// 	return appendLieux(`${positionToString(getPosition())};${vue[0]};${vue[1]}\n`);
-// }
-
-function bddLieux(start, stop, limitH, limitV) {
-	start = start || 1;
-	stop = stop || nbLieux;
-	stop = Math.min(nbLieux, stop);
-	let myPosition = getPosition();
-	let txt = '';
-	for (let i = start; i <= stop; i++) {
-		let lieuPosition = getLieuPosition(i);
-		if (MZ_deltaH(myPosition, lieuPosition) > limitH) {
-			continue;
-		}
-		if (MZ_deltaV(myPosition, lieuPosition) > limitV) {
-			continue;
-		}
-		txt = `${txt}${getLieuID(i)};${epure(getLieuNom(i))};${positionToString(lieuPosition)}\n`;
-	}
-	return txt ? `#DEBUT LIEUX\n${txt}#FIN LIEUX\n` : '';
-}
-
 /** x~x Gestion Préférences Utilisateur -------------------------------- */
 
+/* pas utilisé : àto be deleted ?
 function saveCheckBox(chkbox, pref) {
 	// Enregistre et retourne l'état d'une CheckBox
 	let etat = chkbox.checked;
@@ -11437,33 +11243,7 @@ function recallComboBox(cbb, pref) {
 	}
 	return nb;
 }
-
-function synchroniseFiltres() {
-	// Récupération de toutes les options de la vue
-	let wasActive =
-		Number(recallComboBox(comboBoxNiveauMin, 'NIVEAUMINMONSTRE')) +
-		Number(recallComboBox(comboBoxNiveauMax, 'NIVEAUMAXMONSTRE')) +
-		(recallComboBox(comboBoxFamille, 'FAMILLEMONSTRE') == 0 ? 0 : 1);	// Roule 30/01/2020 on obtient du non numérique si il y a filtre par famille
-	if (wasActive > 0) {
-		debutFiltrage('Monstres');
-	}
-	recallCheckBox(checkBoxGowapsS, 'NOGOWAPS');
-	recallCheckBox(checkBoxGowapsA, 'NOGOWAPA');
-	recallCheckBox(checkBoxMythiques, 'NOMYTH');
-	recallCheckBox(checkBoxEngages, 'NOENGAGE');
-	recallCheckBox(checkBoxLevels, 'NOLEVEL');
-	recallCheckBox(checkBoxIntangibles, 'NOINT');
-	recallCheckBox(checkBoxGG, 'NOGG');
-	recallCheckBox(checkBoxCompos, 'NOCOMP');
-	recallCheckBox(checkBoxBidouilles, 'NOBID');
-	recallCheckBox(checkBoxDiplo, `${numTroll}.diplo.off`);
-	recallCheckBox(checkBoxTrou, 'NOTROU');
-	recallCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
-	recallCheckBox(checkBoxTactique, 'NOTACTIQUE');
-	if (MY_getValue('NOINFOEM') != 'true') {
-		recallCheckBox(checkBoxEM, 'NOEM');
-	}
-}
+*/
 
 /** x~x Initialisation: Ajout des Boutons ------------------------------ */
 
@@ -11573,14 +11353,8 @@ class MZ_cVueExterne {
 				txt += `#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
 					}\n#FIN ORIGINE\n`;
 			} else {
-				// to be deleted à l'abandon de l'ancienne vue
-				txt = `${bddTrolls(limitH, limitV) +
-					bddMonstres(null, null, limitH, limitV) +
-					bddChampignons(limitH, limitV) +
-					bddTresors(null, null, null, limitH, limitV) +
-					bddLieux(null, null, limitH, limitV)
-					}#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
-					}\n#FIN ORIGINE\n`;
+				avertissement("[MZ] Erreur MZ pas prêt", null, null);
+				return;
 			}
 			//logMZ(`MZ_cVueExterne.getVueScript_log nbTrolls=${nbTrolls}`, txt);
 			return txt;
@@ -11696,176 +11470,10 @@ class MZ_cVueExterne {
 	}
 }
 
-
-/** x~x Tableau d'Infos ------------------------------------------------ */
-function initialiseInfos() {
-	let infoTab = document.getElementById('infoTab'),
-		tbody = infoTab.tBodies[0],
-		thead = infoTab.createTHead(),
-		tr = appendTr(thead, 'mh_tdtitre'),
-		td = appendTdText(tr, 'INFORMATIONS', true),
-		span = document.createElement('span');
-	if (!infoTab) {
-		avertissement('Vue Position joueur : infoTab non trouvé');
-		return;
-	}
-
-	getPosition(true)
-
-	infoTab.id = 'infoTab'; // Pour scripts externes
-	tbody.id = 'corpsInfoTab';
-	tbody.rows[0].cells[0].colSpan = 2;
-	if (tbody.rows.length > 1) {
-		tbody.rows[1].cells[0].colSpan = 2;
-	}
-	td.colSpan = 3;
-	td.style.cursor = 'pointer';
-
-	/* quel intérêt de changer de className ? et ça fait bouger toute la frame d'un pixel ou deux, c'est désagréable
-	td.onmouseover = function() {
-		this.style.cursor = 'pointer';
-		this.className = 'mh_tdpage';
-	};
-	td.onmouseout = function() {
-		this.className = 'mh_tdtitre';
-	};
-	*/
-	td.onclick = function () {
-		toggleTableauInfos(false);
-	};
-
-	span.id = 'msgInfoTab';
-	span.style.display = 'none';
-	appendText(span,
-		` => Position : X = ${currentPosition[0]
-		}, Y = ${currentPosition[1]
-		}, N = ${currentPosition[2]
-		} --- Vue : ${porteeVue[0]}/${porteeVue[1]
-		} (${porteeVue[2]}/${porteeVue[3]})`,
-		true
-	);
-	td.appendChild(span);
-
-	tr = appendTr(tbody, 'mh_tdpage');
-	td = appendTdText(tr, 'EFFACER : ', true);
-	td.align = 'center';
-	td.className = 'mh_tdtitre';
-	td.width = 100;
-	td = appendTdCenter(tr, 2);
-	// DEBUG : à quoi servent les ids si on utilise des variables globales ?
-	checkBoxGG = appendCheckBoxSpan(td, 'delgg', filtreTresors, " Les GG'").firstChild;
-	checkBoxCompos = appendCheckBoxSpan(td, 'delcomp', filtreTresors, ' Les Compos').firstChild;
-	checkBoxBidouilles = appendCheckBoxSpan(td, 'delbid', filtreTresors, ' Les Bidouilles').firstChild;
-	checkBoxIntangibles = appendCheckBoxSpan(td, 'delint', filtreTrolls, ' Les Intangibles').firstChild;
-	checkBoxGowapsA = appendCheckBoxSpan(td, 'delgowapA', filtreMonstres, ' Les Gowaps Apprivoisés').firstChild;
-	checkBoxGowapsS = appendCheckBoxSpan(td, 'delgowapS', filtreMonstres, ' Les Gowaps Sauvages').firstChild;
-	checkBoxEngages = appendCheckBoxSpan(td, 'delengage', filtreMonstres, ' Les Engagés').firstChild;
-	checkBoxLevels = appendCheckBoxSpan(td, 'delniveau', toggleLevelColumn, ' Les Niveaux').firstChild;
-	checkBoxDiplo = appendCheckBoxSpan(td, 'delDiplo', refreshDiplo, ' La Diplomatie').firstChild;
-	checkBoxTrou = appendCheckBoxSpan(td, 'deltrou', filtreLieux, ' Les Trous').firstChild;
-	checkBoxMythiques = appendCheckBoxSpan(td, 'delmyth', filtreMonstres, ' Les Mythiques').firstChild;
-	if (MY_getValue('NOINFOEM') != 'true') {
-		checkBoxEM = appendCheckBoxSpan(td, 'delem', filtreMonstres, ' Les Composants EM').firstChild;
-	}
-	checkBoxTresorsNonLibres = appendCheckBoxSpan(td, 'deltres', filtreTresors, ' Les Trésors non libres').firstChild;
-	checkBoxTactique = appendCheckBoxSpan(td, 'deltactique', updateTactique, ' Les Infos tactiques').firstChild;
-
-	if (MY_getValue('INFOPLIE')) {
-		toggleTableauInfos(true);
-	}
-}
-
-function toggleTableauInfos(firstRun) {
-	let msg = document.getElementById('msgInfoTab'),
-		corps = document.getElementById('corpsInfoTab'),
-		infoplie = parseInt(MY_getValue('INFOPLIE'));	// 27/032016 Roule, pb sur récupération booléen, force numérique
-	// logMZ('toggleTableauInfos(' + firstRun + '), début, INFOPLIE=' + MY_getValue('INFOPLIE') + ', !INFOPLIE=' + !MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// debug Roule
-	if (!firstRun) {
-		infoplie = !infoplie;
-		MY_setValue('INFOPLIE', infoplie ? 1 : 0);	// 27/032016 Roule, pb sur récupération booléen, force numérique
-		// logMZ('toggleTableauInfos(' + firstRun + '), après toggle et set, INFOPLIE=' + MY_getValue('INFOPLIE') + ', infoplie=' + infoplie);	// Debug Roule
-	}
-	if (infoplie) {
-		msg.style.display = '';
-		corps.style.display = 'none';
-	} else {
-		msg.style.display = 'none';
-		corps.style.display = '';
-	}
-}
-
 /** x~x Fonctions Monstres --------------------------------------------- */
 
-function MZ_insertStyleNth(eStyle, newCol, newStyle, maxCol) {	// DOMElement du style, numéro de colonne insérée, Style supplémentaire, nombre max de col (pas grave si c'est beaucoup plus grand)
-	// cette fonction patche la série de styles en "déplaçant" les colonnes qui suivent celle insérée
-	let sStyle = eStyle.innerHTML;
-	for (let i = maxCol; i >= newCol; i--) {	// on déplace à partir de la fin
-		// Roule : j'avais utilisé string.replaceAll() mais ce n'est pas supporté par Firefox ESR
-		let rNeedle = new RegExp(`\\(${i + 1}\\)`, "g");	// les styles "nth" comptent à partir de "1"
-		sStyle = sStyle.replace(rNeedle, `(${i + 2})`);
-	}
-	sStyle = sStyle + newStyle;
-	eStyle.innerHTML = sStyle;
-}
-
-/* [functions] Affichage de la colonne des niveaux */
-function insertLevelColumn() {
-	// Appelé dans le code attaché à la page de vue et au click/unclick de la checkbox
-
-	MZ_EtatCdMs.indexCellNivMZ = MZ_EtatCdMs.indexCellID + 1;	// la colonne des niveaux sera insérée après la colonne des ID
-	MZ_EtatCdMs.indexCellX = MZ_EtatCdMs.indexCellX + 1;	// et ça décale les colonnes suivantes
-	MZ_EtatCdMs.indexCellY = MZ_EtatCdMs.indexCellY + 1;
-	MZ_EtatCdMs.indexCellN = MZ_EtatCdMs.indexCellN + 1;
-	if (MZ_EtatCdMs.tr_monstres[1] && MZ_EtatCdMs.tr_monstres[1].cells[MZ_EtatCdMs.indexCellDist].innerText.indexOf('|') > -1)
-		MZ_EtatCdMs.tr_monstres[0].cells[MZ_EtatCdMs.indexCellDist].style.width = '50px';	// forcer l'affichage large
-	let td = insertThText(getMonstreLevelNode(0), 'Niv.', false);
-	td.style.width = '20px';
-
-	/* plus de colgroup le 08/07/2020. Mais comme ça pourrait revenir, je laisse le bout de code en commentaire (Roule)
-	let eColGroup = getMonstreLevelNode(0).closest('table').getElementsByTagName('colgroup')[0];
-	let eCol = document.createElement('col');
-	eCol.style.width= '35px';
-	insertBefore(eColGroup.children[3],eCol);
-	*/
-	let monsterStyle = document.getElementById('vue2toggle_monstres').getElementsByTagName('style')[0];
-	if (monsterStyle) {
-		let styleColNivMZ = `.mh_tdborder.footable#VueMONSTRE th:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {width:35px; text-align:center;}`;
-		styleColNivMZ = `${styleColNivMZ}.mh_tdborder.footable#VueMONSTRE td:nth-child(${MZ_EtatCdMs.indexCellNivMZ + 1}) {font-weight:bold;text-align:center;}`;
-		MZ_insertStyleNth(monsterStyle, MZ_EtatCdMs.indexCellNivMZ, styleColNivMZ, MZ_EtatCdMs.indexCellN);
-	} else {
-		//logMZ("[MZ] vue, pas de style spécial monstre, pas d'adaptation");
-	}
-
-	td.id = 'MZ_TITRE_NIVEAU_MONSTRE';
-	for (let i = 1; i <= MZ_EtatCdMs.nbMonstres; i++) {
-		// logMZ('nbMonstres=' + MZ_EtatCdMs.nbMonstres + ', MZ_EtatCdMs.tr_monstres.length=' + MZ_EtatCdMs.tr_monstres.length);	// debug Roule
-		td = insertTdText(getMonstreLevelNode(i), '-');
-		td.style.display = 'table-cell';
-	}
-}
-
-function toggleLevelColumn() {	// Appelé par le code attaché à la page de vue et au click/unclick de la checkbox NOCDM
-	let eltMZ_TITRE_NIVEAU_MONSTRE = document.getElementById('MZ_TITRE_NIVEAU_MONSTRE');	// test si la colonne a déjà été ajoutée
-	if (saveCheckBox(checkBoxLevels, 'NOLEVEL')) {
-		if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
-			return;
-		}	// rien à faire si la colonne n'existe pas. C'est le cas à l'ouverture de la page avec NOCMD coché
-		// cacher tous les td
-		for (let i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
-			getMonstreLevelNode(i).style.display = 'none';
-		}
-	} else if (!eltMZ_TITRE_NIVEAU_MONSTRE) {
-		insertLevelColumn();
-		retrieveCDMs();
-	} else {
-		// afficher tous les td
-		for (let i = 0; i <= MZ_EtatCdMs.nbMonstres; i++) {
-			getMonstreLevelNode(i).style.display = 'block';
-		}
-	}
-}
-
 /* [functions] Gestion de l'AFFICHAGE des CdMs */
+// utilisé en vue V2
 function basculeCDM2() {
 	// = Bascule l'affichage des popups CdM
 	let indx = this.getAttribute('data-indxMZ');
@@ -11881,21 +11489,7 @@ function basculeCDM2() {
 	}
 }
 
-/* [functions] Gestion de l'AFFICHAGE des CdMs */
-function basculeCDM(nom, id) {
-	// = Bascule l'affichage des popups CdM
-	if (MZ_EtatCdMs.listeCDM[id]) {
-		if (!document.getElementById(`popupCDM${id}`)) {
-			afficherCDM(nom, id);
-		} else {
-			cacherPopupCDM(`popupCDM${id}`);
-		}
-	} else {
-		// DEBUG: prévoir un "else" ou désactiver l'effet onmouseover si pas de CdM
-		logMZ(`pas de CdM pour id=${id}, nom=${nom}`);
-	}
-}
-
+// utilisé en vue V2
 function cacherPopupCDM(titre) {
 	let popup = document.getElementById(titre);
 	popup.parentNode.removeChild(popup);
@@ -11943,12 +11537,7 @@ if (!isPage("MH_Play/Play_equipement")) {
 	document.onmousemove = drag;
 }
 
-function afficherCDM(nom, id) {
-	// Crée la table de CdM du mob n° id
-	let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
-	afficherCDM2(donneesMonstre);
-}
-
+// utilisé en vue V2
 function afficherCDM2(donneesMonstre) {
 	/* Début création table */
 	let table = createCDMTable(donneesMonstre.id, donneesMonstre.nom, donneesMonstre, removeTableFromClickEvent);
@@ -11981,201 +11570,7 @@ function afficherCDM2(donneesMonstre) {
 	table.style.top = `${topY}px`;
 }
 
-/* [functions] Gestion de l'AFFICHAGE des Infos de combat */
-function showPopupError(sHTML) {
-	logMZ(`affichage PopupError ${sHTML}`);
-	let divpopup = document.createElement('div');
-	divpopup.id = 'divpopup';
-	divpopup.style =
-		'position: fixed;' +
-		'border: 3px solid #000000;' +
-		'top: 300px;left: 10px;' +
-		'background-color: red;' +
-		'color: white;' +
-		'font-size: xx-large;' +
-		'z-index: 200;';
-	divpopup.innerHTML = sHTML;
-	let divcroix = document.createElement('div');
-	divcroix.style =
-		'position: absolute;' +
-		'top: 0;right: 0;' +
-		'color: inherit;' +
-		'font-size: inherit;' +
-		'cursor: pointer;' +
-		'z-index: 201;';
-	divcroix.innerHTML = "X";
-	divcroix.onclick = function () {
-		document.getElementById('divpopup').style.display = 'none';
-	};
-	document.body.appendChild(divpopup);
-	divpopup.appendChild(divcroix);
-}
-
-// to be deleted à l'abandon de l'ancienne vue
-function retrieveCDMs() {
-	// Récupère les CdM disponibles dans la BDD
-	// Lancé uniquement sur toggleLevelColumn
-	if (checkBoxLevels.checked) {
-		return;
-	}
-	if (MZ_EtatCdMs.nbMonstres < 1) {
-		return;
-	}
-
-	let tReq = [];
-	let nbReq = 0;
-	let prevLastIndexDone = MZ_EtatCdMs.lastIndexDone;
-	let i = prevLastIndexDone + 1;
-	for (; i <= MZ_EtatCdMs.nbMonstres; i++) {
-		// tReq.push(i + "\t" + getMonstreID(i) + "\t" + getMonstreNom(i));
-		// ne pas demander pour les Gowaps
-		let nom = getMonstreNom(i);
-		if (nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
-			getMonstreLevelNode(i).innerHTML = '';
-			continue;
-		}
-		tReq.push({ index: i, id: getMonstreID(i), nom: nom });
-		nbReq++;
-		if (nbReq >= 500) {
-			break;
-		}	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
-	}
-	debugMZ(`Envvoi MZ ${nbReq} IDs, nbMonstres=${MZ_EtatCdMs.nbMonstres}, lastIndexDone=${i}`);
-	MZ_EtatCdMs.lastIndexDone = i;
-	// let startAjaxCdM = new Date();  // WARNING (gath) - non utilisé -> commenté
-	logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
-
-	FF_XMLHttpRequest({
-		method: 'POST',
-		url: URL_MZgetCaracMonstre,
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		// data: 'l=' + tReq.join("\n"),
-		data: `l=${JSON.stringify(tReq)}`,
-		trace: 'demande niveaux monstres V2',
-		onload: function (responseDetails) {
-			let texte;
-			try {
-				// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-				if (responseDetails.status == 0) {
-					return;
-				}
-				// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-				texte = responseDetails.responseText;
-				let infos = JSON.parse(texte);
-				displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
-				if (infos.length == 0) {
-					return;
-				}
-
-				// ajouter les styles CSS pour les popup
-				addStyleSheet(`
-		          .MZtooltip { position: relative;color:red;text-align:center; }
-		          .MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
-		          .MZtooltip:hover .MZtooltiptext {visibility: visible;}
-		        `);
-				// if (MY_DEBUG) {
-				// for (let i = 0; i < 20; i++) logMZ('infos[' + i + ']=' + JSON.stringify(infos[i]));
-				// }
-				// let begin2, end2, index;  // WARNING (gath) - non utilisé -> commenté
-				for (let j = 0; j < infos.length; j++) {
-					let info = infos[j];
-					if (info.index == undefined) {
-						continue;
-					}
-					let eTdLevel = getMonstreLevelNode(info.index);
-					this.className = 'mh_tdpage';
-					let myColor = undefined;
-					if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
-						eTdLevel.className = "MZtooltip";
-						eTdLevel.style.color = "black";
-						eTdLevel.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
-					} else if (!(info && info.esq)) {
-						// debugMZ("pas d'esquive id=" + info.id + ", index=" + info.index);
-						eTdLevel.className = "MZtooltip";
-						eTdLevel.innerHTML = `${mkMinMaxHTML(info.niv)}<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>`;
-					} else {
-						eTdLevel.innerHTML = mkMinMaxHTML(info.niv);
-						// info.iTR = info.index;	// Roule 29/04/2017 permet de récupérer la position du monstres dans analyseTactique (pour calcul de distance pour le PM). 15/11/2019 index contient l'info
-						myColor = MZ_CdMColorFromMode(info);
-						eTdLevel.style.cursor = 'pointer';
-						eTdLevel.onclick = function () {
-							basculeCDM(getMonstreNomByTR(this.parentNode), getMonstreIDByTR(this.parentNode));
-						};
-					}
-					eTdLevel.style.width = '20px';
-					MZ_EtatCdMs.listeCDM[info.id] = info;
-					if (myColor) {
-						eTdLevel.style.color = myColor;
-					}
-
-					/* Roule' à étudier plus tard, cette différence de style selon la diplo...
-					eTdLevel.onmouseover = function() {
-						this.className = 'mh_tdtitre';
-					};
-					eTdLevel.onmouseout = function() {
-						if(this.parentNode.diploActive=='oui') {
-							this.className = '';
-						} else {
-							this.className = 'mh_tdpage';
-						}
-					};
-					*/
-				}
-				debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
-				computeMission(prevLastIndexDone + 1, MZ_EtatCdMs.nbMonstres);
-				debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant filtreMonstres`);
-				filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
-				debugMZ(`${MZ_formatDateMS()} ajax niv monstres fin`);
-				document.body.dataset.MZ_Etat = 2;	// indiquer aux scripts tiers qu'on a récupéré les carac
-				if (document.body.MZ_Callback_fin_vue !== undefined) {
-					for (let iCallback = 0; iCallback < document.body.MZ_Callback_fin_vue.length; iCallback++) {
-						document.body.MZ_Callback_fin_vue[iCallback]();
-					}
-				}
-			} catch (exc) {
-				logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
-			}
-			// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
-			MZ_EtatCdMs.isCDMsRetrieved = true;
-			// afficher/supprimer le bouton pour demander la suite
-			let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
-			debugMZ(`lastIndexDone=${MZ_EtatCdMs.lastIndexDone}, nbMonstres=${MZ_EtatCdMs.nbMonstres}, eltBoutonSuite=${eltBoutonSuite}`);
-			if (MZ_EtatCdMs.lastIndexDone < MZ_EtatCdMs.nbMonstres) {
-				if (eltBoutonSuite) {
-					replaceContentByText(eltBoutonSuite, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
-					retrieveCDMs();	// lancer la suite
-				} else {
-					eltBoutonSuite = document.createElement('div');
-					eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
-					eltBoutonSuite.style.position = 'fixed';
-					eltBoutonSuite.style.border = '1px solid black';
-					eltBoutonSuite.style.top = '10px';
-					eltBoutonSuite.style.right = '10px';
-					// eltBoutonSuite.style.backgroundColor = 'white';
-					eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
-					eltBoutonSuite.style.color = 'black';
-					eltBoutonSuite.style.fontSize = 'large';
-					eltBoutonSuite.style.padding = '5px';
-					eltBoutonSuite.style.borderRadius = '10px';
-					eltBoutonSuite.style.cursor = 'pointer';
-					eltBoutonSuite.style.zIndex = '500';
-					appendText(eltBoutonSuite, `${nbReq} CdM(s) récupérées`);
-					appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
-					appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
-					appendBr(eltBoutonSuite);
-					appendText(eltBoutonSuite, `des ${MZ_EtatCdMs.nbMonstres} monstres`);
-					eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
-					eltBoutonSuite.onclick = MZ_SuiteCdMs;
-					document.body.appendChild(eltBoutonSuite);
-				}
-			} else if (eltBoutonSuite) {
-				eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
-			}
-		},
-	});
-	debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
-}
-
+// utilisé en vue V2
 function MZ_CdMColorFromMode(info) {
 	switch (info.Mode) {
 		case 'cdm':
@@ -12187,27 +11582,7 @@ function MZ_CdMColorFromMode(info) {
 	}
 }
 
-// to be deleted à l'abandon de l'ancienne vue
-function MZ_SuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
-	let evt = e || window.event;
-	if (evt.shiftKey) {
-		this.parentNode.removeChild(this);
-		return;
-	}
-	replaceContentByText(this, `en cours ${MZ_EtatCdMs.lastIndexDone}/${MZ_EtatCdMs.nbMonstres}`);
-	this.title = 'Shift-Click pour faire disparaitre ce bouton';
-	this.style.cursor = '';	// default
-	this.onclick = MZ_SupprBoutonCdMs;
-	retrieveCDMs();
-}
-
-function MZ_SupprBoutonCdMs(e) {
-	let evt = e || window.event;
-	if (evt.shiftKey) {
-		this.parentNode.removeChild(this);
-	}
-}
-
+// utilisé en vue V2
 function mkMinMaxHTML(oMM) {
 	if (oMM == undefined) {
 		return '';
@@ -12228,422 +11603,10 @@ function mkMinMaxHTML(oMM) {
 	return `<span style="color:red">${oMM.min}-${oMM.max}</span>`;
 }
 
-function computeMission(begin, end) {
-	// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance
-	// +++logMZ('computeMission, begin=' + begin + ', end=' + end);
-	computeVLC(begin, end);
-	// +++logMZ('computeMission, après computeVLC');
-	begin = begin || 1;
-	end = end || MZ_EtatCdMs.nbMonstres;
-	let str = MY_getValue(`${numTroll}.MISSIONS`);
-	if (!str) {
-		return;
-	}
-
-	let urlImg = `${URL_MZimg}mission.png`;
-	let obMissions = JSON.parse(str);
-
-	for (let i = end; i >= begin; i--) {
-		let mess = '';
-		let bPeutEtreIcone = false;
-		for (let num in obMissions) {
-			let mobMission = false;
-			let mobMissionPeutEtre = undefined;
-			let donneesMonstre;
-			switch (obMissions[num].type) {
-				case 'Race':
-					let race = epure(obMissions[num].race.toLowerCase());
-					let nom = epure(getMonstreNom(i).toLowerCase());
-					if (nom.indexOf(race) != -1) {
-						if (race == 'crasc') {
-							if (nom.indexOf('medius') != -1) {
-								// pas éligible
-							} else if (nom.indexOf('maexus') != -1) {
-								// pas éligible
-							} else if (nom.indexOf('parasitus') != -1) {
-								if (nom.match(/^crasc parasitus \[/ui)) {
-									// on ne peut pas savoir
-									mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
-										'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
-								} else {
-									// c'est un monstre de la race des Crasc Parasitus
-									mobMission = false;
-								}
-							} else {
-								mobMission = true;
-							}
-						} else if (race == 'crasc parasitus') {
-							if (nom.match(/^crasc parasitus \[/ui)) {
-								// on ne peut pas savoir
-								mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
-									'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
-							} else {
-								// c'est un monstre de la race des Crasc Parasitus
-								mobMission = true;
-							}
-						} else if (race == 'shai') {
-							if (nom.match(/abishai/ui)) {
-								mobMission = false;
-							} else {
-								mobMission = true;
-							}
-						} else if (race == 'ombre') {
-							if (nom.match(/roche/ui)) {
-								mobMission = false;
-							} else {
-								mobMission = true;
-							}
-						} else if (race == 'geck\'oo') {
-							if (nom.match(/majestueux/ui)) {
-								mobMission = false;
-							} else {
-								mobMission = true;
-							}
-						} else if (race == 'bouj\'dla') {
-							if (nom.match(/placide/ui)) {
-								mobMission = false;
-							} else {
-								mobMission = true;
-							}
-						} else {
-							mobMission = true;
-						}
-					}
-					break;
-				case 'Niveau':
-					let minMimi, maxMimi;
-					donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-					if (donneesMonstre) {
-						let nivMimi = Number(obMissions[num].niveau);
-						let mod = obMissions[num].mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
-						if (isNaN(mod)) {
-							minMimi = nivMimi;
-							maxMimi = nivMimi + 999999;
-						} else {
-							minMimi = nivMimi - mod;
-							maxMimi = nivMimi + mod;
-						}
-						if (donneesMonstre.niv) {	// nouveau mode
-							if (donneesMonstre.niv.max && donneesMonstre.niv.min) {
-								if (donneesMonstre.niv.max <= maxMimi && donneesMonstre.niv.min >= minMimi) {
-									mobMission = true;
-								} else if (!(donneesMonstre.niv.max < minMimi || donneesMonstre.niv.min > maxMimi)) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-									if (isDEV) {
-										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${donneesMonstre.niv.min}, ${donneesMonstre.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
-									}
-								}
-							} else if (donneesMonstre.niv.max) {
-								if (donneesMonstre.niv.max >= minMimi) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-								}
-							} else if (donneesMonstre.niv.min) {
-								if (donneesMonstre.niv.min <= maxMimi) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-								}
-							}
-						}
-					}
-					break;
-				case 'Famille':
-					donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-					if (donneesMonstre && donneesMonstre.fam) {
-						let familleMimi = epure(obMissions[num].famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
-						let familleMob = epure(donneesMonstre.fam.toLowerCase());
-						if (familleMob.indexOf(familleMimi) != -1) {
-							mobMission = true;
-						}
-					}
-					break;
-				case 'Pouvoir':
-					donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-					if (donneesMonstre && donneesMonstre.pouv) {
-						let pvrMimi = epure(obMissions[num].pouvoir.toLowerCase());
-						let pvrMob = epure(donneesMonstre.pouv.toLowerCase());
-						if (pvrMob.indexOf(pvrMimi) != -1) {
-							mobMission = true;
-						}
-					}
-			}
-			if (mobMission) {
-				mess = mess + (mess ? '\n\n' : '');
-				mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
-			} else if (mobMissionPeutEtre !== undefined) {
-				mess = mess + (mess ? '\n\n' : '');
-				mess = `${mess}${mobMissionPeutEtre}\n`;
-				bPeutEtreIcone = true;
-				mess = `${mess}Mission ${num} :\n${obMissions[num].libelle}`;
-			}
-		}
-		if (mess) {
-			let td = getMonstreNomNode(i);
-			appendText(td, ' ');
-			let myURL;
-			if (bPeutEtreIcone) {
-				myURL = `${URL_MZimg}missionX.png`;
-			} else {
-				myURL = urlImg;
-			}
-			td.appendChild(createImage(myURL, mess));
-		}
-	}
-}
-
-function computeVLC(begin, end) {
-	// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeMission
-	// +++logMZ('computeVLC, begin=' + begin + ', end=' + end);
-	computeTactique(begin, end);
-	// +++logMZ('computeVLC, après computeTactique');
-	begin = begin || 1;
-	end = end || MZ_EtatCdMs.nbMonstres;
-	let cache = getSortComp("Invisibilité") > 0 || getSortComp("Camouflage") > 0;
-	if (!cache) {
-		return false;
-	}
-	let urlImg = `${URL_MZimg}oeil.png`;
-	for (let i = end; i >= begin; i--) {
-		let id = getMonstreID(i);
-		let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
-		if (donneesMonstre && donneesMonstre.vlc) {
-			// if (donneesMonstre) logMZ('computeVLC i=' + i + ' id=' + id + ' ' + JSON.stringify(donneesMonstre));
-			let td = getMonstreNomNode(i);
-			td.appendChild(document.createTextNode(" "));
-			td.appendChild(createImage(urlImg, "Voit le caché"));
-		}
-		if (donneesMonstre && donneesMonstre.gen) {
-			let imgPh, txtPh;
-			switch (donneesMonstre.gen) {
-				case 1:
-					imgPh = `${URL_MZimg}Phoenix1.png`;
-					txtPh = 'Phœnix de première génération';
-					break;
-				case 2:
-					imgPh = `${URL_MZimg}Phoenix2.png`;
-					txtPh = 'Phœnix de deuxième génération';
-					break;
-				case 3:
-					imgPh = `${URL_MZimg}Phoenix3.png`;
-					txtPh = 'Phœnix de troisième génération';
-					break;
-				case 23:
-					imgPh = `${URL_MZimg}Phoenix23.png`;
-					txtPh = 'Phœnix de deuxième ou troisième génération';
-					break;
-			}
-			let td = getMonstreNomNode(i);
-			td.appendChild(document.createTextNode(" "));
-			let img = td.appendChild(createImage(imgPh, txtPh));
-			img.style.height = '15px';
-			img.style.width = 'auto';
-		}
-	}
-}
-
-/* appelé
-par updateTactique
-	par initialiseInfos
-		par do_vue_html
-par computeVLC
-	par computeMission
-		par filtreMonstres
-		par retrieveCDMs
-*/
-function computeTactique(begin, end) {
-	// pk begin/end ? --> parce qu'au chargement c'est RetrieveCdMs qui le lance via computeVLC
-	begin = begin || 1;
-	end = end || MZ_EtatCdMs.nbMonstres;
-	let j = end;
-	try {
-		// +++logMZ('computeTactique, begin=' + begin + ', end=' + end + ', checkBoxTactique=' + checkBoxTactique);
-		let noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
-		// +++logMZ('computeTactique, noTactique=' + noTactique);
-		if (noTactique || !isProfilActif()) {
-			return;
-		}
-		// +++logMZ('computeTactique, après isProfilActif');
-
-		for (; j >= begin; j--) {
-			let id = getMonstreID(j);
-			let nom = getMonstreNom(j);
-			let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
-			let bShowTactique = false;
-			if (donneesMonstre && donneesMonstre.esq) {
-				bShowTactique = true;
-			}
-			if (bShowTactique) {
-				let td = getMonstreNomNode(j);
-				if (!td) {
-					logMZ(`computeTactique, pas de <td> pour j=${j}`);
-					continue;
-				}
-				appendText(td, ' ');
-				td.appendChild(MZ_Tactique.createImage(id, nom));
-			}
-		}
-	} catch (exc) {
-		logMZ(`computeTactique: mob num : ${j}`, exc);
-	}
-	filtreMonstres();
-}
-
-function updateTactique() {
-	// = Handler checkBox noTactique
-	let noTactique = saveCheckBox(checkBoxTactique, 'NOTACTIQUE');
-	// +++logMZ('updateTactique, noTactique=' + noTactique);
-	if (!MZ_EtatCdMs.isCDMsRetrieved) {
-		return;
-	}
-	// +++logMZ('updateTactique, isCDMsRetrieved=' + MZ_EtatCdMs.isCDMsRetrieved);
-
-	if (noTactique) {
-		for (let i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
-			let tr = getMonstreNomNode(i);
-			let img = document.evaluate(`img[@src='${URL_MZimg}calc2.png']`, tr, null, 9, null).singleNodeValue;
-			if (img) {
-				img.parentNode.removeChild(img.previousSibling);
-				img.parentNode.removeChild(img);
-			}
-		}
-	} else {
-		computeTactique();
-	}
-}
-
-function filtreMonstres() {
-	// = Handler universel pour les fonctions liées aux monstres
-	let urlImg = `${URL_MZimg}Competences/ecritureMagique.png`,
-		urlEnchantImg = `${URL_MZimg}enchant.png`;
-
-	/* Vérification/Sauvegarde de tout ce qu'il faudra traiter */
-	let useCss = MY_getValue(`${numTroll}.USECSS`) == 'true';
-	let noGowapsS = saveCheckBox(checkBoxGowapsS, 'NOGOWAPS');
-	let noGowapsA = saveCheckBox(checkBoxGowapsA, 'NOGOWAPA');
-	let noEngages = saveCheckBox(checkBoxEngages, 'NOENGAGE');
-	let nivMin = saveComboBox(comboBoxNiveauMin, 'NIVEAUMINMONSTRE');
-	let nivMax = saveComboBox(comboBoxNiveauMax, 'NIVEAUMAXMONSTRE');
-	let famille = saveComboBox(comboBoxFamille, 'FAMILLEMONSTRE');
-	// old/new : détermine s'il faut ou non nettoyer les tr
-	let oldNOEM = true, noEM = true;
-	if (MY_getValue('NOINFOEM') != 'true') {
-		noEM = saveCheckBox(checkBoxEM, 'NOEM');
-	}
-	// Filtrage par nom
-	let eMonstre = document.getElementById('strMonstres');
-	if (!eMonstre) {
-		return;
-	}	// cas smartphone
-	let strMonstre = eMonstre.value.toLowerCase();
-	// Génère la liste des mobs engagés (si filtrés)
-	if (noEngages && !isEngagesComputed) {
-		for (let i = nbTrolls; i > 0; i--) {
-			let pos = MZ_getTrollPosition(i);
-			if (!listeEngages[pos[0]]) {
-				listeEngages[pos[0]] = {};
-			}
-			if (!listeEngages[pos[0]][pos[1]]) {
-				listeEngages[pos[0]][pos[1]] = {};
-			}
-			listeEngages[pos[0]][pos[1]][pos[2]] = 1;
-		}
-		isEngagesComputed = true;
-	}
-
-	/** * FILTRAGE ***/
-	/* À computer :
-	 * - EM (nom suffit)
-	 * - Enchant (nom suffit)
-	 * - Mission (nécessite CdM)
-	   * - mob VlC (nécessite CdM)
-	 * Sans computation :
-	 * - Gowap ? engagé ?
-	 */
-	for (let i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
-		let pos = getMonstrePosition(i);
-		let nom = getMonstreNom(i).toLowerCase();
-		if (noEM != oldNOEM) {
-			let tr = getMonstreNomNode(i);
-			if (noEM) {
-				// Si noEM passe de false à true, on nettoie les td "Nom"
-				// DEBUG: Sauf que ce serait carrément mieux avec des id...
-				while (tr.childNodes.length > 1) {
-					tr.removeChild(tr.childNodes[1]);
-				}
-			} else {
-				let TypeMonstre = getEM(nom);
-				if (TypeMonstre != '') {
-					let infosCompo = compoMobEM(TypeMonstre);
-					if (infosCompo.length > 0) {
-						tr.appendChild(document.createTextNode(' '));
-						tr.appendChild(createImage(urlImg, infosCompo));
-					}
-				}
-			}
-		}
-		if (needComputeEnchantement || noEM != oldNOEM && noEM) {
-			let texte = getInfoEnchantementFromMonstre(nom);
-			if (texte != '') {
-				let td = getMonstreNomNode(i);
-				td.appendChild(document.createTextNode(' '));
-				td.appendChild(createImage(urlEnchantImg, texte));
-			}
-		}
-
-		let dataV2 = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-		MZ_EtatCdMs.tr_monstres[i].style.display =
-			noGowapsS &&
-				nom.indexOf('gowap sauvage') != -1 &&
-				getMonstreDistance(i) > 1 ||
-				noGowapsA &&
-				nom.indexOf('gowap apprivoisé') != -1 &&
-				getMonstreDistance(i) > 1 ||
-				noEngages &&
-				getMonstreDistance(i) != 0 &&
-				listeEngages[pos[0]] &&
-				listeEngages[pos[0]][pos[1]] &&
-				listeEngages[pos[0]][pos[1]][pos[2]] ||
-				strMonstre != '' &&
-				nom.indexOf(strMonstre) == -1 ||
-				isMonstreLevelOutLimit(i, nivMin, nivMax) &&
-				getMonstreDistance(i) > 1 &&
-				nom.toLowerCase().indexOf("kilamo") == -1 ||
-				famille != '0' &&
-				dataV2 &&
-				dataV2.fam &&
-				dataV2.fam != famille ?
-				'none' : '';
-	}
-
-	if (MY_getValue('NOINFOEM') != 'true') {
-		if (noEM != oldNOEM) {
-			if (noEM && MZ_EtatCdMs.isCDMsRetrieved) {
-				computeMission();
-			}
-		}
-		oldNOEM = noEM;
-	}
-
-	needComputeEnchantement = false;
-}
-
 /** x~x Fonctions Trõlls ----------------------------------------------- */
 
-function filtreTrolls() {
-	let noIntangibles = saveCheckBox(checkBoxIntangibles, 'NOINT');
-	let strTroll = document.getElementById('strTrolls').value.toLowerCase();
-	let strGuilde = document.getElementById('strGuildes').value.toLowerCase();
-	for (let i = 1; i <= nbTrolls; i++) {
-		tr_trolls[i].style.display =
-			noIntangibles &&
-				getTrollNomNode(i).firstChild.className == 'mh_trolls_0' ||
-				strTroll != '' &&
-				getTrollNomNode(i).textContent.toLowerCase().indexOf(strTroll) == -1 ||
-				strGuilde != '' &&
-				getTrollGuilde(i).toLowerCase().indexOf(strGuilde) == -1 ?
-				'none' : '';
-	}
-}
-
 /* [functions] Bulle PX Trolls */
+// utilisé en vue V2
 function initPXTroll() {
 	let bulle = document.createElement('div');
 	bulle.id = 'bulleTrollPX';
@@ -12657,6 +11620,7 @@ function initPXTroll() {
 	document.body.appendChild(bulle);
 }
 
+// utilisé en vue V2
 function showPXTroll(evt) {
 	let lvl = this.firstChild.nodeValue;
 	let lvInt = isLetter(lvl[0]) ? lvl.substring(1) : lvl;
@@ -12667,187 +11631,13 @@ function showPXTroll(evt) {
 	bulle.style.visibility = 'visible';
 }
 
+// utilisé en vue V2
 function hidePXTroll() {
 	let bulle = document.getElementById('bulleTrollPX');
 	bulle.style.visibility = 'hidden';
 }
 
-/* [functions] Envoi PX / MP */
-function putBoutonPXMP() {
-	// Bouton d'initialisation du mode Envoi
-	// WARNING - Nécessite que le Filtre Trõll ait été mis en place
-	let td = document.getElementById('tdInsertTrolls');
-	if (!td) {
-		return;
-	}
-	td.width = 100;
-	td = insertAfterTd(td);
-	td.style.verticalAlign = 'top';
-	let bouton = appendButton(td, 'Envoyer...', prepareEnvoi);
-	bouton.id = 'btnEnvoi';
-}
-
-function prepareEnvoi() {
-	// = 1er Handler du bouton d'envoi
-
-	/* Ajout de la colonne des CheckBoxes */
-	let td = insertThText(getTrollNomNode(0), '');
-	td.style.width = '17px';
-	for (let i = nbTrolls; i > 0; i--) {
-		td = insertTd(getTrollNomNode(i));
-		td.style.width = '17px';
-		appendCheckBox(td, `envoi${i}`);
-	}
-
-	/* Ajout du radio de choix PX ou MP */
-	let btnEnvoi = document.getElementById('btnEnvoi');
-	if (!btnEnvoi) {
-		return;
-	}
-	let tdEnvoi = btnEnvoi.parentNode;
-	appendText(tdEnvoi, ' ');
-	let label = document.createElement('label');
-	label.style.whiteSpace = 'nowrap';
-	let radioElt = document.createElement('input');
-	radioElt.type = 'radio';
-	radioElt.name = 'envoiPXMP';
-	radioElt.id = 'radioPX';
-	label.appendChild(radioElt);
-	appendText(label, 'des PX ');
-	tdEnvoi.appendChild(label);
-	label = document.createElement('label');
-	radioElt = document.createElement('input');
-	radioElt.type = 'radio';
-	radioElt.name = 'envoiPXMP';
-	radioElt.checked = true;
-	label.appendChild(radioElt);
-	appendText(label, 'un MP');
-	tdEnvoi.appendChild(label);
-
-	/* Insertion du bouton Annuler */
-	insertButton(btnEnvoi, 'Annuler', annuleEnvoi);
-
-	/* Modification de l'effet du bouton Envoi */
-	document.getElementById('btnEnvoi').onclick = effectueEnvoi;
-}
-
-function annuleEnvoi() {
-	// = Handler bouton Annuler
-	/* Nettoyage du td du bouton Envoi */
-	let btnEnvoi = document.getElementById('btnEnvoi');
-	let tdEnvoi = btnEnvoi.parentNode;
-	while (tdEnvoi.firstChild) {
-		tdEnvoi.removeChild(tdEnvoi.firstChild);
-	}
-
-	/* Retour à l'effet de base du bouton Envoi */
-	btnEnvoi.onclick = prepareEnvoi;
-	tdEnvoi.appendChild(btnEnvoi);
-
-	/* Suppression CheckBoxes */
-	for (let i = nbTrolls; i >= 0; i--) {
-		let td = getTrollNomNode(i);
-		td.parentNode.removeChild(td);
-	}
-}
-
-function effectueEnvoi() {
-	// = 2e Handler du bouton d'envoi (charge un nouveau frame)
-	let str = '';
-	let errID = false;
-	for (let i = nbTrolls; i > 0; i--) {
-		let chb = document.getElementById(`envoi${i}`);
-		if (chb.checked) {
-			let idTroll = getTrollID(i);
-			if (idTroll == undefined) {
-				errID = true;
-			} else {
-				str = str + ((str ? ',' : '') + idTroll);
-			}
-		}
-	}
-	if (errID) {
-		avertissement('MZ : il y a eu une erreur dans la liste, vérifiez à qui vous faites l\'envoi');
-	}
-	let PXchecked = document.getElementById('radioPX').checked;
-	if (PXchecked) {
-		window.open(`./Play_a_Action.php?type=A&id=9&dest=${str}`, 'Contenu');
-	} else {
-		window.open(`../Messagerie/MH_Messagerie.php?cat=3&dest=${str}`, 'Contenu');
-	}
-}
-
-/** x~x Fonctions Trésors ---------------------------------------------- */
-
-function filtreTresors() {
-	// += Handler checkboxes : gg, compos, bidouilles, non libres
-	let noGG = saveCheckBox(checkBoxGG, 'NOGG');
-	let noCompos = saveCheckBox(checkBoxCompos, 'NOCOMP');
-	let noBidouilles = saveCheckBox(checkBoxBidouilles, 'NOBID');
-	let noEngages = saveCheckBox(checkBoxTresorsNonLibres, 'NOTRESORSNONLIBRES');
-	if (noEngages && !isEngagesComputed) {
-		for (let i = nbTrolls; i > 0; i--) {
-			let pos = MZ_getTrollPosition(i);
-			if (!listeEngages[pos[2]]) {
-				listeEngages[pos[2]] = [];
-			}
-			if (!listeEngages[pos[2]][pos[1]]) {
-				listeEngages[pos[2]][pos[1]] = [];
-			}
-			listeEngages[pos[2]][pos[1]][pos[0]] = 1;
-		}
-		isEngagesComputed = true;
-	}
-	let strTresor = document.getElementById('strTresors').value.toLowerCase();
-	for (let i = nbTresors; i > 0; i--) {
-		let nom = getTresorNom(i);
-		let pos = getTresorPosition(i);
-		tr_tresors[i].style.display =
-			noGG &&
-				nom.indexOf('Gigots de Gob') != -1 ||
-				noCompos &&
-				nom.indexOf('Composant') != -1 ||
-				noEngages &&
-				listeEngages[pos[2]] &&
-				listeEngages[pos[2]][pos[1]] &&
-				listeEngages[pos[2]][pos[1]][pos[0]] &&
-				getTresorDistance(i) > 0 ||
-				strTresor != '' &&
-				nom.toLowerCase().indexOf(strTresor) == -1 ||
-				noBidouilles &&
-				nom.indexOf('Bidouille') != -1 ?
-				'none' : '';
-	}
-}
-
-/** x~x Fonctions Lieux ------------------------------------------------ */
-
-function filtreLieux() {
-	// += Handler checkbox trous
-	let noTrou = saveCheckBox(checkBoxTrou, 'NOTROU');
-	let strLieu = document.getElementById('strLieux').value.toLowerCase();
-	for (let i = nbLieux; i > 0; i--) {
-		tr_lieux[i].style.display =
-			strLieu &&
-				getLieuNom(i).toLowerCase().indexOf(strLieu) == -1 ||
-				noTrou &&
-				getLieuNom(i).toLowerCase().indexOf("trou de météorite") != -1 &&
-				getLieuDistance(i) > 1 ? 'none' : '';
-	}
-}
-
-/** x~x Diplomatie ----------------------------------------------------- */
-
-function refreshDiplo() {
-	MY_setValue(`${numTroll}.diplo.off`,
-		checkBoxDiplo.checked ? 'true' : 'false'
-	);
-	if (isDiploRaw) {
-		computeDiplo();
-	}
-	appliqueDiplo();
-}
-
+// utilisé en vue V2
 // à déplacer en tant que méthode statique dans la classe MZ_cLigneTroll
 // pour l'instant, ça renseigne la variable globale Diplo (burk)
 function computeDiplo() {
@@ -12901,180 +11691,6 @@ function computeDiplo() {
 	isDiploRaw = false;
 }
 
-function appliqueDiplo() {
-	let aAppliquer = Diplo;
-	if (checkBoxDiplo.checked) {
-		// Pour retour à l'affichage basique sur désactivation de la diplo
-		aAppliquer = {
-			Guilde: {},
-			Troll: {},
-			Monstre: {}
-		};
-	}
-
-	/* On applique "aAppliquer" */
-	// Diplo Trõlls
-	for (let i = nbTrolls; i > 0; i--) {
-		let idG = getTrollGuildeID(i);
-		let idT = getTrollID(i);
-		let tr = tr_trolls[i];
-		// logMZ('diplo i=' + i + ', troll=' + idT + ', guilde=' + idG + ', HTML=' + tr.innerHTML);
-		if (aAppliquer.Troll[idT]) {
-			tr.classList.remove('mh_tdpage');
-			let descr = aAppliquer.Troll[idT].titre;
-			if (descr) {
-				getTrollNomNode(i).title = descr;
-			}
-			tr.style.backgroundColor = aAppliquer.Troll[idT].couleur;
-		} else if (aAppliquer.Guilde[idG]) {
-			tr.classList.remove('mh_tdpage');
-			let descr = aAppliquer.Guilde[idG].titre;
-			if (descr) {
-				getTrollNomNode(i).title = descr;
-			}
-			tr.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
-		} else {
-			tr.classList.add('mh_tdpage');	// ne fait rien si déjà là
-			getTrollNomNode(i).removeAttribute('title');
-		}
-	}
-
-	// Diplo Monstres
-	for (let i = MZ_EtatCdMs.nbMonstres; i > 0; i--) {
-		let id = getMonstreID(i);
-		let nom = getMonstreNom(i).toLowerCase();
-		let tr = MZ_EtatCdMs.tr_monstres[i];
-		if (aAppliquer.Monstre[id]) {
-			//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-			for (let td of tr.children) td.style.backgroundColor = aAppliquer.Monstre[id].couleur;
-			tr.style.backgroundColor = aAppliquer.Monstre[id].couleur;
-			tr.diploActive = 'oui';
-			let descr = aAppliquer.Monstre[id].titre;
-			if (descr) {
-				getMonstreNomNode(i).title = descr;
-			}
-		} else if (aAppliquer.mythiques &&
-			(nom.indexOf('liche') >= 0 ||
-				nom.indexOf('hydre') >= 0 ||
-				nom.indexOf('balrog') >= 0 ||
-				nom.indexOf('beholder') >= 0 ||
-				nom.indexOf('sidoine') >= 0)) {
-			//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-			for (let td of tr.children) td.style.backgroundColor = aAppliquer.mythiques;
-			tr.style.backgroundColor = aAppliquer.mythiques;
-			tr.diploActive = 'oui';
-			getMonstreNomNode(i).title = 'Monstre Mythique';
-		} else {
-			tr.className = 'mh_tdpage';
-			tr.diploActive = '';
-		}
-	}
-}
-
-/** x~x Actions à distance --------------------------------------------- */
-
-function computeActionDistante(dmin, dmax, keltypes, oussa, urlIcon, message) {
-	let monN = parseInt(getPosition()[2]),
-		isLdP = oussa == 'self';
-
-	for (let type in keltypes) {
-		debugMZ(`computeActionDistante(${dmin}, ${dmax}, ${oussa}, ${urlIcon}, ${message}) type=${type}`);
-		let alt = oussa == 'self' ? type.slice(0, -1) : oussa;
-		for (let i = VueContext[`nb${type}`]; i > 0; i--) {
-			let tr = VueContext[`tr_${type.toLowerCase()}`][i];
-			// Roule 11/03/2016, on passe par les nouvelles fonctions getXxxPosition et getXxxDistance
-			// let sonN = this['get'+type.slice(0,-1)+'Position'](i)[2];
-			// let d = this['get'+type.slice(0,-1)+'Distance'](i);
-			let sonN = getXxxPosition(type, i)[2];
-			let d = getXxxDistance(type, i);
-			let thismessage = message;
-			if (isLdP) {
-				let chanceToucher = getTalent("Lancer de Potions") + Math.min(10,
-					10 - 10 * d +
-					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-				);
-				thismessage = `${thismessage} (${chanceToucher}%)`;
-			}
-
-			if (sonN == monN && d >= dmin && d <= dmax) {
-				let iconeAction = document.evaluate(
-					`./descendant::img[@alt='${alt}']`, tr, null, 9, null
-				).singleNodeValue;
-				let tdAction = tr.getElementsByTagName('td')[1];
-				if (iconeAction) {
-					if (iconeAction.title) {
-						iconeAction.title = `${iconeAction.title}\n${thismessage}`;
-					} else {
-						iconeAction.title = thismessage;
-					}
-					iconeAction.src = urlIcon;
-				} else {
-					let icon = document.createElement('img');
-					icon.src = urlIcon;
-					icon.height = 20;
-					icon.alt = alt;
-					icon.title = thismessage;
-					tdAction.appendChild(icon);
-				}
-				tdAction.style.whiteSpace = 'nowrap';
-			}
-		}
-	}
-}
-
-function computeCharge() {
-	computeActionDistante(1,
-		getPortee(
-			Math.ceil(MY_getValue(`${numTroll}.caracs.pv`) / 10) +
-			MY_getValue(`${numTroll}.caracs.regeneration`)
-		),
-		{ Monstres: 1, Trolls: 1 },
-		'Attaquer',
-		`${MHicons}E_Metal09.png`,
-		'Cible à portée de Charge'
-	);
-}
-
-function computeProjo() {
-	computeActionDistante(0,
-		getPortee(
-			parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-			parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-		),
-		{ Monstres: 1, Trolls: 1 },
-		'Attaquer',
-		`${MHicons}S_Fire05.png`,
-		'Cible à portée de Projo'
-	);
-}
-
-function computeTelek() {
-	computeActionDistante(0,
-		Math.floor((
-			parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-			parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-		) / 2),
-		{ Tresors: 1 },
-		'Telek',
-		`${MHicons}S_Magic04.png`,
-		'Trésor à portée de Télékinésie'
-	);
-}
-
-function computeLdP() {
-	computeActionDistante(0,
-		2 + Math.floor((
-			parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-			parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-		) / 5),
-		{ Monstres: 1, Trolls: 1 },
-		'self',
-		`${MHicons}P_Red01.png`,
-		'Cible à portée de Lancer de Potions'
-	);
-}
-
 /** x~x Systèmes Tactiques --------------------------------------------- */
 
 /*
@@ -13095,6 +11711,7 @@ function computeLdP() {
 }
 */
 
+// utilisé en vue V2
 function createPVTroll(infos, itName) {
 	let pv_cadre = document.createElement('div');
 	pv_cadre.className = "barre";
@@ -13129,6 +11746,7 @@ function createPVTroll(infos, itName) {
 	return lien; // retourne le contenu de la case PV Bricol'Troll
 }
 
+// utilisé en vue V2
 function createPATroll(infos) {
 	let span = document.createElement('span');
 	span.title = `DLA : ${SQLDateToFrenchTime(infos.dla)}`;
@@ -13141,6 +11759,7 @@ function createPATroll(infos) {
 	return span;
 }
 
+// utilisé en vue V2
 function displayCamoTroll(infos) {
 	let img;
 	if (infos.camoufle || infos.invisible) {
@@ -13149,47 +11768,6 @@ function displayCamoTroll(infos) {
 	}
 	return img;
 }
-
-/*
-function createTrollRowFromRef(infos, ref_tr) {
-	let tr = ref_tr.cloneNode(true);
-	tr.style.color = 'cc7000';
-	// [dist, [act,] ref, name, pv, pa, guild, niv, [race,] x, y , z]
-	let desktopView = isDesktopView();
-	let idx = 0; // distance
-	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_dist', infos.dist);
-	if (desktopView) {
-		idx++; // action
-		tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id);
-		tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id);
-	}
-	idx++; // ref
-	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_ref', infos.id);
-	idx++; // name
-	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_ref', infos.id).replace('r_name', infos.nom);
-	idx++; // guild
-	tr.cells[idx].innerHTML = ref_tr.cells[idx].innerHTML.replace('r_guild', infos.guilde ? infos.guilde : '');
-	if (desktopView) {
-		idx++;	// niv
-		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_niv', infos.niveau ? infos.niveau : '');
-		idx++;	// race
-		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_race', infos.race ? infos.race : '');
-	} else {
-		idx++;	// Race + Niveau
-		let lettreRace = { "Kastar": "K", "Durakuir": "D", "Skrim": "S", "Tomawak": "T", "Darkling": "G", " Nkrwapu": "N" };
-		let race_niv = infos.race ? `${lettreRace[infos.race]}` : '';
-		race_niv = infos.niveau ? `${race_niv}${infos.niveau}` : race_niv;
-		tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_niv', race_niv);
-	}
-	idx++; // x
-	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_x', infos.x);
-	idx++; // y
-	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_y', infos.y);
-	idx++; // n
-	tr.cells[idx].innerText = ref_tr.cells[idx].innerText.replace('r_n', infos.n);
-	return tr;
-}
-*/
 
 /** x~x Mode Tétalanvert! ------------------------------------------------- */
 
@@ -13201,6 +11779,7 @@ function calculeDistance(maPos, posArr) {
 	);
 }
 
+// à faire : reporter en Vue V2 (ou pas ?)
 function inversionCoord() {
 	let maPos = getPosition(true);
 	let listeOffsets = {
@@ -13223,21 +11802,7 @@ function inversionCoord() {
 
 /*                             Partie principale                              */
 function do_vue() {
-	// test vue méthode pré ou post 2024
-	// dans la nouvelle vue, quand on passe ici, on a juste eu, par exemple, un "let json_monstres;"
-	node = document.evaluate(
-		"//p/text()[contains(., 'Cette page est obsolète.')]", document, null, 9, null
-	).singleNodeValue;
-	if (node) {
-		do_vue_html();	// "ancienne" vue
-		do_scizEnhanceView(); /* SCIZ */
-		do_highlightSameXYN();
-		avertissement(`MZ et SCIZ sont intégrés dans la nouvelle vue   
-			<br>Cette ancienne vue va bientôt disparaitre   
-			<br>Si quelque chose manque dans la nouvelle vue, le signaler <a href="https://www.mountyhall.com/Forum/display_topic_threads.php?ThreadID=2809627#2809627" target="_blank">sur le forum</a>   `);
-	} else {
-		MZ_cVueJSON.initGlobal();	// inclut SCIZ et SameXYN
-	}
+	MZ_cVueJSON.initGlobal();	// inclut l'initialisation de SCIZ et SameXYN
 }
 
 class MZ_cVueJSON {
@@ -14024,56 +12589,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
 
-		/* peut être pas. En attente de voir si c'est fait coté MH
-		if (getTalent("Projectile Magique")) {
-			computeActionDistante(0,
-				getPortee(
-					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-				),
-				{ Monstres: 1, Trolls: 1 },
-				'Attaquer',
-				`${MHicons}S_Fire05.png`,
-				'Cible à portée de Projo'
-			);
-		}
-		if (getTalent("Charger")) {
-			computeActionDistante(1,
-				getPortee(
-					Math.ceil(MY_getValue(`${numTroll}.caracs.pv`) / 10) +
-					MY_getValue(`${numTroll}.caracs.regeneration`)
-				),
-				{ Monstres: 1, Trolls: 1 },
-				'Attaquer',
-				`${MHicons}E_Metal09.png`,
-				'Cible à portée de Charge'
-			);
-		}
-		if (getTalent("Télékinésie")) {
-			computeActionDistante(0,
-				Math.floor((
-					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-				) / 2),
-				{ Tresors: 1 },
-				'Telek',
-				`${MHicons}S_Magic04.png`,
-				'Trésor à portée de Télékinésie'
-			);
-		}
-		if (getTalent("Lancer de Potions")) {
-			computeActionDistante(0,
-				2 + Math.floor((
-					parseInt(MY_getValue(`${numTroll}.caracs.vue`)) +
-					parseInt(MY_getValue(`${numTroll}.caracs.vue.bm`))
-				) / 5),
-				{ Monstres: 1, Trolls: 1 },
-				'self',
-				`${MHicons}P_Red01.png`,
-				'Cible à portée de Lancer de Potions'
-			);
-		}
-		*/
 		// diplo
 		if (isDiploRaw) computeDiplo();
 		// ceci permet de retirer la diplo (non implémenté dans la nouvelle vue)
@@ -14369,7 +12884,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	}
 
 	static receptionMZNiveauxAJAX(responseDetails) {
-		// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+		// logMZ('receptionMZNiveauxAJAX_log readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 		if (responseDetails.status == 0) { return; }
 		let texte;
 		let nbResult = 0;
@@ -14639,7 +13154,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			//filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
 			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres fin`);
 		} catch (exc) {
-			logMZ(`retrieveCDMs: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
+			logMZ(`receptionMZNiveauxAJAX_log: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
 		}
 
 		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
@@ -15174,122 +13689,6 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneCenotaphe.MZ_oVueJSON);
 	}
 }
-
-// to be deleted à l'abandon de l'ancienne vue
-function do_vue_html() {
-	let skip = [];
-	for (let type in typesAFetcher) {
-		let ok = fetchData(type);
-		if (!ok) { skip.push(type); }
-	}
-
-	// roule' 11/03/2016
-	// maintenant, tr_monstres et this['tr_monstres'], ce n'est plus la même chose
-	// je fais une recopie :(
-	MZ_EtatCdMs.tr_monstres = VueContext.tr_monstres;
-	if (MZ_EtatCdMs.tr_monstres && MZ_EtatCdMs.tr_monstres[0]) {
-		for (let i = 0; i < MZ_EtatCdMs.tr_monstres[0].cells.length; i++) { // Roule 22/07/2020
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Dist/i)) {
-				MZ_EtatCdMs.indexCellDist = i;
-			}
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/Action/i)) {
-				MZ_EtatCdMs.indexCellActions = i;
-			}
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/r[eéè]f/i)) {
-				MZ_EtatCdMs.indexCellID = i;
-			}
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^X$/i)) {
-				MZ_EtatCdMs.indexCellX = i;
-			}
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^Y$/i)) {
-				MZ_EtatCdMs.indexCellY = i;
-			}
-			if (MZ_EtatCdMs.tr_monstres[0].cells[i].innerText.match(/^N$/i)) {
-				MZ_EtatCdMs.indexCellN = i;
-			}
-		}
-	}
-
-	tr_trolls = VueContext.tr_trolls;
-	tr_tresors = VueContext.tr_tresors;
-	tr_champignons = VueContext.tr_champignons;
-	tr_lieux = VueContext.tr_lieux;
-
-	MZ_EtatCdMs.nbMonstres = VueContext.nbMonstres;
-	nbTrolls = VueContext.nbTrolls;
-	nbTresors = VueContext.nbTresors;
-	nbChampignons = VueContext.nbChampignons;
-	nbLieux = VueContext.nbLieux;
-
-	try {
-		start_script(31, 'do_vue_log');
-
-		initialiseInfos();
-		savePosition();
-
-		// Fonctionnalité "Têtalenvert" cachée, en test :
-		if (MY_getValue(`${numTroll}.VERLAN`) == 'true') {
-			inversionCoord();
-		}
-
-		ajoutDesFiltres();
-		MZ_cVueExterne.set2DViewSystem();
-		// putBoutonTroogle();
-		putBoutonPXMP();
-
-		synchroniseFiltres();
-		if (!skip.includes("monstres")) {
-			toggleLevelColumn();	// appel des CdM, ne fait rien si la checkbox NOCDM est cochée
-		}
-
-		refreshDiplo();
-
-		// 400 ms
-		let noGG = saveCheckBox(checkBoxGG, "NOGG");
-		let noCompos = saveCheckBox(checkBoxCompos, "NOCOMP");
-		let noBidouilles = saveCheckBox(checkBoxBidouilles, "NOBID");
-		let noGowapsS = saveCheckBox(checkBoxGowapsS, "NOGOWAPS");
-		let noGowapsA = saveCheckBox(checkBoxGowapsA, "NOGOWAPA");
-		let noEngages = saveCheckBox(checkBoxEngages, "NOENGAGE");
-		let noTresorsEngages = saveCheckBox(checkBoxTresorsNonLibres, "NOTRESORSNONLIBRES");
-		let noTrou = saveCheckBox(checkBoxTrou, "NOTROU");
-		let noIntangibles = saveCheckBox(checkBoxIntangibles, "NOINT");
-		filtreMonstres();
-		if (noIntangibles) {
-			filtreTrolls();
-		}
-		if (noGG || noCompos || noBidouilles || noTresorsEngages) {
-			filtreTresors();
-		}
-		if (noTrou) {
-			filtreLieux();
-		}
-
-		MZ_Tactique.initPopup();
-		initPXTroll();
-
-		if (getTalent("Projectile Magique")) {
-			computeProjo();
-		}
-		if (getTalent("Charger")) {
-			computeCharge();
-		}
-		if (getTalent("Télékinésie")) {
-			computeTelek();
-		}
-		if (getTalent("Lancer de Potions")) {
-			computeLdP();
-		}
-
-		displayScriptTime(undefined, 'do_vue_log');
-	} catch (exc) {
-		// gath: on garde le message sympa plutôt qu'ajouter un '- Plus d'infos
-		// en console (F12)' sans ame !
-		avertissement(`Une erreur est survenue. Seriez-vous sous l'effet d'un Fumeux ?`);
-		logMZ('do_vue_log', exc);
-	}
-}
-
 
 /** x~x profil2 -------------------------------------------------------- */
 
