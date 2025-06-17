@@ -609,35 +609,6 @@ function debugMZ(obj, exc = undefined) {
 	// printMZ(window.console.debug, MY_DEBUG, obj);
 }
 
-// WARNING (gath) - non utilisé (refonte logging) -> commenté
-// function traceStack(e, sModule) {
-// 	let version = '';
-// 	if (GM_info && GM_info.script && GM_info.script.version) {
-// 		version = `${GM_info.script.version}`;
-// 	}
-// 	let sRet = `[MZ_TRACE|${version}]`;
-// 	if (sModule) {
-// 		sRet = `${sRet} \{${sModule}\}`;
-// 	}
-// 	try {
-// 		if (e.message) {
-// 			sRet = `${sRet} ${e.message}`;
-// 		}
-// 	} catch (e2) {
-// 		sRet = `${sRet} <exception acces message>`; // + e2.message;
-// 	}
-// 	try {
-// 		if (e.stack) {
-// 			let sStack = e.stack;
-// 			// enlever les infos confidentielles
-// 			sRet = `${sRet}\n${sStack.replace(/file\:\/\/.*gm_scripts/ig, '...')}`;
-// 		}
-// 	} catch (e2) {
-// 		sRet = `${sRet} <exception acces stack>`; // + e2.message;
-// 	}
-// 	return sRet;
-// }
-
 /** ********************************************************
 **** Début de zone à déplacer dans une bibli commune ******
 **********************************************************/
@@ -3047,10 +3018,6 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 		MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre);
 		MZ_tab_carac_add_tr_autres(tbody, donneesMonstre, id, nom);
 
-		/* à supprimer, remplacé par un "title" sur le 3e td de "autres"
-		let msgInfo = MZ_carac_build_nb_cmd_msg(donneesMonstre);
-		if (msgInfo) MZ_tab_carac_add_tr_sansTitre(tbody, msgInfo, 0, true);
-		*/
 		return table;
 	} catch (exc) {
 		avertissement('Une erreur est survenue (createCDMTable)', null, null, exc);
@@ -3071,16 +3038,6 @@ function MZ_tab_carac_mkBlessureTexte(donneesMonstre) {
 	}
 	return texte;
 }
-
-// function MZ_tab_carac_add_tr_sansTitre(table, msg, bItalic) {
-// 	if (!msg) { return; }
-// 	let tr = appendTr(table, 'mh_tdpage');
-// 	td = appendTdText(tr, msg);
-// 	td.colSpan = 3;
-// 	if (bItalic) { td.style.fontStyle = 'italic'; }
-// 	td.className = 'mh_tdpage';
-// 	return td;
-// }
 
 function MZ_tab_carac_add_tr_pouvoir(tbody, donneesMonstre) {
 	if (!donneesMonstre.pouv) {
@@ -4458,27 +4415,6 @@ function changeActionDecalage() {
 function DMYHMSToDate(t) {
 	return new Date(t.replace(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/, "$2/$1/$3 $4:$5:$6"));
 }
-
-/*
-function DateDiff(d1, d2) {
-	let diff = {},
-		tmp = Math.floor((d2 - d1) / 1000); // on s'affranchit des 1000e de s
-
-	diff.sec = tmp % 60; tmp = Math.floor((tmp - diff.sec) / 60);
-	diff.min = tmp % 60; tmp = Math.floor((tmp - diff.min) / 60);
-	diff.hour = tmp % 24; tmp = Math.floor((tmp - diff.hour) / 24);
-	diff.day = tmp;
-
-	return diff.day > 5 ? "> 5j" : [
-		diff.day > 0 ? `${diff.day}j` : null,
-		diff.hour > 0 ? `${diff.hour}h` : null,
-		diff.min > 0 ? `${diff.min}m` : null,
-		diff.sec > 0 ? `${diff.sec}s` : null
-	].filter((o) => {
-		return o;
-	}).join(" ");
-}
-*/
 
 function initCompteAreboursDLA() {
 	if (MY_getValue('COMPTEAREBOURSDLA') != 'true') {
@@ -11206,45 +11142,6 @@ function MZ_getDistanceAvecSplit(cellTxt) {
 	return Math.max(dH, dV);
 }
 
-/** x~x Gestion Préférences Utilisateur -------------------------------- */
-
-/* pas utilisé : àto be deleted ?
-function saveCheckBox(chkbox, pref) {
-	// Enregistre et retourne l'état d'une CheckBox
-	let etat = chkbox.checked;
-	MY_setValue(pref, etat ? 'true' : 'false');
-	return etat;
-}
-
-function recallCheckBox(chkbox, pref) {
-	// Restitue l'état d'une CheckBox
-	chkbox.checked = MY_getValue(pref) == 'true';
-}
-
-function saveComboBox(cbb, pref) {
-	if (!cbb) {
-		return;
-	}
-	// Enregistre et retourne l'état d'une ComboBox
-	let opt = cbb.options[cbb.selectedIndex];
-	if (!opt) {
-		return;
-	}
-	let etat = cbb.options[cbb.selectedIndex].value;
-	MY_setValue(pref, etat);
-	return etat;
-}
-
-function recallComboBox(cbb, pref) {
-	// Restitue l'état d'une ComboBox
-	let nb = MY_getValue(pref);
-	if (nb && cbb) {
-		cbb.value = nb;
-	}
-	return nb;
-}
-*/
-
 /** x~x Initialisation: Ajout des Boutons ------------------------------ */
 
 // Encapsulation du code pour les vues externes
@@ -13120,31 +13017,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						oMonstre.cibleMission = true;
 					}
 				}
-				/* à supprimer
-				if (mess) {
-					let myURL;
-					if (bPeutEtreIcone) {
-						myURL = `${URL_MZimg}missionX.png`;
-					} else {
-						myURL = `${URL_MZimg}mission.png`;
-					}
-					oMonstre.eltTdNom.appendChild(createImage(myURL, mess));
-					oMonstre.cibleMission = true;
-				}
-				*/
-
-				/* Roule' à étudier plus tard, cette différence de style selon la diplo...
-				oMonstre.eltTdNiveau.onmouseover = function() {
-					this.className = 'mh_tdtitre';
-				};
-				oMonstre.eltTdNiveau.onmouseout = function() {
-					if(this.parentNode.diploActive=='oui') {
-						this.className = '';
-					} else {
-						this.className = 'mh_tdpage';
-					}
-				};
-				*/
 				nbResult++;
 			}
 			// todo
@@ -13227,36 +13099,6 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		this.initGenerique(MZ_oVueJSON, id, eTr);
 		this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde];
 		this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv];
-
-		/*
-		if (!MZ_cLigneTroll.refTr) {
-			// gath: on construit pour afficher les trolls hors-vue (bricolTroll).
-			// Le premier troll visible (nous) est dupliqué puis
-			// ses attributs sont réinitilisés pour servir de référence
-			// (gère les cas de colonne invisible type 'guilde').
-			let ref_tr = eTr.cloneNode(true);
-			let ref_anchors = ['r_dist', 'r_ref', 'r_name', 'r_guild', 'r_niv', 'r_x', 'r_y', 'r_n'];
-			isDesktopView() ? ref_anchors.splice(1, 0, 'r_act') : '';
-			isDesktopView() ? ref_anchors.splice(6, 0, 'r_race') : '';
-			for (let j = 0, col; col = ref_tr.cells[j]; j++) {
-				// [dist, [act,] ref, name, guild, niv, [race,] x, y , z]
-				let r_a = ref_anchors[j];
-				if (r_a == 'r_act') {
-					continue;
-				} else if (r_a == 'r_name') {
-					Array.from(ref_tr.cells[j].getElementsByTagName('img')).forEach((img) => {
-						img.remove(); // supprime les mentions Troll à Ghé/Pogé/Prieur de ...
-					});
-					let s_id = this.id.toString(), s_name = this.nom.toString();
-					ref_tr.cells[j].innerHTML = ref_tr.cells[j].innerHTML.replace(s_name, r_a).replace(s_id, 'r_ref');
-				} else {
-					let s_txt = ref_tr.cells[j].innerText;
-					ref_tr.cells[j].innerText = (s_txt != '') ? ref_tr.cells[j].innerText.replace(s_txt, r_a) : r_a;
-				}
-			}
-			MZ_cLigneTroll.refTr = ref_tr;
-		}
-		*/
 	}
 
 	insertColumn(param) {
@@ -13518,12 +13360,6 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 				});
 				for (let [idTroll, infos] of Object.entries(btData.data.trolls)) {
 					if (visibleTrolls.includes(idTroll)) { continue; }
-					/*
-					let awayTroll = new MZ_cLigneTroll();
-					let maPos = getPosition(true), pos = [infos.x, infos.y, infos.n];
-					infos.dist = calculeDistance(maPos, pos);
-					awayTroll.initFromRef(infos);
-					*/
 					//logMZ('receptionBricolTrollAJAX', infos);
 					MZ_cLigneTroll.addLigne(
 						infos.id,
@@ -14470,13 +14306,6 @@ function setAccel() {
 		appendText(insertPt, 'Aucun calcul possible : vous êtes mort voyons !');
 		skip = true;
 	}
-
-	/* désactivé, ça n'arrive plus
-	if (!skip && fat > 30) {
-		appendText(insertPt, 'Vous êtes trop fatigué pour accélérer.');
-		skip = true;
-	}
-	// */
 
 	// Setup lastDLAZone
 	if (overDLA) {
