@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.74
+// @version     1.6.75
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.74';
+var MZ_latest = '1.6.75';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -770,6 +770,9 @@ function MY_getSessionValue(key) {
 	}
 	window.sessionStorage.removeItem(key);
 	return null;
+}
+function MY_removeSessionValue(key) {
+	window.sessionStorage.removeItem(key);
 }
 
 /** x~x Variables globales utiles -------------------------------------- */
@@ -6302,8 +6305,7 @@ class MZ_cHighlightSameXYN {
 	}
 
 	static defineOptions(tbody) {
-		let tr = appendTr(tbody),
-			td = appendTd(tr);
+		let td = appendTd(appendTr(tbody));
 		appendCheckBoxBlock(td, 'highlightSameXYN', "Améliorer la vue d'une caverne", MY_getValue('HIGHLIGHTSAMEXYN') == 'true');
 		appendCheckBoxBlock(td, 'highlightSameXYNCoordsOnly', "uniquement depuis les coordonnées", MY_getValue('HIGHLIGHTSAMEXYNCOORDSONLY') == 'true');
 	}
@@ -8958,6 +8960,7 @@ function saveAll() {
 		MZ_setOrRemoveValue('NOINFOEM', document.getElementById('noInfoEM').checked);
 
 		MZ_cHighlightSameXYN.saveOptions();
+		MZ_cLieuxBT.saveOptions();
 
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
@@ -9230,6 +9233,7 @@ function insertOptionTable(insertPt) {
 	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
 
 	MZ_cHighlightSameXYN.defineOptions(tbody);
+	MZ_cLieuxBT.defineOptions(tbody);
 
 	/* Interface Tactique */
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
@@ -9256,7 +9260,7 @@ function insertOptionTable(insertPt) {
 	td = appendTd(appendTr(mainBody, 'mh_tdtitre'));
 	appendText(td, 'SCIZ :', true);
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
-	td = appendTdText(td, 'JWT : ');
+	appendText(td, 'JWT : ');
 	appendTextbox(td, 'text', 'sciz_jwt', 150, 500, MY_getValue(`${numTroll}.SCIZJWT`));
 	// Event checkbox
 	td = appendTd(appendTr(mainBody, 'mh_tdpage'));
@@ -12364,7 +12368,7 @@ class MZ_cLigneVue {
 		// gère les td communs : distance, id, nom (pas le remplissage), x, y, n
 		// met le tr à sa place
 		let hv;
-		if (MZ_cVueJSON.oTrolls.objets.length > 0) {
+		if (oModele != undefined && MZ_cVueJSON.oTrolls.objets.length > 0) {
 			hv = oModele.eltTdDist.classList.contains('hv');
 		}
 		oNouvelleLigne.eltTr = document.createElement('tr');
@@ -12406,8 +12410,10 @@ class MZ_cLigneVue {
 		oNouvelleLigne.eltTdRef= document.createElement('td');
 		oNouvelleLigne.eltTdRef.className = 'ref';
 		oNouvelleLigne.eltTdRef.appendChild(document.createTextNode(id));
-		oNouvelleLigne.eltTdAction = document.createElement('td');
-		oNouvelleLigne.eltTdAction.className = 'actions';
+		if (isDesktopView()) {
+			oNouvelleLigne.eltTdAction = document.createElement('td');
+			oNouvelleLigne.eltTdAction.className = 'actions';
+		}
 		oNouvelleLigne.eltTdNom= document.createElement('td');
 		oNouvelleLigne.eltTdX = document.createElement('td');
 		oNouvelleLigne.eltTdX.appendChild(document.createTextNode(x));
@@ -13194,9 +13200,9 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 		initPXTroll();
 		MZ_cLigneTroll.processPX();
-		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 		MZ_cSCIZ.processTrolls();
 		MZ_cLigneTroll.MZ_oVueJSON.initFiltre();
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 
 		// diplo
 		if (isDiploRaw) computeDiplo();
@@ -13506,10 +13512,11 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
+		MZ_cLieuxBT.processVue();
 		MZ_cSCIZ.processTraps();
 		MZ_cSCIZ.processPortals();
 		MZ_cLigneLieu.MZ_oVueJSON.initFiltre();
+		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
 	}
 
 	static addLigne(id, type, x, y, n) {
@@ -13517,14 +13524,15 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 		let oNouvelleLigne = new MZ_cLigneLieu();
 		if (!MZ_cLigneVue.addLigne(id, type, x, y, n, oNouvelleLigne, oModele)) return;
 		oNouvelleLigne.eltTdNom.appendChild(document.createTextNode(type));
-		for (let e of [
-			oNouvelleLigne.eltTdDist,
-			oNouvelleLigne.eltTdAction,
-			oNouvelleLigne.eltTdRef,
+		let tabTd = [oNouvelleLigne.eltTdDist];
+		if (isDesktopView()) tabTd.push(oNouvelleLigne.eltTdAction);
+		tabTd.push(oNouvelleLigne.eltTdRef,
 			oNouvelleLigne.eltTdNom,
 			oNouvelleLigne.eltTdX,
 			oNouvelleLigne.eltTdY,
-			oNouvelleLigne.eltTdN]) {
+			oNouvelleLigne.eltTdN
+		);
+		for (let e of tabTd) {
 			e.style.display = 'table-cell';
 			oNouvelleLigne.eltTr.appendChild(e);
 		}
@@ -13537,6 +13545,114 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 	static initGlobal() {
 		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneCenotaphe.MZ_oVueJSON);
+	}
+}
+
+/** x~x Lieux BricolTrolls --------------------------------------------- */
+
+class MZ_cLieuxBT {
+	static typesLieux = {
+		"Lac": "1",
+		// "Lieu à champignons": "2",
+		"Divers": "3",
+		"Gowapier": "4",
+		"Tanière": "5",
+		"Geyser": "6",
+		"Puit": "7",
+		"Agence d'Annonce": "20",
+		"Armurerie": "21",
+		"Auberge": "22",
+		"Boutique d'Enchantement": "23",
+		"Cahute du Rémouleur": "24",
+		"Forge": "25",
+		"Lice": "26",
+		// "Maléfacterie": "27",
+		// "Marabouterie": "28",
+		"Refuge": "29",
+		// "Source de Purification": "30",
+		"Téléporteur": "31",
+		"Minéroll": "32",
+		// "Bureau des Primes": "33",
+		"Trou de Météorite": "99",
+		// "Crasc": "100",
+		"Gares TGV": "-3"
+	};
+
+	static defineOptions(tbody) {
+		let td = appendTd(appendTr(tbody)),
+			select = document.createElement('select'),
+			selected = MY_getValue(`${numTroll}.BT.nearestLocation`);
+
+		appendText(td, 'Afficher le lieu le plus proche : ');
+		select.id = 'nearestLocSelect';
+		appendOption(select, 'none', 'Aucun');
+		for (const [key, value] of Object.entries(MZ_cLieuxBT.typesLieux)) {
+				let opt = appendOption(select, value, key);
+				if (value == selected) opt.selected = true;
+		}
+		// seule interface supportée !
+		td.appendChild(select);
+	}
+
+	static saveOptions() {
+		MZ_setOrRemoveValue(`${numTroll}.BT.nearestLocation`, document.getElementById('nearestLocSelect').value);
+		MY_removeSessionValue(`MZ_${numTroll}_BT_nearestLocation`);  // clear existing cache
+	}
+
+	static processVue() {
+		let locType = MY_getValue(`${numTroll}.BT.nearestLocation`);
+		if (locType == undefined || locType == 'none') { return; }
+
+		let btData = MY_getSessionValue(`MZ_${numTroll}_BT_nearestLocation`);
+		if (btData) {
+			MZ_cLieuxBT.receptionLieuxAJAX()(btData);
+			debugMZ(`${MZ_formatDateMS()} données de cache pour bricolTroll (lieux)`);
+			return;
+		}
+		let oPosTroll = MZ_cVueJSON.oPosTroll;
+		let urlBricol = `${URL_bricol_mountyhall}lieux.php?search=position&format=json&orderBy=distance&posx=${oPosTroll.x}&posy=${oPosTroll.y}&posn=${oPosTroll.n}&typeLieu=${locType}`;
+		FF_XMLHttpRequest({
+			method: 'GET',
+			url: urlBricol,
+			trace: `bricolTroll (lieux)`,
+			onload: MZ_cLieuxBT.receptionLieuxAJAX(),
+		});
+		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll (lieux)`);
+	}
+
+	static receptionLieuxAJAX() {
+		return function (responseDetails) {
+			let btData;
+			try {
+				if (responseDetails.status == 0) { return; }
+				btData = JSON.parse(responseDetails.responseText);
+				if (btData.error) {
+					avertissement(`Bricol'Troll (lieux) a répondu :<br />${btData.error}`);
+					return;
+				}
+				MY_setSessionValue(`MZ_${numTroll}_BT_nearestLocation`, btData, 3);
+			} catch {
+				// si on est pas en XMLHttpRequest, alors ca vient du cache
+				btData = responseDetails;
+			}
+
+			if (btData.data.lieux.length == 0) {
+				let locType = MY_getValue(`${numTroll}.BT.nearestLocation`);
+				logMZ(`MZ_cLieuxBT.receptionLieuxAJAX: aucun lieux ${locType}`);
+				return;
+			}
+			let visibleLocs = MZ_cLigneLieu.MZ_oVueJSON.objets.map(function (lieu) {
+				return lieu.id.toString()
+			});
+			let locInfos = Object.entries(btData.data.lieux).reduce((acc, val) => {
+				acc = ( acc === undefined || val[1].distance < acc.distance ) ? val[1] : acc;
+				return acc;
+			}, undefined);
+			if (visibleLocs.includes(locInfos.id)) { return; }
+			MZ_cLigneLieu.addLigne(
+				locInfos.id, locInfos.nom, locInfos.positionX, locInfos.positionY, locInfos.positionN
+			);
+		}
 	}
 }
 
