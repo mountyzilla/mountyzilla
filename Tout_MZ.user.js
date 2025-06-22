@@ -11739,6 +11739,7 @@ class MZ_cVueJSON {
 	static callbacksFinMH = [];
 	static callbacksFinMZ = [];
 	static oPosTroll;
+	static hvDist;
 	static initDone;
 	static debugEnchainements = false;
 
@@ -12273,6 +12274,9 @@ class MZ_cLigneVue {
 		this.id = id;
 		this.eltTr = eTr;
 		this.eltTdDist = eTr.cells[MZ_oVueJSON.indxTdDist];
+		if (MZ_cVueJSON.hvDist == undefined) {
+			MZ_cVueJSON.hvDist = this.eltTdDist.classList.contains('hv');
+		}
 		if (isDesktopView()) { this.eltTdAction = eTr.cells[MZ_oVueJSON.indxTdAction]; }
 		this.eltTdRef = eTr.cells[MZ_oVueJSON.indxTdRef];
 		this.eltTdNom = eTr.cells[MZ_oVueJSON.indxTdNom];
@@ -12367,10 +12371,6 @@ class MZ_cLigneVue {
 		// crée le tr
 		// gère les td communs : distance, id, nom (pas le remplissage), x, y, n
 		// met le tr à sa place
-		let hv;
-		if (oModele != undefined && MZ_cVueJSON.oTrolls.objets.length > 0) {
-			hv = oModele.eltTdDist.classList.contains('hv');
-		}
 		oNouvelleLigne.eltTr = document.createElement('tr');
 		oNouvelleLigne.eltTr.className = 'mh_tdpage';
 		oNouvelleLigne.eltTr.setAttribute('data-xyn', `${x};${y};${n}`);
@@ -12385,12 +12385,12 @@ class MZ_cLigneVue {
 			oNouvelleLigne.eltTdDist.classList = oModele.eltTdDist.classList;
 		} else {
 			let c = 'dist footable-first-visible';
-			if (hv) c += ' hv';
+			if (MZ_cVueJSON.hvDist) c += ' hv';
 			oNouvelleLigne.eltTdDist.className = c;
 		}
 		let codeDistance = oNouvelleLigne.distH.toString() + (oNouvelleLigne.distV+100).toString();
 		oNouvelleLigne.eltTdDist.setAttribute('data-sort-value', codeDistance);
-		if (hv) {
+		if (MZ_cVueJSON.hvDist) {
 			let txt = `${oNouvelleLigne.distH}|`;
 			if (oNouvelleLigne.distV >= 10) {
 				txt += '+' + oNouvelleLigne.distV;
