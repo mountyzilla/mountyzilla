@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.76
+// @version     1.6.77
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.76';
+var MZ_latest = '1.6.77';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -12035,6 +12035,8 @@ class MZ_cVueJSON {
 			// debugging cas où on retrouve MZ_cVueJSON.oTrolls.objets  undefined
 			for (let o of tBloc) {
 				if (o && !Array.isArray(o.objets)) {
+					if (!o.eltTable) // cas par exemple des Troll si le joueur est sous l'effet de OUKISONT
+						continue;
 					for (let o2 of tBloc) {
 						if (o2) {
 							logMZ(`${o2.nomBase} : existe=${o2.eltTable!=null}, loaded=${o2.loaded}, typeof objets=${typeof objets}`);
@@ -12077,6 +12079,7 @@ class MZ_cVueJSON {
 	}
 
 	getData4Vue2D(limitH, limitV, avecFiltre) {
+		if (!this.objets) return;	// cas d'effet OUKISONT, par exemple
 		let txt = '#DEBUT ' + this.nomBase.toUpperCase() + "\n";
 		let myPosition = getPosition();
 		for (let o of this.objets) {

@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.46
+// @version 2.47
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -326,6 +326,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			oBlocMZ;
 			constructor(oBlocMZ) {
 				if (!oBlocMZ) return;
+				if (!oBlocMZ.objets) return;	// cas OUKISONT, par exemple
 				this.oBlocMZ = oBlocMZ;
 				for (let oLigne of oBlocMZ.objets) {
 					oLigne.loadXYN();
