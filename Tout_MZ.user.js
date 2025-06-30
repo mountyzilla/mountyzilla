@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.77
+// @version     1.6.78
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.77';
+var MZ_latest = '1.6.78';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -831,57 +831,90 @@ function displayScriptTime(duree, texte) {
 }
 
 /** x~x Communication serveurs ----------------------------------------- */
-function FF_XMLHttpRequest(MY_XHR_Ob) {
-	let request = new XMLHttpRequest();
-	request.open(MY_XHR_Ob.method, MY_XHR_Ob.url);
-	for (let head in MY_XHR_Ob.headers) {
-		request.setRequestHeader(head, MY_XHR_Ob.headers[head]);
+class MZ_XMLHttpRequest {
+	// Gestion des requetes asynchrones:
+	// ajout de logique de cache et gestion d'erreurs
+	constructor(cacheKey = undefined) {
+		this.cacheKey = cacheKey;
+		this.cacheExpiration = 5; // expiration du cache après 5 minutes
+		return this;
 	}
-	request.onreadystatechange = function () {
-		if (request.readyState != 4) {
-			return;
-		}
-		if (request.error) {
-			if (MY_XHR_Ob.onerror) {
-				MY_XHR_Ob.onerror(request);
-			}
-			return;
-		}
-		if (request.status == 0) {
-			if (isDEV) {
-				let grandCadre = createOrGetGrandCadre();
-				let sousCadre = document.createElement('div');
-				sousCadre.innerHTML = 'AJAX status = 0, voir console';
-				sousCadre.style.width = 'auto';
-				sousCadre.style.fontSize = 'large';
-				sousCadre.style.border = 'solid 1px black';
-				grandCadre.appendChild(sousCadre);
-			}
-			if (MY_XHR_Ob.onerror) {
-				MY_XHR_Ob.onerror(request);
-			}
-			// showHttpsErrorContenuMixte();
-			return;
-		}
-		if (MY_XHR_Ob.onload) {
-			if (MY_XHR_Ob.trace) {
-				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`);
-			}
 
-			request.oXHR = MY_XHR_Ob;	// permet à la fonction onload de modifier le message de trace
-			MY_XHR_Ob.onload(request);
-			if (MY_XHR_Ob.trace) {
-				logMZ(`XMLHttp.onload ${MZ_formatDateMS()} fin traitement retour AJAX ${MY_XHR_Ob.trace}`);
-			}
+	_save(xmlHttpRequest) {
+		// sauvegarde de l'état de la requête pour le traitement ultérieur
+		if (!this.cacheKey || isDEV) return;  // pas de caching en mode dev
+		let respData = {
+			status: xmlHttpRequest.status,
+			statusText: xmlHttpRequest.statusText,
+			responseType: xmlHttpRequest.responseType,
+			responseText: xmlHttpRequest.responseText,
+			// response: xmlHttpRequest.response,  // gath': inutilisé
+		};
+		MY_setSessionValue(this.cacheKey, respData, this.cacheExpiration);
+	}
+
+	_load() {
+		// chargement de l'état de la requête sauvegardée
+		if (!this.cacheKey) return;
+		return MY_getSessionValue(this.cacheKey);
+	}
+
+	do(MY_XHR_Ob) {
+		let cachedResponse = this._load();
+		if (cachedResponse) {
+			MY_XHR_Ob.onload(cachedResponse);
+			if (MY_XHR_Ob.trace) logMZ(`XMLHttp.onload ${MZ_formatDateMS()} traitement AJAX (cache) ${MY_XHR_Ob.trace}`);
+			return;
 		}
-	};
-	if (MY_XHR_Ob.HTML) {
-		request.responseType = 'document';
+		this._do_req(MY_XHR_Ob);
 	}
-	request.send(MY_XHR_Ob.data);
-	if (MY_XHR_Ob.trace) {
-		logMZ(`XMLHttp.send ${MZ_formatDateMS()} envoi AJAX ${MY_XHR_Ob.trace}`);
+
+	_do_req(MY_XHR_Ob) {
+		let request = new XMLHttpRequest();
+		request.open(MY_XHR_Ob.method, MY_XHR_Ob.url);
+		for (let head in MY_XHR_Ob.headers) {
+			request.setRequestHeader(head, MY_XHR_Ob.headers[head]);
+		}
+		MY_XHR_Ob.cls = this;	// permet à la fonction onload de cacher la requête
+		request.onreadystatechange = function () {
+			if (request.readyState != 4) return;
+			if (request.error) {
+				if (MY_XHR_Ob.onerror) MY_XHR_Ob.onerror(request);
+				return;
+			}
+			if (request.status == 0) {
+				if (isDEV) {
+					let grandCadre = createOrGetGrandCadre();
+					let sousCadre = document.createElement('div');
+					sousCadre.innerHTML = 'AJAX status = 0, voir console';
+					sousCadre.style.width = 'auto';
+					sousCadre.style.fontSize = 'large';
+					sousCadre.style.border = 'solid 1px black';
+					grandCadre.appendChild(sousCadre);
+				}
+				if (MY_XHR_Ob.onerror) MY_XHR_Ob.onerror(request);
+				// showHttpsErrorContenuMixte();
+				return;
+			}
+			if (MY_XHR_Ob.onload) {
+				if (MY_XHR_Ob.trace) logMZ(`XMLHttp.onload ${MZ_formatDateMS()} début traitement retour AJAX ${MY_XHR_Ob.trace}`);
+
+				request.oXHR = MY_XHR_Ob;	// permet à la fonction onload de modifier le message de trace
+				MY_XHR_Ob.onload(request);
+				MY_XHR_Ob.cls._save(request);
+				if (MY_XHR_Ob.trace) logMZ(`XMLHttp.onload ${MZ_formatDateMS()} fin traitement retour AJAX ${MY_XHR_Ob.trace}`);
+			}
+		};
+		if (MY_XHR_Ob.HTML) request.responseType = 'document';
+		request.send(MY_XHR_Ob.data);
+		if (MY_XHR_Ob.trace) logMZ(`XMLHttp.send ${MZ_formatDateMS()} envoi AJAX ${MY_XHR_Ob.trace}`);
 	}
+}
+
+function FF_XMLHttpRequest(MY_XHR_Ob) {
+	// Fonction de compatibilité. Utiliser MZ_XMLHttpRequest à la place.
+	warnMZ('FF_XMLHttpRequest est obsolète, utilisez MZ_XMLHttpRequest à la place.');
+	new MZ_XMLHttpRequest().do(MY_XHR_Ob);
 }
 
 // rend une chaine affichant date et heure et milliseconds (maintenant si le paramètre est absent)
@@ -6740,7 +6773,8 @@ class MZ_cSCIZ {
 
 		// Check the list against the SCIZ bestiaire
 		let sciz_url = 'https://www.sciz.fr/api/bestiaire/check';
-		if (mobs.length > 0) FF_XMLHttpRequest({
+		if (mobs.length > 0) new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_bestiaire${window.location.search}`).do({
+			trace: "SCIZ-bestiaire",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -6810,7 +6844,8 @@ class MZ_cSCIZ {
 
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/trolls';
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_trolls`).do({
+			trace: "SCIZ-trolls",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -6891,7 +6926,8 @@ class MZ_cSCIZ {
 
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/treasures';
-		if (ids.length > 0) FF_XMLHttpRequest({
+		if (ids.length > 0) new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_treasures`).do({
+			trace: "SCIZ-treasures",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -6970,7 +7006,8 @@ class MZ_cSCIZ {
 
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/mushrooms';
-		if (ids.length > 0) FF_XMLHttpRequest({
+		if (ids.length > 0) new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_mushrooms`).do({
+			trace: "SCIZ-mushrooms",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -7043,7 +7080,8 @@ class MZ_cSCIZ {
 		// Call SCIZ
 		let oPosTroll = MZ_cVueJSON.oPosTroll;
 		let sciz_url = 'https://www.sciz.fr/api/hook/traps';
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_traps`).do({
+			trace: "SCIZ-traps",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -7115,7 +7153,8 @@ class MZ_cSCIZ {
 
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/portals';
-		if (ids.length > 0) FF_XMLHttpRequest({
+		if (ids.length > 0) new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_portals`).do({
+			trace: "SCIZ-portals",
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -7581,13 +7620,17 @@ function changeButtonValidate() {
 
 function do_move() {
 	debugMZ('do_move_log');
+	// expiration cache vue
+	MY_removeSessionValue(`MZ_${numTroll}_CDMv2`);
+	MY_removeSessionValue(`MZ_${numTroll}_CDMv2?monstres`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_bestiaire`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_bestiaire?monstres`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_treasures`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_mushrooms`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_traps`);
+	MY_removeSessionValue(`MZ_${numTroll}_SCIZ_portals`);
 	// Roule', vérification du risque de tomber dans un trou déplacée dans do_lieuTeleport pour le cas des TP
-	// if(isPage('MH_Play/Play_a_Move.php')) {
 	changeValidation();
-	// }
-	// else if(isPage('MH_Lieux/Lieu_Teleport.php')) {
-	//	changeButtonValidate();
-	// }
 }
 
 /** x~x News ----------------------------------------------------------- */
@@ -10294,7 +10337,10 @@ function MZ_analyseCdM(idHTMLCdM, bIgnoreEltAbsent) {	// rend un contexte
 				replaceContentByText(this.parentNode.firstChild, texte);
 			}
 		}
-		FF_XMLHttpRequest({
+
+		MY_removeSessionValue(`MZ_${numTroll}_CDMv2`);
+		MY_removeSessionValue(`MZ_${numTroll}_CDMv2?monstres`);
+		new MZ_XMLHttpRequest().do({
 			method: 'POST',
 			url: URL_pageDispatcherV2,
 			data: `cdm_json=${encodeURIComponent(JSON.stringify(oRet.oData))}`,
@@ -10439,7 +10485,7 @@ function sendCDM() {
 		}
 	}
 
-	FF_XMLHttpRequest({
+	new MZ_XMLHttpRequest().do({
 		method: 'POST',
 		url: URL_pageDispatcherV2,
 		data: `cdm_json=${encodeURIComponent(JSON.stringify(oData))}`,
@@ -12773,7 +12819,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${nbMonstre}, lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}`);
 		if (nbReq == 0) return;
 
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2${window.location.search}`).do({
 			method: 'POST',
 			url: URL_MZgetCaracMonstre,
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -12813,7 +12859,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			texte = responseDetails.responseText;
 			let infos = JSON.parse(texte);
 			//displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
-			responseDetails.oXHR.trace = `${infos.length} demandes niveaux monstres V2`;
+			if (responseDetails.oXHR) responseDetails.oXHR.trace = `${infos.length} demandes niveaux monstres V2`;
 			if (infos.length == 0) { return; }
 
 			// ajouter les styles CSS pour les popup
@@ -13186,19 +13232,12 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			data.push(extClef);
 			if (data[0] != 'bricol') { continue; }
 
-			let btData = MY_getSessionValue(`MZ_${numTroll}_bricolTroll${data[5]}`);
-			if (btData) {
-				MZ_cLigneTroll.receptionBricolTrollAJAX(data)(btData);
-				debugMZ(`${MZ_formatDateMS()} données de cache pour bricolTroll ${data[1]}`);
-				continue;
-			}
-			FF_XMLHttpRequest({
+			new MZ_XMLHttpRequest(`MZ_${numTroll}_bricolTroll${data[5]}`).do({
 				method: 'GET',
 				url: `${URL_bricol + data[1]}/mz_json.php?login=${encodeURIComponent(data[2])}&password=${data[3]}`,
 				trace: `bricolTroll ${data[1]}`,
 				onload: MZ_cLigneTroll.receptionBricolTrollAJAX(data),
 			});
-			debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll ${data[1]}`);
 		}
 
 		initPXTroll();
@@ -13364,17 +13403,11 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	static receptionBricolTrollAJAX(data) {
 		return function (responseDetails) {
 			let btData;
-			try {
-				if (responseDetails.status == 0) { return; }
-				btData = JSON.parse(responseDetails.responseText);
-				if (btData.error) {
-					avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
-					return;
-				}
-				MY_setSessionValue(`MZ_${numTroll}_bricolTroll${data[5]}`, btData, 3);
-			} catch {
-				// si on est pas en XMLHttpRequest, alors ca vient du cache
-				btData = responseDetails;
+			if (responseDetails.status == 0) { return; }
+			btData = JSON.parse(responseDetails.responseText);
+			if (btData.error) {
+				avertissement(`Bricol'Troll (${data[1]}) a répondu :<br />${btData.error}`);
+				return;
 			}
 
 			if (data[4] > 0) {  // afficher les trolls hors-vue
@@ -13606,37 +13639,24 @@ class MZ_cLieuxBT {
 		let locType = MY_getValue(`${numTroll}.BT.nearestLocation`);
 		if (locType == undefined || locType == 'none') { return; }
 
-		let btData = MY_getSessionValue(`MZ_${numTroll}_BT_nearestLocation`);
-		if (btData) {
-			MZ_cLieuxBT.receptionLieuxAJAX()(btData);
-			debugMZ(`${MZ_formatDateMS()} données de cache pour bricolTroll (lieux)`);
-			return;
-		}
 		let oPosTroll = MZ_cVueJSON.oPosTroll;
 		let urlBricol = `${URL_bricol_mountyhall}lieux.php?search=position&format=json&orderBy=distance&posx=${oPosTroll.x}&posy=${oPosTroll.y}&posn=${oPosTroll.n}&typeLieu=${locType}`;
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest(`MZ_${numTroll}_BT_nearestLocation`).do({
 			method: 'GET',
 			url: urlBricol,
 			trace: `bricolTroll (lieux)`,
 			onload: MZ_cLieuxBT.receptionLieuxAJAX(),
 		});
-		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour bricolTroll (lieux)`);
 	}
 
 	static receptionLieuxAJAX() {
 		return function (responseDetails) {
 			let btData;
-			try {
-				if (responseDetails.status == 0) { return; }
-				btData = JSON.parse(responseDetails.responseText);
-				if (btData.error) {
-					avertissement(`Bricol'Troll (lieux) a répondu :<br />${btData.error}`);
-					return;
-				}
-				MY_setSessionValue(`MZ_${numTroll}_BT_nearestLocation`, btData, 3);
-			} catch {
-				// si on est pas en XMLHttpRequest, alors ca vient du cache
-				btData = responseDetails;
+			if (responseDetails.status == 0) { return; }
+			btData = JSON.parse(responseDetails.responseText);
+			if (btData.error) {
+				avertissement(`Bricol'Troll (lieux) a répondu :<br />${btData.error}`);
+				return;
 			}
 
 			if (btData.data.lieux.length == 0) {
@@ -16763,9 +16783,7 @@ try {
 		do_news();
 	} else if (isPage("MH_Play/Play_evenement")) {
 		MZ_cSCIZ.init()._overwriteEvents()
-	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 12 } })) {
-		do_move();
-	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
+	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 12 } }) || isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
 		do_move();
 	} else if (isPage("View/MonsterView")) {
 		do_infomonstre();
