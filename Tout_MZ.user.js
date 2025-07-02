@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.78
+// @version     1.6.79
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.78';
+var MZ_latest = '1.6.79';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6256,52 +6256,62 @@ function traiteMonstre() {
 	}
 	g_idMonstre = m[1];
 	let tReq = [{ index: 1, id: Number(g_idMonstre), nom: g_nomMonstre }];	// "+" pour forcer du numérique
+	let cdmCallback = function (responseDetails) {
+		try {
+			// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+			if (responseDetails.status == 0) {
+				return true;
+			}
+			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+			texte = responseDetails.responseText;
+			let infosRet = JSON.parse(texte);
+			infosRet = infosRet.filter((cdm) => cdm.id == g_idMonstre)
+			if (infosRet.length == 0) {
+				return false;  // montre hors vue (cache), on force la requete serveur
+			}
+			let info = infosRet[0];
+			// QUESTION Quelle est l'utilité de ceci?
+			// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
+			MZ_EtatCdMs.listeCDM[g_idMonstre] = info;
+			let nodeInsert;
+			try {
+				nodeInsert = document.evaluate(
+					"//div[@class='view']//h3", document, null, 9, null
+				).singleNodeValue;
+			} catch (exc) {
+				logMZ('recherche node pour info CdM', exc);
+				return true;
+			}
+			let table = createCDMTable(g_idMonstre, g_nomMonstre, info);
+			table.align = 'center';
+			let tbody = table.childNodes[1];
+			let thead = table.childNodes[0];
+			let tdEntete = thead.firstChild.firstChild;
+			tdEntete.onclick = toggleTableau;
+			tdEntete.style.cursor = 'pointer';
+			thead.firstChild.style = 'mh_tdpage';
+			tbody.style.display = 'none';
+			table.style.width = '350px';
+			insertBefore(nodeInsert, table);
+			return true;
+		} catch (exc) {
+			logMZ('traiteMonstre onload', exc);
+			return true;
+		}
+	}
+	let cdmCached = new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2?monstres`)._load() || new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2`)._load();
+	if (cdmCached && cdmCallback(cdmCached)) {
+		// gath': si le monstre affiché vient de la vue,
+		// alors on peut utiliser les infos que l'on a déjà en cache
+		return;
+	}
 	FF_XMLHttpRequest({
 		method: 'POST',
 		url: URL_MZgetCaracMonstre,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		data: `l=${JSON.stringify(tReq)}`,
 		trace: 'demande niveaux monstres V2, MonsterView',
-		onload: function (responseDetails) {
-			try {
-				// logMZ('retrieveCDMs readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-				if (responseDetails.status == 0) {
-					return;
-				}
-				// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-				texte = responseDetails.responseText;
-				let infosRet = JSON.parse(texte);
-				if (infosRet.length == 0) {
-					return;
-				}
-				let info = infosRet[0];
-				// QUESTION Quelle est l'utilité de ceci?
-				// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
-				MZ_EtatCdMs.listeCDM[g_idMonstre] = info;
-				let nodeInsert;
-				try {
-					nodeInsert = document.evaluate(
-						"//div[@class='view']//h3", document, null, 9, null
-					).singleNodeValue;
-				} catch (exc) {
-					logMZ('recherche node pour info CdM', exc);
-					return;
-				}
-				let table = createCDMTable(g_idMonstre, g_nomMonstre, info);
-				table.align = 'center';
-				let tbody = table.childNodes[1];
-				let thead = table.childNodes[0];
-				let tdEntete = thead.firstChild.firstChild;
-				tdEntete.onclick = toggleTableau;
-				tdEntete.style.cursor = 'pointer';
-				thead.firstChild.style = 'mh_tdpage';
-				tbody.style.display = 'none';
-				table.style.width = '350px';
-				insertBefore(nodeInsert, table);
-			} catch (exc) {
-				logMZ('traiteMonstre onload', exc);
-			}
-		},
+		onload: cdmCallback,
 	});
 }
 
@@ -16786,8 +16796,8 @@ try {
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 12 } }) || isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: 1 } })) {
 		do_move();
 	} else if (isPage("View/MonsterView")) {
-		do_infomonstre();
 		MZ_cSCIZ.init()._overwriteEvents()
+		do_infomonstre();
 	} else if (isPage("MH_Play/Play_e_follo.php")) {
 		do_listegowap();
 	} else if (isPage("MH_Lieux/Lieu_Description.php")) {
