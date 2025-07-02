@@ -9689,10 +9689,10 @@ function visuMobileTableaux() {
 	if (isDesktopView()) return;
 
 	let numTroll = MY_getValue('NUM_TROLL');
-	let tables = ['Parchemin', 'Potion', 'Spécial'];
+	let tables = ['Composant', 'Parchemin', 'Potion', 'Spécial'];
 	for (let section of tables) {
 		$(`#part2toggle_${numTroll}_${section}`).find('th:last-child, td:last-child').remove()
-		if (section == 'Spécial') continue;  // détails peu intéressant ici
+		if (section == 'Composant' || section == 'Spécial') continue;  // détails peu intéressant ici
 		let thDetail = document.querySelector(`#part2toggle_${numTroll}_${section}>table>thead>tr>th:nth-child(4)`);
 		thDetail.style = 'min-width: 185px;';
 	}
