@@ -12198,7 +12198,6 @@ class MZ_cVueJSON {
 		eltNav.insertBefore(this.eltDivShowFiltre, null);
 
 		this.eltParamFiltreRestr = document.createElement('div');
-		//this.eltParamFiltreRestr.id = `dlo_${this.nomBase}`
 		if (this.cLigneClass.nomsFiltres) {
 			let imgDone = false;
 			for (let nomfiltre in this.cLigneClass.nomsFiltres) {
@@ -12899,6 +12898,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				}
 			}
 
+			let styleImg = "height:12px;width:auto;"
 			for (let info of infos) {
 				if (info.index == undefined) continue;
 				let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[info.index];
@@ -12931,9 +12931,11 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 				// icône "voir le caché"
 				if (info.vlc) {
-					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}oeil.png`, "Voit le caché"));
+					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}oeil.png`, "Voit le caché", styleImg));
 				}
-
+				if (info.attd) {
+					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}distance.gif`, "Attaque à distance", styleImg));
+				}
 				// précision sur les phoenix
 				if (info.gen) {
 					let imgPh, txtPh;
@@ -12955,9 +12957,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 							txtPh = 'Phœnix de deuxième ou troisième génération';
 							break;
 					}
-					let img = oMonstre.eltTdNom.appendChild(createImage(imgPh, txtPh));
-					img.style.height = '15px';
-					img.style.width = 'auto';
+					oMonstre.eltTdNom.appendChild(createImage(imgPh, txtPh, styleImg));
 				}
 
 				// missions
@@ -13081,7 +13081,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						//mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
 						oMonstre.eltTdNom.appendChild(createImage(
 							`${URL_MZimg}mission.png`,
-							`Mission ${num} :\n${oMission.libelle}`));
+							`Mission ${num} :\n${oMission.libelle}`, styleImg));
 						oMonstre.cibleMission = true;
 					} else if (mobMissionPeutEtre !== undefined) {
 						/*
@@ -13092,7 +13092,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						*/
 						oMonstre.eltTdNom.appendChild(createImage(
 							`${URL_MZimg}missionX.png`,
-							`Mission ${num} :\n${oMission.libelle}\n${mobMissionPeutEtre}`));
+							`Mission ${num} :\n${oMission.libelle}\n${mobMissionPeutEtre}`, styleImg));
 						oMonstre.cibleMission = true;
 					}
 				}
