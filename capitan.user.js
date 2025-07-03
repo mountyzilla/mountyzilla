@@ -13,9 +13,11 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.21
+// @version 8.8.22
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
+
+"use strict";
 
 /****************************************************************
 *         Aide à la recherche de cachettes de Capitan           *
@@ -389,7 +391,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 				// ici, on a tiré tous les chiffres des 3 coordonnées, on teste si ces coord sont compatibles avec les essais
 				var isCompatible = true;
-				for (oEssai of this.gEssais) {
+				for (let oEssai of this.gEssais) {
 					if (!oEssai.isCompatible(newContexte.tabCoord)) {
 						isCompatible = false;
 						break;
@@ -717,7 +719,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			let p = document.createElement('p');
 			if (color) p.style.color = color;
 			p.appendChild(document.createTextNode('MZ Capitan : ' + msg));
-			let contMsg = document.getElementById('msgDiv');
+			let contMsg = document.getElementById('msgEffet');
 			if (!contMsg) {
 				contMsg = document.evaluate("//div[@class = 'modal']",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -851,7 +853,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		createNewRecherche: function(parentElt) {
-			p = document.createElement('p');
+			let p = document.createElement('p');
 
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
@@ -964,7 +966,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") == null)
 			{
-				var msg = document.getElementById("msgDiv").textContent;
+				var msg = document.getElementById("msgEffet").textContent;
 
 				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
 				if(!msg.match(/es dans le bon Xcoin/))
@@ -978,10 +980,14 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			var table = this.afficheInfoCarte(idCarte);
 
 			if (!table) return;
-			form = document.getElementsByTagName('FORM')[0];
 			var p = document.createElement('p');
 			p.appendChild(table);
-			form.appendChild(p);
+			let t = document.getElementsByTagName('TABLE');
+			if (t.length > 0) {
+				t[0].parentNode.insertBefore(p, t[0].nextSibling);
+			} else {
+				document.body.appendChild(p);
+			}
 		},
 
 		// return undefined if not found
