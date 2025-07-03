@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.79
+// @version     1.6.80
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.79';
+var MZ_latest = '1.6.80';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -4382,7 +4382,7 @@ function traiteRM() {
 		nomIdt = nomIdt.slice(0, nomIdt.indexOf("(") - 1);
 		nomIdt = nomIdt.replace(regExpBeginning, "").replace(regExpEnd, "");
 	}
-	FF_XMLHttpRequest({
+	new MZ_XMLHttpRequest().do({
 		method: 'GET',
 		url: idtURL + "?item=" + escape(nomIdt) + "&descr=" + escape(caracIdt),
 		headers : {
@@ -6305,7 +6305,7 @@ function traiteMonstre() {
 		// alors on peut utiliser les infos que l'on a déjà en cache
 		return;
 	}
-	FF_XMLHttpRequest({
+	new MZ_XMLHttpRequest().do({
 		method: 'POST',
 		url: URL_MZgetCaracMonstre,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -6644,7 +6644,7 @@ class MZ_cSCIZ {
 		let sciz_url = `https://www.sciz.fr/api/hook/events/${id}/${startTime}/${endTime}`;
 		let eventType = url.searchParams.get('as_EventType'); // Retrieve event type filter
 		sciz_url = sciz_url + (eventType !== null && eventType !== '' ? `/${eventType.split(' ')[0]}` : ''); // Only the first word used for filtering ("MORT par monstre" => "MORT");
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest().do({
 			method: 'GET',
 			url: sciz_url,
 			headers: { Authorization: MZ_cSCIZ.jwt },
@@ -6726,7 +6726,7 @@ class MZ_cSCIZ {
 		replaceContentByText(monster.popup, 'La chauve-souris va bientôt revenir...');
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/bestiaire';
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest().do({
 			method: 'POST',
 			url: sciz_url,
 			headers: { 'Authorization': MZ_cSCIZ.jwt, 'Content-Type': 'application/json' },
@@ -7684,7 +7684,7 @@ function appendTitledTable(node, titre, description) {
 
 function testCertif(paramURL, callbackOnError) {
 	try {
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest().do({
 			method: 'GET',
 			url: paramURL,
 			onload: function (responseDetails) {
@@ -7796,7 +7796,7 @@ function traiterJubilaires() {
 			debugMZ(`${MZ_formatDateMS()} données de cache pour jubilaires`);
 			return;
 		}
-		FF_XMLHttpRequest({
+		new MZ_XMLHttpRequest().do({
 			method: 'GET',
 			url: URL_anniv,
 			onload: receptionJubilaireAJAX,
@@ -12557,7 +12557,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 	static initGlobal() {
 		// cette fonction est appelée une fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		MZ_cLigneMonstre.sendAJAXCdMRequest();
+		MZ_cLigneMonstre.sendAJAXCdMRequest(false, true);	// pas Full, avec Cache
 		MZ_Tactique.initPopup();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
 		MZ_cSCIZ.processMonsters();
@@ -12800,7 +12800,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		}
 	}
 
-	static sendAJAXCdMRequest(bFull) {
+	static sendAJAXCdMRequest(bFull, avecCache) {
 		let tReq = [];
 		let nbReq = 0;
 		let nbMax = 500;
@@ -12828,7 +12828,10 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${nbMonstre}, lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}`);
 		if (nbReq == 0) return;
 
-		new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2${window.location.search}`).do({
+		// Roule : temporaire, désactivation du cache pour les monstres "suivants"
+		let idCache;
+		if (avecCache) idCache = `MZ_${numTroll}_CDMv2${window.location.search}`;
+		new MZ_XMLHttpRequest(idCache).do({
 			method: 'POST',
 			url: URL_MZgetCaracMonstre,
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -16565,7 +16568,7 @@ function MZ_doSearchCompoTanieres(event) {
 				// modification de l'history pour gérer le referer de l'appel AJAX JSON
 				let oldURL = document.URL;
 				window.history.replaceState(null, '', `https://${window.location.host}/mountyhall/MH_Play/Play_a_Action.php`);
-				FF_XMLHttpRequest({
+				new MZ_XMLHttpRequest().do({
 					method: 'GET',
 					url: url2,
 					trace: `recherche en tanière compos phase 2 ${oInfo.monstre}`,
@@ -16578,7 +16581,7 @@ function MZ_doSearchCompoTanieres(event) {
 				if (nbCall == 0) {
 					// Il faut le faire 2 fois pour récupérer le code cp
 					nbCall = 1;
-					FF_XMLHttpRequest({
+					new MZ_XMLHttpRequest().do({
 						method: 'POST',
 						HTML: true,
 						url: url,
@@ -16655,7 +16658,7 @@ function MZ_doSearchCompoTanieres(event) {
 			logMZ('compo taniere .onload1', exc);
 		}
 	};
-	FF_XMLHttpRequest({
+	new MZ_XMLHttpRequest().do({
 		method: 'POST',
 		HTML: true,
 		url: url,
