@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.80
+// @version     1.6.81
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.80';
+var MZ_latest = '1.6.81';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -6620,8 +6620,10 @@ class MZ_cSCIZ {
 		let xPathEvents = document.evaluate(xPathQuery, document, null, 0, null);
 		let xPathEvent;
 		while (xPathEvent = xPathEvents.iterateNext()) {
+			let time = Date.parse(StringToDate(xPathEvent.children[0].innerHTML));
+			if (isNaN(time)) continue;
 			MZ_cSCIZ.events.push({
-				time: Date.parse(StringToDate(xPathEvent.children[0].innerHTML)),
+				time: time,
 				type: xPathEvent.children[1].innerHTML,
 				desc: xPathEvent.children[2].innerHTML,
 				sciz_type: null,
