@@ -2921,6 +2921,437 @@ function isProfilActif() { // DEBUG: Réfléchir à l'utilité de cette fonction
 }
 
 /** x~x Gestion des CDMs ----------------------------------------------- */
+
+
+// to be deleted à l'abandon de l'ancienne vue
+var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
+	nbMonstres: 0,
+	tr_monstres: [],
+	lastIndexDone: 0,
+	isCDMsRetrieved: false, // = si les CdM ont déjà été DL
+	listeCDM: [],
+	indexCellDist: -1,
+	indexCellActions: -1,
+	indexCellID: -1,
+	indexCellNivMZ: -1,
+	indexCellX: -1,
+	indexCellY: -1,
+	indexCellN: -1,
+};
+
+class MZ_cCDMv2 {
+	static setup = {
+		maxPerRequest: 500,  // Maximum number of monsters to fetch in one round-trip
+		// Gère l'affichage en cascade des popups de CdM
+		yIndex: 0,
+		tdWitdh: 110,
+	};
+	static monsters = {
+		n: 0,           // monsters quantity in view
+		visible: new Map(),    // monsters in view
+		processed: new Map(),  // monsters in view with MZ enhancement
+	};
+	static relatedMissions = undefined;
+	static fetchDone = false;
+
+	static init() {
+		// préparation missions
+		let m = MY_getValue(`${numTroll}.MISSIONS`);
+		if (m) {
+			try { MZ_cCDMv2.relatedMissions = JSON.parse(m); }
+			catch (exc) { logMZ(`MZ_cCDMv2::init`, exc); }
+		}
+
+		let idx = -1;
+		MZ_cLigneMonstre.MZ_oVueJSON.objets.forEach((oMonstre) => {
+			idx++;
+			if (oMonstre.nom.match(/^[^\[]*(Gowap|Flou)/i)) {	// le mot Gowap/Flou peut être précédé par un template (qui ne contient donc pas [)
+				oMonstre.nivMZ_no = true;
+				return;
+			}
+			// logMZ(`MZ_cCDMv2::init nom=${oMonstre.nom} pas gowap`);
+			MZ_cCDMv2.monsters.visible.set(idx, { index: idx, id: oMonstre.id, nom: oMonstre.nom });
+		});
+		MZ_cCDMv2.monsters.n = Array(...MZ_cCDMv2.monsters.visible.values()).length
+	}
+
+	static sendAJAXCdMRequest(bFull, avecCache) {
+		let nbMax = MZ_cCDMv2.setup.maxPerRequest;
+		if (!bFull && (typeof MH_mountyzilla_json != 'undefined') && MH_mountyzilla_json && MH_mountyzilla_json.general) {
+			nbMax = MH_mountyzilla_json.general.maxRecupCdM;
+			if (nbMax == undefined) nbMax = 500;
+		}
+		let monsters = Array(...MZ_cCDMv2.monsters.visible.values())
+		let nbReq = Math.min(monsters.length, nbMax);
+		if (nbReq == 0) return;
+
+		let tReq = monsters.slice(0, nbReq);
+		// let tReq = MZ_cCDMv2.monsters.visible.slice(0, nbReq);
+		// logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
+		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${MZ_cCDMv2.monsters.n}, processed=${Array(...MZ_cCDMv2.monsters.processed.values()).length}`);
+
+		new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2`, MZ_cCDMv2.mergeCdmCallback).do({
+			method: 'POST',
+			url: URL_MZgetCaracMonstre,
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			data: `l=${JSON.stringify(tReq)}`,
+			trace: 'demande niveaux monstres V2',
+			onload: MZ_cCDMv2.receptionMZNiveauxAJAX,
+		});
+		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
+	}
+
+	static getSuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
+		let evt = e || window.event;
+		if (evt.shiftKey) {
+			this.parentNode.removeChild(this);
+			return;
+		}
+		replaceContentByText(this, `en cours ${Array(...MZ_cCDMv2.monsters.processed.values()).length}/${MZ_cCDMv2.monsters.n}`);
+		this.style.cursor = '';	// default
+		this.onclick = MZ_cCDMv2.removeCdMButton;
+		MY_removeSessionValue(`MZ_${numTroll}_CDMv2_merge`);
+		MZ_cCDMv2.sendAJAXCdMRequest();
+	}
+
+	static mergeCdmCallback(newData, cacheData) {
+		let metadata = [];
+		let newCDMs = new Map();
+		let cacheCDMs = new Map();
+		let mergedIDs = [];
+		try {
+			let fresh = JSON.parse(newData.responseText);
+			let cache = JSON.parse(cacheData.responseText);
+			cache.forEach((oMonstre) => {
+				if (!("id" in oMonstre)) return;  // skip metadata
+				cacheCDMs.set(oMonstre.id, oMonstre);
+			});
+			fresh.forEach((oMonstre) => {
+				if (!("id" in oMonstre)) {
+					metadata.push(oMonstre);
+					return;
+				}
+				newCDMs.set(oMonstre.id, oMonstre);
+				cacheCDMs.delete(oMonstre.id);
+				mergedIDs.push(oMonstre.id);
+			});
+		} catch (exc) {
+			logMZ(`MZ_cCDMv2::mergeCdmCallback`, exc);
+			return [cacheData, []];
+		}
+		cacheCDMs.forEach((oMonstre, id) => {
+			newCDMs.set(id, oMonstre);
+			mergedIDs.push(id);
+		});
+		newData.responseText = JSON.stringify(Array(...newCDMs.values()).concat(metadata));
+		return [newData, mergedIDs];
+	}
+
+	static removeCdMButton(e) {	// handler du click sur le bouton pendant l'attente de la récup, ne permet que la suppression du texte
+		let evt = e || window.event;
+		if (evt.shiftKey) {
+			this.parentNode.removeChild(this);
+		}
+	}
+
+	static receptionMZNiveauxAJAX(responseDetails) {
+		// logMZ('receptionMZNiveauxAJAX_log readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+		if (responseDetails.status == 0) { return; }
+		let texte;
+		let nbResult = 0;
+		try {
+			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
+			texte = responseDetails.responseText;
+			let infos = JSON.parse(texte);
+			// displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
+			if (infos.length == 0) return;
+			if (responseDetails.oXHR) responseDetails.oXHR.trace = `${infos.length-3} demandes niveaux monstres V2`;  // -3 : [..ids, tpsReq, nReq, nResp]
+
+			// ajouter les styles CSS pour les popup
+			if (!MZ_cLigneMonstre.cssMZDone) {
+				addStyleSheet(`
+				.MZtooltip { position: relative;color:red;text-align:center; }
+				.MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
+				.MZtooltip:hover .MZtooltiptext {visibility: visible;}
+				`);
+				MZ_cLigneMonstre.cssMZDone = true;
+			}
+
+			if (!MZ_cLigneMonstre.colNiveauDone) {
+				// ajouter la colonne dans le HTML après Rèf
+				MZ_cLigneMonstre.MZ_oVueJSON.insertColumn(MZ_cLigneMonstre.MZ_oVueJSON.indxTdRef, 'Niv', '20px', 1);
+				MZ_cLigneMonstre.colNiveauDone = true;
+			}
+
+			let styleImg = "height:12px;width:auto;"
+			for (let info of infos) {
+				let mzIndex = MZ_cLigneMonstre.MZ_oVueJSON.map_id_objets[info.id];
+				if (mzIndex === undefined) continue;
+				let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[mzIndex];
+				if (!oMonstre) continue;
+
+				// to do migrer listeCDM vers l'objet MZ_cLigneMonstre
+				// MZ_EtatCdMs.listeCDM[info.id] = info;
+				MZ_cCDMv2.monsters.processed.set(mzIndex, info);  // on bascule vers processed et
+				MZ_cCDMv2.monsters.visible.delete(mzIndex);       // on supprime de visible (pour req ajax suivant)
+				oMonstre.infoMZ = info;
+
+				let className = 'mh_tdpage';
+				let myColor = undefined;
+				if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
+					oMonstre.eltTdNiveau.className = "MZtooltip";
+					oMonstre.eltTdNiveau.style.color = "black";
+					oMonstre.eltTdNiveau.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
+				} else if (!(info && info.esq)) {
+					oMonstre.eltTdNiveau.className = "MZtooltip";
+					oMonstre.eltTdNiveau.innerHTML = `${mkMinMaxHTML(info.niv)}<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>`;
+				} else {
+					oMonstre.eltTdNiveau.innerHTML = mkMinMaxHTML(info.niv);
+					myColor = MZ_CdMColorFromMode(info);
+					oMonstre.eltTdNiveau.style.cursor = 'pointer';
+					oMonstre.eltTdNiveau.setAttribute('data-indxMZ', mzIndex);
+					oMonstre.eltTdNiveau.onclick = basculeCDM2;
+					oMonstre.eltTdNom.appendChild(MZ_Tactique.createImage(oMonstre.id, oMonstre.nom));
+				}
+				oMonstre.eltTdNiveau.style.width = '20px';
+				if (myColor) {
+					oMonstre.eltTdNiveau.style.color = myColor;
+				}
+
+				// icône "voir le caché"
+				if (info.vlc) {
+					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}oeil.png`, "Voit le caché", styleImg));
+				}
+				if (info.attd) {
+					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}distance.gif`, "Attaque à distance", styleImg));
+				}
+				// précision sur les phoenix
+				if (info.gen) {
+					let imgPh, txtPh;
+					switch (info.gen) {
+						case 1:
+							imgPh = `${URL_MZimg}Phoenix1.png`;
+							txtPh = 'Phœnix de première génération';
+							break;
+						case 2:
+							imgPh = `${URL_MZimg}Phoenix2.png`;
+							txtPh = 'Phœnix de deuxième génération';
+							break;
+						case 3:
+							imgPh = `${URL_MZimg}Phoenix3.png`;
+							txtPh = 'Phœnix de troisième génération';
+							break;
+						case 23:
+							imgPh = `${URL_MZimg}Phoenix23.png`;
+							txtPh = 'Phœnix de deuxième ou troisième génération';
+							break;
+					}
+					oMonstre.eltTdNom.appendChild(createImage(imgPh, txtPh, styleImg));
+				}
+
+				// missions
+				//let mess = '';
+				//let bPeutEtreIcone = false;
+				for (let num in MZ_cCDMv2.relatedMissions) {
+					let oMission = MZ_cCDMv2.relatedMissions[num];
+					let mobMission = false;
+					let mobMissionPeutEtre = undefined;
+					switch (oMission.type) {
+						case 'Race':
+							let race = epure(oMission.race.toLowerCase());
+							let nom = epure(info.nom.toLowerCase());
+							if (nom.indexOf(race) != -1) {
+								if (race == 'crasc') {
+									if (nom.indexOf('medius') != -1) {
+										// pas éligible
+									} else if (nom.indexOf('maexus') != -1) {
+										// pas éligible
+									} else if (nom.indexOf('parasitus') != -1) {
+										if (nom.match(/^crasc parasitus \[/ui)) {
+											// on ne peut pas savoir
+											mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+												'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+										} else {
+											// c'est un monstre de la race des Crasc Parasitus
+											mobMission = false;
+										}
+									} else {
+										mobMission = true;
+									}
+								} else if (race == 'crasc parasitus') {
+									if (nom.match(/^crasc parasitus \[/ui)) {
+										// on ne peut pas savoir
+										mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
+											'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
+									} else {
+										// c'est un monstre de la race des Crasc Parasitus
+										mobMission = true;
+									}
+								} else if (race == 'shai') {
+									if (nom.match(/abishai/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == 'ombre') {
+									if (nom.match(/roche/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == "geck'oo") {
+									if (nom.match(/majestueux/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else if (race == "bouj'dla") {
+									if (nom.match(/placide/ui)) {
+										mobMission = false;
+									} else {
+										mobMission = true;
+									}
+								} else {
+									mobMission = true;
+								}
+							}
+							break;
+						case 'Niveau':
+							let minMimi, maxMimi;
+							let nivMimi = Number(oMission.niveau);
+							let mod = oMission.mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
+							if (isNaN(mod)) {
+								minMimi = nivMimi;
+								maxMimi = nivMimi + 999999;
+							} else {
+								minMimi = nivMimi - mod;
+								maxMimi = nivMimi + mod;
+							}
+							if (!info.niv) break;
+							if (info.niv.max && info.niv.min) {
+								if (info.niv.max <= maxMimi && info.niv.min >= minMimi) {
+									mobMission = true;
+								} else if (!(info.niv.max < minMimi || info.niv.min > maxMimi)) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+									if (isDEV) {
+										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${info.niv.min}, ${info.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
+									}
+								}
+							} else if (info.niv.max) {
+								if (info.niv.max >= minMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							} else if (info.niv.min) {
+								if (info.niv.min <= maxMimi) {
+									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
+								}
+							}
+							break;
+						case 'Famille':
+							if (info && info.fam) {
+								let familleMimi = epure(oMission.famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
+								let familleMob = epure(info.fam.toLowerCase());
+								if (familleMob.indexOf(familleMimi) != -1) {
+									mobMission = true;
+								}
+							}
+							break;
+						case 'Pouvoir':
+							if (info && info.pouv) {
+								let pvrMimi = epure(oMission.pouvoir.toLowerCase());
+								let pvrMob = epure(info.pouv.toLowerCase());
+								if (pvrMob.indexOf(pvrMimi) != -1) {
+									mobMission = true;
+								}
+							}
+					}
+					if (mobMission) {
+						//mess = mess + (mess ? '\n\n' : '');
+						//mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
+						oMonstre.eltTdNom.appendChild(createImage(
+							`${URL_MZimg}mission.png`,
+							`Mission ${num} :\n${oMission.libelle}`, styleImg));
+						oMonstre.cibleMission = true;
+					} else if (mobMissionPeutEtre !== undefined) {
+						/*
+						mess = mess + (mess ? '\n\n' : '');
+						mess = `${mess}${mobMissionPeutEtre}\n`;
+						bPeutEtreIcone = true;
+						mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
+						*/
+						oMonstre.eltTdNom.appendChild(createImage(
+							`${URL_MZimg}missionX.png`,
+							`Mission ${num} :\n${oMission.libelle}\n${mobMissionPeutEtre}`, styleImg));
+						oMonstre.cibleMission = true;
+					}
+				}
+				nbResult++;
+			}
+			// todo
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
+			//computeMission(prevLastIndexDone + 1, MZ_EtatCdMs.nbMonstres);
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant filtreMonstres`);
+			//filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
+			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres fin`);
+		} catch (exc) {
+			logMZ(`receptionMZNiveauxAJAX_log: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
+		}
+
+		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
+		MZ_cCDMv2.fetchDone = true;  // MZ_cLigneMonstre.isCDMsRetrieved = true;
+		// afficher/supprimer le bouton pour demander la suite
+		let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
+		let visibles = Array(...MZ_cCDMv2.monsters.visible.values());
+		let processed = Array(...MZ_cCDMv2.monsters.processed.values());
+		debugMZ(`processed=${processed.length}, nbMonstres=${MZ_cCDMv2.monsters.n}, eltBoutonSuite=${eltBoutonSuite}`);
+		if (visibles.length > 0) {
+			if (eltBoutonSuite) {
+				replaceContentByText(eltBoutonSuite, `en cours ${processed.length}/${MZ_cCDMv2.monsters.n}`);
+				MY_removeSessionValue(`MZ_${numTroll}_CDMv2_merge`);
+				MZ_cCDMv2.sendAJAXCdMRequest();	// lancer la suite
+			} else {
+				eltBoutonSuite = document.createElement('div');
+				eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
+				eltBoutonSuite.style.position = 'fixed';
+				eltBoutonSuite.style.border = '1px solid black';
+				if (isDesktopView()) {
+					eltBoutonSuite.style.top = '10px';
+					eltBoutonSuite.style.right = '10px';
+					eltBoutonSuite.style.fontSize = 'large';
+					eltBoutonSuite.style.padding = '5px';
+				} else {
+					eltBoutonSuite.style.top = '30px';
+					eltBoutonSuite.style.right = '1px';
+					eltBoutonSuite.style.fontSize = 'small';
+				}
+				eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
+				eltBoutonSuite.style.color = 'black';
+				eltBoutonSuite.style.borderRadius = '10px';
+				eltBoutonSuite.style.cursor = 'pointer';
+				eltBoutonSuite.style.zIndex = '500';
+				appendText(eltBoutonSuite, `${nbResult} CdM(s) récupérées`);
+				appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
+				appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
+				appendBr(eltBoutonSuite);
+				appendText(eltBoutonSuite, `des ${MZ_cCDMv2.monsters.n - (processed.length)} monstres restants`);
+				eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
+				eltBoutonSuite.onclick = MZ_cCDMv2.getSuiteCdMs;
+				document.body.appendChild(eltBoutonSuite);
+			}
+		} else if (eltBoutonSuite) {
+			eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
+		}
+		// appel des callback
+		for (let callback of MZ_cVueJSON.callbacksFinMZ) {
+			try {
+				callback();
+			} catch (exc) {
+				logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
+			}
+		}
+	}
+}
+
 function getPVsRestants(pv, bless, vue) {
 	bless = Number(bless.match(/\d+/)[0]);
 	if (bless == 0) {
@@ -3177,7 +3608,7 @@ function MZ_tab_carac_add_tr_autres(table, donneesMonstre, id, nom) {
 	let tr = appendTr(table, 'mh_tdpage');
 	let td = appendTdText(tr, 'Autres', true);
 	td.className = 'mh_tdtitre';
-	td.width = MZ_EtatCdMs.tdWitdh;
+	td.width = MZ_cCDMv2.setup.tdWitdh;
 
 	td = appendTd(tr);
 	td.className = 'mh_tdpage';
@@ -3230,7 +3661,7 @@ function MZ_tab_carac_add_tr_texte(table, titre, msg, unit) {
 
 	let td = appendTdText(tr, titre, true);
 	td.className = 'mh_tdtitre';
-	td.width = MZ_EtatCdMs.tdWitdh;
+	td.width = MZ_cCDMv2.setup.tdWitdh;
 
 	let texte = msg;
 	if (unit) {
@@ -3253,7 +3684,7 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 	let tr = appendTr(table, 'mh_tdpage');
 	let td = appendTdText(tr, titre, true);
 	td.className = 'mh_tdtitre';
-	td.width = MZ_EtatCdMs.tdWitdh;
+	td.width = MZ_cCDMv2.setup.tdWitdh;
 
 	let texte = '';
 	if (!ominmax.min || ominmax.min == 0) {
@@ -3304,7 +3735,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 	let tr = appendTr(table, 'mh_tdpage');
 	let td = appendTdText(tr, titre, true);
 	td.className = 'mh_tdtitre';
-	td.width = MZ_EtatCdMs.tdWitdh;
+	td.width = MZ_cCDMv2.setup.tdWitdh;
 
 	let texte = '';
 	if (!ominmax.min || ominmax.min == 0) {
@@ -3749,7 +4180,11 @@ function getTexteAnalyse(modificateur, chiffre) {
 
 // rend le HTML pour le tableau de la "calculette"
 function getAnalyseTactique(id, nom) {
-	let donneesMonstre = MZ_EtatCdMs.listeCDM[id];
+	let donneesMonstre;
+	MZ_cCDMv2.monsters.processed.forEach((value, key) => {
+		if (!(id == value.id)) return;
+		donneesMonstre = value;
+	});
 	let needAutres = false;
 	if (donneesMonstre == null) {
 		return;
@@ -6253,7 +6688,9 @@ function traiteMonstre() {
 			let info = infosRet[0];
 			// QUESTION Quelle est l'utilité de ceci?
 			// Roule 19/01/2020 Il doit y avoir un endroit "au fond du trou" où le code va chercher les infos à partir de l'ID. Est-ce que c'est propre ? : non
-			MZ_EtatCdMs.listeCDM[g_idMonstre] = info;
+
+			MZ_cCDMv2.monsters.processed.set(g_idMonstre, info);
+			// MZ_EtatCdMs.listeCDM[g_idMonstre] = info;
 			let nodeInsert;
 			try {
 				nodeInsert = document.evaluate(
@@ -6280,13 +6717,14 @@ function traiteMonstre() {
 			return true;
 		}
 	}
-	let cdmCached = new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2?monstres`)._load() || new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2`)._load();
+	let cdmCached = new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2`)._load();
 	if (cdmCached && cdmCallback(cdmCached)) {
 		// gath': si le monstre affiché vient de la vue,
 		// alors on peut utiliser les infos que l'on a déjà en cache
 		return;
 	}
-	new MZ_XMLHttpRequest().do({
+	MY_removeSessionValue(`MZ_${numTroll}_CDMv2_merge`);
+	new MZ_XMLHttpRequest(`MZ_${numTroll}_CDMv2`, MZ_cCDMv2.mergeCdmCallback).do({
 		method: 'POST',
 		url: URL_MZgetCaracMonstre,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -10791,25 +11229,6 @@ var typesAFetcher = {
 	lieux: 1
 };
 
-// to be deleted à l'abandon de l'ancienne vue
-var MZ_EtatCdMs = {	// zone où sont stockées les variables "globales" pour la gestion des cdM et infos tactiques
-	nbMonstres: 0,
-	tr_monstres: [],
-	lastIndexDone: 0,
-	isCDMsRetrieved: false, // = si les CdM ont déjà été DL
-	listeCDM: [],
-	indexCellDist: -1,
-	indexCellActions: -1,
-	indexCellID: -1,
-	indexCellNivMZ: -1,
-	indexCellX: -1,
-	indexCellY: -1,
-	indexCellN: -1,
-	// Gère l'affichage en cascade des popups de CdM
-	yIndexCDM: 0,
-	tdWitdh: 110,
-};
-
 var VueContext = {};
 var tr_trolls = {}, tr_tresors = {}, tr_champignons = {}, tr_lieux = {};
 var nbTrolls = 0, nbTresors = 0, nbChampignons = 0, nbLieux = 0;
@@ -10935,51 +11354,52 @@ function getMonstreID(i) {
 	return Number(MZ_EtatCdMs.tr_monstres[i].cells[MZ_EtatCdMs.indexCellID].firstChild.nodeValue);
 }
 
-function getMonstreIDByTR(tr) {
-	return tr.cells[MZ_EtatCdMs.indexCellID].firstChild.nodeValue;
-}
+// gath': inutilisé, à supprimer ?
+// function getMonstreIDByTR(tr) {
+// 	return tr.cells[MZ_EtatCdMs.indexCellID].firstChild.nodeValue;
+// }
 
-function getMonstreLevelNode(i) {
-	let tr = MZ_EtatCdMs.tr_monstres[i];
-	if (!tr) {
-		printMZ(window.console.error, true, `Pas de monstre n°${i} / ${MZ_EtatCdMs.tr_monstres.length}`);
-		return;
-	}
-	return tr.cells[MZ_EtatCdMs.indexCellNivMZ];
-}
+// function getMonstreLevelNode(i) {
+// 	let tr = MZ_EtatCdMs.tr_monstres[i];
+// 	if (!tr) {
+// 		printMZ(window.console.error, true, `Pas de monstre n°${i} / ${MZ_EtatCdMs.tr_monstres.length}`);
+// 		return;
+// 	}
+// 	return tr.cells[MZ_EtatCdMs.indexCellNivMZ];
+// }
 
-function isMonstreLevelOutLimit(i, limitMin, limitMax) {
-	if (!(MZ_EtatCdMs.isCDMsRetrieved || MZ_cLigneMonstre.isCDMsRetrieved)) {
-		return false;
-	}
-	let donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
-	if (!donneesMonstre) {
-		return false;
-	}
-	let niv = donneesMonstre.niv;
-	if (niv == undefined) {
-		return false;
-	}
-	if (limitMin > 0 && niv.max && niv.max < limitMin) {
-		return true;
-	}
-	if (limitMax > 0 && niv.min && niv.min > limitMax) {
-		return true;
-	}
-	return false;
-}
+// function isMonstreLevelOutLimit(i, limitMin, limitMax) {
+// 	if (!(MZ_EtatCdMs.isCDMsRetrieved || MZ_cLigneMonstre.isCDMsRetrieved)) {
+// 		return false;
+// 	}
+// 	let donneesMonstre = MZ_EtatCdMs.listeCDM[getMonstreID(i)];
+// 	if (!donneesMonstre) {
+// 		return false;
+// 	}
+// 	let niv = donneesMonstre.niv;
+// 	if (niv == undefined) {
+// 		return false;
+// 	}
+// 	if (limitMin > 0 && niv.max && niv.max < limitMin) {
+// 		return true;
+// 	}
+// 	if (limitMax > 0 && niv.min && niv.min > limitMax) {
+// 		return true;
+// 	}
+// 	return false;
+// }
 
-function getMonstreNomNode(i) {
-	try {
-		let td = document.evaluate(
-			"./td/a[starts-with(@href, 'javascript:PVM')]/..",
-			MZ_EtatCdMs.tr_monstres[i], null, 9, null
-		).singleNodeValue;
-		return td;
-	} catch (exc) {
-		avertissement(`[getMonstreNomNode] Impossible de trouver le monstre ${i}`, null, null, exc);
-	}
-}
+// function getMonstreNomNode(i) {
+// 	try {
+// 		let td = document.evaluate(
+// 			"./td/a[starts-with(@href, 'javascript:PVM')]/..",
+// 			MZ_EtatCdMs.tr_monstres[i], null, 9, null
+// 		).singleNodeValue;
+// 		return td;
+// 	} catch (exc) {
+// 		avertissement(`[getMonstreNomNode] Impossible de trouver le monstre ${i}`, null, null, exc);
+// 	}
+// }
 
 function getMonstreNom(i) {
 	return getMonstreNomByTR(MZ_EtatCdMs.tr_monstres[i], i);
@@ -11507,19 +11927,19 @@ function afficherCDM2(donneesMonstre) {
 	table.style.position = 'fixed';
 	table.style.backgroundColor = 'rgb(229, 222, 203)';
 	table.style.zIndex = 1;
-	// let topY = +(300+(30*MZ_EtatCdMs.yIndexCDM))%(30*Math.floor((window.innerHeight-400)/30));
+	// let topY = +(300+(30*MZ_cCDMv2.setup.yIndex))%(30*Math.floor((window.innerHeight-400)/30));
 	table.style.left = `${Number(window.innerWidth - 365)}px`;
 	table.style.width = '300px';
 
 	/* Fin création table & Affichage */
 	document.body.appendChild(table);
-	let topY = 90 + 30 * MZ_EtatCdMs.yIndexCDM;
+	let topY = 90 + 30 * MZ_cCDMv2.setup.yIndex;
 	// logMZ('topY=' + topY + ', offsetHeight=' + table.offsetHeight + ', innerHeight=' + window.innerHeight);
 	if (topY + table.offsetHeight > window.innerHeight) {
-		MZ_EtatCdMs.yIndexCDM = 0;	// on se repositionne en haut s'il n'y a pas assez de place
+		MZ_cCDMv2.setup.yIndex = 0;	// on se repositionne en haut s'il n'y a pas assez de place
 		topY = 90;
 	} else {
-		MZ_EtatCdMs.yIndexCDM++;	// décalage pour la fois suivante
+		MZ_cCDMv2.setup.yIndex++;	// décalage pour la fois suivante
 	}
 	table.style.top = `${topY}px`;
 }
@@ -12542,7 +12962,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 
 	static initGlobal() {
 		// cette fonction est appelée une fois que les objects dérivés de MZ_cLigneMonstre ont été créés
-		MZ_cLigneMonstre.sendAJAXCdMRequest(false, true);	// pas Full, avec Cache
+		MZ_cCDMv2.init();
+		MZ_cCDMv2.sendAJAXCdMRequest(false, true);	// pas Full, avec Cache
 		MZ_Tactique.initPopup();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneMonstre.MZ_oVueJSON);
 		MZ_cSCIZ.processMonsters();
@@ -12782,369 +13203,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 				oMonstre.eltTr.style.display = 'none';
 			else if ((!cache) && prevDisplay == 'none')
 				oMonstre.eltTr.style.display = 'table-row';
-		}
-	}
-
-	static sendAJAXCdMRequest(bFull, avecCache) {
-		let tReq = [];
-		let nbReq = 0;
-		let nbMax = 500;
-		if (!bFull && (typeof MH_mountyzilla_json != 'undefined') && MH_mountyzilla_json && MH_mountyzilla_json.general) {
-			nbMax = MH_mountyzilla_json.general.maxRecupCdM;
-			if (nbMax == undefined) nbMax = 500;
-		}
-		let nbMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets.length;
-		for (let indx = MZ_cLigneMonstre.lastIndexSent + 1; indx < nbMonstre; indx++) {
-			let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[indx];
-			// ne pas demander pour les Gowaps
-			MZ_cLigneMonstre.lastIndexSent = indx;
-			if (oMonstre.nom.match(/^[^\[]*Gowap/i)) {	// le mot Gowap peut être précédé par un template (qui ne contient donc pas [)
-				oMonstre.nivMZ_no = true;
-				continue;
-			}
-			//logMZ(`MZ_cLigneMonstre.init nom=${oMonstre.nom} pas gowap`);
-			tReq.push({ index: indx, id: oMonstre.id, nom: oMonstre.nom });
-			nbReq++;
-			if (nbReq >= nbMax) {	// limitation pour ne pas faire attendre, et aussi car on a un dépassement mémoire coté serveur si c'est trop gros
-				break;
-			}
-		}
-		//logMZ(`${MZ_formatDateMS()} lancement AJAX ${nbReq} demandes niveaux monstres V2`);
-		debugMZ(`Envoi MZ ${nbReq} IDs, nbMonstres=${nbMonstre}, lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}`);
-		if (nbReq == 0) return;
-
-		// Roule : temporaire, désactivation du cache pour les monstres "suivants"
-		let idCache;
-		if (avecCache) idCache = `MZ_${numTroll}_CDMv2${window.location.search}`;
-		new MZ_XMLHttpRequest(idCache).do({
-			method: 'POST',
-			url: URL_MZgetCaracMonstre,
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			data: `l=${JSON.stringify(tReq)}`,
-			trace: 'demande niveaux monstres V2',
-			onload: MZ_cLigneMonstre.receptionMZNiveauxAJAX,
-		});
-		debugMZ(`${MZ_formatDateMS()} requête ajax partie pour ${tReq.length} monstres`);
-	}
-
-	static getSuiteCdMs(e) {	// handler du click sur le bouton pour demander la suite des CdMs
-		let evt = e || window.event;
-		if (evt.shiftKey) {
-			this.parentNode.removeChild(this);
-			return;
-		}
-		replaceContentByText(this, `en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cLigneMonstre.MZ_oVueJSON.objets.length}`);
-		this.style.cursor = '';	// default
-		this.onclick = MZ_cLigneMonstre.removeCdMButton;
-		MZ_cLigneMonstre.sendAJAXCdMRequest();
-	}
-
-	static removeCdMButton(e) {	// handler du click sur le bouton pendant l'attente de la récup, ne permet que la suppression du texte
-		let evt = e || window.event;
-		if (evt.shiftKey) {
-			this.parentNode.removeChild(this);
-		}
-	}
-
-	static receptionMZNiveauxAJAX(responseDetails) {
-		// logMZ('receptionMZNiveauxAJAX_log readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
-		if (responseDetails.status == 0) { return; }
-		let texte;
-		let nbResult = 0;
-		try {
-			// logMZ('[MZd] ' + (+new Date) + ' ajax niv monstres début');
-			texte = responseDetails.responseText;
-			let infos = JSON.parse(texte);
-			//displayScriptTime(new Date().getTime() - date_debut.getTime(), 'Analyse des CdM MZ');
-			if (responseDetails.oXHR) responseDetails.oXHR.trace = `${infos.length} demandes niveaux monstres V2`;
-			if (infos.length == 0) { return; }
-
-			// ajouter les styles CSS pour les popup
-			if (!MZ_cLigneMonstre.cssMZDone) {
-				addStyleSheet(`
-				.MZtooltip { position: relative;color:red;text-align:center; }
-				.MZtooltip .MZtooltiptext { visibility: hidden;width: 250px;padding: 5px 0;border:solid 1px;position: absolute;z-index: 1;color:black;background-color:white }
-				.MZtooltip:hover .MZtooltiptext {visibility: visible;}
-				`);
-				MZ_cLigneMonstre.cssMZDone = true;
-			}
-
-			if (!MZ_cLigneMonstre.colNiveauDone) {
-				// ajouter la colonne dans le HTML après Rèf
-				MZ_cLigneMonstre.MZ_oVueJSON.insertColumn(MZ_cLigneMonstre.MZ_oVueJSON.indxTdRef, 'Niv', '20px', 1);
-				MZ_cLigneMonstre.colNiveauDone = true;
-			}
-
-			// préparation missions
-			let obMissions;
-			let strMiss = MY_getValue(`${numTroll}.MISSIONS`);
-			if (strMiss) {
-				try {
-					obMissions = JSON.parse(strMiss);
-				} catch (exc) {
-					logMZ(`MZ_cLigneMonstre:::receptionMZNiveauxAJAX_log`, exc);
-				}
-			}
-
-			let styleImg = "height:12px;width:auto;"
-			for (let info of infos) {
-				let mzIndex = MZ_cLigneMonstre.MZ_oVueJSON.map_id_objets[info.id];
-				if (mzIndex === undefined) continue;
-				let oMonstre = MZ_cLigneMonstre.MZ_oVueJSON.objets[mzIndex];
-				if (!oMonstre) continue;
-				oMonstre.infoMZ = info;
-				let className = 'mh_tdpage';
-				let myColor = undefined;
-				if (info.niv != undefined && info.niv.max == -1 && info.Mode != 'cdm') {
-					oMonstre.eltTdNiveau.className = "MZtooltip";
-					oMonstre.eltTdNiveau.style.color = "black";
-					oMonstre.eltTdNiveau.innerHTML = 'Var.<span class="MZtooltiptext">Ce monstre est variable.<br />On ne peut pas avoir d\'information sans CdM.</span>';
-				} else if (!(info && info.esq)) {
-					oMonstre.eltTdNiveau.className = "MZtooltip";
-					oMonstre.eltTdNiveau.innerHTML = `${mkMinMaxHTML(info.niv)}<span class="MZtooltiptext">Désolé, pas de CdM dans MZ pour ce type de monstre (même âge, même template).<br />Vous pouvez aider en envoyant une CdM à MZ.</span>`;
-				} else {
-					oMonstre.eltTdNiveau.innerHTML = mkMinMaxHTML(info.niv);
-					myColor = MZ_CdMColorFromMode(info);
-					oMonstre.eltTdNiveau.style.cursor = 'pointer';
-					console.warn('mzIndex', mzIndex, info.id);
-					oMonstre.eltTdNiveau.setAttribute('data-indxMZ', mzIndex);
-					oMonstre.eltTdNiveau.onclick = basculeCDM2;
-					oMonstre.eltTdNom.appendChild(MZ_Tactique.createImage(oMonstre.id, oMonstre.nom));
-				}
-				oMonstre.eltTdNiveau.style.width = '20px';
-				// to do migrer listeCDM vers l'objet MZ_cLigneMonstre
-				MZ_EtatCdMs.listeCDM[info.id] = info;
-				if (myColor) {
-					oMonstre.eltTdNiveau.style.color = myColor;
-				}
-
-				// icône "voir le caché"
-				if (info.vlc) {
-					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}oeil.png`, "Voit le caché", styleImg));
-				}
-				if (info.attd) {
-					oMonstre.eltTdNom.appendChild(createImage(`${URL_MZimg}distance.gif`, "Attaque à distance", styleImg));
-				}
-				// précision sur les phoenix
-				if (info.gen) {
-					let imgPh, txtPh;
-					switch (info.gen) {
-						case 1:
-							imgPh = `${URL_MZimg}Phoenix1.png`;
-							txtPh = 'Phœnix de première génération';
-							break;
-						case 2:
-							imgPh = `${URL_MZimg}Phoenix2.png`;
-							txtPh = 'Phœnix de deuxième génération';
-							break;
-						case 3:
-							imgPh = `${URL_MZimg}Phoenix3.png`;
-							txtPh = 'Phœnix de troisième génération';
-							break;
-						case 23:
-							imgPh = `${URL_MZimg}Phoenix23.png`;
-							txtPh = 'Phœnix de deuxième ou troisième génération';
-							break;
-					}
-					oMonstre.eltTdNom.appendChild(createImage(imgPh, txtPh, styleImg));
-				}
-
-				// missions
-				//let mess = '';
-				//let bPeutEtreIcone = false;
-				if (obMissions) for (let num in obMissions) {
-					let oMission = obMissions[num];
-					let mobMission = false;
-					let mobMissionPeutEtre = undefined;
-					switch (oMission.type) {
-						case 'Race':
-							let race = epure(oMission.race.toLowerCase());
-							let nom = epure(info.nom.toLowerCase());
-							if (nom.indexOf(race) != -1) {
-								if (race == 'crasc') {
-									if (nom.indexOf('medius') != -1) {
-										// pas éligible
-									} else if (nom.indexOf('maexus') != -1) {
-										// pas éligible
-									} else if (nom.indexOf('parasitus') != -1) {
-										if (nom.match(/^crasc parasitus \[/ui)) {
-											// on ne peut pas savoir
-											mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
-												'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
-										} else {
-											// c'est un monstre de la race des Crasc Parasitus
-											mobMission = false;
-										}
-									} else {
-										mobMission = true;
-									}
-								} else if (race == 'crasc parasitus') {
-									if (nom.match(/^crasc parasitus \[/ui)) {
-										// on ne peut pas savoir
-										mobMissionPeutEtre = 'Impossible de savoir si ce monstre a comme race "Crasc" ou "Crasc Parasitus"\n' +
-											'Faire une CdM. Si la portée de pouvoir est "automatique", il s\'agit d\'un "Crasc", si elle est "au toucher", il s\'agit d\'un "Crasc Parasitus"';
-									} else {
-										// c'est un monstre de la race des Crasc Parasitus
-										mobMission = true;
-									}
-								} else if (race == 'shai') {
-									if (nom.match(/abishai/ui)) {
-										mobMission = false;
-									} else {
-										mobMission = true;
-									}
-								} else if (race == 'ombre') {
-									if (nom.match(/roche/ui)) {
-										mobMission = false;
-									} else {
-										mobMission = true;
-									}
-								} else if (race == "geck'oo") {
-									if (nom.match(/majestueux/ui)) {
-										mobMission = false;
-									} else {
-										mobMission = true;
-									}
-								} else if (race == "bouj'dla") {
-									if (nom.match(/placide/ui)) {
-										mobMission = false;
-									} else {
-										mobMission = true;
-									}
-								} else {
-									mobMission = true;
-								}
-							}
-							break;
-						case 'Niveau':
-							let minMimi, maxMimi;
-							let nivMimi = Number(oMission.niveau);
-							let mod = oMission.mod;	// mission nivMimi±mod si mod est numérique, sinon, c'est >= nivMimi
-							if (isNaN(mod)) {
-								minMimi = nivMimi;
-								maxMimi = nivMimi + 999999;
-							} else {
-								minMimi = nivMimi - mod;
-								maxMimi = nivMimi + mod;
-							}
-							if (!info.niv) break;
-							if (info.niv.max && info.niv.min) {
-								if (info.niv.max <= maxMimi && info.niv.min >= minMimi) {
-									mobMission = true;
-								} else if (!(info.niv.max < minMimi || info.niv.min > maxMimi)) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-									if (isDEV) {
-										mobMissionPeutEtre = `${mobMissionPeutEtre}\nMonstre=(${info.niv.min}, ${info.niv.max}), mimi=(${minMimi}, ${maxMimi})`;
-									}
-								}
-							} else if (info.niv.max) {
-								if (info.niv.max >= minMimi) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-								}
-							} else if (info.niv.min) {
-								if (info.niv.min <= maxMimi) {
-									mobMissionPeutEtre = 'Il reste à déterminer le niveau exact du monstre';
-								}
-							}
-							break;
-						case 'Famille':
-							if (info && info.fam) {
-								let familleMimi = epure(oMission.famille.toLowerCase()).replace(/[']/g, '');	// Roule 27/02/2019 simple quote dans les familles
-								let familleMob = epure(info.fam.toLowerCase());
-								if (familleMob.indexOf(familleMimi) != -1) {
-									mobMission = true;
-								}
-							}
-							break;
-						case 'Pouvoir':
-							if (info && info.pouv) {
-								let pvrMimi = epure(oMission.pouvoir.toLowerCase());
-								let pvrMob = epure(info.pouv.toLowerCase());
-								if (pvrMob.indexOf(pvrMimi) != -1) {
-									mobMission = true;
-								}
-							}
-					}
-					if (mobMission) {
-						//mess = mess + (mess ? '\n\n' : '');
-						//mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
-						oMonstre.eltTdNom.appendChild(createImage(
-							`${URL_MZimg}mission.png`,
-							`Mission ${num} :\n${oMission.libelle}`, styleImg));
-						oMonstre.cibleMission = true;
-					} else if (mobMissionPeutEtre !== undefined) {
-						/*
-						mess = mess + (mess ? '\n\n' : '');
-						mess = `${mess}${mobMissionPeutEtre}\n`;
-						bPeutEtreIcone = true;
-						mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
-						*/
-						oMonstre.eltTdNom.appendChild(createImage(
-							`${URL_MZimg}missionX.png`,
-							`Mission ${num} :\n${oMission.libelle}\n${mobMissionPeutEtre}`, styleImg));
-						oMonstre.cibleMission = true;
-					}
-				}
-				nbResult++;
-			}
-			// todo
-			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant computeMission`);
-			//computeMission(prevLastIndexDone + 1, MZ_EtatCdMs.nbMonstres);
-			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres avant filtreMonstres`);
-			//filtreMonstres();	// ajout Roule' 20/01/2017 car il y a des cas où les données arrivent après le filtrage
-			//debugMZ(`${MZ_formatDateMS()} ajax niv monstres fin`);
-		} catch (exc) {
-			logMZ(`receptionMZNiveauxAJAX_log: ${URL_MZgetCaracMonstre}\n${texte}`, exc);
-		}
-
-		// debugMZ('id=6376829, info=' + JSON.stringify(MZ_EtatCdMs.listeCDM[6376829]));
-		MZ_cLigneMonstre.isCDMsRetrieved = true;
-		// afficher/supprimer le bouton pour demander la suite
-		let eltBoutonSuite = document.getElementById('MZ_boutonSuiteCdM');
-		debugMZ(`lastIndexDone=${MZ_cLigneMonstre.lastIndexSent}, nbMonstres=${MZ_cVueJSON.oMonstres.objets.length}, eltBoutonSuite=${eltBoutonSuite}`);
-		if (MZ_cLigneMonstre.lastIndexSent < (MZ_cVueJSON.oMonstres.objets.length - 1)) {
-			if (eltBoutonSuite) {
-				replaceContentByText(eltBoutonSuite, `en cours ${MZ_cLigneMonstre.lastIndexSent}/${MZ_cVueJSON.oMonstres.objets.length}`);
-				MZ_cLigneMonstre.sendAJAXCdMRequest();	// lancer la suite
-			} else {
-				eltBoutonSuite = document.createElement('div');
-				eltBoutonSuite.id = 'MZ_boutonSuiteCdM';
-				eltBoutonSuite.style.position = 'fixed';
-				eltBoutonSuite.style.border = '1px solid black';
-				if (isDesktopView()) {
-					eltBoutonSuite.style.top = '10px';
-					eltBoutonSuite.style.right = '10px';
-					eltBoutonSuite.style.fontSize = 'large';
-					eltBoutonSuite.style.padding = '5px';
-				} else {
-					eltBoutonSuite.style.top = '30px';
-					eltBoutonSuite.style.right = '1px';
-					eltBoutonSuite.style.fontSize = 'small';
-				}
-				eltBoutonSuite.style.backgroundImage = 'url("/mountyhall/MH_Packs/packMH_parchemin/fond/fond2.jpg")';
-				eltBoutonSuite.style.color = 'black';
-				eltBoutonSuite.style.borderRadius = '10px';
-				eltBoutonSuite.style.cursor = 'pointer';
-				eltBoutonSuite.style.zIndex = '500';
-				appendText(eltBoutonSuite, `${nbResult} CdM(s) récupérées`);
-				appendBr(eltBoutonSuite);	// C'est plus classe que d'utiliser innerHTML ☺
-				appendText(eltBoutonSuite, 'Cliquer ici pour demander les CdMs');
-				appendBr(eltBoutonSuite);
-				appendText(eltBoutonSuite, `des ${MZ_cVueJSON.oMonstres.objets.length - (MZ_cLigneMonstre.lastIndexSent + 1)} monstres restants`);
-				eltBoutonSuite.title = 'Shift-Click pour faire disparaitre ce bouton sans demander les CdMs';
-				eltBoutonSuite.onclick = MZ_cLigneMonstre.getSuiteCdMs;
-				document.body.appendChild(eltBoutonSuite);
-			}
-		} else if (eltBoutonSuite) {
-			eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
-		}
-		// appel des callback
-		for (let callback of MZ_cVueJSON.callbacksFinMZ) {
-			try {
-				callback();
-			} catch (exc) {
-				logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
-			}
 		}
 	}
 }
