@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.81
+// @version     1.6.82
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.81';
+var MZ_latest = '1.6.82';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -751,11 +751,24 @@ function MZ_getValueBoolean(key) {
 }
 // gath: sessionStorage utilisé comme cache
 // -> si besoin de reset cache, clore l'onglet
+// update possible: durée max cache 2x expiration
 function MY_setSessionValue(key, value, expirationInMin = 3) {
 	let expDate = new Date(new Date().getTime() + (60000 * expirationInMin))
+	let maxExpDate = new Date(new Date().getTime() + (60000 * 2 * expirationInMin))
+
+	let strVal = window.sessionStorage.getItem(key)
+	if (strVal !== null) {
+		let value = JSON.parse(strVal)
+		let maxExpirationDate = new Date(value.maxExpirationDate)
+		if (expDate > maxExpirationDate) {
+			expDate= maxExpirationDate;
+			maxExpDate= maxExpirationDate;
+		}
+	}
 	let sessVal = {
 		data: value,
-		expirationDate: expDate.toISOString()
+		expirationDate: expDate.toISOString(),
+		maxExpirationDate: maxExpDate.toISOString(),
 	}
 	window.sessionStorage.setItem(key, JSON.stringify(sessVal));
 }
@@ -764,9 +777,7 @@ function MY_getSessionValue(key) {
 	if (strVal !== null) {
 		let value = JSON.parse(strVal)
 		let expirationDate = new Date(value.expirationDate)
-		if (expirationDate > new Date()) {
-			return value.data;
-		}
+		if (expirationDate > new Date()) return value.data;
 	}
 	window.sessionStorage.removeItem(key);
 	return null;
@@ -833,11 +844,28 @@ function displayScriptTime(duree, texte) {
 /** x~x Communication serveurs ----------------------------------------- */
 class MZ_XMLHttpRequest {
 	// Gestion des requetes asynchrones:
-	// ajout de logique de cache et gestion d'erreurs
-	constructor(cacheKey = undefined) {
+	// ajout de logique de cache et gestion d'erreurs.
+	//
+	// function cacheMergeCallback(newData, cacheData) -> [mergedData, ...mergedIDs] {
+	// 	.. data = {
+	// 			status: int,
+	// 			statusText: string,
+	// 			responseType: string,
+	// 			responseText: string,
+	// 		}
+	// }
+	constructor(cacheKey = undefined, cacheMergeCallback = undefined) {
 		this.cacheKey = cacheKey;
 		this.cacheExpiration = 5; // expiration du cache après 5 minutes
+		this.cacheMergeCallback = cacheMergeCallback;
 		return this;
+	}
+
+	_save_merge(ids = undefined) {
+		ids = ids || [];
+		if (!this.cacheKey || isDEV) return;  // pas de caching en mode dev
+		let mergeData = [...new Set(ids)];
+		MY_setSessionValue(`${this.cacheKey}_merge`, mergeData, this.cacheExpiration);
 	}
 
 	_save(xmlHttpRequest) {
@@ -850,18 +878,32 @@ class MZ_XMLHttpRequest {
 			responseText: xmlHttpRequest.responseText,
 			// response: xmlHttpRequest.response,  // gath': inutilisé
 		};
+		if (this.cacheMergeCallback !== undefined) {
+			let ids = [];
+			let cacheData = this._load();
+			if (cacheData) {
+				[respData, ids] = this.cacheMergeCallback(respData, cacheData);
+				this._save_merge(ids);
+			}
+		}
 		MY_setSessionValue(this.cacheKey, respData, this.cacheExpiration);
+	}
+
+	_load_merge() {
+		if (!this.cacheKey) return null;
+		return MY_getSessionValue(`${this.cacheKey}_merge`);
 	}
 
 	_load() {
 		// chargement de l'état de la requête sauvegardée
-		if (!this.cacheKey) return;
+		if (!this.cacheKey) return null;
 		return MY_getSessionValue(this.cacheKey);
 	}
 
 	do(MY_XHR_Ob) {
+		let skipMerge = this.cacheMergeCallback ? this._load_merge() : true;
 		let cachedResponse = this._load();
-		if (cachedResponse) {
+		if (cachedResponse && skipMerge) {
 			MY_XHR_Ob.onload(cachedResponse);
 			if (MY_XHR_Ob.trace) logMZ(`XMLHttp.onload ${MZ_formatDateMS()} traitement AJAX (cache) ${MY_XHR_Ob.trace}`);
 			return;
