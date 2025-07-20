@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.82
+// @version     1.6.83
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.82';
+var MZ_latest = '1.6.83';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -13134,11 +13134,11 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		let nomCache;
 		if (oConfig.nomCache) nomCache = oConfig.nomCache.toLowerCase();
 		if ((nivMin !== undefined || nivMax !== undefined || nonmis || famille)
-			&& !(MZ_cLigneMonstre.isCDMsRetrieved)) {
-			if (MZ_cLigneMonstre.nbRetry++ < 5)	// protection
+			&& !(MZ_cCDMv2.fetchDone)) {
+			if (MZ_cLigneMonstre.nbRetry++ < 6)	// protection
 				MZ_cVueJSON.registerCallbackMZ(MZ_cLigneMonstre.applyFiltreNu);
 			else
-				logMZ('Plus de 5 retry pour le filtrage des monstres')
+				logMZ('Plus de 6 retry pour le filtrage des monstres')
 			// on continue en ignorant ces filtres
 			nivMin = undefined;
 			nivMax = undefined;

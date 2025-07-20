@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name        cmp_chasse
 // @namespace   MH
-// @description ompartaison de tableaux de chasse
+// @description Comparaison de tableaux de chasse
 // @match       *MH_Play/Play_ev_chasse.php*
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
 // @version     1.0
+// @licence     GNU GPLv3
 // ==/UserScript==
 
 // vérif UTF-8 ş
