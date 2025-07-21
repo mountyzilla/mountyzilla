@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.83
+// @version     1.6.84
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.83';
+var MZ_latest = '1.6.84';
 var MZ_changeLog = [
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
@@ -12932,7 +12932,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		gowapA: {libelle: 'Les Gowaps Apprivoisés'},
 		gowapS: {libelle: 'Les Gowaps Sauvages'},
 		engage: {libelle: 'Les Engagés', infobulle: 'Les monstres ayant au moins un Trõll sur la même case'},
-		nonmis: {libelle: 'Hors mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active"},
+		nonmis: {libelle: 'Hors mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active"},
+		grGoGu: {libelle: 'Regrp. Gowaps/Gnus', infobulle : "Ne garde qu'une ligne par groupe"},
 	};
 	static listeFamille = ['Animal', 'Insecte', 'Démon', 'Humanoide', 'Monstre', 'Mort-Vivant'];
 	static listeFamilleAvecTrema = ['Animal', 'Insecte', 'Démon', 'Humanoïde', 'Monstre', 'Mort-Vivant'];
@@ -13131,6 +13132,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		let nivMax = oConfig.nivMax;
 		let nonmis = oConfig.nonmis;
 		let famille = oConfig.famille;
+		let grGoGu = oConfig.grGoGu;
 		let nomCache;
 		if (oConfig.nomCache) nomCache = oConfig.nomCache.toLowerCase();
 		if ((nivMin !== undefined || nivMax !== undefined || nonmis || famille)
@@ -13145,6 +13147,8 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 			nonmis = false;
 			famille = undefined;
 		}
+		let premierGoGu;	// premier Gowap ou Gnu du groupe (pour en modifier le texte)
+		let nbGowapGroupe, nbGnuGroupe;
 		for (let oMonstre of MZ_cVueJSON.oMonstres.objets) {
 			let cache = (oConfig.gowapA && oMonstre.nom.indexOf('Gowap Apprivoisé') != -1)
 					|| (oConfig.gowapS && oMonstre.nom.indexOf('Gowap Sauvage') != -1);
@@ -13193,11 +13197,50 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 						let nomSansFlou = oMonstre.nom.substring(0, indx).trim();
 						if ((MZ_cLigneMonstre.listeFamille.includes(nomSansFlou)) && nomSansFlou != famille) cache = true;
 					}
-				}
+			}
 			if ((!cache)
 				&& nomCache) {
 				if (oMonstre.nom.toLowerCase().indexOf(nomCache) != -1) cache = true;
+			}
+			if ((!cache)
+				&& grGoGu) {
+				let isGowap = (oMonstre.nom.indexOf('Gowap') != -1);
+				let isGnu;
+				if (!isGowap) isGnu = (oMonstre.nom.indexOf('Gnu') != -1);
+				if (isGowap || isGnu) {
+					oMonstre.loadXYN();
+					if (premierGoGu == undefined
+						|| premierGoGu.x != oMonstre.x
+						|| premierGoGu.y != oMonstre.y
+						|| premierGoGu.n != oMonstre.n) {
+						premierGoGu = oMonstre;
+						if (premierGoGu.saveHTMLNom == undefined)
+							premierGoGu.saveHTMLNom = premierGoGu.eltTdNom.innerHTML;
+						nbGowapGroupe = isGowap ? 1 : 0;
+						nbGnuGroupe = isGnu ? 1 : 0;
+					} else {
+						cache = true;
+						if (isGowap) {
+							nbGowapGroupe++;
+						} else {
+							nbGnuGroupe++;
+						}
+						while (premierGoGu.eltTdNom.firstChild)
+							premierGoGu.eltTdNom.removeChild(premierGoGu.eltTdNom.firstChild);
+						let txts = []
+						if (nbGowapGroupe > 0)
+							txts.push(`${nbGowapGroupe} Gowap${nbGowapGroupe > 1 ? 's' : ''}`);
+						if (nbGnuGroupe > 0)
+							txts.push(`${nbGnuGroupe} Gnu${nbGnuGroupe > 1 ? 's' : ''}`);
+						premierGoGu.eltTdNom.appendChild(document.createTextNode(txts.join(' et ')));
+					}
 				}
+			}
+			if ((!cache) && (!grGoGu) && oMonstre.saveHTMLNom != undefined) {
+				// remettre le HTML d'origine
+				oMonstre.eltTdNom.innerHTML = oMonstre.saveHTMLNom;
+				delete oMonstre.saveHTMLNom;
+			}
 			let prevDisplay = oMonstre.eltTr.style.display;
 			if (cache && prevDisplay != 'none')
 				oMonstre.eltTr.style.display = 'none';
