@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.84
+// @version     1.6.86
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.84';
+var MZ_latest = '1.6.86';
 var MZ_changeLog = [
+	"V1.6.86 \t\t 21/07/2025",
+	"	- Vue : possibilité de regrouper Gowaps & Gnus",
 	"V1.6.x \t\t 23/12/2024",
 	"	- Adapations nouvelle vue",
 	"V1.5.x \t\t 23/09/2024",
@@ -8386,7 +8388,14 @@ function insertChangelog(insertPt) {
 	let td = appendTd(tr);
 	td.colSpan = 2;
 	let pre = document.createElement('pre');
-	appendText(pre, getLatestChanges());
+	let txtLatestChange = getLatestChanges();
+	let m = txtLatestChange.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+	if (m) {
+		let d = new Date(m[3], m[2] - 1, m[1]);
+		d.setDate(d.getDate() + 7);
+		if (d > (new Date())) pre.style.color = 'red';
+	}
+	appendText(pre, txtLatestChange);
 	pre.id = 'mz_pre_changelog'
 	pre.style.whiteSpace = 'pre-wrap';
 	pre.style.display = 'inherit';
