@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.86
+// @version     1.6.87
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -2965,6 +2965,7 @@ class MZ_cCDMv2 {
 		}
 
 		let idx = -1;
+		let mapIDs = new Map();
 		MZ_cLigneMonstre.MZ_oVueJSON.objets.forEach((oMonstre) => {
 			idx++;
 			if (oMonstre.nom.match(/^[^\[]*(Gowap|Flou)/i)) {	// le mot Gowap/Flou peut être précédé par un template (qui ne contient donc pas [)
@@ -2972,7 +2973,11 @@ class MZ_cCDMv2 {
 				return;
 			}
 			// logMZ(`MZ_cCDMv2::init nom=${oMonstre.nom} pas gowap`);
+			// en cas de Nvoitdouble?, on a plusieurs fois le même oMonstre.id, ce qui met une belle pagaille
+			// => dédoublonage
+			if (mapIDs.has(oMonstre.id)) return;
 			MZ_cCDMv2.monsters.visible.set(idx, { index: idx, id: oMonstre.id, nom: oMonstre.nom });
+			mapIDs.set(oMonstre.id, null);
 		});
 		MZ_cCDMv2.monsters.n = Array(...MZ_cCDMv2.monsters.visible.values()).length
 	}
@@ -2985,6 +2990,7 @@ class MZ_cCDMv2 {
 		}
 		let monsters = Array(...MZ_cCDMv2.monsters.visible.values())
 		let nbReq = Math.min(monsters.length, nbMax);
+		//console.log(`[MZ] sendAJAXCdMRequest MZ_cCDMv2.monsters.visible.size=${MZ_cCDMv2.monsters.visible.size}, nbReg=${nbReq}`);
 		if (nbReq == 0) return;
 
 		let tReq = monsters.slice(0, nbReq);
@@ -3096,6 +3102,7 @@ class MZ_cCDMv2 {
 				// MZ_EtatCdMs.listeCDM[info.id] = info;
 				MZ_cCDMv2.monsters.processed.set(mzIndex, info);  // on bascule vers processed et
 				MZ_cCDMv2.monsters.visible.delete(mzIndex);       // on supprime de visible (pour req ajax suivant)
+				if (oMonstre.infoMZ) continue;	// Ça arrive en cas de Nvoitdouble?
 				oMonstre.infoMZ = info;
 
 				let className = 'mh_tdpage';
@@ -3306,7 +3313,7 @@ class MZ_cCDMv2 {
 		let visibles = Array(...MZ_cCDMv2.monsters.visible.values());
 		let processed = Array(...MZ_cCDMv2.monsters.processed.values());
 		debugMZ(`processed=${processed.length}, nbMonstres=${MZ_cCDMv2.monsters.n}, eltBoutonSuite=${eltBoutonSuite}`);
-		if (visibles.length > 0) {
+		if (visibles.length > 0 && MZ_cCDMv2.monsters.n > processed.length) {
 			if (eltBoutonSuite) {
 				replaceContentByText(eltBoutonSuite, `en cours ${processed.length}/${MZ_cCDMv2.monsters.n}`);
 				MY_removeSessionValue(`MZ_${numTroll}_CDMv2_merge`);
