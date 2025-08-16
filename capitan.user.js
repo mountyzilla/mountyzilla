@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.22
+// @version 8.8.23
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -40,7 +40,14 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 	window.console.log("script capitan déjà chargé");	// ça arrive dans le cas de l'affichage des détails d'une carte en popup
 } else {
 	oCAPITAN_MH_ROULE = {
-		bDebug: false,
+		bDebug: true,
+		/* pour mémoire
+		numTroll: undefined,
+		modeIntege: undefined,
+		MZ_ok: undefined,
+		curPos: undefined,	// object genre {x:10, y:10, n:-10}, non renseigné en cas smartphone sans MZ
+		// */
+		infoCartes: {},	// {"1234": {"mort": {x:10, y:10, n:-10}, "essais": [{x:10, y:10, n:-10, c=0}, {x:11, y:11, n:-10, c=1}], "signex": 1, "signey": -1}
 		appendButton: function(paren,value,onClick) {
 			var input = document.createElement('input');
 			input.type = 'button';
@@ -265,23 +272,31 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		gListeSolutions: new Array(),	// tableau de tableaux des 3 coord
-		gEssais: new Array(),	// tableau d'objets de type oEssai
-		oMort: null,	// objet de type oEssai sans "c"
+		gEssais: new Array(),	// tableau d'objets de type cEssai
+		oMort: null,	// objet de type cEssai sans "c"
 
-		oEssai: function(x, y, n, c) {	// déclaration d'objet méthode "function"
+		cEssai: function(x, y, n, c) {	// déclaration d'objet méthode "function"
 			if (y == undefined) {	// initialisation à partir d'une chaine séparée par ";"
-				let t = x.split(";");
-				this.x = parseInt(t[0], 10);
-				this.y = parseInt(t[1], 10);
-				this.n = parseInt(t[2], 10);
-				this.c = parseInt(t[3], 10);
+				if (typeof x === 'string' || x instanceof String) {
+					let t = x.split(";");
+					this.x = parseInt(t[0], 10);
+					this.y = parseInt(t[1], 10);
+					this.n = parseInt(t[2], 10);
+					if (t.length > 3) this.c = parseInt(t[3], 10);
+				} else if (x != undefined) {
+					this.x = x.x;
+					this.y = x.y;
+					this.n = x.n;
+					if (x.c !== undefined) this.c = x.c;
+				}
 			} else {
-				this.x = x;
-				this.y = y;
-				this.n = n;
-				this.c = c;
+				this.x = parseInt(x, 10);
+				this.y = parseInt(y, 10);
+				this.n = parseInt(n, 10);
+				if (c !== undefined) this.c = parseInt(c, 10);
 			}
 
+			/*
 			this.xAbs = Math.abs(this.x);
 			this.yAbs = Math.abs(this.y);
 			this.nAbs = Math.abs(this.n);
@@ -291,6 +306,42 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			if (this.yText.length < 2) this.yText = '0' + this.yText;
 			this.nText = this.nAbs + '';
 			if (this.nText.length < 2) this.nText = '0' + this.nText;
+			*/
+			this.coord2text = function(coord) {
+				let t = coord + '';
+				if (t.length < 2) t = '0' + t;
+				return t;
+			};
+
+			this.xText = function() {return this.coord2text(this.x)};
+			this.yText = function() {return this.coord2text(this.y)};
+			this.nText = function() {return this.coord2text(this.n)};
+
+			this.isValidLoc = function() {
+				if (this.x === undefined || isNaN(this.x)) return false;
+				if (this.y === undefined || isNaN(this.y)) return false;
+				if (this.n === undefined || isNaN(this.n)) return false;
+				return true;
+			};
+
+			this.isValidEssai = function() {
+				if (!this.isValidLoc) return false;
+				if (this.c === undefined || isNaN(this.c)) return false;
+				return true;
+			};
+
+			this.sameLocAs = function(oOther) {
+				if (this.x != oOther.x) return false;
+				if (this.y != oOther.y) return false;
+				if (this.n != oOther.n) return false;
+				return true;
+			};
+
+			this.sameAs = function(oOther) {
+				if (!this.sameLocAs(oOther)) return false;
+				if (this.c !== oOther.c) return false;
+				return true;
+			};
 
 			this.nbMatchesOne = function (t1, t2) {
 				t1 = '' + parseInt(t1, 10);	// virer le zéro à gauche. MH n'en tient pas compte quand il compte le nombre de match
@@ -304,25 +355,25 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			};
 
 			this.isCompatible = function(tabCoord) {	// vérifie si c'est compatible avec les coord passées en argument sous forme de tableau de chaines
-				var nMatches = this.nbMatchesOne(this.xText, tabCoord[0]);
-				nMatches += this.nbMatchesOne(this.yText, tabCoord[1]);
-				nMatches += this.nbMatchesOne(this.nText, tabCoord[2]);
+				var nMatches = this.nbMatchesOne(this.xText(), tabCoord[0]);
+				nMatches += this.nbMatchesOne(this.yText(), tabCoord[1]);
+				nMatches += this.nbMatchesOne(this.nText(), tabCoord[2]);
 				return nMatches == this.c
 			};
 
 			this.forPsychoChasseur = function() {	// rend le bout de texte à mettre dans l'URL vers l'outil des Psycho Chasseurs
-				return this.xAbs + '+' + this.yAbs + '+' + this.nAbs + '+' + this.c;
+				return Math.abs(this.x) + '+' + Math.abs(this.y) + '+' + Math.abs(this.n) + '+' + this.c;
 			};
 
 			this.nbChiffre = function() {	// rend le nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités)
-				return this.xText.length + this.yText.length + this.nText.length;
+				return this.xText().length + this.yText().length + this.nText().length;
 			};
 
-			this.tabOccurenceChiffre = function() {	// le nombre d'occurrence de chaque chiffre (0 à 9) dans les coord
+			this.tabOccurenceChiffre = function() {	// le nombre d'occurrences de chaque chiffre (0 à 9) dans les coord
 				var tabRet = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-				this.addOccurenceChiffre(tabRet, this.xText);
-				this.addOccurenceChiffre(tabRet, this.yText);
-				this.addOccurenceChiffre(tabRet, this.nText);
+				this.addOccurenceChiffre(tabRet, this.xText());
+				this.addOccurenceChiffre(tabRet, this.yText());
+				this.addOccurenceChiffre(tabRet, this.nText());
 				return tabRet;
 			};
 
@@ -391,8 +442,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				}
 				// ici, on a tiré tous les chiffres des 3 coordonnées, on teste si ces coord sont compatibles avec les essais
 				var isCompatible = true;
-				for (let oEssai of this.gEssais) {
-					if (!oEssai.isCompatible(newContexte.tabCoord)) {
+				for (let cEssai of this.gEssais) {
+					if (!cEssai.isCompatible(newContexte.tabCoord)) {
 						isCompatible = false;
 						break;
 					}
@@ -400,10 +451,10 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				if (this.bDebug && newContexte.tabCoord[0] == '03' && newContexte.tabCoord[1] == '80') {
 					let sCause = '';
 					if (!isCompatible) {
-						sCause = ' bad ' + oEssai.forPsychoChasseur() + ' nMatches=';
-						sCause += oEssai.nbMatchesOne(oEssai.xText, newContexte.tabCoord[0]);
-						sCause += ' ' + oEssai.nbMatchesOne(oEssai.yText, newContexte.tabCoord[1]);
-						sCause += ' ' + oEssai.nbMatchesOne(oEssai.nText, newContexte.tabCoord[2]);
+						sCause = ' bad ' + cEssai.forPsychoChasseur() + ' nMatches=';
+						sCause += cEssai.nbMatchesOne(cEssai.xText(), newContexte.tabCoord[0]);
+						sCause += ' ' + cEssai.nbMatchesOne(cEssai.yText(), newContexte.tabCoord[1]);
+						sCause += ' ' + cEssai.nbMatchesOne(cEssai.nText(), newContexte.tabCoord[2]);
 					}
 					window.console.log('CAPITAN calculeSolutionRecursifDigit, teste ' + newContexte.tabCoord.join("; ") + ', isCompatible=' + isCompatible + sCause);
 				}
@@ -414,6 +465,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		afficheInfoCarte: function(idCarte) {
+			this.idCarte = idCarte;
+			this.initCarte();
+			/*
 			var originalPosText = this.CAPITAN_getValue("capitan."+idCarte+".position");
 			if (originalPosText === undefined) {
 				let msg = "La recherche a été enregistrée. Mais vous n'avez pas encore affiché le détail de la carte "
@@ -429,14 +483,15 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				this.afficheMsg(msg, 'red');
 				return;
 			}
-			this.oMort = new this.oEssai(originalPosText);
+			*/
+			this.oMort = this.infoCartes[this.idCarte].mort;
 			this.gEssais = new Array();
 			var i = 0;
 			var essaiText;
 			while((essaiText = this.CAPITAN_getValue("capitan."+idCarte+".essai."+i)) != null)
 			{
 				//this.gEssais.push(this.CAPITAN_getValue("capitan."+idCarte+".essai."+i).split(";"));
-				this.gEssais.push(new this.oEssai(essaiText));
+				this.gEssais.push(new this.cEssai(essaiText));
 				i++;
 			}
 			if(this.CAPITAN_getValue("capitan."+idCarte+".this.signe") !=null)
@@ -479,14 +534,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		// Roule 08/08/2016 passage numTroll en paramètre
 		// Roule 15/08/2016 passage position courante en paramètre (tableau des 3 valeurs)
-		newRecherche: function(listeSolutions, currentPos) {
+		newRecherche: function(listeSolutions) {
 			if(listeSolutions.length<=1)
 				return null;
-			// Roule 15/08/2016 plus que dubitatif sur ce calcul de Size, j'utilise repartition.length
-			//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
-			var repartition = this.getRepartitionFromCase(currentPos[0], currentPos[1], currentPos[2], listeSolutions);
-			var size = repartition.length;
-			if (this.bDebug) window.console.log('newRecherche_log: this.newRecherche_log, repartition=' + JSON.stringify(repartition));
 
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
@@ -496,13 +546,28 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			table.setAttribute('style', 'width: 400px;');
 			table.setAttribute('align', 'center');
 
+			if (this.curPos == undefined) {
+				var thead = document.createElement('thead');
+				var tr = this.appendTr(thead, 'mh_tdtitre');
+				var td = this.appendTdText(tr, "Impossible de suggérer une loc en mode smartphone sans MZ", true);
+				td.setAttribute('align', 'center');
+				table.appendChild(thead);
+				return table;
+			}
+
+			// Roule 15/08/2016 plus que dubitatif sur ce calcul de Size, j'utilise repartition.length
+			//var size = (";"+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])+Math.abs(listeSolutions[0][0])).length-1;
+			var repartition = this.getRepartitionFromCase(this.curPos.x, this.curPos.y, this.curPos.n, listeSolutions);
+			var size = repartition.length;
+			if (this.bDebug) window.console.log('newRecherche_log: this.newRecherche_log, repartition=' + JSON.stringify(repartition));
+
 			var nbNotZero = 0;
 			for(var i=0;i<size;i++)
 			{
 				if(repartition[i]!=0)
 					nbNotZero++;
 			}
-			var string = "Il y a une utilité de faire une recherche en X = "+currentPos[0]+" Y = "+currentPos[1]+" N = "+currentPos[2];
+			var string = "Il y a une utilité de faire une recherche en X = "+this.curPos.x+" Y = "+this.curPos.y+" N = "+this.curPos.n;
 			if(nbNotZero<=1)
 			{
 				//
@@ -515,13 +580,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 						{
 							if(dx==0 && dy==0 && dn==0)
 								continue;
-							var tmprepartition = this.getRepartitionFromCase(currentPos[0]+dx, currentPos[1]+dy, currentPos[2]+dn, listeSolutions);
+							var tmprepartition = this.getRepartitionFromCase(this.curPos.x+dx, this.curPos.y+dy, this.curPos.n+dn, listeSolutions);
 							var tmpmeanscore = this.getMeanPositionNumber(tmprepartition,listeSolutions.length);
 							if(((dn==0 || !isNotN) && minsolution>=tmpmeanscore) || (dn!=0 && isNotN && tmpmeanscore<=2*minsolution/3))
 							{
 								minsolution = tmpmeanscore;
 								repartition = tmprepartition;
-								newpos = "X = "+(currentPos[0]+dx)+" Y = "+(currentPos[1]+dy)+" N = "+(currentPos[2]+dn);
+								newpos = "X = "+(this.curPos.x+dx)+" Y = "+(this.curPos.y+dy)+" N = "+(this.curPos.n+dn);
 								isNotN = (dn==0);
 							}
 						}
@@ -529,7 +594,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				{
 					var thead = document.createElement('thead');
 					var tr = this.appendTr(thead, 'mh_tdtitre');
-					var td = this.appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en X = "+currentPos[0]+" Y = "+currentPos[1]+" N = "+currentPos[2], true);
+					var td = this.appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en X = "+this.curPos.x+" Y = "+this.curPos.y+" N = "+this.curPos.n, true);
 					td.setAttribute('align', 'center');
 					table.appendChild(thead);
 					return table;
@@ -569,35 +634,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			return table;
 		},
 
-		// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
-		getNumTroll: function() {
-			/* 07/10/2020, l'info n'est plus dans la page, on se replie sur le localStorage
-			var infoObjet = document.evaluate("//td[@class = 'mh_tdtitre']/text()[contains(.,'Propriétaire actuel')]",
-				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-			if (this.bDebug) {
-				if (infoObjet) {
-					window.console.log('CAPITAN getNumTroll: infoObjet.nodeValue=' + infoObjet.nodeValue);
-				} else {
-					window.console.log('CAPITAN getNumTroll: infoObjet est nul');
-				}
-			}
-			var numTroll = 0;
-			if (infoObjet)
-			{
-				// infoObjet.nodeValue=Propriétaire actuel : TROLL - 91305. Rouletabille
-				var m = infoObjet.nodeValue.match(/troll[ -]*(\d*)[. +]/i);
-				if (m) {
-					if (this.bDebug) window.console.log('CAPITAN getNumTroll: m=' + m);
-					if (m.length > 1) numTroll = parseInt(m[1]);
-				}
-			}
-			*/
-			numTroll = parseInt(window.localStorage['NUM_TROLL']);
-			if (this.bDebug) window.console.log('CAPITAN getNumTroll: numTroll=' + numTroll);
-			return numTroll;
-		},
-
 		getIDCarte: function() {
+			//if (this.bDebug) return;
 			var infoObjet = document.evaluate("//h2[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 			// si échec, essayer avec l'ancienne méthode
@@ -606,28 +644,22 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			// si échec, essayer avec l'ancienne méthode
 			if (!infoObjet) infoObjet = document.evaluate("//div[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-			var idCarte = 0;
-			if(infoObjet)
-			{
-				idCarte = parseInt(infoObjet.nodeValue.replace('[', ''));
-			}
-			return idCarte;
+			if(infoObjet) return parseInt(infoObjet.nodeValue.replace('[', ''));
 		},
 
 		analyseObject: function() {
+			//if (this.bDebug) {console.log('[Capitan debug] analyseObject: début'); console.trace();}
 			var eSpacer = document.getElementById('spacerMZCapitan');
 			if (eSpacer) return;	// déjà affiché
-			var numTroll = this.getNumTroll();	// Roule 08/08/2016 récupération numéro de Troll dans la page HTML
-			if( !numTroll) {
+			if( !this.numTroll) {
 				window.console.log('CAPITAN analyseObject: *** erreur *** pas de numéro de Trõll');
 				return;
 			}
-			var idCarte = this.getIDCarte();
-			if (this.bDebug && idCarte == 11987020) {	// test Roule
-				var originalPos = '-101;-8;-73';
-				this.CAPITAN_setValue("capitan."+idCarte+".position", originalPos)
-			} else if (idCarte > 0) {
-				var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position");
+			this.idCarte = this.getIDCarte();
+			if (this.bDebug && this.idCarte == 11987020) {	// test Roule
+				this.info.mort = new this.cEssai(-101, -8, -73);
+			} else if (this.idCarte > 0) {
+				this.initCarte();
 			} else {
 				var parentElt = document.body;
 				var modalElt = document.evaluate("//div[@class = 'modal']",
@@ -636,27 +668,28 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 					modalElt.appendChild(document.createTextNode("Erreur à la récupération de l'ID de la carte"));
 					modalElt.errorIDDone = true;
 				}
+				if (this.bDebug) console.log('[Capitan debug] analyseObject: pas trouvé de idCarte');
 				return;
 			}
-			if (this.bDebug) window.console.log('CAPITAN analyseObject: this.analyseObject numTroll=' + numTroll + ', idCarte=' + idCarte + ', originalPos=' + originalPos);
+			if (this.bDebug) window.console.log('CAPITAN analyseObject: this.analyseObject numTroll=' + this.numTroll + ', this.idCarte=' + this.idCarte + ', originalPos=' + originalPos);
 			if(!originalPos || originalPos == null)
 			{
 				var infoPos = document.evaluate("//td/text()[contains(.,'ai été tué en')]",
 				document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				if(!infoPos) {
-					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver le texte de la mort du Capitan');
+					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + this.numTroll + ', this.idCarte=' + this.idCarte + ', impossible de trouver le texte de la mort du Capitan');
 					return;
 				}
 				var listePos = infoPos.nodeValue.split("=");
 				if(listePos.length!=4) {
-					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + numTroll + ', idCarte=' + idCarte + ', impossible de trouver les coord. de la mort du Capitan ' + infoPos.nodeValue);
+					if (this.bDebug) window.console.log('CAPITAN analyseObject: numTroll=' + this.numTroll + ', this.idCarte=' + this.idCarte + ', impossible de trouver les coord. de la mort du Capitan ' + infoPos.nodeValue);
 					return;
 				}
 				var x = parseInt(listePos[1]);
 				var y = parseInt(listePos[2]);
 				var n = parseInt(listePos[3]);
-				if (this.bDebug) window.console.log('CAPITAN analyseObject: setValue("capitan.'+idCarte+'.position, '+x+";"+y+";"+n);
-				this.CAPITAN_setValue("capitan."+idCarte+".position",x+";"+y+";"+n);
+				if (this.bDebug) window.console.log('CAPITAN analyseObject: setValue("capitan.'+this.idCarte+'.position, '+x+";"+y+";"+n);
+				this.CAPITAN_setValue("capitan."+this.idCarte+".position",x+";"+y+";"+n);
 			}
 			// Roule 23/11/2016 travail dans le body (ancienne version, fenêtre indépendante) ou dans la div modale (nouvelle version en "popup")
 			var parentElt = document.body;
@@ -668,7 +701,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			parentElt = this.gDiv;
 
 			// bloc liste de solutions
-			var table = this.afficheInfoCarte(idCarte);
+			var table = this.afficheInfoCarte(this.idCarte);
 			if (table) {
 				var p = document.createElement('p');
 				p.id = 'spacerMZCapitan';
@@ -677,17 +710,9 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				parentElt.appendChild(p);
 			}
 
-			// position courante du Troll
-			// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
-			var curPos = [];
-			curPos[0] = parseInt(window.localStorage[numTroll+".position.X"]);
-			curPos[1] = parseInt(window.localStorage[numTroll+".position.Y"]);
-			curPos[2] = parseInt(window.localStorage[numTroll+".position.N"]);
-			if (this.bDebug) window.console.log('CAPITAN analyseObject: position du troll récupérée en localStorage=' + JSON.stringify(curPos));
-
 			// bloc utilité de faire une recherche sur la position courante
-			table = this.newRecherche(this.gListeSolutions, curPos);
-			if(table!=null)
+			table = this.newRecherche(this.gListeSolutions);
+			if(table != null)
 			{
 				var p = document.createElement('p');
 				p.appendChild(table);
@@ -699,13 +724,13 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			// Roule 08/08/2016 bloc des recherches mémorisées
 			if(this.gEssais)
 			{
-				table = this.prevRecherche(idCarte);
+				table = this.prevRecherche(this.idCarte);
 				var p = document.createElement('p');
 				p.id = 'MZ_capitan_p_liste_memo';
 				p.appendChild(table);
 				parentElt.appendChild(p);
 				// Roule 08/08/2016 bloc préparant les infos pour l'outil Mamoune (Psyko-Chasseurs)
-				table = this.blocMamoune(idCarte, curPos);
+				table = this.blocMamoune(this.idCarte);
 				if(table!=null)
 				{
 					p = document.createElement('p');
@@ -729,7 +754,7 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 		},
 
 		// Roule 08/08/2016
-		blocMamoune: function(idCarte, currentPos) {
+		blocMamoune: function(idCarte) {
 			var table = document.createElement('table');
 			table.setAttribute('class', 'mh_tdborder');
 			table.setAttribute('border', '0');
@@ -750,21 +775,21 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 			// http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=101&y=8&n=73&t=3+77+30+1%0D%0A37+57+48+0%0D%0A33+32+29+1%0D%0A87+20+74+2%0D%0A17+56+63+0%0D%0A22+89+78+2&voir=1&cent=100&enter=Go#
 			var tabtxt = new Array();
-			var currentPosAlreadyDone = false;
-			for (var i = 0; i < this.gEssais.length; i++) {
-				tabtxt.push(this.gEssais[i].forPsychoChasseur());
-				if (this.gEssais[i].x == currentPos[0] && this.gEssais[i].y == currentPos[1] && this.gEssais[i].n == currentPos[2]) currentPosAlreadyDone = true;
-				//tabtxt.push(this.gEssais[i].join('+'));
-				//if (this.gEssais[i][0] == currentPos[0] && this.gEssais[i][1] == currentPos[1] && this.gEssais[i][2] == currentPos[2]) currentPosAlreadyDone = true;
+			if (this.curPos != undefined) {
+				let currentPosAlreadyDone = false;
+				for (let i = 0; i < this.gEssais.length; i++) {
+					tabtxt.push(this.gEssais[i].forPsychoChasseur());
+					if (this.gEssais[i].x == this.curPos.x && this.gEssais[i].y == this.curPos.y && this.gEssais[i].n == this.curPos.n) currentPosAlreadyDone = true;
+				}
+				if (!currentPosAlreadyDone) tabtxt.push(this.curPos.x + '+' + this.curPos.y + '+' + this.curPos.n + '+%3F');	// spécial pour demander à Mamoune ce qu'elle pense d'un essai à la position courante
 			}
-			if (!currentPosAlreadyDone) tabtxt.push(currentPos.join('+') + '+%3F');	// spécial pour demander à Mamoune ce qu'elle pense d'un essai à la position courante
 			var tr2 = this.appendTr(tbody, 'mh_tdpage');
 			var td2 = this.appendTd(tr2);
 			var originalPos = this.CAPITAN_getValue("capitan."+idCarte+".position").split(";");
 			if(originalPos.length!=3) {
 				td2.this.appendText('Erreur\u00A0: impossible de retrouver les coordonnées de la mort');
 			} else {
-				var a = document.createElement('a');
+				let a = document.createElement('a');
 				this.appendText(a, 'Cliquer ici pour savoir ce qu\'en pensent les Psyko-Chasseurs');
 				a.setAttribute('href', 'http://mountyhall.dispas.net/dynamic/outils_capitan.php?x=' + originalPos[0] + '&y=' + originalPos[1] + '&n=' + originalPos[2] + '&t=' + tabtxt.join('%0D%0A') + '&voir=1&cent=100');
 				a.setAttribute('target', 'psykochasseurs');
@@ -834,8 +859,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			let lg = this.gEssais.length;
 			for (let i = 0; i < lg; i++) {
 				let clef = "capitan." + idCarte + ".essai." + i;
-				let oEssai = this.gEssais[i];
-				let v = oEssai.x + ';' + oEssai.y + ';' + oEssai.n + ';' + oEssai.c;
+				let cEssai = this.gEssais[i];
+				let v = cEssai.x + ';' + cEssai.y + ';' + cEssai.n + ';' + cEssai.c;
 				if (this.bDebug) window.console.log('CAPITAN delRecherche_log: set ' + clef + '=' + v);
 				this.CAPITAN_setValue(clef, v);
 			}
@@ -1045,10 +1070,87 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 
 		CAPITAN_horsGM: false,
 
+		initCarte: function() {	// idCarte dans this.idCarte
+			if (this.infoCartes[this.idCarte]) return;	// déjà fait
+			let info = {};
+			if (this.modeIntege && MH_capitan_json && MH_capitan_json[this.idCarte]) {
+				for (let k in MH_capitan_json[this.idCarte])
+					info[k] = new cEssai(MH_capitan_json[k]);
+				this.infoCartes[this.idCarte] = MH_capitan_json[this.idCarte];
+			}
+			// merge position mort en localStorage
+			let oMortLocalStorage = new this.cEssai(this.CAPITAN_getValue("capitan."+this.idCarte+".position"));
+			if (oMortLocalStorage.isValidLoc()) {
+				if (info.mort) {
+					if (!info.sameLocAs(oMortLocalStorage)) {
+						console.log('[Capitan] divergence de loc de mort');
+						console.log('centralisé');
+						console.log(info.mort);
+						console.log('localStorage');
+						console.log(oMortLocalStorage);
+					}
+				} else {
+					info.mort = oMortLocalStorage;
+				}
+			} else {
+				console.log('[Capitan] mauvaise log de mort en localStorage: ' + this.CAPITAN_getValue("capitan."+this.idCarte+".position"));
+				console.log(oMortLocalStorage);
+			}
+			// merge essais en localStorage
+			let essaiText;
+			for (let i = 0; (essaiText = this.CAPITAN_getValue("capitan."+this.idCarte+".essai."+i)) != null; i++) {
+				let cEssai = new this.cEssai(essaiText);
+				if (!cEssai.isValidEssai()) {
+					console.log(`[Capitan] mauvaise loc en localStorage: ${essaiText}`);
+					continue;
+				}
+				if (info.essais) for (let oEssai2 of info.essais) {
+					if (!oEssai2.sameLocAs(cEssai)) continue;
+					if (!oEssai2.sameAs(cEssai)) {
+						console.log(`[Capitan] essais incohérents en localStorage: ${essaiText} <-> ${JSON.stringify(oEssai2)}`);
+					}
+					continue;
+				}
+				if (!info.essais) info.essais = [];
+				info.essais.push(cEssai);
+			}
+			// merge cadran
+			let txtCadran = this.CAPITAN_getValue("capitan."+this.idCarte+".this.signe");
+			if (txtCadran != null) {
+				var signes = this.CAPITAN_getValue("capitan."+this.idCarte+".this.signe").split(";");
+				if (this.bDebug) window.console.log(`[CAPITAN debug] afficheInfoCarte_log txtCadran=${txtCadran}, signes=${JSON.stringify(signes)}`);
+				if (info.signex) {
+					if (signes[0] != info.signex) console.log(`[Capitan] signe X incohérent en localStorage: ${signes[0]} <-> ${info.signex}`);
+				} else {
+					info.signx = signes[0];
+				}
+				if (info.signey) {
+					if (signes[1] != info.signey) console.log(`[Capitan] signe Y incohérent en localStorage: ${signes[1]} <-> ${info.signey}`);
+				} else {
+					info.signy = signes[1];
+				}
+			}
+
+			/*
+			if (originalPosText === undefined) {
+				let msg = "La recherche a été enregistrée. Mais vous n'avez pas encore affiché le détail de la carte "
+					+ idCarte + " et le « script du Capitan » ne connait pas la position de la mort du Capitan. Il ne peut pas vous en dire plus. Allez dans «  EQUIPEMENT » et affichez cette carte.";
+				window.console.log('afficheInfoCarte_log: ' + msg);
+				this.afficheMsg(msg, 'red');
+				return;
+			}
+			}
+			*/
+			if (this.bDebug) console.log(`[Capitan debug] initCarte(${this.idCarte} => ${JSON.stringify(info)}`);
+			this.infoCartes[this.idCarte] = info;
+		},
+
 		reinit: function() {
 			if (this.gDiv) this.gDiv.parentNode.removeChild(this.gDiv);
 			this.analyseObject();
 		},
+
+		MutationObserverConfig: { childList: true, subtree: true },
 
 		init: function () {
 			this.CAPITAN_horsGM = false;
@@ -1104,6 +1206,50 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 				this.CAPITAN_deleteValue = GM_deleteValue;
 				this.CAPITAN_setValue = GM_setValue;
 			}
+
+			this.modeIntege = (typeof MH_capitan_json !== 'undefined');
+			this.MZ_ok = (typeof MH_capitan_json !== 'undefined');
+
+			// charger le numéro du Troll
+			let frameSommaire;
+			let eltId = document.getElementById('footer');	// cas smartphone
+			let p = window.parent;	// cas classique (pas smartphone)
+			while (p) {	// cas classique (pas smartphone)
+				frameSommaire = p.frames['Sommaire'];
+				if (frameSommaire) break;
+				p = p.parent;
+			}
+			if (frameSommaire) eltId = frameSommaire.document.getElementById ('id');
+			if (eltId) {
+				this.numTroll = parseInt(eltId.getAttribute('data-id'));
+				if (this.bDebug) console.log(`[Capitan debug] troll id=${this.numTroll}`);
+			} else this.numTroll = 0;	// on continue, pas de problème en mode intégré sauf qu'on ne récupère pas les anciennes cartes
+			if (this.numTroll == 0) console.log('[Capitan] erreur à la récupération du numéro de Troll');
+			// position courante du Troll
+			eltId = undefined;
+			if (frameSommaire) eltId = frameSommaire.document.getElementById ('DLA_xyn');
+			if (eltId) {
+				let m = eltId.innerText.match(/X\s*=\s*([-\d]+)[\s|]+Y\s*=\s*([-\d]+)[\s|]+N\s*=\s*([-\d]+)/im);
+				if (m && m.length == 4) {
+					this.curPos = new this.cEssai(m[1], m[2], m[3]);
+					//if (this.bDebug) console.log(`[Capitan debug] init: pos from MH ${eltId.innerText}`)
+				} else {
+					console.log(`[Capitan] init erreur analyse position troll pour ${eltId.innerText}`);
+				}
+			}
+			if (this.MZ_ok && !this.curPos) {
+				// Roule 08/08/2016 utilisation de localStorage car c'est là que tout_MZ stocke les coord
+				this.curPos = new this.cEssai(window.localStorage[this.numTroll+".position.X"],
+					window.localStorage[this.numTroll+".position.Y"],
+					window.localStorage[this.numTroll+".position.N"]);
+				if (this.bDebug) window.console.log('CAPITAN init: position du troll récupérée en localStorage');
+			}
+			if (this.curPos && !this.curPos.isValidLoc()) {
+				console.log(`[Capitan] position troll invalide: ${JSON.stringify(this.curPos)}`);
+				this.curPos = undefined;
+			}
+			if (this.bDebug) window.console.log('CAPITAN init: position du troll=' + JSON.stringify(this.curPos));
+
 			if (this.isPage("View/TresorHistory.php"))
 			{
 				this.analyseObject();
@@ -1116,8 +1262,8 @@ if (oCAPITAN_MH_ROULE instanceof Object) {
 			}
 			else if(this.isPage("MH_Play/Play_equipement.php") || this.isPage("MH_Taniere/TanierePJ_o_Stock.php"))
 			{
-				// Roule, 23/11/2016, il faudrait trouver mieux pour s'activer quand l'utilisateur ouvre le popup
-				window.setInterval(this.analyseObject.bind(this), 1000);
+				this.mutationObserver = new MutationObserver(this.analyseObject.bind(this));
+				this.mutationObserver.observe(document.body, this.MutationObserverConfig);
 			}
 		},
 	}
