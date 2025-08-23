@@ -253,7 +253,7 @@ class cCAPITAN_MH {
 		// On lance le balayage récursif des possibilités
 		cCAPITAN_MH.listeSolution = new Array();
 		cCAPITAN_MH.calculeSolutionRecursifCoord(oContexte);
-		if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2 résultat=" + JSON.stringify(cCAPITAN_MH.listeSolution));
+		//if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log résultat=" + JSON.stringify(cCAPITAN_MH.listeSolution));
 	};
 
 	static calculeSolutionRecursifCoord(oContexte) {	// balayage récursif des solutions, balayage coordonnée (x, y ou n)
@@ -312,10 +312,20 @@ class cCAPITAN_MH {
 		}
 	};
 
-	static afficheInfoCarte(idCarte) {
+	static afficheInfoCarte(idCarte, bRecherche) {
 		cCAPITAN_MH.idCarte = idCarte;
-		cCAPITAN_MH.initCarte();
+		cCAPITAN_MH.initCarte(idCarte);
 		cCAPITAN_MH.infoCurrentCarte = cCAPITAN_MH.infoCartes[cCAPITAN_MH.idCarte];
+		if (!cCAPITAN_MH.infoCurrentCarte.mort) {
+			let table = cCAPITAN_MH.createHTMLTable();
+			let thead = document.createElement('thead');
+			let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
+			let td = cCAPITAN_MH.appendTdText(tr, `[Extension Capitan] Impossible de suggérer des solutions car la position de la mort du Capitan n'a pas été mémorisée. Affichez le détail de la carte dans la page EQUIPEMENT.`, true);
+			td.setAttribute('align', 'center');
+			table.appendChild(thead);
+			if (bRecherche) cCAPITAN_MH.createCase(`Cette recherche a bien été mémorisée`,table)
+			return table;
+		}
 		cCAPITAN_MH.calculeSolution2();
 		return cCAPITAN_MH.generateTableSolutions();
 	};
@@ -460,7 +470,7 @@ class cCAPITAN_MH {
 		if (cCAPITAN_MH.bDebug && cCAPITAN_MH.idCarte == 11987020) {	// test Roule
 			cCAPITAN_MH.info.mort = new cCAPITAN_essai(-101, -8, -73);
 		} else if (cCAPITAN_MH.idCarte > 0) {
-			cCAPITAN_MH.initCarte();
+			cCAPITAN_MH.initCarte(cCAPITAN_MH.idCarte);
 		} else {
 			var parentElt = document.body;
 			var modalElt = document.evaluate("//div[@class = 'modal']",
@@ -617,7 +627,7 @@ class cCAPITAN_MH {
 		} else {
 			let a = document.createElement('a');
 			cCAPITAN_MH.appendText(a, 'Cliquer ici pour savoir ce qu\'en pensent les Psyko-Chasseurs');
-			a.setAttribute('href', 'http://mountyhall.dispas.net/dynamic/outils_capitan.php?' + cCAPITAN_MH.infoCurrentCarte.mort.display4get() + '&t=' + tabtxt.join('%0D%0A') + '&voir=1&cent=100');
+			a.setAttribute('href', 'http://mountyhall.dispas.net/dynamic/outils_capitan.php?' + cCAPITAN_MH.infoCurrentCarte.mort.forGet() + '&t=' + tabtxt.join('%0D%0A') + '&voir=1&cent=100');
 			a.setAttribute('target', 'psykochasseurs');
 			td2.appendChild(a);
 		}
@@ -673,30 +683,30 @@ class cCAPITAN_MH {
 	};
 
 	static delRecherche(e) {
-		let idEssaiDel = e.target.idEssai;
+		let idEssaiDel = e.target.idEssai;	// index dans le tableau cCAPITAN_MH.infoCartes[idCarte]
 		let idCarte = e.target.idCarte;
-		if (cCAPITAN_MH.bDebug) window.console.log('CAPITAN delRecherche: idEssaiDel=' + idEssaiDel + ', idCarte=' + idCarte + ', cCAPITAN_MH.gEssais.length=' + cCAPITAN_MH.gEssais.length);
-		cCAPITAN_MH.gEssais.splice(idEssaiDel, 1);
-		if (cCAPITAN_MH.bDebug) window.console.log('delRecherche_log ' + JSON.stringify(cCAPITAN_MH.gEssais));
-		let lg = cCAPITAN_MH.gEssais.length;
-		for (let i = 0; i < lg; i++) {
-			let clef = "capitan." + idCarte + ".essai." + i;
-			let cCAPITAN_essai = cCAPITAN_MH.gEssais[i];
-			let v = cCAPITAN_essai.x + ';' + cCAPITAN_essai.y + ';' + cCAPITAN_essai.n + ';' + cCAPITAN_essai.c;
-			if (cCAPITAN_MH.bDebug) window.console.log('CAPITAN delRecherche_log: set ' + clef + '=' + v);
-			cCAPITAN_MH.CAPITAN_setValue(clef, v);
+		let infos = cCAPITAN_MH.infoCartes[idCarte];
+		if (!infos) {
+			window.console.log(`[Capitan] delRecherche_log: idEssaiDel=${idEssaiDel}, idCarte=${idCarte}, ERREUR, pas d'info du tout`);
+			return;
 		}
-		for (let i = 0; i < 10; i++) {	// pour être sûr, on  supprime les 10 suivantes
-			let clef = "capitan." + idCarte + ".essai." + (i + lg);
-			if (cCAPITAN_MH.bDebug) window.console.log('CAPITAN delRecherche_log: remove ' + clef);
-			cCAPITAN_MH.CAPITAN_deleteValue(clef);
+		if (!infos.essais) {
+			window.console.log(`[Capitan] delRecherche_log: idEssaiDel=${idEssaiDel}, idCarte=${idCarte}, ERREUR, pas d'essais`);
+			return;
 		}
-		let eP = document.getElementById('MZ_capitan_p_liste_memo');
-		while (eP.lastChild) eP.removeChild(eP.lastChild);
-		let eTable = cCAPITAN_MH.prevRecherche(idCarte);
-		eP.appendChild(eTable);
-		let tbody = document.getElementById('MZ_capitan_tbody_liste_memo');
-		tbody.style.display = '';	// show
+		let nbEssai = infos.essais.length;
+		if (idEssaiDel >= nbEssai) {
+			window.console.log(`[Capitan] delRecherche_log: idEssaiDel=${idEssaiDel}, idCarte=${idCarte}, ERREUR, il n'y a que ${nbEssai} essais`);
+			return;
+		}
+		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] delRecherche_log: idEssaiDel=${idEssaiDel}, idCarte=${idCarte}, nbEssai=${nbEssai}`);
+		infos.essais.splice(idEssaiDel, 1);
+		if (cCAPITAN_MH.bDebug) window.console.log('[Capitan debug] delRecherche_log après suppression, il reste ' + JSON.stringify(infos));
+
+		cCAPITAN_MH.saveIntoMH(idCarte);
+		cCAPITAN_MH.copyInfo2LocalStorage(idCarte);
+
+		cCAPITAN_MH.reinit();
 	};
 
 	static createNewRecherche(parentElt) {
@@ -760,11 +770,6 @@ class cCAPITAN_MH {
 		}
 	};
 
-	static addOneRecherche(idCarte, x, y, n, nbChiffres) {
-		for (var i = 0; window.localStorage["capitan."+idCarte+".essai."+i]; i++){}
-		cCAPITAN_MH.CAPITAN_setValue("capitan."+idCarte+".essai."+i,parseInt(x)+";"+parseInt(y)+";"+parseInt(n)+";"+parseInt(nbChiffres));
-	};
-
 	static addInput(parent, nom, size)
 	{
 		var input = document.createElement('input');
@@ -780,45 +785,45 @@ class cCAPITAN_MH {
 
 	static infoRecherche()
 	{
-		var idCarte = cCAPITAN_MH.getIntegerByID('carte', 'numéro de carte');
+		let idCarte = cCAPITAN_MH.getIntegerByID('carte', 'numéro de carte');
 		if (idCarte === undefined) return;
-		var x = cCAPITAN_MH.getIntegerByID('x', 'x');
-		if (cCAPITAN_MH.bDebug) window.console.log("infoRecherche_log: X=" + x);
-		if (x === undefined) return;	// ne pas utiliser «!» car x peut être «0» !
-		var y = cCAPITAN_MH.getIntegerByID('y', 'y');
-		if (cCAPITAN_MH.bDebug) window.console.log("infoRecherche_log: Y=" + y);
+		let x = cCAPITAN_MH.getIntegerByID('x', 'x');
+		if (cCAPITAN_MH.bDebug) window.console.log("[Capitan debug] infoRecherche_log: X=" + x);
+		if (x === undefined) return;	// ne pas utiliser «!» car x peut être «0» ! Le message a déjà été affiché
+		let y = cCAPITAN_MH.getIntegerByID('y', 'y');
+		if (cCAPITAN_MH.bDebug) window.console.log("[Capitan debug] infoRecherche_log: Y=" + y);
 		if (y === undefined) return;
-		var n = cCAPITAN_MH.getIntegerByID('n', 'n');
-		if (cCAPITAN_MH.bDebug) window.console.log("infoRecherche_log: N=" + n);
+		let n = cCAPITAN_MH.getIntegerByID('n', 'n');
+		if (cCAPITAN_MH.bDebug) window.console.log("[Capitan debug] infoRecherche_log: N=" + n);
 		if (n === undefined) return;
-		var nb = cCAPITAN_MH.getIntegerByID('nb', 'Vous avez retrouvé');
+		let nb = cCAPITAN_MH.getIntegerByID('nb', 'Vous avez retrouvé');
 		if (cCAPITAN_MH.bDebug) window.console.log("infoRecherche_log: nb=" + nb);
 		if (nb === undefined) return;
 
-		var i = 0;
-		while(window.localStorage["capitan."+idCarte+".essai."+i] != null)
-		{
-			i++;
-		}
-		cCAPITAN_MH.CAPITAN_setValue("capitan."+idCarte+".essai."+i,x+";"+y+";"+n+";"+nb);
-
-		if(window.localStorage["capitan."+idCarte+".cCAPITAN_MH.signe"] == null)
-		{
-			var msg = document.getElementById("msgEffet").textContent;
-
-			// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
-			if(!msg.match(/es dans le bon Xcoin/))
-				x = -x;
-			if(!msg.match(/es dans le bon Ycoin/))
-				y = -y;
-
-			cCAPITAN_MH.CAPITAN_setValue("capitan."+idCarte+".cCAPITAN_MH.signe",cCAPITAN_MH.signe(x)+";"+cCAPITAN_MH.signe(y));
+		let eMsg = document.getElementById("msgEffet");
+		if (eMsg) {
+			let msg = eMsg.textContent;
+			if (msg.match(/Xcoin/) && msg.match(/Xcoin/)) {
+				// fonctionne à la fois pour "Tu es dans..." et "Vous êtes dans..."
+				if(!msg.match(/es dans le bon Xcoin/))
+					x = -x;
+				if(!msg.match(/es dans le bon Ycoin/))
+					y = -y;
+			} else {
+				window.console.log('[Capitan] infoRecherche_log ERREUR, pas Xcoin et Ycoin, le signe ne sera pas mémorisé');
+				eMsg = false;
+			}
+		} else {
+			window.console.log('[Capitan] infoRecherche_log ERREUR, pas de msgEffet, le signe ne sera pas mémorisé');
 		}
 
-		var table = cCAPITAN_MH.afficheInfoCarte(idCarte);
+		cCAPITAN_MH.addOneRecherche(idCarte, x, y, n, nb, x, y);
+
+		cCAPITAN_MH.infoCurrentCarte = cCAPITAN_MH.infoCartes[idCarte];
+		let table = cCAPITAN_MH.afficheInfoCarte(idCarte, true);
 
 		if (!table) return;
-		var p = document.createElement('p');
+		let p = document.createElement('p');
 		p.appendChild(table);
 		let t = document.getElementsByTagName('TABLE');
 		if (t.length > 0) {
@@ -830,9 +835,10 @@ class cCAPITAN_MH {
 
 	// return undefined if not found
 	static getIntegerByID(id, msg) {
-		var e = document.getElementById(id);
+		let e = document.getElementById(id);
 		if (!e || !e.childNodes || !e.childNodes[0] || !e.childNodes[0].nodeValue) {
 			if (msg) window.alert('Script carte de Capitan : impossible de retrouver le ' + msg);
+			window.console.log(`[Capitan] getIntegerByID_log ERREUR : impossible de retrouver le ` + (msg ? msg : id));
 			return;
 		}
 		return parseInt(e.childNodes[0].nodeValue);
@@ -881,52 +887,88 @@ class cCAPITAN_MH {
 		cCAPITAN_MH.appendText(td, sText, bBold);
 	};
 
-	static initCarte() {	// idCarte dans cCAPITAN_MH.idCarte
-		if (cCAPITAN_MH.infoCartes[cCAPITAN_MH.idCarte]) return;	// déjà fait
+	static limitInfiniteLoop() {
+		if (cCAPITAN_MH.limitxx === undefined) cCAPITAN_MH.limitxx = 1;
+		else                                   cCAPITAN_MH.limitxx++;
+		if (cCAPITAN_MH.limitxx > 20) {
+			console.trace();
+			console.log(`cCAPITAN_MH.limitxx=${cCAPITAN_MH.limitxx}`);
+			return true;
+		}
+	}
+
+	////// gestion stockage
+
+	// pour la carte cCAPITAN_MH.idCarte, merge localStrage et infos de MH_capitan_json
+	// => met à jour cCAPITAN_MH.infoCartes[idCarte] mais PAS dans cCAPITAN_MH.infoCurrentCarte
+	static initCarte(idCarte) {
+		if (cCAPITAN_MH.infoCartes[idCarte]) return;	// déjà fait
+		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] avant merge carte ${idCarte}, infoCartes=${JSON.stringify(cCAPITAN_MH.infoCartes)}`);
+		let MH_data = {};
+		if (MH_capitan_json != '') MH_data = JSON.parse(MH_capitan_json);
 		let info = {};
-		if (MH_capitan_json && MH_capitan_json[cCAPITAN_MH.idCarte]) {
-			for (let k in MH_capitan_json[cCAPITAN_MH.idCarte])
-				info[k] = new cCAPITAN_essai(MH_capitan_json[k]);
-			cCAPITAN_MH.infoCartes[cCAPITAN_MH.idCarte] = MH_capitan_json[cCAPITAN_MH.idCarte];
+		if (MH_data && MH_data[idCarte]) {
+			let MH_info = MH_data[idCarte];
+			if (MH_info.mort) info.mort = new cCAPITAN_essai(MH_info.mort);
+			if (MH_info.essais) {
+				info.essais = [];
+				for (let v of MH_info.essais)
+					info.essais.push(new cCAPITAN_essai(v));
+			}
+			if (MH_info.signeX) info.signeX = MH_info.signeX;
+			if (MH_info.signeY) info.signeY = MH_info.signeY;
+			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] partir de MH_data, carte ${idCarte}
+				MH_data=${JSON.stringify(MH_data)}
+				info=${JSON.stringify(info)}`);
+		} else {
+			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] pas de recup MH carte ${idCarte}
+				MH_data=${JSON.stringify(MH_data)}`);
 		}
 		// merge position mort en localStorage
-		let oMortLocalStorage = new cCAPITAN_essai(window.localStorage["capitan."+cCAPITAN_MH.idCarte+".position"]);
-		if (oMortLocalStorage.isValidLoc()) {
-			if (info.mort) {
-				if (!info.sameLocAs(oMortLocalStorage)) {
-					console.log('[Capitan] divergence de loc de mort');
-					console.log('centralisé');
-					console.log(info.mort);
-					console.log('localStorage');
-					console.log(oMortLocalStorage);
+		let txtMortLocalStorage = window.localStorage["capitan."+idCarte+".position"];
+		if (!txtMortLocalStorage) {
+			// ça peut être normal (ouverture de la carte sur un nouvel appareil)
+		} else {
+			let oMortLocalStorage = new cCAPITAN_essai(txtMortLocalStorage);
+			if (oMortLocalStorage.isValidLoc()) {
+				if (info.mort) {
+					if (!info.mort.sameLocAs(oMortLocalStorage)) {
+						console.log(`[Capitan] divergence de loc de mort
+centralisé=${JSON.stringfy(info.mort)}
+localStorage='${JSON.stringify(oMortLocalStorage)}`);
+					}
+				} else {
+					info.mort = oMortLocalStorage;
 				}
 			} else {
-				info.mort = oMortLocalStorage;
+				console.log('[Capitan] mauvaise loc de mort en localStorage: ' + window.localStorage["capitan."+idCarte+".position"]);
 			}
-		} else {
-			console.log('[Capitan] mauvaise log de mort en localStorage: ' + window.localStorage["capitan."+cCAPITAN_MH.idCarte+".position"]);
-			console.log(oMortLocalStorage);
 		}
+
 		// merge essais en localStorage
 		let essaiText;
-		for (let i = 0; (essaiText = window.localStorage["capitan."+cCAPITAN_MH.idCarte+".essai."+i]) != null; i++) {
+		for (let i = 0; (essaiText = window.localStorage["capitan."+idCarte+".essai."+i]) != null; i++) {
 			let oEssai = new cCAPITAN_essai(essaiText);
 			if (!oEssai.isValidEssai()) {
 				console.log(`[Capitan] mauvaise loc en localStorage: ${essaiText}`);
 				continue;
 			}
+			let bFound = false;
 			if (info.essais) for (let oEssai2 of info.essais) {
 				if (!oEssai2.sameLocAs(oEssai)) continue;
 				if (!oEssai2.sameAs(oEssai)) {
 					console.log(`[Capitan] essais incohérents en localStorage: ${essaiText} <-> ${JSON.stringify(oEssai2)}`);
 				}
-				continue;
+				bFound = true;
+				break;
 			}
+			if (bFound) continue;
 			if (!info.essais) info.essais = [];
+			if (cCAPITAN_MH.bDebug) window.console.log(`[CAPITAN debug] initCarte_log ajout ${JSON.stringify(oEssai)} à ${JSON.stringify(info.essais)}`);
 			info.essais.push(oEssai);
 		}
 		// merge cadran
-		let keyLocalStorageCadran = "capitan."+cCAPITAN_MH.idCarte+".this.signe";
+		let keyLocalStorageCadran = "capitan."+idCarte+".this.signe";
 		let txtCadran = window.localStorage[keyLocalStorageCadran];
 		if (txtCadran != null) {
 			var signes = txtCadran.split(";");
@@ -955,20 +997,112 @@ class cCAPITAN_MH {
 		}
 		}
 		*/
-		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] initCarte(${cCAPITAN_MH.idCarte}) => ${JSON.stringify(info)}`);
-		if (cCAPITAN_MH.limitInfiniteLoop()) cCAPITAN_MH.initCarte = undefined;
-		cCAPITAN_MH.infoCartes[cCAPITAN_MH.idCarte] = info;
+		if (cCAPITAN_MH.limitInfiniteLoop()) cCAPITAN_MH.initCarte_log = undefined;
+		cCAPITAN_MH.infoCartes[idCarte] = info;
+		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] après merge carte ${idCarte}, infoCartes=${JSON.stringify(cCAPITAN_MH.infoCartes)}`);
 	};
 
-	static limitInfiniteLoop() {
-		if (cCAPITAN_MH.limitxx === undefined) cCAPITAN_MH.limitxx = 1;
-		else                                   cCAPITAN_MH.limitxx++;
-		if (cCAPITAN_MH.limitxx > 20) {
-			console.trace();
-			console.log(`cCAPITAN_MH.limitxx=${cCAPITAN_MH.limitxx}`);
-			return true;
+	static addOneRecherche(idCarte, x, y, n, nbChiffres, signeX, signeY) {
+		cCAPITAN_MH.initCarte(idCarte);
+		let info = cCAPITAN_MH.infoCartes[idCarte];
+		let newEssai = new cCAPITAN_essai(x, y, n, nbChiffres);
+		if (info.essais) for (let oEssai of info.essais) {
+			if (!oEssai.sameLocAs(newEssai)) continue;
+			if (!oEssai.sameAs(newEssai)) {
+				console.log(`[Capitan] tentative d'ajout d'un essai même loc, résultat différent carte=${idCarte} nouveau=${newEssai.display()} existant=${oEssai.display()}`);
+				newEssai.c = undefined;
+				cCAPITAN_MH.afficheMsg(`tentative d'ajout d'un 2e essai en ${newEssai.display()}. Supprimez d'abord le précédent`, 'red');
+			} else {
+				console.log(`[Capitan] tentative d'ajout d'un essai déjà existant carte=${idCarte} essai=${newEssai.display()}`);
+			}
+			return;
+		}
+		if (!info.essais) info.essais = [newEssai];
+		else              info.essais.push(newEssai);
+		if (signeX && signeY) {	// 0 serait bien une erreur
+			info.signeX = signeX > 0 ? 1 : -1;
+			info.signeY = signeY > 0 ? 1 : -1;
+		}
+		cCAPITAN_MH.saveIntoMH(idCarte);
+		cCAPITAN_MH.copyInfo2LocalStorage(idCarte);
+	};
+
+	static saveIntoMH(idCarte) {
+		let url = window.location.origin;	// https://gams.mountyhall.com
+		url += '/mountyhall/MH_PageUtils/Services/json_extension.php';
+		url += '?mode=set&ext=capitan&clef=' + idCarte;
+		let request = new XMLHttpRequest();
+		request.open('POST', url);
+		request.onreadystatechange = function () {
+			if (request.readyState != 4) {
+				return;
+			}
+			if (request.error) {
+				window.console.error('[Capitan] erreur set config MH : ' + request.error);
+				return;
+			}
+			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] retour AJAX set prop MH ${request.responseText}`);
+			if (request.responseText.indexOf('"OK"') < 0) {
+				console.log(`[Capitan] ERREUR à l'envoi des information sur le serveur MH, le message d'erreur est: ${request.responseText}`);
+			}
+		};
+		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] envoi à MH data pour ${idCarte}, info=${JSON.stringify(cCAPITAN_MH.infoCartes[idCarte])}`);
+		request.send(cCAPITAN_MH.escapeUnicode(JSON.stringify(cCAPITAN_MH.infoCartes[idCarte])));
+	};
+
+	static copyInfo2LocalStorage(idCarte) {
+		let info = cCAPITAN_MH.infoCartes[idCarte];
+		if (!info) {
+			console.log(`[Capitan] ERREUR à la sauvegarde de la carte ${idCarte} : pas d'info`);
+			return;
+		}
+		// mort
+		if (info.mort) {
+			let keyMort = "capitan."+idCarte+".position";
+			let txtInfo = info.mort.forLocalStrorage();
+			let txtLocalStorage = window.localStorage.getItem(keyMort);
+			if (txtInfo != txtLocalStorage) window.localStorage.setItem(keyMort, txtInfo);
+		}
+
+		// cadran
+		if (info.signeX || info.signeY) {
+			let keyCadran = "capitan."+idCarte+".this.signe";
+			let txtInfo = info.signeX + ';' + info.signeY;
+			let txtLocalStorage = window.localStorage.getItem(keyCadran);
+			if (txtInfo != txtLocalStorage) window.localStorage.setItem(keyCadran, txtInfo);
+		}
+
+		// essais : on balaie les index en comparant les essais
+		// tant que c'est pareil, on avance
+		// quand ce n'est plus pareil, on supprimer out le reste coté LocalStorage et on réécrit
+		let iEssai;
+		if (info.essais) for (iEssai=0; iEssai < info.essais.length; iEssai++) {
+			let keyEssai = 'capitan.' + idCarte+'.essai.' + iEssai;
+			let txtInfo = info.essais[iEssai].forLocalStrorage();
+			let txtLocalStorage = window.localStorage.getItem(keyEssai);
+			if (txtInfo != txtLocalStorage) break;
+		}
+		// supprimer la suite coté localStorage (iEssai jusqu'aux les 10 suivant le dernier existant pour faire bonne mesure)
+		let iLastLocalStorage = iEssai;
+		for (let i2 = iEssai; i2 < iLastLocalStorage + 10; i2++) {
+			let keyEssai = 'capitan.' + idCarte +'.essai.' + i2;
+			if (!window.localStorage.getItem(keyEssai)) continue;
+			iLastLocalStorage = i2;
+			window.localStorage.removeItem(keyEssai);
+		}
+		// ajouter le reste de Info dans localStorage
+		if (info.essais) for (let i2=iEssai; i2 < info.essais.length; i2++) {
+			let keyEssai = 'capitan.' + idCarte +'.essai.' + i2;
+			let txtInfo = info.essais[i2].forLocalStrorage();
+			window.localStorage.setItem(keyEssai, txtInfo);
 		}
 	}
+
+	static escapeUnicode(str) { // https://stackoverflow.com/questions/62449035/escape-all-unicode-non-ascii-characters-in-a-string-with-javascript
+		return [...str].map(c => /^[\x00-\x7F]$/.test(c) ? c : c.split("").map(a => "\\u" + a.charCodeAt().toString(16).padStart(4, "0")).join("")).join("");
+	}
+
+	//////
 
 	static reinit() {
 		if (cCAPITAN_MH.gDiv) cCAPITAN_MH.gDiv.parentNode.removeChild(cCAPITAN_MH.gDiv);
@@ -984,7 +1118,8 @@ class cCAPITAN_MH {
 			cCAPITAN_MH.afficheMsg(msg, 'red', true);
 			return;
 		}
-		cCAPITAN_MH.MZ_ok = (typeof MH_capitan_json !== 'undefined');
+		cCAPITAN_MH.MZ_ok = (typeof MH_mountyzilla_json !== 'undefined');
+		if (cCAPITAN_MH.bDebug) console.log('[Capitan debug] init MH_capitan_json=', MH_capitan_json);
 
 		// charger le numéro du Troll
 		let frameSommaire;
@@ -1092,14 +1227,26 @@ class cCAPITAN_essai {
 	yText() {return this.coord2text(Math.abs(this.y));};
 	nText() {return this.coord2text(Math.abs(this.n));};
 
-	display() {
+	display() {	// pour les humains
 		let ret = 'X = ' + this.x + ', Y = ' + this.y +', N = ' + this.n;
 		if (this.c !== undefined) ret += ' => ' + this.c;
 		return ret;
 	};
 
-	display4get() {
+	forGet() {
 		return 'x=' + this.x + '&y=' + this.y +'&n=' + this.n;
+	};
+
+	forLocalStrorage() {
+		let ret = this.x + ';' + this.y +';' + this.n;
+		if (this.c !== undefined) ret += ';' + this.c;
+		return ret;
+	}
+
+	forPsychoChasseur() {	// rend le bout de texte à mettre dans l'URL vers l'outil des Psycho Chasseurs
+		let ret = Math.abs(this.x) + '+' + Math.abs(this.y) + '+' + Math.abs(this.n);
+		if (this.c !== undefined) ret += '+' + this.c;
+		return ret;
 	};
 
 	isValidLoc() {
@@ -1158,12 +1305,6 @@ class cCAPITAN_essai {
 		nMatches += this.nbMatchesOne(this.yText(), tabCoord[1]);
 		nMatches += this.nbMatchesOne(this.nText(), tabCoord[2]);
 		return nMatches == this.c
-	};
-
-	forPsychoChasseur() {	// rend le bout de texte à mettre dans l'URL vers l'outil des Psycho Chasseurs
-		let ret = Math.abs(this.x) + '+' + Math.abs(this.y) + '+' + Math.abs(this.n);
-		if (this.c !== undefined) ret += '+' + this.c;
-		return ret;
 	};
 
 	nbChiffre() {	// rend le nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités)
