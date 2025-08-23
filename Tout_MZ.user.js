@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.87
+// @version     1.6.88
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -3274,6 +3274,7 @@ class MZ_cCDMv2 {
 								}
 							}
 					}
+					//console.log(`[MZ debug] mobMission=${mobMission}, oMission=${JSON.stringify(oMission)}`);
 					if (mobMission) {
 						//mess = mess + (mess ? '\n\n' : '');
 						//mess = `${mess}Mission ${num} :\n${oMission.libelle}`;
@@ -7691,8 +7692,10 @@ function parseMissionSteps() {
 			validationFound = true;
 			if (0 < stepText.indexOf("monstre")) {
 				let step = handleMonsterStep(stepText);
-				MZ_troogle.addTroogleLinkToStep(stepNode, step);
-				saveMission(idMission, step);
+				if (step) {
+					MZ_troogle.addTroogleLinkToStep(stepNode, step);
+					saveMission(idMission, step);
+				}
 				return;
 			}
 			if (0 < stepText.indexOf("du pouvoir")) {
@@ -7734,6 +7737,7 @@ function handleMonsterStep(text) {
 		recherche: MZ_troogle.SEARCH_MONSTER
 	};
 
+	let bFound = false;
 	//let raceExtract = /de la race des (.*)/i;
 	let match = (/de la race des (.*)/i).exec(text);
 	if (match) {
@@ -7741,6 +7745,7 @@ function handleMonsterStep(text) {
 		let race = removeEnclosingSimpleCote(trim(match[1]));
 		mission.recherche += ` ${race}`;
 		mission.race = race;
+		bFound = true;
 	}
 
 	//let familyExtract = /de la famille (.*)/i;
@@ -7752,12 +7757,14 @@ function handleMonsterStep(text) {
 		let famille = removeEnclosingSimpleCote(trim(match[1]));
 		mission.recherche += `:${famille}`;
 		mission.famille = famille;
+		bFound = true;
 	}
 
 	let minLevelExtract = /niveau.* (\d+) au moins/i;
 	match = minLevelExtract.exec(text);
 	if (match) {
 		mission.niveau = atoi(match[1]);
+		bFound = true;
 	}
 
 	var levelRangeExtract = /niveau.* (\d+) +\+ ou - +(\d+)/i;
@@ -7765,8 +7772,9 @@ function handleMonsterStep(text) {
 	if (match) {
 		mission.niveau = atoi(match[1]);
 		mission.mod = atoi(match[2]);
+		bFound = true;
 	}
-	return mission;
+	if (bFound) return mission;
 }
 
 // un ParseInt un peu plus résistant aux Strings un peu loose
