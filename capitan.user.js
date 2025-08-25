@@ -36,7 +36,7 @@
 ****************************************************************/
 
 class cCAPITAN_MH {
-	static bDebug = true;
+	static bDebug = false;
 	static MZ_ok;
 	/* pour mémoire
 	static numTroll = undefined;
@@ -248,7 +248,7 @@ class cCAPITAN_MH {
 		};
 		// nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités) dans les coord de la mort du Capitan
 		oContexte.nCoord3 = cCAPITAN_MH.infoCurrentCarte.mort.nbChiffre() - 6;
-		if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log contexte initial=" + JSON.stringify(oContexte));
+		//if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log contexte initial=" + JSON.stringify(oContexte));
 
 		// On lance le balayage récursif des possibilités
 		cCAPITAN_MH.listeSolution = new Array();
@@ -304,7 +304,7 @@ class cCAPITAN_MH {
 					sCause += ' ' + oEssai.nbMatchesOne(oEssai.yText(), newContexte.tabCoord[1]);
 					sCause += ' ' + oEssai.nbMatchesOne(oEssai.nText(), newContexte.tabCoord[2]);
 				}
-				window.console.log('[CAPITAN debug] calculeSolutionRecursifDigit, teste ' + newContexte.tabCoord.join("; ") + ', bCompatible=' + bCompatible + sCause);
+				//window.console.log('[CAPITAN debug] calculeSolutionRecursifDigit_log, teste ' + newContexte.tabCoord.join("; ") + ', bCompatible=' + bCompatible + sCause);
 			}
 			if (bCompatible) {
 				cCAPITAN_MH.listeSolution.push(new cCAPITAN_essai(newContexte.tabCoord));	// slice pour cloner le tableau
@@ -505,9 +505,19 @@ class cCAPITAN_MH {
 			//cCAPITAN_MH.CAPITAN_setValue("capitan."+cCAPITAN_MH.idCarte+".position",x+";"+y+";"+n);
 		}
 		if (locMortFromHTML && locMortFromHTML.isValidLoc()) {
-			if (infos.mort && !infos.mort.sameLocAs(locMortFromHTML))
-				console.log(`[Capitan] analyseObject_log pas la même loc de mort ${infos.mort}<->${locMortFromHTML}`);
-			infos.mort = locMortFromHTML	// on écrase dans tous les cas
+			let bKeep = false;
+			if (infos.mort) {
+				if (!infos.mort.sameLocAs(locMortFromHTML)) {
+					console.log(`[Capitan] analyseObject_log pas la même loc de mort ${infos.mort}<->${locMortFromHTML}`);
+					bKeep = true;
+				}
+			} else {
+				bKeep = true;
+			}
+			if (bKeep) {
+				infos.mort = locMortFromHTML;
+				cCAPITAN_MH.saveIntoMH(cCAPITAN_MH.idCarte);
+			}
 		} else {
 			console.log(`[Capitan] analyseObject_log erreur à la récupération de la loc de mort, on tente celle stockée ${infos.mort}<->${locMortFromHTML}`);
 			//if (!infos.mort) {
@@ -783,7 +793,7 @@ class cCAPITAN_MH {
 		return input;
 	};
 
-	static infoRecherche()
+	static analyseResultatRecherche()
 	{
 		let idCarte = cCAPITAN_MH.getIntegerByID('carte', 'numéro de carte');
 		if (idCarte === undefined) return;
@@ -1127,7 +1137,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 		let p = window.parent;	// cas classique (pas smartphone)
 		let iTry = 0;
 		while (p) {	// cas classique (pas smartphone)
-			console.log(p);
+			//if (cCAPITAN_MH.bDebug) console.log(p);
 			frameSommaire = p.frames['Sommaire'];
 			if (frameSommaire) break;
 			if (iTry++ > 10) break;	// ceinture et bretelle contre une boucle infinie
@@ -1174,7 +1184,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 		{
 			// uniquement si l'id du body est p_trouverunecachette
 			if (document.body.id != 'p_trouverunecachette') return;
-			cCAPITAN_MH.infoRecherche();
+			cCAPITAN_MH.analyseResultatRecherche();
 		}
 		else if(cCAPITAN_MH.isPage("MH_Play/Play_equipement.php") || cCAPITAN_MH.isPage("MH_Taniere/TanierePJ_o_Stock.php"))
 		{
