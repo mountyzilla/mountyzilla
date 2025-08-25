@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.87
+// @version     1.6.89
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.86';
+var MZ_latest = '1.6.89';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -14128,9 +14128,14 @@ function extractionDonnees() {
 
 	// Heure Serveur
 	try {
-		let heureServeurSTR = document.querySelector("#hserveur").innerHTML;
-		heureServeurSTR = heureServeurSTR.slice(heureServeurSTR.indexOf("/") - 2, heureServeurSTR.lastIndexOf(":") + 3);
-		HeureServeur = new Date(StringToDate(heureServeurSTR));
+		let eHeureServeur = document.querySelector("#hserveur");
+		if (eHeureServeur) {
+			let heureServeurSTR = document.querySelector("#hserveur").innerHTML;
+			heureServeurSTR = heureServeurSTR.slice(heureServeurSTR.indexOf("/") - 2, heureServeurSTR.lastIndexOf(":") + 3);
+			HeureServeur = new Date(StringToDate(heureServeurSTR));
+		} else {
+			HeureServeur = new Date();
+		}
 	} catch (exc) {
 		warnMZ(`Heure Serveur introuvable, utilisation de l'heure actuelle`, exc);
 		HeureServeur = new Date();
@@ -14880,30 +14885,32 @@ function setTalent(nom, pc, niveau, sousCompetences) {
 
 function creerBulleVide() {
 	let table = document.createElement('table');
-	table.id = 'bulle';
-	table.className = 'mh_tdborder';
+	table.style.backgroundColor = 'var(--color-light)';
+	let tr = appendTr(table, isDesktopView() ? 'mh_tdtitre' : ' ui-bar-b');
+	appendTdText(tr, 'Titre');
+	tr = appendTr(table, isDesktopView() ? 'mh_tdpage' : ' ui-bar-b');
+	appendTdText(tr, 'Contenu');
+	if (isDesktopView())
+		table.className = 'mh_tdborder';
+	else
+		table.className = 'ui-body-a ui-corner-all';
 	table.width = 300;
 	table.border = 0;
 	table.cellPadding = 5;
 	table.cellSpacing = 1;
-	table.style =
-		'position:absolute;' +
-		'visibility:hidden;' +
-		'z-index:800;' +
-		'height:auto;';
-	let tr = appendTr(table, 'mh_tdtitre');
-	appendTdText(tr, 'Titre');
-	tr = appendTr(table, 'mh_tdpage');
-	appendTdText(tr, 'Contenu');
-	let aList = document.getElementsByTagName('a');
-	aList[aList.length - 1].parentNode.appendChild(table);
+	table.style.height = 'auto';
+
+	table.id = 'MZ_bulleSortComp';
+	table.style.position = 'absolute';
+	table.style.visibility = 'hidden';
+	table.style.zIndex = 800;
+	document.body.appendChild(table);
 	return table;
 }
 
-function cacherBulle() {
-	if (bulleStyle) {
-		bulleStyle.visibility = 'hidden';
-	}
+function cacherBulle(evt) {
+	let element = document.getElementById('MZ_bulleSortComp');
+	if (element) element.style.visibility = 'hidden';
 }
 
 function setBulle(evt) {
@@ -14912,37 +14919,37 @@ function setBulle(evt) {
 	let niveau = parseInt(this.niveau);
 	let str = '';
 	if (fonction == 'competences') {
-		str = competences(nom, niveau);
+		str = MZ_texteAideCompetence(nom, niveau);
 	} else if (fonction == 'sortileges') {
-		str = sortileges(nom);
+		str = MZ_texteAideSortileges(nom);
 	} else if (fonction == '*') {	// pour les raccourcis de la frame de gauche : on ne sait pas si c'est compétence ou sort
-		str = competences(nom, niveau);
+		str = MZ_texteAideCompetence(nom, niveau);
 		if (str == '') {
-			str = sortileges(nom);
+			str = MZ_texteAideSortileges(nom);
 		}
 	}
 	if (str == '') {
-		debugMZ(`setBulle, pas de description sur ${nom}`);
+		debugMZ(`setBulle_log, pas de description sur ${nom}`);
 		return;
 	}
 	if (nom.indexOf('Golem') != -1) {
 		nom = 'Golemologie';
 	}
 
-	let xfenetre, yfenetre, xpage, ypage, element = null;
-	let offset = 15;
-	let bulleWidth = 300;
-	if (!hauteur) {
-		hauteur = 50;
-	}
-	element = document.getElementById('bulle');
+	let element = document.getElementById('MZ_bulleSortComp');
 	if (!element) {
 		element = creerBulleVide();
 	}
-	xfenetre = evt.clientX;
-	yfenetre = evt.clientY;
-	xpage = xfenetre;
-	ypage = yfenetre;
+
+	let offset = 15;
+	if (!hauteur) {
+		hauteur = 50;
+	}
+	let bulleWidth = 300;
+	let xfenetre = evt.clientX;
+	let yfenetre = evt.clientY;
+	let xpage = xfenetre;
+	let ypage = yfenetre;
 	if (evt.pageX) {
 		xpage = evt.pageX;
 	}
@@ -14973,7 +14980,8 @@ function setBulle(evt) {
 
 /* -[functions] Textes des infos-bulles pour les competences et sortileges - */
 
-function competences(comp, niveau) {
+function MZ_texteAideCompetence(comp, niveau) {
+	//console.log(`[MZ debug] comp=${comp}, niveau=${niveau}`);
 	let modA = atttour ? Math.floor((att + atttourD) * atttour / 100) : 0,
 		modD = degtour ? Math.floor(deg * degtour / 100) : 0,
 		texte = "";
@@ -15032,8 +15040,8 @@ function competences(comp, niveau) {
 		texte = 'Bidouiller un trésor permet de compléter le nom d\'un objet ' +
 			'de votre inventaire avec le texte de votre choix.';
 	} else if (comp.indexOf('Baroufle') != -1) {
-		texte = 'Vous voulez encourager vos compagnons de chasse ? ' +
-			'Ramassez quelques Coquillages, et en avant la musique !<br>';
+		texte = 'Vous voulez encourager vos compagnons de chasse ? ' +
+			'Ramassez quelques Coquillages, et en avant la musique !<br>';
 		texte = `${texte}${'<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
 			'<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th></tr>' +
 			'<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td></tr>' +
@@ -15312,11 +15320,14 @@ function competences(comp, niveau) {
 	} else if (comp.indexOf('Shamaner') != -1) {
 		texte = 'Permet de contrecarrer certains effets des pouvoirs spéciaux ' +
 			'des monstres en utilisant des champignons (de 1 à 3).';
+	} else {
+		//console.log(`[MZ debug] comp non connue ${comp}`);
 	}
+	//console.log(`[MZ debug] comp ${comp}, texte=${texte}`);
 	return texte;
 }
 
-function sortileges(sort) {
+function MZ_texteAideSortileges(sort) {
 	sort = sort.toLowerCase();
 	let
 		// Fonctions utiles uniquement à "sortileges"
