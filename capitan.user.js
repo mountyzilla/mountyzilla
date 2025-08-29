@@ -917,6 +917,7 @@ class cCAPITAN_MH {
 		let MH_data = {};
 		if (MH_capitan_json != '') MH_data = JSON.parse(MH_capitan_json);
 		let info = {};
+		let bChanged = false;
 		if (MH_data && MH_data[idCarte]) {
 			let MH_info = MH_data[idCarte];
 			if (MH_info.mort) info.mort = new cCAPITAN_essai(MH_info.mort);
@@ -934,6 +935,7 @@ class cCAPITAN_MH {
 			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] pas de recup MH carte ${idCarte}
 				MH_data=${JSON.stringify(MH_data)}`);
 		}
+
 		// merge position mort en localStorage
 		let txtMortLocalStorage = window.localStorage["capitan."+idCarte+".position"];
 		if (!txtMortLocalStorage) {
@@ -949,6 +951,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 					}
 				} else {
 					info.mort = oMortLocalStorage;
+					bChanged = true;
 				}
 			} else {
 				console.log('[Capitan] mauvaise loc de mort en localStorage: ' + window.localStorage["capitan."+idCarte+".position"]);
@@ -976,7 +979,9 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 			if (!info.essais) info.essais = [];
 			if (cCAPITAN_MH.bDebug) window.console.log(`[CAPITAN debug] initCarte_log ajout ${JSON.stringify(oEssai)} à ${JSON.stringify(info.essais)}`);
 			info.essais.push(oEssai);
+			bChanged = true;
 		}
+
 		// merge cadran
 		let keyLocalStorageCadran = "capitan."+idCarte+".this.signe";
 		let txtCadran = window.localStorage[keyLocalStorageCadran];
@@ -987,11 +992,13 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 				if (signes[0] != info.signeX) console.log(`[Capitan] signe X incohérent en localStorage: ${signes[0]} <-> ${info.signeX}`);
 			} else {
 				info.signeX = signes[0];
+				bChanged = true;
 			}
 			if (info.signeY) {
 				if (signes[1] != info.signeY) console.log(`[Capitan] signe Y incohérent en localStorage: ${signes[1]} <-> ${info.signeY}`);
 			} else {
 				info.signeY = signes[1];
+				bChanged = true;
 			}
 		} else if (cCAPITAN_MH.bDebug) {
 			window.console.log(`[CAPITAN debug] initCarte_log pas de cadran en localStorage pour ${keyLocalStorageCadran}`);
@@ -1009,6 +1016,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 		*/
 		if (cCAPITAN_MH.limitInfiniteLoop()) cCAPITAN_MH.initCarte_log = undefined;
 		cCAPITAN_MH.infoCartes[idCarte] = info;
+		if (bChanged) cCAPITAN_MH.saveIntoMH(idCarte);
 		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] après merge carte ${idCarte}, infoCartes=${JSON.stringify(cCAPITAN_MH.infoCartes)}`);
 	};
 
@@ -1198,7 +1206,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 
 class cCAPITAN_essai {
 	constructor(x, y, n, c) {
-		if (y == undefined) {	// initialisation à partir d'une chaine séparée par ";"
+		if (y == undefined) {	// initialisation à partir d'une chaine séparée par ";", d'un array ou d'un objet
 			if (typeof x === 'string' || x instanceof String) {
 				let t = x.split(";");
 				this.x = parseInt(t[0], 10);
@@ -1322,7 +1330,7 @@ class cCAPITAN_essai {
 	};
 
 	tabOccurenceChiffre() {	// le nombre d'occurrences de chaque chiffre (0 à 9) dans les coord
-		var tabRet = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		let tabRet = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		this.addOccurenceChiffre(tabRet, this.xText());
 		this.addOccurenceChiffre(tabRet, this.yText());
 		this.addOccurenceChiffre(tabRet, this.nText());
@@ -1330,10 +1338,10 @@ class cCAPITAN_essai {
 	};
 
 	addOccurenceChiffre(t, s) {
-		var l = s.length;
-		for (var i = 0; i < l; i++) {
-			var c = s.substring(i, i+1);
-			var n = parseInt(c, 10);
+		let l = s.length;
+		for (let i = 0; i < l; i++) {
+			let c = s.substring(i, i+1);
+			let n = parseInt(c, 10);
 			if (!isNaN(n)) t[n]++;
 		}
 	};
