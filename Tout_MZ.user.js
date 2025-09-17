@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.89
+// @version     1.6.90
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.89';
+var MZ_latest = '1.6.90';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -672,6 +672,7 @@ var URL_MZimg = `${URL_MZ}/img/`;
 var URL_MZinfoMonstre = `${URL_MZ}/monstres_0.9_FF.php`;
 var URL_MZgetCaracMonstre = `${URL_MZ}/getCaracMonstre.php`;
 var URL_pageDispatcherV2 = `${URL_MZ}/cdmdispatcherV2.php`;
+var URL_MZcolorPicker = `${URL_MZ}/colorPicker.html`;
 
 // liens externes déduits
 var URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
@@ -10347,23 +10348,40 @@ function toggleMythiques() {
 
 function previewCouleur() {
 	let value = this.value;
-	let eErrMsg = this.nextSibling;
-	if (eErrMsg && !eErrMsg.classList.contains('MZ_error')) eErrMsg = undefined;
 	if (isCouleur(value)) {
 		this.style.backgroundColor = value;
-		if (eErrMsg) eErrMsg.parentNode.removeChild(eErrMsg);
-	} else {
-		this.style.backgroundColor = '';
-		if (!eErrMsg) {
-			eErrMsg = document.createElement('span');
-			eErrMsg.appendChild(document.createTextNode('Entrez une couleur au format #789ABC'));
-			eErrMsg.style.color = 'red';
-			eErrMsg.style.marginLeft = '5px';
-			eErrMsg.style.fontSize = 'small';
-			eErrMsg.className = 'MZ_error';
-			this.parentNode.insertBefore(eErrMsg, this.nextSibling);
-		}
 	}
+	let butPicker = this.nextSibling;
+	if (butPicker && butPicker.tagName == 'button') return;
+	if (!previewCouleur.listenerDone) {
+		window.addEventListener("message", function(event) {
+			if (!URL_MZ.startsWith(event.origin)) {
+				console.log(`[MZ] erreur message reçu de ${event.origin}≠${URL_MZ}`);
+				// something from an unknown domain, let's ignore it
+				return;
+			}
+			console.log(`received: ${JSON.stringify(event.data)}`);
+			for (let name in event.data) {
+				let e = document.getElementById(name);
+				if (e) {
+					let color = event.data[name];
+					e.value = color;
+					if (isCouleur(color))
+						e.style.backgroundColor = color;
+				}
+			}
+		});
+		//console.log(`[MZ debug] previewCouleur done addEventListener`);
+		previewCouleur.listenerDone = true;
+	}
+	butPicker = document.createElement('button');
+	butPicker.appendChild(document.createTextNode('Choisir'));
+	let url = URL_MZcolorPicker + '?field=' + this.id;
+	butPicker.onclick  = function() {
+		window.open(url, 'MZcolorPicker', 'location=0,menubar=0,resizable=1,scrollbars=0,status=0,titlebar=0,toolbar=0,height=600,width=800,top=100,left=100');
+		return false;
+	}
+	this.after(butPicker);
 }
 
 function appendMenuType(node, duType) {
