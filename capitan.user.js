@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.23
+// @version 8.8.24
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -330,11 +330,11 @@ class cCAPITAN_MH {
 		return cCAPITAN_MH.generateTableSolutions();
 	};
 
-	static getRepartitionFromCase() {
+	static getRepartitionFromCase(oPos) {
 		let repartition = new Array();
 		for(let i=0;i<cCAPITAN_MH.listeSolution.length;i++)
 		{
-			let nbGood = cCAPITAN_MH.listeSolution[i].nbMatches(cCAPITAN_MH.curPos);
+			let nbGood = cCAPITAN_MH.listeSolution[i].nbMatches(oPos);
 			for (let j = repartition.length; j <= nbGood; j++) repartition.push(0);	// Roule 15/08/2016 compléter le tableau selon le besoin
 			repartition[nbGood]++;
 		}
@@ -368,45 +368,43 @@ class cCAPITAN_MH {
 
 		// Roule 15/08/2016 plus que dubitatif sur ce calcul de Size, j'utilise repartition.length
 		//let size = (";"+Math.abs(cCAPITAN_MH.listeSolution[0][0])+Math.abs(cCAPITAN_MH.listeSolution[0][0])+Math.abs(cCAPITAN_MH.listeSolution[0][0])).length-1;
-		let repartition = cCAPITAN_MH.getRepartitionFromCase();
+		let repartition = cCAPITAN_MH.getRepartitionFromCase(cCAPITAN_MH.curPos);
 		let size = repartition.length;
-		if (cCAPITAN_MH.bDebug) window.console.log('[Capitan debug] newRecherche_log: repartition=' + JSON.stringify(repartition));
+		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: size=${size}, repartition=${JSON.stringify(repartition)}`);
 
 		let nbNotZero = 0;
-		for(let i=0;i<size;i++)
-		{
+		for(let i=0;i<size;i++) {
 			if(repartition[i]!=0)
 				nbNotZero++;
 		}
 		let string = "Il y a une utilité de faire une recherche en X = "+cCAPITAN_MH.curPos.x+" Y = "+cCAPITAN_MH.curPos.y+" N = "+cCAPITAN_MH.curPos.n;
-		if(nbNotZero<=1)
-		{
+		if(nbNotZero<=1) {
 			//
 			let minsolution = cCAPITAN_MH.listeSolution.length;
 			let newpos = "";
 			let isNotN = true;
 			for(let dx=-1;dx<=1;dx++)
 				for(let dy=-1;dy<=1;dy++)
-					for(let dn=0;dn!=-3;dn=(dn==0?1:dn-2))
-					{
-						if(dx==0 && dy==0 && dn==0)
-							continue;
-						let tmprepartition = cCAPITAN_MH.getRepartitionFromCase();
+					for(let dn=0;dn!=-3;dn=(dn==0?1:dn-2)) {
+						if(dx==0 && dy==0 && dn==0) continue;
+						//if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: dx=${dx}, dy=${dy}, dn=${dn}, `);
+						let thisPos = new cCAPITAN_essai(cCAPITAN_MH.curPos);
+						thisPos.move(dx, dy, dn);
+						let tmprepartition = cCAPITAN_MH.getRepartitionFromCase(thisPos);
 						let tmpmeanscore = cCAPITAN_MH.getMeanPositionNumber(tmprepartition,cCAPITAN_MH.listeSolution.length);
-						if (cCAPITAN_MH.bDebug) window.console.log(`[CAPITAN debug] newRecherche_log dx=${dx}, dy=${dy}, dn=${dn}, isNotN=${isNotN}, tmpmeanscore=${tmpmeanscore}, minsolution=${minsolution}, `);
-						if(((dn==0 || !isNotN) && minsolution>=tmpmeanscore) || (dn!=0 && isNotN && tmpmeanscore<=2*minsolution/3))
-						{
+						if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: dx=${dx}, dy=${dy}, dn=${dn}, isNotN=${isNotN}, tmpmeanscore=${tmpmeanscore}, minsolution=${minsolution}, `);
+						if(((dn==0 || !isNotN) && minsolution>=tmpmeanscore) || (dn!=0 && isNotN && tmpmeanscore<=2*minsolution/3)) {
 							minsolution = tmpmeanscore;
 							repartition = tmprepartition;
-							newpos = "X = "+(cCAPITAN_MH.curPos.x+dx)+" Y = "+(cCAPITAN_MH.curPos.y+dy)+" N = "+(cCAPITAN_MH.curPos.n+dn);
+							newpos = thisPos.display();;
 							isNotN = (dn==0);
 						}
 					}
-			if(minsolution == cCAPITAN_MH.listeSolution.length)
-			{
+			if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: minsolution=${minsolution}, listeSolution.length=${cCAPITAN_MH.listeSolution.length}`);
+			if(minsolution == cCAPITAN_MH.listeSolution.length) {
 				let thead = document.createElement('thead');
 				let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
-				let td = cCAPITAN_MH.appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en X = "+cCAPITAN_MH.curPos.x+" Y = "+cCAPITAN_MH.curPos.y+" N = "+cCAPITAN_MH.curPos.n, true);
+				let td = cCAPITAN_MH.appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en " + cCAPITAN_MH.curPos.display(), true);
 				td.setAttribute('align', 'center');
 				table.appendChild(thead);
 				return table;
@@ -414,6 +412,7 @@ class cCAPITAN_MH {
 			string = "Conseil : allez faire une recherche en "+newpos;
 		}
 
+		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: size=${size}, repartition=${JSON.stringify(repartition)}`);
 		let thead = document.createElement('thead');
 		let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
 		let td = cCAPITAN_MH.appendTdText(tr,string, true);
@@ -421,15 +420,12 @@ class cCAPITAN_MH {
 		table.appendChild(thead);
 		let tbody = document.createElement('tbody');
 		table.appendChild(tbody);
-		for(let i=0;i<size;i++)
-		{
-			if(i==size-1)
-			{
+		size = repartition.length;
+		for(let i=0;i<size;i++) {
+			if(i==size-1) {
 				if(repartition[i]!=0)
 					cCAPITAN_MH.createCase(Math.round(100*repartition[i]/cCAPITAN_MH.listeSolution.length)+"% de chance d'éliminer "+(cCAPITAN_MH.listeSolution.length-repartition[i])+" positions possibles",tbody,400);
-			}
-			else
-			{
+			} else {
 				let n=1;
 				while((i+n)<size && repartition[i]==repartition[i+n])
 					n++;
@@ -1346,6 +1342,12 @@ class cCAPITAN_essai {
 			if (!isNaN(n)) t[n]++;
 		}
 	};
+
+	move(dx, dy, dn) {
+		this.x += dx;
+		this.y += dy;
+		this.n += dn;
+	}
 };
 
 try
