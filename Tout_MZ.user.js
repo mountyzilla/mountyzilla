@@ -13611,6 +13611,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		a.appendChild(document.createTextNode(nom));
 		oNouvelleLigne.eltTdNom.appendChild(a);
 		oNouvelleLigne.eltTdGuilde = document.createElement('td');
+		oNouvelleLigne.eltTdGuilde.className = 'col-auto-mask';
 		if (guildeNom !== undefined) {
 			if (guildeId) {
 				a = document.createElement('a');
