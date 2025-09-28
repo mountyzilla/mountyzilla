@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.91
+// @version     1.6.92
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.91';
+var MZ_latest = '1.6.92';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -6991,7 +6991,7 @@ class MZ_cSCIZ {
 	}
 
 	static _printTrap(t) {
-		let res = '<span style="color:#990000">Piège à ${t.type} ';
+		let res = `<span style="color:#990000">Piège à ${t.type} `;
 		res = t.mm ? `${res}(MM ${t.mm}) ` : res;
 		res = t.creation_datetime ? `${res} - ${t.creation_datetime} ` : res;
 		res = `${res}</span>`;
