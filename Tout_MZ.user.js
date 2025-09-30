@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.92
+// @version     1.6.93
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.92';
+var MZ_latest = '1.6.93';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -4893,6 +4893,7 @@ function initCompteAreboursDLA() {
 	let dlaFavicon = '/favicon.ico';
 	let div = document.getElementById('DLA_xyn');
 	div.style.marginTop = '10px';
+	div.style.paddingTop = '70px';
 	let br = div.getElementsByTagName('br')[0];
 	// logMZ('initCompteAreboursDLA_log' + div.innerHTML);
 

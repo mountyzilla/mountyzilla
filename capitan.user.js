@@ -1133,6 +1133,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 			cCAPITAN_MH.afficheMsg(msg, 'red', true);
 			return;
 		}
+		//cCAPITAN_MH.afficheMsg('Repassez sur la version normale du script du Capitan (options, extensions)', 'red', true);
 		cCAPITAN_MH.MZ_ok = (typeof MH_mountyzilla_json !== 'undefined');
 		if (cCAPITAN_MH.bDebug) console.log('[Capitan debug] init MH_capitan_json=', MH_capitan_json);
 
