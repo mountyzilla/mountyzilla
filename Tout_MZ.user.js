@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.93
+// @version     1.6.94
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.93';
+var MZ_latest = '1.6.94';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -7290,6 +7290,7 @@ class MZ_cSCIZ {
 		let cbx = MY_getValue(`${numTroll}.SCIZ_CB_VIEW_TROLLS`);
 		if (cbx === '0') return;
 
+		let bViewSCIZ = MY_getValue('SCIZ_SHOW_TROLLS') == 'no';
 		// Call SCIZ
 		let sciz_url = 'https://www.sciz.fr/api/hook/trolls';
 		new MZ_XMLHttpRequest(`MZ_${numTroll}_SCIZ_trolls`).do({
@@ -7311,6 +7312,7 @@ class MZ_cSCIZ {
 					// Look for trolls to enhance
 					MZ_cSCIZ.getVisibleTrolls();
 					trolls.trolls.forEach((t) => {
+						//logMZ(`[MZ SCIZ] processTrolls process ${t.nom}`);
 						for (let oTrollSCIZ of MZ_cSCIZ.trolls) {
 							if (oTrollSCIZ.id !== t.id) continue;
 							oTrollSCIZ.sciz_desc = oTrollSCIZ.nodeNom.innerHTML + MZ_cSCIZ._printTroll(t);  // PrettyPrint
@@ -7318,7 +7320,7 @@ class MZ_cSCIZ {
 							if (oTrollSCIZ.guilde == "" && t.guilde_id && t.guilde_nom) {
 								oTrollSCIZ.nodeGuilde.innerHTML = `<a href="javascript:PVG(${t.guilde_id})">${t.guilde_nom}</a>`;
 							}
-							return;  // break foreach
+							break;
 						}
 						// ajout de ligne dans le bloc Trolls
 						//if (t.id==68481 && numTroll==91305) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60;}	// test Roule'
@@ -7327,7 +7329,12 @@ class MZ_cSCIZ {
 						if (oLigne) {
 							let html_nom = oLigne.eltTdNom.innerHTML;
 							MZ_cSCIZ.trolls.push({
-								id: t.id, name: html_nom, sciz_desc: html_nom + MZ_cSCIZ._printTroll(t), nodeNom: oLigne.eltTdNom, displayed: bViewSCIZ, caracs: t.caracs
+								id: t.id,
+								name: html_nom,
+								sciz_desc: html_nom + MZ_cSCIZ._printTroll(t),
+								nodeNom: oLigne.eltTdNom,
+								displayed: bViewSCIZ,
+								caracs: t.caracs,
 							});
 						}
 					});
