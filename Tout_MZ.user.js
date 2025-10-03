@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.94
+// @version     1.6.95
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.94';
+var MZ_latest = '1.6.95';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -7320,7 +7320,7 @@ class MZ_cSCIZ {
 							if (oTrollSCIZ.guilde == "" && t.guilde_id && t.guilde_nom) {
 								oTrollSCIZ.nodeGuilde.innerHTML = `<a href="javascript:PVG(${t.guilde_id})">${t.guilde_nom}</a>`;
 							}
-							break;
+							return;  // break foreach
 						}
 						// ajout de ligne dans le bloc Trolls
 						//if (t.id==68481 && numTroll==91305) {t.pos_x=50; t.pos_y=-90; t.pos_n=-60;}	// test Roule'
