@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.95
+// @version     1.6.96
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.95';
+var MZ_latest = '1.6.96';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -5656,35 +5656,47 @@ function setDisplayBM() {
 }
 
 /** x~x Traitement Malus --------------------------------------- */
-function traiteMalus() {
+function MZ_traiteMalus() {
+	"use strict";
 	let mainTab = document.getElementById('bmm');
 	if (!mainTab) {
-		logMZ('traiteMalus: pas de table bmm');
+		logMZ('traiteMalus_log: pas de table bmm');
 		return;
 	}
 	let tbody = mainTab.tBodies[0];
 	if (!tbody) {
-		logMZ('traiteMalus: pas de BM (pas de tbody)');
+		logMZ('traiteMalus_log: pas de BM (pas de tbody)');
 		return;
 	}
 
-	/* Suppression des BM de fatigue stockés */
-	if (MY_getValue(`${numTroll}.bm.fatigue`)) {
-		MY_removeValue(`${numTroll}.bm.fatigue`);
-	}
-
 	/* Extraction des données */
-	let uniListe = [], listeDurees = {}, listeDecumuls = {};
-	let nb = 0;
+	let listEffets = [];
 	for (let tr of tbody.rows) {
+		listEffets.push({
+			effetsT: tr.cells[1].textContent.split(' | '),
+			phymag: tr.cells[3].textContent,
+			duree: tr.cells[4].textContent.match(/\d+/),
+			nom: tr.childNodes[1].textContent,
+		});
+	}
+	// la suite est mutualisée avec la page turnStart
+	MZ_traiteDecumulAffResume(listEffets, true);
+}
+
+function MZ_traiteDecumulAffResume(listEffets, bDisplay) {
+	"use strict";
+	// fonction appelée dans 2 contextes
+	// - analyse de la page de BM : calcul décumul, affichage du résumé, valorisation bm.fatigue en localStorage
+	// - analyse de lma page turnstart : calcul décumul et valorisation bm.fatigue en localStorage (bDisplay=false)
+
+	let uniListe = [], listeDurees = {};
+	let nb = 0;
+	for (let oEffet of listEffets) {
 		nb++;
-		let effetsT = tr.cells[1].textContent.split(' | ');
-		let phymag = tr.cells[3].textContent;
-		let duree = tr.cells[4].textContent.match(/\d+/);
-		if (duree == null) {	// Roule 28/01/2018 protection malus Crasc sans durée
-			duree = 1;
+		if (oEffet.duree == null) {	// Roule 28/01/2018 protection malus Crasc sans durée
+			oEffet.duree = 1;
 		} else {
-			duree = Number(duree[0]);
+			oEffet.duree = Number(oEffet.duree[0]);
 		}
 		// Roule 23/11/2016 tout semble être soumis à décumul (vérifié pour Charme, Drain de vie)
 		// si c'est un type à décumul
@@ -5695,34 +5707,34 @@ function traiteMalus() {
 			case 'Parchemin':
 			case 'Sortilège':
 			case 'Capacité Spéciale':
-				nom = tr.childNodes[1].textContent+phymag;
+				nom = tr.childNodes[1].textContent+oEffet.phymag;
 				break;
 			default:
 				nom = 'pasdedecumul';
 		}
 		*/
-		let nom = tr.childNodes[1].textContent + phymag;
+		let nom = oEffet.nom + oEffet.phymag;
 		// !! Amnésie = Capa, mais pas décumulée
 		if (nom.indexOf('Amnésie') != -1) {
 			nom = 'pasdedecumul';
 		}
 
 		uniListe[nb] = {
-			duree: duree,
+			duree: oEffet.duree,
 			nom: nom, // permet de gérer le non décumul des sorts à double composante
 			caracs: {}
 		};
-		for (let i = 0; i < effetsT.length; i++) {
-			if (effetsT[i].indexOf(':') == -1) {
+		for (let i = 0; i < oEffet.effetsT.length; i++) {
+			if (oEffet.effetsT[i].indexOf(':') == -1) {
 				continue;
 			}
 			// structure : liste[nb]=[duree , nom , [type ,] Array[caracs] ]
 			// nom = 'pasdedecumul' si pas de décumul
-			let carac = trim(effetsT[i].substring(0, effetsT[i].indexOf(':')));
+			let carac = trim(oEffet.effetsT[i].substring(0, oEffet.effetsT[i].indexOf(':')));
 			if (carac == 'ATT' || carac == 'DEG' || carac == 'Armure') {
-				uniListe[nb].type = phymag;
+				uniListe[nb].type = oEffet.phymag;
 			}
-			let tmatch = effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et exceptionnellement un autre numérique précédé d'un antislash
+			let tmatch = oEffet.effetsT[i].match(/(-?\d+)(\\([+-]?\d+))?/);	// un numérique et exceptionnellement un autre numérique précédé d'un antislash
 			let bm;
 			if (tmatch[2] == undefined) {
 				bm = Number(tmatch[1]);
@@ -5731,8 +5743,8 @@ function traiteMalus() {
 				bm = Number(tmatch[3]);
 			}	// cas DEG : +0\-5
 			uniListe[nb].caracs[carac] = bm;
-			debugMZ(`effetsT[${i}]=${effetsT[i]}, uniListe[${nb}]['caracs'][${carac}] = ${bm}, durée=${duree} tmatch=${JSON.stringify(tmatch)}`);
-			listeDurees[duree] = true;
+			debugMZ(`oEffet.effetsT[${i}]=${oEffet.effetsT[i]}, uniListe[${nb}]['caracs'][${carac}] = ${bm}, durée=${oEffet.duree} tmatch=${JSON.stringify(tmatch)}`);
+			listeDurees[oEffet.duree] = true;
 		}
 	}	// fin boucle sur les lignes de bonus/malus
 
@@ -5744,14 +5756,20 @@ function traiteMalus() {
 	toursGeres.sort((a, b) => {
 		return b - a;
 	});
-	debugMZ(`toursGeres=${JSON.stringify(toursGeres)}\nuniListe=${JSON.stringify(uniListe)}`);
+	debugMZ(`listEffets=${JSON.stringify(listEffets)}
+		toursGeres=${JSON.stringify(toursGeres)}
+		uniListe=${JSON.stringify(uniListe)}
+		listeDurees=${JSON.stringify(listeDurees)}`);
 	let strfat = ''; // pour sauvegarder les bm de fatigue
 	// Pour affichage & adpatation à footable.js (statique)
-	let thead = document.getElementsByTagName('thead')[0];
-	let nbHidden = document.evaluate(
-		"./tr/th[@style='display: none;']", thead, null, 7, null
-	).snapshotLength;
-	let tfoot = document.getElementsByTagName('tfoot')[0];
+	let nbHidden, tfoot;
+	if (bDisplay) {
+		let thead = document.getElementsByTagName('thead')[0];
+		nbHidden = document.evaluate(
+			"./tr/th[@style='display: none;']", thead, null, 7, null
+		).snapshotLength;
+		tfoot = document.getElementsByTagName('tfoot')[0];
+	}
 
 	for (let i = 0; i < toursGeres.length; i++) {
 		let tour = toursGeres[i];
@@ -5811,7 +5829,7 @@ function traiteMalus() {
 
 		for (let j = 0; j < caracGerees.length; j++) {
 			let carac = caracGerees[j], str = '';
-			debugMZ(`traiteMalus, j=${j}, carac=${carac}, effetsCeTour=${effetsCeTour[carac]}, toursGeres=${toursGeres[i]}`);
+			debugMZ(`traiteMalus_log, j=${j}, carac=${carac}, effetsCeTour=${effetsCeTour[carac]}, toursGeres=${toursGeres[i]}`);
 
 			switch (carac) {
 				case 'ATT':
@@ -5843,8 +5861,9 @@ function traiteMalus() {
 				texteD = texteD + str;
 				texteS = texteS + str;
 			}
-			debugMZ(`traiteMalus, j=${j}, strfat=${strfat}`);
+			debugMZ(`traiteMalus_log, j=${j}, strfat=${strfat}`);
 		}	// fin boucle sur les caractéristiques
+		if (!bDisplay) continue;
 
 		/* Affichage */
 		// Si rien à afficher on passe
@@ -5874,20 +5893,25 @@ function traiteMalus() {
 		appendTdText(tr, txttour);
 	}	// fin boucle sur les tours générés
 
+	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
+	debugMZ(`strFat=${strfat}`);
+	if (strfat) {
+		MY_setValue(`${numTroll}.bm.fatigue`, strfat);
+	} else {
+		MY_removeValue(`${numTroll}.bm.fatigue`);
+	}
+
+	if (!bDisplay) return;
+
 	/* mise en place toggleDetails */
 	tfoot.style.cursor = 'pointer';
 	tfoot.onclick = toggleDetailsBM;
-
-	/* Stockage fatigue : tour-fatigue;tour-fatigue;... */
-	if (strfat) {
-		MY_setValue(`${numTroll}.bm.fatigue`, strfat);
-	}
 }
 
 function do_malus() {
 	try {
 		start_script(undefined, 'do_malus_log');
-		traiteMalus();
+		MZ_traiteMalus();
 		setDisplayBM();
 		displayScriptTime(undefined, 'do_malus_log');
 	} catch (exc) {
@@ -11041,16 +11065,20 @@ function do_cdmbot() {	// Roule 17/10/2016, restreint à la page des message du 
 let menuRac, mainIco;
 
 function updateNumTroll() {
-	let eltId = document.getElementById('id');
-	if (!eltId) eltId = document.getElementById('footer');	// cas smartphone
-	if (!eltId) {
-		warnMZ(`updateNumTroll_log: numéro Troll introuvable`);
-		return null;
-	}
-	let l_numTroll = parseInt(eltId.getAttribute('data-id'));
+	// version universelle à partir du 07/10/2025
+	let l_numTroll = parseInt(document.body.getAttribute('data-idtroll'));
 	if (isNaN(l_numTroll)) {
-		warnMZ(`updateNumTroll_log: numéro Troll introuvable: eltId=${eltId}`);
-		return null;
+		let eltId = document.getElementById('id');
+		if (!eltId) eltId = document.getElementById('footer');	// cas smartphone
+		if (!eltId) {
+			warnMZ(`updateNumTroll_log: numéro Troll introuvable, pas de footer`);
+			return null;
+		}
+		l_numTroll = parseInt(eltId.getAttribute('data-id'));
+		if (isNaN(l_numTroll)) {
+			warnMZ(`updateNumTroll_log: numéro Troll introuvable: eltId=${eltId}`);
+			return null;
+		}
 	}
 	MY_setValue('NUM_TROLL', l_numTroll);
 	debugMZ(`updateNumTroll_log: numTroll=${l_numTroll}`);
@@ -11067,6 +11095,28 @@ function updateNomTroll() {
 	MY_setValue('NOM_TROLL', l_nomTroll);
 	debugMZ(`updateNomTroll_log: nomTroll=${l_nomTroll}`);
 	return l_nomTroll;
+}
+
+function MZ_loadBMFatigueTurnstart() {
+	"use strict";
+	let eltH3 = document.getElementById('BMEncours');
+	if (!eltH3) return;
+	let listEffets = [];
+	for (let li of eltH3.parentNode.getElementsByTagName('li')) {
+		debugMZ(li.innerText);
+		let m = li.innerText.match(/(.*) *\([^\)]*(Fatigue *:* *[\-\+]*\d+)[ :\)]+(\d+) *tour/i);
+		if (!m) continue;
+		listEffets.push({
+			effetsT: [m[2]],
+			phymag: 'Physique',	// fake
+			duree: [parseInt(m[3])],
+			nom: m[1].trim(),
+		});
+	}
+	debugMZ(`bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}
+		listEffets=${JSON.stringify(listEffets)}`);
+	// la suite est mutualisée avec la page turnStart
+	MZ_traiteDecumulAffResume(listEffets, false);
 }
 
 // met à jour les carac sauvegardées (position, DLA, etc.)
@@ -14561,10 +14611,56 @@ function inputMode() {
 	appendButton(lastDLAZone, 'Enregistrer', saveLastDLA);
 }
 
+class MZ_BMfat {
+	// populate this.BMfrais and this.listeBmFat
+	constructor() {
+		this.BMfrais = false;
+		this.listeBmFat = [];
+		if (bmfatigue > 0) {
+			debugMZ(`setAccel, bmfatigue=${bmfatigue}, ${numTroll}.bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}`);
+			// On tente de recuperer les BM de fatigue de la page des BM
+			if (MY_getValue(`${numTroll}.bm.fatigue`)) {
+				let BMmemoire = MY_getValue(`${numTroll}.bm.fatigue`).split(';');
+				BMmemoire.pop();
+				for (let i = 0; i < BMmemoire.length; i++) {
+					let nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
+					let s = `0000${nbrs[0]}`;
+					BMmemoire[i] = `${s.substr(s.length - 4)} ${nbrs[1]}`;
+				}
+				BMmemoire.sort();	// tri par n° de tour
+				let tour = 0;
+				for (let i = 0; i < BMmemoire.length; i++) {
+					let nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
+					while (tour <= parseInt(nbrs[0])) {
+						this.listeBmFat[tour] = parseInt(nbrs[1]);
+						tour++;
+					}
+				}
+			}
+			if (this.listeBmFat[0] == bmfatigue) {
+				// Si (bm profil=1er bm stocke), on suppose que les bm stockes sont a jour
+				this.BMfrais = true;
+				// Roule 17/06/2020 je ne vois pas du tout pourquoi on viderait bm.fatigue ici. Et ça fait que la fatigue des Kastars affiche une erreur la 2e fois qu'on va sur le profil... J'enlève
+				// MY_removeValue(numTroll+".bm.fatigue");
+			}
+		} else {
+			// S'il n'y a pas de bm de fatigue sur le profil, on est a jour
+			this.BMfrais = true;
+		}
+		if (!this.BMfrais && bmfatigue > 0) {
+			// si les BM n'ont pas ete rafraichis, on conjecture le pire:
+			if (bmfatigue == 15) {
+				this.listeBmFat = [15, 15, 15];
+			} else {
+				this.listeBmFat = [30, 30, 15];
+			}
+		}
+	}
+}
+
 function setAccel() {
-	let BMfrais = false,
-		fat = fatigue, listeBmFat = [],
-		tr, th, insertPt;
+	"use strict";
+	let fat = fatigue, tr, th, insertPt;
 
 	// Creation ligne speciale pour AM dans le cadre "Etat"
 	tr = document.createElement('tr');
@@ -14583,45 +14679,7 @@ function setAccel() {
 	}
 
 	// Gestion des BM de fatigue
-	if (bmfatigue > 0) {
-		debugMZ(`setAccel, bmfatigue=${bmfatigue}, ${numTroll}.bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}`);
-		// On tente de recuperer les BM de fatigue de la page des BM
-		if (MY_getValue(`${numTroll}.bm.fatigue`)) {
-			let BMmemoire = MY_getValue(`${numTroll}.bm.fatigue`).split(';');
-			BMmemoire.pop();
-			for (let i = 0; i < BMmemoire.length; i++) {
-				let nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
-				let s = `0000${nbrs[0]}`;
-				BMmemoire[i] = `${s.substr(s.length - 4)} ${nbrs[1]}`;
-			}
-			BMmemoire.sort();	// tri par n° de tour
-			let tour = 0;
-			for (let i = 0; i < BMmemoire.length; i++) {
-				let nbrs = BMmemoire[i].match(/\d+/g); // [tour,fatigue]
-				while (tour <= parseInt(nbrs[0])) {
-					listeBmFat[tour] = parseInt(nbrs[1]);
-					tour++;
-				}
-			}
-		}
-		if (listeBmFat[0] == bmfatigue) {
-			// Si (bm profil=1er bm stocke), on suppose que les bm stockes sont a jour
-			BMfrais = true;
-			// Roule 17/06/2020 je ne vois pas du tout pourquoi on viderait xxx;bm.fatigue ici. Et ça fait que la fatigue des Kastars affiche une erreur la 2e fois qu'on va sur le profil... J'enlève
-			// MY_removeValue(numTroll+".bm.fatigue");
-		}
-	} else {
-		// S'il n'y a pas de bm de fatigue sur le profil, on est a jour
-		BMfrais = true;
-	}
-	if (!BMfrais && bmfatigue > 0) {
-		// si les BM n'ont pas ete rafraichis, on conjecture le pire:
-		if (bmfatigue == 15) {
-			listeBmFat = [15, 15, 15];
-		} else {
-			listeBmFat = [30, 30, 15];
-		}
-	}
+	let oBMfat = new MZ_BMfat();
 
 	let skip = false;
 	if (pvcourant <= 0) {
@@ -14632,7 +14690,7 @@ function setAccel() {
 	// Setup lastDLAZone
 	if (overDLA) {
 		// Si on est en over-DLA, on decale les bm d'un tour
-		listeBmFat.shift();
+		oBMfat.listeBmFat.shift();
 
 		// bypass des infos de "menu_FF.js" en cas d'overDLA
 		DLAaccel = new Date(DLAsuiv);
@@ -14653,8 +14711,8 @@ function setAccel() {
 	}
 
 	// ***INIT GLOBALE*** minParPV
-	let minppv = minParPVsac(fat, listeBmFat[0]);
-	minParPV = listeBmFat[0] == void 0 ? minppv[0] : minppv[1];
+	let minppv = minParPVsac(fat, oBMfat.listeBmFat[0]);
+	minParPV = oBMfat.listeBmFat[0] == void 0 ? minppv[0] : minppv[1];
 	if (!skip) {
 		appendText(insertPt, 'Dernière DLA enregistrée : ');
 		lastDLAZone = document.createElement('span');
@@ -14680,7 +14738,7 @@ function setAccel() {
 		refreshAccel();
 	}
 
-	if (!(fat > 0 || listeBmFat[0] > 0)) {
+	if (!(fat > 0 || oBMfat.listeBmFat[0] > 0)) {	// we are lucky : undefined > 0 is false 😉
 		return; // skip si rien a calculer
 	}
 
@@ -14720,7 +14778,7 @@ function setAccel() {
 	}
 
 	col = 0;
-	while (col < 9 && (fat > 0 || listeBmFat[col])) {
+	while (col < 9 && (fat > 0 || oBMfat.listeBmFat[col])) {
 		let txt_tour = col == 0 ? 'En cours' : `\u00A0\u00A0+${col}\u00A0\u00A0`,
 			txt_fat, txt_min;
 		if (col == 0 && overDLA) {
@@ -14731,9 +14789,9 @@ function setAccel() {
 		} else {
 			appendTdText(ligneTour, txt_tour);
 		}
-		if (listeBmFat[col]) {
-			txt_fat = (BMfrais || !overDLA && col == 0) ? `${fat}+${listeBmFat[col]}` : `${fat}+${listeBmFat[col]} (?)`;
-			txt_min = (BMfrais || !overDLA && col == 0) ? `${Math.max(1, minppv[1])}'` : `${minppv[1]}' (${minppv[0]}')`;
+		if (oBMfat.listeBmFat[col]) {
+			txt_fat = (oBMfat.BMfrais || !overDLA && col == 0) ? `${fat}+${oBMfat.listeBmFat[col]}` : `${fat}+${oBMfat.listeBmFat[col]} (?)`;
+			txt_min = (oBMfat.BMfrais || !overDLA && col == 0) ? `${Math.max(1, minppv[1])}'` : `${minppv[1]}' (${minppv[0]}')`;
 		} else {
 			txt_fat = fat;
 			txt_min = `${minppv[0]}'`;
@@ -14743,7 +14801,7 @@ function setAccel() {
 		tr_detail = desktopView ? '' : appendTrDetail(tr_detail, `[MZ] ${txt_tour}`, `${txt_fat.toString().padEnd(12, '\u00A0')}|${txt_min.padStart(12, nbsp)}`, true);
 		col++;
 		fat = Math.floor(fat / 1.25);
-		minppv = minParPVsac(fat, listeBmFat[col]);
+		minppv = minParPVsac(fat, oBMfat.listeBmFat[col]);
 	}
 	if (fat > 1 || fat == 1 && !overDLA) {
 		appendTdText(ligneTour, '\u00A0\u00A0...\u00A0\u00A0', true);
@@ -14756,7 +14814,7 @@ function setAccel() {
 	appendTdText(ligneMin, '30\'');
 	tr_detail = desktopView ? '' : appendTrDetail(tr_detail, `[MZ] \u00A0\u00A0+${col}\u00A0\u00A0`, `${'0'.padEnd(12, '\u00A0')}|${'30\''.padStart(12, nbsp)}`, true);
 
-	if (!BMfrais && bmfatigue) {
+	if (!oBMfat.BMfrais && bmfatigue) {
 		// si les BM n'ont pas ete rafraichis, on signale:
 		appendText(err_node, 'Attention, ce tableau est probablement faux.' +
 			' Visitez la page des Bonus/Malus pour mettre à jour votre fatigue.', true, 'red');
@@ -14998,7 +15056,7 @@ function setBulle(evt) {
 	}
 	if (element) {
 		bulleStyle = element.style;
-		element.firstChild.firstChild.innerHTML = `<b>${nom}</b>`;
+		element.firstChild.firstChild.innerHTML = `[MZ] <b>${nom}</b>`;
 		element.childNodes[1].firstChild.innerHTML = str;
 	}
 	if (bulleStyle) {
@@ -15129,15 +15187,23 @@ function MZ_texteAideCompetence(comp, niveau) {
 			// N'est plus censé se produire : activation obligatoire si mort
 			return "<i>On ne peut charger personne quand on est mort !</i>";
 		}
-		let portee = Math.min(
-			Math.max(
-				getPortee(reg + Math.floor(pvcourant / 10)) -
-				Math.floor((fatigue + bmfatigue) / 5),
-				1
-			),
-			vuetotale
-		);
-		if (portee < 1) {
+		let oBMfat = new MZ_BMfat();
+		let fatigueCeTour = fatigue;
+		let portee = [];
+		let porteeMax = getPortee(reg + Math.floor(pvcourant / 10));
+		for (let iTour = 0; iTour < 20; iTour++) {
+			let oInfo = {};
+			oInfo.fbm = oBMfat.listeBmFat[iTour];
+			if (oInfo.fbm === undefined) oInfo.fbm = 0;
+			oInfo.f = fatigueCeTour;
+			oInfo.p = Math.min(
+					Math.max(porteeMax - Math.floor((oInfo.f + oInfo.fbm) / 5), 1),
+					vuetotale);
+			portee.push(oInfo);
+			if (fatigueCeTour == 0 && oInfo.fbm == 0) break;
+			fatigueCeTour = Math.floor(fatigueCeTour / 1.25);
+		};
+		if (portee[0].p < 1) {
 			return "<b>Impossible de charger</b>";
 		}
 		texte = `Attaque : <b>${att}</b> D6 `;
@@ -15150,12 +15216,26 @@ function MZ_texteAideCompetence(comp, niveau) {
 		if (modD) {
 			texte = `${texte}<i>${aff(modD)}D3</i> `;
 		}
-		texte = `${texte}${aff(degbp + degbm)
-			} => <b>${degmoytour}/${degmoycrittour}</b><br>` +
-			`Portée : <b>${portee}</b> case`;
-		if (portee > 1) {
-			texte = `${texte}s`;
+		let classTR = isDesktopView() ? 'mh_tdpage' : ' ui-bar-b';
+		let styleCell = ` style="border: 1px solid black; padding: 0 1px 0 1px; white-space: nowrap;"`;
+		texte += `${aff(degbp + degbm)
+			} => <b>${degmoytour}/${degmoycrittour}</b>`;
+		if (!oBMfat.BMfrais && bmfatigue) {
+			// si les BM n'ont pas ete rafraichis, on signale:
+			texte += `<div style="color: red; font-weight: bold">Attention, ce tableau est probablement faux.
+				Visitez la page des Bonus/Malus pour mettre à jour votre fatigue.</div>`;
 		}
+		texte += `<table class="${isDesktopView() ? 'mh_tdborder' : 'ui-body-a ui-corner-all'}">
+			<tr class="${classTR}"><th${styleCell}>Tour :</th>`;
+		for (let iTour in portee)
+			texte += `<th${styleCell}>${iTour == 0 ? 'En cours' : `+${iTour}`}</th>`;
+		texte += `</tr><tr class="${classTR}"><th${styleCell}>Fatigue :</th>`;
+		for (let p of portee)
+			texte += `<td${styleCell}>${p.f}${p.fbm ? `+${p.fbm}` : ''}</td>`;
+		texte += `</tr><tr class="${classTR}"><th${styleCell}>Portée (cases) :</th>`;
+		for (let p of portee)
+			texte += `<td${styleCell}>${p.p}</td>`;
+		texte += `</tr></table>`;
 	} else if (comp.indexOf('Connaissance des Monstres') != -1) {
 		texte = `Portée horizontale : <b>${vuetotale}</b> case`;
 		if (vuetotale > 1) {
@@ -16923,6 +17003,7 @@ try {
 		replaceLinkMHtoMZ();
 	} else if (isPage("MH_Play/TurnStart")) {
 		updateNumTroll();
+		MZ_loadBMFatigueTurnstart();
 	} else if (MZ_fo_ordres) {
 		do_ordresgowap();
 	} else if (isPage("MH_Play/Play_a_ActionResult")) {
