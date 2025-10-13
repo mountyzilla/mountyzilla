@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.96
+// @version     1.6.97
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.96';
+var MZ_latest = '1.6.97';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -3707,7 +3707,7 @@ function MZ_tab_carac_add_tr_minmax(table, titre, ominmax, unit) {
 			texte = `${ominmax.min}-${ominmax.max}\u00A0→\u00A0`;
 			if (ominmax.min > ominmax.max) {
 				td.style.color = 'red';
-				unit = `${unit} *** erreur ***`;
+				unit = `${unit}`;
 			}
 		}
 		texte = `${texte}${(ominmax.min + ominmax.max) / 2}\u00A0${unit}`;
@@ -3757,7 +3757,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		texte = `${ominmax.min}-${ominmax.max}`;
 		if (ominmax.min > ominmax.max) {
 			td.style.color = 'red';
-			texte = `${texte} *** erreur ***`;
+			texte = `${texte}`;
 		}
 	} else {
 		texte = ominmax.min;
@@ -3775,7 +3775,7 @@ function MZ_tab_carac_add_tr_minmax2(table, titre, ominmax, unit, ominmaxUnit) {
 		texte = `${texte} \u2192 ${ominmaxUnit.min}\u2A7D${unit}\u2A7D${ominmaxUnit.max}`;
 		if (ominmaxUnit.min > ominmaxUnit.max) {
 			td.style.color = 'red';
-			texte = `${texte} *** erreur ***`;
+			texte = `${texte}`;
 		}
 	} else if (isNaN(ominmaxUnit.min)) {
 		texte = `${texte} \u2192 ${ominmaxUnit.min}`;
