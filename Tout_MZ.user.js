@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.97
+// @version     1.6.98
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.97';
+var MZ_latest = '1.6.98';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -16665,6 +16665,7 @@ function MZ_CompoTanieresPrepare(eTable) {
 }
 
 function MZ_doSearchCompoTanieres(event) {
+	"use strict";
 	let eTableTaniere = document.getElementById('MZ_CompoTanieres');
 	if (!eTableTaniere) {
 		logMZ('MZ_doSearchCompoTanieres, erreur, pas de MZ_CompoTanieres');
@@ -16743,7 +16744,7 @@ function MZ_doSearchCompoTanieres(event) {
 			//console.log('push2 compo ' + compoLC);
 		}
 		tabTri.sort();
-		eTr = document.createElement('tr');
+		let eTr = document.createElement('tr');
 		eTr.className = 'mh_tdtitre';
 		for (let qualite of tabQualite) {
 			let eTh = document.createElement('th');
@@ -16760,7 +16761,7 @@ function MZ_doSearchCompoTanieres(event) {
 		for (let compo of tabTri) {
 			eTr = document.createElement('tr');
 			for (let qualite of tabQualite) {
-				eTd = document.createElement('td');
+				let eTd = document.createElement('td');
 				eTd.style.border = 'solid black 1px';
 				eTd.className = 'mh_tdpage';
 				if (oInfo.composant.toLowerCase() == compo && oInfo.qualite == qualite) {
@@ -16784,9 +16785,16 @@ function MZ_doSearchCompoTanieres(event) {
 			if (responseDetails.status == 0) return;
 			let oReponse = JSON.parse(responseDetails.responseText);
 			//logMZ('compo taniere.onload2 ' + JSON.stringify(oReponse));
-			for (oCompoRep of oReponse) {
+			for (let oCompoRep of oReponse) {
 				//console.log(JSON.stringify(oCompoRep));
-				let m = oCompoRep.value.nom.value.match(/> *(.*) d'une* (.*)de Qualité (.*) \[/i);
+				let nom;
+				if (oCompoRep.value) nom = oCompoRep.value.nom;
+				if (!nom && oCompoRep.nom) nom = oCompoRep.nom.value;
+				if (!nom) {
+					logMZ(`MZ_doSearchCompoTanieres ni nom ni info dans ${JSON.stringify(oCompoRep)}`);
+					continue;
+				}
+				let m = nom.match(/> *(.*) d'une* (.*)de Qualité (.*) \[/i);
 				if (!m) {
 					logMZ(`MZ_doSearchCompoTanieres no match ${oCompoRep.value.nom.value}`);
 					continue;
@@ -16804,9 +16812,15 @@ function MZ_doSearchCompoTanieres(event) {
 		try {
 			// logMZ('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
 			if (responseDetails.status == 0) return;
+			let cp;
 			let eStockAppendRows = responseDetails.responseXML.getElementById('stock-append-rows');
-			if (eStockAppendRows && eStockAppendRows.value) {
-				let url2 = '/mountyhall/MH_PageUtils/Services/json_stock.php?cp=' + eStockAppendRows.value;
+			if (eStockAppendRows && eStockAppendRows.value) cp = eStockAppendRows.value;
+			if (!cp) {
+				let eBut = responseDetails.responseXML.getElementById('loadMore');
+				cp = eBut.value;
+			}
+			if (cp) {
+				let url2 = '/mountyhall/MH_PageUtils/Services/json_stock.php?cp=' + cp;
 				// modification de l'history pour gérer le referer de l'appel AJAX JSON
 				let oldURL = document.URL;
 				window.history.replaceState(null, '', `https://${window.location.host}/mountyhall/MH_Play/Play_a_Action.php`);
@@ -16881,7 +16895,7 @@ function MZ_doSearchCompoTanieres(event) {
 				if (!event) {
 					msgErreur += oInfo.composant;
 				} else {
-					msgErreur = `${sMsg}composant`;
+					msgErreur = `${msgErreur}composant`;
 				}
 				msgErreur = `${msgErreur} de ${oInfo.monstre} en tanière`;
 			} else if (nTotal < 100) {
