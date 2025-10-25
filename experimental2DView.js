@@ -185,15 +185,7 @@ class Grid {
                     continue;
                 }
 
-                if (null == column) {
-                    html += this.emptyCell(i, j);
-                    continue;
-                }
-                let cell = column[j];
-                if (null == cell) {
-                    html += this.emptyCell(i, j);
-                    continue;
-                }
+                let cell = this.getCellInternal(i,j);
                 html += cell.convertToHtml(i, j, this.centerX, this.centerY);
             }
         }
@@ -231,9 +223,19 @@ class Grid {
         return i + this.centerY - this.horizontalRange;
     }
 
-    getCell(x, y) {
+    getCellMounty(x, y) {
         let i = this.xToIndex(x);
         let j = this.yToIndex(y);
+        return this.getCell(i, j, x, y);
+    }
+
+    getCellInternal(i,j) {
+        let x = this.indexToX(i);
+        let y = this.indexToY(j);
+        return this.getCell(i, j, x, y);
+    }
+
+    getCell(i, j, x, y) {
         if (i >= this.gridSize || i < 0
             || j >= this.gridSize || j < 0) {
             // outside of the view range
@@ -265,17 +267,20 @@ class Grid {
         if (null == gridElements) {
             return;
         }
-        let here = this.getCell(this.centerX, this.centerY);
+        let here = this.getCellMounty(this.centerX, this.centerY);
         here.youAreHere = this.centerN;
         for (const element of gridElements) {
             let o = new CellObject(element);
-            let cell = this.getCell(o.x, o.y)
+            let cell = this.getCellMounty(o.x, o.y)
             if (null != cell) {
                 addFunction(cell, o);
             }
         }
     }
 
+    /**
+     * Centre la grille sur la cellule du joueur.
+     */
     gotoPlayer(){
         let gridHolder =$("#mz-map-grid-scroll")[0];
         let gridRect = gridHolder.getBoundingClientRect();
@@ -308,6 +313,9 @@ function cellStyle(centerX, centerY, x, y) {
     return 0 === (dist % 2) ? `mz-map-grid-view-odd` : `mz-map-grid-view-even`;
 }
 
+/**
+ * Représente la cellule du point de vue DOM
+ */
 class Cell {
 
     constructor(x, y) {
@@ -316,22 +324,41 @@ class Cell {
     }
 
     convertToHtml(i, j, centerX, centerY) {
-        const id = this.youAreHere ? `id="you-are-here"` : "";
-        let html = `<div ${id} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+        const id = this.youAreHere ? `id="you-are-here"` : ``;
+        let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+        if (null != this.trolls || null != this.monsters) {
+            html += `<span class="mz-map-cell-header">${this.x} ${this.y}</span>`;
+        }
         if (null != this.youAreHere) {
             html += `<span class="mz-map-grid-view-here">${this.youAreHere} : Vous êtes ici</span>`;
         }
-        if (null != this.monsters) {
-            for (const monster of this.monsters) {
-                html += `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`;
-            }
-        }
         if (null != this.trolls) {
-            for (const troll of this.trolls) {
-                html += `<span class="mz-map-grid-view-troll mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`;
-            }
+            html += this.groupToHtml(this.trolls, troll => `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`);
+        }
+        if (null != this.monsters) {
+            html += this.groupToHtml(this.monsters, monster => `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`);
         }
         html += "</div>";
+        return html;
+    }
+
+    groupToHtml(group, itemToSpan) {
+        var previousLevel = -1000;
+        var blockStarted = false;
+
+        var html = '';
+        for (const item of group) {
+            if (item.n !== previousLevel) {
+                previousLevel = item.n;
+                if (blockStarted) {
+                    html += '</span>';
+                }
+                blockStarted = true;
+                html += '<span class="mz-map-grid-view-group">';
+            }
+            html += itemToSpan(item);
+        }
+        html += '</span>';
         return html;
     }
 
@@ -388,7 +415,7 @@ class CellObject {
             case "monstres" :
                 this.name = val.nom.options.sortValue;
                 this.groupName = this.toGroupName(this.name);
-                this.family = "todo";
+                // this.family = "todo";
                 break;
             case "champignons":
                 this.name = val.nom;
@@ -435,6 +462,10 @@ style.appendChild(document.createTextNode(`
 .mz-map-grid-view-here { display: block; font-weight: bold;}
 .mz-map-grid-view-troll { display: block; }
 .mz-map-grid-view-monster { display: block; }
+.mz-map-grid-view-group { display: block; margin-top: 0.5px; margin-bottom: 0.5px}
+.mz-map-grid-view-odd .mz-map-grid-view-group { border-bottom:1px solid darkseagreen; }
+.mz-map-grid-view-even .mz-map-grid-view-group { border-bottom:1px solid antiquewhite; }
+.mz-map-cell-header { display: block; font-weight: bold; text-align: center;}
 `));
 document.head.appendChild(style);
 
