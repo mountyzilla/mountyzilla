@@ -204,16 +204,15 @@ class Grid {
     emptyCell(i, j) {
         const center = 1 + this.horizontalRange;
         return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}">&nbsp;</div>`;
-        // return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}">${this.indexToX(i)} ; ${this.indexToY(j)}</div>`;
     }
 
     borderCell(i, j) {
         const center = 1 + this.horizontalRange;
         const borderIndex = this.gridSize - 1;
         const index = (0 === i) || borderIndex === i ? this.indexToY(j) : this.indexToX(i);
-        let borderClass = 0 === i ? "mz-grid-view-border-left" : "";
-        borderClass = borderIndex === i ? "mz-grid-view-border-right" : borderClass;
-        return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}"><span class="mz-grid-view-border ${borderClass}">${index}</span></div>`;
+        let borderClass = 0 === i ? "mz-map-grid-view-border-left" : "";
+        borderClass = borderIndex === i ? "mz-map-grid-view-border-right" : borderClass;
+        return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}"><span class="mz-map-grid-view-border ${borderClass}">${index}</span></div>`;
     }
 
     xToIndex(x) {
@@ -277,13 +276,36 @@ class Grid {
         }
     }
 
+    gotoPlayer(){
+        let gridHolder =$("#mz-map-grid-scroll")[0];
+        let gridRect = gridHolder.getBoundingClientRect();
+        let playerCell = $("#you-are-here")[0];
+        let cellRect = playerCell.getBoundingClientRect();
+
+        let cellLeft = cellRect.left - gridRect.left + gridHolder.scrollLeft;
+        let cellTop = cellRect.top - gridRect.top + gridHolder.scrollTop;
+
+        let scrollLeft = cellLeft - (gridHolder.clientWidth / 2) + (cellRect.width / 2);
+        let scrollTop = cellTop - (gridHolder.clientHeight / 2) + (cellRect.height / 2);
+
+        gridHolder.scrollTo({left: scrollLeft, top: scrollTop});
+    };
+
 }
 
+/**
+ * Renvoie le style approprié pour une cellule de la grille en fonction de ses coordonnées (en référentiel Mountyhall)
+ * @param {int} centerX coordonnée X du centre de la grille
+ * @param {int} centerY coordonnée Y du centre de la grille
+ * @param {int} x coordonnée X de la cellule
+ * @param {int} y coordonnée Y de la cellule
+ * @returns {string} le style ad hoc
+ */
 function cellStyle(centerX, centerY, x, y) {
     const distX = Math.abs(centerX - x);
     const distY = Math.abs(centerY - y);
     const dist = Math.max(distX, distY);
-    return 0 === (dist % 2) ? `mz-grid-view-odd` : `mz-grid-view-even`;
+    return 0 === (dist % 2) ? `mz-map-grid-view-odd` : `mz-map-grid-view-even`;
 }
 
 class Cell {
@@ -295,18 +317,18 @@ class Cell {
 
     convertToHtml(i, j, centerX, centerY) {
         const id = this.youAreHere ? `id="you-are-here"` : "";
-        let html = `<div ${id} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+        let html = `<div ${id} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
         if (null != this.youAreHere) {
-            html += `<span class="mz-grid-view-here">${this.youAreHere} : Vous êtes ici</span>`;
+            html += `<span class="mz-map-grid-view-here">${this.youAreHere} : Vous êtes ici</span>`;
         }
         if (null != this.monsters) {
             for (const monster of this.monsters) {
-                html += `<span class="mz-grid-view-monster">${monster.n} : ${monster.groupName}</span>`;
+                html += `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`;
             }
         }
         if (null != this.trolls) {
             for (const troll of this.trolls) {
-                html += `<span class="mz-grid-view-troll">${troll.n} : ${troll.name}</span>`;
+                html += `<span class="mz-map-grid-view-troll mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`;
             }
         }
         html += "</div>";
@@ -404,21 +426,25 @@ class CellObject {
 
 const style = document.createElement('style');
 style.appendChild(document.createTextNode(`
-.mz-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
-.mz-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
-.mz-grid-view-cell { padding: 0 0.5rem 0 0.5rem; }
-.mz-grid-view-border { display: block; font-weight: bold; text-align: center;}
-.mz-grid-view-border-left { translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
-.mz-grid-view-border-right { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(90deg); top: 50%; left: 50%;}
-.mz-grid-view-here { display: block; font-weight: bold;}
-.mz-grid-view-troll { display: block; }
-.mz-grid-view-monster { display: block; }
+.mz-map-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
+.mz-map-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
+.mz-map-grid-view-cell { padding: 0 0.5rem 0 0.5rem; }
+.mz-map-grid-view-border { display: block; font-weight: bold; text-align: center;}
+.mz-map-grid-view-border-left { translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
+.mz-map-grid-view-border-right { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(90deg); top: 50%; left: 50%;}
+.mz-map-grid-view-here { display: block; font-weight: bold;}
+.mz-map-grid-view-troll { display: block; }
+.mz-map-grid-view-monster { display: block; }
 `));
 document.head.appendChild(style);
 
-g = new Grid(-51, -44, -41, 14, 7);
+g = new Grid(111, 99, -74, 14, 7);
 g.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-html = g.convertToHtml("mz-grid-view");
-$('#infoTab').after(`<div id="mz-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
+html = g.convertToHtml("mz-map-grid-view");
+$('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
 
-$('#mz-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
+$('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
+
+
+
+g.gotoPlayer();
