@@ -3,6 +3,25 @@ window.MZGrid = window.MZGrid || {};
 
 (function (MZGrid) {
 
+    // TODO: use this only and not mh_caracs
+    const TREASURE_ICONS = {
+        "anneau" : "I_Scroll02.png",
+        "armure" : "A_Armor05.png",
+        "arme" : "S_Sword07.png",
+        "arme (1 main)" : "S_Sword07.png",
+        "arme (2 mains)" : "W_Axe006_R.png",
+        "bottes" : "A_Shoes02.png ",
+        "bouclier" : "E_Metal02.png",
+        "casque" : "C_Elm03.png",
+        "talisman" : "Ac_Necklace03.png",
+        "parchemin" : "I_Scroll02.png",
+        "carte" : "I_Map.png",
+        "outil" : "Z_BoneWrench.png",
+        "composant" : "I_Tentacle.png",
+        "potion" : "P_Medicine05.png",
+        "GG" : "E_Gold02.png",
+    };
+
     class Grid {
 
         constructor(x, y, n, horizontalRange, verticalRange) {
@@ -157,23 +176,76 @@ window.MZGrid = window.MZGrid || {};
         convertToHtml(i, j, centerX, centerY) {
             const id = this.youAreHere ? `id="you-are-here"` : ``;
             let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
-            if (null != this.trolls || null != this.monsters) {
+            if (null != this.monsters
+                || null != this.trolls
+                || null != this.treasures
+                || null != this.places
+                || null != this.mushrooms
+                || null != this.graves) {
                 html += `<span class="mz-map-cell-header">${this.x} ${this.y}</span>`;
             }
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-view-here">${this.youAreHere} : Vous &ecirc;tes ici</span>`;
             }
-            if (null != this.trolls) {
-                html += this.groupToHtml(this.trolls, troll => `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`);
-            }
-            if (null != this.monsters) {
-                html += this.groupToHtml(this.monsters, monster => `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`);
-            }
+            html += this.groupToHtml(this.trolls, this.trollToHtml);
+            html += this.groupToHtml(this.monsters, this.monsterToHtml);
+            html += this.treasuresToHtml();
             html += "</div>";
             return html;
         }
 
+        trollToHtml(troll) {
+            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`;
+        }
+
+        monsterToHtml(monster) {
+            return `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`;
+        }
+
+
+        treasuresToHtml() {
+            if (null == this.treasures) {
+                return '';
+            }
+            let summaries = [[this.treasures[0].n, {}]];
+            for (const treasure of this.treasures) {
+                let line = summaries.at(-1);
+                if (line[0] != treasure.n) {
+                    let line = [treasure.n, {}];
+                    summaries.push(line);
+                }
+                let summary = line[1];
+                let treasureName = treasure.name.toLowerCase();
+                if (treasureName.indexOf("centaines de") >= 0 || treasureName.indexOf("gigots de") >= 0) {
+                    summary.GG = (summary.GG ?? 0) + 1;
+                    continue;
+                }
+                let type = mh_caracs[treasureName];
+                if (null == type) {
+                    type = treasureName;
+                } else {
+                    type = type[0];
+                }
+                summary[type] = (summary[type] ?? 0) + 1;
+            }
+            let result = "";
+            for (const s of summaries) {
+                let summary = s[1];
+                result += `<span className="mz-map-grid-view-treasure" mz_grid_type="treasure">${s[0]} : `;
+                let keys = Object.keys(summary).sort();
+                let icons = keys.map(key => {
+                    return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' alt='${key}' height='15'/>:${summary[key]}`;
+                });
+                result += `${icons.join(" ")}</span>`;
+            }
+            return result;
+        }
+
+
         groupToHtml(group, itemToSpan) {
+            if (null == group) {
+                return '';
+            }
             var previousLevel = -1000;
             var blockStarted = false;
 
@@ -193,40 +265,42 @@ window.MZGrid = window.MZGrid || {};
             return html;
         }
 
+        sortByDepth(a, b) {return a.n - b.n};
+
         addMonster(monster) {
-            this.monsters = null == this.monsters ? [] : this.monsters;
+            this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
-            this.monsters.sort((a, b) => a.n - b.n);
+            this.monsters.sort(this.sortByDepth);
         }
 
         addTroll(troll) {
-            this.trolls = null == this.trolls ? [] : this.trolls;
+            this.trolls = this.trolls ?? [];
             this.trolls.push(troll);
-            this.trolls.sort((a, b) => a.n - b.n);
+            this.trolls.sort(this.sortByDepth);
         }
 
         addMushroom(mushroom) {
-            this.mushrooms = null == this.mushrooms ? [] : this.mushrooms;
+            this.mushrooms = this.mushrooms ?? [];
             this.mushrooms.push(mushroom);
-            this.mushrooms.sort((a, b) => a.n - b.n);
+            this.mushrooms.sort(this.sortByDepth);
         }
 
         addGrave(grave) {
-            this.graves = null == this.graves ? [] : this.graves;
+            this.graves = this.graves ?? [];
             this.graves.push(grave);
-            this.graves.sort((a, b) => a.n - b.n);
+            this.graves.sort(this.sortByDepth);
         }
 
         addPlace(place) {
-            this.places = null == this.places ? [] : this.places;
+            this.places = this.places ?? [];
             this.places.push(place);
-            this.places.sort((a, b) => a.n - b.n);
+            this.places.sort(this.sortByDepth);
         }
 
         addTreasure(treasure) {
-            this.treasures = null == this.treasures ? [] : this.treasures;
+            this.treasures = this.treasures ?? [];
             this.treasures.push(treasure);
-            this.treasures.sort((a, b) => a.n - b.n);
+            this.treasures.sort(this.sortByDepth);
         }
 
     }
@@ -312,6 +386,7 @@ window.MZGrid = window.MZGrid || {};
 .mz-map-grid-view-here { display: block; font-weight: bold;}
 .mz-map-grid-view-troll { display: block; }
 .mz-map-grid-view-monster { display: block; }
+.mz-map-grid-view-treasure { display: block; }
 .mz-map-grid-view-group { display: block; margin-top: 0.5px; margin-bottom: 0.5px}
 .mz-map-grid-view-odd .mz-map-grid-view-group { border-bottom:1px solid darkseagreen; }
 .mz-map-grid-view-even .mz-map-grid-view-group { border-bottom:1px solid antiquewhite; }
@@ -481,20 +556,50 @@ window.MZGrid = window.MZGrid || {};
         })(jQuery); // confine scope
 
         MZGrid.injectStyles();
-        console.log(`!!!Numtroll: ${numTroll} posX: ${posX}`);
-        g = new Grid(111, 99, -74, 14, 7);
+        let x = parseInt(MY_getValue(`${numTroll}.position.X`));
+        let y = parseInt(MY_getValue(`${numTroll}.position.Y`));
+        let n = parseInt(MY_getValue(`${numTroll}.position.N`));
+        let g = new Grid(x, y, n, 14, 7);
         g.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
         html = g.convertToHtml("mz-map-grid-view");
         $('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
 
         $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
         g.gotoPlayer();
-
     }
 
 })(window.MZGrid); // scope confinement
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
-    MZ_cVueJSON.registerCallbackMZ(MZGrid.whenViewReady);
+    function waitForMZ(timeout = 3000) {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+            const interval = setInterval(() => {
+                if (typeof MZ_cVueJSON !== 'undefined' && MZ_cVueJSON !== null) {
+                    clearInterval(interval);
+                    resolve(MZ_cVueJSON);
+                    return;
+                }
+                console.log("waiting for MZ");
+                if (Date.now() - startTime > timeout) {
+                    clearInterval(interval);
+                    reject(new Error(`Timeout waiting for MZ`));
+                }
+            }, 100); // Check every 100ms
+        });
+    }
+
+    async function register2DView() {
+        await waitForMZ(3000);
+        if (document.body.dataset.MZ_Etat === undefined) {
+            MZ_cVueJSON.registerCallback(MZGrid.whenViewReady);
+        } else {
+            MZGrid.whenViewReady();
+        }
+    }
+
+    register2DView();
+
+
 }
 
