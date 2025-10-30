@@ -2182,100 +2182,6 @@ function carte_MZ(ref, tabDepl) {
 	}
 }
 
-/** ********************
-* analyse de la vue pour produire un objet
-* Raistlin 25/09/2020, intégré par Roule
-*
-* en mode objet car ça permet d'isoler les noms
-/**********************/
-
-var MZ_AnalyseVue = {	// ceci est un OBJET stocké comme une variable globale
-	sectionList: {
-		Monstre: "VueMONSTRE",
-		Troll: "VueTROLL",
-		Tresor: "VueTRESOR",
-		Champignon: "VueCHAMPIGNON",
-		Lieu: "VueLIEU",
-		Cenotaphe: "VueCADAVRE"
-	},
-	columnTranslation: {
-		"Dist.": "distance",
-		"Actions": "actions",
-		"Réf.": "Id",
-		"Nom": "nom",
-		"X": "x",
-		"Y": "y",
-		"N": "n",
-		"Niv.": "niveau",
-		"Type": "nom",
-		"Race": "race",
-		"Champignon": "nom",
-	},
-
-	getSectionVueColsHeader: function (section) {
-		let colList = [];
-		for (let col of document.getElementById(section).childNodes[0].childNodes[0].childNodes) {
-			if (typeof col.innerText !== 'undefined') {
-				colList.push(col.innerText);
-			}
-		}
-		return colList;
-	},
-
-	getSectionVueLines: function (section) {
-		let sectionArray = [];
-		for (let line of document.getElementById(section).childNodes[1].childNodes) {
-			let lineArray = [];
-			for (let field of line.childNodes) {
-				lineArray.push(field.innerText);
-			}
-			sectionArray.push(lineArray);
-		}
-		return sectionArray;
-	},
-
-	htmlToObj: function () {
-		this.oVue = {};
-		for (let section in this.sectionList) {
-			let sectionColList = this.getSectionVueColsHeader(this.sectionList[section]);
-			let sectionLineList = this.getSectionVueLines(this.sectionList[section]);
-			let oSection = [];
-			for (let line in sectionLineList) {
-				let oElement = {};
-				for (let col in sectionColList) {
-					let colTranslated = this.columnTranslation[sectionColList[col]];
-					if (!colTranslated) {
-						continue;
-					}
-					oElement[colTranslated] = sectionLineList[line][col];
-				}
-				oSection.push(oElement);
-			}
-			this.oVue[section] = oSection;
-		}
-		this.oVue.caseOrigine = { x: MY_getValue(`${numTroll}.position.X`), y: MY_getValue(`${numTroll}.position.Y`), n: MY_getValue(`${numTroll}.position.N`) };
-	},
-
-	messageHandler: function (event) {
-		debugMZ(`get event, origin=${event.origin}`);
-		debugMZ(`get event, data=${event.data}`);
-		debugMZ(`sendVueExterne, domaine=${MZ_AnalyseVue.domaine}`);
-		MZ_AnalyseVue.otherTab.postMessage(MZ_AnalyseVue.oVue, MZ_AnalyseVue.domaine);
-	},
-
-	openVueExterne: function (url) {
-		window.addEventListener("message", this.messageHandler);
-		let oURL = new URL(url); // extraire le hostname, on en aura besoin dans sendVueExterne
-		this.htmlToObj();
-		// debugMZ(JSON.stringify(this.oVue));
-		this.url = url;
-		this.domaine = `${oURL.protocol}//${oURL.hostname}`;
-		this.otherTab = window.open(url, 'vueExtnMZ');
-		// l'onglet (ou fenêtre) va envoyer un message quand il sera prêt et on lui enevrra la vue alors (fonction messageHandler)
-	},
-};
-
-
 /** ********************************************************
 **** Fin de zone à déplacer dans une bibli commune ********
 **********************************************************/
@@ -11733,7 +11639,7 @@ function MZ_getDistanceAvecSplit(cellTxt) {
 // Encapsulation du code pour les vues externes
 class MZ_cVueExterne {
 	static vue2Ddata = {
-		'Bricol\' Vue': {
+		"Bricol' Vue": {
 			url: `${URL_bricol_mountyhall}vue_form.php`,
 			paramid: 'vue',
 			func: MZ_cVueExterne.getVueScript,
@@ -11770,12 +11676,21 @@ class MZ_cVueExterne {
 				type_vue: 'V5b1'
 			}
 		},
-		'Cube': {
+		Cube: {
 			noform: true,
-			func: function () {
-				MZ_AnalyseVue.openVueExterne(`${URL_MZ}/${URL_vue_cube}`);
-			},
+			func: MZ_cVueExterne.openVueCube,
 			extra_params: {},
+			columnTranslation: {
+				dist: 'distance',
+				actions: 'actions',
+				id: 'Id',
+				nom: 'nom',
+				x: 'x',
+				y: 'y',
+				n: 'n',
+				niv: 'niveau',
+				race: 'race',
+			},
 		},
 
 		/* 'DEBUG': {
@@ -11950,6 +11865,73 @@ class MZ_cVueExterne {
 		} catch (exc) {
 			avertissement("Erreur de traitement du système de vue externe", null, null, exc);
 		}
+	}
+
+	static openVueCube() {
+		let url = `${URL_MZ}/${URL_vue_cube}`;
+		window.addEventListener("message", MZ_cVueExterne.messageHandlerCube);
+		let oURL = new URL(url); // extraire le hostname, on en aura besoin dans sendVueExterne
+
+		MZ_cVueExterne.oVueCube = {};
+		for (let oVueJSON of [
+			MZ_cVueJSON.oMonstres,
+			MZ_cVueJSON.oTrolls,
+			MZ_cVueJSON.oTresors,
+			MZ_cVueJSON.oChampignons,
+			MZ_cVueJSON.oLieux,
+			MZ_cVueJSON.oCenotaphes,
+		]) {
+			//logMZ(`openVueCube section ${oVueJSON.nomBase}`);
+			let oSection = [];
+			for (let oLigneVue of oVueJSON.objets) {
+				//logMZ(`openVueCube ligne ${oLigneVue.id}`);
+				let oElement = {};
+				oLigneVue.loadXYN();
+				oLigneVue.loadDist();
+				for (let param in MZ_cVueExterne.vue2Ddata.Cube.columnTranslation) {
+					let v = oLigneVue[param];
+					if (v === undefined) {
+						switch (param) {
+							case  'niv':
+								let infoMZ = oLigneVue.infoMZ;
+								//logMZ(`infoMZ = ${JSON.stringify(infoMZ)}`);
+								if (infoMZ && infoMZ.niv) {
+									if (infoMZ.niv.min == infoMZ.niv.max) {
+										if (infoMZ.niv.min > 0) v = infoMZ.niv.min;
+									} else {
+										v = infoMZ.niv.min + '-' + infoMZ.niv.max;
+									}
+								}
+								break;
+							case 'actions':
+								let eActions = oLigneVue.eltTdAction;
+								if (eActions) v = eActions.innerText;
+								break;
+							case 'race':
+								if (oLigneVue.getRace) v = oLigneVue.getRace();
+								break;
+						}
+					};
+					if (v === undefined || v == '') continue;
+					oElement[MZ_cVueExterne.vue2Ddata.Cube.columnTranslation[param]] = v;
+				}
+				oSection.push(oElement);
+			}
+			MZ_cVueExterne.oVueCube[oVueJSON.nomBase] = oSection;
+		}
+		MZ_cVueExterne.oVueCube.caseOrigine = { x: MY_getValue(`${numTroll}.position.X`), y: MY_getValue(`${numTroll}.position.Y`), n: MY_getValue(`${numTroll}.position.N`) };
+		//logMZ(JSON.stringify(MZ_cVueExterne.oVueCube));
+		MZ_cVueExterne.urlCube = url;
+		MZ_cVueExterne.domaineCube = `${oURL.protocol}//${oURL.hostname}`;
+		MZ_cVueExterne.otherTabCube = window.open(url, 'vueExtnMZ');
+		// l'onglet (ou fenêtre) va envoyer un message quand il sera prêt et on lui enevrra la vue alors (fonction messageHandler)
+	}
+
+	static messageHandlerCube(event) {
+		debugMZ(`messageHandlerCube get event, origin=${event.origin}`);
+		debugMZ(`messageHandlerCube get event, data=${event.data}`);
+		debugMZ(`messageHandlerCube sendVueExterne, domaine=${MZ_cVueExterne.domaineCube}`);
+		MZ_cVueExterne.otherTabCube.postMessage(MZ_cVueExterne.oVueCube, MZ_cVueExterne.domaineCube);
 	}
 }
 
@@ -12380,7 +12362,7 @@ class MZ_cVueJSON {
 	objets;				// objets de type (dérivé de) MZ_cLigneVue
 	//MH_ft;				// l'object footable - non utilisé
 	MH_json;			// les datas obtenues en JSON par MH en AJAX
-	initSpecificBloc;	// adrese d'une fonction pour les initialisations spécifiques à un bloc (filtres)
+	initSpecificBloc;	// adresse d'une fonction pour les initialisations spécifiques à un bloc (filtres)
 	loaded = false;
 	cLigneClass;
 	nomFiltre;
@@ -12399,6 +12381,7 @@ class MZ_cVueJSON {
 	indxTdY;
 	indxTdN;
 	indxTdNiv;
+	indxTdRace;
 	// filtres
 	eltDivShowFiltre;
 	eltParamFiltreCache;
@@ -12531,6 +12514,9 @@ class MZ_cVueJSON {
 					break;
 				case 'niv.':
 					this.indxTdNiv = iCol;
+					break;
+				case 'race':
+					this.indxTdRace = iCol;
 					break;
 			}
 		}
@@ -13372,6 +13358,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	//static refTr;
 	eltTdBtPV;	// le TD est créé même pour les lignes où les PV ne sont pas dispo
 	eltTdBtPA;	// le TD est créé même pour les lignes où les PA ne sont pas dispo
+	eltTdRace;
 	eltTdGuilde;
 	eltTdNiv;
 	eltEnvoi;
@@ -13381,6 +13368,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		this.initGenerique(MZ_oVueJSON, id, eTr);
 		this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde];
 		this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv];
+		this.eltTdRace = eTr.cells[MZ_oVueJSON.indxTdRace];
 	}
 
 	insertColumn(param) {
@@ -13431,6 +13419,10 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			if (isNaN(this.idGuilde)) this.idGuilde = 0;
 		}
 		return this.idGuilde;
+	}
+
+	getRace() {
+		return this.eltTdRace.innerText;
 	}
 
 	static initGlobal() {
