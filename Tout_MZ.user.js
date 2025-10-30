@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.6.99
+// @version     1.7.001
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.6.99';
+var MZ_latest = '1.7.001';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -11701,54 +11701,58 @@ class MZ_cVueExterne {
 		},*/
 	};
 
+	static loadPorteeFiltre() {
+		// calcule MZ_cVueExterne.limitV, MZ_cVueExterne.limitH, MZ_cVueExterne.porteeVueExt, MZ_cVueExterne.avecFiltre
+		let eLimitH = document.getElementById('MZvueExtMaxH');
+		if (eLimitH) {
+			MZ_cVueExterne.limitH = eLimitH.value;
+		}
+		if (MZ_cVueExterne.limitH != '') {
+			MZ_cVueExterne.limitH = parseInt(MZ_cVueExterne.limitH);
+		}
+		let eLimitV = document.getElementById('MZvueExtMaxV');
+		if (eLimitV) {
+			MZ_cVueExterne.limitV = eLimitV.value;
+		}
+		if (MZ_cVueExterne.limitV != '') {
+			MZ_cVueExterne.limitV = parseInt(MZ_cVueExterne.limitV);
+		}
+		if (MZ_cVueExterne.limitH == '' || MZ_cVueExterne.limitH == 0) {
+			MY_removeValue('MZ_VueExtMaxH');
+			MZ_cVueExterne.porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
+			MZ_cVueExterne.limitH = 999;
+		} else {
+			MY_setValue('MZ_VueExtMaxH', MZ_cVueExterne.limitH);
+			MZ_cVueExterne.porteeVueExt = MZ_cVueExterne.limitH;
+		}
+		if (MZ_cVueExterne.limitV == '' || MZ_cVueExterne.limitV == 0) {
+			MY_removeValue('MZ_VueExtMaxV');
+			MZ_cVueExterne.limitV = 999;
+		} else {
+			MY_setValue('MZ_VueExtMaxV', MZ_cVueExterne.limitV);
+		}
+		MZ_cVueExterne.avecFiltre = false;
+		let eAvecFiltre = document.getElementById('MZVueExtFiltre');
+		if (eAvecFiltre) MZ_cVueExterne.avecFiltre = eAvecFiltre.checked;
+		if (MZ_cVueExterne.avecFiltre) {
+			MY_setValue('MZ_VueExtFiltre', 1);
+		} else {
+			MY_removeValue('MZ_VueExtFiltre');
+		}
+	}
+
 	static getVueScript() {
 		try {
-			let limitH, eLimitH = document.getElementById('MZvueExtMaxH');
-			if (eLimitH) {
-				limitH = eLimitH.value;
-			}
-			if (limitH != '') {
-				limitH = parseInt(limitH);
-			}
-			let limitV, eLimitV = document.getElementById('MZvueExtMaxV');
-			if (eLimitV) {
-				limitV = eLimitV.value;
-			}
-			if (limitV != '') {
-				limitV = parseInt(limitV);
-			}
-			let porteeVueExt;
-			if (limitH == '' || limitH == 0) {
-				MY_removeValue('MZ_VueExtMaxH');
-				porteeVueExt = getPorteVue()[2];	// vue limitée horizontale
-				limitH = 999;
-			} else {
-				MY_setValue('MZ_VueExtMaxH', limitH);
-				porteeVueExt = limitH;
-			}
-			if (limitV == '' || limitV == 0) {
-				MY_removeValue('MZ_VueExtMaxV');
-				limitV = 999;
-			} else {
-				MY_setValue('MZ_VueExtMaxV', limitV);
-			}
-			let avecFiltre = false;
-			let eAvecFiltre = document.getElementById('MZVueExtFiltre');
-			if (eAvecFiltre) avecFiltre = eAvecFiltre.checked;
-			if (avecFiltre) {
-				MY_setValue('MZ_VueExtFiltre', 1);
-			} else {
-				MY_removeValue('MZ_VueExtFiltre');
-			}
+			MZ_cVueExterne.loadPorteeFiltre();
 			let txt;
 			if (MZ_cVueJSON.oMonstres) {
 				// vue "nouvelle"
-				txt = MZ_cVueJSON.oTrolls.getData4Vue2D(limitH, limitV, avecFiltre);
-				txt += MZ_cVueJSON.oMonstres.getData4Vue2D(limitH, limitV, avecFiltre);
-				txt += MZ_cVueJSON.oChampignons.getData4Vue2D(limitH, limitV, avecFiltre);
-				txt += MZ_cVueJSON.oTresors.getData4Vue2D(limitH, limitV, avecFiltre);
-				txt += MZ_cVueJSON.oLieux.getData4Vue2D(limitH, limitV, avecFiltre);
-				txt += `#DEBUT ORIGINE\n${porteeVueExt};${positionToString(getPosition())
+				txt = MZ_cVueJSON.oTrolls.getData4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre);
+				txt += MZ_cVueJSON.oMonstres.getData4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre);
+				txt += MZ_cVueJSON.oChampignons.getData4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre);
+				txt += MZ_cVueJSON.oTresors.getData4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre);
+				txt += MZ_cVueJSON.oLieux.getData4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre);
+				txt += `#DEBUT ORIGINE\n${MZ_cVueExterne.porteeVueExt};${positionToString(getPosition())
 					}\n#FIN ORIGINE\n`;
 			} else {
 				avertissement("[MZ] Erreur MZ pas prêt", null, null);
@@ -11872,6 +11876,8 @@ class MZ_cVueExterne {
 		window.addEventListener("message", MZ_cVueExterne.messageHandlerCube);
 		let oURL = new URL(url); // extraire le hostname, on en aura besoin dans sendVueExterne
 
+		MZ_cVueExterne.loadPorteeFiltre();
+
 		MZ_cVueExterne.oVueCube = {};
 		for (let oVueJSON of [
 			MZ_cVueJSON.oMonstres,
@@ -11888,6 +11894,9 @@ class MZ_cVueExterne {
 				let oElement = {};
 				oLigneVue.loadXYN();
 				oLigneVue.loadDist();
+				if (oLigneVue.distH > MZ_cVueExterne.limitH) continue;
+				if (oLigneVue.distV > MZ_cVueExterne.limitV) continue;
+				if (MZ_cVueExterne.avecFiltre && oLigneVue.eltTr.style.display == 'none') continue;
 				for (let param in MZ_cVueExterne.vue2Ddata.Cube.columnTranslation) {
 					let v = oLigneVue[param];
 					if (v === undefined) {
