@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.003
+// @version     1.7.4
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.003';
+var MZ_latest = '1.7.4';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -11662,6 +11662,7 @@ class MZ_cVueExterne {
 				id: `${numTroll};${positionToString(getPosition())}`
 			}
 		},
+		/* ne fonctionnent plus
 		'Vue Gloumfs 2D': {
 			url: URL_vue_Gloumfs2D,
 			paramid: 'vue_mountyzilla',
@@ -11674,6 +11675,7 @@ class MZ_cVueExterne {
 			func: MZ_cVueExterne.getVueScript,
 			extra_params: {}
 		},
+		*/
 		'Grouky Vue!': {
 			url: URL_vue_Grouky,
 			paramid: 'vue',
@@ -13439,11 +13441,25 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	getRace() {
-		return this.eltTdRace.innerText;
+		if (this.eltTdRace) return this.eltTdRace.innerText;
+		if (!this.eltTdNiv) return;
+		let r = this.eltTdNiv.innerText.substr(0, 1);
+		switch (r.toLowerCase()) {
+			case 't': return 'Tomawak';
+			case 'k': return 'Kastar';
+			case 'd': return 'Durakuir';
+			case 's': return 'Skrim';
+			case 'n': return 'Nkrwapu';
+			case 'g': return 'Darkling';
+		}
 	}
 
 	getNiveau() {
-		let niv = parseInt(this.eltTdNiv.innerText);
+		let nivtxt;
+		if (this.eltTdNiv) nivtxt= this.eltTdNiv.innerText;
+		let niv = parseInt(nivtxt);
+		if (!isNaN(niv)) return niv;
+		niv = parseInt(nivtxt.substr(1));
 		if (!isNaN(niv)) return niv;
 	}
 
