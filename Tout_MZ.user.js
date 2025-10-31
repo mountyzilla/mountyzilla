@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.002
+// @version     1.7.003
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.002';
+var MZ_latest = '1.7.003';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -8110,7 +8110,12 @@ function createOrGetGrandCadre() {
 
 	grandCadre.style.border = 'solid 5px red';
 	grandCadre.style.width = 'auto';
-	insertBefore(rappels, grandCadre);
+	if (rappels) {
+		insertBefore(rappels, grandCadre);
+	} else {
+		logMZ(`createOrGetGrandCadre : pas de "rappels", url=${window.location}`);
+		document.body.apprenChild(grandCadre);
+	}
 	return grandCadre;
 }
 
@@ -9924,6 +9929,7 @@ function do_option() {
 					tabK.push(k);
 				}
 			}
+			if (!confirm(`OK pour effacer ${tabK.length} informations du Trõll ${numTroll} ?`)) return;
 			for (let i = 0; i < tabK.length; ++i) {
 				MY_removeValue(tabK[i]);
 			}
@@ -11910,6 +11916,8 @@ class MZ_cVueExterne {
 									} else {
 										v = infoMZ.niv.min + '-' + infoMZ.niv.max;
 									}
+								} else if (oLigneVue.getNiveau) {
+									v = oLigneVue.getNiveau();
 								}
 								break;
 							case 'actions':
@@ -13432,6 +13440,11 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 
 	getRace() {
 		return this.eltTdRace.innerText;
+	}
+
+	getNiveau() {
+		let niv = parseInt(this.eltTdNiv.innerText);
+		if (!isNaN(niv)) return niv;
 	}
 
 	static initGlobal() {
