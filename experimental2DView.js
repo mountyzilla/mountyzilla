@@ -5,7 +5,7 @@ window.MZGrid = window.MZGrid || {};
 
     const TREASURE_ICONS = {
         "GG": "E_Gold02.png",
-        "anneau": "I_Scroll02.png",
+        "anneau": "Ac_Ring02.png",
         "arme (1 main)": "S_Sword07.png",
         "arme (2 mains)": "W_Axe006_R.png",
         "arme": "S_Sword07.png",
@@ -221,6 +221,18 @@ window.MZGrid = window.MZGrid || {};
             this.indexCategory(places, (cell, o) => cell.addPlace(o));
             this.indexCategory(mushrooms, (cell, o) => cell.addMushroom(o));
             this.indexCategory(graves, (cell, o) => cell.addGrave(o));
+
+            for (let i = 0; i < this.cells.length; i++) {
+                if (null == this.cells[i]) {
+                    continue;
+                }
+                for (let j = 0; j < this.cells[i].length; j++) {
+                    let cell = this.cells[i][j];
+                    if (null != cell) {
+                        cell.sortContents();
+                    }
+                }
+            }
         }
 
         indexCategory(gridElements, addFunction) {
@@ -238,6 +250,26 @@ window.MZGrid = window.MZGrid || {};
             }
         }
 
+        insertIntoDom() {
+            let html = this.convertToHtml("mz-map-grid-view");
+            let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15'></img></div>";
+            $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div></div>`);
+
+            $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
+            this.gotoPlayer();
+
+            document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
+                cell.addEventListener('click', function () {
+                    this.classList.add('expanded');
+                });
+
+                cell.addEventListener('mouseleave', function () {
+                    this.classList.remove('expanded');
+                });
+            });
+            document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
+        }
+
         /**
          * Centre la grille sur la cellule du joueur.
          */
@@ -253,7 +285,7 @@ window.MZGrid = window.MZGrid || {};
             let scrollLeft = cellLeft - (gridHolder.clientWidth / 2) + (cellRect.width / 2);
             let scrollTop = cellTop - (gridHolder.clientHeight / 2) + (cellRect.height / 2);
 
-            gridHolder.scrollTo({left: scrollLeft, top: scrollTop});
+            gridHolder.scrollTo({left: scrollLeft, top: scrollTop, behavior: 'smooth'});
         };
 
     }
@@ -297,7 +329,7 @@ window.MZGrid = window.MZGrid || {};
         }
 
         trollToHtml(troll) {
-            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name} ${troll.race.substring(0,2)}${troll.level}`;
+            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name} ${troll.race.substring(0, 2)}${troll.level}`;
         }
 
         monsterToHtml(monster) {
@@ -323,7 +355,7 @@ window.MZGrid = window.MZGrid || {};
                     continue;
                 }
                 let type = TREASURE_TYPES[treasureName];
-                type = null == type ? treasureName : type[0];
+                type = null == type ? treasureName : type;
                 summary.set(type, (summary.get(type) ?? 0) + 1);
             }
             if (summary.size === 0) {
@@ -373,40 +405,44 @@ window.MZGrid = window.MZGrid || {};
             return 0;
         };
 
+        sortContents() {
+            this.monsters?.sort(this.sortByDepthAndName);
+            this.trolls?.sort(this.sortByDepthAndName);
+            this.mushrooms?.sort(this.sortByDepthAndName);
+            this.graves?.sort(this.sortByDepthAndName);
+            this.places?.sort(this.sortByDepthAndName);
+            this.treasures?.sort(this.sortByDepthAndName);
+
+        }
+
         addMonster(monster) {
             this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
-            this.monsters.sort(this.sortByDepthAndName); // TODO: sort when all add operations are done
         }
 
         addTroll(troll) {
             this.trolls = this.trolls ?? [];
             this.trolls.push(troll);
-            this.trolls.sort(this.sortByDepthAndName);
         }
 
         addMushroom(mushroom) {
             this.mushrooms = this.mushrooms ?? [];
             this.mushrooms.push(mushroom);
-            this.mushrooms.sort(this.sortByDepthAndName);
         }
 
         addGrave(grave) {
             this.graves = this.graves ?? [];
             this.graves.push(grave);
-            this.graves.sort(this.sortByDepthAndName);
         }
 
         addPlace(place) {
             this.places = this.places ?? [];
             this.places.push(place);
-            this.places.sort(this.sortByDepthAndName);
         }
 
         addTreasure(treasure) {
             this.treasures = this.treasures ?? [];
             this.treasures.push(treasure);
-            this.treasures.sort(this.sortByDepthAndName);
         }
 
     }
@@ -479,6 +515,32 @@ window.MZGrid = window.MZGrid || {};
 
     const css = String.raw;
     const styles = css`
+
+        #mz-map-wrapper {
+            position: relative;
+        }
+        
+        #mz-map-grid-scroll {
+            max-width: 85vw;
+            max-height: 80vh;
+            overflow: auto;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        #mz-map-grid-toolbar {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: white;
+            border: 1px solid #999;
+            padding: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+            max-width: 30rem;
+        }
+
         .mz-map-grid-view-odd {
             background: antiquewhite;
             position: relative;
@@ -507,9 +569,6 @@ window.MZGrid = window.MZGrid || {};
 
         .mz-map-grid-view-cell:hover {
             border-color: #4CAF50;
-        }
-
-        .mz-map-grid-view-cell.expanded {
         }
 
         .mz-map-grid-view-cell-content {
@@ -615,14 +674,23 @@ window.MZGrid = window.MZGrid || {};
 
     MZGrid.insertGrid = function () {
         MZGrid.injectStyles();
-        let x = parseInt(MY_getValue(`${numTroll}.position.X`));
-        let y = parseInt(MY_getValue(`${numTroll}.position.Y`));
-        let n = parseInt(MY_getValue(`${numTroll}.position.N`));
+        let x = 0;
+        let y = 0;
+        let n = 0;
 
-        let rangeText = $("#infoTab div ul li")[2].textContent;
+        let positionText = document.getElementsByClassName('position')[0].textContent;
+        let positionMatch = positionText.match(/(-?\d+).*?= (-?\d+).*?= (-?\d+)/, positionText);
+        if (positionMatch) {
+            x = parseInt(positionMatch[1]);
+            y = parseInt(positionMatch[2]);
+            n = parseInt(positionMatch[3]);
+        }
+        console.log(positionMatch);
+        let infoTabValues = $("#infoTab div ul li");
+        let rangeText = infoTabValues[2].textContent;
         let rangeX = 1;
         let rangeY = 1;
-        let rangeMatch = rangeText.match(/([0-9]+) cases.*? et ([0-9]+)/);
+        let rangeMatch = rangeText.match(/(\d+) cases.*? et (\d+)/);
         if (rangeMatch) {
             rangeX = parseInt(rangeMatch[1]);
             rangeY = parseInt(rangeMatch[2]);
@@ -630,21 +698,7 @@ window.MZGrid = window.MZGrid || {};
 
         MZGrid.grid = new Grid(x, y, n, rangeX, rangeY);
         MZGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-        html = MZGrid.grid.convertToHtml("mz-map-grid-view");
-        $('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
-
-        $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
-        MZGrid.grid.gotoPlayer();
-
-        document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
-            cell.addEventListener('click', function () {
-                this.classList.add('expanded');
-            });
-
-            cell.addEventListener('mouseleave', function () {
-                this.classList.remove('expanded');
-            });
-        });
+        MZGrid.grid.insertIntoDom();
     }
 
     MZGrid.whenViewReady = function () {
