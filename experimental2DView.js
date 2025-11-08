@@ -3,24 +3,118 @@ window.MZGrid = window.MZGrid || {};
 
 (function (MZGrid) {
 
-    // TODO: use this only and not mh_caracs
     const TREASURE_ICONS = {
-        "anneau" : "I_Scroll02.png",
-        "armure" : "A_Armor05.png",
-        "arme" : "S_Sword07.png",
-        "arme (1 main)" : "S_Sword07.png",
-        "arme (2 mains)" : "W_Axe006_R.png",
-        "bottes" : "A_Shoes02.png ",
-        "bouclier" : "E_Metal02.png",
-        "casque" : "C_Elm03.png",
-        "talisman" : "Ac_Necklace03.png",
-        "matériau" : "I_Crystal01.png",
-        "parchemin" : "I_Scroll02.png",
-        "carte" : "I_Map.png",
-        "outil" : "Z_BoneWrench.png",
-        "composant" : "I_Tentacle.png",
-        "potion" : "P_Medicine05.png",
-        "GG" : "E_Gold02.png",
+        "GG": "E_Gold02.png",
+        "anneau": "I_Scroll02.png",
+        "arme (1 main)": "S_Sword07.png",
+        "arme (2 mains)": "W_Axe006_R.png",
+        "arme": "S_Sword07.png",
+        "armure": "A_Armor05.png",
+        "bidouille": "S_Magic02.png",
+        "bottes": "A_Shoes02.png",
+        "bouclier": "E_Metal02.png",
+        "carte": "I_Map.png",
+        "casque": "C_Elm03.png",
+        "composant": "I_Tentacle.png",
+        "minerai": "I_Crystal01.png",
+        "materiau": "I_Crystal01.png",
+        "outil": "Z_BoneWrench.png",
+        "parchemin": "I_Scroll02.png",
+        "potion": "P_Medicine05.png",
+        "special": "E_Gold01.png",
+        "talisman": "Ac_Necklace03.png",
+    };
+
+    const TREASURE_TYPES = {
+        "armure d'anneaux": "armure",
+        "couronne d'obsidienne": "casque",
+        "coutelas d'obsidienne": "arme (1 main)",
+        "cuirasse d'ossements": "armure",
+        "cuirasse d'ecailles": "armure",
+        "gros'porte": "bouclier",
+        "hache a deux mains d'obsidienne": "arme (2 mains)",
+        "haubert d'ecailles": "armure",
+        "lame d'obsidienne": "arme (1 main)",
+        "masse d'arme": "arme (1 main)",
+        "talisman d'obsidienne": "talisman",
+        "tunique d'ecailles": "armure",
+        'anneau de protection': "anneau",
+        'anneau magique': "anneau",
+        'armure de bois': "armure",
+        'armure de cuir': "armure",
+        'armure de peaux': "armure",
+        'armure de pierre': "armure",
+        'armure de plates': "armure",
+        'baton de mage': "arme (1 main)",
+        'baton leste': "arme (2 mains)",
+        'baton de mage': "arme (2 mains)",
+        'bottes': "bottes",
+        'bouclier a pointes': "bouclier",
+        'boulet et chaîne': "arme (1 main)",
+        'bâtons de parade': "arme (2 mains)",
+        'cagoule': "casque",
+        'casque en cuir': "casque",
+        'casque en metal': "casque",
+        'casque a cornes': "casque",
+        'casque a pointes': "casque",
+        'chapeau pointu': "casque",
+        'chaîne cloutee': "arme (2 mains)",
+        'collier de dents': "talisman",
+        'collier de pierre': "talisman",
+        'collier a pointes': "talisman",
+        'cotte de mailles': "armure",
+        'couronne de cristal': "casque",
+        'couronne de ronces': "casque",
+        'coutelas en os': "arme (1 main)",
+        'crochet': "arme (1 main)",
+        'cuir bouilli': "armure",
+        'culotte en cuir': "armure",
+        'dague': "arme (1 main)",
+        'epee courte': "arme (1 main)",
+        'epee longue': "arme (1 main)",
+        'espadon': "arme (2 mains)",
+        'filet': "arme (1 main)",
+        'fouet': "arme (1 main)",
+        'fourrures': "armure",
+        'gantelet': "arme (1 main)",
+        'gorgeron en cuir': "armure",
+        'gorgeron en metal': "armure",
+        'gourdin cloute': "arme (1 main)",
+        'gourdin': "arme (1 main)",
+        'grimoire': "bouclier",
+        'grosse racine': "arme (1 main)",
+        'grosse stalagmite': "arme (2 mains)",
+        'hache de bataille': "arme (2 mains)",
+        'hache de guerre en os': "arme (2 mains)",
+        'hache de guerre en pierre': "arme (2 mains)",
+        'hallebarde': "arme (2 mains)",
+        'haubert de mailles': "armure",
+        'heaume': "casque",
+        'jambieres en cuir': "bottes",
+        'jambieres en fourrure': "bottes",
+        'jambieres en maille': "bottes",
+        'jambieres en metal': "bottes",
+        'jambieres en os': "bottes",
+        'lame en os': "arme (1 main)",
+        'lame en pierre': "arme (1 main)",
+        'lorgnons': "casque",
+        'machette': "arme (1 main)",
+        'menhir': "bouclier",
+        'oeil de sang': "talisman",
+        'pagne de mailles': "armure",
+        'pagne en cuir': "armure",
+        'pendentif incandescent': "talisman",
+        'robe de mage': "armure",
+        'rondache en bois': "bouclier",
+        'rondache en metal': "bouclier",
+        'sandales': "bottes",
+        'souliers dores': "bottes",
+        'talisman de pierre': "talisman",
+        'targe': "bouclier",
+        'torche': "arme (1 main)",
+        'torque de pierre': "talisman",
+        'tunique': "armure",
+        'turban': "casque",
     };
 
     class Grid {
@@ -175,6 +269,7 @@ window.MZGrid = window.MZGrid || {};
         }
 
         convertToHtml(i, j, centerX, centerY) {
+
             const id = this.youAreHere ? `id="you-are-here"` : ``;
             let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}"><div class="mz-map-grid-view-cell-content">`;
             if (null != this.monsters
@@ -188,8 +283,11 @@ window.MZGrid = window.MZGrid || {};
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-view-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
-            for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange ; depth++) {
-                let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtml) + this.groupToHtml(depth, this.monsters, this.monsterToHtml) + this.treasuresToHtml(depth);
+            for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange; depth++) {
+                let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtml)
+                    + this.groupToHtml(depth, this.monsters, this.monsterToHtml)
+                    + this.groupToHtml(depth, this.places, this.placeToHtml)
+                    + this.treasuresToHtml(depth);
                 if (depthHtml.length > 0) {
                     html += `<span class="mz-map-grid-view-cell-header">${depth}</span>` + depthHtml;
                 }
@@ -199,11 +297,15 @@ window.MZGrid = window.MZGrid || {};
         }
 
         trollToHtml(troll) {
-            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name}`;
+            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name} ${troll.race.substring(0,2)}${troll.level}`;
         }
 
         monsterToHtml(monster) {
             return `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.groupName}`;
+        }
+
+        placeToHtml(place) {
+            return `<span class="mz-map-grid-view-place" mz_id=${place.id} mz_grid_type="lieux">${place.name}`;
         }
 
         treasuresToHtml(depth) {
@@ -220,12 +322,8 @@ window.MZGrid = window.MZGrid || {};
                     summary.set('GG', (summary.get('GG') ?? 0) + 1);
                     continue;
                 }
-                let type = mh_caracs[treasureName];
-                if (null == type) {
-                    type = treasureName;
-                } else {
-                    type = type[0];
-                }
+                let type = TREASURE_TYPES[treasureName];
+                type = null == type ? treasureName : type[0];
                 summary.set(type, (summary.get(type) ?? 0) + 1);
             }
             if (summary.size === 0) {
@@ -251,7 +349,7 @@ window.MZGrid = window.MZGrid || {};
                     continue;
                 }
                 let name = item.groupName ?? item.name;
-                summary.set(name, summary.get(name) ?? [itemToSpan(item) , 0]);
+                summary.set(name, summary.get(name) ?? [itemToSpan(item), 0]);
                 summary.get(name)[1]++;
             }
             if (summary.size === 0) {
@@ -343,15 +441,13 @@ window.MZGrid = window.MZGrid || {};
                     this.name = val.nom.options.sortValue;
                     break;
                 case "tresors" :
-                    this.name = val.nom.options.sortValue;
+                    this.name = val.nom.options.sortValue.epure();
                     break;
                 case "trolls" :
                     this.name = val.nom.options.sortValue;
                     this.race = val.race;
                     this.level = val.niv;
                     break;
-
-
             }
         }
 
@@ -383,11 +479,11 @@ window.MZGrid = window.MZGrid || {};
 
     const css = String.raw;
     const styles = css`
-        .mz-map-grid-view-odd { 
-            background: antiquewhite; 
-            position: relative; 
-            display: inline-block; 
-            padding-top: 0.5rem; 
+        .mz-map-grid-view-odd {
+            background: antiquewhite;
+            position: relative;
+            display: inline-block;
+            padding-top: 0.5rem;
             padding-bottom: 0.5rem;
         }
 
@@ -433,7 +529,7 @@ window.MZGrid = window.MZGrid || {};
             left: 0;
             transform: translateY(-50%);
             background: inherit;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             border-radius: 5px;
             border: 2px solid #4CAF50;
             width: 15rem;
@@ -479,6 +575,10 @@ window.MZGrid = window.MZGrid || {};
             display: block;
         }
 
+        .mz-map-grid-view-place {
+            display: block;
+        }
+
         .mz-map-grid-view-group {
             display: block;
             margin-top: 0.5px;
@@ -513,12 +613,22 @@ window.MZGrid = window.MZGrid || {};
         document.head.appendChild(style);
     }
 
-    MZGrid.insertGrid = function() {
+    MZGrid.insertGrid = function () {
         MZGrid.injectStyles();
         let x = parseInt(MY_getValue(`${numTroll}.position.X`));
         let y = parseInt(MY_getValue(`${numTroll}.position.Y`));
         let n = parseInt(MY_getValue(`${numTroll}.position.N`));
-        MZGrid.grid = new Grid(x, y, n, 14, 7);
+
+        let rangeText = $("#infoTab div ul li")[2].textContent;
+        let rangeX = 1;
+        let rangeY = 1;
+        let rangeMatch = rangeText.match(/([0-9]+) cases.*? et ([0-9]+)/);
+        if (rangeMatch) {
+            rangeX = parseInt(rangeMatch[1]);
+            rangeY = parseInt(rangeMatch[2]);
+        }
+
+        MZGrid.grid = new Grid(x, y, n, rangeX, rangeY);
         MZGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
         html = MZGrid.grid.convertToHtml("mz-map-grid-view");
         $('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
@@ -527,11 +637,11 @@ window.MZGrid = window.MZGrid || {};
         MZGrid.grid.gotoPlayer();
 
         document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
-            cell.addEventListener('click', function() {
+            cell.addEventListener('click', function () {
                 this.classList.add('expanded');
             });
 
-            cell.addEventListener('mouseleave', function() {
+            cell.addEventListener('mouseleave', function () {
                 this.classList.remove('expanded');
             });
         });
