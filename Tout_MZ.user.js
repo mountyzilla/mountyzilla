@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.5
+// @version     1.7.6
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.5';
+var MZ_latest = '1.7.6';
 var MZ_changeLog = [
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
@@ -10772,15 +10772,6 @@ var porteeVue = [0, 0, 0, 0];
 var winCurr = null;
 var offsetX, offsetY;
 
-// Diplomatie
-var Diplo = {
-	Guilde: {},
-	Troll: {},
-	Monstre: {}
-	// .mythiques: uniquement si option activée
-};
-var isDiploRaw = true; // = si la Diplo n'a pas encore été analysée
-
 // Infos tactiques
 // => MZ_Tactique.popup
 
@@ -11255,6 +11246,8 @@ class MZ_cVueExterne {
 				n: 'n',
 				niv: 'niveau',
 				race: 'race',
+				guilde: 'guilde',
+				// la diplo est traitée spécifiquement
 			},
 		},
 
@@ -11441,6 +11434,10 @@ class MZ_cVueExterne {
 		window.addEventListener("message", MZ_cVueExterne.messageHandlerCube);
 		let oURL = new URL(url); // extraire le hostname, on en aura besoin dans sendVueExterne
 
+		let diplo = MY_getValue(`${numTroll}.diplo.guilde`);
+		if (diplo) diplo = JSON.parse(diplo);
+		//logMZ(diplo);
+
 		MZ_cVueExterne.loadPorteeFiltre();
 
 		MZ_cVueExterne.oVueCube = {};
@@ -11486,10 +11483,47 @@ class MZ_cVueExterne {
 							case 'race':
 								if (oLigneVue.getRace) v = oLigneVue.getRace();
 								break;
+							case 'guilde':
+								if (oLigneVue.getGuilde) v = oLigneVue.getGuilde();
+								break;
 						}
 					};
-					if (v === undefined || v == '') continue;
+					if (v === undefined || v === '') continue;
 					oElement[MZ_cVueExterne.vue2Ddata.Cube.columnTranslation[param]] = v;
+				}
+				if (oVueJSON.nomBase == 'trolls' && diplo)  {
+					let guildeID = oLigneVue.getGuildeID();
+					let bDone = false;
+					for (let typeDiplo in diplo) { 	// amis0, etc.
+						let oSubDiplo = diplo[typeDiplo];
+						if (typeof oSubDiplo !== "object") continue;
+						// priorité Troll
+						//logMZ('oSubDiplo', oSubDiplo);
+						let tabID = [];
+						if (oSubDiplo.Troll) tabID = oSubDiplo.Troll.split(';');
+						for (let id2 of tabID) {
+							if (id2 == oElement.Id) {
+								bDone = true;
+								oElement.diplo = typeDiplo;
+								if (oSubDiplo.titre) oElement.dplText = oSubDiplo.titre;
+								if (oSubDiplo.couleur) oElement.dplColor = oSubDiplo.couleur;
+								break;
+							}
+						}
+						// sinon guilde
+						tabID = [];
+						if (oSubDiplo.Guilde) tabID = oSubDiplo.Guilde.split(';');
+						for (let id2 of tabID) {
+							if (id2 == guildeID) {
+								bDone = true;
+								oElement.diplo = typeDiplo;
+								if (oSubDiplo.titre) oElement.dplText = oSubDiplo.titre;
+								if (oSubDiplo.couleur) oElement.dplColor = oSubDiplo.couleur;
+								break;
+							}
+						}
+						if (bDone) break;
+					}
 				}
 				oSection.push(oElement);
 			}
@@ -11676,60 +11710,6 @@ function showPXTroll(evt) {
 function hidePXTroll() {
 	let bulle = document.getElementById('bulleTrollPX');
 	bulle.style.visibility = 'hidden';
-}
-
-// utilisé en vue V2
-// à déplacer en tant que méthode statique dans la classe MZ_cLigneTroll
-// pour l'instant, ça renseigne la variable globale Diplo (burk)
-function computeDiplo() {
-	// On extrait les données de couleur et on les stocke par id
-	// Ordre de préséance :
-	//  source Guilde < source Perso
-	//  guilde cible < troll cible
-
-	/* Diplo de Guilde */
-	diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`) ? JSON.parse(MY_getValue(`${numTroll}.diplo.guilde`)) : {};
-	if (diploGuilde && diploGuilde.isOn == 'true') {
-		// Guilde perso
-		if (diploGuilde.guilde) {
-			Diplo.Guilde[diploGuilde.guilde.id] = {
-				couleur: diploGuilde.guilde.couleur,
-				titre: 'Ma Guilde'
-			};
-		}
-		// Guildes/Trolls A/E
-		for (let AE in { Amis: 0, Ennemis: 0 }) {
-			for (let i = 0; i < 5; i++) {
-				if (!diploGuilde[AE + i]) {
-					continue;
-				}
-				for (let type in { Guilde: 0, Troll: 0 }) {
-					let liste = diploGuilde[AE + i][type].split(';');
-					for (let j = liste.length - 2; j >= 0; j--) {
-						Diplo[type][liste[j]] = {
-							couleur: diploGuilde[AE + i].couleur,
-							titre: diploGuilde[AE + i].titre
-						};
-					}
-				}
-			}
-		}
-	}
-
-	/* Diplo Perso */
-	// let diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
-	if (diploPerso && diploPerso.isOn == 'true') {
-		for (let type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
-			for (let id in diploPerso[type]) {
-				Diplo[type][id] = diploPerso[type][id];
-			}
-		}
-	}
-	if (diploPerso.mythiques) {
-		Diplo.mythiques = diploPerso.mythiques;
-	}
-
-	isDiploRaw = false;
 }
 
 /** x~x Systèmes Tactiques --------------------------------------------- */
@@ -12590,6 +12570,62 @@ class MZ_cLigneVue {
 		}
 		return true;
 	}
+
+	static initDiplo() {
+		// On extrait les données de couleur et on les stocke par id
+		// Ordre de préséance :
+		//  source Guilde < source Perso
+		//  guilde cible < troll cible
+
+		if (MZ_cLigneVue.diplo) return;	// déjà fait
+
+		MZ_cLigneVue.diplo = {Guilde: {}, Troll: {}, Monstre: {}}
+
+		/* Diplo de Guilde */
+		
+		let diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`);
+		if (diploGuilde) diploGuilde = JSON.parse(diploGuilde);
+		if (diploGuilde && diploGuilde.isOn == 'true') {
+			// Guilde perso
+			if (diploGuilde.guilde) {
+				MZ_cLigneVue.diplo.Guilde[diploGuilde.guilde.id] = {
+					couleur: diploGuilde.guilde.couleur,
+					titre: 'Ma Guilde'
+				};
+			}
+			// Guildes/Trolls A/E
+			for (let AE of ['Amis', 'Ennemis']) {
+				for (let i = 0; i < 5; i++) {
+					if (!diploGuilde[AE + i]) {
+						continue;
+					}
+					for (let type of ['Guilde', 'Troll']) {
+						let liste = diploGuilde[AE + i][type].split(';');
+						for (let j = liste.length - 2; j >= 0; j--) {
+							MZ_cLigneVue.diplo[type][liste[j]] = {
+								couleur: diploGuilde[AE + i].couleur,
+								titre: diploGuilde[AE + i].titre
+							};
+						}
+					}
+				}
+			}
+		}
+
+		/* Diplo Perso */
+		// let diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
+		if (diploPerso && diploPerso.isOn == 'true') {
+			for (let type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
+				for (let id in diploPerso[type]) {
+					MZ_cLigneVue.diplo[type][id] = diploPerso[type][id];
+				}
+			}
+		}
+		if (diploPerso.mythiques) {
+			MZ_cLigneVue.diplo.mythiques = diploPerso.mythiques;
+		}
+	}
+
 }
 
 class MZ_cLigneMonstre extends MZ_cLigneVue {
@@ -12647,38 +12683,28 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
 
 		// diplo
-		if (isDiploRaw) computeDiplo();
-		// ceci permet de retirer la diplo (non implémenté dans la nouvelle vue)
-		let aAppliquer = Diplo;
-		if (false) {//checkBoxDiplo.checked) {
-			// Pour retour à l'affichage basique sur désactivation de la diplo
-			aAppliquer = {
-				Guilde: {},
-				Troll: {},
-				Monstre: {}
-			};
-		}
+		MZ_cLigneVue.initDiplo();
 		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
 			let nom =oLigne.nom.toLowerCase();
 			let tr = oLigne.eltTr;
-			if (aAppliquer.Monstre[oLigne.id]) {
+			if (MZ_cLigneVue.diplo.Monstre[oLigne.id]) {
 				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
-				tr.style.backgroundColor = aAppliquer.Monstre[oLigne.id].couleur;
+				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Monstre[oLigne.id].couleur;
+				tr.style.backgroundColor = MZ_cLigneVue.diplo.Monstre[oLigne.id].couleur;
 				tr.diploActive = 'oui';
-				let descr = aAppliquer.Monstre[oLigne.id].titre;
+				let descr = MZ_cLigneVue.diplo.Monstre[oLigne.id].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
 				}
-			} else if (aAppliquer.mythiques &&
+			} else if (MZ_cLigneVue.diplo.mythiques &&
 					nom.match(/^[^\[]*liche/) ||
 					nom.match(/^[^\[]*hydre/) ||
 					nom.match(/^[^\[]*balrog/) ||
 					nom.match(/^[^\[]*beholder/) ||
 					nom.match(/^[^\[]*sidoine/)) {
 				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) td.style.backgroundColor = aAppliquer.mythiques;
-				tr.style.backgroundColor = aAppliquer.mythiques;
+				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.mythiques;
+				tr.style.backgroundColor = MZ_cLigneVue.diplo.mythiques;
 				tr.diploActive = 'oui';
 				oLigne.eltTdNom.title = 'Monstre Mythique';
 			} else {
@@ -12986,7 +13012,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 	}
 
 	getGuildeID() {
-		if (this.idGuilde !== undefined) return idGuilde;
+		if (this.idGuilde !== undefined) return this.idGuilde;
 		let eltA = this.eltTdGuilde.getElementsByTagName('a')[0];
 		this.idGuilde = 0;
 		if (eltA) {
@@ -12995,6 +13021,10 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 			if (isNaN(this.idGuilde)) this.idGuilde = 0;
 		}
 		return this.idGuilde;
+	}
+
+	getGuilde() {
+		if (this.eltTdGuilde) return this.eltTdGuilde.innerText;
 	}
 
 	getRace() {
@@ -13047,34 +13077,24 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 
 		// diplo
-		if (isDiploRaw) computeDiplo();
-		// ceci permet de retirer la diplo (non implémenté dans la nouvelle vue)
-		let aAppliquer = Diplo;
-		if (false) {//checkBoxDiplo.checked) {
-			// Pour retour à l'affichage basique sur désactivation de la diplo
-			aAppliquer = {
-				Guilde: {},
-				Troll: {},
-				Monstre: {}
-			};
-		}
-		//logMZ(`initGlobal Trolls aAppliquer ${JSON.stringify(aAppliquer)}`);
+		MZ_cLigneVue.initDiplo();
+		//logMZ(`initGlobal Trolls MZ_cLigneVue.diplo ${JSON.stringify(MZ_cLigneVue.diplo)}`);
 		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
 			let idG = oLigne.getGuildeID();
 			let tr = oLigne.eltTr;
-			if (aAppliquer.Troll[oLigne.id]) {
-				//logMZ(`initGlobal Trolls aAppliquer id=${oLigne.id}`);
-				let descr = aAppliquer.Troll[oLigne.id].titre;
+			if (MZ_cLigneVue.diplo.Troll[oLigne.id]) {
+				//logMZ(`initGlobal Trolls MZ_cLigneVue.diplo id=${oLigne.id}`);
+				let descr = MZ_cLigneVue.diplo.Troll[oLigne.id].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
 				}
-				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Troll[oLigne.id].couleur;
-			} else if (idG > 0 && aAppliquer.Guilde[idG]) {
-				let descr = aAppliquer.Guilde[idG].titre;
+				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Troll[oLigne.id].couleur;
+			} else if (idG > 0 && MZ_cLigneVue.diplo.Guilde[idG]) {
+				let descr = MZ_cLigneVue.diplo.Guilde[idG].titre;
 				if (descr) {
 					oLigne.eltTdNom.title = descr;
 				}
-				for (let td of tr.children) td.style.backgroundColor = aAppliquer.Guilde[idG].couleur;
+				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Guilde[idG].couleur;
 			} else {
 				for (let td of tr.children) td.style.backgroundColor = '';
 				oLigne.eltTdNom.removeAttribute('title');
