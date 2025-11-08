@@ -37,7 +37,7 @@ window.MZGrid = window.MZGrid || {};
 
         convertToHtml(id) {
             const borderIndex = this.gridSize - 1;
-            let html = `<div id="${id}" style="display: grid; column-gap: 2px; row-gap: 2px; grid-template-columns: repeat(${this.gridSize}, 15rem);"> `;
+            let html = `<div id="${id}" class="mz-map-grid-view-wrapper" style="grid-template-columns: repeat(${this.gridSize}, 15rem); grid-template-rows: repeat(${this.gridSize}, 10rem);"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 let column = this.cells[i];
                 for (let j = 0; j < this.gridSize; j++) {
@@ -175,14 +175,14 @@ window.MZGrid = window.MZGrid || {};
 
         convertToHtml(i, j, centerX, centerY) {
             const id = this.youAreHere ? `id="you-are-here"` : ``;
-            let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}">`;
+            let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}"><div class="mz-map-grid-view-cell-content">`;
             if (null != this.monsters
                 || null != this.trolls
                 || null != this.treasures
                 || null != this.places
                 || null != this.mushrooms
                 || null != this.graves) {
-                html += `<span class="mz-map-cell-header">${this.x} ${this.y}</span>`;
+                html += `<span class="mz-map-grid-view-cell-header">${this.x} ${this.y}</span>`;
             }
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-view-here">${this.youAreHere} : Vous &ecirc;tes ici</span>`;
@@ -190,7 +190,7 @@ window.MZGrid = window.MZGrid || {};
             html += this.groupToHtml(this.trolls, this.trollToHtml);
             html += this.groupToHtml(this.monsters, this.monsterToHtml);
             html += this.treasuresToHtml();
-            html += "</div>";
+            html += "</div></div>";
             return html;
         }
 
@@ -265,42 +265,49 @@ window.MZGrid = window.MZGrid || {};
             return html;
         }
 
-        sortByDepth(a, b) {return a.n - b.n};
+        sortByDepthAndName(a, b) {
+            if (a.n != b.n) {
+                return a.n - b.n;
+            }
+            if (a.name < b.name) return -1;
+            if (a.name > b.name) return 1;
+            return 0;
+        };
 
         addMonster(monster) {
             this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
-            this.monsters.sort(this.sortByDepth);
+            this.monsters.sort(this.sortByDepthAndName);
         }
 
         addTroll(troll) {
             this.trolls = this.trolls ?? [];
             this.trolls.push(troll);
-            this.trolls.sort(this.sortByDepth);
+            this.trolls.sort(this.sortByDepthAndName);
         }
 
         addMushroom(mushroom) {
             this.mushrooms = this.mushrooms ?? [];
             this.mushrooms.push(mushroom);
-            this.mushrooms.sort(this.sortByDepth);
+            this.mushrooms.sort(this.sortByDepthAndName);
         }
 
         addGrave(grave) {
             this.graves = this.graves ?? [];
             this.graves.push(grave);
-            this.graves.sort(this.sortByDepth);
+            this.graves.sort(this.sortByDepthAndName);
         }
 
         addPlace(place) {
             this.places = this.places ?? [];
             this.places.push(place);
-            this.places.sort(this.sortByDepth);
+            this.places.sort(this.sortByDepthAndName);
         }
 
         addTreasure(treasure) {
             this.treasures = this.treasures ?? [];
             this.treasures.push(treasure);
-            this.treasures.sort(this.sortByDepth);
+            this.treasures.sort(this.sortByDepthAndName);
         }
 
     }
@@ -373,25 +380,135 @@ window.MZGrid = window.MZGrid || {};
         return 0 === (dist % 2) ? `mz-map-grid-view-odd` : `mz-map-grid-view-even`;
     }
 
+    const css = String.raw;
+    const styles = css`
+        .mz-map-grid-view-odd { 
+            background: antiquewhite; 
+            position: relative; 
+            display: inline-block; 
+            padding-top: 0.5rem; 
+            padding-bottom: 0.5rem;
+        }
+
+        .mz-map-grid-view-even {
+            background: darkseagreen;
+            position: relative;
+            display: inline-block;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .mz-map-grid-view-cell {
+            padding: 0 0.5rem 0 0.5rem;
+            position: relative;
+            overflow: hidden;
+            //border: 2px solid #ddd;
+            //border-radius: 3px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .mz-map-grid-view-cell:hover {
+            border-color: #4CAF50;
+        }
+
+        .mz-map-grid-view-cell.expanded {
+        }
+
+        .mz-map-grid-view-cell-content {
+            height: 100%;
+            box-sizing: border-box;
+            //transition: height 1s ease, min-height 1s ease;
+        }
+
+        .mz-map-grid-view-cell.expanded {
+            z-index: 10;
+            overflow: visible;
+        }
+
+        .mz-map-grid-view-cell.expanded .mz-map-grid-view-cell-content {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            background: inherit;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-radius: 5px;
+            border: 2px solid #4CAF50;
+            width: 15rem;
+            height: auto;
+            min-height: 10rem;
+            box-sizing: border-box;
+        }
+
+        .mz-map-grid-view-border {
+            display: block;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .mz-map-grid-view-border-left {
+        translateY(- 50 %) rotate(- 90 deg);
+            top: 50%;
+            left: 50%;
+        }
+
+        .mz-map-grid-view-border-right {
+            display: inline-block;
+            position: absolute;
+            transform: translateX(-50%) translateY(-50%) rotate(90deg);
+            top: 50%;
+            left: 50%;
+        }
+
+        .mz-map-grid-view-here {
+            display: block;
+            font-weight: bold;
+        }
+
+        .mz-map-grid-view-troll {
+            display: block;
+        }
+
+        .mz-map-grid-view-monster {
+            display: block;
+        }
+
+        .mz-map-grid-view-treasure {
+            display: block;
+        }
+
+        .mz-map-grid-view-group {
+            display: block;
+            margin-top: 0.5px;
+            margin-bottom: 0.5px
+        }
+
+        .mz-map-grid-view-odd .mz-map-grid-view-group {
+            border-bottom: 1px solid darkseagreen;
+        }
+
+        .mz-map-grid-view-even .mz-map-grid-view-group {
+            border-bottom: 1px solid antiquewhite;
+        }
+
+        .mz-map-grid-view-cell-header {
+            display: block;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .mz-map-grid-view-wrapper {
+            display: grid;
+            column-gap: 2px;
+            row-gap: 2px;
+            font-size: small;
+        }
+    `;
 
     MZGrid.injectStyles = function () {
         const style = document.createElement('style');
-        style.appendChild(document.createTextNode(`
-.mz-map-grid-view-odd { background-color: antiquewhite; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
-.mz-map-grid-view-even { background-color: darkseagreen; position: relative; display: inline-block; padding-top: 0.5rem; padding-bottom: 0.5rem;}
-.mz-map-grid-view-cell { padding: 0 0.5rem 0 0.5rem; }
-.mz-map-grid-view-border { display: block; font-weight: bold; text-align: center;}
-.mz-map-grid-view-border-left { translateY(-50%) rotate(-90deg); top: 50%; left: 50%;}
-.mz-map-grid-view-border-right { display: inline-block; position: absolute; transform: translateX(-50%) translateY(-50%) rotate(90deg); top: 50%; left: 50%;}
-.mz-map-grid-view-here { display: block; font-weight: bold;}
-.mz-map-grid-view-troll { display: block; }
-.mz-map-grid-view-monster { display: block; }
-.mz-map-grid-view-treasure { display: block; }
-.mz-map-grid-view-group { display: block; margin-top: 0.5px; margin-bottom: 0.5px}
-.mz-map-grid-view-odd .mz-map-grid-view-group { border-bottom:1px solid darkseagreen; }
-.mz-map-grid-view-even .mz-map-grid-view-group { border-bottom:1px solid antiquewhite; }
-.mz-map-cell-header { display: block; font-weight: bold; text-align: center;}
-`));
+        style.appendChild(document.createTextNode(styles));
         document.head.appendChild(style);
     }
 
@@ -566,6 +683,15 @@ window.MZGrid = window.MZGrid || {};
 
         $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
         g.gotoPlayer();
+        document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                this.classList.add('expanded');
+            });
+
+            cell.addEventListener('mouseleave', function() {
+                this.classList.remove('expanded');
+            });
+        });
     }
 
 })(window.MZGrid); // scope confinement
