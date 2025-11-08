@@ -14,6 +14,7 @@ window.MZGrid = window.MZGrid || {};
         "bouclier" : "E_Metal02.png",
         "casque" : "C_Elm03.png",
         "talisman" : "Ac_Necklace03.png",
+        "matériau" : "I_Crystal01.png",
         "parchemin" : "I_Scroll02.png",
         "carte" : "I_Map.png",
         "outil" : "Z_BoneWrench.png",
@@ -185,39 +186,38 @@ window.MZGrid = window.MZGrid || {};
                 html += `<span class="mz-map-grid-view-cell-header">${this.x} ${this.y}</span>`;
             }
             if (null != this.youAreHere) {
-                html += `<span class="mz-map-grid-view-here">${this.youAreHere} : Vous &ecirc;tes ici</span>`;
+                html += `<span class="mz-map-grid-view-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
-            html += this.groupToHtml(this.trolls, this.trollToHtml);
-            html += this.groupToHtml(this.monsters, this.monsterToHtml);
-            html += this.treasuresToHtml();
+            for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange ; depth++) {
+                let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtml) + this.groupToHtml(depth, this.monsters, this.monsterToHtml) + this.treasuresToHtml(depth);
+                if (depthHtml.length > 0) {
+                    html += `<span class="mz-map-grid-view-cell-header">${depth}</span>` + depthHtml;
+                }
+            }
             html += "</div></div>";
             return html;
         }
 
         trollToHtml(troll) {
-            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.n} : ${troll.name}</span>`;
+            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name}`;
         }
 
         monsterToHtml(monster) {
-            return `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.n} : ${monster.groupName}</span>`;
+            return `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.groupName}`;
         }
 
-
-        treasuresToHtml() {
+        treasuresToHtml(depth) {
             if (null == this.treasures) {
                 return '';
             }
-            let summaries = [[this.treasures[0].n, {}]];
+            let summary = new Map();
             for (const treasure of this.treasures) {
-                let line = summaries.at(-1);
-                if (line[0] != treasure.n) {
-                    let line = [treasure.n, {}];
-                    summaries.push(line);
+                if (treasure.n !== depth) {
+                    continue;
                 }
-                let summary = line[1];
                 let treasureName = treasure.name.toLowerCase();
                 if (treasureName.indexOf("centaines de") >= 0 || treasureName.indexOf("gigots de") >= 0) {
-                    summary.GG = (summary.GG ?? 0) + 1;
+                    summary.set('GG', (summary.get('GG') ?? 0) + 1);
                     continue;
                 }
                 let type = mh_caracs[treasureName];
@@ -226,43 +226,44 @@ window.MZGrid = window.MZGrid || {};
                 } else {
                     type = type[0];
                 }
-                summary[type] = (summary[type] ?? 0) + 1;
+                summary.set(type, (summary.get(type) ?? 0) + 1);
             }
-            let result = "";
-            for (const s of summaries) {
-                let summary = s[1];
-                result += `<span className="mz-map-grid-view-treasure" mz_grid_type="treasure">${s[0]} : `;
-                let keys = Object.keys(summary).sort();
-                let icons = keys.map(key => {
-                    return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' alt='${key}' height='15'/>:${summary[key]}`;
-                });
-                result += `${icons.join(" ")}</span>`;
+            if (summary.size === 0) {
+                return '';
             }
+            let result = '<span className="mz-map-grid-view-treasure" mz_grid_type="treasure">';
+            let keys = Array.from(summary.keys()).sort();
+            let icons = keys.map(key => {
+                return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' title='${key}' height='15'/>:${summary.get(key)}`;
+            });
+            result += `${icons.join(" ")}</span>`;
             return result;
         }
 
-
-        groupToHtml(group, itemToSpan) {
+        groupToHtml(depth, group, itemToSpan) {
             if (null == group) {
                 return '';
             }
-            var previousLevel = -1000;
-            var blockStarted = false;
+            let summary = new Map();
 
-            var html = '';
             for (const item of group) {
-                if (item.n !== previousLevel) {
-                    previousLevel = item.n;
-                    if (blockStarted) {
-                        html += '</span>';
-                    }
-                    blockStarted = true;
-                    html += '<span class="mz-map-grid-view-group">';
+                if (item.n !== depth) {
+                    continue;
                 }
-                html += itemToSpan(item);
+                let name = item.groupName ?? item.name;
+                summary.set(name, summary.get(name) ?? [itemToSpan(item) , 0]);
+                summary.get(name)[1]++;
             }
-            html += '</span>';
-            return html;
+            if (summary.size === 0) {
+                return '';
+            }
+            let keys = Array.from(summary.keys()).sort();
+            let values = keys.map(key => {
+                let value = summary.get(key);
+                let text = value[0];
+                return value[1] === 1 ? `${text}</span>` : `${text} : ${value[1]}</span>`;
+            });
+            return values.join(" ");
         }
 
         sortByDepthAndName(a, b) {
@@ -277,7 +278,7 @@ window.MZGrid = window.MZGrid || {};
         addMonster(monster) {
             this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
-            this.monsters.sort(this.sortByDepthAndName);
+            this.monsters.sort(this.sortByDepthAndName); // TODO: sort when all add operations are done
         }
 
         addTroll(troll) {
@@ -442,20 +443,19 @@ window.MZGrid = window.MZGrid || {};
         }
 
         .mz-map-grid-view-border {
-            display: block;
             font-weight: bold;
             text-align: center;
+            display: inline-block;
+            position: absolute;
         }
 
         .mz-map-grid-view-border-left {
-        translateY(- 50 %) rotate(- 90 deg);
+            transform: translateX(-50%) translateY(-50%) rotate(-90deg);
             top: 50%;
             left: 50%;
         }
 
         .mz-map-grid-view-border-right {
-            display: inline-block;
-            position: absolute;
             transform: translateX(-50%) translateY(-50%) rotate(90deg);
             top: 50%;
             left: 50%;
@@ -464,6 +464,7 @@ window.MZGrid = window.MZGrid || {};
         .mz-map-grid-view-here {
             display: block;
             font-weight: bold;
+            text-align: center;
         }
 
         .mz-map-grid-view-troll {
@@ -512,6 +513,29 @@ window.MZGrid = window.MZGrid || {};
         document.head.appendChild(style);
     }
 
+    MZGrid.insertGrid = function() {
+        MZGrid.injectStyles();
+        let x = parseInt(MY_getValue(`${numTroll}.position.X`));
+        let y = parseInt(MY_getValue(`${numTroll}.position.Y`));
+        let n = parseInt(MY_getValue(`${numTroll}.position.N`));
+        MZGrid.grid = new Grid(x, y, n, 14, 7);
+        MZGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
+        html = MZGrid.grid.convertToHtml("mz-map-grid-view");
+        $('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
+
+        $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
+        MZGrid.grid.gotoPlayer();
+
+        document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                this.classList.add('expanded');
+            });
+
+            cell.addEventListener('mouseleave', function() {
+                this.classList.remove('expanded');
+            });
+        });
+    }
 
     MZGrid.whenViewReady = function () {
         /*
@@ -672,26 +696,7 @@ window.MZGrid = window.MZGrid || {};
 
         })(jQuery); // confine scope
 
-        MZGrid.injectStyles();
-        let x = parseInt(MY_getValue(`${numTroll}.position.X`));
-        let y = parseInt(MY_getValue(`${numTroll}.position.Y`));
-        let n = parseInt(MY_getValue(`${numTroll}.position.N`));
-        let g = new Grid(x, y, n, 14, 7);
-        g.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-        html = g.convertToHtml("mz-map-grid-view");
-        $('#infoTab').after(`<div id="mz-map-grid-scroll" style="max-width: 85vw; max-height: 80vh; overflow: auto;">${html}</div>`);
-
-        $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
-        g.gotoPlayer();
-        document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
-            cell.addEventListener('click', function() {
-                this.classList.add('expanded');
-            });
-
-            cell.addEventListener('mouseleave', function() {
-                this.classList.remove('expanded');
-            });
-        });
+        MZGrid.insertGrid();
     }
 
 })(window.MZGrid); // scope confinement
