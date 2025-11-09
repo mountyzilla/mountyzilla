@@ -183,12 +183,22 @@ window.MZGrid = window.MZGrid || {};
             return i + this.centerY - this.horizontalRange;
         }
 
+        /**
+         * Récupère une cellule sur base de ses coordonnées Mountyhall
+         * @param x coordonnée Mountyhall X
+         * @param y  coordonnée Mountyhall X
+         * @returns {Cell}
+         */
         getCellMounty(x, y) {
             let i = this.xToIndex(x);
             let j = this.yToIndex(y);
             return this.getCell(i, j, x, y);
         }
 
+        /**
+         * Récupère une cellule sur base de ses index internes
+         * @returns {Cell}
+         */
         getCellInternal(i, j) {
             let x = this.indexToX(i);
             let y = this.indexToY(j);
@@ -214,7 +224,14 @@ window.MZGrid = window.MZGrid || {};
             return cell;
         }
 
+        /**
+         * Indexe l'ensemble des données "json" fournies par Mountyhall afin de le stocker dans un structure bidimensionnelle
+         * qui correspond à la grille de la vue 2D
+         */
         indexMap(monsters, trolls, treasures, places, mushrooms, graves) {
+            let here = this.getCellMounty(this.centerX, this.centerY);
+            here.youAreHere = this.centerN;
+
             this.indexCategory(monsters, (cell, o) => cell.addMonster(o));
             this.indexCategory(trolls, (cell, o) => cell.addTroll(o));
             this.indexCategory(treasures, (cell, o) => cell.addTreasure(o));
@@ -235,13 +252,16 @@ window.MZGrid = window.MZGrid || {};
             }
         }
 
-        indexCategory(gridElements, addFunction) {
-            if (null == gridElements) {
+        /**
+         * Indexe une catégorie particulière
+         * @param mhElements éléments Mountyhall d'un type donné
+         * @param addFunction fonction spécifique à appeler pour indexer les infos d'un élément donné
+         */
+        indexCategory(mhElements, addFunction) {
+            if (null == mhElements) {
                 return;
             }
-            let here = this.getCellMounty(this.centerX, this.centerY);
-            here.youAreHere = this.centerN;
-            for (const element of gridElements) {
+            for (const element of mhElements) {
                 let o = new HallEntity(element);
                 let cell = this.getCellMounty(o.x, o.y)
                 if (null != cell) {
@@ -250,6 +270,10 @@ window.MZGrid = window.MZGrid || {};
             }
         }
 
+        /**
+         * Insère la vue 2D dans le Dom et ajoute les eventListeners nécessaire pour agrandir une cellule ou en
+         * avoir les détails
+         */
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid");
             let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15'></img></div>";
