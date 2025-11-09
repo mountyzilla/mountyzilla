@@ -132,7 +132,7 @@ window.MZGrid = window.MZGrid || {};
 
         convertToHtml(id) {
             const borderIndex = this.gridSize - 1;
-            let html = `<div id="${id}" class="mz-map-grid-view-wrapper" style="grid-template-columns: repeat(${this.gridSize}, 15rem); grid-template-rows: repeat(${this.gridSize}, 10rem);"> `;
+            let html = `<div id="${id}" class="mz-map-grid-view-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize-2}, 10rem) 2rem;"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 let column = this.cells[i];
                 for (let j = 0; j < this.gridSize; j++) {
@@ -316,9 +316,9 @@ window.MZGrid = window.MZGrid || {};
                 html += `<span class="mz-map-grid-view-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
             for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange; depth++) {
-                let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtml)
-                    + this.groupToHtml(depth, this.monsters, this.monsterToHtml)
-                    + this.groupToHtml(depth, this.places, this.placeToHtml)
+                let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtmlBits)
+                    + this.groupToHtml(depth, this.monsters, this.monsterToHtmlBits)
+                    + this.groupToHtml(depth, this.places, this.placeToHtmlBits)
                     + this.treasuresToHtml(depth);
                 if (depthHtml.length > 0) {
                     html += `<span class="mz-map-grid-view-cell-header">${depth}</span>` + depthHtml;
@@ -328,16 +328,16 @@ window.MZGrid = window.MZGrid || {};
             return html;
         }
 
-        trollToHtml(troll) {
-            return `<span class="mz-map-grid-view-troll" mz_id=${troll.id} mz_grid_type="trolls">${troll.name} ${troll.race.substring(0, 2)}${troll.level}`;
+        trollToHtmlBits(troll) {
+            return ['class="mz-map-grid-view-troll" mz_grid_type="trolls"', `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`];
         }
 
-        monsterToHtml(monster) {
-            return `<span class="mz-map-grid-view-monster" mz_id=${monster.id} mz_grid_type="monstres">${monster.groupName}`;
+        monsterToHtmlBits(monster) {
+            return ['class="mz-map-grid-view-monster" mz_grid_type="monstres"', monster.groupName];
         }
 
-        placeToHtml(place) {
-            return `<span class="mz-map-grid-view-place" mz_id=${place.id} mz_grid_type="lieux">${place.name}`;
+        placeToHtmlBits(place) {
+            return ['class="mz-map-grid-view-place" mz_grid_type="lieux"', place.name];
         }
 
         treasuresToHtml(depth) {
@@ -370,7 +370,7 @@ window.MZGrid = window.MZGrid || {};
             return result;
         }
 
-        groupToHtml(depth, group, itemToSpan) {
+        groupToHtml(depth, group, itemToBits) {
             if (null == group) {
                 return '';
             }
@@ -381,7 +381,7 @@ window.MZGrid = window.MZGrid || {};
                     continue;
                 }
                 let name = item.groupName ?? item.name;
-                summary.set(name, summary.get(name) ?? [itemToSpan(item), 0]);
+                summary.set(name, summary.get(name) ?? [itemToBits(item), 0]);
                 summary.get(name)[1]++;
             }
             if (summary.size === 0) {
@@ -389,9 +389,9 @@ window.MZGrid = window.MZGrid || {};
             }
             let keys = Array.from(summary.keys()).sort();
             let values = keys.map(key => {
-                let value = summary.get(key);
-                let text = value[0];
-                return value[1] === 1 ? `${text}</span>` : `${text} : ${value[1]}</span>`;
+                let nameAndCount = summary.get(key);
+                let attributesAndText = nameAndCount[0];
+                return nameAndCount[1] === 1 ? `<span ${attributesAndText[0]}>${attributesAndText[1]}</span>` : `<span ${attributesAndText[0]}>${nameAndCount[1]} x ${attributesAndText[1]}</span>`;
             });
             return values.join(" ");
         }
@@ -519,7 +519,7 @@ window.MZGrid = window.MZGrid || {};
         #mz-map-wrapper {
             position: relative;
         }
-        
+
         #mz-map-grid-scroll {
             max-width: 85vw;
             max-height: 80vh;
@@ -574,7 +574,7 @@ window.MZGrid = window.MZGrid || {};
         .mz-map-grid-view-cell-content {
             height: 100%;
             box-sizing: border-box;
-            //transition: height 1s ease, min-height 1s ease;
+            white-space: nowrap;
         }
 
         .mz-map-grid-view-cell.expanded {
@@ -585,23 +585,24 @@ window.MZGrid = window.MZGrid || {};
         .mz-map-grid-view-cell.expanded .mz-map-grid-view-cell-content {
             position: absolute;
             top: 50%;
-            left: 0;
-            transform: translateY(-50%);
+            left: 50%;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            transform: translateY(-50%) translateX(-50%);
             background: inherit;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             border-radius: 5px;
-            border: 2px solid #4CAF50;
-            width: 15rem;
+            outline: 2px solid #4CAF50;
+            width: auto;
             height: auto;
             min-height: 10rem;
             box-sizing: border-box;
         }
 
         .mz-map-grid-view-border {
+            display: block;
             font-weight: bold;
             text-align: center;
-            display: inline-block;
-            position: absolute;
         }
 
         .mz-map-grid-view-border-left {
@@ -624,10 +625,12 @@ window.MZGrid = window.MZGrid || {};
 
         .mz-map-grid-view-troll {
             display: block;
+            color: darkblue;
         }
 
         .mz-map-grid-view-monster {
             display: block;
+            color: darkgreen;
         }
 
         .mz-map-grid-view-treasure {
