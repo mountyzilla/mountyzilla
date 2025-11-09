@@ -132,7 +132,7 @@ window.MZGrid = window.MZGrid || {};
 
         convertToHtml(id) {
             const borderIndex = this.gridSize - 1;
-            let html = `<div id="${id}" class="mz-map-grid-view-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize-2}, 10rem) 2rem;"> `;
+            let html = `<div id="${id}" class="mz-map-grid-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize-2}, 10rem) 2rem;"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 let column = this.cells[i];
                 for (let j = 0; j < this.gridSize; j++) {
@@ -162,9 +162,9 @@ window.MZGrid = window.MZGrid || {};
             const center = 1 + this.horizontalRange;
             const borderIndex = this.gridSize - 1;
             const index = (0 === i) || borderIndex === i ? this.indexToY(j) : this.indexToX(i);
-            let borderClass = 0 === i ? "mz-map-grid-view-border-left" : "";
-            borderClass = borderIndex === i ? "mz-map-grid-view-border-right" : borderClass;
-            return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}"><span class="mz-map-grid-view-border ${borderClass}">${index}</span></div>`;
+            let borderClass = 0 === i ? "mz-map-grid-border-left" : "";
+            borderClass = borderIndex === i ? "mz-map-grid-border-right" : borderClass;
+            return `<div style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="${cellStyle(center, center, i + 1, j + 1)}"><span class="mz-map-grid-border ${borderClass}">${index}</span></div>`;
         }
 
         xToIndex(x) {
@@ -242,7 +242,7 @@ window.MZGrid = window.MZGrid || {};
             let here = this.getCellMounty(this.centerX, this.centerY);
             here.youAreHere = this.centerN;
             for (const element of gridElements) {
-                let o = new CellObject(element);
+                let o = new HallEntity(element);
                 let cell = this.getCellMounty(o.x, o.y)
                 if (null != cell) {
                     addFunction(cell, o);
@@ -251,15 +251,15 @@ window.MZGrid = window.MZGrid || {};
         }
 
         insertIntoDom() {
-            let html = this.convertToHtml("mz-map-grid-view");
+            let html = this.convertToHtml("mz-map-grid");
             let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15'></img></div>";
-            let details = '<div id="mz-map-details-wrapper">DETAILS</div>';
+            let details = '<div id="mz-map-details-wrapper"><span class="mz-map-details-header">DETAILS</span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
             this.gotoPlayer();
 
-            document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
+            document.querySelectorAll('.mz-map-grid-cell').forEach(cell => {
                 cell.addEventListener('mouseenter', function () {
                     this.classList.add('expanded');
                 });
@@ -269,6 +269,7 @@ window.MZGrid = window.MZGrid || {};
                 });
             });
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
+            document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
         }
 
         /**
@@ -289,6 +290,25 @@ window.MZGrid = window.MZGrid || {};
             gridHolder.scrollTo({left: scrollLeft, top: scrollTop, behavior: 'smooth'});
         };
 
+        /**
+         * Met à jour la boîte avec les détails de la grotte aux coordonnées stockées dans le DOM element.
+         * @param e event
+         */
+        updateDetailsForDepth(e) {
+            let target = e.target;
+            if (!target.classList.contains('mz-map-grid-cell-depth')) {
+                target = target.parentNode;
+                if (!target.classList.contains('mz-map-grid-cell-depth')) {
+                    return;
+                }
+            }
+            const x = parseInt(target.dataset.mzGridX);
+            const y = parseInt(target.dataset.mzGridY);
+            const n = parseInt(target.dataset.mzGridN);
+            const cell = MZGrid.grid.getCellMounty(x, y);
+            document.getElementById('mz-map-details-content').innerHTML = cell.detailsHtml(n);
+        }
+
     }
 
     /**
@@ -304,17 +324,17 @@ window.MZGrid = window.MZGrid || {};
         convertToHtml(i, j, centerX, centerY) {
 
             const id = this.youAreHere ? `id="you-are-here"` : ``;
-            let html = `<div ${id} mz-grid-x={this.x} mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-view-cell ${cellStyle(centerX, centerY, this.x, this.y)}"><div class="mz-map-grid-view-cell-content">`;
+            let html = `<div ${id} data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}"><div class="mz-map-grid-cell-content">`;
             if (null != this.monsters
                 || null != this.trolls
                 || null != this.treasures
                 || null != this.places
                 || null != this.mushrooms
                 || null != this.graves) {
-                html += `<span class="mz-map-grid-view-cell-header">${this.x} ${this.y}</span>`;
+                html += `<span class="mz-map-grid-cell-header">${this.x} ${this.y}</span>`;
             }
             if (null != this.youAreHere) {
-                html += `<span class="mz-map-grid-view-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
+                html += `<span class="mz-map-grid-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
             for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange; depth++) {
                 let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtmlBits)
@@ -322,7 +342,7 @@ window.MZGrid = window.MZGrid || {};
                     + this.groupToHtml(depth, this.places, this.placeToHtmlBits)
                     + this.treasuresToHtml(depth);
                 if (depthHtml.length > 0) {
-                    html += `<span class="mz-map-grid-view-cell-header">${depth}</span>` + depthHtml;
+                    html += `<span class="mz-map-grid-cell-depth" data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} data-mz-grid-n=${depth}><span class="mz-map-grid-cell-header">${depth}</span>${depthHtml}</span>`;
                 }
             }
             html += "</div></div>";
@@ -330,15 +350,15 @@ window.MZGrid = window.MZGrid || {};
         }
 
         trollToHtmlBits(troll) {
-            return ['class="mz-map-grid-view-troll" mz_grid_type="trolls"', `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`];
+            return ['class="mz-map-grid-troll" mz_grid_type="trolls"', `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`];
         }
 
         monsterToHtmlBits(monster) {
-            return ['class="mz-map-grid-view-monster" mz_grid_type="monstres"', monster.groupName];
+            return ['class="mz-map-grid-monster" mz_grid_type="monstres"', monster.groupName];
         }
 
         placeToHtmlBits(place) {
-            return ['class="mz-map-grid-view-place" mz_grid_type="lieux"', place.name];
+            return ['class="mz-map-grid-place" mz_grid_type="lieux"', place.name];
         }
 
         treasuresToHtml(depth) {
@@ -362,7 +382,7 @@ window.MZGrid = window.MZGrid || {};
             if (summary.size === 0) {
                 return '';
             }
-            let result = '<span className="mz-map-grid-view-treasure" mz_grid_type="treasure">';
+            let result = '<span className="mz-map-grid-treasure" mz_grid_type="treasure">';
             let keys = Array.from(summary.keys()).sort();
             let icons = keys.map(key => {
                 return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' title='${key}' height='15'/>:${summary.get(key)}`;
@@ -395,6 +415,29 @@ window.MZGrid = window.MZGrid || {};
                 return nameAndCount[1] === 1 ? `<span ${attributesAndText[0]}>${attributesAndText[1]}</span>` : `<span ${attributesAndText[0]}>${nameAndCount[1]} x ${attributesAndText[1]}</span>`;
             });
             return values.join(" ");
+        }
+
+        detailsHtml(depth) {
+            return this.groupToDetailsHtml(depth, this.trolls, "mz-map-details-troll")
+                + this.groupToDetailsHtml(depth, this.monsters, "mz-map-details-monster")
+                + this.groupToDetailsHtml(depth, this.treasures, "mz-map-details-treasure")
+                + this.groupToDetailsHtml(depth, this.places, "mz-map-details-place")
+                + this.groupToDetailsHtml(depth, this.graves, "mz-map-details-grave")
+                + this.groupToDetailsHtml(depth, this.mushrooms, "mz-map-details-mushroom");
+        }
+
+        groupToDetailsHtml(depth, group, groupClass) {
+            if (null == group) {
+                return '';
+            }
+            let result = '';
+            for (const item of group) {
+                if (item.n !== depth) {
+                    continue;
+                }
+                result += `<span class="${groupClass}">${item.id} ${item.html}</span>`;
+            }
+            return result;
         }
 
         sortByDepthAndName(a, b) {
@@ -451,7 +494,7 @@ window.MZGrid = window.MZGrid || {};
     /**
      * Un élément (monstre, troll, trésor,...) que l'on retrouve dans une cellule.
      */
-    class CellObject {
+    class HallEntity {
 
         constructor(mhValue) {
             let val = mhValue.value;
@@ -461,6 +504,7 @@ window.MZGrid = window.MZGrid || {};
             this.y = val.y;
             this.n = val.n;
             this.distance = val.dist;
+            this.html = val.nom.value;
 
             switch (this.type) {
                 case "monstres" :
@@ -511,12 +555,18 @@ window.MZGrid = window.MZGrid || {};
         const distX = Math.abs(centerX - x);
         const distY = Math.abs(centerY - y);
         const dist = Math.max(distX, distY);
-        return 0 === (dist % 2) ? `mz-map-grid-view-odd` : `mz-map-grid-view-even`;
+        return 0 === (dist % 2) ? `mz-map-grid-odd` : `mz-map-grid-even`;
     }
 
     const css = String.raw;
     const styles = css`
 
+        :root {
+            --color-troll: darkblue; 
+            --color-monster: darkgreen; 
+            --color-border: #4CAF50; 
+        }
+        
         #mz-map-wrapper {
             margin-top: 1rem;
             position: relative;
@@ -524,7 +574,7 @@ window.MZGrid = window.MZGrid || {};
             column-gap: 0.5rem;
         }
 
-        .mz-map-grid-view-wrapper {
+        .mz-map-grid-wrapper {
             display: grid;
             column-gap: 2px;
             row-gap: 2px;
@@ -535,12 +585,12 @@ window.MZGrid = window.MZGrid || {};
             max-width: 85%;
             max-height: 70vh;
             overflow: auto;
-            border: 2px solid #4CAF50;
+            border: 2px solid var(--color-border);
             border-radius: 8px;
         }
         
         #mz-map-details-wrapper {
-            border: 2px solid #4CAF50;
+            border: 2px solid var(--color-border);
             border-radius: 8px;
             flex-grow: 4;
         }
@@ -557,7 +607,7 @@ window.MZGrid = window.MZGrid || {};
             max-width: 30rem;
         }
 
-        .mz-map-grid-view-odd {
+        .mz-map-grid-odd {
             background: antiquewhite;
             position: relative;
             display: inline-block;
@@ -565,7 +615,7 @@ window.MZGrid = window.MZGrid || {};
             padding-bottom: 0.5rem;
         }
 
-        .mz-map-grid-view-even {
+        .mz-map-grid-even {
             background: darkseagreen;
             position: relative;
             display: inline-block;
@@ -573,7 +623,7 @@ window.MZGrid = window.MZGrid || {};
             padding-bottom: 0.5rem;
         }
 
-        .mz-map-grid-view-cell {
+        .mz-map-grid-cell {
             padding: 0 0.5rem 0 0.5rem;
             position: relative;
             overflow: hidden;
@@ -581,102 +631,129 @@ window.MZGrid = window.MZGrid || {};
             //border-radius: 3px;
             cursor: pointer;
             transition: border-color 0.2s;
+
+            &:hover {
+                border-color: var(--color-border);
+            }
+
         }
 
-        .mz-map-grid-view-cell:hover {
-            border-color: #4CAF50;
-        }
-
-        .mz-map-grid-view-cell-content {
+ 
+        .mz-map-grid-cell-content {
             height: 100%;
             box-sizing: border-box;
             white-space: nowrap;
         }
 
-        .mz-map-grid-view-cell.expanded {
+        .mz-map-grid-cell.expanded {
             z-index: 10;
             overflow: visible;
+
+            .mz-map-grid-cell-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                transform: translateY(-50%) translateX(-50%);
+                background: inherit;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                border-radius: 5px;
+                outline: 2px solid var(--color-border);
+                width: auto;
+                height: auto;
+                min-height: 10rem;
+                min-width: 15rem;
+                box-sizing: border-box;
+            }
         }
 
-        .mz-map-grid-view-cell.expanded .mz-map-grid-view-cell-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            transform: translateY(-50%) translateX(-50%);
-            background: inherit;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            border-radius: 5px;
-            outline: 2px solid #4CAF50;
-            width: auto;
-            height: auto;
-            min-height: 10rem;
-            min-width: 15rem;
-            box-sizing: border-box;
-        }
-
-        .mz-map-grid-view-border {
+        .mz-map-grid-border {
             display: block;
             font-weight: bold;
             text-align: center;
         }
 
-        .mz-map-grid-view-border-left {
+        .mz-map-grid-border-left {
             transform: translateX(-50%) translateY(-50%) rotate(-90deg);
             top: 50%;
             left: 50%;
         }
 
-        .mz-map-grid-view-border-right {
+        .mz-map-grid-border-right {
             transform: translateX(-50%) translateY(-50%) rotate(90deg);
             top: 50%;
             left: 50%;
         }
 
-        .mz-map-grid-view-here {
+        .mz-map-grid-here {
             display: block;
             font-weight: bold;
             text-align: center;
         }
 
-        .mz-map-grid-view-troll {
+        .mz-map-grid-troll {
             display: block;
-            color: darkblue;
+            color: var(--color-troll);
         }
 
-        .mz-map-grid-view-monster {
+        .mz-map-grid-monster {
             display: block;
-            color: darkgreen;
+            color: var(--color-monster);
         }
 
-        .mz-map-grid-view-treasure {
-            display: block;
-        }
-
-        .mz-map-grid-view-place {
+        .mz-map-grid-treasure {
             display: block;
         }
 
-        .mz-map-grid-view-group {
+        .mz-map-grid-place {
+            display: block;
+        }
+
+        .mz-map-grid-group {
             display: block;
             margin-top: 0.5px;
             margin-bottom: 0.5px
         }
 
-        .mz-map-grid-view-odd .mz-map-grid-view-group {
+        .mz-map-grid-odd .mz-map-grid-group {
             border-bottom: 1px solid darkseagreen;
         }
 
-        .mz-map-grid-view-even .mz-map-grid-view-group {
+        .mz-map-grid-even .mz-map-grid-group {
             border-bottom: 1px solid antiquewhite;
         }
 
-        .mz-map-grid-view-cell-header {
+        .mz-map-grid-cell-header {
             display: block;
             font-weight: bold;
             text-align: center;
         }
+
+        .mz-map-details-header {
+            display: block;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .mz-map-details-troll {
+            display: block;
+            color: var(--color-troll);
+        }
+
+        .mz-map-details-monster {
+            display: block;
+            color: var(--color-monster);
+        }
+
+        .mz-map-details-treasure {
+            display: block;
+        }
+
+        .mz-map-details-place {
+            display: block;
+        }
+
     `;
 
     MZGrid.injectStyles = function () {
