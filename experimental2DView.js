@@ -253,13 +253,14 @@ window.MZGrid = window.MZGrid || {};
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid-view");
             let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15'></img></div>";
-            $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div></div>`);
+            let details = '<div id="mz-map-details-wrapper">DETAILS</div>';
+            $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
             this.gotoPlayer();
 
             document.querySelectorAll('.mz-map-grid-view-cell').forEach(cell => {
-                cell.addEventListener('click', function () {
+                cell.addEventListener('mouseenter', function () {
                     this.classList.add('expanded');
                 });
 
@@ -517,16 +518,31 @@ window.MZGrid = window.MZGrid || {};
     const styles = css`
 
         #mz-map-wrapper {
+            margin-top: 1rem;
             position: relative;
+            display: flex;
+            column-gap: 0.5rem;
+        }
+
+        .mz-map-grid-view-wrapper {
+            display: grid;
+            column-gap: 2px;
+            row-gap: 2px;
+            font-size: small;
         }
 
         #mz-map-grid-scroll {
-            max-width: 85vw;
-            max-height: 80vh;
+            max-width: 85%;
+            max-height: 70vh;
             overflow: auto;
             border: 2px solid #4CAF50;
             border-radius: 8px;
-            margin-top: 1rem;
+        }
+        
+        #mz-map-details-wrapper {
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            flex-grow: 4;
         }
 
         #mz-map-grid-toolbar {
@@ -596,6 +612,7 @@ window.MZGrid = window.MZGrid || {};
             width: auto;
             height: auto;
             min-height: 10rem;
+            min-width: 15rem;
             box-sizing: border-box;
         }
 
@@ -659,13 +676,6 @@ window.MZGrid = window.MZGrid || {};
             display: block;
             font-weight: bold;
             text-align: center;
-        }
-
-        .mz-map-grid-view-wrapper {
-            display: grid;
-            column-gap: 2px;
-            row-gap: 2px;
-            font-size: small;
         }
     `;
 
