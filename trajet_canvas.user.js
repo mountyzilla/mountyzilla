@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.47
+// @version 2.48
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -28,13 +28,12 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 	let noeud_courant = 0;
 	let choix_ini = false;
 	let ie = (window.attachEvent)? true:false;
-	if("function" != typeof isPage) {
-		function isPage(url) {
+	if("function" != typeof isPage)
+		var isPage = function(url) {
 			return window.location.pathname.indexOf("/mountyhall/"+url) == 0;
 		}
-	}
 	if("function" != typeof isPageWithParam) {
-		function isPageWithParam(filters) {
+		var isPageWithParam = function(filters) {
 			if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
 			if (filters.body_id && document.body.id != filters.body_id) return false;
 			if (filters.params) {
@@ -1242,7 +1241,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			let desc = document.getElementById("bulle_desc_gow");
 			desc.innerHTML = "";
 			for(let i in position_trous) {
-				dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
+				let dist = (xcase-position_trous[i][0])*(xcase-position_trous[i][0])+(ycase-position_trous[i][1])*(ycase-position_trous[i][1])-position_trous[i][2]
 				if(dist <= 0) {
 					desc.appendChild(document.createTextNode(" Trous de Météorite : n=-1 -> n="+position_trous[i][4]));
 					desc.appendChild(document.createElement("br"));
@@ -1252,13 +1251,13 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			xcase = Math.round(xcase);
 			ycase = Math.round(ycase);
 			//console.log(`trajet_canvas afficher_position_suivant typeof suivants = ${typeof suivants}`);
-			for (let i in suivants) {
-				if (!Array.isArray(suivants[i])) {
+			for (let [i, suivant] of suivants.entries()) {
+				if (!Array.isArray(suivant)) {
 					//console.log(`trajet_canvas afficher_position_suivant suivants[${i}] pas array`);
 					continue;
 				}
-				if(Math.abs(suivants[i][2] - xcase) <= 4 && Math.abs(suivants[i][3] - ycase) <= 4 ) {
-					desc.appendChild(document.createTextNode(suivants[i][1]+", x=" + suivants[i][2] + ", y=" + suivants[i][3] + ", n="+suivants[i][4]))
+				if(Math.abs(suivant[2] - xcase) <= 4 && Math.abs(suivant[3] - ycase) <= 4 ) {
+					desc.appendChild(document.createTextNode(suivant[1]+", x=" + suivant[2] + ", y=" + suivant[3] + ", n="+suivant[4]))
 					desc.appendChild(document.createElement("br"));;
 				}
 			}
@@ -1928,29 +1927,29 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 		function echelle_position() {
 			trace_trou();
 			//window.console.log('echelle_position suivants=' + JSON.stringify(suivants));
-			for(let i in suivants) {
-				// suivants[i] : [(0)num_gow, (1)nom, (2)x, (3)y, (4)n, (5)etapes_ini, (6)etapes, (7)arret];
-				//gowap_debug = suivants[i][0];
-				//if (gowap_debug == 5813233) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivants[i]));
-				if (!Array.isArray(suivants[i])) continue;
-				trace_position([suivants[i][2], suivants[i][3]]);
+			for(let [i, suivant] of suivants.entries()) {
+				// suivant : [(0)num_gow, (1)nom, (2)x, (3)y, (4)n, (5)etapes_ini, (6)etapes, (7)arret];
+				//gowap_debug = suivant[0];
+				//if (gowap_debug == 5813233) window.console.log('echelle_position suivants debug,t_prev=' + t_prev + ', t_enreg=' + t_enreg + ' gowap=' + JSON.stringify(suivant));
+				if (!Array.isArray(suivant)) continue;
+				trace_position([suivant[2], suivant[3]]);
 				let aleatoire = 50+Math.round(155.0*i/nbs);
 				//console.log(`trajet_canvas echelle_position aleatoire=${aleatoire}, i=${i}, nbs=${nbs}`);
-				//if(t_prev && suivants[i][6]) {
-				if(t_prev && suivants[i][6] && suivants[i][6] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
-					trace_trajet("rgba(0,"+aleatoire+",0,0.6)", "trou", [suivants[i][2], suivants[i][3]], suivants[i][6], false);
+				//if(t_prev && suivant[6]) {
+				if(t_prev && suivant[6] && suivant[6] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
+					trace_trajet("rgba(0,"+aleatoire+",0,0.6)", "trou", [suivant[2], suivant[3]], suivant[6], false);
 				}
-				//if(t_enreg && suivants[i][5]) {
-				if(t_enreg && suivants[i][5] && suivants[i][5] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
-					if (!Array.isArray(suivants[i])) {
+				//if(t_enreg && suivant[5]) {
+				if(t_enreg && suivant[5] && suivant[5] != '') { // correction par Vapulabehemot (82169) le 31/08/2013
+					if (!Array.isArray(suivant)) {
 						let msg = 'null ?';
 						try {
-							msg = suivants[i].substring(0, 60);
+							msg = suivant.substring(0, 60);
 						} catch(e) {}
-						console.log(`trajet_canvas echelle_position suivants[i]=${msg}`);
+						console.log(`trajet_canvas echelle_position suivant=${msg}`);
 						return;
 					}
-					trace_reel(aleatoire, "trou", [suivants[i][2], suivants[i][3]], suivants[i][5], suivants[i][7], false);
+					trace_reel(aleatoire, "trou", [suivant[2], suivant[3]], suivant[5], suivant[7], false);
 				}
 			}
 		}
@@ -2005,6 +2004,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			trace_sortie(sortie);
 		}
 		function ini_position() {
+			suivants = new Array();
 			nbs = 0;
 			for (let oSuivant of MZ_analyse_page_suivants.suivants) {
 				arret = new Array();	// Roule' 23/12/2018
@@ -2028,7 +2028,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				addEvent(oSuivant.eTi, "mouseover", surligne_point, true);
 				addEvent(oSuivant.eTi, "mouseout", efface_surligne, true);
 				nbs++;
-			}			
+			}
 			if(nbs > 0) {
 				charge_opt_position();
 				declare_css();
@@ -2060,7 +2060,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 				dessin = creer_canvas("surligne");	// Roule 25/10/2019 pour surlignage position suivant
 				dessin.style.display = 'none';
 				trajet.appendChild(dessin);
-}
+			}
 		}
 		function ini_teleport() {
 			// Roule 03/05/2019 Un dev MH a cru bon d'enlever les espaces autour des "=" :(
@@ -2721,6 +2721,7 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			d2.style.color = 'red';
 			let msg = 'trajet_canvas ne fonctionne plus sans MZ    ';
 			window.console.log(msg);
+			alert(msg);
 			d2.appendChild(document.createTextNode(msg));
 			div.appendChild(d2);
 			d2 = document.createElement('div');
@@ -2814,7 +2815,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		else if(page == "suivants"){
-			let suivants = new Array();
 			nbs = 0;
 			let nb_liste = 0;
 			let t_enreg = false, t_prev = false;
