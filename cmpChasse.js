@@ -6,7 +6,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.0
+// @version     1.1
 // @licence     GNU GPLv3
 // ==/UserScript==
 
@@ -88,7 +88,7 @@ class MZ_cmpChasse {
 	}
 
 	static go() {
-		//console.log('MZ_cmpChasse.go start');
+		//console.log('MZ_cmpChasse.go_log start');
 		MZ_cmpChasse.clearResult();
 		MZ_cmpChasse.result = [null, null];
 		MZ_cmpChasse.nomTroll = [];
@@ -97,17 +97,17 @@ class MZ_cmpChasse {
 	}
 
 	static async getInfo(iTroll) {
-		//console.log('MZ_cmpChasse.getInfo ' + iTroll);
+		//console.log('MZ_cmpChasse.getInfo_log ' + iTroll);
 		let sTroll = document.getElementById(MZ_cmpChasse.idIDTroll[iTroll]).value.trim();
 		if (sTroll == '') {
-			//console.log('MZ_cmpChasse.getInfo(' + iTroll + ') sTroll vide');
+			//console.log('MZ_cmpChasse.getInfo_log(' + iTroll + ') sTroll vide');
 			MZ_cmpChasse.result[iTroll] = MZ_cmpChasse.msgTrollVide;
 			MZ_cmpChasse.tryAfficheResult();
 			return;
 		}
 		let idTroll = parseInt(sTroll);
 		if (isNaN(idTroll) || idTroll <= 0) {
-			//console.log('MZ_cmpChasse.getInfo(' + iTroll + ') sTroll non numérique');
+			//console.log('MZ_cmpChasse.getInfo_log(' + iTroll + ') sTroll non numérique');
 			MZ_cmpChasse.result[iTroll] = 'N° Troll incorrect : ' + sTroll;
 			MZ_cmpChasse.tryAfficheResult();
 			return;
@@ -146,37 +146,80 @@ class MZ_cmpChasse {
 			if (h1s.length >= 1) MZ_cmpChasse.nomTroll[iTroll] = h1s[0].innerText;
 			else                 MZ_cmpChasse.nomTroll[iTroll] = MZ_cmpChasse.nomTrollInconnu;
 
-			let tableData = doc.getElementById(MZ_cmpChasse.idTableDataMH);
-			if (!tableData) {
-				if (MZ_cmpChasse.nomTroll[iTroll] == MZ_cmpChasse.nomTrollInconnu) {
-					MZ_cmpChasse.result[iTroll] = 'Pas de résultat (ou erreur) venant de MH pour le Troll n°' + idTroll;
-				} else {
-					MZ_cmpChasse.result[iTroll] = 'Le Troll n°' + idTroll + ' (' + MZ_cmpChasse.nomTroll[iTroll] + ') semble ne pas avoir donné un accès public à son tableau de chasse';
-				}
-				MZ_cmpChasse.tryAfficheResult();
-				return;
-			}
-
-			//console.log('MZ_cmpChasse.getInfo(' + iTroll + ') nbRow=' + tableData.tBodies[0].rows.length);
 			let tabData = [];
-			for (let row of tableData.tBodies[0].rows) {
-				//console.log(row);
-				let oneData = {
-					'monstre': row.cells[0].getAttribute('data-sort-value').toString(),
-					//'famille': row.cells[2].innerText,	// finalement, on ne l'affiche pas
-					'max': parseInt(row.cells[4].getAttribute('data-sort-value')),
-				};
-				oneData['nb' + iTroll] = parseInt(row.cells[3].innerText),
 
-				tabData.push(oneData);
+			// méthode 11/2025 : data dans un json dans la variable "r" dans le javascript
+			let m = html.match(/r\s*=\s+"(.*)";?\s*loadRows/);
+			if (!m) m = html.match(/r\s*=\s+'(.*)';?\s*loadRows/);
+			//console.log(`m=${JSON.stringify(m)}`);
+			if (m) {
+				let replacements = {'\\\\': '\\', '\\n': '\n', '\\"': '"', "\\'": "'"};
+				let json = m[1].replace(/\\(\\|n|"|')/g, function(replace) {
+					return replacements[replace];
+				});
+				let data;
+				try {
+					data = JSON.parse(json);
+				} catch (error) {
+					MZ_cmpChasse.result[iTroll] = 'Erreur à la récupération des infos JSON MH pour le Troll ' + idTroll;
+					console.error('MZ_cmpChasse.getInfo_log(' + iTroll + ') : bad JSON: ', json, error)
+					return;
+				}
+				//console.log(data);
+				for (let d of data) {
+					let oneData = {};
+					if (d.m && d.m.options && d.m.options.sortValue) {
+						oneData.monstre = d.m.options.sortValue;
+					} else if (d.m) {
+						oneData.monstre = d.m.value;
+					} else {
+						oneData.monstre = JSON.stringify(d);
+					}
+					if (d.c && d.c.options && d.c.options.sortvalue) {
+						oneData.max = d.m.options.sortValue;	// en fait pas utilisé
+					} else {
+						oneData.moax = '?';
+					}
+					//'famille': ...,	// finalement, on ne l'affiche pas
+					oneData['nb' + iTroll] = parseInt(d.nb),
+					tabData.push(oneData);
+				}
+
+			} else {
+
+				// méthode pré 11/2025, ne fonctionne plus
+				let tableData = doc.getElementById(MZ_cmpChasse.idTableDataMH);
+				if (!tableData) {
+					if (MZ_cmpChasse.nomTroll[iTroll] == MZ_cmpChasse.nomTrollInconnu) {
+						MZ_cmpChasse.result[iTroll] = 'Pas de résultat (ou erreur) venant de MH pour le Troll n°' + idTroll;
+					} else {
+						MZ_cmpChasse.result[iTroll] = 'Le Troll n°' + idTroll + ' (' + MZ_cmpChasse.nomTroll[iTroll] + ') semble ne pas avoir donné un accès public à son tableau de chasse';
+					}
+					MZ_cmpChasse.tryAfficheResult();
+					return;
+				}
+
+				//console.log('MZ_cmpChasse.getInfo_log(' + iTroll + ') nbRow=' + tableData.tBodies[0].rows.length);
+				for (let row of tableData.tBodies[0].rows) {
+					//console.log(row);
+					let oneData = {
+						'monstre': row.cells[0].getAttribute('data-sort-value').toString(),
+						//'famille': row.cells[2].innerText,	// finalement, on ne l'affiche pas
+						'max': parseInt(row.cells[4].getAttribute('data-sort-value')),
+					};
+					oneData['nb' + iTroll] = parseInt(row.cells[3].innerText),
+
+					tabData.push(oneData);
+				}
 			}
+
 			//console.log(tabData);
 			MZ_cmpChasse.result[iTroll] = tabData;
 			MZ_cmpChasse.tryAfficheResult();
 		} catch (error) {
 			MZ_cmpChasse.result[iTroll] = 'Erreur à la récupération des infos MH pour le Troll ' + idTroll;
 			MZ_cmpChasse.tryAfficheResult();
-			console.error('MZ_cmpChasse.getInfo(' + iTroll + ') : Failed to fetch page: ', error)
+			console.error('MZ_cmpChasse.getInfo_log(' + iTroll + ') : Failed to fetch page: ', error)
 		}
 	}
 
@@ -191,15 +234,15 @@ class MZ_cmpChasse {
 		let show0, show1;
 		for (let iTroll = 0; iTroll <= 1; iTroll++) {
 			if (MZ_cmpChasse.result[iTroll] == MZ_cmpChasse.msgTrollVide) {
-				//console.log('MZ_cmpChasse.tryAfficheResult, iTroll=' + iTroll + ' : ignore silencieusement');
+				//console.log('MZ_cmpChasse.tryAfficheResult_log, iTroll=' + iTroll + ' : ignore silencieusement');
 				continue;	 //ignore silencieusement
 			}
 			if (typeof MZ_cmpChasse.result[iTroll] === 'string' || MZ_cmpChasse.result[iTroll] instanceof String) {
 				MZ_cmpChasse.addErreur(MZ_cmpChasse.result[iTroll]);
-				//console.log('MZ_cmpChasse.tryAfficheResult, iTroll=' + iTroll + ' : message erreur');
+				//console.log('MZ_cmpChasse.tryAfficheResult_log, iTroll=' + iTroll + ' : message erreur');
 				MZ_cmpChasse.result[iTroll] = null;
 			} else {
-				//console.log('MZ_cmpChasse.tryAfficheResult, iTroll=' + iTroll + ' : à faire, type=' + typeof MZ_cmpChasse.result[iTroll]);
+				//console.log('MZ_cmpChasse.tryAfficheResult_log, iTroll=' + iTroll + ' : à faire, type=' + typeof MZ_cmpChasse.result[iTroll]);
 				if (mergedData) {
 					mergedData = mergedData.concat(MZ_cmpChasse.result[iTroll]);
 				} else {
@@ -210,7 +253,7 @@ class MZ_cmpChasse {
 			}
 		}
 		if (!mergedData) {
-			//console.log('MZ_cmpChasse.tryAfficheResult rien à faire');
+			//console.log('MZ_cmpChasse.tryAfficheResult_log rien à faire');
 			return;
 		}
 		mergedData.sort((a, b) => a.monstre.localeCompare(b.monstre));
