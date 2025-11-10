@@ -1,7 +1,22 @@
-// Namespace MZGrid
-window.MZGrid = window.MZGrid || {};
+// ==UserScript==
+// @author Kalamar
+// @description Injection d'une vue 2D dans l'interface de jeu
+// @include */mountyhall/mountyhall/MH_Play/Play_vue2.php*
+// @exclude *mh2.mh.raistlin.fr*
+// @exclude *mzdev.mh.raistlin.fr*
+// @name Vue2D
+// @version 0.1.0
+// @namespace https://greasyfork.org/en/users/1536460
+// @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
+// @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
+// @license MIT
+// ==/UserScript==
 
-(function (MZGrid) {
+
+// Namespace MountyzillaGrid
+window.MountyzillaGrid = window.MountyzillaGrid || {};
+
+(function (MountyzillaGrid) {
 
     const TREASURE_ICONS = {
         "GG": "E_Gold02.png",
@@ -276,7 +291,7 @@ window.MZGrid = window.MZGrid || {};
          */
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid");
-            let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15'></img></div>";
+            let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img></div>";
             let details = '<div id="mz-map-details-wrapper"><span class="mz-map-details-header">DETAILS</span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
@@ -326,10 +341,10 @@ window.MZGrid = window.MZGrid || {};
                     return;
                 }
             }
-            const x = parseInt(target.dataset.mzGridX);
-            const y = parseInt(target.dataset.mzGridY);
-            const n = parseInt(target.dataset.mzGridN);
-            const cell = MZGrid.grid.getCellMounty(x, y);
+            const x = parseInt(target.dataset.MountyzillaGridX);
+            const y = parseInt(target.dataset.MountyzillaGridY);
+            const n = parseInt(target.dataset.MountyzillaGridN);
+            const cell = MountyzillaGrid.grid.getCellMounty(x, y);
             document.getElementById('mz-map-details-content').innerHTML = cell.detailsHtml(n);
         }
 
@@ -360,7 +375,7 @@ window.MZGrid = window.MZGrid || {};
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
-            for (let depth = MZGrid.grid.centerN - MZGrid.grid.verticalRange; depth <= MZGrid.grid.centerN + MZGrid.grid.verticalRange; depth++) {
+            for (let depth = MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth <= MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth++) {
                 let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtmlBits)
                     + this.groupToHtml(depth, this.monsters, this.monsterToHtmlBits)
                     + this.groupToHtml(depth, this.places, this.placeToHtmlBits)
@@ -780,14 +795,14 @@ window.MZGrid = window.MZGrid || {};
 
     `;
 
-    MZGrid.injectStyles = function () {
+    MountyzillaGrid.injectStyles = function () {
         const style = document.createElement('style');
         style.appendChild(document.createTextNode(styles));
         document.head.appendChild(style);
     }
 
-    MZGrid.insertGrid = function () {
-        MZGrid.injectStyles();
+    MountyzillaGrid.insertGrid = function () {
+        MountyzillaGrid.injectStyles();
         let x = 0;
         let y = 0;
         let n = 0;
@@ -799,7 +814,6 @@ window.MZGrid = window.MZGrid || {};
             y = parseInt(positionMatch[2]);
             n = parseInt(positionMatch[3]);
         }
-        console.log(positionMatch);
         let infoTabValues = $("#infoTab div ul li");
         let rangeText = infoTabValues[2].textContent;
         let rangeX = 1;
@@ -810,12 +824,12 @@ window.MZGrid = window.MZGrid || {};
             rangeY = parseInt(rangeMatch[2]);
         }
 
-        MZGrid.grid = new Grid(x, y, n, rangeX, rangeY);
-        MZGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-        MZGrid.grid.insertIntoDom();
+        MountyzillaGrid.grid = new Grid(x, y, n, rangeX, rangeY);
+        MountyzillaGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
+        MountyzillaGrid.grid.insertIntoDom();
     }
 
-    MZGrid.whenViewReady = function () {
+    MountyzillaGrid.whenViewReady = function () {
         /*
         * jQuery dragscrollable Plugin
         * version: 1.2 (09-Feb-2020)
@@ -974,10 +988,10 @@ window.MZGrid = window.MZGrid || {};
 
         })(jQuery); // confine scope
 
-        MZGrid.insertGrid();
+        MountyzillaGrid.insertGrid();
     }
 
-})(window.MZGrid); // scope confinement
+})(window.MountyzillaGrid); // scope confinement
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
     function waitForMZ(timeout = 3000) {
@@ -1001,9 +1015,9 @@ if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
     async function register2DView() {
         await waitForMZ(3000);
         if (document.body.dataset.MZ_Etat === undefined) {
-            MZ_cVueJSON.registerCallback(MZGrid.whenViewReady);
+            MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
         } else {
-            MZGrid.whenViewReady();
+            MountyzillaGrid.whenViewReady();
         }
     }
 
