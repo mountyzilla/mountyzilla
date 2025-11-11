@@ -26,7 +26,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         "arme (2 mains)": "W_Axe006_R.png",
         "arme": "S_Sword07.png",
         "armure": "A_Armor05.png",
-        "bidouille": "S_Magic02.png",K
+        "bidouille": "S_Magic02.png",
         "bottes": "A_Shoes02.png",
         "bouclier": "E_Metal02.png",
         "carte": "I_Map.png",
