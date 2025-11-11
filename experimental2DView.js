@@ -21,6 +21,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
     const TREASURE_ICONS = {
         "GG": "E_Gold02.png",
         "anneau": "Ac_Ring02.png",
+        "apocryphe": "W_Book03.png",
         "arme (1 main)": "S_Sword07.png",
         "arme (2 mains)": "W_Axe006_R.png",
         "arme": "S_Sword07.png",
@@ -30,7 +31,11 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         "bouclier": "E_Metal02.png",
         "carte": "I_Map.png",
         "casque": "C_Elm03.png",
+        "champignon": "I_C_Mushroom.png",
+        "champignon inconnu": "I_C_Mushroom.png",
         "composant": "I_Tentacle.png",
+        "conteneur": "Z_Backpack.png",
+        "mimique": "I_Chest02.png",
         "minerai": "I_Crystal01.png",
         "materiau": "I_Crystal01.png",
         "outil": "Z_BoneWrench.png",
@@ -341,11 +346,12 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                     return;
                 }
             }
-            const x = parseInt(target.dataset.MountyzillaGridX);
-            const y = parseInt(target.dataset.MountyzillaGridY);
-            const n = parseInt(target.dataset.MountyzillaGridN);
+            const x = parseInt(target.dataset.mzGridX);
+            const y = parseInt(target.dataset.mzGridY);
+            const n = parseInt(target.dataset.mzGridN);
             const cell = MountyzillaGrid.grid.getCellMounty(x, y);
-            document.getElementById('mz-map-details-content').innerHTML = cell.detailsHtml(n);
+            let detailsHtml = cell.detailsHtml(n);
+            document.getElementById('mz-map-details-content').innerHTML = detailsHtml;
         }
 
     }
@@ -480,7 +486,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         sortByDepthAndName(a, b) {
-            if (a.n != b.n) {
+            if (a.n !== b.n) {
                 return a.n - b.n;
             }
             if (a.name < b.name) return -1;
@@ -547,7 +553,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             switch (this.type) {
                 case "monstres" :
-                    this.name = val.nom.options.sortValue;
+                    this.name = this.extractName(val);
                     this.groupName = this.toGroupName(this.name);
                     // this.family = "todo";
                     break;
@@ -558,17 +564,28 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                     // TODO
                     break;
                 case "lieux" :
-                    this.name = val.nom.options.sortValue;
+                    this.name = this.extractName(val);
                     break;
                 case "tresors" :
-                    this.name = val.nom.options.sortValue.epure();
+                    this.name = this.extractName(val).epure();
+                    if (this.name.startsWith("mimique")) {
+                        this.name = this.toGroupName(this.name);
+                    }
                     break;
                 case "trolls" :
-                    this.name = val.nom.options.sortValue;
+                    this.name = this.extractName(val);
                     this.race = val.race;
                     this.level = val.niv;
                     break;
             }
+        }
+
+        extractName(val) {
+            let options = val.nom.options;
+            if (options == null) { // == is intended to force type coercion
+                return val.nom.value || val.nom;
+            }
+            return options.sortValue;
         }
 
         toGroupName(name) {
@@ -676,7 +693,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
 
         }
-
  
         .mz-map-grid-cell-content {
             height: 100%;
