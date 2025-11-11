@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.6
+// @version     1.7.7
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.6';
+var MZ_latest = '1.7.7';
 var MZ_changeLog = [
+	"V1.7.7 \t\t 11/11/2025",
+	"	- Couleurs diplo : gestion des 2 guildes possibles",
 	"V1.6.86 \t\t 21/07/2025",
 	"	- Vue : possibilité de regrouper Gowaps & Gnus",
 	"V1.6.x \t\t 23/12/2024",
@@ -96,16 +98,13 @@ var MZ_changeLog = [
 Doc État et Callback pour l'utilisation par les scripts tiers
 	MZ met à jour la propriété document.body.dataset.MZ_Etat
 		1 à la fin de l'initialisation (tout le code MZ s'est déroulé mais il peut y avoir des appels AJAX en cours)
-		2 (uniquement sur l'onglet de la vue) quand l'onglet a été mis à jour avec les niveaux, etc.
-			ATTENTION, l'utilisateur peut demander un complément de CdM s'il voit plus de 500 monstres
 	MZ appelle les callback définies dans les tableaux suivants, si ces tableaux existent
 		document.body.MZ_Callback_init: fonctions que MZ appellera quand MZ aura fini sont initialisation
 			ATTENTION, si MZ est chargé avant le script tiers, cette fonction ne sera jamais appelée. Le script tiers doit donc tester l'état document.body.dataset.MZ_Etat et faire l'appel à la callback lui-même si l'état est déjà défini, ce qui signifie que MZ est déjà initialisé.
-		document.body.MZ_Callback_fin_vue: fonctions que MZ appellera quand MZ aura fini son premier traitement des CdM dans la vue
-		ATTENTION document.body.MZ_Callback_init et document.body.MZ_Callback_fin_vue sont des tableaux.
-			Vous n'êtes pas seuls au monde. Un autre script externe peut s'être déjà enregistré en callback
-			Voici un exemple de code pour enregistrer une callback
-			if (document.body.MZ_Callback_init === undefined) {
+		Voici un exemple de code pour enregistrer une callback générale
+			if (document.body.dataset.MZ_Etat !== undefined) {
+				myCallback();
+			} elseif (document.body.MZ_Callback_init === undefined) {
 				document.body.MZ_Callback_init = [myCallback];
 			} else {
 				document.body.MZ_Callback_init.push(myCallback);
@@ -857,6 +856,13 @@ function insertTdText(node, text, bold) {
 
 function appendHr(node) {
 	node.appendChild(document.createElement('hr'));
+}
+
+function appendLabel(node) {
+	let label = document.createElement('label');
+	label.style.cursor = 'pointer';
+	node.appendChild(label);
+	return label;
 }
 
 function appendBr(node) {
@@ -2810,6 +2816,7 @@ class MZ_cCDMv2 {
 			eltBoutonSuite.parentNode.removeChild(eltBoutonSuite);
 		}
 		// appel des callback
+		MZ_cVueJSON.MZ_received = true;
 		for (let callback of MZ_cVueJSON.callbacksFinMZ) {
 			try {
 				callback();
@@ -5360,7 +5367,7 @@ function MZ_traiteDecumulAffResume(listEffets, bDisplay) {
 
 	if (!bDisplay) return;
 
-	/* mise en place toggleDetails */
+	/* mise en place toggleDetails_log */
 	tfoot.style.cursor = 'pointer';
 	tfoot.onclick = toggleDetailsBM;
 }
@@ -9667,465 +9674,723 @@ function do_equip() {
 
 /** x~x Diplo ---------------------------------------------------------- */
 
-/*
-TODO:
- V Étape 1: Gestion comme actuellement, avec 2 couleurs (amis/ennemis)
- V Étape 2: Gestion couleurs par catégorie (10 couleurs)
- V Étape 3: Ajout de la diplo perso
- X Étape 4: Gestion distante (sécurisée par mdp) de cette option
- V Étape 5: Ajout des fioritures (preview de la couleur...)
+class MZ_cDiplo {
+	// cette classe n'est jamais instanciée
 
- Options Globales:
- Actuelles:
-	  numTroll.USECSS,
-	  numTroll.NODIPLO
-	  NOMYTH
- Nouvelles:
-	  TODO numTroll.USECSS
-	  numTroll.diplo.off (remplace NODIPLO)
-	  numTroll.diplo.guilde
-	  numTroll.diplo.perso
+	// propriétés statiques
+	static diplos;	// reprise du localStorage
+	static diploInverse;	// par ID
+	static mythiques	// booleén
 
- Structure de diplo.guilde:
- isOn: 'true' ou 'false'
- isDetailOn: 'true' ou 'false'
- guilde
-	  > id
-	  > couleur
- AllAmis,AllEnnemis: couleur
- Amis0,...,Ennemis5
-	  > Troll: idTroll1;...;
-	  > Guilde: idGuilde1;...;
-	  > titre
-	  > couleur
-
- Structure de diplo.perso:
- isOn: 'true' ou 'false'
- mythiques: couleur
- Troll,Guilde,Monstre:
-	  > id
-	  > couleur
-	  > description
-*/
-
-/** x~x Fonctions utilitaires ------------------------------------------ */
-
-function couleurAleatoire() {
-	let alph = '0123456789ABCDEF'.split('');
-	let clr = '#';
-	for (let i = 0; i < 6; i++) {
-		clr = clr + alph[Math.floor(16 * Math.random())];
+	// la propriété diplos et le localStorage sont des objets comme suit
+	/*
+	{
+		"groupes": [
+			{
+				"trolls": [19072, 90756],	// ou absent
+				"guildes": [24, 1498],	// ou absent
+				"monstres": [103568, 103897],	// ou absent
+				"nom": "Amis0": {	// ou "T_xxx" ou "M_xxx" pour la diplo perso
+				"titre": "nos copains",
+				"couleur": "#AAFFAA"
+			},
+		]
+		// attribut de diplo de guilde seulement
+		"guildeID": 123,	// absent en migration de l'ancien système pré 11/2025
+		"isDetailOn": "true", // utile seulement pour la page de diplo, absent si false
+		"allAmis": "#AAFFAA",	// utile seulement pour la page de diplo
+		"allEnnemis": "#FFAAAA",	// utile seulement pour la page de diplo
+		"couleur": "#AAAAFF",	// couleur pour cette guilde, optionnel
+		// uniquement diploPerso
+		"mythiques": "#AAAAFF",	// ou absent
+		"isPerso" : true,
+		// dans les deux
+		"isOn": "true",	// actif dans la vue ou pas, absent si false
 	}
-	return clr;
-}
+	*/
 
-function isCouleur(str) {
-	return (/^#[0-9A-F]{6}$/i).test(str);
-}
+	// propriétés statiques pour la page de diplo
+	static isDetailOn;
+	static currentGuildeID;
+	static currentGuildeDiplo;
+	static isMythiquesOn;
+	static diploPerso;
+	static traceDiplo = false;
 
-/** x~x Analyse de la page --------------------------------------------- */
+	// récupération de la diplo en localStorage -------------------------------------------
 
-function appendChoixCouleur(node, id) {
-	let span = document.createElement('span');
-	span.id = `span${id}`;
-	// C'est un grand jour quand on utilise un OU Exclusif
-	if (isDetailOn ^ (id.indexOf('All') < 0)) {
-		span.style.display = 'none';
+	static initDiplo() {
+		if (MZ_cDiplo.diplos !== undefined) return;	// déjà fait
+
+		let s = MY_getValue(`${numTroll}.diplo`);	// version nov. 2025 qui intègre tout
+		if (s) {
+			MZ_cDiplo.diplos = JSON.parse(s);
+			if (MZ_cDiplo.traceDiplo) logMZ(`load diplo 2025 ${JSON.stringify(MZ_cDiplo.diplos, null, 2)}`);
+			return;
+		}
+
+		// ancienne version guilde unique
+		MZ_cDiplo.processOldDiplo(MY_getValue(`${numTroll}.diplo.guilde`), false);
+
+		// ancienne version diplo perso
+		MZ_cDiplo.processOldDiplo(MY_getValue(`${numTroll}.diplo.perso`), true);
+		if (MZ_cDiplo.traceDiplo) logMZ(`load diplo pre 2025`, MZ_cDiplo.diplos);
 	}
-	let couleur = '#AAFFAA';
-	if (id.indexOf('nnemi') > 0) couleur = '#FFAAAA';
-	if (diploGuilde[id]) {
-		couleur = diploGuilde[id].couleur;
-	}
-	appendText(span, ' - Couleur HTML: ');
-	let input = appendTextbox(span, 'text', id, 8, 7, couleur);
-	input.onkeyup = previewCouleur;
-	input.onchange = previewCouleur;
-	input.onkeyup();
-	node.appendChild(span);
-}
 
-function insertChoixCouleur(node, id) {
-	let span = document.createElement('span');
-	span.id = `span${id}`;
-	// La couleur détaillée passera à une valeur aléatoire
-	// si toggle vers isDetailOn
-	let couleur = couleurAleatoire();
-	if (!isDetailOn) {
-		span.style.display = 'none';
-	} else if (diploGuilde[id]) {
-		couleur = diploGuilde[id].couleur;
-	}
-	appendText(span, ' - Couleur HTML: ');
-	let input = appendTextbox(span, 'text', id, 8, 7, couleur);
-	input.onkeyup = previewCouleur;
-	input.onchange = previewCouleur;
-	input.onkeyup();
-	insertBefore(node, span);
-}
-
-function setChoixCouleurs() {
-	try {
-		let eAmis = document.getElementById('amis');
-		eAmis.parentNode.id = 'insertPt';
-		let i, mode, Mode;
-		for (let e of eAmis.parentNode.children) {
-			switch (e.id) {
-				case 'amis':
-					i = 0;
-					mode = 'ami';
-					Mode = 'Ami';
-					appendChoixCouleur(e, `AllAmis`);
-					continue;
-				case 'ennemis':
-					i = 0;
-					mode = 'ennemi';
-					Mode = 'Ennemi';
-					appendChoixCouleur(e, `AllEnnemis`);
-					continue
+	static processOldDiplo(s, bPerso) {
+		if (!s) return;
+		if (!MZ_cDiplo.diplos) MZ_cDiplo.diplos = [];
+		try {
+			let oldDiplo = JSON.parse(s);
+			// conversion
+			let newDiplo = {'groupes': []};
+			if (bPerso) newDiplo.isPerso = true;
+			for (let k in oldDiplo) {
+				let v = oldDiplo[k];
+				//console.log(`initDiplo_log migration oldDiplo perso=${bPerso} k=${k}, v=`, v);
+				if (!v) continue;
+				switch (k) {
+					case 'isOn':
+					case 'isDetailOn':
+						if (v.toLowerCase() == 'false') continue;
+						newDiplo[k] = true;
+						break;
+					case 'AllAmis':
+						newDiplo['allAmis'] = v;
+						break;
+					case 'AllEnnemis':
+						newDiplo['allEnnemis'] = v;
+						break;
+					case 'guilde':	// couleur de la guilde en diploGuilde
+						if (v.couleur) newDiplo.couleur = v.couleur;
+						break;
+					case 'Guilde': // liste des guildes en diplo perso
+					case 'Troll': // liste des trõlls en diplo perso
+					case 'Monstre': // liste des montres en diplo perso
+						for (let idString in v) {	// idString = id, v= {couleur, titre}
+							let v2 = v[idString];
+							if (!v2) continue;	// ne devrait pas arriver
+							let id = parseInt(idString);
+							if (isNaN(id)) continue;
+							let newGroupe = {};
+							newGroupe[k.toLowerCase(k) + 's'] = [id];
+							if (v2.titre) newGroupe.titre = v2.titre;
+							if (v2.couleur) newGroupe.couleur = v2.couleur;
+							newGroupe.nom = k.substring(0, 1) + '_' + id;
+							newDiplo.groupes.push(newGroupe);
+						}
+						break;
+					case 'mythiques': // couleur des mythiques
+						newDiplo.mythiques = v;
+						MZ_cDiplo.mythiques = v;
+						break;
+					default:	// Amis0, etc.
+						let newGroupe = {};
+						MZ_cDiplo.processListOldDiplo(v.Troll, 'trolls', newGroupe);
+						MZ_cDiplo.processListOldDiplo(v.Guilde, 'guildes', newGroupe);
+						newGroupe.nom = k;
+						if (v.titre) newGroupe.titre = v.titre;
+						if (v.couleur) newGroupe.couleur = v.couleur;
+						newDiplo.groupes.push(newGroupe);
+						break;
+				}
 			}
-			if (e.tagName != 'H3') continue;
-			e.id = `td${Mode}s${i}`;
-			appendChoixCouleur(e, `${Mode}s${i}`);
-			i++;
+			MZ_cDiplo.diplos.push(newDiplo);
+		} catch (exc) {
+			logMZ(`initDiplo_log: Ancienne diplo non reconnue, perso=${bPerso}\n${s}`, exc);
+			return;
+		}
+	}
+
+	static processListOldDiplo(lst, key, newGroupe) {
+		if (!lst) return;
+		let tIn = lst.split(';');
+		let tOut = [];
+		for (let id of tIn) {
+			let id2 = parseInt(id);
+			if (isNaN(id2)) continue;
+			tOut.push(id2);
+		}
+		if (tOut.length > 0) newGroupe[key] = tOut;
+	}
+
+	//partie récupération de la diplo pour mettre des couleurs dans la vue et envoi à la vue Cube ------------------------------
+
+	static initDiploInverse() {
+		// On extrait les données et on les stocke par id
+		// Ordre de préséance :
+		// diplo perso, troll ou monstre
+		// diplo guilde, troll
+		// diplo perso guilde
+		// diplo guilde, guilde
+
+		if (MZ_cDiplo.diploInverse !== undefined) return;
+		MZ_cDiplo.initDiplo()
+		MZ_cDiplo.diploInverse = {guildes: new Map(), trolls: new Map(), monstres: new Map()}
+
+		// à faire : raccourci pour les uniques
+
+		// traiter en ordre invese (le dernier qui cause a raison)
+
+		//Diplos de Guilde, guilde
+		MZ_cDiplo.inverseOne(false, 'guildes');
+		// diplo perso guilde
+		MZ_cDiplo.inverseOne(true, 'guildes');
+		// diplo guilde, troll
+		MZ_cDiplo.inverseOne(false, 'trolls');
+		// diplo perso, troll ou monstre
+		MZ_cDiplo.inverseOne(true, 'trolls');
+		MZ_cDiplo.inverseOne(true, 'monstres');
+		//console.log(`diploInverse`, MZ_cDiplo.diploInverse);
+	}
+
+	static inverseOne(bPerso, typeID) {
+		// bPerso dit si on traite les diplos guilde ou la displo perso
+		// typeID : guildes, trolls, monstres
+		let mapToUpdate = MZ_cDiplo.diploInverse[typeID];
+		if (MZ_cDiplo.diplos === undefined)  return;
+		for (let diplo of MZ_cDiplo.diplos) {
+			if (bPerso && !diplo.isPerso) continue;
+			if (!bPerso && diplo.isPerso) continue;
+			if (!diplo.isOn) continue;
+			for (let v of diplo.groupes) {
+				if (!v[typeID]) continue;
+				let data = {};
+				if (v.nom) data.nom =  v.nom;
+				if (v.titre) data.titre =  v.titre;
+				if ((diplo.isDetailOn || diplo.isPerso) && v.couleur) {
+					data.couleur = v.couleur;
+				} else if (!diplo.isDetailOn) {
+					if (v.nom.toString().startsWith('Ami') && diplo.allAmis) {
+						data.couleur = diplo.allAmis;
+					} else if (v.nom.toString().startsWith('Ennemi') && diplo.allEnnemis) {
+						data.couleur = diplo.allEnnemis;
+					}
+				}
+				for (let id of v[typeID]) {
+					mapToUpdate.set(id, data);
+				}
+			}
+		}
+	}
+
+	static getDiploMonstre(id) {
+		return MZ_cDiplo.diploInverse.monstres.get(id);
+	}
+
+	static getDiploGuilde(id) {
+		return MZ_cDiplo.diploInverse.guildes.get(id);
+	}
+
+	static getDiploTroll(id) {
+		return MZ_cDiplo.diploInverse.trolls.get(id);
+	}
+
+	// partie page MH de la diplomatie de guilde ---------------------------- -
+
+	static do_diplo() {
+		MZ_cDiplo.initDiplo();
+
+		// trouver la guilde pour laquelle on travaille
+		for (let elt of document.getElementsByName('gid')) {
+			let gid = parseInt(elt.value);
+			if (gid > 0) {
+				MZ_cDiplo.currentGuildeID = gid;
+				break;
+			}
+		}
+		if (!MZ_cDiplo.currentGuildeID) {
+			logMZ(`diplo : impossible de trouver l'id de la guilde par la méthode des gid`);
+			avertissement(`couleurs de diplo impossible, erreur MZ, pas d'ID de guide`, 10000);
+			return;
+		}
+		if (!MZ_cDiplo.diplos) MZ_cDiplo.diplos = [];
+		for (let diplo of MZ_cDiplo.diplos) {
+			if (diplo.guildeID == MZ_cDiplo.currentGuildeID) {
+				MZ_cDiplo.currentGuildeDiplo = diplo;
+				break;
+			}
+		}
+		if (!MZ_cDiplo.currentGuildeDiplo) {
+			// S'il y a une diplo de guilde ancienne, on la récupère
+			let diploARecuperer;
+			for (let diplo of MZ_cDiplo.diplos) {
+				if (!diplo.guildeID && !diplo.isPerso) {
+					diploARecuperer = diplo;
+					break;
+				}
+			}
+			if (diploARecuperer) {
+				diploARecuperer.guildeID = MZ_cDiplo.currentGuildeID;
+				MZ_cDiplo.currentGuildeDiplo = diploARecuperer;
+			} else {
+				logMZ(`Création de la diplo pour la guilde ${MZ_cDiplo.currentGuildeID}`);
+				MZ_cDiplo.currentGuildeDiplo = {
+					guildeID: MZ_cDiplo.currentGuildeID,
+					groupes: [],
+					isOn: true,
+				};
+				MZ_cDiplo.diplos.push(MZ_cDiplo.currentGuildeDiplo);
+			}
+		}
+		MZ_cDiplo.isDetailOn = MZ_cDiplo.currentGuildeDiplo.isDetailOn;
+
+		for (let diplo of MZ_cDiplo.diplos) {
+			if (diplo.isPerso) {
+				MZ_cDiplo.diploPerso = diplo;
+				break;
+			}
+		}
+		if (!MZ_cDiplo.diploPerso) {
+			MZ_cDiplo.diploPerso = {isPerso: true, isOn: true, groupes: []};
+			MZ_cDiplo.diplos.push(MZ_cDiplo.diploPerso);
+		}
+
+
+		if (MZ_cDiplo.setChoixCouleurs() && MZ_cDiplo.fetchDiploGuilde()) {
+			MZ_cDiplo.creeTablePrincipale();
+		}
+	}
+
+	// Fonctions utilitaires
+
+	static couleurAleatoire() {
+		let alph = '0123456789ABCDEF'.split('');
+		let clr = '#';
+		for (let i = 0; i < 6; i++) {
+			clr = clr + alph[Math.floor(16 * Math.random())];
+		}
+		return clr;
+	}
+
+	static isCouleur(str) {
+		return (/^#[0-9A-F]{6}$/i).test(str);
+	}
+
+	static getDiploGroupByNom(diplo, nom) {
+		for (let groupe of diplo.groupes) {
+			if (groupe.nom == nom) return groupe;
+		}
+	}
+
+	// Analyse de la page
+
+	static appendChoixCouleur(node, idHTML) {
+		let span = document.createElement('span');
+		span.id = `span${idHTML}`;
+		let isAll = idHTML.indexOf('All') >= 0;
+		// Attention le ^ javascript est un XOR bitwise qui ne convient pas ici, (!a != !b) fonctionne
+		// un XOR (en fait un ⇔ ici) fait toujours plaisir !
+		if ((!MZ_cDiplo.isDetailOn) == !isAll) {
+			span.style.display = 'none';
+		}
+		let couleur = '';
+		if (isAll) {
+			couleur = '#AAFFAA';
+			if (idHTML.indexOf('nnemi') > 0) couleur = '#FFAAAA';
+		} else {
+			let thisGroupe = MZ_cDiplo.getDiploGroupByNom(MZ_cDiplo.currentGuildeDiplo, idHTML);
+			if (thisGroupe && thisGroupe.couleur) couleur = thisGroupe.couleur;
+		}
+		appendText(span, ' - Couleur HTML: ');
+		let input = appendTextbox(span, 'text', idHTML, 8, 7, couleur);
+		input.onkeyup = MZ_cDiplo.previewCouleur;
+		input.onchange = MZ_cDiplo.previewCouleur;
+		input.onkeyup();
+		node.appendChild(span);
+	}
+
+	/* non utilisé
+	static insertChoixCouleur(node, idHTML) {
+		let span = document.createElement('span');
+		span.id = `span${idHTML}`;
+		// La couleur détaillée passera à une valeur aléatoire
+		// si toggle vers isDetailOn
+		let couleur = MZ_cDiplo.couleurAleatoire();
+		if (!MZ_cDiplo.isDetailOn) {
+			span.style.display = 'none';
+		} else {
+			let thisGroupe = MZ_cDiplo.getDiploGroupByNom(MZ_cDiplo.currentGuildeDiplo, idHTML);
+			if (thisGroupe && thisGroupe.couleur) couleur = thisGroupe.couleur;
+		}
+		appendText(span, ' - Couleur HTML: ');
+		let input = appendTextbox(span, 'text', idHTML, 8, 7, couleur);
+		input.onkeyup = MZ_cDiplo.previewCouleur;
+		input.onchange = MZ_cDiplo.previewCouleur;
+		input.onkeyup();
+		insertBefore(node, span);
+	}
+	*/
+
+	static setChoixCouleurs() {
+		try {
+			let eAmis = document.getElementById('amis');
+			eAmis.parentNode.id = 'insertPt';
+			let i, mode, Mode;
+			for (let e of eAmis.parentNode.children) {
+				switch (e.id) {
+					case 'amis':
+						i = 0;
+						mode = 'ami';
+						Mode = 'Ami';
+						MZ_cDiplo.appendChoixCouleur(e, `AllAmis`);
+						continue;
+					case 'ennemis':
+						i = 0;
+						mode = 'ennemi';
+						Mode = 'Ennemi';
+						MZ_cDiplo.appendChoixCouleur(e, `AllEnnemis`);
+						continue
+				}
+				if (e.tagName != 'H3') continue;
+				e.id = `td${Mode}s${i}`;
+				MZ_cDiplo.appendChoixCouleur(e, `${Mode}s${i}`);
+				i++;
+			}
+			return true;
+		} catch (exc) {
+			logMZ('Diplomatie Structure de la page non reconnue', exc);
+			return false;
+		}
+	}
+
+	static fetchDiploGuilde() {
+		try {
+			for (let AE of ['Amis', 'Ennemis']) {
+				for (let i = 0; i < 5; i++) {
+					/* Récup des A/E de rang i */
+					let h3 = document.getElementById(`td${AE}${i}`);
+					let form = h3.nextSibling;
+					while (form && form.nodeType != 1) {
+						form = form.nextSibling;	// sauter le texte
+					}
+					if (!form) {
+						logMZ(`Diplomatie fetchDiploGuilde_log pour td${AE}${i}, pas d'élément`);
+						continue;
+					}
+					let ligne = form.getElementsByTagName('table')[0].rows;
+					// je n'ai pas trouvé ça tout seul
+					// https://medium.com/@roxeteer/javascript-one-liner-to-get-elements-text-content-without-its-child-nodes-8e59269d1e71
+					let titre = trim([].reduce.call(h3.childNodes, function(a, b) { return a + (b.nodeType === 3 ? b.textContent : ''); }, ''));
+					// On laisse la gestion des couleurs à setChoixCouleurs:
+					let couleur = document.getElementById(AE + i).value;
+					let thisGroupe = MZ_cDiplo.getDiploGroupByNom(MZ_cDiplo.currentGuildeDiplo, AE + i);
+					if (!thisGroupe) {
+						thisGroupe = {nom: AE + i};
+						MZ_cDiplo.currentGuildeDiplo.groupes.push(thisGroupe);
+					}
+					thisGroupe.trolls = [];
+					thisGroupe.guildes = [];
+					thisGroupe.titre = titre;
+					thisGroupe.couleur = couleur;
+					for (let j = 1; j < ligne.length; j++) {
+						let str = trim(ligne[j].cells[0].textContent);
+						let idx = str.lastIndexOf('(');
+						let num = parseInt(str.slice(idx + 1, -1));
+						if (isNaN(num)) continue;
+						let type = trim(ligne[j].cells[1].textContent);
+						thisGroupe[type.toLowerCase() + 's'].push(num);
+					}
+				}
+			}
+		} catch (exc) {
+			logMZ('Diplomatie récupération de la diplo', exc);
+			return false;
 		}
 		return true;
-	} catch (exc) {
-		logMZ('Diplomatie Structure de la page non reconnue', exc);
-		return false;
 	}
-}
 
-function fetchDiploGuilde() {
-	try {
+
+	/** x~x Handlers ------------------------------------------------------- */
+
+	static toggleDetails() {
+		MZ_cDiplo.isDetailOn = !MZ_cDiplo.isDetailOn;
 		for (let AE in { Amis: 0, Ennemis: 0 }) {
+			document.getElementById(`spanAll${AE}`).style.display = MZ_cDiplo.isDetailOn ? 'none' : '';
 			for (let i = 0; i < 5; i++) {
-				/* Récup des A/E de rang i */
-				let h3 = document.getElementById(`td${AE}${i}`);
-				let form = h3.nextSibling;
-				while (form && form.nodeType != 1) {
-					form = form.nextSibling;	// sauter le texte
-				}
-				if (!form) {
-					logMZ(`Diplomatie fetchDiploGuilde pour td${AE}${i}, pas d'élément`);
-					continue;
-				}
-				let ligne = form.getElementsByTagName('table')[0].rows;
-				// je n'ai pas trouvé ça tout seul
-				// https://medium.com/@roxeteer/javascript-one-liner-to-get-elements-text-content-without-its-child-nodes-8e59269d1e71
-				let titre = trim([].reduce.call(h3.childNodes, function(a, b) { return a + (b.nodeType === 3 ? b.textContent : ''); }, ''));
-				// On laisse la gestion des couleurs à setChoixCouleurs:
-				let couleur = document.getElementById(AE + i).value;
-				diploGuilde[AE + i] = {
-					Troll: '',
-					Guilde: '',
-					titre: titre,
-					couleur: couleur
-				};
-				for (let j = 1; j < ligne.length; j++) {
-					let str = trim(ligne[j].cells[0].textContent);
-					let idx = str.lastIndexOf('(');
-					let num = str.slice(idx + 1, -1);
-					let type = trim(ligne[j].cells[1].textContent);
-					diploGuilde[AE + i][type] += `${num};`;
-				}
+				document.getElementById(`span${AE}${i}`).style.display = MZ_cDiplo.isDetailOn ? '' : 'none';
 			}
 		}
-	} catch (exc) {
-		logMZ('Diplomatie récupération de la diplo', exc);
-		return false;
 	}
-	return true;
-}
 
+	static toggleMythiques() {
+		MZ_cDiplo.isMythiquesOn = !MZ_cDiplo.isMythiquesOn;
+		document.getElementById('spanMythiques').style.display = MZ_cDiplo.isMythiquesOn ? '' : 'none';
+	}
 
-/** x~x Handlers ------------------------------------------------------- */
-
-function toggleDetails() {
-	isDetailOn = !isDetailOn;
-	for (let AE in { Amis: 0, Ennemis: 0 }) {
-		document.getElementById(`spanAll${AE}`).style.display = isDetailOn ? 'none' : '';
-		for (let i = 0; i < 5; i++) {
-			document.getElementById(`span${AE}${i}`).style.display = isDetailOn ? '' : 'none';
+	static previewCouleur() {
+		let value = this.value;
+		if (MZ_cDiplo.isCouleur(value)) {
+			this.style.backgroundColor = value;
 		}
-	}
-}
-
-function toggleMythiques() {
-	isMythiquesOn = !isMythiquesOn;
-	document.getElementById('spanMythiques').style.display = isMythiquesOn ? '' : 'none';
-}
-
-function previewCouleur() {
-	let value = this.value;
-	if (isCouleur(value)) {
-		this.style.backgroundColor = value;
-	}
-	let butPicker = this.nextSibling;
-	if (butPicker && butPicker.tagName == 'button') return;
-	if (!previewCouleur.listenerDone) {
-		window.addEventListener("message", function(event) {
-			if (!URL_MZ.startsWith(event.origin)) {
-				console.log(`[MZ] erreur message reçu de ${event.origin}≠${URL_MZ}`);
-				// something from an unknown domain, let's ignore it
-				return;
-			}
-			console.log(`received: ${JSON.stringify(event.data)}`);
-			for (let name in event.data) {
-				let e = document.getElementById(name);
-				if (e) {
-					let color = event.data[name];
-					e.value = color;
-					if (isCouleur(color))
-						e.style.backgroundColor = color;
+		let butPicker = this.nextSibling;
+		if (butPicker && butPicker.tagName.toLowerCase() == 'button') return;
+		if (!MZ_cDiplo.previewCouleur.listenerDone) {
+			window.addEventListener("message", function(event) {
+				if (!URL_MZ.startsWith(event.origin)) {
+					console.log(`[MZ] erreur message reçu de ${event.origin}≠${URL_MZ}`);
+					// something from an unknown domain, let's ignore it
+					return;
 				}
-			}
-		});
-		//console.log(`[MZ debug] previewCouleur done addEventListener`);
-		previewCouleur.listenerDone = true;
+				console.log(`received: ${JSON.stringify(event.data)}`);
+				for (let name in event.data) {
+					let e = document.getElementById(name);
+					if (e) {
+						let color = event.data[name];
+						e.value = color;
+						if (MZ_cDiplo.isCouleur(color))
+							e.style.backgroundColor = color;
+					}
+				}
+			});
+			//console.log(`[MZ debug] previewCouleur_log done addEventListener`);
+			MZ_cDiplo.previewCouleur.listenerDone = true;
+		}
+		butPicker = document.createElement('button');
+		butPicker.appendChild(document.createTextNode('Choisir'));
+		let url = URL_MZcolorPicker + '?field=' + this.id;
+		butPicker.onclick  = function() {
+			window.open(url, 'MZcolorPicker', 'location=0,menubar=0,resizable=1,scrollbars=0,status=0,titlebar=0,toolbar=0,height=600,width=800,top=100,left=100');
+			return false;
+		}
+		this.after(butPicker);
 	}
-	butPicker = document.createElement('button');
-	butPicker.appendChild(document.createTextNode('Choisir'));
-	let url = URL_MZcolorPicker + '?field=' + this.id;
-	butPicker.onclick  = function() {
-		window.open(url, 'MZcolorPicker', 'location=0,menubar=0,resizable=1,scrollbars=0,status=0,titlebar=0,toolbar=0,height=600,width=800,top=100,left=100');
-		return false;
-	}
-	this.after(butPicker);
-}
 
-function appendMenuType(node, duType) {
-	let select = document.createElement('select');
-	select.className = 'SelectboxV2';
-	let type = ['Guilde', 'Troll', 'Monstre'];
-	for (let i = 0; i < 3; i++) {
-		appendOption(select, type[i], type[i]);
-		if (type[i] == duType) {
-			select.selectedIndex = i;
+	static appendMenuType(node, duType) {
+		let select = document.createElement('select');
+		select.className = 'SelectboxV2';
+		let type = ['Guilde', 'Troll', 'Monstre'];
+		for (let i = 0; i < 3; i++) {
+			appendOption(select, type[i], type[i]);
+			if (type[i] == duType) {
+				select.selectedIndex = i;
+			}
+		}
+		node.appendChild(select);
+	}
+
+	static ajouteChamp(type, num, couleur, descr) {
+		let champs = document.getElementById('diploPerso');
+		let nb = champs.rows.length;
+		let tr = champs.insertRow(-1);
+		let td = appendTd(tr);
+		MZ_cDiplo.appendMenuType(td, type);
+		td = appendTd(tr);
+		appendText(td, ' n°');
+		appendTextbox(td, 'text', `num${nb}`, 6, 15, num);
+		td = appendTd(tr);
+		appendText(td, ' couleur HTML:');
+		let input = appendTextbox(td, 'text', `couleur${nb}`, 8, 7, couleur);
+		input.onkeyup = MZ_cDiplo.previewCouleur;
+		input.onchange = MZ_cDiplo.previewCouleur;
+		input.onkeyup();
+		td = appendTd(tr);
+		appendText(td, ' Description:');
+		appendTextbox(td, 'text', `descr${nb}`, 30, 150, descr);
+		td = appendTd(tr);
+		let span = document.createElement('span');
+		appendText(span, '[ok!]', true);
+		span.style.visibility = 'hidden';
+		td.appendChild(span);
+		td = appendTd(tr);
+		appendButton(td, 'Suppr.', MZ_cDiplo.retireCeChamp); // let bouton = appendButton(..)
+	}
+
+	static retireCeChamp() {
+		let thisTr = this.parentNode.parentNode;
+		thisTr.parentNode.removeChild(thisTr);
+		let champs = document.getElementById('diploPerso');
+		if (champs.rows.length == 0) {
+			MZ_cDiplo.ajouteChamp();
 		}
 	}
-	node.appendChild(select);
-}
 
-function ajouteChamp(type, num, couleur, descr) {
-	let champs = document.getElementById('diploPerso');
-	let nb = champs.rows.length;
-	let tr = champs.insertRow(-1);
-	let td = appendTd(tr);
-	appendMenuType(td, type);
-	td = appendTd(tr);
-	appendText(td, ' n°');
-	appendTextbox(td, 'text', `num${nb}`, 6, 15, num);
-	td = appendTd(tr);
-	appendText(td, ' couleur HTML:');
-	let input = appendTextbox(td, 'text', `couleur${nb}`, 8, 7, couleur);
-	input.onkeyup = previewCouleur;
-	input.onchange = previewCouleur;
-	input.onkeyup();
-	td = appendTd(tr);
-	appendText(td, ' Description:');
-	appendTextbox(td, 'text', `descr${nb}`, 30, 150, descr);
-	td = appendTd(tr);
-	let span = document.createElement('span');
-	appendText(span, '[ok!]', true);
-	span.style.visibility = 'hidden';
-	td.appendChild(span);
-	td = appendTd(tr);
-	appendButton(td, 'Suppr.', retireCeChamp); // let bouton = appendButton(..)
-}
-
-function retireCeChamp() {
-	let thisTr = this.parentNode.parentNode;
-	thisTr.parentNode.removeChild(thisTr);
-	let champs = document.getElementById('diploPerso');
-	if (champs.rows.length == 0) {
-		ajouteChamp();
+	static valideChamp(champ) {
+		let isValide = (/^\d+$/).test(champ.cells[1].childNodes[1].value) &&
+			MZ_cDiplo.isCouleur(champ.cells[2].childNodes[1].value);
+		if (isValide) {
+			champ.cells[4].firstChild.style.visibility = 'visible';
+		} else {
+			champ.cells[4].firstChild.style.visibility = 'hidden';
+		}
+		return isValide;
 	}
-}
 
-function valideChamp(champ) {
-	let isValide = (/^\d+$/).test(champ.cells[1].childNodes[1].value) &&
-		isCouleur(champ.cells[2].childNodes[1].value);
-	if (isValide) {
-		champ.cells[4].firstChild.style.visibility = 'visible';
-	} else {
-		champ.cells[4].firstChild.style.visibility = 'hidden';
-	}
-	return isValide;
-}
-
-function sauvegarderTout() {
-	/* Diplo de guilde */
-	diploGuilde.isOn = document.getElementById('isGuildeOn').checked ? 'true' : 'false';
-	diploGuilde.isDetailOn = isDetailOn ? 'true' : 'false';
-	let numGuilde = Number(document.getElementById('numGuilde').value);
-	let couleur = document.getElementById('couleurGuilde').value;
-	if (numGuilde) {
-		diploGuilde.guilde = {
-			id: numGuilde,
-			couleur: couleur
-		};
-	} else {
-		delete diploGuilde.guilde;
-	}
-	for (let AE in { Amis: 0, Ennemis: 0 }) {
-		diploGuilde[`All${AE}`] = document.getElementById(`All${AE}`).value;
-		for (let i = 0; i < 5; i++) {
-			if (isDetailOn) {
-				diploGuilde[AE + i].couleur = document.getElementById(AE + i).value;
+	static sauvegarderTout() {
+		// Diplo de guilde
+		if (document.getElementById('isGuildeOn').checked) {
+			MZ_cDiplo.currentGuildeDiplo.isOn = true;
+		} else {
+			delete MZ_cDiplo.currentGuildeDiplo.isOn;
+		}
+		if (MZ_cDiplo.isDetailOn) {
+			MZ_cDiplo.currentGuildeDiplo.isDetailOn = true;
+		} else {
+			delete MZ_cDiplo.currentGuildeDiplo.isDetailOn;
+		}
+		let couleur = document.getElementById('couleurGuilde').value;
+		if (MZ_cDiplo.isCouleur(couleur)) {
+			MZ_cDiplo.currentGuildeDiplo.couleur = couleur;
+		} else {
+			delete MZ_cDiplo.currentGuildeDiplo.couleur;
+		}
+		for (let AE of ['Amis',  'Ennemis']) {
+			let couleurGroupe = document.getElementById('All' + AE).value;
+			if (MZ_cDiplo.isCouleur(couleurGroupe)) {
+				MZ_cDiplo.currentGuildeDiplo['all' + AE] = couleurGroupe;
 			} else {
-				diploGuilde[AE + i].couleur = diploGuilde[`All${AE}`];
+				delete MZ_cDiplo.currentGuildeDiplo['all' + AE];
+				couleurGroupe = null;
+			}
+			for (let i = 0; i < 5; i++) {
+				let thisGroupe = MZ_cDiplo.getDiploGroupByNom(MZ_cDiplo.currentGuildeDiplo, AE + i);
+				if (!thisGroupe) {
+					thisGroupe = {nom: AE + i};
+					MZ_cDiplo.currentGuildeDiplo.groupes.push(thisGroupe);
+				}
+				couleur = document.getElementById(AE + i).value;
+				if (!MZ_cDiplo.isCouleur(couleur)) couleur = null;
+				if (couleur) {
+					thisGroupe.couleur = couleur;
+				} else {
+					delete thisGroupe.couleur;
+				}
 			}
 		}
-	}
-	MY_setValue(`${numTroll}.diplo.guilde`, JSON.stringify(diploGuilde));
 
-	/* Diplo personnelle (ex-fonction saveChamps) */
-	let champs = document.getElementById('diploPerso');
-	diploPerso = {
-		isOn: document.getElementById('isPersoOn').checked ? 'true' : 'false',
-		Guilde: {},
-		Troll: {},
-		Monstre: {}
-	};
-	if (isMythiquesOn &&
-		isCouleur(document.getElementById('couleurMythiques').value)) {
-		diploPerso.mythiques = document.getElementById('couleurMythiques').value;
-	}
-	for (let i = 0; i < champs.rows.length; i++) {
-		if (valideChamp(champs.rows[i])) {
+		// Diplo personnelle
+		let champs = document.getElementById('diploPerso');
+		MZ_cDiplo.diploPerso.groupes = [];
+		if (document.getElementById('isPersoOn').checked) {
+			MZ_cDiplo.diploPerso.isOn = true;
+		} else {
+			delete MZ_cDiplo.diploPerso.isOn;
+		}
+		couleur = document.getElementById('couleurMythiques').value;
+		if (MZ_cDiplo.isMythiquesOn &&
+			MZ_cDiplo.isCouleur(couleur)) {
+			MZ_cDiplo.diploPerso.mythiques = couleur;
+		} else {
+			delete MZ_cDiplo.diploPerso.mythiques;
+		}
+		for (let i = 0; i < champs.rows.length; i++) {
+			if (!MZ_cDiplo.valideChamp(champs.rows[i])) continue;
 			let type = champs.rows[i].cells[0].firstChild.value;
-			let num = champs.rows[i].cells[1].childNodes[1].value;
+			let num = parseInt(champs.rows[i].cells[1].childNodes[1].value);
+			if (isNaN(num)) continue;
 			couleur = champs.rows[i].cells[2].childNodes[1].value;
-			let descr = champs.rows[i].cells[3].childNodes[1].value;
-			diploPerso[type][num] = {
-				couleur: couleur
+			let descr = champs.rows[i].cells[3].childNodes[1].value.trim();
+			
+			let newGroupe = {
+				nom: type.substring(0, 1).toUpperCase() + '_' + num,
 			};
-			if (descr) {
-				diploPerso[type][num].titre = descr;
+			newGroupe[type.toLowerCase() + 's'] = [num];
+			if (descr) newGroupe.titre = descr;
+			if (MZ_cDiplo.isCouleur(couleur)) newGroupe.couleur = couleur;
+			MZ_cDiplo.diploPerso.groupes.push(newGroupe);
+		}
+		//console.log(MZ_cDiplo.diplos);
+		MY_removeValue(`${numTroll}.diplo.guilde`);	// ancienne méthode
+		MY_removeValue(`${numTroll}.diplo.perso`);	// ancienne méthode
+		MY_setValue(`${numTroll}.diplo`, JSON.stringify(MZ_cDiplo.diplos));
+		if (MZ_cDiplo.traceDiplo) logMZ(`save diplo 2025 ${JSON.stringify(MZ_cDiplo.diplos, null, 2)}`);
+		avertissement('Données sauvegardées');
+	}
+
+	/** x~x Modifications de la page --------------------------------------- */
+
+	static creeTablePrincipale() {
+		if (MZ_cDiplo.diploPerso.mythiques) MZ_cDiplo.isMythiquesOn = true;
+		MZ_cDiplo.isDetailOn = MZ_cDiplo.currentGuildeDiplo.isDetailOn;
+
+		let insertPt = document.getElementById('insertPt');
+
+		/* Titre + bouton de Sauvegarde */
+		let tr = insertTr(insertPt, 'mh_tdtitre');
+		let td = appendTdText(tr, '[Mountyzilla] Options de Diplomatie ', true);
+		appendButton(td, 'Sauvegarder', MZ_cDiplo.sauvegarderTout);
+		td.onclick = function(e) {
+			let evt = e || window.event;
+			if (!evt.shiftKey) return;
+			logMZ(`diplo avant modif ${JSON.stringify(MZ_cDiplo.diplos, null, 2)}`);
+		}
+
+		/* Options fixes */
+		tr = insertTr(insertPt, 'mh_tdpage');
+		td = appendTdText(tr, 'Diplomatie de guilde:', true);
+		appendBr(td);
+		let label = appendLabel(td);
+		appendCheckBox(label, 'isGuildeOn', MZ_cDiplo.currentGuildeDiplo.isOn != 'false');
+		appendText(label, 'Afficher la diplomatie de guilde dans la Vue');
+		appendBr(td);
+		label = appendLabel(td);
+		appendCheckBox(label, 'detailOn', MZ_cDiplo.isDetailOn, MZ_cDiplo.toggleDetails);
+		appendText(label, 'Utiliser des couleurs détaillées (10)');
+
+		/* Diplo personnelle */
+		tr = insertTr(insertPt, 'mh_tdpage');
+		td = appendTdText(tr, 'Diplomatie personnelle:', true);
+		appendBr(td);
+		// Diplo Mythiques
+		label = appendLabel(td);
+		appendCheckBox(label, 'isMythiquesOn', MZ_cDiplo.isMythiquesOn, MZ_cDiplo.toggleMythiques);
+		appendText(label, 'Ajouter les monstres Mythiques à la Diplomatie');
+		let span = document.createElement('span');
+		span.id = 'spanMythiques';
+		if (!MZ_cDiplo.isMythiquesOn) {
+			span.style.display = 'none';
+		}
+		let couleur = '#FFAAAA';
+		if (MZ_cDiplo.diploPerso.mythiques) {
+			couleur = MZ_cDiplo.diploPerso.mythiques;
+		}
+		appendText(span, ' - couleur HTML:');
+		let input = appendTextbox(span, 'text', 'couleurMythiques', 7, 7, couleur);
+		input.onkeyup = MZ_cDiplo.previewCouleur;
+		input.onchange = MZ_cDiplo.previewCouleur;
+		input.onkeyup();
+		td.appendChild(span);
+		appendBr(td);
+		// Diplo éditable
+		label = appendLabel(td);
+		appendCheckBox(label, 'isPersoOn', MZ_cDiplo.diploPerso.isOn != 'false');
+		appendText(label, 'Afficher la diplomatie personnelle dans la Vue:');
+		appendBr(td);
+		let table = document.createElement('table');
+		table.id = 'diploPerso';
+		td.appendChild(table);
+		for (let groupe of MZ_cDiplo.diploPerso.groupes) {
+			for (let type of ['guildes', 'trolls', 'monstres']) {
+				let aIDs = groupe[type];
+				if (!aIDs) continue;
+				for (let num of aIDs) {
+					MZ_cDiplo.ajouteChamp(
+						type.charAt(0).toUpperCase() + type.slice(1, type.length-1),
+						num,
+						groupe.couleur,
+						groupe.titre,
+					);
+				}
 			}
 		}
-	}
-	MY_setValue(`${numTroll}.diplo.perso`, JSON.stringify(diploPerso));
-	avertissement('Données sauvegardées');
-}
-
-/** x~x Modifications de la page --------------------------------------- */
-
-function creeTablePrincipale() {
-	let insertPt = document.getElementById('insertPt');
-
-	/* Titre + bouton de Sauvegarde */
-	let tr = insertTr(insertPt, 'mh_tdtitre');
-	let td = appendTdText(tr, '[Mountyzilla] Options de Diplomatie ', true);
-	appendButton(td, 'Sauvegarder', sauvegarderTout);
-
-	/* Options fixes */
-	tr = insertTr(insertPt, 'mh_tdpage');
-	td = appendTdText(tr, 'Diplomatie de guilde:', true);
-	appendBr(td);
-	appendCheckBox(td, 'isGuildeOn', diploGuilde.isOn != 'false');
-	appendText(td, 'Afficher la diplomatie de guilde dans la Vue');
-	appendBr(td);
-	appendCheckBox(td, 'detailOn', isDetailOn, toggleDetails);
-	appendText(td, 'Utiliser des couleurs détaillées (10)');
-
-	/* Diplo personnelle */
-	tr = insertTr(insertPt, 'mh_tdpage');
-	td = appendTdText(tr, 'Diplomatie personnelle:', true);
-	appendBr(td);
-	// Diplo Mythiques
-	appendCheckBox(td, 'isMythiquesOn', isMythiquesOn, toggleMythiques);
-	appendText(td, 'Ajouter les monstres Mythiques à la Diplomatie');
-	let span = document.createElement('span');
-	span.id = 'spanMythiques';
-	if (!isMythiquesOn) {
-		span.style.display = 'none';
-	}
-	let couleur = '#FFAAAA';
-	if (diploPerso.mythiques) {
-		couleur = diploPerso.mythiques;
-	}
-	appendText(span, ' - couleur HTML:');
-	let input = appendTextbox(span, 'text', 'couleurMythiques', 7, 7, couleur);
-	input.onkeyup = previewCouleur;
-	input.onchange = previewCouleur;
-	input.onkeyup();
-	td.appendChild(span);
-	appendBr(td);
-	// Diplo éditable
-	appendCheckBox(td, 'isPersoOn', diploPerso.isOn != 'false');
-	appendText(td, 'Afficher la diplomatie personnelle dans la Vue:');
-	appendBr(td);
-	let table = document.createElement('table');
-	table.id = 'diploPerso';
-	td.appendChild(table);
-	for (let type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
-		for (let num in diploPerso[type]) {
-			ajouteChamp(
-				type,
-				num,
-				diploPerso[type][num].couleur,
-				diploPerso[type][num].titre
-			);
+		if (table.rows.length == 0) {
+			MZ_cDiplo.ajouteChamp();
 		}
-	}
-	if (table.rows.length == 0) {
-		ajouteChamp();
-	}
-	appendButton(td, 'Ajouter', ajouteChamp);
-	// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
-	appendText(td, ' ');
-	appendButton(td,
-		'Exemples de couleur',
-		() => {
-			let fenetre = window.open(
-				'/mountyhall/MH_Play/Options/Play_o_Color.php',
-				'Divers',
-				'width=500,height=550,toolbar=0,location=0,directories=0,' +
-				'status=0,menubar=0,resizable=1,scrollbars=1'
-			);
-			fenetre.focus();
-		}
-	);
+		appendButton(td, 'Ajouter', MZ_cDiplo.ajouteChamp);
+		// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
+		appendText(td, ' ');
 
-	/* Couleur de Guilde */
-	tr = insertTr(insertPt, 'mh_tdtitre');
-	td = appendTdText(tr, 'GUILDE', true);
-	appendText(td, ' - n°');
-	appendTextbox(td, 'text', 'numGuilde', 5, 10,
-		diploGuilde.guilde && diploGuilde.guilde.id ?
-			diploGuilde.guilde.id : ''
-	);
-	appendText(td, ' - Couleur HTML: ');
-	input = appendTextbox(td, 'text', 'couleurGuilde', 7, 7,
-		diploGuilde.guilde && diploGuilde.guilde.couleur ?
-			diploGuilde.guilde.couleur : '#BBBBFF'
-	);
-	input.onkeyup = previewCouleur;
-	input.onchange = previewCouleur;
-	input.onkeyup();
-}
-
-/** x~x Main ----------------------------------------------------------- */
-
-function initDiplo(sType) {
-	let sDiplo = MY_getValue(`${numTroll}.diplo.${sType}`);
-	// logMZ('sDiplo' + sType + '=' + sDiplo);
-	if (sDiplo && sDiplo != 'null') {	// le stockage JSON nous donne parfois 'null'
-		return JSON.parse(sDiplo);
-	}
-	return {};
-}
-
-var diploGuilde = initDiplo('guilde');
-var diploPerso = initDiplo('perso');
-var isDetailOn = diploGuilde.isDetailOn == 'true';
-var isMythiquesOn = diploPerso.mythiques != undefined;
-
-function do_diplo() {
-	if (setChoixCouleurs() && fetchDiploGuilde()) {
-		creeTablePrincipale();
+		/* Couleur de Guilde */
+		tr = insertTr(insertPt, 'mh_tdtitre');
+		td = appendTdText(tr, 'GUILDE', true);
+		appendText(td, ' - n°' + MZ_cDiplo.currentGuildeID + ' - Couleur HTML: ');
+		input = appendTextbox(td, 'text', 'couleurGuilde', 7, 7,
+			MZ_cDiplo.currentGuildeDiplo.couleur ?
+				MZ_cDiplo.currentGuildeDiplo.couleur : '#BBBBFF'
+		);
+		input.onkeyup = MZ_cDiplo.previewCouleur;
+		input.onchange = MZ_cDiplo.previewCouleur;
+		input.onkeyup();
 	}
 }
 
@@ -11434,10 +11699,7 @@ class MZ_cVueExterne {
 		window.addEventListener("message", MZ_cVueExterne.messageHandlerCube);
 		let oURL = new URL(url); // extraire le hostname, on en aura besoin dans sendVueExterne
 
-		let diplo = MY_getValue(`${numTroll}.diplo.guilde`);
-		if (diplo) diplo = JSON.parse(diplo);
-		//logMZ(diplo);
-
+		MZ_cDiplo.initDiploInverse();
 		MZ_cVueExterne.loadPorteeFiltre();
 
 		MZ_cVueExterne.oVueCube = {};
@@ -11491,39 +11753,18 @@ class MZ_cVueExterne {
 					if (v === undefined || v === '') continue;
 					oElement[MZ_cVueExterne.vue2Ddata.Cube.columnTranslation[param]] = v;
 				}
-				if (oVueJSON.nomBase == 'trolls' && diplo)  {
-					let guildeID = oLigneVue.getGuildeID();
-					let bDone = false;
-					for (let typeDiplo in diplo) { 	// amis0, etc.
-						let oSubDiplo = diplo[typeDiplo];
-						if (typeof oSubDiplo !== "object") continue;
-						// priorité Troll
-						//logMZ('oSubDiplo', oSubDiplo);
-						let tabID = [];
-						if (oSubDiplo.Troll) tabID = oSubDiplo.Troll.split(';');
-						for (let id2 of tabID) {
-							if (id2 == oElement.Id) {
-								bDone = true;
-								oElement.diplo = typeDiplo;
-								if (oSubDiplo.titre) oElement.dplText = oSubDiplo.titre;
-								if (oSubDiplo.couleur) oElement.dplColor = oSubDiplo.couleur;
-								break;
-							}
-						}
-						// sinon guilde
-						tabID = [];
-						if (oSubDiplo.Guilde) tabID = oSubDiplo.Guilde.split(';');
-						for (let id2 of tabID) {
-							if (id2 == guildeID) {
-								bDone = true;
-								oElement.diplo = typeDiplo;
-								if (oSubDiplo.titre) oElement.dplText = oSubDiplo.titre;
-								if (oSubDiplo.couleur) oElement.dplColor = oSubDiplo.couleur;
-								break;
-							}
-						}
-						if (bDone) break;
-					}
+				let diplo = undefined;
+				if (oVueJSON.nomBase == 'trolls') {
+					let idG = oLigneVue.getGuildeID();
+					diplo = MZ_cDiplo.getDiploTroll(oElement.Id);
+					if (!diplo && idG > 0) diplo = MZ_cDiplo.getDiploGuilde(idG);
+				} else if (oVueJSON.nomBase == 'monstres') {
+					diplo = MZ_cDiplo.getDiploMonstre(oElement.Id);
+				}
+				if (diplo) {
+					if (diplo.nom) oElement.diplo = diplo.nom;
+					if (diplo.titre) oElement.dplText = diplo.titre;
+					if (diplo.couleur) oElement.dplColor = diplo.couleur;
 				}
 				oSection.push(oElement);
 			}
@@ -11834,6 +12075,13 @@ class MZ_cVueJSON {
 	// les propriétés principales sont des tableaux d'objets cLigneVueJSON (un tableau pour chaque type montre, troll, trésor, etc.)
 	// cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
 
+	// les scripts souhaitant utiliser les données extraits MZ_cVueJSON doivent fournir une fonction (callback)
+	// par MZ_cVueJSON.registerCallback(mycallback)
+	// 	pour ête appelé quand on a reçu les infos de MH (les blocs monstres, trolls, etc. sont remplis et traités)
+	// par MZ_cVueJSON.registerCallbackMZ(mycallback)
+	// 	pour être appelé quand on a reçu les infos de MZ (les niveaux et carac des monstres ont été reçus, enfin les 500 premiers)
+	// dans les 2 cas, si les infos ont déjà été reçues au moment de l'appel à registerCallback, la callback est appelée IMMÉDIATEMENT
+
 	// partie static : gestion globale
 	static oMonstres;	// classes MZ_cVueJSON
 	static oTrolls;
@@ -11847,6 +12095,8 @@ class MZ_cVueJSON {
 	static oPosTroll;
 	static hvDist;
 	static initDone;
+	static MH_received;
+	static MZ_received;
 	static debugEnchainements = false;
 
 	static initGlobal() {
@@ -11871,8 +12121,10 @@ class MZ_cVueJSON {
 		// fonction appelée quand tous les blocs sont chargés
 		MZ_cVueExterne.set2DViewSystem();
 		// do_scizEnhanceView();
+		MZ_cVueJSON.MH_received = true;
 		for (let callback of MZ_cVueJSON.callbacksFinMH) {
 			try {
+				if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.allMHLoaded appel de la callback ${callback.name}`);
 				callback();
 			} catch (exc) {
 				logMZ("MZ_cVueJSON_log Erreur à l'appel d'une callback", exc);
@@ -11886,13 +12138,27 @@ class MZ_cVueJSON {
 
 	static registerCallback(callback) {
 		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé, mais PAS le retour AJAX MZ avec les infos sur les monstres)
-		MZ_cVueJSON.callbacksFinMH.push(callback);
+		// si c'est déjà le cas, la callback est appelée immédiatement
+		if (MZ_cVueJSON.MH_received) {
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallback_log appel immédiat de la callback ${callback.name}`);
+			callback();
+		} else {
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallback_log register de la callback ${callback.name}`);
+			MZ_cVueJSON.callbacksFinMH.push(callback);
+		}
 	}
 
 	static registerCallbackMZ(callback) {
 		// permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH, le retour MZ a été traité et les cibles des missions traitées)
 		// utilisé aussi pour rafraichir le filtre des monstres pour niveau, famille et mission
-		MZ_cVueJSON.callbacksFinMZ.push(callback);
+		// si c'est déjà le cas, la callback est appelée immédiatement
+		if (MZ_cVueJSON.MZ_received) {
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallbackMZ_log appel immédiat de la callback ${callback.name}`);
+			callback();
+		} else {
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallbackMZ_log register de la callback ${callback.name}`);
+			MZ_cVueJSON.callbacksFinMZ.push(callback);
+		}
 	}
 
 	static loadPosTroll() {	// chargement de MZ_cVueJSON.oPosTroll
@@ -12016,7 +12282,7 @@ class MZ_cVueJSON {
 
 		// teste que notre tableau est rempli si le tableau MH est rempli
 		if (this.MH_json === undefined || this.objets !== undefined) {
-			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log avorté car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
+			if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} avorté car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
 			if (!this.mutationObserver) {
 				// créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
 				let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
@@ -12024,12 +12290,12 @@ class MZ_cVueJSON {
 					//logMZ('MZ_cVueJSON_log callback1 ' + oThis.nomBase);
 					oThis.load();
 				});
-				if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log arme un mutationObserver`);
+				if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} arme un mutationObserver et passe la main`);
 				this.mutationObserver.observe(this.eltTable, MZ_cVueJSON.MutationObserverConfig);
 			}
 			return;
 		}
-		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log continue car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
+		if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} s'exécute pour de bon car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
 
 		if (this.mutationObserver) {
 			this.mutationObserver.disconnect();
@@ -12137,7 +12403,7 @@ class MZ_cVueJSON {
 		];
 		for (let o of tBloc) {
 			if (o === undefined || (o.eltTable && !o.loaded)) {
-				if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded}`);
+				if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${this.nomBase} ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded} donc ce n'est pas fini`);
 				allMHLoaded = false;
 				break;
 			}
@@ -12156,7 +12422,7 @@ class MZ_cVueJSON {
 							logMZ('un des blocs est indéfini');
 						}
 					}
-					let msg = `MZ_cVueJSON.load_log erreur allMHLoaded incohérent, this.nomBase=${this.nomBase}`;
+					let msg = `MZ_cVueJSON.load_log ${this.nomBase} erreur allMHLoaded incohérent, this.nomBase=${this.nomBase}`;
 					console.trace(`[MZ] ${msg}`);
 					if (numTroll == 91305) alert(msg);
 					return;
@@ -12432,6 +12698,22 @@ class MZ_cLigneVue {
 		}
 	}
 
+	applyDiplo(diplo) {
+		if (diplo) {
+			//this.eltTr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
+			if (diplo.couleur) {
+				for (let td of this.eltTr.children) td.style.backgroundColor = diplo.couleur;
+				this.eltTr.style.backgroundColor = diplo.couleur;
+			}
+			if (diplo.titre) {
+				this.eltTdNom.title = diplo.titre;
+			}
+		} else {
+			//this.eltTr.className = 'mh_tdpage';
+			this.eltTdNom.removeAttribute('title');
+		}
+	}
+
 	static stopPropagation(event) {
 		event.cancelBubble = true;
 		if(event.stopPropagation) event.stopPropagation();
@@ -12570,62 +12852,6 @@ class MZ_cLigneVue {
 		}
 		return true;
 	}
-
-	static initDiplo() {
-		// On extrait les données de couleur et on les stocke par id
-		// Ordre de préséance :
-		//  source Guilde < source Perso
-		//  guilde cible < troll cible
-
-		if (MZ_cLigneVue.diplo) return;	// déjà fait
-
-		MZ_cLigneVue.diplo = {Guilde: {}, Troll: {}, Monstre: {}}
-
-		/* Diplo de Guilde */
-		
-		let diploGuilde = MY_getValue(`${numTroll}.diplo.guilde`);
-		if (diploGuilde) diploGuilde = JSON.parse(diploGuilde);
-		if (diploGuilde && diploGuilde.isOn == 'true') {
-			// Guilde perso
-			if (diploGuilde.guilde) {
-				MZ_cLigneVue.diplo.Guilde[diploGuilde.guilde.id] = {
-					couleur: diploGuilde.guilde.couleur,
-					titre: 'Ma Guilde'
-				};
-			}
-			// Guildes/Trolls A/E
-			for (let AE of ['Amis', 'Ennemis']) {
-				for (let i = 0; i < 5; i++) {
-					if (!diploGuilde[AE + i]) {
-						continue;
-					}
-					for (let type of ['Guilde', 'Troll']) {
-						let liste = diploGuilde[AE + i][type].split(';');
-						for (let j = liste.length - 2; j >= 0; j--) {
-							MZ_cLigneVue.diplo[type][liste[j]] = {
-								couleur: diploGuilde[AE + i].couleur,
-								titre: diploGuilde[AE + i].titre
-							};
-						}
-					}
-				}
-			}
-		}
-
-		/* Diplo Perso */
-		// let diploPerso = MY_getValue(numTroll+'.diplo.perso') ? JSON.parse(MY_getValue(numTroll+'.diplo.perso')) : {};	// déjà chargé
-		if (diploPerso && diploPerso.isOn == 'true') {
-			for (let type in { Guilde: 0, Troll: 0, Monstre: 0 }) {
-				for (let id in diploPerso[type]) {
-					MZ_cLigneVue.diplo[type][id] = diploPerso[type][id];
-				}
-			}
-		}
-		if (diploPerso.mythiques) {
-			MZ_cLigneVue.diplo.mythiques = diploPerso.mythiques;
-		}
-	}
-
 }
 
 class MZ_cLigneMonstre extends MZ_cLigneVue {
@@ -12670,6 +12896,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	insertColumnNiveau() {
 		this.eltTdNiveau = insertTdText(this.eltTdRef, '');
 		this.eltTdNiveau.style.display = 'table-cell';
+		if (this.eltTr.style.backgroundColor) this.eltTdNiveau.style.backgroundColor = this.eltTr.style.backgroundColor;
 	}
 
 	static initGlobal() {
@@ -12683,34 +12910,19 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		MZ_cLigneMonstre.MZ_oVueJSON.initFiltre();
 
 		// diplo
-		MZ_cLigneVue.initDiplo();
+		MZ_cDiplo.initDiploInverse();
 		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
-			let nom =oLigne.nom.toLowerCase();
-			let tr = oLigne.eltTr;
-			if (MZ_cLigneVue.diplo.Monstre[oLigne.id]) {
-				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Monstre[oLigne.id].couleur;
-				tr.style.backgroundColor = MZ_cLigneVue.diplo.Monstre[oLigne.id].couleur;
-				tr.diploActive = 'oui';
-				let descr = MZ_cLigneVue.diplo.Monstre[oLigne.id].titre;
-				if (descr) {
-					oLigne.eltTdNom.title = descr;
+			// monstre présent dans la diplo
+			let diplo = MZ_cDiplo.getDiploMonstre(oLigne.id);
+			if (!diplo 
+				&& MZ_cDiplo.mythiques
+				&& oLigne.nom.match(/^[^\[]*(liche|hydre|balrog|beholder|sidoine)/i)) {
+				diplo = {
+					couleur: MZ_cDiplo.mythiques,
+					titre: 'Monstre Mythique',
 				}
-			} else if (MZ_cLigneVue.diplo.mythiques &&
-					nom.match(/^[^\[]*liche/) ||
-					nom.match(/^[^\[]*hydre/) ||
-					nom.match(/^[^\[]*balrog/) ||
-					nom.match(/^[^\[]*beholder/) ||
-					nom.match(/^[^\[]*sidoine/)) {
-				//tr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
-				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.mythiques;
-				tr.style.backgroundColor = MZ_cLigneVue.diplo.mythiques;
-				tr.diploActive = 'oui';
-				oLigne.eltTdNom.title = 'Monstre Mythique';
-			} else {
-				tr.className = 'mh_tdpage';
-				tr.diploActive = '';
 			}
+			oLigne.applyDiplo(diplo);
 		}
 	}
 
@@ -13077,28 +13289,13 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneTroll.MZ_oVueJSON);
 
 		// diplo
-		MZ_cLigneVue.initDiplo();
-		//logMZ(`initGlobal Trolls MZ_cLigneVue.diplo ${JSON.stringify(MZ_cLigneVue.diplo)}`);
+		MZ_cDiplo.initDiploInverse();
+		//logMZ(`initGlobal Trolls MZ_cDiplo.diploInverse ${JSON.stringify(MZ_cDiplo.diploInverse)}`);
 		for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
 			let idG = oLigne.getGuildeID();
-			let tr = oLigne.eltTr;
-			if (MZ_cLigneVue.diplo.Troll[oLigne.id]) {
-				//logMZ(`initGlobal Trolls MZ_cLigneVue.diplo id=${oLigne.id}`);
-				let descr = MZ_cLigneVue.diplo.Troll[oLigne.id].titre;
-				if (descr) {
-					oLigne.eltTdNom.title = descr;
-				}
-				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Troll[oLigne.id].couleur;
-			} else if (idG > 0 && MZ_cLigneVue.diplo.Guilde[idG]) {
-				let descr = MZ_cLigneVue.diplo.Guilde[idG].titre;
-				if (descr) {
-					oLigne.eltTdNom.title = descr;
-				}
-				for (let td of tr.children) td.style.backgroundColor = MZ_cLigneVue.diplo.Guilde[idG].couleur;
-			} else {
-				for (let td of tr.children) td.style.backgroundColor = '';
-				oLigne.eltTdNom.removeAttribute('title');
-			}
+			let diplo = MZ_cDiplo.getDiploTroll(oLigne.id);
+			if (!diplo && idG > 0) diplo = MZ_cDiplo.getDiploGuilde(idG);
+			oLigne.applyDiplo(diplo);
 		}
 	}
 
@@ -16639,7 +16836,7 @@ try {
 	} else if (isPage("MH_Play/Play_a_TalentResult")) {
 		do_cdmcomp();
 	} else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -6, sub: 'diplomatie' } })) {
-		do_diplo();
+		MZ_cDiplo.do_diplo();
 	} else if (isPage("MH_Play/Play_equipement")) {
 		do_equip();
 	} else if (isPage("MH_Play/Play_menu")) {
