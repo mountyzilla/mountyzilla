@@ -813,6 +813,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
     MountyzillaGrid.injectStyles = function () {
         const style = document.createElement('style');
+        style.id = 'mz-map-styles';
         style.appendChild(document.createTextNode(styles));
         document.head.appendChild(style);
     }
@@ -1010,35 +1011,5 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 })(window.MountyzillaGrid); // scope confinement
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
-    function waitForMZ(timeout = 3000) {
-        return new Promise((resolve, reject) => {
-            const startTime = Date.now();
-            const interval = setInterval(() => {
-                if (typeof MZ_cVueJSON !== 'undefined' && MZ_cVueJSON !== null) {
-                    clearInterval(interval);
-                    resolve(MZ_cVueJSON);
-                    return;
-                }
-                console.log("waiting for MZ");
-                if (Date.now() - startTime > timeout) {
-                    clearInterval(interval);
-                    reject(new Error(`Timeout waiting for MZ`));
-                }
-            }, 100); // Check every 100ms
-        });
-    }
-
-    async function register2DView() {
-        await waitForMZ(3000);
-        if (document.body.dataset.MZ_Etat === undefined) {
-            MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
-        } else {
-            MountyzillaGrid.whenViewReady();
-        }
-    }
-
-    register2DView();
-
-
+    MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
 }
-
