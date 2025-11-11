@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.1.1
+// @version 0.1.2
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -26,7 +26,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         "arme (2 mains)": "W_Axe006_R.png",
         "arme": "S_Sword07.png",
         "armure": "A_Armor05.png",
-        "bidouille": "S_Magic02.png",
+        "bidouille": "S_Magic02.png",K
         "bottes": "A_Shoes02.png",
         "bouclier": "E_Metal02.png",
         "carte": "I_Map.png",
@@ -154,7 +154,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const borderIndex = this.gridSize - 1;
             let html = `<div id="${id}" class="mz-map-grid-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize-2}, 10rem) 2rem;"> `;
             for (let i = 0; i < this.gridSize; i++) {
-                let column = this.cells[i];
                 for (let j = 0; j < this.gridSize; j++) {
                     if (0 === i || 0 === j || borderIndex === i || borderIndex === j) {
                         if (i === j || i + j === borderIndex) {
@@ -196,11 +195,11 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         yToIndex(y) {
-            return y - this.centerY + this.horizontalRange;
+            return this.centerY + this.horizontalRange - y;
         }
 
         indexToY(i) {
-            return i + this.centerY - this.horizontalRange;
+            return this.centerY + this.horizontalRange - i;
         }
 
         /**
@@ -297,7 +296,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid");
             let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img></div>";
-            let details = '<div id="mz-map-details-wrapper"><span class="mz-map-details-header">DETAILS</span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
+            let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
@@ -463,7 +462,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         detailsHtml(depth) {
-            return this.groupToDetailsHtml(depth, this.trolls, "mz-map-details-troll")
+            return `<h3 class="titre3" style="text-align:center">${this.x} ${this.y} ${depth}</h3>`
+                + this.groupToDetailsHtml(depth, this.trolls, "mz-map-details-troll")
                 + this.groupToDetailsHtml(depth, this.monsters, "mz-map-details-monster")
                 + this.groupToDetailsHtml(depth, this.treasures, "mz-map-details-treasure")
                 + this.groupToDetailsHtml(depth, this.places, "mz-map-details-place")
