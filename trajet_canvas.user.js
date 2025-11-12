@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.48
+// @version 2.49
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -23,7 +23,7 @@
 'use strict';
 
 try { // ajout par Vapulabehemot (82169) le 30/08/2013
-	let aj_noeud = false, t_enreg, t_prev, point_surligne, nbs, xcase, ycase, liste_etapes, suppr_surligne;
+	let aj_noeud = false, t_enreg, t_prev, point_surligne, nbs, xcase, ycase, liste_etapes, suppr_surligne, suivants;
 	let ligne_h = new Array(), ligne_v = new Array(), ligne_d = new Array(), distances = new Array();
 	let noeud_courant = 0;
 	let choix_ini = false;
