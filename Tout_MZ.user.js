@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.7
+// @version     1.7.8
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.7';
+var MZ_latest = '1.7.8';
 var MZ_changeLog = [
 	"V1.7.7 \t\t 11/11/2025",
 	"	- Couleurs diplo : gestion des 2 guildes possibles",
@@ -12868,6 +12868,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 	static nomsFiltres = {
 		gowapA: {libelle: 'Les Gowaps Apprivoisés'},
 		gowapS: {libelle: 'Les Gowaps Sauvages'},
+		flous: {libelle: 'Les Monstres Flous'},
 		engage: {libelle: 'Les Engagés', infobulle: 'Les monstres ayant au moins un Trõll sur la même case'},
 		nonmis: {libelle: 'Hors mission', infobulle : "Ne garde que les monstres cibles d'une étape de mission active"},
 		grGoGu: {libelle: 'Regrp. Gowaps/Gnus', infobulle : "Ne garde qu'une ligne par groupe"},
@@ -13080,6 +13081,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 					&& MZ_cLigneMonstre.listPosTroll[oMonstre.n][oMonstre.x]
 					&& MZ_cLigneMonstre.listPosTroll[oMonstre.n][oMonstre.x][oMonstre.y]) cache = true;
 			}
+			if (!cache && oConfig.flous && oMonstre.nom.indexOf('Créature Floue') == 0) cache = true;
 			if ((!cache) && oConfig.nom) {
 				if (oMonstre.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
 			}
