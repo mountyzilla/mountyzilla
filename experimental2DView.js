@@ -338,12 +338,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * @param e event
          */
         updateDetailsForDepth(e) {
-            let target = e.target;
-            if (!target.classList.contains('mz-map-grid-cell-depth')) {
-                target = target.parentNode;
-                if (!target.classList.contains('mz-map-grid-cell-depth')) {
-                    return;
-                }
+            let target = e.target.closest('[data-mz-grid-x]');;
+            if (null == target) {
+                return;
             }
             const x = parseInt(target.dataset.mzGridX);
             const y = parseInt(target.dataset.mzGridY);
