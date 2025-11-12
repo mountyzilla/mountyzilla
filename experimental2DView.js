@@ -313,6 +313,12 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             });
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
             document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
+            const allCells = document.getElementsByClassName('mz-map-grid-cell');
+            for (const cell of allCells) {
+                if (cell.scrollHeight > cell.clientHeight) {
+                    cell.querySelector('.mz-map-grid-cell-hint').style.display = 'block';
+                }
+            }
         }
 
         /**
@@ -365,7 +371,11 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         convertToHtml(i, j, centerX, centerY) {
 
             const id = this.youAreHere ? `id="you-are-here"` : ``;
-            let html = `<div ${id} data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}"><div class="mz-map-grid-cell-content">`;
+            let html = `<div ${id} data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} 
+style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" 
+class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
+<div class="mz-map-grid-cell-hint">&#8661;</div>
+<div class="mz-map-grid-cell-content">`;
             if (null != this.monsters
                 || null != this.trolls
                 || null != this.treasures
@@ -690,7 +700,16 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
 
         }
- 
+        
+        .mz-map-grid-cell-hint {
+            display: none;
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            font-weight: bold;
+            color: red;
+        }
+        
         .mz-map-grid-cell-content {
             height: 100%;
             box-sizing: border-box;
@@ -805,7 +824,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         .mz-map-details-place {
             display: block;
         }
-
+        
     `;
 
     MountyzillaGrid.injectStyles = function () {
