@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.8
+// @version     1.7.9
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.8';
+var MZ_latest = '1.7.9';
 var MZ_changeLog = [
+	"V1.7.9 \t\t 13/11/2025",
+	"	- Dans la vue des lieux, recherche d'un certain service",
 	"V1.7.7 \t\t 11/11/2025",
 	"	- Couleurs diplo : gestion des 2 guildes possibles",
 	"V1.6.86 \t\t 21/07/2025",
@@ -13574,6 +13576,9 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 		MZ_cLigneLieu.MZ_oVueJSON.initFiltre();
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneLieu.MZ_oVueJSON);
 	}
+	static services = [
+		'Achat', 'Dépôt', 'Forge', 'Resurrection', 'Réseau T.G.V.', 'Soins', 'Maisonnée', 'Recycleur',
+	];
 
 	static addLigne(id, type, x, y, n) {
 		let oModele = MZ_cVueJSON.oLieux.objets[0];
@@ -13594,12 +13599,80 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
 		}
 		return oNouvelleLigne;
 	}
+
+	static initOtherFiltre(div2, oConfig) {
+		appendText(div2, 'Service :');
+		let comboBox = MZ_cLigneVue.ajoutFiltreDropdown(div2, 'MZ_ServiceLieu', MZ_cLigneLieu.modifFiltre
+			, MZ_cLigneLieu.services
+			, oConfig.service);
+		comboBox.style.marginRight = '5px';
+		comboBox.style.marginLeft = '3px';
+	}
+
+	static modifFiltre() {
+		let oConfig = {};
+		let bSomething = false;
+
+		let nom = document.getElementById('MZ_Nom' + MZ_cLigneLieu.MZ_oVueJSON.nomFiltre).value;
+		if (nom.trim() != '') {
+			oConfig.nom = nom;
+			bSomething = true;
+		} else delete oConfig.nom;
+
+		let service = document.getElementById('MZ_ServiceLieu').value;
+		if (service && service != '0') {	// firefox nous donne "0" dans le texte de la listbox est vide
+			oConfig.service = service;
+			bSomething = true;
+		} else delete oConfig.service;
+
+		if (!bSomething) oConfig = {empty: true};
+
+		MZ_cLigneLieu.MZ_oVueJSON.applyFiltre(oConfig);
+
+		//console.log('[MZ] vue set config lieux ' + JSON.stringify(oConfig));
+		if (oConfig.empty) oConfig = undefined;
+		MZ_SauvegardeMH.setZone(MZ_cLigneLieu.MZ_oVueJSON.nomFiltre, oConfig);
+	}
+
+	static razFiltre() {
+		document.getElementById('MZ_ServiceLieu').value = '';
+	}
+
+	static applyFiltreBloc(oConfig) {
+		//logMZ(`applyFiltreBloc Lieux oConfig=${JSON.stringify(oConfig)}`);
+		if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
+		let service = oConfig.service;
+		for (let oLieu of MZ_cVueJSON.oLieux.objets) {
+			let cache = false;
+			if ((!cache) && oConfig.nom) {
+				if (oLieu.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
+			}
+			if ((!cache)
+				&& service) {
+				let spans = oLieu.eltTdNom.getElementsByTagName('span');
+				cache = true;
+				for (let oSpan of spans) {
+					if (oSpan.innerText.indexOf(service) >= 0) {
+						//logMZ(`Lieux applyFiltreBloc found ${service} in ${oSpan.innerText}`);
+						cache = false;
+						break;
+					}
+					//logMZ(`Lieux applyFiltreBloc not found ${service} in ${oSpan.innerText}`);
+				}
+			}
+			let prevDisplay = oLieu.eltTr.style.display;
+			if (cache && prevDisplay != 'none')
+				oLieu.eltTr.style.display = 'none';
+			else if ((!cache) && prevDisplay == 'none')
+				oLieu.eltTr.style.display = 'table-row';
+		}
+	}
 }
 
 class MZ_cLigneCenotaphe extends MZ_cLigneVue {
 	static MZ_oVueJSON;
 	static initGlobal() {
-		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+		// cette fonction est appelée un fois que les objects dérivés de MZ_cLigneVue ont été créés
 		MZ_cHighlightSameXYN.processVue(MZ_cLigneCenotaphe.MZ_oVueJSON);
 	}
 }
