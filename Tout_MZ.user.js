@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.9
+// @version     1.7.10
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
 *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
 *******************************************************************************/
 
-var MZ_latest = '1.7.9';
+var MZ_latest = '1.7.10';
 var MZ_changeLog = [
 	"V1.7.9 \t\t 13/11/2025",
 	"	- Dans la vue des lieux, recherche d'un certain service",
@@ -8981,7 +8981,9 @@ function saveAll() {
 
 		// Pourquoi Tilk stockait-il tout en str ?
 		// -> parce que les booléens c'est foireux (vérifié)
-		MZ_setOrRemoveValue(`${numTroll}.USECSS`, document.getElementById('usecss').checked);
+
+		// USECSS n'est pas (plus ?) utilisé
+		//MZ_setOrRemoveValue(`${numTroll}.USECSS`, document.getElementById('usecss').checked);
 		MZ_setOrRemoveValue('INFOCARAC', document.getElementById('infocarac').checked);
 		// MY_setValue(numTroll+'.SEND_IDT', document.getElementById('send_idt').checked);
 		// Fonctionnalité désactivée
@@ -9246,8 +9248,9 @@ function insertOptionTable(insertPt) {
 	// td = appendTdText(tr, 'Nombre de CdM automatiquement récupérées : ');
 	// appendTextbox(td, 'text', 'maxcdm', 5, 10, MY_getValue(`${numTroll}.MAXCDM`));
 
-	td = appendTd(tr);
-	appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
+	// USECSS n'est pas (plus ?) utilisé
+	//td = appendTd(tr);
+	//appendCheckBoxBlock(td, 'usecss', 'Utiliser la CSS pour les couleurs de la diplomatie', MY_getValue(`${numTroll}.USECSS`) == 'true');
 
 	MZ_cHighlightSameXYN.defineOptions(tbody);
 	MZ_cLieuxBT.defineOptions(tbody);
@@ -9828,9 +9831,7 @@ class MZ_cDiplo {
 
 		if (MZ_cDiplo.diploInverse !== undefined) return;
 		MZ_cDiplo.initDiplo()
-		MZ_cDiplo.diploInverse = {guildes: new Map(), trolls: new Map(), monstres: new Map()}
-
-		// à faire : raccourci pour les uniques
+		MZ_cDiplo.diploInverse = {guildes: new Map(), trolls: new Map(), monstres: new Map(), monstreWord: new Map()}
 
 		// traiter en ordre invese (le dernier qui cause a raison)
 
@@ -9870,7 +9871,12 @@ class MZ_cDiplo {
 					}
 				}
 				for (let id of v[typeID]) {
-					mapToUpdate.set(id, data);
+					if (id == 0 && typeID == 'monstres') {
+						// id null => le "titre" est un mot et on mets cette couleur quand le mot fait partie du nom du monstre
+						MZ_cDiplo.diploInverse.monstreWord.set(data.titre.toLowerCase(), data);
+					} else {
+						mapToUpdate.set(id, data);
+					}
 				}
 			}
 		}
@@ -10275,11 +10281,19 @@ class MZ_cDiplo {
 		} else {
 			delete MZ_cDiplo.diploPerso.mythiques;
 		}
+		let nbBad = 0;
 		for (let i = 0; i < champs.rows.length; i++) {
-			if (!MZ_cDiplo.valideChamp(champs.rows[i])) continue;
 			let type = champs.rows[i].cells[0].firstChild.value;
-			let num = parseInt(champs.rows[i].cells[1].childNodes[1].value);
-			if (isNaN(num)) continue;
+			let v = champs.rows[i].cells[1].childNodes[1].value;
+			if (v.trim() == '' && type == 'Monstre') {
+				v = '0';
+				champs.rows[i].cells[1].childNodes[1].value = '0';
+			}
+			if (!MZ_cDiplo.valideChamp(champs.rows[i])) {
+				nbBad++;
+				continue;
+			}
+			let num = parseInt(v);
 			couleur = champs.rows[i].cells[2].childNodes[1].value;
 			let descr = champs.rows[i].cells[3].childNodes[1].value.trim();
 			
@@ -10297,6 +10311,10 @@ class MZ_cDiplo {
 		MY_setValue(`${numTroll}.diplo`, JSON.stringify(MZ_cDiplo.diplos));
 		if (MZ_cDiplo.traceDiplo) logMZ(`save diplo 2025 ${JSON.stringify(MZ_cDiplo.diplos, null, 2)}`);
 		avertissement('Données sauvegardées');
+		if (nbBad > 0) setTimeout(function() {
+			if (nbBad == 1) alert(`Une ligne n'a pas été sauvegardée (celle sans [ok!])`);
+			if (nbBad > 1) alert(`${nbBad} lignes n'ont pas été sauvegardées (celles sans [ok!])`);
+		}, 10);
 	}
 
 	/** x~x Modifications de la page --------------------------------------- */
@@ -10378,6 +10396,12 @@ class MZ_cDiplo {
 		if (table.rows.length == 0) {
 			MZ_cDiplo.ajouteChamp();
 		}
+
+		let divItalic = document.createElement('div');
+		divItalic.style.fontStyle = "italic";
+		appendText(divItalic, "Laisser le n° d'un monstre vide ou à 0 pour mettre la couleur sur les monstres avec cette description");
+		td.appendChild(divItalic);
+
 		appendButton(td, 'Ajouter', MZ_cDiplo.ajouteChamp);
 		// Prévisualisation couleurs (merci à Vys d'avoir implémenté ça xD)
 		appendText(td, ' ');
@@ -12917,6 +12941,13 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
 		for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
 			// monstre présent dans la diplo
 			let diplo = MZ_cDiplo.getDiploMonstre(oLigne.id);
+			if (!diplo) {
+				for (let [mot, d2] of MZ_cDiplo.diploInverse.monstreWord) {
+					if (oLigne.nom.toLowerCase().indexOf(mot) < 0) continue;
+					diplo = d2;
+					break;
+				}
+			}
 			if (!diplo 
 				&& MZ_cDiplo.mythiques
 				&& oLigne.nom.match(/^[^\[]*(liche|hydre|balrog|beholder|sidoine)/i)) {
