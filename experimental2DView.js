@@ -70,15 +70,15 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         'baton de mage': "arme (2 mains)",
         'bottes': "bottes",
         'bouclier a pointes': "bouclier",
-        'boulet et chaîne': "arme (1 main)",
-        'bâtons de parade': "arme (2 mains)",
+        'boulet et chaine': "arme (1 main)",
+        'batons de parade': "arme (2 mains)",
         'cagoule': "casque",
         'casque en cuir': "casque",
         'casque en metal': "casque",
         'casque a cornes': "casque",
         'casque a pointes': "casque",
         'chapeau pointu': "casque",
-        'chaîne cloutee': "arme (2 mains)",
+        'chaine cloutee': "arme (2 mains)",
         'collier de dents': "talisman",
         'collier de pierre': "talisman",
         'collier a pointes': "talisman",
@@ -145,7 +145,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             this.centerN = n;
             this.horizontalRange = horizontalRange;
             this.verticalRange = verticalRange;
-            this.gridSize = 3 + 2 * this.horizontalRange; // 2 lignes/colonnes en plus pour les cellules de coordonnées
+            this.gridSize = 1 + 2 * this.horizontalRange + 2; // 2 lignes/colonnes en plus pour les cellules de coordonnées
 
             this.cells = new Array(this.gridSize);
         }
@@ -295,13 +295,31 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          */
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid");
-            let toolbar = "<div id='mz-map-grid-toolbar'><img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img></div>";
+            let toolbar = this.createToolbar();
             let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
             this.gotoPlayer();
 
+            this.addEventHandlers();
+
+            document.getElementById("mz-map-toolbar-resize-text").oninput = function() {
+                console.log(this.value);
+            }
+
+        }
+
+        createToolbar() {
+            return `<div id='mz-map-grid-toolbar'>
+        <img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img>
+         Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
+         Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
+         Horizon: <input id="mz-map-toolbar-resize-horizon" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
+</div>`;
+        }
+
+        addEventHandlers() {
             document.querySelectorAll('.mz-map-grid-cell').forEach(cell => {
                 cell.addEventListener('mouseenter', function () {
                     this.classList.add('expanded');
@@ -313,6 +331,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             });
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
             document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
+
+            // Make all cells display a hint if there is more content than what is visible (not that this is not
+            // recomputed if cells are resized)
             const allCells = document.getElementsByClassName('mz-map-grid-cell');
             for (const cell of allCells) {
                 if (cell.scrollHeight > cell.clientHeight) {
@@ -320,6 +341,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 }
             }
         }
+
 
         /**
          * Centre la grille sur la cellule du joueur.
@@ -344,7 +366,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * @param e event
          */
         updateDetailsForDepth(e) {
-            let target = e.target.closest('[data-mz-grid-x]');;
+            let target = e.target.closest('[data-mz-grid-n]');;
             if (null == target) {
                 return;
             }
@@ -369,7 +391,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         convertToHtml(i, j, centerX, centerY) {
-
             const id = this.youAreHere ? `id="you-are-here"` : ``;
             let html = `<div ${id} data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} 
 style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" 
@@ -387,7 +408,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
-            for (let depth = MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth <= MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth++) {
+            for (let depth = MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth >= MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth--) {
                 let depthHtml = this.groupToHtml(depth, this.trolls, this.trollToHtmlBits)
                     + this.groupToHtml(depth, this.monsters, this.monsterToHtmlBits)
                     + this.groupToHtml(depth, this.places, this.placeToHtmlBits)
@@ -667,7 +688,48 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             padding: 0.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             z-index: 50;
-            max-width: 30rem;
+        }
+
+        input[type="range"].mz-map-toolbar-slider {
+            display: inline-block;
+            width: 10rem;
+            vertical-align: middle;
+            height: 0.7rem;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+            
+            &::-webkit-slider-runnable-track {
+                background: darkgrey;
+                height: 0.5rem;
+                border-radius: 3px;
+            }
+
+            &::-moz-range-track {
+                background: darkgrey;
+                height: 0.5rem;
+                border-radius: 3px;
+            }
+            
+            &::-webkit-slider-thumb {
+                appearance: none;
+                background: white;
+                border: 2px solid darkgrey;
+                width: 0.8rem;
+                height: 1.4rem;
+                border-radius: 50%;
+                margin-top: -0.45rem;
+            } 
+            
+            &::-moz-range-thumb {
+                appearance: none;
+                background: white;
+                border: 2px solid darkgrey;
+                width: 0.8rem;
+                height: 1.4rem;
+                border-radius: 50%;
+            }
+
         }
 
         .mz-map-grid-odd {
@@ -799,6 +861,13 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             display: block;
             font-weight: bold;
             text-align: center;
+        }
+
+        .mz-map-grid-cell-depth {
+            border-top: 1px dotted darkgreen;
+            display: block;
+            margin-top: 4px;
+            padding-top: 2px;
         }
 
         .mz-map-details-header {
