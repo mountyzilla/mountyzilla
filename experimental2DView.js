@@ -152,7 +152,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
         convertToHtml(id) {
             const borderIndex = this.gridSize - 1;
-            let html = `<div id="${id}" class="mz-map-grid-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize-2}, 10rem) 2rem;"> `;
+            let html = `<div id="${id}" class="mz-map-grid-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize - 2}, 10rem) 2rem;"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 for (let j = 0; j < this.gridSize; j++) {
                     if (0 === i || 0 === j || borderIndex === i || borderIndex === j) {
@@ -296,26 +296,20 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         insertIntoDom() {
             let html = this.convertToHtml("mz-map-grid");
             let toolbar = this.createToolbar();
-            let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une grotte, cliquez sur l\'indicateur de profondeur</div></div>';
+            let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une caverne, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
             this.gotoPlayer();
 
             this.addEventHandlers();
-
-            document.getElementById("mz-map-toolbar-resize-text").oninput = function() {
-                console.log(this.value);
-            }
-
         }
 
         createToolbar() {
             return `<div id='mz-map-grid-toolbar'>
         <img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img>
-         Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
-         Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
-         Horizon: <input id="mz-map-toolbar-resize-horizon" type="range" min="1" max="100" value="50" class="mz-map-toolbar-slider" >
+         Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="0" max="100" value="50" class="mz-map-toolbar-slider" >
+         Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="0" max="100" value="50" class="mz-map-toolbar-slider" >
 </div>`;
         }
 
@@ -331,6 +325,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             });
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
             document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
+            document.getElementById("mz-map-toolbar-resize-text").oninput = e => this.resizeCellText(e);
 
             // Make all cells display a hint if there is more content than what is visible (not that this is not
             // recomputed if cells are resized)
@@ -342,6 +337,30 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
         }
 
+        /**
+         * Change the styles linked to cell contents to scale text and icons
+         */
+        resizeCellText(e) {
+            let value = e.target.value;
+            let rootSheet = document.getElementById("mz-map-styles");
+            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
+
+            let textSize = 0.3 + 0.018 * value;
+            style.style.setProperty("line-height", `${textSize}rem`);
+            style.style.setProperty("font-size", `${textSize}rem`);
+
+            let imgStyle = this.findStyle(style, "& img");
+            let imageSize = 3 + 0.24 * value;
+            imgStyle.style.setProperty("height", `${imageSize}px`);
+        }
+
+        findStyle(styleSheet, styleName) {
+            for (const cssRule of styleSheet.cssRules) {
+                if (cssRule.selectorText === styleName) {
+                    return cssRule;
+                }
+            }
+        }
 
         /**
          * Centre la grille sur la cellule du joueur.
@@ -366,7 +385,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * @param e event
          */
         updateDetailsForDepth(e) {
-            let target = e.target.closest('[data-mz-grid-n]');;
+            let target = e.target.closest('[data-mz-grid-n]');
+
             if (null == target) {
                 return;
             }
@@ -454,7 +474,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             if (summary.size === 0) {
                 return '';
             }
-            let result = '<span className="mz-map-grid-treasure" mz_grid_type="treasure">';
+            let result = '<span class="mz-map-grid-treasure" mz_grid_type="treasure">';
             let keys = Array.from(summary.keys()).sort();
             let icons = keys.map(key => {
                 return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' title='${key}' height='15'/>:${summary.get(key)}`;
@@ -642,261 +662,271 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
         return 0 === (dist % 2) ? `mz-map-grid-odd` : `mz-map-grid-even`;
     }
 
-    const css = String.raw;
-    const styles = css`
-
-        :root {
-            --color-troll: darkblue; 
-            --color-monster: darkgreen; 
-            --color-border: #4CAF50; 
-        }
-        
-        #mz-map-wrapper {
-            margin-top: 1rem;
-            position: relative;
-            display: flex;
-            column-gap: 0.5rem;
-        }
-
-        .mz-map-grid-wrapper {
-            display: grid;
-            column-gap: 2px;
-            row-gap: 2px;
-            font-size: small;
-        }
-
-        #mz-map-grid-scroll {
-            max-width: 85%;
-            max-height: 70vh;
-            overflow: auto;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-        }
-        
-        #mz-map-details-wrapper {
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            flex-grow: 4;
-        }
-
-        #mz-map-grid-toolbar {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: white;
-            border: 1px solid #999;
-            padding: 0.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            z-index: 50;
-        }
-
-        input[type="range"].mz-map-toolbar-slider {
-            display: inline-block;
-            width: 10rem;
-            vertical-align: middle;
-            height: 0.7rem;
-            appearance: none;
-            background: transparent;
-            cursor: pointer;
-            
-            &::-webkit-slider-runnable-track {
-                background: darkgrey;
-                height: 0.5rem;
-                border-radius: 3px;
-            }
-
-            &::-moz-range-track {
-                background: darkgrey;
-                height: 0.5rem;
-                border-radius: 3px;
-            }
-            
-            &::-webkit-slider-thumb {
-                appearance: none;
-                background: white;
-                border: 2px solid darkgrey;
-                width: 0.8rem;
-                height: 1.4rem;
-                border-radius: 50%;
-                margin-top: -0.45rem;
-            } 
-            
-            &::-moz-range-thumb {
-                appearance: none;
-                background: white;
-                border: 2px solid darkgrey;
-                width: 0.8rem;
-                height: 1.4rem;
-                border-radius: 50%;
-            }
-
-        }
-
-        .mz-map-grid-odd {
-            background: antiquewhite;
-            position: relative;
-            display: inline-block;
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .mz-map-grid-even {
-            background: darkseagreen;
-            position: relative;
-            display: inline-block;
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .mz-map-grid-cell {
-            padding: 0 0.5rem 0 0.5rem;
-            position: relative;
-            overflow: hidden;
-            //border: 2px solid #ddd;
-            //border-radius: 3px;
-            cursor: pointer;
-            transition: border-color 0.2s;
-
-            &:hover {
-                border-color: var(--color-border);
-            }
-
-        }
-        
-        .mz-map-grid-cell-hint {
-            display: none;
-            position: absolute;
-            bottom: 0.5rem;
-            right: 0.5rem;
-            font-weight: bold;
-            color: red;
-        }
-        
-        .mz-map-grid-cell-content {
-            height: 100%;
-            box-sizing: border-box;
-            white-space: nowrap;
-        }
-
-        .mz-map-grid-cell.expanded {
-            z-index: 10;
-            overflow: visible;
-
-            .mz-map-grid-cell-content {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-                transform: translateY(-50%) translateX(-50%);
-                background: inherit;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                border-radius: 5px;
-                outline: 2px solid var(--color-border);
-                width: auto;
-                height: auto;
-                min-height: 10rem;
-                min-width: 15rem;
-                box-sizing: border-box;
-            }
-        }
-
-        .mz-map-grid-border {
-            display: block;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .mz-map-grid-border-left {
-            transform: translateX(-50%) translateY(-50%) rotate(-90deg);
-            top: 50%;
-            left: 50%;
-        }
-
-        .mz-map-grid-border-right {
-            transform: translateX(-50%) translateY(-50%) rotate(90deg);
-            top: 50%;
-            left: 50%;
-        }
-
-        .mz-map-grid-here {
-            display: block;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .mz-map-grid-troll {
-            display: block;
-            color: var(--color-troll);
-        }
-
-        .mz-map-grid-monster {
-            display: block;
-            color: var(--color-monster);
-        }
-
-        .mz-map-grid-treasure {
-            display: block;
-        }
-
-        .mz-map-grid-place {
-            display: block;
-        }
-
-        .mz-map-grid-group {
-            display: block;
-            margin-top: 0.5px;
-            margin-bottom: 0.5px
-        }
-
-        .mz-map-grid-odd .mz-map-grid-group {
-            border-bottom: 1px solid darkseagreen;
-        }
-
-        .mz-map-grid-even .mz-map-grid-group {
-            border-bottom: 1px solid antiquewhite;
-        }
-
-        .mz-map-grid-cell-header {
-            display: block;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .mz-map-grid-cell-depth {
-            border-top: 1px dotted darkgreen;
-            display: block;
-            margin-top: 4px;
-            padding-top: 2px;
-        }
-
-        .mz-map-details-header {
-            display: block;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .mz-map-details-troll {
-            display: block;
-            color: var(--color-troll);
-        }
-
-        .mz-map-details-monster {
-            display: block;
-            color: var(--color-monster);
-        }
-
-        .mz-map-details-treasure {
-            display: block;
-        }
-
-        .mz-map-details-place {
-            display: block;
-        }
-        
-    `;
 
     MountyzillaGrid.injectStyles = function () {
+        const defaultCellFontSize = 1.2;
+        const defaultImageFontSize = 15;
+        const css = String.raw;
+        const styles = css`
+
+            :root {
+                --color-troll: darkblue;
+                --color-monster: darkgreen;
+                --color-border: #4CAF50;
+            }
+
+            #mz-map-wrapper {
+                margin-top: 1rem;
+                position: relative;
+                display: flex;
+                column-gap: 0.5rem;
+            }
+
+            .mz-map-grid-wrapper {
+                display: grid;
+                column-gap: 2px;
+                row-gap: 2px;
+                font-size: small;
+            }
+
+            #mz-map-grid-scroll {
+                max-width: 85%;
+                max-height: 70vh;
+                overflow: auto;
+                border: 2px solid var(--color-border);
+                border-radius: 8px;
+            }
+
+            #mz-map-details-wrapper {
+                border: 2px solid var(--color-border);
+                border-radius: 8px;
+                flex-grow: 4;
+            }
+
+            #mz-map-grid-toolbar {
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                background: white;
+                border: 1px solid #999;
+                padding: 0.5rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                z-index: 50;
+            }
+
+            input[type="range"].mz-map-toolbar-slider {
+                display: inline-block;
+                width: 10rem;
+                vertical-align: middle;
+                height: 0.7rem;
+                appearance: none;
+                background: transparent;
+                cursor: pointer;
+
+                &::-webkit-slider-runnable-track {
+                    background: darkgrey;
+                    height: 0.5rem;
+                    border-radius: 3px;
+                }
+
+                &::-moz-range-track {
+                    background: darkgrey;
+                    height: 0.5rem;
+                    border-radius: 3px;
+                }
+
+                &::-webkit-slider-thumb {
+                    appearance: none;
+                    background: white;
+                    border: 2px solid darkgrey;
+                    width: 0.8rem;
+                    height: 1.4rem;
+                    border-radius: 50%;
+                    margin-top: -0.45rem;
+                }
+
+                &::-moz-range-thumb {
+                    appearance: none;
+                    background: white;
+                    border: 2px solid darkgrey;
+                    width: 0.8rem;
+                    height: 1.4rem;
+                    border-radius: 50%;
+                }
+
+            }
+
+            .mz-map-grid-odd {
+                background: antiquewhite;
+                position: relative;
+                display: inline-block;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .mz-map-grid-even {
+                background: darkseagreen;
+                position: relative;
+                display: inline-block;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .mz-map-grid-cell {
+                padding: 0 0.5rem 0 0.5rem;
+                position: relative;
+                overflow: hidden;
+                //border: 2px solid #ddd;
+                //border-radius: 3px;
+                cursor: pointer;
+                transition: border-color 0.2s;
+
+                &:hover {
+                    border-color: var(--color-border);
+                }
+
+            }
+
+            .mz-map-grid-cell-hint {
+                display: none;
+                position: absolute;
+                bottom: 0.5rem;
+                right: 0.5rem;
+                font-weight: bold;
+                color: red;
+            }
+
+            .mz-map-grid-cell-content {
+                height: 100%;
+                box-sizing: border-box;
+                white-space: nowrap;
+                font-size: ${defaultCellFontSize}rem;
+                line-height: ${defaultCellFontSize}rem;
+
+                img {
+                    height: ${defaultImageFontSize}px;
+                }
+            }
+
+            .mz-map-grid-cell.expanded {
+                z-index: 10;
+                overflow: visible;
+
+                .mz-map-grid-cell-content {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    padding-left: 0.5rem;
+                    padding-right: 0.5rem;
+                    transform: translateY(-50%) translateX(-50%);
+                    background: inherit;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                    border-radius: 5px;
+                    outline: 2px solid var(--color-border);
+                    width: auto;
+                    height: auto;
+                    min-height: 10rem;
+                    min-width: 15rem;
+                    box-sizing: border-box;
+                }
+            }
+
+            .mz-map-grid-border {
+                display: block;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .mz-map-grid-border-left {
+                transform: translateX(-50%) translateY(-50%) rotate(-90deg);
+                top: 50%;
+                left: 50%;
+            }
+
+            .mz-map-grid-border-right {
+                transform: translateX(-50%) translateY(-50%) rotate(90deg);
+                top: 50%;
+                left: 50%;
+            }
+
+            .mz-map-grid-here {
+                display: block;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .mz-map-grid-troll {
+                display: block;
+                color: var(--color-troll);
+            }
+
+            .mz-map-grid-monster {
+                display: block;
+                color: var(--color-monster);
+            }
+
+            .mz-map-grid-treasure {
+                display: block;
+            }
+
+            .mz-map-grid-place {
+                display: block;
+            }
+
+            .mz-map-grid-group {
+                display: block;
+                margin-top: 0.5px;
+                margin-bottom: 0.5px
+            }
+
+            .mz-map-grid-odd .mz-map-grid-group {
+                border-bottom: 1px solid darkseagreen;
+            }
+
+            .mz-map-grid-even .mz-map-grid-group {
+                border-bottom: 1px solid antiquewhite;
+            }
+
+            .mz-map-grid-cell-header {
+                display: block;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .mz-map-grid-cell-depth {
+                border-top: 1px dotted darkgreen;
+                display: block;
+                margin-top: 4px;
+                padding-top: 2px;
+            }
+
+            .mz-map-details-header {
+                display: block;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .mz-map-details-troll {
+                display: block;
+                color: var(--color-troll);
+            }
+
+            .mz-map-details-monster {
+                display: block;
+                color: var(--color-monster);
+            }
+
+            .mz-map-details-treasure {
+                display: block;
+            }
+
+            .mz-map-details-place {
+                display: block;
+            }
+
+        `;
+
+
         const style = document.createElement('style');
         style.id = 'mz-map-styles';
         style.appendChild(document.createTextNode(styles));
