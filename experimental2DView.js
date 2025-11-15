@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.2.0
+// @version 0.2.1
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -161,9 +161,13 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             this.cells = new Array(this.gridSize);
         }
 
-        convertToHtml(id) {
+        convertToHtml() {
+            const gridCellWidth = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
+            const gridCellHeight = gridCellWidth * CELL_WIDTH_HEIGHT_RATIO;
             const borderIndex = this.gridSize - 1;
-            let html = `<div id="${id}" class="mz-map-grid-wrapper" style="grid-template-columns: 2rem repeat(${this.gridSize - 2}, 15rem) 2rem; grid-template-rows: 2rem repeat(${this.gridSize - 2}, 10rem) 2rem;"> `;
+            const templateColumns = this.gridTemplate(gridCellWidth);
+            const templateRows = this.gridTemplate(gridCellHeight);
+            let html = `<div id="mz-map-grid" class="mz-map-grid-wrapper" style="grid-template-columns: ${templateColumns}; grid-template-rows: ${templateRows};"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 for (let j = 0; j < this.gridSize; j++) {
                     if (0 === i || 0 === j || borderIndex === i || borderIndex === j) {
@@ -181,6 +185,10 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
             html += `</div>`;
             return html;
+        }
+
+        gridTemplate(size) {
+            return `2rem repeat(${this.gridSize - 2}, ${size}rem) 2rem`;
         }
 
         emptyCell(i, j) {
@@ -305,7 +313,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * avoir les détails
          */
         insertIntoDom() {
-            let html = this.convertToHtml("mz-map-grid");
+            let html = this.convertToHtml();
             let toolbar = this.createToolbar();
             let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une caverne, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
@@ -317,12 +325,15 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         createToolbar() {
-            const storedSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
-            const initialTextValue = (storedSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE ;
+            const storedTextSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
+            const initialTextValue = (storedTextSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE ;
+            const storedCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
+            const initialCellValue = (storedCellSize - MIN_CELL_SIZE) / RATIO_VALUE_TO_CELL_SIZE ;
+
             return `<div id='mz-map-grid-toolbar'>
         <img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img>
          Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="0" max="100" value="${initialTextValue}" class="mz-map-toolbar-slider" >
-         Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="0" max="100" value="50" class="mz-map-toolbar-slider" >
+         Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="0" max="100" value="${initialCellValue}" class="mz-map-toolbar-slider" >
 </div>`;
         }
 
@@ -339,6 +350,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
             document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
             document.getElementById("mz-map-toolbar-resize-text").oninput = e => this.resizeCellText(e);
+            document.getElementById("mz-map-toolbar-resize-cell").oninput = e => this.resizeCellSize(e);
 
             // Make all cells display a hint if there is more content than what is visible (not that this is not
             // recomputed if cells are resized)
@@ -349,8 +361,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 }
             }
         }
-
-
 
         /**
          * Change the styles linked to cell contents to scale text and icons
@@ -369,6 +379,16 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             const imgStyle = this.findStyle(style, "& img");
             imgStyle.style.setProperty("height", `${imageSize}px`);
+        }
+
+        resizeCellSize(e) {
+            const value = e.target.value;
+            const gridCellWidth = MIN_CELL_SIZE + RATIO_VALUE_TO_CELL_SIZE * value;
+            localStorage.setItem(KEY_MAP_GRID_CELL_SIZE, gridCellWidth);
+            const gridCellHeight = gridCellWidth * CELL_WIDTH_HEIGHT_RATIO;
+            const templateColumns = this.gridTemplate(gridCellWidth);
+            const templateRows = this.gridTemplate(gridCellHeight);
+            document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateRows};`;
         }
 
         findStyle(styleSheet, styleName) {
@@ -690,6 +710,12 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
     const MIN_ICON_SIZE = 3;
     const RATIO_VALUE_TO_ICON_SIZE = 0.24;
     const DEFAULT_CELL_TEXT_SIZE = 1.2;
+
+    const KEY_MAP_GRID_CELL_SIZE = "MZ_vue2d_mz-map-grid-cell-size";
+    const MIN_CELL_SIZE = 3;
+    const RATIO_VALUE_TO_CELL_SIZE = 0.24;
+    const DEFAULT_CELL_SIZE = 15;
+    const CELL_WIDTH_HEIGHT_RATIO = 2/3;
 
 
     MountyzillaGrid.injectStyles = function () {
