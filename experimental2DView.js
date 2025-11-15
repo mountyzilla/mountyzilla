@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.1.2
+// @version 0.2.0
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -124,6 +124,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         'pagne de mailles': "armure",
         'pagne en cuir': "armure",
         'pendentif incandescent': "talisman",
+        'poiscaille d\'avril': "special",
         'robe de mage': "armure",
         'rondache en bois': "bouclier",
         'rondache en metal': "bouclier",
@@ -136,6 +137,16 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         'tunique': "armure",
         'turban': "casque",
     };
+
+    class Util {
+        static getFloatOrDefault(key, defaultValue) {
+            let item = localStorage.getItem(key);
+            if (null === item) {
+                return defaultValue;
+            }
+            return parseFloat(item);
+        }
+    }
 
     class Grid {
 
@@ -306,9 +317,11 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         createToolbar() {
+            const storedSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
+            const initialTextValue = (storedSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE ;
             return `<div id='mz-map-grid-toolbar'>
         <img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img>
-         Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="0" max="100" value="50" class="mz-map-toolbar-slider" >
+         Taille texte: <input id="mz-map-toolbar-resize-text" type="range" min="0" max="100" value="${initialTextValue}" class="mz-map-toolbar-slider" >
          Taille cellule: <input id="mz-map-toolbar-resize-cell" type="range" min="0" max="100" value="50" class="mz-map-toolbar-slider" >
 </div>`;
         }
@@ -337,20 +350,24 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
         }
 
+
+
         /**
          * Change the styles linked to cell contents to scale text and icons
          */
         resizeCellText(e) {
-            let value = e.target.value;
-            let rootSheet = document.getElementById("mz-map-styles");
-            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
+            const value = e.target.value;
+            const rootSheet = document.getElementById("mz-map-styles");
+            const textSize = MIN_TEXT_SIZE + RATIO_VALUE_TO_TEXT_SIZE * value;
+            localStorage.setItem(KEY_MAP_GRID_TEXT_SIZE, textSize);
+            const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
+            localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize);
 
-            let textSize = 0.3 + 0.018 * value;
+            const style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
             style.style.setProperty("line-height", `${textSize}rem`);
             style.style.setProperty("font-size", `${textSize}rem`);
 
-            let imgStyle = this.findStyle(style, "& img");
-            let imageSize = 3 + 0.24 * value;
+            const imgStyle = this.findStyle(style, "& img");
             imgStyle.style.setProperty("height", `${imageSize}px`);
         }
 
@@ -477,7 +494,9 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             let result = '<span class="mz-map-grid-treasure" mz_grid_type="treasure">';
             let keys = Array.from(summary.keys()).sort();
             let icons = keys.map(key => {
-                return `<img src='../Images/Icones/${TREASURE_ICONS[key]}' title='${key}' height='15'/>:${summary.get(key)}`;
+                let treasureicon = TREASURE_ICONS[key];
+                if (null == treasureicon) { console.log(`vue2d: Type de tresor sans icone: ${key}`); }
+                return `<img src='../Images/Icones/${treasureicon}' title='${key}' height='15'/>:${summary.get(key)}`;
             });
             result += `${icons.join(" ")}</span>`;
             return result;
@@ -662,10 +681,20 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
         return 0 === (dist % 2) ? `mz-map-grid-odd` : `mz-map-grid-even`;
     }
 
+    const KEY_MAP_GRID_TEXT_SIZE = "MZ_vue2d_mz-map-grid-cell-text-size";
+    const MIN_TEXT_SIZE = 0.5;
+    const RATIO_VALUE_TO_TEXT_SIZE = 0.015 ;
+    const DEFAULT_CELL_ICON_SIZE = 15;
+
+    const KEY_MAP_GRID_ICON_SIZE = "MZ_vue2d_mz-map-grid-cell-icon-size";
+    const MIN_ICON_SIZE = 3;
+    const RATIO_VALUE_TO_ICON_SIZE = 0.24;
+    const DEFAULT_CELL_TEXT_SIZE = 1.2;
+
 
     MountyzillaGrid.injectStyles = function () {
-        const defaultCellFontSize = 1.2;
-        const defaultImageFontSize = 15;
+        const defaultCellFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
+        const defaultImageFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_ICON_SIZE, DEFAULT_CELL_ICON_SIZE);
         const css = String.raw;
         const styles = css`
 
@@ -705,8 +734,8 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
 
             #mz-map-grid-toolbar {
                 position: absolute;
-                top: 1rem;
-                left: 1rem;
+                top: 2rem;
+                left: 2rem;
                 background: white;
                 border: 1px solid #999;
                 padding: 0.5rem;
@@ -891,6 +920,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                 display: block;
                 font-weight: bold;
                 text-align: center;
+                padding-top: 2px;
             }
 
             .mz-map-grid-cell-depth {
