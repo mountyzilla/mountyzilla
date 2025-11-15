@@ -206,19 +206,19 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         xToIndex(x) {
-            return x - this.centerX + this.horizontalRange;
+            return -this.centerX + this.horizontalRange + x + 1;
         }
 
         indexToX(i) {
-            return i + this.centerX - this.horizontalRange;
+            return this.centerX - this.horizontalRange + i - 1;
         }
 
         yToIndex(y) {
-            return this.centerY + this.horizontalRange - y;
+            return this.centerY + this.horizontalRange - y + 1;
         }
 
         indexToY(i) {
-            return this.centerY + this.horizontalRange - i;
+            return this.centerY + this.horizontalRange - i + 1 ;
         }
 
         /**
@@ -814,7 +814,8 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             .mz-map-grid-odd {
                 background: antiquewhite;
                 position: relative;
-                display: inline-block;
+                display: grid;
+                place-items: center;
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
             }
@@ -822,7 +823,8 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             .mz-map-grid-even {
                 background: darkseagreen;
                 position: relative;
-                display: inline-block;
+                display: grid;
+                place-items: center;
                 padding-top: 0.5rem;
                 padding-bottom: 0.5rem;
             }
@@ -893,15 +895,11 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             }
 
             .mz-map-grid-border-left {
-                transform: translateX(-50%) translateY(-50%) rotate(-90deg);
-                top: 50%;
-                left: 50%;
+                transform: rotate(-90deg);
             }
 
             .mz-map-grid-border-right {
-                transform: translateX(-50%) translateY(-50%) rotate(90deg);
-                top: 50%;
-                left: 50%;
+                transform: rotate(90deg);
             }
 
             .mz-map-grid-here {
