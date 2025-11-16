@@ -373,7 +373,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
             localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize);
 
-            const style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
+            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
             style.style.setProperty("line-height", `${textSize}rem`);
             style.style.setProperty("font-size", `${textSize}rem`);
 
@@ -389,6 +389,12 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const templateColumns = this.gridTemplate(gridCellWidth);
             const templateRows = this.gridTemplate(gridCellHeight);
             document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateRows};`;
+
+            const rootSheet = document.getElementById("mz-map-styles");
+            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell.expanded');
+            style = this.findStyle(style, "& .mz-map-grid-cell-content");
+            style.style.setProperty("min-height", `${gridCellHeight}rem`);
+            style.style.setProperty("min-width-size", `${gridCellWidth}rem`);
         }
 
         findStyle(styleSheet, styleName) {
@@ -403,9 +409,13 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * Centre la grille sur la cellule du joueur.
          */
         gotoPlayer() {
+            this.goToCell($("#you-are-here")[0]);
+        };
+
+        goToCell(cell) {
             let gridHolder = $("#mz-map-grid-scroll")[0];
             let gridRect = gridHolder.getBoundingClientRect();
-            let playerCell = $("#you-are-here")[0];
+            let playerCell = cell;
             let cellRect = playerCell.getBoundingClientRect();
 
             let cellLeft = cellRect.left - gridRect.left + gridHolder.scrollLeft;
@@ -415,7 +425,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             let scrollTop = cellTop - (gridHolder.clientHeight / 2) + (cellRect.height / 2);
 
             gridHolder.scrollTo({left: scrollLeft, top: scrollTop, behavior: 'smooth'});
-        };
+        }
 
         /**
          * Met à jour la boîte avec les détails de la grotte aux coordonnées stockées dans le DOM element.
@@ -736,7 +746,12 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
     MountyzillaGrid.injectStyles = function () {
         const defaultCellFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
         const defaultImageFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_ICON_SIZE, DEFAULT_CELL_ICON_SIZE);
+        const defaultMinCellWidth = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
+        const defaultMinCellHeight = defaultMinCellWidth * CELL_WIDTH_HEIGHT_RATIO;
         const css = String.raw;
+        const style = document.createElement('style');
+
+
         const styles = css`
 
             :root {
@@ -897,8 +912,8 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     outline: 2px solid var(--color-border);
                     width: auto;
                     height: auto;
-                    min-height: 10rem;
-                    min-width: 15rem;
+                    min-height: ${defaultMinCellWidth}rem;
+                    min-width: ${defaultMinCellWidth}rem;
                     box-sizing: border-box;
                 }
             }
@@ -1000,9 +1015,6 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             }
 
         `;
-
-
-        const style = document.createElement('style');
         style.id = 'mz-map-styles';
         style.appendChild(document.createTextNode(styles));
         document.head.appendChild(style);
