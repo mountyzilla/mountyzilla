@@ -315,7 +315,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         insertIntoDom() {
             let html = this.convertToHtml();
             let toolbar = this.createToolbar();
-            let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une caverne, cliquez sur l\'indicateur de profondeur</div></div>';
+            let details = '<div id="mz-map-details-wrapper" class="mh_tdtitre"><span class="mz-map-details-header"><h2 class="titre2">D&eacute;tails</h2></span><div id="mz-map-details-content-wrapper">Pour une vue plus d&eacute;taill&eacute;e du contenu d\'une caverne, cliquez sur l\'indicateur de profondeur</div></div>';
             $('#infoTab').after(`<div id='mz-map-wrapper'>${toolbar}<div id="mz-map-grid-scroll">${html}</div>${details}</div>`);
 
             $('#mz-map-grid-scroll').dragscrollable({dragSelector: 'div', acceptPropagatedEvent: false});
@@ -348,7 +348,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 });
             });
             document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
-            document.getElementById('mz-map-grid').addEventListener('click', this.updateDetailsForDepth);
+            document.getElementById('mz-map-grid').addEventListener('click', e => this.updateDetailsForDepth(e));
             document.getElementById("mz-map-toolbar-resize-text").oninput = e => this.resizeCellText(e);
             document.getElementById("mz-map-toolbar-resize-cell").oninput = e => this.resizeCellSize(e);
 
@@ -437,14 +437,55 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             if (null == target) {
                 return;
             }
+            const {x, y, n} = this.retrieveCoordinates(target);
+            const cell = MountyzillaGrid.grid.getCellMounty(x, y);
+            let detailsHtml = cell.detailsHtml(n);
+            document.getElementById('mz-map-details-content-wrapper').innerHTML = detailsHtml;
+            document.getElementById('mz-map-details-memorize').addEventListener('click', e => this.setMapDestination(e));
+        }
+
+        retrieveCoordinates(target) {
             const x = parseInt(target.dataset.mzGridX);
             const y = parseInt(target.dataset.mzGridY);
             const n = parseInt(target.dataset.mzGridN);
-            const cell = MountyzillaGrid.grid.getCellMounty(x, y);
-            let detailsHtml = cell.detailsHtml(n);
-            document.getElementById('mz-map-details-content').innerHTML = detailsHtml;
+            return {x, y, n};
         }
 
+        setMapDestination(e) {
+            let target = e.target.closest('[data-mz-grid-n]');
+            const {x, y, n} = this.retrieveCoordinates(target);
+            console.log({x, y, n});
+
+            let favorites = localStorage.getItem("favori_gow");
+            if (null !== favorites) {
+                favorites = favorites.split("/");
+                // for some reason, the last item is an empty string
+                favorites.pop();
+                if (0 !== favorites.length % 4) {
+                    console.log(`Impossible de parser les favoris: ${favorites}`);
+                    return;
+                }
+                const count = Math.floor(favorites.length / 4);
+                let needToAppend = true;
+                for (let i = 0; i < count; i++) {
+                    if (favorites[i * 4] === "vue2d") {
+                        needToAppend = false;
+                        favorites[i * 4 + 1] = x;
+                        favorites[i * 4 + 2] = y;
+                        favorites[i * 4 + 3] = n;
+                        break;
+                    }
+                }
+                if (needToAppend) {
+                    favorites.push(...[ "vue2d", x, y, n]);
+                }
+
+            } else {
+                favorites = [ "vue2d", x, y, n];
+            }
+            favorites.push("");
+            localStorage.setItem("favori_gow", favorites.join("/"));
+        }
     }
 
     /**
@@ -571,13 +612,17 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
         }
 
         detailsHtml(depth) {
-            return `<h3 class="titre3" style="text-align:center">${this.x} ${this.y} ${depth}</h3>`
+            return `<h3 class="titre3" style="text-align:center" data-mz-grid-x="${this.x}" data-mz-grid-y="${this.y}" data-mz-grid-n="${depth}">${this.x} ${this.y} ${depth} 
+                    <img id="mz-map-details-memorize" src="../Images/Icones/S_Bow09.png" height="15" title="M&eacute;moriser comme destination"/>
+                    </h3>
+                    <span id="mz-map-details-content" data-mz-grid-x="${this.x}" data-mz-grid-y="${this.y}" data-mz-grid-n="${depth}">`
                 + this.groupToDetailsHtml(depth, this.trolls, "mz-map-details-troll")
                 + this.groupToDetailsHtml(depth, this.monsters, "mz-map-details-monster")
                 + this.groupToDetailsHtml(depth, this.treasures, "mz-map-details-treasure")
                 + this.groupToDetailsHtml(depth, this.places, "mz-map-details-place")
                 + this.groupToDetailsHtml(depth, this.graves, "mz-map-details-grave")
-                + this.groupToDetailsHtml(depth, this.mushrooms, "mz-map-details-mushroom");
+                + this.groupToDetailsHtml(depth, this.mushrooms, "mz-map-details-mushroom")
+                + "<span>";
         }
 
         groupToDetailsHtml(depth, group, groupClass) {
