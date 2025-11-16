@@ -218,7 +218,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         indexToY(i) {
-            return this.centerY + this.horizontalRange - i + 1 ;
+            return this.centerY + this.horizontalRange - i + 1;
         }
 
         /**
@@ -326,9 +326,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
         createToolbar() {
             const storedTextSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
-            const initialTextValue = (storedTextSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE ;
+            const initialTextValue = (storedTextSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE;
             const storedCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
-            const initialCellValue = (storedCellSize - MIN_CELL_SIZE) / RATIO_VALUE_TO_CELL_SIZE ;
+            const initialCellValue = (storedCellSize - MIN_CELL_SIZE) / RATIO_VALUE_TO_CELL_SIZE;
 
             return `<div id='mz-map-grid-toolbar'>
         <img id='mz-map-goto-player' src='../Images/Icones/W_Throw004.png' height='15' alt='Recentrer' title='Recentrer la vue'></img>
@@ -479,15 +479,25 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
         }
 
         trollToHtmlBits(troll) {
-            return ['class="mz-map-grid-troll" mz_grid_type="trolls"', `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`];
+            return {
+                spanAttributes: 'class="mz-map-grid-troll" mz_grid_type="trolls"',
+                display: `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`
+            };
         }
 
         monsterToHtmlBits(monster) {
-            return ['class="mz-map-grid-monster" mz_grid_type="monstres"', monster.groupName];
+            return {
+                spanAttributes: 'class="mz-map-grid-monster" mz_grid_type="monstres"',
+                display: monster.groupName
+            };
         }
 
         placeToHtmlBits(place) {
-            return ['class="mz-map-grid-place" mz_grid_type="lieux"', place.name];
+            const extraClass = place.hole ? 'mz-map-grid-hole' : '';
+            return {
+                spanAttributes: `class="mz-map-grid-place ${extraClass}" mz_grid_type="lieux"`,
+                display: place.hole ? `<img src="../Images/Icones/S_Fire05.png"/>${place.name}` : place.name
+            };
         }
 
         treasuresToHtml(depth) {
@@ -515,7 +525,9 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             let keys = Array.from(summary.keys()).sort();
             let icons = keys.map(key => {
                 let treasureicon = TREASURE_ICONS[key];
-                if (null == treasureicon) { console.log(`vue2d: Type de tresor sans icone: ${key}`); }
+                if (null == treasureicon) {
+                    console.log(`vue2d: Type de tresor sans icone: ${key}`);
+                }
                 return `<img src='../Images/Icones/${treasureicon}' title='${key}' height='15'/>:${summary.get(key)}`;
             });
             result += `${icons.join(" ")}</span>`;
@@ -541,9 +553,9 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             }
             let keys = Array.from(summary.keys()).sort();
             let values = keys.map(key => {
-                let nameAndCount = summary.get(key);
-                let attributesAndText = nameAndCount[0];
-                return nameAndCount[1] === 1 ? `<span ${attributesAndText[0]}>${attributesAndText[1]}</span>` : `<span ${attributesAndText[0]}>${nameAndCount[1]} x ${attributesAndText[1]}</span>`;
+                let piecesAndCounts = summary.get(key);
+                let pieces = piecesAndCounts[0];
+                return piecesAndCounts[1] === 1 ? `<span ${pieces.spanAttributes}>${pieces.display}</span>` : `<span ${pieces.spanAttributes}>${piecesAndCounts[1]} x ${pieces.display}</span>`;
             });
             return values.join(" ");
         }
@@ -651,7 +663,10 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     // TODO
                     break;
                 case "lieux" :
-                    this.name = this.extractName(val);
+                    this.name = this.extractName(val).epure();
+                    if (this.name === 'Trou de Meteorite') {
+                        this.hole = true;
+                    }
                     break;
                 case "tresors" :
                     this.name = this.extractName(val).epure();
@@ -703,7 +718,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
 
     const KEY_MAP_GRID_TEXT_SIZE = "MZ_vue2d_mz-map-grid-cell-text-size";
     const MIN_TEXT_SIZE = 0.5;
-    const RATIO_VALUE_TO_TEXT_SIZE = 0.015 ;
+    const RATIO_VALUE_TO_TEXT_SIZE = 0.015;
     const DEFAULT_CELL_ICON_SIZE = 15;
 
     const KEY_MAP_GRID_ICON_SIZE = "MZ_vue2d_mz-map-grid-cell-icon-size";
@@ -715,7 +730,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
     const MIN_CELL_SIZE = 3;
     const RATIO_VALUE_TO_CELL_SIZE = 0.24;
     const DEFAULT_CELL_SIZE = 15;
-    const CELL_WIDTH_HEIGHT_RATIO = 2/3;
+    const CELL_WIDTH_HEIGHT_RATIO = 2 / 3;
 
 
     MountyzillaGrid.injectStyles = function () {
@@ -925,6 +940,12 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             .mz-map-grid-place {
                 display: block;
             }
+
+            .mz-map-grid-hole {
+                background: black;
+                color: orangered;
+                font-weight: bolder
+                }
 
             .mz-map-grid-group {
                 display: block;
