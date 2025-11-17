@@ -1270,7 +1270,4 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
     MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
-    MZ_cVueJSON.registerCallbackMZ(function() {
-        console.log("callback MZVue CDM");
-    })
 }
