@@ -125,6 +125,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         'pagne en cuir': "armure",
         'pendentif incandescent': "talisman",
         'poiscaille d\'avril': "special",
+        'recompense': "special",
         'robe de mage': "armure",
         'rondache en bois': "bouclier",
         'rondache en metal': "bouclier",
@@ -162,12 +163,10 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         convertToHtml() {
-            const gridCellWidth = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
-            const gridCellHeight = gridCellWidth * CELL_WIDTH_HEIGHT_RATIO;
+            const gridCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
             const borderIndex = this.gridSize - 1;
-            const templateColumns = this.gridTemplate(gridCellWidth);
-            const templateRows = this.gridTemplate(gridCellHeight);
-            let html = `<div id="mz-map-grid" class="mz-map-grid-wrapper" style="grid-template-columns: ${templateColumns}; grid-template-rows: ${templateRows};"> `;
+            const templateColumns = this.gridTemplate(gridCellSize);
+            let html = `<div id="mz-map-grid" class="mz-map-grid-wrapper" style="grid-template-columns: ${templateColumns}; grid-template-rows: ${templateColumns};"> `;
             for (let i = 0; i < this.gridSize; i++) {
                 for (let j = 0; j < this.gridSize; j++) {
                     if (0 === i || 0 === j || borderIndex === i || borderIndex === j) {
@@ -347,7 +346,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                     this.classList.remove('expanded');
                 });
             });
-            document.getElementById("mz-map-goto-player").addEventListener('click', this.gotoPlayer);
+            document.getElementById("mz-map-goto-player").addEventListener('click', e => this.gotoPlayer());
             document.getElementById('mz-map-grid').addEventListener('click', e => this.updateDetailsForDepth(e));
             document.getElementById("mz-map-toolbar-resize-text").oninput = e => this.resizeCellText(e);
             document.getElementById("mz-map-toolbar-resize-cell").oninput = e => this.resizeCellSize(e);
@@ -357,7 +356,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const allCells = document.getElementsByClassName('mz-map-grid-cell');
             for (const cell of allCells) {
                 if (cell.scrollHeight > cell.clientHeight) {
-                    cell.querySelector('.mz-map-grid-cell-hint').style.display = 'block';
+                    cell.querySelector('.mz-map-grid-cell-hint').classList.add('mz-map-grid-cell-hint-visible');
                 }
             }
         }
@@ -367,34 +366,27 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          */
         resizeCellText(e) {
             const value = e.target.value;
-            const rootSheet = document.getElementById("mz-map-styles");
             const textSize = MIN_TEXT_SIZE + RATIO_VALUE_TO_TEXT_SIZE * value;
-            localStorage.setItem(KEY_MAP_GRID_TEXT_SIZE, textSize);
+            localStorage.setItem(KEY_MAP_GRID_TEXT_SIZE, textSize.toString());
             const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
-            localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize);
+            localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize.toString());
 
-            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell-content');
-            style.style.setProperty("line-height", `${textSize}rem`);
-            style.style.setProperty("font-size", `${textSize}rem`);
-
-            const imgStyle = this.findStyle(style, "& img");
-            imgStyle.style.setProperty("height", `${imageSize}px`);
+            const rootSheet = document.getElementById("mz-map-styles");
+            const rootStyle = this.findStyle(rootSheet.sheet, ':root');
+            rootStyle.style.setProperty("--cell-default-font-size", `${textSize}rem`);
+            rootStyle.style.setProperty("--cell-default-image-size", `${imageSize}px`);
         }
 
         resizeCellSize(e) {
             const value = e.target.value;
-            const gridCellWidth = MIN_CELL_SIZE + RATIO_VALUE_TO_CELL_SIZE * value;
-            localStorage.setItem(KEY_MAP_GRID_CELL_SIZE, gridCellWidth);
-            const gridCellHeight = gridCellWidth * CELL_WIDTH_HEIGHT_RATIO;
-            const templateColumns = this.gridTemplate(gridCellWidth);
-            const templateRows = this.gridTemplate(gridCellHeight);
-            document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateRows};`;
+            const gridCellSize = MIN_CELL_SIZE + RATIO_VALUE_TO_CELL_SIZE * value;
+            localStorage.setItem(KEY_MAP_GRID_CELL_SIZE, gridCellSize.toString());
+            const templateColumns = this.gridTemplate(gridCellSize);
+            document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateColumns};`;
 
             const rootSheet = document.getElementById("mz-map-styles");
-            let style = this.findStyle(rootSheet.sheet, '.mz-map-grid-cell.expanded');
-            style = this.findStyle(style, "& .mz-map-grid-cell-content");
-            style.style.setProperty("min-height", `${gridCellHeight}rem`);
-            style.style.setProperty("min-width-size", `${gridCellWidth}rem`);
+            const rootStyle = this.findStyle(rootSheet.sheet, ':root');
+            rootStyle.style.setProperty("--cell-size-min", `${gridCellSize}rem`);
         }
 
         findStyle(styleSheet, styleName) {
@@ -503,16 +495,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             let html = `<div ${id} data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} 
 style="grid-row-start: ${j + 1}; grid-column-start: ${i + 1}" 
 class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
-<div class="mz-map-grid-cell-hint">&#8661;</div>
 <div class="mz-map-grid-cell-content">`;
-            if (null != this.monsters
-                || null != this.trolls
-                || null != this.treasures
-                || null != this.places
-                || null != this.mushrooms
-                || null != this.graves) {
-                html += `<span class="mz-map-grid-cell-header">${this.x} ${this.y}</span>`;
-            }
+            html += `<span class="mz-map-grid-cell-header">${this.x} ${this.y}</span>`;
             if (null != this.youAreHere) {
                 html += `<span class="mz-map-grid-here">Vous &ecirc;tes ici (${this.youAreHere})</span>`;
             }
@@ -522,9 +506,10 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     + this.groupToHtml(depth, this.places, this.placeToHtmlBits)
                     + this.treasuresToHtml(depth);
                 if (depthHtml.length > 0) {
-                    html += `<span class="mz-map-grid-cell-depth" data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} data-mz-grid-n=${depth}><span class="mz-map-grid-cell-header">${depth}</span>${depthHtml}</span>`;
+                    html += `<span class="mz-map-grid-cell-depth" data-mz-grid-x=${this.x} data-mz-grid-y=${this.y} data-mz-grid-n=${depth}><span class="mz-map-grid-cell-depth-header">${depth}</span>${depthHtml}</span>`;
                 }
             }
+            html += '<div class="mz-map-grid-cell-hint">&#8661;</div>'
             html += "</div></div>";
             return html;
         }
@@ -606,7 +591,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             let values = keys.map(key => {
                 let piecesAndCounts = summary.get(key);
                 let pieces = piecesAndCounts[0];
-                return piecesAndCounts[1] === 1 ? `<span ${pieces.spanAttributes}>${pieces.display}</span>` : `<span ${pieces.spanAttributes}>${piecesAndCounts[1]} x ${pieces.display}</span>`;
+                return piecesAndCounts[1] === 1 ? `<span ${pieces.spanAttributes}>${pieces.display}</span>` : `<span ${pieces.spanAttributes}>${piecesAndCounts[1]} &times; ${pieces.display}</span>`;
             });
             return values.join(" ");
         }
@@ -709,10 +694,12 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                 case "monstres" :
                     this.name = this.extractName(val);
                     this.groupName = this.toGroupName(this.name);
+                    this.action = val.action;
                     // this.family = "todo";
                     break;
                 case "champignons":
                     this.name = val.nom;
+                    this.action = val.action;
                     break;
                 case "cenotaphes" :
                     // TODO
@@ -725,14 +712,17 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     break;
                 case "tresors" :
                     this.name = this.extractName(val).epure();
-                    if (this.name.startsWith("mimique")) {
-                        this.name = this.toGroupName(this.name);
+                    this.action = val.action;
+                    if (this.name.toLowerCase().includes("mimique")) {
+                        this.type = 'monstres';
+                        this.name = 'mimique';
                     }
                     break;
                 case "trolls" :
                     this.name = this.extractName(val);
                     this.race = val.race;
                     this.level = val.niv;
+                    this.action = val.action;
                     break;
             }
         }
@@ -785,14 +775,12 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
     const MIN_CELL_SIZE = 3;
     const RATIO_VALUE_TO_CELL_SIZE = 0.24;
     const DEFAULT_CELL_SIZE = 15;
-    const CELL_WIDTH_HEIGHT_RATIO = 2 / 3;
 
 
     MountyzillaGrid.injectStyles = function () {
         const defaultCellFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
-        const defaultImageFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_ICON_SIZE, DEFAULT_CELL_ICON_SIZE);
-        const defaultMinCellWidth = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
-        const defaultMinCellHeight = defaultMinCellWidth * CELL_WIDTH_HEIGHT_RATIO;
+        const defaultCellIconSize = Util.getFloatOrDefault(KEY_MAP_GRID_ICON_SIZE, DEFAULT_CELL_ICON_SIZE);
+        const defaultCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
         const css = String.raw;
         const style = document.createElement('style');
 
@@ -803,6 +791,9 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                 --color-troll: darkblue;
                 --color-monster: darkgreen;
                 --color-border: #4CAF50;
+                --cell-default-font-size: ${defaultCellFontSize}rem;
+                --cell-default-image-size: ${defaultCellIconSize}px;
+                --cell-size-min: ${defaultCellSize}rem;
             }
 
             #mz-map-wrapper {
@@ -928,21 +919,30 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                 color: red;
             }
 
+            .mz-map-grid-cell-hint.mz-map-grid-cell-hint-visible {
+                display: block;
+            }
+
             .mz-map-grid-cell-content {
                 height: 100%;
                 box-sizing: border-box;
                 white-space: nowrap;
-                font-size: ${defaultCellFontSize}rem;
-                line-height: ${defaultCellFontSize}rem;
+                font-size: var(--cell-default-font-size);
+                line-height: var(--cell-default-font-size);
 
                 img {
-                    height: ${defaultImageFontSize}px;
+                    height: var(--cell-default-image-size);
                 }
             }
 
             .mz-map-grid-cell.expanded {
                 z-index: 10;
                 overflow: visible;
+
+                .mz-map-grid-cell-header, .mz-map-grid-cell-depth-header, .mz-map-grid-here {
+                    display: block;
+                    width: 100%;
+                }
 
                 .mz-map-grid-cell-content {
                     position: absolute;
@@ -957,9 +957,13 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     outline: 2px solid var(--color-border);
                     width: auto;
                     height: auto;
-                    min-height: ${defaultMinCellWidth}rem;
-                    min-width: ${defaultMinCellWidth}rem;
+                    min-height: var(--cell-size-min);
+                    min-width: var(--cell-size-min);
                     box-sizing: border-box;
+                }
+
+                .mz-map-grid-cell-hint.mz-map-grid-cell-hint-visible {
+                    display: none;
                 }
             }
 
@@ -1022,17 +1026,24 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             }
 
             .mz-map-grid-cell-header {
-                display: block;
+                display: none;
                 font-weight: bold;
                 text-align: center;
                 padding-top: 2px;
+                width: var(--cell-size-min);
             }
 
             .mz-map-grid-cell-depth {
-                border-top: 1px dotted darkgreen;
+                //border-top: 1px dotted darkgreen;
                 display: block;
-                margin-top: 4px;
+            }
+
+            .mz-map-grid-cell-depth-header, .mz-map-grid-here {
+                display: inline-block;
+                font-weight: bold;
+                text-align: center;
                 padding-top: 2px;
+                width: var(--cell-size-min);
             }
 
             .mz-map-details-header {
@@ -1259,4 +1270,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
     MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
+    MZ_cVueJSON.registerCallbackMZ(function() {
+        console.log("callback MZVue CDM");
+    })
 }
