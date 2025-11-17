@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.2.1
+// @version 0.2.2
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
