@@ -517,7 +517,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
         trollToHtmlBits(troll) {
             return {
                 spanAttributes: 'class="mz-map-grid-troll" mz_grid_type="trolls"',
-                display: `${troll.name} ${troll.race.substring(0, 2)}${troll.level}`
+                display: `${troll.name} ${troll.quickInfo()}`
             };
         }
 
@@ -723,6 +723,7 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
                     this.race = val.race;
                     this.level = val.niv;
                     this.action = val.action;
+                    this.html = `${this.html} ${this.quickInfo()} ${val.guilde?.value ?? ''}`;
                     break;
             }
         }
@@ -743,6 +744,10 @@ class="mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}">
             let j = i - 1;
             while (j > 0 && ' ' === name[j]) j--;
             return name.substring(0, j + 1);
+        }
+
+        quickInfo() {
+            return this.race.substring(0, 2) + this.level;
         }
     }
 
