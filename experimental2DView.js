@@ -218,7 +218,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             const span = document.createElement("span");
             span.className = `mz-map-grid-border ${borderClass}`;
-            span.innerHTML = index;
+            span.textContent = index;
 
             cellDiv.appendChild(span);
             return cellDiv;
@@ -434,7 +434,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const allCells = document.getElementsByClassName('mz-map-grid-cell');
             for (const cell of allCells) {
                 if (cell.scrollHeight > cell.clientHeight) {
-                    cell.querySelector('.mz-map-grid-cell-hint').classList.add('mz-map-grid-cell-hint-visible');
+                    cell.querySelector('.mz-map-grid-cell-hint').classList.add('mz-map-grid-cell-hint-visible'); // TODO: this is broken now
                 }
             }
         }
@@ -509,10 +509,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
             const {x, y, n} = this.retrieveCoordinates(target);
             const cell = MountyzillaGrid.grid.getCellMounty(x, y);
-            let detailsHtml = cell.detailsHtml(n);
-            document.getElementById('mz-map-details-content-wrapper').innerHTML = detailsHtml;
+            let detailsDom = cell.detailsDom(n);
+            document.getElementById('mz-map-details-content-wrapper').replaceChildren(...detailsDom);
             document.getElementById('mz-map-details-memorize').addEventListener('click', e => this.setMapDestination(e));
-            document.querySelectorAll('.todo').forEach( n => n.onclick = basculeCDM2);
         }
 
         retrieveCoordinates(target) {
@@ -540,7 +539,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 for (let i = 0; i < count; i++) {
                     if (favorites[i * 4] === "vue2d") {
                         needToAppend = false;
-                        favorites[i * 4 + 1] = x;
+                        favorites[i * 4 + 1] = x; 
                         favorites[i * 4 + 2] = y;
                         favorites[i * 4 + 3] = n;
                         break;
@@ -602,14 +601,14 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             const hintDiv = document.createElement("div");
             hintDiv.className = "mz-map-grid-cell-hint";
-            hintDiv.innerHtml = "&#8661;";
+            hintDiv.textContent = "+";
             cellDiv.appendChild(hintDiv);
             
             for (let depth = MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth >= MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth--) {
                 let depthContent = [];
-                depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToHtmlBits),
-                    this.groupToNodes(depth, this.monsters, this.monsterToHtmlBits),
-                    this.groupToNodes(depth, this.places, this.placeToHtmlBits),
+                depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToBits),
+                    this.groupToNodes(depth, this.monsters, this.monsterToBits),
+                    this.groupToNodes(depth, this.places, this.placeToBits),
                     this.treasuresToNodes(depth));
 
                 if (depthContent.length > 0) {
@@ -631,7 +630,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             return cellDiv;
         }
 
-        trollToHtmlBits(troll) {
+        trollToBits(troll) {
             return {
                 className: "mz-map-grid-troll",
                 gridType: "trolls",
@@ -639,7 +638,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             };
         }
 
-        monsterToHtmlBits(monster) {
+        monsterToBits(monster) {
             return {
                 className: "mz-map-grid-monster",
                 gridType: "monstres",
@@ -647,7 +646,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             };
         }
 
-        placeToHtmlBits(place) {
+        placeToBits(place) {
             const extraClass = place.hole ? 'mz-map-grid-hole' : '';
             return {
                 className: `mz-map-grid-place ${extraClass}`,
@@ -727,43 +726,86 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             return values;
         }
 
-        detailsHtml(depth) {
-            return `<h3 class="titre3" style="text-align:center" data-mz-grid-x="${this.x}" data-mz-grid-y="${this.y}" data-mz-grid-n="${depth}">${this.x} ${this.y} ${depth} 
-                    <img id="mz-map-details-memorize" src="../Images/Icones/S_Bow09.png" height="15" title="Mémoriser comme destination"/>
-                    </h3>
-                    <span id="mz-map-details-content" data-mz-grid-x="${this.x}" data-mz-grid-y="${this.y}" data-mz-grid-n="${depth}">`
-                + this.groupToDetailsHtml(depth, this.trolls, "mz-map-details-troll")
-                + this.groupToDetailsHtml(depth, this.monsters, "mz-map-details-monster", this.monsterInfo)
-                + this.groupToDetailsHtml(depth, this.treasures, "mz-map-details-treasure")
-                + this.groupToDetailsHtml(depth, this.places, "mz-map-details-place")
-                + this.groupToDetailsHtml(depth, this.graves, "mz-map-details-grave")
-                + this.groupToDetailsHtml(depth, this.mushrooms, "mz-map-details-mushroom")
-                + "<span>";
+        detailsDom(depth) {
+            let elements = [];
+
+            let header = document.createElement("h3");
+            header.className = "titre3";
+            header.style.textAlign = "center";
+            header.dataset.mzGridX = this.x;
+            header.dataset.mzGridY = this.y;
+            header.dataset.mzGridN = depth;
+            header.textContent = `${this.x} ${this.y} ${depth}`;
+
+            let memorizeImg = document.createElement("img");
+            memorizeImg.id = "mz-map-details-memorize";
+            memorizeImg.src = "../Images/Icones/S_Bow09.png";
+            memorizeImg.height = 15;
+            memorizeImg.title = "Mémoriser comme destination ";
+
+            header.appendChild(memorizeImg);
+
+            elements.push(header);
+
+            let contentSpan = document.createElement("span");
+            contentSpan.id = "mz-map-details-content";
+            contentSpan.dataset.mzGridX = this.x;
+            contentSpan.dataset.mzGridY = this.y;
+            contentSpan.dataset.mzGridN = depth;
+
+            contentSpan.append(...(this.groupToDetails(depth, this.trolls, "mz-map-details-troll")));
+            contentSpan.append(...(this.groupToDetails(depth, this.monsters, "mz-map-details-monster", this.monsterInfo)));
+            contentSpan.append(...(this.groupToDetails(depth, this.treasures, "mz-map-details-treasure")));
+            contentSpan.append(...(this.groupToDetails(depth, this.places, "mz-map-details-place")));
+            contentSpan.append(...(this.groupToDetails(depth, this.graves, "mz-map-details-grave")));
+            contentSpan.append(...(this.groupToDetails(depth, this.mushrooms, "mz-map-details-mushroom")));
+
+            elements.push(contentSpan);
+            return elements;
         }
 
-        groupToDetailsHtml(depth, group, groupClass, additionalInfo) {
-            if (null == group) {
-                return '';
+        groupToDetails(depth, group, groupClass, additionalInfo = null) {
+            if (group == null) {
+                return [];
             }
-            let result = '';
+
+            let resultElements = [];
+
             for (const item of group) {
                 if (item.n !== depth) {
                     continue;
                 }
-                result += `<span class="${groupClass}">${item.id} ${item.html} ${additionalInfo?.(item) ?? ''}</span>`;
+
+                let itemSpan = document.createElement("span");
+                itemSpan.className = groupClass;
+                itemSpan.innerHTML = `${item.id} ${item.html}`;
+
+                const additionalElement = additionalInfo?.(item);
+                if (additionalElement) {
+                    itemSpan.appendChild(document.createTextNode(' '));
+                    itemSpan.appendChild(additionalElement);
+                }
+                resultElements.push(itemSpan);
             }
-            return result;
+            return resultElements;
         }
 
         monsterInfo(monster) {
             const row = MountyzillaGrid.grid.monsterRows.get(monster.id);
-            if (null == row) {
-                return '';
+            if (!row) {
+                return null;
             }
-            const cdmCell = row.cells[2];
-            return `<span class="todo" data-indxmz="${cdmCell.dataset?.indxmz}">${cdmCell.innerText}</span>`;
-        }
 
+            const cdmCell = row.cells[2];
+            let infoSpan = document.createElement("span");
+            infoSpan.className = "todo"; // TODO: actually clone the node
+            if (cdmCell.dataset && cdmCell.dataset.indxmz) {
+                infoSpan.dataset.indxmz = cdmCell.dataset.indxmz;
+            }
+            infoSpan.textContent = cdmCell.innerText;
+            infoSpan.onclick = basculeCDM2;
+            return infoSpan;
+        }
 
         sortByDepthAndName(a, b) {
             if (a.n !== b.n) {
