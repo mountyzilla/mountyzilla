@@ -199,7 +199,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             cellDiv.style.gridRowStart = j + 1;
             cellDiv.style.gridColumnStart = i + 1;
-            cellDiv.className = cellStyle(center, center, i + 1, j + 1);
+            cellDiv.className = cellClass(center, center, i + 1, j + 1);
             cellDiv.innerHTML = "&nbsp;";
             return cellDiv;
         }
@@ -214,7 +214,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const cellDiv = document.createElement("div");
             cellDiv.style.gridRowStart = j + 1;
             cellDiv.style.gridColumnStart = i + 1;
-            cellDiv.className = cellStyle(center, center, i + 1, j + 1);
+            cellDiv.className = cellClass(center, center, i + 1, j + 1);
 
             const span = document.createElement("span");
             span.className = `mz-map-grid-border ${borderClass}`;
@@ -434,7 +434,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const allCells = document.getElementsByClassName('mz-map-grid-cell');
             for (const cell of allCells) {
                 if (cell.scrollHeight > cell.clientHeight) {
-                    cell.querySelector('.mz-map-grid-cell-hint').classList.add('mz-map-grid-cell-hint-visible'); // TODO: this is broken now
+                    cell.querySelector('.mz-map-grid-cell-hint').classList.add('mz-map-grid-cell-hint-visible');
                 }
             }
         }
@@ -539,18 +539,18 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 for (let i = 0; i < count; i++) {
                     if (favorites[i * 4] === "vue2d") {
                         needToAppend = false;
-                        favorites[i * 4 + 1] = x; 
+                        favorites[i * 4 + 1] = x;
                         favorites[i * 4 + 2] = y;
                         favorites[i * 4 + 3] = n;
                         break;
                     }
                 }
                 if (needToAppend) {
-                    favorites.push(...[ "vue2d", x, y, n]);
+                    favorites.push(...["vue2d", x, y, n]);
                 }
 
             } else {
-                favorites = [ "vue2d", x, y, n];
+                favorites = ["vue2d", x, y, n];
             }
             favorites.push("");
             localStorage.setItem("favori_gow", favorites.join("/"));
@@ -579,7 +579,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             cellDiv.style.gridRowStart = rowStart;
             cellDiv.style.gridColumnStart = colStart;
 
-            cellDiv.className = `mz-map-grid-cell ${cellStyle(centerX, centerY, this.x, this.y)}`;
+            cellDiv.className = `mz-map-grid-cell ${cellClass(centerX, centerY, this.x, this.y)}`;
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "mz-map-grid-cell-content";
@@ -601,9 +601,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             const hintDiv = document.createElement("div");
             hintDiv.className = "mz-map-grid-cell-hint";
-            hintDiv.textContent = "+";
+            hintDiv.textContent = String.fromCharCode(8661);
             cellDiv.appendChild(hintDiv);
-            
+
             for (let depth = MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth >= MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth--) {
                 let depthContent = [];
                 depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToBits),
@@ -639,11 +639,21 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         monsterToBits(monster) {
-            return {
+            let bits = {
                 className: "mz-map-grid-monster",
                 gridType: "monstres",
-                display: monster.groupName
+                display: monster.groupName,
             };
+            let groupName = monster.groupName.toLowerCase();
+            switch (groupName) {
+                case 'balrog':
+                case 'liche':
+                case 'hydre':
+                case 'beholder':
+                    bits.image = `https://www.iktomi.eu/images/${groupName}.png`;
+                    break;
+            }
+            return bits;
         }
 
         placeToBits(place) {
@@ -676,17 +686,17 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             if (summary.size === 0) {
                 return [];
             }
-            let result= document.createElement("span");
-            result.className =  "mz-map-grid-treasure";
+            let result = document.createElement("span");
+            result.className = "mz-map-grid-treasure";
             result.dataset.gridType = "treasure";
             let keys = Array.from(summary.keys()).sort();
             for (const key of keys) {
-                const treasureicon = TREASURE_ICONS[key];
-                if (null == treasureicon) {
+                const treasureIcon = TREASURE_ICONS[key];
+                if (null == treasureIcon) {
                     console.log(`vue2d: Type de tresor sans icone: ${key}`);
                 }
                 const img = document.createElement("img");
-                img.src = `../Images/Icones/${treasureicon}`;
+                img.src = `../Images/Icones/${treasureIcon}`;
                 img.title = key;
                 result.appendChild(img);
                 result.appendChild(document.createTextNode(`:${summary.get(key)} `));
@@ -715,10 +725,16 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             let values = keys.map(key => {
                 let piecesAndCounts = summary.get(key);
                 let pieces = piecesAndCounts[0];
-                let span= document.createElement("span");
+                let span = document.createElement("span");
                 span.className = pieces.className;
                 span.dataset.gridType = pieces.gridType;
-                span.textContent = piecesAndCounts[1] === 1 ? pieces.display : `${piecesAndCounts[1]} × ${pieces.display}`;
+                let text = piecesAndCounts[1] === 1 ? pieces.display : `${piecesAndCounts[1]} × ${pieces.display}`;
+                if (pieces.image) {
+                    let img = document.createElement("img");
+                    img.src = pieces.image;
+                    span.appendChild(img);
+                }
+                span.appendChild(document.createTextNode(text));
 
                 return span;
             });
@@ -782,9 +798,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
                 const additionalElement = additionalInfo?.(item);
                 if (additionalElement) {
-                    itemSpan.appendChild(document.createTextNode(' '));
                     itemSpan.appendChild(additionalElement);
                 }
+
                 resultElements.push(itemSpan);
             }
             return resultElements;
@@ -797,14 +813,15 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
 
             const cdmCell = row.cells[2];
-            let infoSpan = document.createElement("span");
-            infoSpan.className = "todo"; // TODO: actually clone the node
-            if (cdmCell.dataset && cdmCell.dataset.indxmz) {
-                infoSpan.dataset.indxmz = cdmCell.dataset.indxmz;
+            if ('' === cdmCell.innerText.trim()) {
+                return null;
             }
-            infoSpan.textContent = cdmCell.innerText;
-            infoSpan.onclick = basculeCDM2;
-            return infoSpan;
+            let cdmSpan = document.createElement('span');
+            cdmSpan.innerText = `CDM:${cdmCell.innerText}`;
+            cdmSpan.dataset.indxmz = cdmCell.dataset.indxmz;
+            cdmSpan.style.color = cdmCell.style.color;
+            cdmSpan.onclick = e => basculeCDM2.apply(e.target, [Side.LEFT]);
+            return cdmSpan;
         }
 
         sortByDepthAndName(a, b) {
@@ -935,14 +952,14 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
     }
 
     /**
-     * Renvoie le style approprié pour une cellule de la grille en fonction de ses coordonnées (en référentiel Mountyhall)
+     * Renvoie la classe appropriée pour une cellule de la grille en fonction de ses coordonnées (en référentiel Mountyhall)
      * @param {int} centerX coordonnée X du centre de la grille
      * @param {int} centerY coordonnée Y du centre de la grille
      * @param {int} x coordonnée X de la cellule
      * @param {int} y coordonnée Y de la cellule
-     * @returns {string} le style ad hoc
+     * @returns {string} la classe ad hoc
      */
-    function cellStyle(centerX, centerY, x, y) {
+    function cellClass(centerX, centerY, x, y) {
         const distX = Math.abs(centerX - x);
         const distY = Math.abs(centerY - y);
         const dist = Math.max(distX, distY);
@@ -1020,7 +1037,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 border: 1px solid #999;
                 padding: 0.5rem;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                z-index: 50;
+                z-index: 1;
             }
 
             input[type="range"].mz-map-toolbar-slider {
@@ -1197,7 +1214,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 background: black;
                 color: orangered;
                 font-weight: bolder
-                }
+            }
 
             .mz-map-grid-group {
                 display: block;
@@ -1455,7 +1472,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         MZ_cVueJSON.registerCallbackMZ(MountyzillaGrid.whenCdmReady);
     }
 
-    MountyzillaGrid.whenCdmReady = function() {
+    MountyzillaGrid.whenCdmReady = function () {
         let monsterRows = document.querySelectorAll("#monstres tbody tr");
         monsterRows = new Map([...monsterRows].map(j => [parseInt(j.cells[3].innerText), j]));
         MountyzillaGrid.grid.monsterRows = monsterRows;
