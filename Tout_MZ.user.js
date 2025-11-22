@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.10';
+var MZ_latest = '1.7.11';
 var MZ_changeLog = [
     "V1.7.9 \t\t 13/11/2025",
     "	- Dans la vue des lieux, recherche d'un certain service",
