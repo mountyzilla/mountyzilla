@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.10
+// @version     1.7.12
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.11';
+var MZ_latest = '1.7.12';
 var MZ_changeLog = [
     "V1.7.9 \t\t 13/11/2025",
     "	- Dans la vue des lieux, recherche d'un certain service",
@@ -12162,10 +12162,6 @@ class MZ_cVueJSON {
                 logMZ("MZ_cVueJSON_log Erreur à l'appel d'une callback", exc);
             }
         }
-    }
-
-    static MZLoaded() {
-        // fonction appelée quand tous les blocs venant de MH sont chargés, le retour MZ est chargé et le calcul des cibles de mission est fait
     }
 
     static registerCallback(callback) {
