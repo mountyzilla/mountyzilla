@@ -16,7 +16,6 @@
 // Namespace vue2d
 window.vue2d = window.vue2d || {};
 
-const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
 (function (vue2d) {
 
     const EXTENSION_ID = 'vue2d';
@@ -141,6 +140,7 @@ const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
         'tunique': "armure",
         'turban': "casque",
     };
+    const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
 
     class Util {
         static getFloatOrDefault(key, defaultValue) {
@@ -189,6 +189,8 @@ const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
     }
 
     class Options {
+        static MAX_TARGET_COUNT = 5;
+
         constructor(options = null) {
             if (null == options) {
                 this.options = {};
@@ -209,7 +211,7 @@ const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
         addTarget(id, name, cellId) {
             let workTargets = this.getWorkTargets();
             let targets = this.options['targets'];
-            if (null != targets[id] || 5 <= workTargets.length) {
+            if (null != targets[id] || Options.MAX_TARGET_COUNT <= workTargets.length) {
                 return;
             }
             targets[id] = name;
@@ -976,7 +978,7 @@ const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
                 });
                 result.push(removeTarget);
             } else {
-                if (options.targetCount() < 5) {
+                if (options.targetCount() < Options.MAX_TARGET_COUNT) {
                     let image = document.createElement('img');
                     image.src = '../Images/Icones/S_Bow10.png';
                     image.title = 'Suivre comme cible';
