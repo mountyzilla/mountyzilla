@@ -13,10 +13,13 @@
 // ==/UserScript==
 
 
-// Namespace MountyzillaGrid
-window.MountyzillaGrid = window.MountyzillaGrid || {};
+// Namespace vue2d
+window.vue2d = window.vue2d || {};
 
-(function (MountyzillaGrid) {
+const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
+(function (vue2d) {
+
+    const EXTENSION_ID = 'vue2d';
 
     const TREASURE_ICONS = {
         "GG": "E_Gold02.png",
@@ -146,6 +149,95 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 return defaultValue;
             }
             return parseFloat(item);
+        }
+
+        static saveIntoMountyhall(value) {
+            const url = `${window.location.origin}/mountyhall/MH_PageUtils/Services/json_extension.php?mode=set&ext=${EXTENSION_ID}`;
+            let request = new XMLHttpRequest();
+            request.open('POST', url);
+            request.onreadystatechange = function () {
+                if (request.error) {
+                    logMZ('erreur sauvegarde config dans MH : ' + request.error);
+                }
+            };
+            let json = JSON.stringify(value);
+            json = json.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x00-\x7F]/g, '');
+            request.send(json);
+        }
+
+        static showFadingMessage(text, x, y, durationMs = 3000) {
+            const div = document.createElement('div');
+            div.className = 'mh_tdtitre mz-map-effects-fade';
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+            div.textContent = text;
+            document.body.appendChild(div);
+
+            setTimeout(() => {
+                div.classList.add('visible');
+            }, 10);
+
+            setTimeout(() => {
+                div.classList.remove('visible');
+                div.classList.add('fade-out');
+                setTimeout(() => {
+                    div.remove();
+                }, 500);
+            }, durationMs);
+        }
+
+    }
+
+    class Options {
+        constructor(options = null) {
+            if (null == options) {
+                this.options = {};
+            } else {
+                this.options = JSON.parse(options);
+            }
+        }
+
+        save() {
+            Util.saveIntoMountyhall(this.options);
+        }
+
+        isTarget(id) {
+            const targets = this.options['targets'];
+            return null != targets ? null != targets[id] : false;
+        }
+
+        addTarget(id, name, cellId) {
+            let workTargets = this.getWorkTargets();
+            let targets = this.options['targets'];
+            if (null != targets[id] || 5 <= workTargets.length) {
+                return;
+            }
+            targets[id] = name;
+            this.options['targets'] = targets;
+            this.save();
+            workTargets.push([id, name, cellId]);
+        }
+
+        removeTarget(id) {
+            let workTargets = this.getWorkTargets();
+            for (let i = 0; i < workTargets.length; i++) {
+                const target = workTargets[i];
+                if (target[0] === id) {
+                    workTargets.splice(i, 1);
+                    delete this.options['targets'][id];
+                    this.save();
+                    return;
+                }
+            }
+        }
+
+        targetCount() {
+            return this.getWorkTargets().length;
+        }
+
+        getWorkTargets() {
+            this.workTargets ??= Object.entries(this.options['targets'] ??= {});
+            return this.workTargets;
         }
     }
 
@@ -334,6 +426,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         insertIntoDom() {
             let gridDom = this.convertToDom();
             let toolbar = this.createToolbar();
+            let targetbar = this.createTargetBar();
 
             let detailsWrapper = document.createElement("div");
             detailsWrapper.id = "mz-map-details-wrapper";
@@ -362,7 +455,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             gridScrollDiv.appendChild(gridDom);
 
-            mapWrapper.append(toolbar, gridScrollDiv, detailsWrapper);
+            mapWrapper.append(toolbar, targetbar, gridScrollDiv, detailsWrapper);
 
             let infoTab = document.getElementById('infoTab');
             infoTab.parentNode.insertBefore(mapWrapper, infoTab.nextSibling);
@@ -380,6 +473,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
             let toolbarDiv = document.createElement("div");
             toolbarDiv.id = 'mz-map-grid-toolbar';
+            toolbarDiv.className = 'mz-map-grid-bar';
 
             let img = document.createElement("img");
             img.id = 'mz-map-goto-player';
@@ -414,7 +508,57 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             return toolbarDiv;
         }
 
+        createTargetBar() {
+            let targetBarDiv = document.createElement("div");
+            targetBarDiv.id = 'mz-map-grid-targetbar';
+            if (0 === this.options.getWorkTargets().length) {
+                return targetBarDiv;
+            }
+            targetBarDiv.className = 'mz-map-grid-bar';
+
+            for (const target of this.options.getWorkTargets()) {
+                let targetDiv = document.createElement("div");
+                let monsterId = target[0];
+                targetDiv.id = `mz-map-grid-target-${monsterId}`;
+                if (target.length >= 3) {
+                    let img = document.createElement("img");
+                    img.src = '../Images/Icones/W_Throw004.png';
+                    img.height = '15';
+                    img.alt = 'Centrer la vue sur la cible';
+                    img.title = 'Centrer la vue sur la cible';
+                    targetDiv.appendChild(img);
+                    img.onclick = e => this.goToCell(target[2]);
+                }
+                targetDiv.appendChild(document.createTextNode(target[1]));
+                let removeTarget =  document.createElement("span");
+                removeTarget.textContent = '×';
+                removeTarget.style.color = "red";
+                removeTarget.style.setProperty("font-weight", "bold");
+                removeTarget.style.setProperty("font-size", "2.5rem");
+                removeTarget.style.setProperty("vertical-align", "middle");
+                removeTarget.title = 'Supprimer le suivi';
+                removeTarget.addEventListener('click', e => {
+                    this.options.removeTarget(monsterId);
+                    Util.showFadingMessage("Cible supprimée", e.x - 50, e.y - 50);
+                    this.replaceTargetBar(targetBarDiv);
+                });
+                targetDiv.appendChild(removeTarget);
+
+                targetBarDiv.appendChild(targetDiv);
+            }
+            return targetBarDiv;
+        }
+
+        replaceTargetBar(targetBarDiv) {
+            if (null == targetBarDiv) {
+                targetBarDiv = document.getElementById("mz-map-grid-targetbar");
+            }
+            let newTargetBar = this.createTargetBar();
+            targetBarDiv.parentNode.replaceChild(newTargetBar, targetBarDiv);
+        }
+
         addEventHandlers() {
+            // TODO: move the toolbar handlers into the toolbar creation
             document.querySelectorAll('.mz-map-grid-cell').forEach(cell => {
                 cell.addEventListener('mouseenter', function () {
                     this.classList.add('expanded');
@@ -479,14 +623,14 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
          * Centre la grille sur la cellule du joueur.
          */
         gotoPlayer() {
-            this.goToCell($("#you-are-here")[0]);
+            this.goToCell(`mz-map-grid-cell-${this.centerX}-${this.centerY}`);
         };
 
-        goToCell(cell) {
+        goToCell(cellId) {
             let gridHolder = $("#mz-map-grid-scroll")[0];
+            let cell = document.getElementById(cellId);
             let gridRect = gridHolder.getBoundingClientRect();
-            let playerCell = cell;
-            let cellRect = playerCell.getBoundingClientRect();
+            let cellRect = cell.getBoundingClientRect();
 
             let cellLeft = cellRect.left - gridRect.left + gridHolder.scrollLeft;
             let cellTop = cellRect.top - gridRect.top + gridHolder.scrollTop;
@@ -495,6 +639,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             let scrollTop = cellTop - (gridHolder.clientHeight / 2) + (cellRect.height / 2);
 
             gridHolder.scrollTo({left: scrollLeft, top: scrollTop, behavior: 'smooth'});
+            cell.classList.add('mz-map-effects-flash-attention');
+            setTimeout(() => cell.classList.remove('mz-map-effects-flash-attention'), 5000);
         }
 
         /**
@@ -508,7 +654,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 return;
             }
             const {x, y, n} = this.retrieveCoordinates(target);
-            const cell = MountyzillaGrid.grid.getCellMounty(x, y);
+            const cell = vue2d.grid.getCellMounty(x, y);
             let detailsDom = cell.detailsDom(n);
             document.getElementById('mz-map-details-content-wrapper').replaceChildren(...detailsDom);
             document.getElementById('mz-map-details-memorize').addEventListener('click', e => this.setMapDestination(e));
@@ -554,7 +700,9 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
             favorites.push("");
             localStorage.setItem("favori_gow", favorites.join("/"));
+            Util.showFadingMessage('Destination "vue2D" enregistrée', e.x - 50, e.y - 50);
         }
+
     }
 
     /**
@@ -572,6 +720,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             const colStart = i + 1;
 
             const cellDiv = document.createElement("div");
+            cellDiv.id = this.cellId();
 
             cellDiv.dataset.mzGridX = this.x;
             cellDiv.dataset.mzGridY = this.y;
@@ -590,7 +739,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             contentDiv.appendChild(headerSpan);
 
             if (this.youAreHere) {
-                cellDiv.id = "you-are-here";
                 let hereSpan = document.createElement("span");
                 hereSpan.className = "mz-map-grid-here";
                 hereSpan.textContent = `Vous êtes ici (${this.youAreHere})`;
@@ -604,7 +752,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             hintDiv.textContent = String.fromCharCode(8661);
             cellDiv.appendChild(hintDiv);
 
-            for (let depth = MountyzillaGrid.grid.centerN + MountyzillaGrid.grid.verticalRange; depth >= MountyzillaGrid.grid.centerN - MountyzillaGrid.grid.verticalRange; depth--) {
+            for (let depth = vue2d.grid.centerN + vue2d.grid.verticalRange; depth >= vue2d.grid.centerN - vue2d.grid.verticalRange; depth--) {
                 let depthContent = [];
                 depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToBits),
                     this.groupToNodes(depth, this.monsters, this.monsterToBits),
@@ -630,6 +778,10 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             return cellDiv;
         }
 
+        cellId() {
+            return `mz-map-grid-cell-${this.x}-${this.y}`;
+        }
+
         trollToBits(troll) {
             return {
                 className: "mz-map-grid-troll",
@@ -645,13 +797,12 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 display: monster.groupName,
             };
             let groupName = monster.groupName.toLowerCase();
-            switch (groupName) {
-                case 'balrog':
-                case 'liche':
-                case 'hydre':
-                case 'beholder':
-                    bits.image = `https://www.iktomi.eu/images/${groupName}.png`;
+            for (const mythique of MYTHIQUES) {
+                if (groupName.includes(mythique)) {
+                    bits.image = `https://www.iktomi.eu/images/${mythique}.png`;
+                    bits.className += " dangerous";
                     break;
+                }
             }
             return bits;
         }
@@ -798,7 +949,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
                 const additionalElement = additionalInfo?.(item);
                 if (additionalElement) {
-                    itemSpan.appendChild(additionalElement);
+                    itemSpan.append(...additionalElement);
                 }
 
                 resultElements.push(itemSpan);
@@ -807,9 +958,42 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         }
 
         monsterInfo(monster) {
-            const row = MountyzillaGrid.grid.monsterRows.get(monster.id);
+            let result = [];
+            const options = vue2d.grid.options;
+            if (options.isTarget(monster.id)) {
+                let removeTarget = document.createElement("span");
+                removeTarget.textContent = '×';
+                removeTarget.style.color = "red";
+                removeTarget.style.setProperty("font-weight", "bold");
+                removeTarget.style.setProperty("font-size", "2.5rem");
+                removeTarget.style.setProperty("vertical-align", "middle");
+                removeTarget.title = 'Supprimer le suivi';
+                removeTarget.addEventListener('click', e => {
+                    options.removeTarget(monster.id);
+                    removeTarget.remove();
+                    Util.showFadingMessage("Cible supprimée", e.x - 50, e.y - 50);
+                    vue2d.grid.replaceTargetBar();
+                });
+                result.push(removeTarget);
+            } else {
+                if (options.targetCount() < 5) {
+                    let image = document.createElement('img');
+                    image.src = '../Images/Icones/S_Bow10.png';
+                    image.title = 'Suivre comme cible';
+                    image.height = 15;
+                    image.addEventListener('click', e => {
+                        image.remove();
+                        options.addTarget(monster.id, monster.name, `mz-map-grid-cell-${monster.x}-${monster.y}`);
+                        Util.showFadingMessage("Cible ajoutée", e.x - 50, e.y - 50);
+                        vue2d.grid.replaceTargetBar();
+                    });
+                    result.push(image);
+                }
+            }
+
+            const row = vue2d.grid.monsterRows?.get(monster.id);
             if (!row) {
-                return null;
+                return result;
             }
 
             const cdmCell = row.cells[2];
@@ -821,7 +1005,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             cdmSpan.dataset.indxmz = cdmCell.dataset.indxmz;
             cdmSpan.style.color = cdmCell.style.color;
             cdmSpan.onclick = e => basculeCDM2.apply(e.target, [Side.LEFT]);
-            return cdmSpan;
+            result.push(cdmSpan);
+            return result;
         }
 
         sortByDepthAndName(a, b) {
@@ -846,6 +1031,13 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
         addMonster(monster) {
             this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
+
+            if (vue2d.grid.options.isTarget(monster.id)) {
+                const target = vue2d.grid.options.getWorkTargets().find(t => t[0] == monster.id);
+                if (null != target) {
+                    target.push(this.cellId());
+                }
+            }
         }
 
         addTroll(troll) {
@@ -876,7 +1068,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
     }
 
     /**
-     * Un élément (monstre, troll, trésor,...) que l'on retrouve dans une cellule.
+     * Un élément (monstre, troll, trésor, ...) que l'on retrouve dans une cellule.
      */
     class HallEntity {
 
@@ -982,7 +1174,7 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
     const DEFAULT_CELL_SIZE = 15;
 
 
-    MountyzillaGrid.injectStyles = function () {
+    vue2d.injectStyles = function () {
         const defaultCellFontSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
         const defaultCellIconSize = Util.getFloatOrDefault(KEY_MAP_GRID_ICON_SIZE, DEFAULT_CELL_ICON_SIZE);
         const defaultCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
@@ -1004,7 +1196,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             #mz-map-wrapper {
                 margin-top: 1rem;
                 position: relative;
-                display: flex;
                 column-gap: 0.5rem;
             }
 
@@ -1016,7 +1207,8 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
 
             #mz-map-grid-scroll {
-                max-width: 85%;
+                width: 85%;
+                display: inline-block;
                 max-height: 70vh;
                 overflow: auto;
                 border: 2px solid var(--color-border);
@@ -1026,18 +1218,28 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             #mz-map-details-wrapper {
                 border: 2px solid var(--color-border);
                 border-radius: 8px;
-                flex-grow: 4;
+                display: inline-block;
+                width: calc(15% - 1rem);
+                margin-left: 1rem;
             }
 
-            #mz-map-grid-toolbar {
+            .mz-map-grid-bar {
                 position: absolute;
-                top: 2rem;
-                left: 2rem;
                 background: white;
                 border: 1px solid #999;
                 padding: 0.5rem;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
                 z-index: 1;
+            }
+
+            #mz-map-grid-toolbar {
+                top: 2rem;
+                left: 2rem;
+            }
+
+            #mz-map-grid-targetbar {
+                top: 2rem;
+                right: calc(15% + 2rem);
             }
 
             input[type="range"].mz-map-toolbar-slider {
@@ -1200,6 +1402,11 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             .mz-map-grid-monster {
                 display: block;
                 color: var(--color-monster);
+
+                &.dangerous {
+                    color: orangered;
+                    font-weight: bolder
+                }
             }
 
             .mz-map-grid-treasure {
@@ -1239,7 +1446,6 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             }
 
             .mz-map-grid-cell-depth {
-                //border-top: 1px dotted darkgreen;
                 display: block;
             }
 
@@ -1275,14 +1481,48 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
                 display: block;
             }
 
+            .mz-map-effects-fade {
+                position: fixed;
+                border: 2px solid var(--color-border);
+                border-radius: 5px;
+                pointer-events: none;
+                z-index: 9999;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+
+            .mz-map-effects-fade.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .mz-map-effects-fade.fade-out {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            @keyframes mz-map-effects-flash-bg {
+                0%, 100% {
+                    background-color: rgba(255, 30, 0, 0.2);
+                }
+                50% {
+                    background-color: rgba(255, 30, 0, 0.6);
+                }
+            }
+
+            .mz-map-effects-flash-attention {
+                animation: mz-map-effects-flash-bg 0.3s ease-in-out 10;
+            }
         `;
+
         style.id = 'mz-map-styles';
         style.appendChild(document.createTextNode(styles));
         document.head.appendChild(style);
     }
 
-    MountyzillaGrid.insertGrid = function () {
-        MountyzillaGrid.injectStyles();
+    vue2d.insertGrid = function () {
+        vue2d.injectStyles();
         let x = 0;
         let y = 0;
         let n = 0;
@@ -1304,12 +1544,13 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
             rangeY = parseInt(rangeMatch[2]);
         }
 
-        MountyzillaGrid.grid = new Grid(x, y, n, rangeX, rangeY);
-        MountyzillaGrid.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
-        MountyzillaGrid.grid.insertIntoDom();
+        vue2d.grid = new Grid(x, y, n, rangeX, rangeY);
+        vue2d.grid.options = new Options(MH_vue2d_json);
+        vue2d.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
+        vue2d.grid.insertIntoDom();
     }
 
-    MountyzillaGrid.whenViewReady = function () {
+    vue2d.whenViewReady = function () {
         /*
         * jQuery dragscrollable Plugin
         * version: 1.2 (09-Feb-2020)
@@ -1467,19 +1708,18 @@ window.MountyzillaGrid = window.MountyzillaGrid || {};
 
 
         })(jQuery); // confine scope
-
-        MountyzillaGrid.insertGrid();
-        MZ_cVueJSON.registerCallbackMZ(MountyzillaGrid.whenCdmReady);
+        vue2d.insertGrid();
+        MZ_cVueJSON.registerCallbackMZ(vue2d.whenCdmReady);
     }
 
-    MountyzillaGrid.whenCdmReady = function () {
+    vue2d.whenCdmReady = function () {
         let monsterRows = document.querySelectorAll("#monstres tbody tr");
         monsterRows = new Map([...monsterRows].map(j => [parseInt(j.cells[3].innerText), j]));
-        MountyzillaGrid.grid.monsterRows = monsterRows;
+        vue2d.grid.monsterRows = monsterRows;
     }
 
-})(window.MountyzillaGrid); // scope confinement
+})(window.vue2d); // scope confinement
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
-    MZ_cVueJSON.registerCallback(MountyzillaGrid.whenViewReady);
+    MZ_cVueJSON.registerCallback(vue2d.whenViewReady);
 }
