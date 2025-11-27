@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.12';
+var MZ_latest = '1.7.13';
 var MZ_changeLog = [
     "V1.7.9 \t\t 13/11/2025",
     "	- Dans la vue des lieux, recherche d'un certain service",
@@ -11899,7 +11899,7 @@ function afficherCDM2(donneesMonstre, side) {
     table.style.outline = 'thin solid';
     table.style.position = 'fixed';
     table.style.backgroundColor = 'rgb(229, 222, 203)';
-    table.style.zIndex = 1;
+    table.style.zIndex = 10;
     // let topY = +(300+(30*MZ_cCDMv2.setup.yIndex))%(30*Math.floor((window.innerHeight-400)/30));
     let lateralPosition = `${Number(window.innerWidth - 365)}px`;
     table.style[side === Side.RIGHT ? 'left' : 'right'] = lateralPosition;
