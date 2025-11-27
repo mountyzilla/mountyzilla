@@ -515,8 +515,8 @@ window.vue2d = window.vue2d || {};
             toolbarDiv.appendChild(textResize);
 
             toolbarDiv.appendChild(document.createTextNode('Taille cellule: '));
-
             let cellResize = document.createElement("input");
+
             cellResize.id = "mz-map-toolbar-resize-cell";
             cellResize.type = "range";
             cellResize.min = "0";
@@ -525,6 +525,19 @@ window.vue2d = window.vue2d || {};
             cellResize.className = "mz-map-toolbar-slider";
             cellResize.oninput = e => this.resizeCellSize(e);
             toolbarDiv.appendChild(cellResize);
+
+            toolbarDiv.appendChild(document.createTextNode(' Même profondeur: '));
+            let myDepthOnly = document.createElement("input");
+            myDepthOnly.type = "checkbox";
+            myDepthOnly.oninput = e => {
+                const differentDepth = this.findStyleFromRoot(".mz-map-grid-cell-different-depth");
+                if (myDepthOnly.checked) {
+                    differentDepth.style.display = "none";
+                } else {
+                    differentDepth.style.display = null;
+                }
+            };
+            toolbarDiv.appendChild(myDepthOnly);
 
             return toolbarDiv;
         }
@@ -588,8 +601,7 @@ window.vue2d = window.vue2d || {};
             const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
             localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize.toString());
 
-            const rootSheet = document.getElementById("mz-map-styles");
-            const rootStyle = this.findStyle(rootSheet.sheet, ':root');
+            const rootStyle = this.findStyleFromRoot(':root');
             rootStyle.style.setProperty("--cell-default-font-size", `${textSize}rem`);
             rootStyle.style.setProperty("--cell-default-image-size", `${imageSize}px`);
         }
@@ -601,9 +613,13 @@ window.vue2d = window.vue2d || {};
             const templateColumns = this.gridTemplate(gridCellSize);
             document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateColumns};`;
 
-            const rootSheet = document.getElementById("mz-map-styles");
-            const rootStyle = this.findStyle(rootSheet.sheet, ':root');
+            const rootStyle = this.findStyleFromRoot(':root');
             rootStyle.style.setProperty("--cell-size-min", `${gridCellSize}rem`);
+        }
+
+        findStyleFromRoot(styleName) {
+            const rootSheet = document.getElementById("mz-map-styles");
+            return this.findStyle(rootSheet.sheet, styleName);
         }
 
         findStyle(styleSheet, styleName) {
@@ -758,7 +774,7 @@ window.vue2d = window.vue2d || {};
 
                 if (depthContent.length > 0) {
                     const cellDepth = document.createElement("span");
-                    cellDepth.className = "mz-map-grid-cell-depth";
+                    cellDepth.className = depth == vue2d.grid.centerN ? "mz-map-grid-cell-depth" : "mz-map-grid-cell-depth mz-map-grid-cell-different-depth";
                     cellDepth.dataset.mzGridX = this.x;
                     cellDepth.dataset.mzGridY = this.y;
                     cellDepth.dataset.mzGridN = depth;
@@ -1470,6 +1486,9 @@ window.vue2d = window.vue2d || {};
 
             .mz-map-grid-cell-depth {
                 display: block;
+            }
+
+            .mz-map-grid-cell-different-depth {
             }
 
             .mz-map-grid-cell-depth-header, .mz-map-grid-here {
