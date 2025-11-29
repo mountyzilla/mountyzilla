@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.24
+// @version 8.8.25
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -454,6 +454,40 @@ class cCAPITAN_MH {
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		if(infoObjet) return parseInt(infoObjet.nodeValue.replace('[', ''));
 	};
+
+	static traiteCartesDansEquipement() {
+		//console.log(`capitan traiteCartes start`);
+		let divCarte = document.querySelector("div[id$=Carte]");
+		if (!divCarte) return;
+		//console.log(`capitan traiteCartes ${divCarte.outerHTML}`);
+		let tables = divCarte.getElementsByTagName('table');
+		//console.log(`capitan traiteCartes nb table ${tables.length}`);
+		if (tables.length == 0) return;
+		for (let tr of tables[0].rows) {
+			//console.log(`capitan traiteCartes ${tr.innerText}`);
+			if (tr.cells.length < 3) continue;
+			let idCarte = parseInt(tr.cells[1].innerText);
+			if (isNaN(idCarte)) continue;
+			//console.log(`capitan traiteCartes ${idCarte}`);
+			cCAPITAN_MH.initCarte(idCarte);
+			cCAPITAN_MH.idCarte = idCarte;
+			cCAPITAN_MH.infoCurrentCarte = cCAPITAN_MH.infoCartes[idCarte];
+			if (cCAPITAN_MH.infoCurrentCarte.mort == undefined) continue;
+			//console.log(cCAPITAN_MH.infoCurrentCarte);
+			cCAPITAN_MH.calculeSolution2();
+			let msg;
+			if (cCAPITAN_MH.listeSolution.length==1) {
+				msg = '<' + cCAPITAN_MH.showXYN(cCAPITAN_MH.listeSolution[0], cCAPITAN_MH.infoCurrentCarte) + '>';
+			} else if (cCAPITAN_MH.listeSolution.length==0) {
+				msg = 'Aucune solution trouvée';
+			} else {
+				msg = `encore ${cCAPITAN_MH.listeSolution.length} possibilités`;
+			}
+			//console.log(`capitan traiteCartes id=${idCarte} msg=${msg}`);
+			if (!msg) continue;
+			tr.cells[3].appendChild(document.createTextNode(msg));
+		}
+	}
 
 	static analyseObject() {
 		//if (cCAPITAN_MH.bDebug) {console.log('[Capitan debug] analyseObject_log: début'); console.trace();}
@@ -1197,6 +1231,9 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 			cCAPITAN_MH.mutationObserver = new MutationObserver(cCAPITAN_MH.analyseObject.bind(this));
 			cCAPITAN_MH.mutationObserver.observe(document.body, cCAPITAN_MH.MutationObserverConfig);
 			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] init activation mutationObserver`);
+			if(cCAPITAN_MH.isPage("/MH_Play/Play_equipement.php")) {
+				cCAPITAN_MH.traiteCartesDansEquipement();
+			}
 		}
 		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] fin init`);
 	};
