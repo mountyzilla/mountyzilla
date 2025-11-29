@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.12
+// @version     1.7.14
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.13';
+var MZ_latest = '1.7.14';
 var MZ_changeLog = [
     "V1.7.9 \t\t 13/11/2025",
     "	- Dans la vue des lieux, recherche d'un certain service",
@@ -13765,6 +13765,7 @@ class MZ_cLieuxBT {
         let locType = MY_getValue(`${numTroll}.BT.nearestLocation`);
         if (locType == undefined || locType == 'none') { return; }
 
+        MZ_cVueJSON.loadPosTroll();
         let oPosTroll = MZ_cVueJSON.oPosTroll;
         let urlBricol = `${URL_bricol_mountyhall}lieux.php?search=position&format=json&orderBy=distance&posx=${oPosTroll.x}&posy=${oPosTroll.y}&posn=${oPosTroll.n}&typeLieu=${locType}`;
         new MZ_XMLHttpRequest(`MZ_${numTroll}_BT_nearestLocation`).do({
