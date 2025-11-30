@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.14
+// @version     1.7.15
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.14';
+var MZ_latest = '1.7.15';
 var MZ_changeLog = [
+    "V1.7.14 \t\t 30/11/2025",
+    "	- Dans l'équipement, affichage des infos des cartes du trésor (script du Capitan)",
     "V1.7.9 \t\t 13/11/2025",
     "	- Dans la vue des lieux, recherche d'un certain service",
     "V1.7.7 \t\t 11/11/2025",

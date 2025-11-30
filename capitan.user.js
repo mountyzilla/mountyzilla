@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.25
+// @version 8.8.26
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -351,7 +351,7 @@ class cCAPITAN_MH {
 		return result/nbSolutions;
 	};
 
-	static newRecherche() {
+	static newRecherche(bReturnString) {
 		if(cCAPITAN_MH.listeSolution.length<=1)
 			return null;
 
@@ -378,6 +378,7 @@ class cCAPITAN_MH {
 				nbNotZero++;
 		}
 		let string = "Il y a une utilité de faire une recherche en X = "+cCAPITAN_MH.curPos.x+" Y = "+cCAPITAN_MH.curPos.y+" N = "+cCAPITAN_MH.curPos.n;
+		let giveProba = true;
 		if(nbNotZero<=1) {
 			//
 			let minsolution = cCAPITAN_MH.listeSolution.length;
@@ -402,17 +403,16 @@ class cCAPITAN_MH {
 					}
 			if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: minsolution=${minsolution}, listeSolution.length=${cCAPITAN_MH.listeSolution.length}`);
 			if(minsolution == cCAPITAN_MH.listeSolution.length) {
-				let thead = document.createElement('thead');
-				let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
-				let td = cCAPITAN_MH.appendTdText(tr, "Il n'y a aucune utilité de faire une recherche en " + cCAPITAN_MH.curPos.display(), true);
-				td.setAttribute('align', 'center');
-				table.appendChild(thead);
-				return table;
+				string = "Il n'y a aucune utilité de faire une recherche en " + cCAPITAN_MH.curPos.display();
+				giveProba = false;
+			} else {
+				string = "Conseil : allez faire une recherche en "+newpos;
 			}
-			string = "Conseil : allez faire une recherche en "+newpos;
 		}
-
 		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: size=${size}, repartition=${JSON.stringify(repartition)}`);
+
+		if (bReturnString) return string;
+
 		let thead = document.createElement('thead');
 		let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
 		let td = cCAPITAN_MH.appendTdText(tr,string, true);
@@ -420,6 +420,8 @@ class cCAPITAN_MH {
 		table.appendChild(thead);
 		let tbody = document.createElement('tbody');
 		table.appendChild(tbody);
+		if (!giveProba) return table;
+
 		size = repartition.length;
 		for(let i=0;i<size;i++) {
 			if(i==size-1) {
@@ -481,10 +483,10 @@ class cCAPITAN_MH {
 			} else if (cCAPITAN_MH.listeSolution.length==0) {
 				msg = 'Aucune solution trouvée';
 			} else {
-				msg = `encore ${cCAPITAN_MH.listeSolution.length} possibilités`;
+				msg = `Encore ${cCAPITAN_MH.listeSolution.length} possibilités. `;
+				msg += cCAPITAN_MH.newRecherche(true);
 			}
 			//console.log(`capitan traiteCartes id=${idCarte} msg=${msg}`);
-			if (!msg) continue;
 			tr.cells[3].appendChild(document.createTextNode(msg));
 		}
 	}
@@ -517,7 +519,7 @@ class cCAPITAN_MH {
 		let infos = cCAPITAN_MH.infoCartes[cCAPITAN_MH.idCarte];
 		if (cCAPITAN_MH.bDebug) window.console.log(`[CAPITAN debug] début analyseObject_log(${cCAPITAN_MH.idCarte} ${JSON.stringify(infos)}`);
 		if (cCAPITAN_MH.limitInfiniteLoop()) {
-			cCAPITAN_MH.MutationObserver.disconnect();
+			if (cCAPITAN_MH.MutationObserver) cCAPITAN_MH.MutationObserver.disconnect();
 		}
 
 		let locMortFromHTML;
@@ -931,7 +933,7 @@ class cCAPITAN_MH {
 	static limitInfiniteLoop() {
 		if (cCAPITAN_MH.limitxx === undefined) cCAPITAN_MH.limitxx = 1;
 		else                                   cCAPITAN_MH.limitxx++;
-		if (cCAPITAN_MH.limitxx > 20) {
+		if (cCAPITAN_MH.limitxx > 2000) {
 			console.trace();
 			console.log(`cCAPITAN_MH.limitxx=${cCAPITAN_MH.limitxx}`);
 			return true;
@@ -1045,7 +1047,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 		}
 		}
 		*/
-		if (cCAPITAN_MH.limitInfiniteLoop()) cCAPITAN_MH.initCarte_log = undefined;
+		if (cCAPITAN_MH.limitInfiniteLoop()) cCAPITAN_MH.initCarte = undefined;
 		cCAPITAN_MH.infoCartes[idCarte] = info;
 		if (bChanged) cCAPITAN_MH.saveIntoMH(idCarte);
 		if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] après merge carte ${idCarte}, infoCartes=${JSON.stringify(cCAPITAN_MH.infoCartes)}`);
