@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.4.0
+// @version 0.4.1
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -492,7 +492,7 @@ window.vue2d = window.vue2d || {};
         createDetailsPane() {
             let detailsWrapper = document.createElement("div");
             detailsWrapper.id = "mz-map-details-wrapper";
-            detailsWrapper.className = "mh_tdtitre";
+            detailsWrapper.className = "mh_tdtitre mz-map-box";
 
             let headerSpan = document.createElement("span");
             headerSpan.className = "mz-map-details-header";
@@ -1647,24 +1647,17 @@ window.vue2d = window.vue2d || {};
         let y = 0;
         let n = 0;
 
-        let positionText = document.getElementsByClassName('position')[0].textContent;
-        let positionMatch = positionText.match(/(-?\d+).*?= (-?\d+).*?= (-?\d+)/, positionText);
-        if (positionMatch) {
-            x = parseInt(positionMatch[1]);
-            y = parseInt(positionMatch[2]);
-            n = parseInt(positionMatch[3]);
-        }
-        let infoTabValues = $("#infoTab div ul li");
-        let rangeText = infoTabValues[2].textContent;
-        let rangeX = 1;
-        let rangeY = 1;
-        let rangeMatch = rangeText.match(/(\d+) cases.*? et (\d+)/);
-        if (rangeMatch) {
-            rangeX = parseInt(rangeMatch[1]);
-            rangeY = parseInt(rangeMatch[2]);
-        }
+        let position = document.getElementById('position');
+        position = JSON.parse(position.dataset.position);
 
-        vue2d.grid = new Grid(x, y, n, rangeX, rangeY);
+        x = parseInt(position.x);
+        y = parseInt(position.y);
+        n = parseInt(position.n);
+
+        let rangeHorizontal = parseInt(position.porteeH);
+        let rangeVertical = parseInt(position.porteeV);
+
+        vue2d.grid = new Grid(x, y, n, rangeHorizontal, rangeVertical);
         vue2d.grid.options = new Options(typeof MH_vue2d_json !== 'undefined' ? MH_vue2d_json : null);
         await vue2d.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
         await vue2d.grid.insertIntoDom();
@@ -1831,6 +1824,11 @@ window.vue2d = window.vue2d || {};
     }
 
     vue2d.whenViewReady = function () {
+        if (document.getRootNode().body.className.includes("light")) {
+            console.log("Pas de compatibilité avec le mode smartphone pour le moment");
+            return;
+        }
+
         vue2d.injectDragScrollablePlugin();
         if (Util.getBooleanOrDefault(KEY_MAP_OPTIONS_START_COLLAPSED, false)) {
             const invokeMapDiv = document.createElement("div")
@@ -1843,14 +1841,22 @@ window.vue2d = window.vue2d || {};
                 invokeMapDiv.remove();
                 vue2d.injectInfoDiv()
                     .then(x => vue2d.insertGrid())
-                    .then(x => MZ_cVueJSON.registerCallbackMZ(vue2d.whenCdmReady));
+                    .then(x => MZ_cVueJSON.registerCallbackMZ(vue2d.whenCdmReady))
+                    .catch(error => {
+                        console.log(error);
+                        vue2d.endInfo();
+                    });
             }
             invokeMapDiv.append(invokeMapButton);
             document.getElementById('infoTab').after(invokeMapDiv);
         } else {
             vue2d.injectInfoDiv()
                 .then(x => vue2d.insertGrid())
-                .then(x => MZ_cVueJSON.registerCallbackMZ(vue2d.whenCdmReady));
+                .then(x => MZ_cVueJSON.registerCallbackMZ(vue2d.whenCdmReady))
+                .catch(error => {
+                    console.log(error);
+                    vue2d.endInfo();
+                });
         }
     }
 
