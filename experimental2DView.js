@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.4.1
+// @version 0.4.2
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -504,48 +504,74 @@ window.vue2d = window.vue2d || {};
             let contentWrapper = document.createElement("div");
             contentWrapper.id = "mz-map-details-content-wrapper";
             contentWrapper.textContent = "Pour une vue plus détaillée du contenu d'une caverne, cliquez sur l'indicateur de profondeur";
-
-            let optionsSpan = document.createElement("span");
-            let optionsTitle = document.createElement("h2");
-            optionsTitle.className = "titre2";
-            optionsTitle.textContent = "Options";
-            optionsSpan.appendChild(optionsTitle);
-            let startCollapsedDiv = this.createCheckboxOption(KEY_MAP_OPTIONS_START_COLLAPSED, "Carte à la demande");
-            optionsSpan.append(startCollapsedDiv);
-
+            let optionsSpan = this.createOptions();
 
             detailsWrapper.append(headerSpan, contentWrapper, optionsSpan);
             return detailsWrapper;
         }
 
-        createCheckboxOption(optionKey, description) {
-            let optionDiv = document.createElement("div");
-            let optionCheckbox = document.createElement("input");
-            optionCheckbox.id = optionKey;
-            optionCheckbox.type = "checkbox";
-            optionCheckbox.checked = Util.getBooleanOrDefault(optionKey, false);
-            optionCheckbox.onchange = function () {
-                localStorage.setItem(optionKey, optionCheckbox.checked);
-            }
-            let optionLabel = document.createElement("label");
-            optionLabel.htmlFor = optionKey;
-            optionLabel.textContent = description;
-            optionDiv.append(optionCheckbox, optionLabel);
-            return optionDiv;
-        }
+        createOptions() {
+            const optionsElement = document.createElement("div");
+            optionsElement.style = "display: grid; grid-template-columns: auto grow; grid-row-gap: 0.4rem;"
+            const optionsTitle = document.createElement("h2");
+            optionsTitle.className = "titre2";
+            optionsTitle.textContent = "Options";
+            optionsTitle.style = "grid-column-end: span 2";
 
-        createToolbar() {
+            const mapOnDemandDescription = document.createElement("label");
+            mapOnDemandDescription.htmlFor = KEY_MAP_OPTIONS_START_COLLAPSED;
+            mapOnDemandDescription.textContent = "Carte à la demande";
+
+            const mapOnDemand = document.createElement("div");
+            const mapOnDemandCheckbox = document.createElement("input");
+            mapOnDemandCheckbox.id = KEY_MAP_OPTIONS_START_COLLAPSED;
+            mapOnDemandCheckbox.type = "checkbox";
+            mapOnDemandCheckbox.checked = Util.getBooleanOrDefault(KEY_MAP_OPTIONS_START_COLLAPSED, false);
+            mapOnDemandCheckbox.onchange = function () {
+                localStorage.setItem(KEY_MAP_OPTIONS_START_COLLAPSED, mapOnDemandCheckbox.checked);
+            }
+            mapOnDemand.append(mapOnDemandCheckbox);
+
+            const textResizeDescription = document.createElement("div");
+            textResizeDescription.textContent = "Taille texte:";
+
             const storedTextSize = Util.getFloatOrDefault(KEY_MAP_GRID_TEXT_SIZE, DEFAULT_CELL_TEXT_SIZE);
             const initialTextValue = (storedTextSize - MIN_TEXT_SIZE) / RATIO_VALUE_TO_TEXT_SIZE;
+            const textResize = document.createElement("input");
+            textResize.id = "mz-map-toolbar-resize-text";
+            textResize.type = "range";
+            textResize.min = "0";
+            textResize.max = "100";
+            textResize.value = initialTextValue;
+            textResize.className = "mz-map-toolbar-slider";
+            textResize.oninput = e => this.resizeCellText(e.target.value);
+
+            const cellResizeDescription = document.createElement("div");
+            cellResizeDescription.textContent = "Taille cellule:";
+
             const storedCellSize = Util.getFloatOrDefault(KEY_MAP_GRID_CELL_SIZE, DEFAULT_CELL_SIZE);
             const initialCellValue = (storedCellSize - MIN_CELL_SIZE) / RATIO_VALUE_TO_CELL_SIZE;
-            const initialDepthValue = Util.getIntOrDefault(KEY_MAP_GRID_DEPTH_RANGE, this.verticalRange);
+            const cellResize = document.createElement("input");
+            cellResize.id = "mz-map-toolbar-resize-cell";
+            cellResize.type = "range";
+            cellResize.min = "0";
+            cellResize.max = "100";
+            cellResize.value = initialCellValue;
+            cellResize.className = "mz-map-toolbar-slider";
+            cellResize.oninput = e => this.resizeCellSize(e.target.value);
 
-            let toolbarDiv = document.createElement("div");
+            optionsElement.append(optionsTitle, mapOnDemandDescription, mapOnDemand, textResizeDescription, textResize, cellResizeDescription, cellResize);
+            return optionsElement;
+        }
+
+
+        createToolbar() {
+            const toolbarDiv = document.createElement("div");
+
             toolbarDiv.id = 'mz-map-grid-toolbar';
             toolbarDiv.className = 'mz-map-grid-bar';
+            const img = document.createElement("img");
 
-            let img = document.createElement("img");
             img.id = 'mz-map-goto-player';
             img.src = '../Images/Icones/W_Throw004.png';
             img.height = '15';
@@ -554,32 +580,9 @@ window.vue2d = window.vue2d || {};
             img.onclick = e => this.gotoPlayer();
             toolbarDiv.appendChild(img);
 
-            toolbarDiv.appendChild(document.createTextNode(' Taille texte: '));
-
-            let textResize = document.createElement("input");
-            textResize.id = "mz-map-toolbar-resize-text";
-            textResize.type = "range";
-            textResize.min = "0";
-            textResize.max = "100";
-            textResize.value = initialTextValue;
-            textResize.className = "mz-map-toolbar-slider";
-            textResize.oninput = e => this.resizeCellText(e.target.value);
-            toolbarDiv.appendChild(textResize);
-
-            toolbarDiv.appendChild(document.createTextNode(' Taille cellule: '));
-            let cellResize = document.createElement("input");
-
-            cellResize.id = "mz-map-toolbar-resize-cell";
-            cellResize.type = "range";
-            cellResize.min = "0";
-            cellResize.max = "100";
-            cellResize.value = initialCellValue;
-            cellResize.className = "mz-map-toolbar-slider";
-            cellResize.oninput = e => this.resizeCellSize(e.target.value);
-            toolbarDiv.appendChild(cellResize);
-
             toolbarDiv.appendChild(document.createTextNode(' Portée verticale: '));
-            let depthResize = document.createElement("input");
+            const initialDepthValue = Util.getIntOrDefault(KEY_MAP_GRID_DEPTH_RANGE, this.verticalRange);
+            const depthResize = document.createElement("input");
             depthResize.id = "mz-map-toolbar-resize-depth";
             depthResize.type = "range";
             depthResize.min = "0";
@@ -645,7 +648,7 @@ window.vue2d = window.vue2d || {};
         /**
          * Change the styles linked to cell contents to scale text and icons
          */
-        resizeCellText(e, value) {
+        resizeCellText(value) {
             const textSize = MIN_TEXT_SIZE + RATIO_VALUE_TO_TEXT_SIZE * value;
             localStorage.setItem(KEY_MAP_GRID_TEXT_SIZE, textSize.toString());
             const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
@@ -656,7 +659,7 @@ window.vue2d = window.vue2d || {};
             rootStyle.style.setProperty("--cell-default-image-size", `${imageSize}px`);
         }
 
-        resizeCellSize(e, value) {
+        resizeCellSize(value) {
             const gridCellSize = MIN_CELL_SIZE + RATIO_VALUE_TO_CELL_SIZE * value;
             localStorage.setItem(KEY_MAP_GRID_CELL_SIZE, gridCellSize.toString());
             const templateColumns = this.gridTemplate(gridCellSize);
@@ -700,6 +703,10 @@ window.vue2d = window.vue2d || {};
             this.goToCell(`mz-map-grid-cell-${this.centerX}-${this.centerY}`);
         };
 
+        /**
+         * Centre la grille sur une cellule
+         * @param cellId identifiant DOM de la cellule sur laquelle centrer la grille.
+         */
         goToCell(cellId) {
             let gridHolder = $("#mz-map-grid-scroll")[0];
             let cell = document.getElementById(cellId);
@@ -734,13 +741,22 @@ window.vue2d = window.vue2d || {};
             document.getElementById('mz-map-details-memorize').addEventListener('click', e => this.setMapDestination(e));
         }
 
-        retrieveCoordinates(target) {
-            const x = parseInt(target.dataset.mzGridX);
-            const y = parseInt(target.dataset.mzGridY);
-            const n = parseInt(target.dataset.mzGridN);
+        /**
+         * Récupère la position d'un troll depuis les données dataset fournies par MH
+         * @param element
+         * @returns {{x: number, y: number, n: number}}
+         */
+        retrieveCoordinates(element) {
+            const x = parseInt(element.dataset.mzGridX);
+            const y = parseInt(element.dataset.mzGridY);
+            const n = parseInt(element.dataset.mzGridN);
             return {x, y, n};
         }
 
+        /**
+         * Stocke la grotte comme destination favorite labelisée "vue2d" pour le plugin trajet_canvas.
+         * @param e événement déclencheur.
+         */
         setMapDestination(e) {
             let target = e.target.closest('[data-mz-grid-n]');
             const {x, y, n} = this.retrieveCoordinates(target);
@@ -819,6 +835,14 @@ window.vue2d = window.vue2d || {};
                 hereSpan.className = "mz-map-grid-here";
                 hereSpan.textContent = `Vous êtes ici (${this.youAreHere})`;
                 contentDiv.appendChild(hereSpan);
+            }
+            if (this.hole) {
+                let holeSpan = document.createElement("span");
+                holeSpan.className = "mz-map-grid-cell-depth-header";
+                holeSpan.textContent = `Trou de météorite ${this.holeTop} .. ${this.holeBottom}`;
+                headerSpan.className = "mz-map-grid-cell-depth-header";
+                cellDiv.className += ' mz-map-grid-carmine';
+                contentDiv.appendChild(holeSpan);
             }
 
             cellDiv.appendChild(contentDiv);
@@ -1135,7 +1159,13 @@ window.vue2d = window.vue2d || {};
 
         addPlace(place) {
             this.places = this.places ?? [];
-            this.places.push(place);
+            if (place.hole) {
+                this.hole = true;
+                this.holeTop = Math.max(this.holeTop ?? -Infinity, place.n);
+                this.holeBottom = Math.min(this.holeBottom ?? Infinity, place.n);
+            } else {
+                this.places.push(place);
+            }
         }
 
         addTreasure(treasure) {
@@ -1536,6 +1566,14 @@ window.vue2d = window.vue2d || {};
                 display: block;
             }
 
+            .mz-map-grid-carmine {
+                background-image: url(https://www.iktomi.eu/images/carmine.webp);
+                background-color: rgba(255, 255, 255, 0.486);
+                background-size: contain;
+                background-blend-mode: overlay;
+                color: lightgrey;
+            }
+
             .mz-map-grid-hole {
                 background: black;
                 color: orangered;
@@ -1569,7 +1607,7 @@ window.vue2d = window.vue2d || {};
             }
 
             .mz-map-grid-cell-depth-header, .mz-map-grid-here {
-                display: inline-block;
+                display: block;
                 font-weight: bold;
                 text-align: center;
                 padding-top: 2px;
