@@ -428,8 +428,8 @@ window.vue2d = window.vue2d || {};
         }
 
         acknowledgeMonster(monsterId, cellId) {
-            if (isTarget(monsterId)) {
-                const target = getWorkTargets().find(t => t[0] == monsterId);
+            if (this.isTarget(monsterId)) {
+                const target = this.getWorkTargets().find(t => t[0] == monsterId);
                 if (null != target) {
                     target.push(cellId);
                 }
@@ -453,36 +453,33 @@ window.vue2d = window.vue2d || {};
          * @param name nom de la famille à éviter
          */
         addAvoid(name) {
-            let workAvoid = this.getWorkAvoid();
-            let avoid = this.options['avoid'] ?? [];
-            if (avoid.includes(name)) {
+            let avoids = this.getAvoids();
+            if (avoids.includes(name)) {
                 return;
             }
-            avoid.push(name);
-            workAvoid.push(name);
+            avoids.push(name);
+            this.options['avoid'] = [...new Set(avoids)]; // remove duplicates
             this.save();
         }
 
         isAvoid(name) {
-            return this.getWorkAvoid().includes(name);
+            return this.getAvoids().includes(name);
         }
 
         removeAvoid(name) {
-            let workAvoid = this.getWorkAvoid();
-            for (let i = 0; i < workAvoid.length; i++) {
-                const avoid = workAvoid[i];
+            let avoids = this.getAvoids();
+            for (let i = 0; i < avoids.length; i++) {
+                const avoid = avoids[i];
                 if (avoid === name) {
-                    workAvoid.splice(i, 1);
-                    this.options['avoid'] = workAvoid;
+                    avoids.splice(i, 1);
                     this.save();
                     return;
                 }
             }
         }
 
-        getWorkAvoid() {
-            this.workAvoid ??= this.options['avoid'] ??= [];
-            return this.workAvoid;
+        getAvoids() {
+            return this.options['avoid'] ??= [];
         }
 
     }
@@ -1512,7 +1509,7 @@ window.vue2d = window.vue2d || {};
         toFamilyName() {
             for (const family of MONSTERS) {
                 if (this.groupName.includes(family)) {
-                    return family;
+                    return family.epure();
                 }
             }
             return null;
