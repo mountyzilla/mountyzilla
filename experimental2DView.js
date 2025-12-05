@@ -5,7 +5,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.4.2
+// @version 0.5.0
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -139,7 +139,160 @@ window.vue2d = window.vue2d || {};
         'tunique': "armure",
         'turban': "casque",
     };
-    const MYTHIQUES = ['balrog', 'liche', 'hydre', 'beholder'];
+    const MYTHICALS = ['Balrog', 'Liche', 'Hydre', 'Beholder'];
+
+    const MONSTERS = [
+        "Abishaii Bleu",
+        "Abishaii Noir",
+        "Abishaii Rouge",
+        "Abishaii Vert",
+        "Ame-en-peine",
+        "Amibe Géante",
+        "Anaconda des Catacombes",
+        "Ankheg",
+        "Anoploure Purpurin",
+        "Araignée Géante",
+        "Aragnarok du Chaos",
+        "Ashashin",
+        "Banshee",
+        "Barghest",
+        "Basilisk",
+        "Behemoth",
+        "Behir",
+        "Boggart",
+        "Bondin",
+        "Bouj'Dla",
+        "Bouj'Dla Placide",
+        "Bulette",
+        "Caillouteux",
+        "Capitan",
+        "Carnosaure",
+        "Champi-Glouton",
+        "Chauve-Souris Géante",
+        "Cheval à Dents de Sabre",
+        "Chimère",
+        "Chonchon",
+        "Coccicruelle",
+        "Cockatrice",
+        "Créature Floue",
+        "Croquemitaine",
+        "Cube Gélatineux",
+        "Daemonite",
+        "Diablotin",
+        "Djinn",
+        "Ectoplasme",
+        "Effrit",
+        "Elémentaire d'Air",
+        "Elémentaire d'Eau",
+        "Elémentaire de Feu",
+        "Elémentaire de Terre",
+        "Elémentaire du Chaos",
+        "Erinyes",
+        "Esprit-Follet",
+        "Essaim Sanguinaire",
+        "Ettin",
+        "Familier",
+        "Fantôme",
+        "Feu Follet",
+        "Flagelleur Mental",
+        "Foudroyeur",
+        "Fumeux",
+        "Fungus Géant",
+        "Fungus Violet",
+        "Furgolin",
+        "Gargouille",
+        "Géant de Pierre",
+        "Géant des Gouffres",
+        "Geck'oo",
+        "Geck'oo Majestueux",
+        "Glouton",
+        "Gnoll",
+        "Goblin",
+        "Goblours",
+        "Golem d'Argile",
+        "Golem de Chair",
+        "Golem de Fer",
+        "Golem de Pierre",
+        "Gorgone",
+        "Goule",
+        "Gowap Apprivoisé",
+        "Gowap Sauvage",
+        "Gremlins",
+        "Gritche",
+        "Grouilleux",
+        "Grylle",
+        "Harpie",
+        "Hellrot",
+        "Homme-Lézard",
+        "Hurleur",
+        "Incube",
+        "Kobold",
+        "Labeilleux",
+        "Lézard Géant",
+        "Limace Géante",
+        "Loup-Garou",
+        "Lutin",
+        "Mante Fulcreuse",
+        "Manticore",
+        "Marilith",
+        "Méduse",
+        "Mégacéphale",
+        "Mille-Pattes Géant",
+        "Mimique",
+        "Minotaure",
+        "Molosse Satanique",
+        "Momie",
+        "Monstre Rouilleur",
+        "Mouch'oo Majestueux Sauvage",
+        "Mouch'oo Sauvage",
+        "Naga",
+        "Nâ-Hàniym-Hééé",
+        "Nécrochore",
+        "Nécromant",
+        "Nécrophage",
+        "Nuage d'Insectes",
+        "Nuée de Vermine",
+        "Ogre",
+        "Ombre",
+        "Ombre de Roches",
+        "Orque",
+        "Ours-Garou",
+        "Palefroi Infernal",
+        "Phoenix",
+        "Plante Carnivore",
+        "Pseudo-Dragon",
+        "Raquettou",
+        "Rat Géant",
+        "Rat-Garou",
+        "Rocketeux",
+        "Sagouin",
+        "Scarabée Géant",
+        "Scorpion Géant",
+        "Shai",
+        "Slaad",
+        "Sorcière",
+        "Spectre",
+        "Sphinx",
+        "Squelette",
+        "Strige",
+        "Succube",
+        "Tertre Errant",
+        "Thri-kreen",
+        "Tigre-Garou",
+        "Titan",
+        "Trancheur",
+        "Tubercule Tueur",
+        "Tutoki",
+        "Vampire",
+        "Ver Carnivore Géant",
+        "Veskan du Chaos",
+        "Vouivre",
+        "Worg",
+        "Xorn",
+        "Yéti",
+        "Yuan-ti",
+        "Zombie"
+    ];
 
     class Util {
         static getFloatOrDefault(key, defaultValue) {
@@ -171,10 +324,20 @@ window.vue2d = window.vue2d || {};
             let request = new XMLHttpRequest();
             request.open('POST', url);
             request.onreadystatechange = function () {
+                if (request.readyState != 4) {
+                    return;
+                }
                 if (request.error) {
                     logMZ('erreur sauvegarde config dans MH : ' + request.error);
+                    return;
+                }
+                const response = JSON.parse(request.response);
+                if (response.erreur) {
+                    logMZ('erreur sauvegarde config dans MH : ' + response.erreur);
+
                 }
             };
+            request.on
             let json = JSON.stringify(value);
             json = json.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x00-\x7F]/g, '');
             request.send(json);
@@ -203,26 +366,38 @@ window.vue2d = window.vue2d || {};
 
     }
 
+    /**
+     * Manipulation des options stockées sur le serveur de Mounthyhall
+     */
     class Options {
         static MAX_TARGET_COUNT = 5;
 
         constructor(options = null) {
-            if (null == options) {
-                this.options = {};
-            } else {
-                this.options = JSON.parse(options);
-            }
+            this.options = null == options ? {} : JSON.parse(options);
         }
 
+        /**
+         * Sauvegarde côté Mountyhall
+         */
         save() {
             Util.saveIntoMountyhall(this.options);
         }
 
+        /**
+         * Renvoie true quand l'identifiant est celui d'une cible marquée à suivre
+         * @param id identifiant à vérifier.
+         */
         isTarget(id) {
             const targets = this.options['targets'];
             return null != targets ? null != targets[id] : false;
         }
 
+        /**
+         * Ajoute une cible à suivre
+         * @param id identifiant de la cible
+         * @param name nom de la cible
+         * @param cellId identifiant de la cellule contenant la cible
+         */
         addTarget(id, name, cellId) {
             let workTargets = this.getWorkTargets();
             let targets = this.options['targets'];
@@ -235,6 +410,10 @@ window.vue2d = window.vue2d || {};
             workTargets.push([id, name, cellId]);
         }
 
+        /**
+         * Supprime une cible à suivre
+         * @param id identifiant de la cible
+         */
         removeTarget(id) {
             let workTargets = this.getWorkTargets();
             for (let i = 0; i < workTargets.length; i++) {
@@ -248,6 +427,18 @@ window.vue2d = window.vue2d || {};
             }
         }
 
+        acknowledgeMonster(monsterId, cellId) {
+            if (isTarget(monsterId)) {
+                const target = getWorkTargets().find(t => t[0] == monsterId);
+                if (null != target) {
+                    target.push(cellId);
+                }
+            }
+        }
+
+        /**
+         * Nombre de cibles à suivre
+         */
         targetCount() {
             return this.getWorkTargets().length;
         }
@@ -256,6 +447,44 @@ window.vue2d = window.vue2d || {};
             this.workTargets ??= Object.entries(this.options['targets'] ??= {});
             return this.workTargets;
         }
+
+        /**
+         * Ajoute une famille à éviter
+         * @param name nom de la famille à éviter
+         */
+        addAvoid(name) {
+            let workAvoid = this.getWorkAvoid();
+            let avoid = this.options['avoid'] ?? [];
+            if (avoid.includes(name)) {
+                return;
+            }
+            avoid.push(name);
+            workAvoid.push(name);
+            this.save();
+        }
+
+        isAvoid(name) {
+            return this.getWorkAvoid().includes(name);
+        }
+
+        removeAvoid(name) {
+            let workAvoid = this.getWorkAvoid();
+            for (let i = 0; i < workAvoid.length; i++) {
+                const avoid = workAvoid[i];
+                if (avoid === name) {
+                    workAvoid.splice(i, 1);
+                    this.options['avoid'] = workAvoid;
+                    this.save();
+                    return;
+                }
+            }
+        }
+
+        getWorkAvoid() {
+            this.workAvoid ??= this.options['avoid'] ??= [];
+            return this.workAvoid;
+        }
+
     }
 
     class Grid {
@@ -609,7 +838,7 @@ window.vue2d = window.vue2d || {};
                 let monsterId = target[0];
                 targetDiv.id = `mz-map-grid-target-${monsterId}`;
                 if (target.length >= 3) {
-                    let img = document.createElement("img"); 
+                    let img = document.createElement("img");
                     img.src = '../Images/Icones/W_Throw004.png';
                     img.height = '15';
                     img.alt = 'Centrer la vue sur la cible';
@@ -859,6 +1088,8 @@ window.vue2d = window.vue2d || {};
                 depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToBits),
                     this.groupToNodes(depth, this.monsters, this.monsterToBits),
                     this.groupToNodes(depth, this.places, this.placeToBits),
+                    this.groupToNodes(depth, this.mushrooms, this.mushroomToBits),
+                    this.groupToNodes(depth, this.graves, this.graveToBits),
                     this.treasuresToNodes(depth));
 
                 if (depthContent.length > 0) {
@@ -881,7 +1112,8 @@ window.vue2d = window.vue2d || {};
         }
 
         cellId() {
-            return `mz-map-grid-cell-${this.x}-${this.y}`;
+            this.id ??= `mz-map-grid-cell-${this.x}-${this.y}`;
+            return this.id;
         }
 
         trollToBits(troll) {
@@ -898,13 +1130,16 @@ window.vue2d = window.vue2d || {};
                 gridType: "monstres",
                 display: monster.groupName,
             };
-            let groupName = monster.groupName.toLowerCase();
-            for (const mythique of MYTHIQUES) {
+            let groupName = monster.groupName;
+            for (const mythique of MYTHICALS) {
                 if (groupName.includes(mythique)) {
-                    bits.image = `https://www.iktomi.eu/images/${mythique}.png`;
-                    bits.className += " dangerous";
+                    bits.image = `https://www.iktomi.eu/images/${mythique.toLowerCase()}.png`;
+                    bits.className += " .mz-map-grid-dangerous";
                     break;
                 }
+            }
+            if (vue2d.grid.options.isAvoid(monster.familyName)) {
+                bits.className += ' mz-map-grid-dangerous';
             }
             return bits;
         }
@@ -915,6 +1150,26 @@ window.vue2d = window.vue2d || {};
                 className: `mz-map-grid-place ${extraClass}`,
                 gridType: "lieux",
                 display: place.name
+            };
+        }
+
+        mushroomToBits(mushroom) {
+            const result = {
+                className: "mz-map-grid-mushroom",
+                gridType: "champignons",
+                display: mushroom.name
+            };
+            if (mushroom.name !== "Champignon inconnu") {
+                result.image = "../Images/Icones/I_C_Mushroom.png";
+            }
+            return result;
+        }
+
+        graveToBits(grave) {
+            return {
+                className: "mz-map-grid-grave",
+                gridType: "cénotaphes",
+                display: grave.name
             };
         }
 
@@ -1004,7 +1259,7 @@ window.vue2d = window.vue2d || {};
             header.dataset.mzGridX = this.x;
             header.dataset.mzGridY = this.y;
             header.dataset.mzGridN = depth;
-            header.textContent = `${this.x} ${this.y} ${depth}`;
+            header.textContent = `${this.x} ${this.y} ${depth} `;
 
             let memorizeImg = document.createElement("img");
             memorizeImg.id = "mz-map-details-memorize";
@@ -1060,15 +1315,20 @@ window.vue2d = window.vue2d || {};
         }
 
         monsterInfo(monster) {
+            function createRemoval(color) {
+                let removeAvoid = document.createElement("span");
+                removeAvoid.textContent = '×';
+                removeAvoid.style.color = color;
+                removeAvoid.style.setProperty("font-weight", "bold");
+                removeAvoid.style.setProperty("font-size", "2.5rem");
+                removeAvoid.style.setProperty("vertical-align", "middle");
+                return removeAvoid;
+            }
+
             let result = [];
             const options = vue2d.grid.options;
             if (options.isTarget(monster.id)) {
-                let removeTarget = document.createElement("span");
-                removeTarget.textContent = '×';
-                removeTarget.style.color = "red";
-                removeTarget.style.setProperty("font-weight", "bold");
-                removeTarget.style.setProperty("font-size", "2.5rem");
-                removeTarget.style.setProperty("vertical-align", "middle");
+                let removeTarget = createRemoval("red");
                 removeTarget.title = 'Supprimer le suivi';
                 removeTarget.addEventListener('click', e => {
                     options.removeTarget(monster.id);
@@ -1093,12 +1353,35 @@ window.vue2d = window.vue2d || {};
                 }
             }
 
-            const row = vue2d.grid.monsterRows?.get(monster.id);
-            if (!row) {
+            if (options.isAvoid(monster.familyName)) {
+                let removeAvoid = createRemoval("blue");
+                removeAvoid.title = "Supprimer l'évitement";
+                removeAvoid.addEventListener('click', e => {
+                    options.removeAvoid(monster.familyName);
+                    removeAvoid.remove();
+                    Util.showFadingMessage("Evitement supprimé", e.x - 50, e.y - 50);
+                });
+                result.push(removeAvoid);
+            } else {
+                let addAvoid = document.createElement('img');
+                addAvoid.src = '../Images/Icones/S_Buff11.png';
+                addAvoid.title = 'Marquer à éviter';
+                addAvoid.height = 15;
+                addAvoid.addEventListener('click', e => {
+                    addAvoid.remove();
+                    options.addAvoid(monster.familyName);
+                    Util.showFadingMessage("Evitement ajouté", e.x - 50, e.y - 50);
+                });
+                result.push(addAvoid);
+            }
+
+            // Est-ce que MZ a créé une cellule avec les infos de CDM? Si oui, on récupère le travail
+            const initialRow = vue2d.grid.monsterRows?.get(monster.id);
+            if (!initialRow) {
                 return result;
             }
 
-            const cdmCell = row.cells[2];
+            const cdmCell = initialRow.cells[2];
             if ('' === cdmCell.innerText.trim()) {
                 return null;
             }
@@ -1108,6 +1391,7 @@ window.vue2d = window.vue2d || {};
             cdmSpan.style.color = cdmCell.style.color;
             cdmSpan.onclick = e => basculeCDM2.apply(e.target, [Side.LEFT]);
             result.push(cdmSpan);
+
             return result;
         }
 
@@ -1134,12 +1418,8 @@ window.vue2d = window.vue2d || {};
             this.monsters = this.monsters ?? [];
             this.monsters.push(monster);
 
-            if (vue2d.grid.options.isTarget(monster.id)) {
-                const target = vue2d.grid.options.getWorkTargets().find(t => t[0] == monster.id);
-                if (null != target) {
-                    target.push(this.cellId());
-                }
-            }
+            // TODO: move this into Options
+            vue2d.grid.options.acknowledgeMonster(monster.id, this.cellId());
         }
 
         addTroll(troll) {
@@ -1194,6 +1474,7 @@ window.vue2d = window.vue2d || {};
                 case "monstres" :
                     this.name = this.extractName(val);
                     this.groupName = this.toGroupName(this.name);
+                    this.familyName = this.toFamilyName();
                     this.action = val.action;
                     // this.family = "todo";
                     break;
@@ -1226,6 +1507,15 @@ window.vue2d = window.vue2d || {};
                     this.html = `${this.html} ${this.quickInfo()} ${val.guilde?.value ?? ''}`;
                     break;
             }
+        }
+
+        toFamilyName() {
+            for (const family of MONSTERS) {
+                if (this.groupName.includes(family)) {
+                    return family;
+                }
+            }
+            return null;
         }
 
         extractName(val) {
@@ -1336,7 +1626,7 @@ window.vue2d = window.vue2d || {};
                 margin: unset;
                 vertical-align: middle;
             }
-            
+
             .mz-map-box {
                 outline: 2px solid var(--color-border);
                 border-radius: 8px;
@@ -1346,7 +1636,7 @@ window.vue2d = window.vue2d || {};
                 margin-top: 1rem;
                 position: relative;
                 column-gap: 0.5rem;
-                
+
                 label {
                     font-weight: unset;
                 }
@@ -1551,12 +1841,32 @@ window.vue2d = window.vue2d || {};
             .mz-map-grid-monster {
                 display: block;
                 color: var(--color-monster);
+            }
 
-                &.dangerous {
-                    color: orangered;
-                    font-weight: bolder
+            .mz-map-grid-mushroom {
+                display: block;
+            }
+
+            .mz-map-grid-dangerous {
+                background: linear-gradient(
+                        90deg,
+                        red 0%,
+                        yellow 50%,
+                        red 100%
+                );
+                background-size: 200% 100%;
+                animation: mz-map-effects-wave 3s ease-in-out infinite;
+            }
+
+            @keyframes mz-map-effects-wave {
+                0%, 100% {
+                    background-position: 0% 0%;
+                }
+                50% {
+                    background-position: 100% 0%;
                 }
             }
+
 
             .mz-map-grid-treasure {
                 display: block;
@@ -1701,7 +2011,7 @@ window.vue2d = window.vue2d || {};
         await vue2d.grid.insertIntoDom();
     }
 
-    vue2d.injectDragScrollablePlugin = function() {
+    vue2d.injectDragScrollablePlugin = function () {
         /*
 * jQuery dragscrollable Plugin
 * version: 1.2 (09-Feb-2020)
