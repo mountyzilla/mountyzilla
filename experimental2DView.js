@@ -139,11 +139,13 @@ window.vue2d = window.vue2d || {};
         'tunique': "armure",
         'turban': "casque",
     };
+
     const MYTHICALS = ['Balrog', 'Liche', 'Hydre', 'Beholder'];
 
     const MONSTERS = [
         "Abishaii Bleu",
         "Abishaii Noir",
+        "Abishaii Rose",
         "Abishaii Rouge",
         "Abishaii Vert",
         "Ame-en-peine",
@@ -364,23 +366,109 @@ window.vue2d = window.vue2d || {};
             }, durationMs);
         }
 
+        static findStyle(styleSheet, styleSelector) {
+            const cssRules = styleSheet.cssRules;
+            for (const cssRule of cssRules) {
+                if (cssRule.selectorText === styleSelector) {
+                    return cssRule;
+                }
+            }
+            const index = styleSheet.insertRule(`${styleSelector} {  }`, cssRules.length);
+            return cssRules.item(index);
+        }
+
+        static findStyleFromRoot(styleSelector) {
+            const rootSheet = document.getElementById("mz-map-styles");
+            return Util.findStyle(rootSheet.sheet, styleSelector);
+        }
+
+    }
+
+    const KEY_MAP_OPTIONS_FILTER = "MZ_vue2d_mz-map-filter";
+
+    /**
+     * Options sélectionnées pour afficher moins d'infos dans la Vue2D.
+     */
+    class Filter {
+
+        static readFromStorage() {
+            const result = new Filter();
+            const json = localStorage.getItem(KEY_MAP_OPTIONS_FILTER);
+            if (!!json) {
+                const fromStorage = JSON.parse(json);
+                result._hideBooked = fromStorage._hideBooked;
+                result.adjustHideBookedStyle();
+                result._hideTamedGowaps = fromStorage._hideTamedGowaps;
+                result.adjustHideTamedGowaps();
+                result._hideWildGowaps = fromStorage._hideWildGowaps;
+                result.adjustHideWildGowaps();
+                result.adjustHideWildGowaps();
+            }
+            return result;
+        }
+
+        toggleHideBooked() {
+            this._hideBooked = !!!this._hideBooked;
+            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
+            this.adjustHideBookedStyle();
+        }
+
+        adjustHideBookedStyle() {
+            const style = Util.findStyleFromRoot('.mz-map-grid-filter-booked');
+            style.style.display = this.isHideBooked() ? 'none' : null;
+        }
+
+        isHideBooked() {
+            return !!this._hideBooked;
+        }
+
+        toggleHideTamedGowaps() {
+            this._hideTamedGowaps = !!!this._hideTamedGowaps;
+            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
+            this.adjustHideTamedGowaps();
+        }
+
+        adjustHideTamedGowaps() {
+            const style = Util.findStyleFromRoot('.mz-map-grid-monster-gowap-tamed');
+            style.style.display = this.isHideTamedGowaps() ? 'none' : null;
+        }
+
+        isHideTamedGowaps() {
+            return !!this._hideTamedGowaps;
+        }
+
+        toggleHideWildGowaps() {
+            this._hideWildGowaps = !!!this._hideWildGowaps;
+            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
+            this.adjustHideWildGowaps();
+        }
+
+        adjustHideWildGowaps() {
+            const style = Util.findStyleFromRoot('.mz-map-grid-monster-gowap-wild');
+            style.style.display = this.isHideWildGowaps() ? 'none' : null;
+        }
+
+        isHideWildGowaps() {
+            return !!this._hideWildGowaps;
+        }
+
     }
 
     /**
-     * Manipulation des options stockées sur le serveur de Mounthyhall
+     * Manipulation des options stockées sur le serveur de MountyHall
      */
     class Options {
         static MAX_TARGET_COUNT = 5;
 
         constructor(options = null) {
-            this.options = null == options ? {} : JSON.parse(options);
+            this._options = null == options ? {} : JSON.parse(options);
         }
 
         /**
          * Sauvegarde côté Mountyhall
          */
         save() {
-            Util.saveIntoMountyhall(this.options);
+            Util.saveIntoMountyhall(this._options);
         }
 
         /**
@@ -388,7 +476,7 @@ window.vue2d = window.vue2d || {};
          * @param id identifiant à vérifier.
          */
         isTarget(id) {
-            const targets = this.options['targets'];
+            const targets = this._options['targets'];
             return null != targets ? null != targets[id] : false;
         }
 
@@ -400,12 +488,12 @@ window.vue2d = window.vue2d || {};
          */
         addTarget(id, name, cellId) {
             let workTargets = this.getWorkTargets();
-            let targets = this.options['targets'];
+            let targets = this._options['targets'];
             if (null != targets[id] || Options.MAX_TARGET_COUNT <= workTargets.length) {
                 return;
             }
             targets[id] = name;
-            this.options['targets'] = targets;
+            this._options['targets'] = targets;
             this.save();
             workTargets.push([id, name, cellId]);
         }
@@ -420,7 +508,7 @@ window.vue2d = window.vue2d || {};
                 const target = workTargets[i];
                 if (target[0] === id) {
                     workTargets.splice(i, 1);
-                    delete this.options['targets'][id];
+                    delete this._options['targets'][id];
                     this.save();
                     return;
                 }
@@ -444,8 +532,8 @@ window.vue2d = window.vue2d || {};
         }
 
         getWorkTargets() {
-            this.workTargets ??= Object.entries(this.options['targets'] ??= {});
-            return this.workTargets;
+            this._workTargets ??= Object.entries(this._options['targets'] ??= {});
+            return this._workTargets;
         }
 
         /**
@@ -458,7 +546,7 @@ window.vue2d = window.vue2d || {};
                 return;
             }
             avoids.push(name);
-            this.options['avoid'] = [...new Set(avoids)]; // remove duplicates
+            this._options['avoid'] = [...new Set(avoids)]; // remove duplicates
             this.save();
         }
 
@@ -479,7 +567,7 @@ window.vue2d = window.vue2d || {};
         }
 
         getAvoids() {
-            return this.options['avoid'] ??= [];
+            return this._options['avoid'] ??= [];
         }
 
     }
@@ -495,6 +583,7 @@ window.vue2d = window.vue2d || {};
             this.gridSize = 1 + 2 * this.horizontalRange + 2; // 2 lignes/colonnes en plus pour les cellules de coordonnées
 
             this.cells = new Array(this.gridSize);
+            this._filter = Filter.readFromStorage();
         }
 
         async convertToDom() {
@@ -526,7 +615,7 @@ window.vue2d = window.vue2d || {};
             let startDepth = this.centerN + this.verticalRange;
             startDepth = startDepth > 0 ? 0 : startDepth;
             for (let depth = startDepth; depth >= vue2d.grid.centerN - vue2d.grid.verticalRange; depth--) {
-                this.findStyleFromRoot(`.mz-map-grid-cell-depth${depth}`);
+                Util.findStyleFromRoot(`.mz-map-grid-cell-depth${depth}`); // pre-inject empty styles
             }
 
             return wrapperDiv;
@@ -796,6 +885,10 @@ window.vue2d = window.vue2d || {};
 
             toolbarDiv.id = 'mz-map-grid-toolbar';
             toolbarDiv.className = 'mz-map-grid-bar';
+
+            const coreDiv = document.createElement("div");
+            toolbarDiv.append(coreDiv);
+
             const img = document.createElement("img");
 
             img.id = 'mz-map-goto-player';
@@ -804,9 +897,9 @@ window.vue2d = window.vue2d || {};
             img.alt = 'Recentrer';
             img.title = 'Recentrer la vue';
             img.onclick = e => this.gotoPlayer();
-            toolbarDiv.appendChild(img);
+            coreDiv.appendChild(img);
 
-            toolbarDiv.appendChild(document.createTextNode(' Portée verticale: '));
+            coreDiv.appendChild(document.createTextNode(' Portée verticale: '));
             const initialDepthValue = Util.getIntOrDefault(KEY_MAP_GRID_DEPTH_RANGE, this.verticalRange);
             const depthResize = document.createElement("input");
             depthResize.id = "mz-map-toolbar-resize-depth";
@@ -816,21 +909,65 @@ window.vue2d = window.vue2d || {};
             depthResize.value = initialDepthValue;
             depthResize.className = "mz-map-toolbar-slider";
             depthResize.oninput = e => this.adjustVisibleDepth(e.target.value);
-            toolbarDiv.appendChild(depthResize);
+            coreDiv.appendChild(depthResize);
             this.adjustVisibleDepth(initialDepthValue);
 
+
+            const filterToggle = document.createElement('input');
+            filterToggle.id = 'mz-map-toolbar-filter-toogle';
+            filterToggle.type = 'checkbox';
+            filterToggle.className = 'mz-map-grid-toggle';
+            filterToggle.onchange = () => document.getElementById("mz-map-toolbar-filter").classList.toggle("mz-map-util-hidden");
+
+            const filterLabel = document.createElement('label');
+            filterLabel.textContent = ' Filtre';
+            filterLabel.htmlFor = 'mz-map-toolbar-filter-toogle';
+            filterLabel.className = 'mz-map-grid-toggle-label';
+
+            coreDiv.append(filterToggle, filterLabel);
+
+            this.addFilterDiv(toolbarDiv);
+
             return toolbarDiv;
+        }
+
+        addFilterDiv(toolbarDiv) {
+            const filterDiv = document.createElement("div");
+            filterDiv.id = "mz-map-toolbar-filter";
+            filterDiv.className = "mz-map-toolbar-filter mz-map-util-hidden";
+            toolbarDiv.append(filterDiv);
+            filterDiv.append(document.createTextNode("Masquer"))
+            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideBooked(), "booked", "Engagés", this._filter.isHideBooked());
+            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideTamedGowaps(), "tamed-gowaps", "Gowaps apprivoisés", this._filter.isHideTamedGowaps());
+            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideWildGowaps(), "wild-gowaps", "Gowaps sauvages", this._filter.isHideWildGowaps());
+        }
+
+        addCheckboxFilter(filterDiv, onchange, id, label, checked) {
+            const filter = document.createElement("span");
+            filter.title = "Les éléments revendicables ayant au moins un Trõll (différent de soi) sur la même case";
+            filterDiv.append(filter);
+
+            const hideBooked = document.createElement("input");
+            hideBooked.id = `mz-map-toolbar-filter-${id}`;
+            hideBooked.type = "checkbox";
+            hideBooked.checked = checked;
+            hideBooked.onchange = onchange;
+            filter.append(hideBooked);
+            const textLabel = document.createElement("label");
+            textLabel.textContent = ` ${label}`;
+            textLabel.htmlFor = hideBooked.id;
+            filter.append(textLabel);
         }
 
         createTargetBar() {
             let targetBarDiv = document.createElement("div");
             targetBarDiv.id = 'mz-map-grid-targetbar';
-            if (0 === this.options.getWorkTargets().length) {
+            if (0 === this._options.getWorkTargets().length) {
                 return targetBarDiv;
             }
             targetBarDiv.className = 'mz-map-grid-bar';
 
-            for (const target of this.options.getWorkTargets()) {
+            for (const target of this._options.getWorkTargets()) {
                 let targetDiv = document.createElement("div");
                 let monsterId = target[0];
                 targetDiv.id = `mz-map-grid-target-${monsterId}`;
@@ -852,7 +989,7 @@ window.vue2d = window.vue2d || {};
                 removeTarget.style.setProperty("vertical-align", "middle");
                 removeTarget.title = 'Supprimer le suivi';
                 removeTarget.addEventListener('click', e => {
-                    this.options.removeTarget(monsterId);
+                    this._options.removeTarget(monsterId);
                     Util.showFadingMessage("Cible supprimée", e.x - 50, e.y - 50);
                     this.replaceTargetBar(targetBarDiv);
                 });
@@ -880,7 +1017,7 @@ window.vue2d = window.vue2d || {};
             const imageSize = MIN_ICON_SIZE + RATIO_VALUE_TO_ICON_SIZE * value;
             localStorage.setItem(KEY_MAP_GRID_ICON_SIZE, imageSize.toString());
 
-            const rootStyle = this.findStyleFromRoot(':root');
+            const rootStyle = Util.findStyleFromRoot(':root');
             rootStyle.style.setProperty("--cell-default-font-size", `${textSize}rem`);
             rootStyle.style.setProperty("--cell-default-image-size", `${imageSize}px`);
         }
@@ -891,7 +1028,7 @@ window.vue2d = window.vue2d || {};
             const templateColumns = this.gridTemplate(gridCellSize);
             document.getElementById("mz-map-grid").style = `grid-template-columns: ${templateColumns}; grid-template-rows: ${templateColumns};`;
 
-            const rootStyle = this.findStyleFromRoot(':root');
+            const rootStyle = Util.findStyleFromRoot(':root');
             rootStyle.style.setProperty("--cell-size-min", `${gridCellSize}rem`);
         }
 
@@ -901,25 +1038,9 @@ window.vue2d = window.vue2d || {};
             let startDepth = this.centerN + this.verticalRange;
             startDepth = startDepth > 0 ? 0 : startDepth;
             for (let depth = startDepth; depth >= this.centerN - this.verticalRange; depth--) {
-                const style = this.findStyleFromRoot(`.mz-map-grid-cell-depth${depth}`);
+                const style = Util.findStyleFromRoot(`.mz-map-grid-cell-depth${depth}`);
                 style.style.display = Math.abs(depth - this.centerN) > value ? 'none' : null;
             }
-        }
-
-        findStyleFromRoot(styleSelector) {
-            const rootSheet = document.getElementById("mz-map-styles");
-            return this.findStyle(rootSheet.sheet, styleSelector);
-        }
-
-        findStyle(styleSheet, styleSelector) {
-            const cssRules = styleSheet.cssRules;
-            for (const cssRule of cssRules) {
-                if (cssRule.selectorText === styleSelector) {
-                    return cssRule;
-                }
-            }
-            const index = styleSheet.insertRule(`${styleSelector} {  }`, cssRules.length);
-            return cssRules.item(index);
         }
 
         /**
@@ -1082,12 +1203,15 @@ window.vue2d = window.vue2d || {};
             startDepth = startDepth > 0 ? 0 : startDepth;
             for (let depth = startDepth; depth >= vue2d.grid.centerN - vue2d.grid.verticalRange; depth--) {
                 let depthContent = [];
+                const trollAtDepth = null != this.trolls ? this.trolls.find(troll => troll.n == depth) : false;
+                const booked = trollAtDepth && !(this.youAreHere && depth === vue2d.grid.centerN);
+
                 depthContent = depthContent.concat(this.groupToNodes(depth, this.trolls, this.trollToBits),
-                    this.groupToNodes(depth, this.monsters, this.monsterToBits),
+                    this.groupToNodes(depth, this.monsters, this.monsterToBits, booked),
                     this.groupToNodes(depth, this.places, this.placeToBits),
-                    this.groupToNodes(depth, this.mushrooms, this.mushroomToBits),
+                    this.groupToNodes(depth, this.mushrooms, this.mushroomToBits, booked),
                     this.groupToNodes(depth, this.graves, this.graveToBits),
-                    this.treasuresToNodes(depth));
+                    this.treasuresToNodes(depth, booked));
 
                 if (depthContent.length > 0) {
                     const cellDepth = document.createElement("span");
@@ -1135,8 +1259,14 @@ window.vue2d = window.vue2d || {};
                     break;
                 }
             }
-            if (vue2d.grid.options.isAvoid(monster.familyName)) {
+            if (vue2d.grid._options.isAvoid(monster.familyName)) {
                 bits.className += ' mz-map-grid-dangerous';
+            }
+            if (monster.familyName?.includes('Gowap Apprivoise')) {
+                bits.className += ' mz-map-grid-monster-gowap-tamed';
+            }
+            if (monster.familyName?.includes('Gowap Sauvage')) {
+                bits.className += ' mz-map-grid-monster-gowap-wild';
             }
             return bits;
         }
@@ -1170,7 +1300,7 @@ window.vue2d = window.vue2d || {};
             };
         }
 
-        treasuresToNodes(depth) {
+        treasuresToNodes(depth, booked) {
             if (null == this.treasures) {
                 return [];
             }
@@ -1193,6 +1323,9 @@ window.vue2d = window.vue2d || {};
             }
             let result = document.createElement("span");
             result.className = "mz-map-grid-treasure";
+            if (booked) {
+                result.className += ' mz-map-grid-filter-booked';
+            }
             result.dataset.gridType = "treasure";
             let keys = Array.from(summary.keys()).sort();
             for (const key of keys) {
@@ -1209,7 +1342,7 @@ window.vue2d = window.vue2d || {};
             return result;
         }
 
-        groupToNodes(depth, group, itemToBits) {
+        groupToNodes(depth, group, itemToBits, booked = false) {
             if (null == group) {
                 return [];
             }
@@ -1232,6 +1365,9 @@ window.vue2d = window.vue2d || {};
                 let pieces = piecesAndCounts[0];
                 let span = document.createElement("span");
                 span.className = pieces.className;
+                if (booked) {
+                    span.className += ' mz-map-grid-filter-booked';
+                }
                 span.dataset.gridType = pieces.gridType;
                 let text = piecesAndCounts[1] === 1 ? pieces.display : `${piecesAndCounts[1]} × ${pieces.display}`;
                 if (pieces.image) {
@@ -1323,7 +1459,7 @@ window.vue2d = window.vue2d || {};
             }
 
             let result = [];
-            const options = vue2d.grid.options;
+            const options = vue2d.grid._options;
             if (options.isTarget(monster.id)) {
                 let removeTarget = createRemoval("red");
                 removeTarget.title = 'Supprimer le suivi';
@@ -1416,7 +1552,7 @@ window.vue2d = window.vue2d || {};
             this.monsters.push(monster);
 
             // TODO: move this into Options
-            vue2d.grid.options.acknowledgeMonster(monster.id, this.cellId());
+            vue2d.grid._options.acknowledgeMonster(monster.id, this.cellId());
         }
 
         addTroll(troll) {
@@ -1635,6 +1771,7 @@ window.vue2d = window.vue2d || {};
                 column-gap: 0.5rem;
 
                 label {
+                    margin-bottom: unset;
                     font-weight: unset;
                 }
             }
@@ -1671,6 +1808,39 @@ window.vue2d = window.vue2d || {};
             #mz-map-grid-toolbar {
                 top: 2rem;
                 left: 2rem;
+            }
+            
+            .mz-map-util-hidden {
+                display: none;
+            }
+            
+            .mz-map-grid-bar {
+                input[type="checkbox"] {
+                    margin-left: 0.5rem;                    
+                }
+                
+                .mz-map-grid-toggle {
+                    display:none;
+                }
+
+                .mz-map-grid-toggle-label::before {
+                    display: inline-block;
+                    margin-left: 0.5rem;
+                    content: "${String.fromCharCode(9654)}";
+                    font-weight: bolder;
+                    transition: transform .1s ease-out;                
+                }
+                
+                .mz-map-grid-toggle:checked + .mz-map-grid-toggle-label::before {
+                    transform: rotate(90deg);
+                }
+                
+                
+                
+                label {
+                    margin-left: 0.2rem;
+                }
+                
             }
 
             #mz-map-grid-targetbar {
@@ -1864,7 +2034,6 @@ window.vue2d = window.vue2d || {};
                 }
             }
 
-
             .mz-map-grid-treasure {
                 display: block;
             }
@@ -2003,7 +2172,7 @@ window.vue2d = window.vue2d || {};
         let rangeVertical = parseInt(position.porteeV);
 
         vue2d.grid = new Grid(x, y, n, rangeHorizontal, rangeVertical);
-        vue2d.grid.options = new Options(typeof MH_vue2d_json !== 'undefined' ? MH_vue2d_json : null);
+        vue2d.grid._options = new Options(typeof MH_vue2d_json !== 'undefined' ? MH_vue2d_json : null);
         await vue2d.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
         await vue2d.grid.insertIntoDom();
     }
