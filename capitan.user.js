@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.26
+// @version 8.8.27
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -351,7 +351,7 @@ class cCAPITAN_MH {
 		return result/nbSolutions;
 	};
 
-	static newRecherche(bReturnString) {
+	static newRecherche(bReturnString, bLapidaire) {
 		if(cCAPITAN_MH.listeSolution.length<=1)
 			return null;
 
@@ -377,7 +377,11 @@ class cCAPITAN_MH {
 			if(repartition[i]!=0)
 				nbNotZero++;
 		}
-		let string = "Il y a une utilité de faire une recherche en X = "+cCAPITAN_MH.curPos.x+" Y = "+cCAPITAN_MH.curPos.y+" N = "+cCAPITAN_MH.curPos.n;
+		let string;
+		if (bLapidaire)
+			string = `C'est utile de chercher ici`;
+		else
+			string = "Il y a une utilité de faire une recherche en X = "+cCAPITAN_MH.curPos.x+" Y = "+cCAPITAN_MH.curPos.y+" N = "+cCAPITAN_MH.curPos.n;
 		let giveProba = true;
 		if(nbNotZero<=1) {
 			//
@@ -403,15 +407,46 @@ class cCAPITAN_MH {
 					}
 			if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: minsolution=${minsolution}, listeSolution.length=${cCAPITAN_MH.listeSolution.length}`);
 			if(minsolution == cCAPITAN_MH.listeSolution.length) {
-				string = "Il n'y a aucune utilité de faire une recherche en " + cCAPITAN_MH.curPos.display();
+				if (bLapidaire) {
+					string = `Pas de case proche utile`;
+				} else {
+					string = "Il n'y a aucune utilité de faire une recherche en " + cCAPITAN_MH.curPos.display();
+				}
 				giveProba = false;
 			} else {
-				string = "Conseil : allez faire une recherche en "+newpos;
+				if (bLapidaire) {
+					string = `Chercher en ${newpos}`;
+				} else {
+					string = "Conseil : allez faire une recherche en "+newpos;
+				}
 			}
 		}
 		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: size=${size}, repartition=${JSON.stringify(repartition)}`);
 
-		if (bReturnString) return string;
+		if (bReturnString) {
+			let oRet = {msg: string, probas: new Array()};
+			size = repartition.length;
+			if (giveProba) for(let i=0;i<size;i++) {
+				if(i==size-1) {
+					if(repartition[i]!=0)
+						oRet.probas.push({
+							proba: Math.round(100*repartition[i]/cCAPITAN_MH.listeSolution.length),
+							nb: cCAPITAN_MH.listeSolution.length-repartition[i],
+						});
+				} else {
+					let n=1;
+					while((i+n)<size && repartition[i]==repartition[i+n])
+						n++;
+					if(repartition[i]!=0)
+						oRet.probas.push({
+							proba: Math.round(100*n*repartition[i]/cCAPITAN_MH.listeSolution.length),
+							nb: (cCAPITAN_MH.listeSolution.length-repartition[i]),
+						});
+					i+=n-1;
+				}
+			}
+			return oRet;
+		}
 
 		let thead = document.createElement('thead');
 		let tr = cCAPITAN_MH.appendTr(thead, 'mh_tdtitre');
@@ -478,16 +513,25 @@ class cCAPITAN_MH {
 			//console.log(cCAPITAN_MH.infoCurrentCarte);
 			cCAPITAN_MH.calculeSolution2();
 			let msg;
+			let tabInfoProba = new Array();
 			if (cCAPITAN_MH.listeSolution.length==1) {
 				msg = '<' + cCAPITAN_MH.showXYN(cCAPITAN_MH.listeSolution[0], cCAPITAN_MH.infoCurrentCarte) + '>';
 			} else if (cCAPITAN_MH.listeSolution.length==0) {
 				msg = 'Aucune solution trouvée';
 			} else {
-				msg = `Encore ${cCAPITAN_MH.listeSolution.length} possibilités. `;
-				msg += cCAPITAN_MH.newRecherche(true);
+				msg = `${cCAPITAN_MH.listeSolution.length} possibilités. `;
+				let oRet = cCAPITAN_MH.newRecherche(true, true);
+				msg += oRet.msg;
+				for (let o of oRet.probas) {
+					tabInfoProba.push(`${o.proba}% de chance d'éliminer ${o.nb} possibilité${o.nb > 1 ? 's' : ''}`);
+				}
 			}
 			//console.log(`capitan traiteCartes id=${idCarte} msg=${msg}`);
-			tr.cells[3].appendChild(document.createTextNode(msg));
+			if (tabInfoProba.length > 0) {
+				msg += ' ℹ️';	// unicode char INFO
+				tr.cells[3].title = tabInfoProba.join("\n");
+			}
+			tr.cells[3].appendChild(document.createTextNode('[MZ] ' + msg));
 		}
 	}
 
