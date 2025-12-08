@@ -142,158 +142,183 @@ window.vue2d = window.vue2d || {};
 
     const MYTHICALS = ['Balrog', 'Liche', 'Hydre', 'Beholder'];
 
+    const ANIMAL = [0, "animal"];
+    const MONSTRE = [1, "monstre"];
+    const HUMANOIDE = [2, "humanoide"];
+    const MORT_VIVANT = [3, "mort-vivant"];
+    const INSECTE =[4, "insecte"];
+    const DEMON = [5, "demon"];
+    const INCONNU = [6, "inconnu"];
+
     const MONSTERS = [
-        "Abishaii Bleu",
-        "Abishaii Noir",
-        "Abishaii Rose",
-        "Abishaii Rouge",
-        "Abishaii Vert",
-        "Ame-en-peine",
-        "Amibe Géante",
-        "Anaconda des Catacombes",
-        "Ankheg",
-        "Anoploure Purpurin",
-        "Araignée Géante",
-        "Aragnarok du Chaos",
-        "Ashashin",
-        "Banshee",
-        "Barghest",
-        "Basilisk",
-        "Behemoth",
-        "Behir",
-        "Boggart",
-        "Bondin",
-        "Bouj'Dla",
-        "Bouj'Dla Placide",
-        "Bulette",
-        "Caillouteux",
-        "Capitan",
-        "Carnosaure",
-        "Champi-Glouton",
-        "Chauve-Souris Géante",
-        "Cheval à Dents de Sabre",
-        "Chimère",
-        "Chonchon",
-        "Coccicruelle",
-        "Cockatrice",
-        "Créature Floue",
-        "Croquemitaine",
-        "Cube Gélatineux",
-        "Daemonite",
-        "Diablotin",
-        "Djinn",
-        "Ectoplasme",
-        "Effrit",
-        "Elémentaire d'Air",
-        "Elémentaire d'Eau",
-        "Elémentaire de Feu",
-        "Elémentaire de Terre",
-        "Elémentaire du Chaos",
-        "Erinyes",
-        "Esprit-Follet",
-        "Essaim Sanguinaire",
-        "Ettin",
-        "Familier",
-        "Fantôme",
-        "Feu Follet",
-        "Flagelleur Mental",
-        "Foudroyeur",
-        "Fumeux",
-        "Fungus Géant",
-        "Fungus Violet",
-        "Furgolin",
-        "Gargouille",
-        "Géant de Pierre",
-        "Géant des Gouffres",
-        "Geck'oo",
-        "Geck'oo Majestueux",
-        "Glouton",
-        "Gnoll",
-        "Goblin",
-        "Goblours",
-        "Golem d'Argile",
-        "Golem de Chair",
-        "Golem de Fer",
-        "Golem de Pierre",
-        "Gorgone",
-        "Goule",
-        "Gowap Apprivoisé",
-        "Gowap Sauvage",
-        "Gremlins",
-        "Gritche",
-        "Grouilleux",
-        "Grylle",
-        "Harpie",
-        "Hellrot",
-        "Homme-Lézard",
-        "Hurleur",
-        "Incube",
-        "Kobold",
-        "Labeilleux",
-        "Lézard Géant",
-        "Limace Géante",
-        "Loup-Garou",
-        "Lutin",
-        "Mante Fulcreuse",
-        "Manticore",
-        "Marilith",
-        "Méduse",
-        "Mégacéphale",
-        "Mille-Pattes Géant",
-        "Mimique",
-        "Minotaure",
-        "Molosse Satanique",
-        "Momie",
-        "Monstre Rouilleur",
-        "Mouch'oo Majestueux Sauvage",
-        "Mouch'oo Sauvage",
-        "Naga",
-        "Nâ-Hàniym-Hééé",
-        "Nécrochore",
-        "Nécromant",
-        "Nécrophage",
-        "Nuage d'Insectes",
-        "Nuée de Vermine",
-        "Ogre",
-        "Ombre",
-        "Ombre de Roches",
-        "Orque",
-        "Ours-Garou",
-        "Palefroi Infernal",
-        "Phoenix",
-        "Plante Carnivore",
-        "Pseudo-Dragon",
-        "Raquettou",
-        "Rat Géant",
-        "Rat-Garou",
-        "Rocketeux",
-        "Sagouin",
-        "Scarabée Géant",
-        "Scorpion Géant",
-        "Shai",
-        "Slaad",
-        "Sorcière",
-        "Spectre",
-        "Sphinx",
-        "Squelette",
-        "Strige",
-        "Succube",
-        "Tertre Errant",
-        "Thri-kreen",
-        "Tigre-Garou",
-        "Titan",
-        "Trancheur",
-        "Tubercule Tueur",
-        "Tutoki",
-        "Vampire",
-        "Ver Carnivore Géant",
-        "Veskan du Chaos",
-        "Vouivre",
-        "Worg",
-        "Xorn",
-        "Yéti",
-        "Yuan-ti",
-        "Zombie"
+        ["Abishaii Bleu", DEMON],
+        ["Abishaii Noir", DEMON],
+        ["Abishaii Rose", DEMON],
+        ["Abishaii Rouge", DEMON],
+        ["Abishaii Vert", DEMON],
+        ["Ame-en-peine", MORT_VIVANT],
+        ["Amibe Géante", MONSTRE],
+        ["Anaconda des Catacombes", MONSTRE],
+        ["Ankheg", INSECTE],
+        ["Anoploure Purpurin", INSECTE],
+        ["Araignée Géante", INSECTE],
+        ["Aragnarok du Chaos", INSECTE],
+        ["Ashashin", HUMANOIDE],
+        ["Balrog", DEMON],
+        ["Banshee", MORT_VIVANT],
+        ["Barghest", DEMON],
+        ["Basilisk", MONSTRE],
+        ["Behemoth", DEMON],
+        ["Behir", MONSTRE],
+        ["Beholder", MONSTRE],
+        ["Boggart", HUMANOIDE],
+        ["Bondin", MONSTRE],
+        ["Bouj'Dla Placide", MONSTRE],
+        ["Bouj'Dla", MONSTRE],
+        ["Bulette", MONSTRE],
+        ["Caillouteux", HUMANOIDE],
+        ["Capitan", MORT_VIVANT],
+        ["Carnosaure", MONSTRE],
+        ["Champi-Glouton", HUMANOIDE],
+        ["Chauve-Souris Géante", ANIMAL],
+        ["Cheval à Dents de Sabre", ANIMAL],
+        ["Chimère", MONSTRE],
+        ["Chonchon", MONSTRE],
+        ["Coccicruelle", INSECTE],
+        ["Cockatrice", MONSTRE],
+        ["Crasc Maexus", MONSTRE],
+        ["Crasc Médius", MONSTRE],
+        ["Crasc", MONSTRE],
+        ["Créature Floue", INCONNU],
+        ["Croquemitaine", MORT_VIVANT],
+        ["Cube Gélatineux", MONSTRE],
+        ["Daemonite", DEMON],
+        ["Diablotin", DEMON],
+        ["Dindon du Chaos", ANIMAL],
+        ["Dindon", ANIMAL],
+        ["Djinn", MONSTRE],
+        ["Ectoplasme", MORT_VIVANT],
+        ["Effrit", MONSTRE],
+        ["Elémentaire d'Air", DEMON],
+        ["Elémentaire d'Eau", DEMON],
+        ["Elémentaire de Feu", DEMON],
+        ["Elémentaire de Terre", DEMON],
+        ["Elémentaire du Chaos", DEMON],
+        ["Erinyes", DEMON],
+        ["Esprit-Follet", MONSTRE],
+        ["Essaim Cratérien", INSECTE],
+        ["Essaim Sanguinaire", INSECTE],
+        ["Ettin", HUMANOIDE],
+        ["Familier", MONSTRE],
+        ["Fantôme", MORT_VIVANT],
+        ["Feu Follet", MONSTRE],
+        ["Flagelleur Mental", HUMANOIDE],
+        ["Foudroyeur", INSECTE],
+        ["Fumeux", DEMON],
+        ["Fungus Géant", MONSTRE],
+        ["Fungus Violet", MONSTRE],
+        ["Furgolin", HUMANOIDE],
+        ["Gargouille", MONSTRE],
+        ["Géant de Pierre", HUMANOIDE],
+        ["Géant des Gouffres", HUMANOIDE],
+        ["Geck'oo Majestueux", ANIMAL],
+        ["Geck'oo", ANIMAL],
+        ["Glouton", ANIMAL],
+        ["Gnoll", HUMANOIDE],
+        ["Gnu Domestique", ANIMAL],
+        ["Gnu Sauvage", ANIMAL],
+        ["Goblin", HUMANOIDE],
+        ["Goblours", HUMANOIDE],
+        ["Golem d'Argile", HUMANOIDE],
+        ["Golem de Chair", HUMANOIDE],
+        ["Golem de Cuir", HUMANOIDE],
+        ["Golem de Fer", HUMANOIDE],
+        ["Golem de Métal", HUMANOIDE],
+        ["Golem de Mithril", HUMANOIDE],
+        ["Golem de Papier", HUMANOIDE],
+        ["Golem de Pierre", HUMANOIDE],
+        ["Gorgone", MONSTRE],
+        ["Goule", MORT_VIVANT],
+        ["Gowap Apprivoisé", ANIMAL],
+        ["Gowap Sauvage", ANIMAL],
+        ["Gremlins", HUMANOIDE],
+        ["Gritche", DEMON],
+        ["Grouilleux", MONSTRE],
+        ["Grylle", MONSTRE],
+        ["Harpie", MONSTRE],
+        ["Hellrot", DEMON],
+        ["Homme-Lézard", HUMANOIDE],
+        ["Hurleur", HUMANOIDE],
+        ["Incube", DEMON],
+        ["Kobold", HUMANOIDE],
+        ["Labeilleux", INSECTE],
+        ["Lézard Géant", MONSTRE],
+        ["Liche", MORT_VIVANT],
+        ["Limace Géante", INSECTE],
+        ["Loup-Garou", HUMANOIDE],
+        ["Lutin", HUMANOIDE],
+        ["Mante Fulcreuse", INSECTE],
+        ["Manticore", MONSTRE],
+        ["Marilith", DEMON],
+        ["Méduse", HUMANOIDE],
+        ["Mégacéphale", HUMANOIDE],
+        ["Mille-Pattes Géant", INSECTE],
+        ["Mimique", MONSTRE],
+        ["Minotaure", HUMANOIDE],
+        ["Molosse Satanique", DEMON],
+        ["Momie", MORT_VIVANT],
+        ["Monstre Rouilleur", MONSTRE],
+        ["Mouch'oo Majestueux Sauvage", MONSTRE],
+        ["Mouch'oo Sauvage", MONSTRE],
+        ["Naga", MONSTRE],
+        ["Nâ-Hàniym-Hééé", MORT_VIVANT],
+        ["Nécrochore", MORT_VIVANT],
+        ["Nécromant", MORT_VIVANT],
+        ["Nécrophage", MORT_VIVANT],
+        ["Nuage d'Insectes", INSECTE],
+        ["Nuée de Vermine", INSECTE],
+        ["Ogre", HUMANOIDE],
+        ["Ombre de Roches", MONSTRE],
+        ["Ombre", MORT_VIVANT],
+        ["Orque", HUMANOIDE],
+        ["Ours-Garou", HUMANOIDE],
+        ["Palefroi Infernal", DEMON],
+        ["Phoenix", MONSTRE],
+        ["Pititabeille", INSECTE],
+        ["Plante Carnivore", MONSTRE],
+        ["Pseudo-Dragon", DEMON],
+        ["Raquettou", HUMANOIDE],
+        ["Rat Géant", ANIMAL],
+        ["Rat-Garou", HUMANOIDE],
+        ["Rocketeux", HUMANOIDE],
+        ["Sagouin", ANIMAL],
+        ["Scarabée Géant", INSECTE],
+        ["Scorpion Géant", INSECTE],
+        ["Shai", DEMON],
+        ["Sirène", HUMANOIDE],
+        ["Slaad", MONSTRE],
+        ["Sorcière", HUMANOIDE],
+        ["Spectre", MORT_VIVANT],
+        ["Sphinx", HUMANOIDE],
+        ["Squelette", MORT_VIVANT],
+        ["Strige", INSECTE],
+        ["Succube", DEMON],
+        ["Tertre Errant", MONSTRE],
+        ["Thri-kreen", INSECTE],
+        ["Tigre-Garou", HUMANOIDE],
+        ["Titan", HUMANOIDE],
+        ["Trancheur", MONSTRE],
+        ["Tubercule Tueur", ANIMAL],
+        ["Tutoki", MONSTRE],
+        ["Vampire", MORT_VIVANT],
+        ["Ver Carnivore Géant", MONSTRE],
+        ["Veskan du Chaos", HUMANOIDE],
+        ["Vouivre", MONSTRE],
+        ["Worg", MONSTRE],
+        ["Xorn", DEMON],
+        ["Yéti", HUMANOIDE],
+        ["Yuan-ti", HUMANOIDE],
+        ["Zombie", MORT_VIVANT],
     ];
 
     class Util {
@@ -395,61 +420,78 @@ window.vue2d = window.vue2d || {};
             const result = new Filter();
             const json = localStorage.getItem(KEY_MAP_OPTIONS_FILTER);
             if (!!json) {
-                const fromStorage = JSON.parse(json);
-                result._hideBooked = fromStorage._hideBooked;
-                result.adjustHideBookedStyle();
-                result._hideTamedGowaps = fromStorage._hideTamedGowaps;
-                result.adjustHideTamedGowaps();
-                result._hideWildGowaps = fromStorage._hideWildGowaps;
-                result.adjustHideWildGowaps();
-                result.adjustHideWildGowaps();
+                result._filter = JSON.parse(json);
+                result.adjustGridStyles();
+            } else {
+                result._filter = {};
             }
             return result;
         }
 
-        toggleHideBooked() {
-            this._hideBooked = !!!this._hideBooked;
-            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
-            this.adjustHideBookedStyle();
+        adjustGridStyles() {
+            this.adjustHideBooked();
+            this.adjustHideTamedGowaps();
+            this.adjustHideWildGowaps();
+            this.adjustHideFuzzies();
         }
 
-        adjustHideBookedStyle() {
-            const style = Util.findStyleFromRoot('.mz-map-grid-filter-booked');
-            style.style.display = this.isHideBooked() ? 'none' : null;
+        toggleHide(property, adjustFunction) {
+            this._filter[property] = !!!this._filter[property];
+            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this._filter));
+            adjustFunction.apply(this);
+        }
+
+        adjustStyle(shouldHide, selector) {
+            const style = Util.findStyleFromRoot(selector);
+            style.style.display = shouldHide ? 'none' : null;
+        }
+
+        toggleHideBooked() {
+            this.toggleHide("hideBooked", this.adjustHideBooked);
+        }
+
+        adjustHideBooked() {
+            this.adjustStyle(this.isHideBooked(), '.mz-map-grid-filter-booked');
         }
 
         isHideBooked() {
-            return !!this._hideBooked;
+            return !!this._filter["hideBooked"];
         }
 
         toggleHideTamedGowaps() {
-            this._hideTamedGowaps = !!!this._hideTamedGowaps;
-            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
-            this.adjustHideTamedGowaps();
+            this.toggleHide("hideTamed", this.adjustHideTamedGowaps);
         }
 
         adjustHideTamedGowaps() {
-            const style = Util.findStyleFromRoot('.mz-map-grid-monster-gowap-tamed');
-            style.style.display = this.isHideTamedGowaps() ? 'none' : null;
+            this.adjustStyle(this.isHideTamedGowaps(), '.mz-map-grid-monster-gowap-tamed');
         }
 
         isHideTamedGowaps() {
-            return !!this._hideTamedGowaps;
+            return !!this._filter["hideTamed"];
         }
 
         toggleHideWildGowaps() {
-            this._hideWildGowaps = !!!this._hideWildGowaps;
-            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this));
-            this.adjustHideWildGowaps();
+            this.toggleHide("hideWild", this.adjustHideWildGowaps);
         }
 
         adjustHideWildGowaps() {
-            const style = Util.findStyleFromRoot('.mz-map-grid-monster-gowap-wild');
-            style.style.display = this.isHideWildGowaps() ? 'none' : null;
+            this.adjustStyle(this.isHideWildGowaps(), '.mz-map-grid-monster-gowap-wild');
         }
 
         isHideWildGowaps() {
-            return !!this._hideWildGowaps;
+            return !!this._filter["hideWild"];
+        }
+
+        toggleHideFuzzies() {
+            this.toggleHide("hideFuzzy", this.adjustHideFuzzies);
+        }
+
+        adjustHideFuzzies() {
+            this.adjustStyle(this.isHideFuzzies(), '.mz-map-grid-monster-fuzzy');
+        }
+
+        isHideFuzzies() {
+            return !!this._filter["hideFuzzy"];
         }
 
     }
@@ -936,10 +978,21 @@ window.vue2d = window.vue2d || {};
             filterDiv.id = "mz-map-toolbar-filter";
             filterDiv.className = "mz-map-toolbar-filter mz-map-util-hidden";
             toolbarDiv.append(filterDiv);
-            filterDiv.append(document.createTextNode("Masquer"))
-            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideBooked(), "booked", "Engagés", this._filter.isHideBooked());
-            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideTamedGowaps(), "tamed-gowaps", "Gowaps apprivoisés", this._filter.isHideTamedGowaps());
-            this.addCheckboxFilter(filterDiv, () => this._filter.toggleHideWildGowaps(), "wild-gowaps", "Gowaps sauvages", this._filter.isHideWildGowaps());
+
+            const hideDiv = document.createElement("div");
+            filterDiv.append(hideDiv);
+            hideDiv.append(document.createTextNode("Masquer:"))
+            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideBooked(), "booked", "Engagés", this._filter.isHideBooked());
+            console.log(this._filter);
+            console.log(this._filter.isHideTamedGowaps());
+            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideTamedGowaps(), "tamed-gowaps", "Gowaps apprivoisés", this._filter.isHideTamedGowaps());
+            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideWildGowaps(), "wild-gowaps", "Gowaps sauvages", this._filter.isHideWildGowaps());
+            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideFuzzies(), "fuzzies", "Créatures floues", this._filter.isHideFuzzies());
+
+            const showDiv = document.createElement("div");
+            filterDiv.append(showDiv);
+            showDiv.append(document.createTextNode("Afficher uniquement:"))
+
         }
 
         addCheckboxFilter(filterDiv, onchange, id, label, checked) {
@@ -1251,6 +1304,10 @@ window.vue2d = window.vue2d || {};
                 gridType: "monstres",
                 display: monster.groupName,
             };
+            const monsterType = monster.monsterInfo?.[1][1];
+            if (null != monsterType) {
+                bits.className += ` mz-map-grid-monster-${monsterType}`;
+            }
             let groupName = monster.groupName;
             for (const mythique of MYTHICALS) {
                 if (groupName.includes(mythique)) {
@@ -1262,11 +1319,14 @@ window.vue2d = window.vue2d || {};
             if (vue2d.grid._options.isAvoid(monster.familyName)) {
                 bits.className += ' mz-map-grid-dangerous';
             }
-            if (monster.familyName?.includes('Gowap Apprivoise')) {
+            if (monster.familyName?.includes('Gowap Apprivoisé')) {
                 bits.className += ' mz-map-grid-monster-gowap-tamed';
             }
             if (monster.familyName?.includes('Gowap Sauvage')) {
                 bits.className += ' mz-map-grid-monster-gowap-wild';
+            }
+            if (monster.groupName?.includes('Flou')) {
+                bits.className += ' mz-map-grid-monster-fuzzy';
             }
             return bits;
         }
@@ -1607,9 +1667,9 @@ window.vue2d = window.vue2d || {};
                 case "monstres" :
                     this.name = this.extractName(val);
                     this.groupName = this.toGroupName(this.name);
-                    this.familyName = this.toFamilyName();
+                    this.monsterInfo = this.findMonsterInfo();
+                    this.familyName = this.monsterInfo?.[0] ?? null;
                     this.action = val.action;
-                    // this.family = "todo";
                     break;
                 case "champignons":
                     this.name = val.nom;
@@ -1642,10 +1702,11 @@ window.vue2d = window.vue2d || {};
             }
         }
 
-        toFamilyName() {
-            for (const family of MONSTERS) {
+        findMonsterInfo() {
+            for (const monster of MONSTERS) {
+                const family = monster[0]
                 if (this.groupName.includes(family)) {
-                    return family.epure();
+                    return monster;
                 }
             }
             return null;
