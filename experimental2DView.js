@@ -1,7 +1,8 @@
 // ==UserScript==
 // @author Kalamar
 // @description Injection d'une vue 2D dans l'interface de jeu
-// @include */mountyhall/mountyhall/MH_Play/Play_vue2.php*
+// @include */mountyhall/MH_Play/Play_vue2.php*
+// @include */mountyhall/MH_Play/Play_a_Action.php*
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
@@ -36,13 +37,14 @@ window.vue2d = window.vue2d || {};
         "champignon inconnu": "I_C_Mushroom.png",
         "composant": "I_Tentacle.png",
         "conteneur": "Z_Backpack.png",
+        "coquillage": "Z_Shell.png",
         "mimique": "I_Chest02.png",
         "minerai": "I_Crystal01.png",
         "materiau": "I_Crystal01.png",
         "outil": "Z_BoneWrench.png",
         "parchemin": "I_Scroll02.png",
         "potion": "P_Medicine05.png",
-        "special": "E_Gold01.png",
+        "special": "S_Ice02.png",
         "talisman": "Ac_Necklace03.png",
     };
 
@@ -138,17 +140,21 @@ window.vue2d = window.vue2d || {};
         'torque de pierre': "talisman",
         'tunique': "armure",
         'turban': "casque",
+        // special ones
+        'pierre de taille': 'special',
+        'tablette du manger': 'special',
     };
 
     const MYTHICALS = ['Balrog', 'Liche', 'Hydre', 'Beholder'];
 
-    const ANIMAL = [0, "animal"];
-    const MONSTRE = [1, "monstre"];
-    const HUMANOIDE = [2, "humanoide"];
-    const MORT_VIVANT = [3, "mort-vivant"];
-    const INSECTE =[4, "insecte"];
-    const DEMON = [5, "demon"];
-    const INCONNU = [6, "inconnu"];
+    const ANIMAL = [0, "animal", "Animal"];
+    const MONSTRE = [1, "monstre", "Monstre"];
+    const HUMANOIDE = [2, "humanoide", "Humanoïde"];
+    const MORT_VIVANT = [3, "mort-vivant", "Mort-Vivant"];
+    const INSECTE =[4, "insecte", "Insecte"];
+    const DEMON = [5, "demon", "Démon"];
+    const INCONNU = [6, "inconnu", ""];
+    const FAMILIES = [ANIMAL, MONSTRE, HUMANOIDE, MORT_VIVANT, INSECTE, DEMON];
 
     const MONSTERS = [
         ["Abishaii Bleu", DEMON],
@@ -433,67 +439,129 @@ window.vue2d = window.vue2d || {};
             this.adjustHideTamedGowaps();
             this.adjustHideWildGowaps();
             this.adjustHideFuzzies();
+            this.adjustFamily();
         }
 
-        toggleHide(property, adjustFunction) {
-            this._filter[property] = !!!this._filter[property];
-            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this._filter));
+        registerCheckbox(checkbox) {
+            this._checkboxes ??= [];
+            this._checkboxes.push(checkbox);
+        }
+
+        registerSelect(select) {
+            this._selects ??= [];
+            this._selects.push(select);
+        }
+
+        clear() {
+            for (const checkbox of this._checkboxes) {
+                checkbox.checked = false;
+                checkbox.dispatchEvent(new Event('change'))
+            }
+            for (const select of this._selects) {
+                select.value = '';
+                select.dispatchEvent(new Event('change'))
+            }
+        }
+
+        isEmpty() {
+            for (const property of Object.values(this._filter)) {
+                if (property) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        setHide(property, adjustFunction, hide) {
+            this._filter[property] = hide;
+            this.persistFilter();
             adjustFunction.apply(this);
         }
 
-        adjustStyle(shouldHide, selector) {
+        persistFilter() {
+            localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this._filter));
+            this.adjustToggle();
+        }
+
+        adjustToggle() {
+            if (this.isEmpty()) {
+                this.clearToggle.classList.add('mz-map-util-hidden');
+            } else {
+                this.clearToggle.classList.remove('mz-map-util-hidden');
+            }
+        }
+
+        adjustStyle(selector, shouldHide) {
             const style = Util.findStyleFromRoot(selector);
             style.style.display = shouldHide ? 'none' : null;
         }
 
-        toggleHideBooked() {
-            this.toggleHide("hideBooked", this.adjustHideBooked);
+        setHideBooked(hide) {
+            this.setHide("hideBooked", this.adjustHideBooked, hide);
         }
 
         adjustHideBooked() {
-            this.adjustStyle(this.isHideBooked(), '.mz-map-grid-filter-booked');
+            this.adjustStyle('.mz-map-grid-filter-booked', this.isHideBooked());
         }
 
         isHideBooked() {
             return !!this._filter["hideBooked"];
         }
 
-        toggleHideTamedGowaps() {
-            this.toggleHide("hideTamed", this.adjustHideTamedGowaps);
+        setHideTamedGowaps(hide) {
+            this.setHide("hideTamed", this.adjustHideTamedGowaps, hide);
         }
 
         adjustHideTamedGowaps() {
-            this.adjustStyle(this.isHideTamedGowaps(), '.mz-map-grid-monster-gowap-tamed');
+            this.adjustStyle('.mz-map-grid-monster-gowap-tamed', this.isHideTamedGowaps());
         }
 
         isHideTamedGowaps() {
             return !!this._filter["hideTamed"];
         }
 
-        toggleHideWildGowaps() {
-            this.toggleHide("hideWild", this.adjustHideWildGowaps);
+        setHideWildGowaps(hide) {
+            this.setHide("hideWild", this.adjustHideWildGowaps, hide);
         }
 
         adjustHideWildGowaps() {
-            this.adjustStyle(this.isHideWildGowaps(), '.mz-map-grid-monster-gowap-wild');
+            this.adjustStyle('.mz-map-grid-monster-gowap-wild', this.isHideWildGowaps());
         }
 
         isHideWildGowaps() {
             return !!this._filter["hideWild"];
         }
 
-        toggleHideFuzzies() {
-            this.toggleHide("hideFuzzy", this.adjustHideFuzzies);
+        setHideFuzzies(hide) {
+            this.setHide("hideFuzzy", this.adjustHideFuzzies, hide);
         }
 
         adjustHideFuzzies() {
-            this.adjustStyle(this.isHideFuzzies(), '.mz-map-grid-monster-fuzzy');
+            this.adjustStyle('.mz-map-grid-monster-fuzzy', this.isHideFuzzies());
         }
 
         isHideFuzzies() {
             return !!this._filter["hideFuzzy"];
         }
 
+        getShowOnlyFamily() {
+            return this._filter["showOnlyFamily"];
+        }
+        
+        showOnlyFamily(toShow) {
+            this._filter["showOnlyFamily"] = toShow;
+            this.persistFilter();
+            this.adjustFamily();
+        }
+
+        adjustFamily() {
+            const toShow = this._filter["showOnlyFamily"];
+            for (let family of FAMILIES) {
+                family = family[1];
+                const show = '' == toShow || null == toShow || family == toShow;
+                this.adjustStyle(`.mz-map-grid-monster-${family}`, !show);
+            }
+        }
     }
 
     /**
@@ -613,6 +681,10 @@ window.vue2d = window.vue2d || {};
         }
 
     }
+
+    const KEY_MOVEMENT_N = "MZ_vue2d_movement_delta_n";
+    const KEY_MOVEMENT_X = "MZ_vue2d_movement_delta_x";
+    const KEY_MOVEMENT_Y = "MZ_vue2d_movement_delta_y";
 
     class Grid {
 
@@ -962,11 +1034,21 @@ window.vue2d = window.vue2d || {};
             filterToggle.onchange = () => document.getElementById("mz-map-toolbar-filter").classList.toggle("mz-map-util-hidden");
 
             const filterLabel = document.createElement('label');
-            filterLabel.textContent = ' Filtre';
+            filterLabel.textContent = ' Filtre ';
             filterLabel.htmlFor = 'mz-map-toolbar-filter-toogle';
             filterLabel.className = 'mz-map-grid-toggle-label';
+            filterLabel.title = 'Afficher/masquer le filtre';
 
             coreDiv.append(filterToggle, filterLabel);
+            const clearFilter = document.createElement("label");
+            clearFilter.textContent = String.fromCharCode(9851);
+            clearFilter.id = 'mz-map-toolbar-filter-clear';
+            clearFilter.style = 'font-size: 1.5rem';
+            clearFilter.title = 'Supprimer le filtre';
+            clearFilter.onclick = e => this._filter.clear();
+            this._filter.clearToggle = clearFilter;
+            coreDiv.append(clearFilter);
+            this._filter.adjustToggle();
 
             this.addFilterDiv(toolbarDiv);
 
@@ -982,34 +1064,51 @@ window.vue2d = window.vue2d || {};
             const hideDiv = document.createElement("div");
             filterDiv.append(hideDiv);
             hideDiv.append(document.createTextNode("Masquer:"))
-            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideBooked(), "booked", "Engagés", this._filter.isHideBooked());
-            console.log(this._filter);
-            console.log(this._filter.isHideTamedGowaps());
-            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideTamedGowaps(), "tamed-gowaps", "Gowaps apprivoisés", this._filter.isHideTamedGowaps());
-            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideWildGowaps(), "wild-gowaps", "Gowaps sauvages", this._filter.isHideWildGowaps());
-            this.addCheckboxFilter(hideDiv, () => this._filter.toggleHideFuzzies(), "fuzzies", "Créatures floues", this._filter.isHideFuzzies());
+            this.addCheckboxFilter(hideDiv, e => this._filter.setHideBooked(e.target.checked), "booked", "Engagés", this._filter.isHideBooked(), "Monstres, trésors, ayant au moins un Trõll (différent de soi) sur la même case");
+            this.addCheckboxFilter(hideDiv, e => this._filter.setHideTamedGowaps(e.target.checked), "tamed-gowaps", "Gowaps apprivoisés", this._filter.isHideTamedGowaps());
+            this.addCheckboxFilter(hideDiv, e => this._filter.setHideWildGowaps(e.target.checked), "wild-gowaps", "Gowaps sauvages", this._filter.isHideWildGowaps());
+            this.addCheckboxFilter(hideDiv, e => this._filter.setHideFuzzies(e.target.checked), "fuzzies", "Créatures floues", this._filter.isHideFuzzies());
 
             const showDiv = document.createElement("div");
             filterDiv.append(showDiv);
             showDiv.append(document.createTextNode("Afficher uniquement:"))
 
+            const familySelect = document.createElement('select');
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '';
+            familySelect.appendChild(defaultOption);
+
+            for (const family of FAMILIES) {
+                    const option = document.createElement('option');
+                    option.value = family[1];
+                    option.textContent = family[2];
+                    familySelect.appendChild(option);
+            }
+            familySelect.value = this._filter.getShowOnlyFamily();
+            familySelect.onchange = e => this._filter.showOnlyFamily(familySelect.value);
+            this._filter.registerSelect(familySelect);
+            showDiv.append(familySelect);
         }
 
-        addCheckboxFilter(filterDiv, onchange, id, label, checked) {
+        addCheckboxFilter(filterDiv, onchange, id, label, checked, title = null) {
             const filter = document.createElement("span");
-            filter.title = "Les éléments revendicables ayant au moins un Trõll (différent de soi) sur la même case";
+            filter.title = title;
             filterDiv.append(filter);
 
-            const hideBooked = document.createElement("input");
-            hideBooked.id = `mz-map-toolbar-filter-${id}`;
-            hideBooked.type = "checkbox";
-            hideBooked.checked = checked;
-            hideBooked.onchange = onchange;
-            filter.append(hideBooked);
+            const hide = document.createElement("input");
+            hide.id = `mz-map-toolbar-filter-${id}`;
+            hide.type = "checkbox";
+            hide.checked = checked;
+            hide.onchange = onchange;
+            filter.append(hide);
             const textLabel = document.createElement("label");
             textLabel.textContent = ` ${label}`;
-            textLabel.htmlFor = hideBooked.id;
+            textLabel.htmlFor = hide.id;
             filter.append(textLabel);
+
+            this._filter.registerCheckbox(hide);
         }
 
         createTargetBar() {
@@ -1228,6 +1327,14 @@ window.vue2d = window.vue2d || {};
             const headerSpan = document.createElement("span");
             headerSpan.className = "mz-map-grid-cell-header";
             headerSpan.textContent = `${this.x} ${this.y}`;
+            const deltaX = this.x - centerX;
+            const deltaY = this.y - centerY;
+            if (Math.abs(deltaX) <= 1 && Math.abs(deltaY) <= 1) {
+                const downArrowSpan = this.createMovementSpan(0x2B9F, 'Déplacement vers le bas', "-1", deltaX, deltaY);
+                const levelArrowSpan = this.createMovementSpan(0x2299, 'Déplacement même niveau', "0", deltaX, deltaY);
+                const upArrowSpan = this.createMovementSpan(0x2B9D, 'Déplacement vers le haut', "1", deltaX, deltaY);
+                headerSpan.append(downArrowSpan, levelArrowSpan, upArrowSpan);
+            }
             contentDiv.appendChild(headerSpan);
 
             if (this.youAreHere) {
@@ -1283,6 +1390,20 @@ window.vue2d = window.vue2d || {};
                 }
             }
             return cellDiv;
+        }
+
+        createMovementSpan(iconCode, description, deltaN, deltaX, deltaY) {
+            const arrowSpan = document.createElement("span");
+            arrowSpan.textContent += String.fromCharCode(iconCode);
+            arrowSpan.className = 'mz-map-grid-cell-movement';
+            arrowSpan.title = description;
+            arrowSpan.onclick = e => {
+                sessionStorage.setItem(KEY_MOVEMENT_N, deltaN);
+                sessionStorage.setItem(KEY_MOVEMENT_X, deltaX);
+                sessionStorage.setItem(KEY_MOVEMENT_Y, deltaY);
+                parent.frames['Action'].location.href = 'Play_action.php?as_Action=ACTION!&ai_ToDo=112';
+            };
+            return arrowSpan;
         }
 
         cellId() {
@@ -1983,6 +2104,18 @@ window.vue2d = window.vue2d || {};
                 }
 
             }
+            
+            .mz-map-grid-cell-movement {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.2rem;
+                aspect-ratio: 1 / 1;
+                border-radius: 50%;
+                background-color: indigo;
+                color: white;
+                margin-left: 3px;
+            }
 
             .mz-map-grid-cell-hint {
                 display: none;
@@ -2101,6 +2234,10 @@ window.vue2d = window.vue2d || {};
 
             .mz-map-grid-place {
                 display: block;
+            }
+
+            .mz-map-grid-filtered-out {
+                display: none;
             }
 
             .mz-map-grid-carmine {
@@ -2441,9 +2578,28 @@ window.vue2d = window.vue2d || {};
         vue2d.grid.monsterRows = monsterRows;
     }
 
+    vue2d.prefillMovement = function() {
+        const deltaN = sessionStorage.getItem(KEY_MOVEMENT_N);
+        if (!deltaN) {
+            return;
+        }
+        const deltaX = sessionStorage.getItem(KEY_MOVEMENT_X);
+        const deltaY = sessionStorage.getItem(KEY_MOVEMENT_Y);
+        sessionStorage.removeItem(KEY_MOVEMENT_N);
+        sessionStorage.removeItem(KEY_MOVEMENT_X);
+        sessionStorage.removeItem(KEY_MOVEMENT_Y);
+        document.getElementById(`depl_x_${deltaX}`).checked = true;
+        document.getElementById(`depl_y_${deltaY}`).checked = true;
+        document.getElementById(`depl_n_${deltaN}`).checked = true;
+    }
+
 })(window.vue2d); // scope confinement
 
 
 if (window.location.pathname.indexOf(`/mountyhall/MH_Play/Play_vue`) === 0) {
     MZ_cVueJSON.registerCallback(vue2d.whenViewReady);
+}
+if (window.location.pathname.indexOf('/mountyhall/MH_Play/Play_a_Action.php') === 0
+    && window.location.search.indexOf('?type=C&id=12') === 0) {
+    vue2d.prefillMovement();
 }
