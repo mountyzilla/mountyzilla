@@ -422,6 +422,12 @@ window.vue2d = window.vue2d || {};
      */
     class Filter {
 
+        static FILTER_HIDE_BOOKED = "hideBooked";
+        static FILTER_HIDE_WILD = "hideWild";
+        static FILTER_HIDE_TAMED = "hideTamed";
+        static FILTER_HIDE_FUZZY = "hideFuzzy";
+        static FILTER_SHOW_ONLY_FAMILY = "showOnlyFamily";
+
         static readFromStorage() {
             const result = new Filter();
             const json = localStorage.getItem(KEY_MAP_OPTIONS_FILTER);
@@ -452,6 +458,14 @@ window.vue2d = window.vue2d || {};
             this._selects.push(select);
         }
 
+        registerClear(clear) {
+            this._clearButton = clear;
+        }
+
+        registerDescription(description) {
+            this._description = description;
+        }
+
         clear() {
             for (const checkbox of this._checkboxes) {
                 checkbox.checked = false;
@@ -461,6 +475,22 @@ window.vue2d = window.vue2d || {};
                 select.value = '';
                 select.dispatchEvent(new Event('change'))
             }
+        }
+
+        displayHide(description, hide, hideDescription) {
+            if (this._filter[hide]) {
+                const prefix = "" == description ? " Cachés: " : ",";
+                description += `${prefix} ${hideDescription}`;
+            }
+            return description;
+        }
+
+        displayShow(description, show, showDescription) {
+            if (this._filter[show]) {
+                const prefix = "" == description ? " Cachés: " : ",";
+                description += `${prefix} ${showDescription}`;
+            }
+            return description;
         }
 
         isEmpty() {
@@ -480,14 +510,26 @@ window.vue2d = window.vue2d || {};
 
         persistFilter() {
             localStorage.setItem(KEY_MAP_OPTIONS_FILTER, JSON.stringify(this._filter));
-            this.adjustToggle();
+            this.adjustVisuals();
         }
 
-        adjustToggle() {
+        adjustVisuals() {
             if (this.isEmpty()) {
-                this.clearToggle.classList.add('mz-map-util-hidden');
+                this._clearButton.classList.add('mz-map-util-hidden');
             } else {
-                this.clearToggle.classList.remove('mz-map-util-hidden');
+                this._clearButton.classList.remove('mz-map-util-hidden');
+            }
+
+            if (this.isEmpty()) {
+                this._description.textContent = "";
+            } else {
+                let description = "";
+                description = this.displayHide(description, Filter.FILTER_HIDE_BOOKED, "engagés");
+                description = this.displayHide(description, Filter.FILTER_HIDE_TAMED, "gowaps apprivoisés");
+                description = this.displayHide(description, Filter.FILTER_HIDE_WILD, "gowaps sauvages");
+                description = this.displayHide(description, Filter.FILTER_HIDE_FUZZY, "créatures floues");
+                description = this.displayShow(description, Filter.FILTER_SHOW_ONLY_FAMILY, `monstres autres que ${this._filter[Filter.FILTER_SHOW_ONLY_FAMILY]}`);
+                this._description.textContent = description;
             }
         }
 
@@ -497,7 +539,7 @@ window.vue2d = window.vue2d || {};
         }
 
         setHideBooked(hide) {
-            this.setHide("hideBooked", this.adjustHideBooked, hide);
+            this.setHide(Filter.FILTER_HIDE_BOOKED, this.adjustHideBooked, hide);
         }
 
         adjustHideBooked() {
@@ -505,11 +547,11 @@ window.vue2d = window.vue2d || {};
         }
 
         isHideBooked() {
-            return !!this._filter["hideBooked"];
+            return !!this._filter[Filter.FILTER_HIDE_BOOKED];
         }
 
         setHideTamedGowaps(hide) {
-            this.setHide("hideTamed", this.adjustHideTamedGowaps, hide);
+            this.setHide(Filter.FILTER_HIDE_TAMED, this.adjustHideTamedGowaps, hide);
         }
 
         adjustHideTamedGowaps() {
@@ -517,11 +559,11 @@ window.vue2d = window.vue2d || {};
         }
 
         isHideTamedGowaps() {
-            return !!this._filter["hideTamed"];
+            return !!this._filter[Filter.FILTER_HIDE_TAMED];
         }
 
         setHideWildGowaps(hide) {
-            this.setHide("hideWild", this.adjustHideWildGowaps, hide);
+            this.setHide(Filter.FILTER_HIDE_WILD, this.adjustHideWildGowaps, hide);
         }
 
         adjustHideWildGowaps() {
@@ -529,11 +571,11 @@ window.vue2d = window.vue2d || {};
         }
 
         isHideWildGowaps() {
-            return !!this._filter["hideWild"];
+            return !!this._filter[Filter.FILTER_HIDE_WILD];
         }
 
         setHideFuzzies(hide) {
-            this.setHide("hideFuzzy", this.adjustHideFuzzies, hide);
+            this.setHide(Filter.FILTER_HIDE_FUZZY, this.adjustHideFuzzies, hide);
         }
 
         adjustHideFuzzies() {
@@ -541,21 +583,21 @@ window.vue2d = window.vue2d || {};
         }
 
         isHideFuzzies() {
-            return !!this._filter["hideFuzzy"];
+            return !!this._filter[Filter.FILTER_HIDE_FUZZY];
         }
 
         getShowOnlyFamily() {
-            return this._filter["showOnlyFamily"];
+            return this._filter[Filter.FILTER_SHOW_ONLY_FAMILY];
         }
         
         showOnlyFamily(toShow) {
-            this._filter["showOnlyFamily"] = toShow;
+            this._filter[Filter.FILTER_SHOW_ONLY_FAMILY] = toShow;
             this.persistFilter();
             this.adjustFamily();
         }
 
         adjustFamily() {
-            const toShow = this._filter["showOnlyFamily"];
+            const toShow = this._filter[Filter.FILTER_SHOW_ONLY_FAMILY];
             for (let family of FAMILIES) {
                 family = family[1];
                 const show = '' == toShow || null == toShow || family == toShow;
@@ -1046,9 +1088,14 @@ window.vue2d = window.vue2d || {};
             clearFilter.style = 'font-size: 1.5rem';
             clearFilter.title = 'Supprimer le filtre';
             clearFilter.onclick = e => this._filter.clear();
-            this._filter.clearToggle = clearFilter;
+            this._filter.registerClear(clearFilter);
             coreDiv.append(clearFilter);
-            this._filter.adjustToggle();
+
+            const filterText = document.createElement("span");
+            this._filter.registerDescription(filterText);
+            coreDiv.append(filterText);
+
+            this._filter.adjustVisuals();
 
             this.addFilterDiv(toolbarDiv);
 
