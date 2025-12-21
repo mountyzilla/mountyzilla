@@ -13,7 +13,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.27
+// @version 8.8.28
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -535,7 +535,12 @@ class cCAPITAN_MH {
 				// '\uD83D\uDEC8'	// char INFO 0x1F6C8 (i dans un rond rouge, la chaine est en UTF-16 comme il se doit en javascript)
 				// '\u24D8'			// i dans un rond basique
 				span.appendChild(document.createTextNode('\uD83D\uDEC8'));
-				span.style.color = (oRet && oRet.ici) ? 'red' : 'blue';
+				if (oRet && oRet.ici) {
+					span.style.color = 'red';
+					span.style.fontWeight = 'bold';
+				} else {
+					span.style.color = 'blue';
+				}
 				span.style.marginLeft = '5px';
 				tr.cells[3].appendChild(span);
 				tr.cells[3].title = tabInfoProba.join("\n");
