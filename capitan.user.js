@@ -424,7 +424,7 @@ class cCAPITAN_MH {
 		if (cCAPITAN_MH.bDebug) window.console.log(`[Capitan debug] newRecherche_log: size=${size}, repartition=${JSON.stringify(repartition)}`);
 
 		if (bReturnString) {
-			let oRet = {msg: string, probas: new Array()};
+			let oRet = {msg: string, probas: new Array(), ici: (nbNotZero > 1)};
 			size = repartition.length;
 			if (giveProba) for(let i=0;i<size;i++) {
 				if(i==size-1) {
@@ -500,6 +500,7 @@ class cCAPITAN_MH {
 		let tables = divCarte.getElementsByTagName('table');
 		//console.log(`capitan traiteCartes nb table ${tables.length}`);
 		if (tables.length == 0) return;
+		let oRet;
 		for (let tr of tables[0].rows) {
 			//console.log(`capitan traiteCartes ${tr.innerText}`);
 			if (tr.cells.length < 3) continue;
@@ -520,18 +521,25 @@ class cCAPITAN_MH {
 				msg = 'Aucune solution trouvée';
 			} else {
 				msg = `${cCAPITAN_MH.listeSolution.length} possibilités. `;
-				let oRet = cCAPITAN_MH.newRecherche(true, true);
+				oRet = cCAPITAN_MH.newRecherche(true, true);
 				msg += oRet.msg;
 				for (let o of oRet.probas) {
 					tabInfoProba.push(`${o.proba}% de chance d'éliminer ${o.nb} possibilité${o.nb > 1 ? 's' : ''}`);
 				}
 			}
 			//console.log(`capitan traiteCartes id=${idCarte} msg=${msg}`);
+			tr.cells[3].appendChild(document.createTextNode('[MZ] ' + msg));
 			if (tabInfoProba.length > 0) {
-				msg += ' ℹ️';	// unicode char INFO
+				let span = document.createElement('span');
+				// '\u2139\ufe0f'	// INFO (i italique) + modifier emoji-style => i dans un carré bleu
+				// '\uD83D\uDEC8'	// char INFO 0x1F6C8 (i dans un rond rouge, la chaine est en UTF-16 comme il se doit en javascript)
+				// '\u24D8'			// i dans un rond basique
+				span.appendChild(document.createTextNode('\uD83D\uDEC8'));
+				span.style.color = (oRet && oRet.ici) ? 'red' : 'blue';
+				span.style.marginLeft = '5px';
+				tr.cells[3].appendChild(span);
 				tr.cells[3].title = tabInfoProba.join("\n");
 			}
-			tr.cells[3].appendChild(document.createTextNode('[MZ] ' + msg));
 		}
 	}
 
