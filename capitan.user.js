@@ -10,10 +10,11 @@
 // @include */mountyhall/MH_Play/Play_equipement.php*
 // @include */mountyhall/MH_Taniere/TanierePJ_o_Stock.php*
 // @include */mountyhall/MH_Play/Play_a_ActionResult.php*
+// @include */mountyhall/MH_Play/Play_a_Action.php*
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.8.28
+// @version 8.9
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -490,6 +491,38 @@ class cCAPITAN_MH {
 		if (!infoObjet) infoObjet = document.evaluate("//div[@class = 'titre2']/text()[contains(.,'Carte de la Cachette')]",
 			document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 		if(infoObjet) return parseInt(infoObjet.nodeValue.replace('[', ''));
+	};
+
+	static traiteCartesDansListe() {
+		let eSelect = document.getElementsByName('id_tresor')[0];
+		if (!eSelect) {
+			console.log(`capitan traiteCartesDansListe pas de id_tresor`);
+			return;
+		}
+		
+		for (let option of eSelect.options) {
+			//console.log(`capitan traiteCartesDansListe ${option.innerText}`);
+			let idCarte = parseInt(option.value);
+			if (isNaN(idCarte)) continue;
+			//console.log(`capitan traiteCartes ${idCarte}`);
+			cCAPITAN_MH.initCarte(idCarte);
+			cCAPITAN_MH.idCarte = idCarte;
+			cCAPITAN_MH.infoCurrentCarte = cCAPITAN_MH.infoCartes[idCarte];
+			if (cCAPITAN_MH.infoCurrentCarte.mort == undefined) continue;
+			//console.log(cCAPITAN_MH.infoCurrentCarte);
+			cCAPITAN_MH.calculeSolution2();
+			let oRet = false;
+			if (cCAPITAN_MH.listeSolution.length==1) {
+			} else if (cCAPITAN_MH.listeSolution.length==0) {
+			} else {
+				oRet = cCAPITAN_MH.newRecherche(true, true);
+			}
+			if (oRet && oRet.probas.length > 0 && oRet.ici) {
+				option.text += ' \uD83D\uDEC8';
+				option.style.color = 'red';
+				option.title = '[MZ] Il est utile de faire une recherche ici de cette carte';
+			}
+		}
 	};
 
 	static traiteCartesDansEquipement() {
@@ -1220,6 +1253,10 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 	static MutationObserverConfig = { childList: true, subtree: true };
 
 	static init() {
+		if (cCAPITAN_MH.isPage("MH_Play/Play_a_Action.php") && !(cCAPITAN_MH.isPage('type=A') && cCAPITAN_MH.isPage('id=523'))) {
+			// optimisation : pas besoin de init
+			return
+		}
 		if (typeof MH_capitan_json === 'undefined') {
 			let msg = "Le script du Capitan doit maintenant fonctionner en mode intégré. Activez-le via Options/Extensions et désactivez-le sous xxxMonkey ou sur le relai Raistlin";
 			console.log(`[Capitan ) ${msg}`);
@@ -1275,15 +1312,21 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 		}
 		if (cCAPITAN_MH.bDebug) window.console.log('[Capitan debug] init_log: position du troll=' + JSON.stringify(cCAPITAN_MH.curPos));
 
+		//console.log(`href=${window.location.href}`);
 		if (cCAPITAN_MH.isPage("View/TresorHistory.php"))
 		{
 			cCAPITAN_MH.analyseObject();
 		}
-		else if(cCAPITAN_MH.isPage("MH_Play/Play_a_ActionResult.php") || cCAPITAN_MH.isPage("MH_Play/Play_a_TrouverCachette2.php"))
+		else if (cCAPITAN_MH.isPage("MH_Play/Play_a_ActionResult.php") || cCAPITAN_MH.isPage("MH_Play/Play_a_TrouverCachette2.php"))
 		{
 			// uniquement si l'id du body est p_trouverunecachette
 			if (document.body.id != 'p_trouverunecachette') return;
 			cCAPITAN_MH.analyseResultatRecherche();
+		}
+		else if (cCAPITAN_MH.isPage("MH_Play/Play_a_Action.php") && cCAPITAN_MH.isPage('type=A') && cCAPITAN_MH.isPage('id=523'))
+		{
+			//console.log(`Capitan Play_a_Action`);
+			cCAPITAN_MH.traiteCartesDansListe();
 		}
 		else if(cCAPITAN_MH.isPage("MH_Play/Play_equipement.php") || cCAPITAN_MH.isPage("MH_Taniere/TanierePJ_o_Stock.php"))
 		{
