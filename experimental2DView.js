@@ -6,7 +6,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Vue2D
-// @version 0.6.0
+// @version 0.6.1
 // @namespace https://greasyfork.org/en/users/1536460
 // @downloadURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
 // @updateURL https://update.greasyfork.org/scripts/555450/Vue2D.user.js
@@ -1465,11 +1465,9 @@ window.vue2d = window.vue2d || {};
             const result = {
                 className: "mz-map-grid-mushroom",
                 gridType: "champignons",
-                display: mushroom.name
+                display: mushroom.name,
+                image: "../Images/Icones/I_C_Mushroom.png",
             };
-            if (mushroom.name !== "Champignon inconnu") {
-                result.image = "../Images/Icones/I_C_Mushroom.png";
-            }
             return result;
         }
 
@@ -1491,7 +1489,9 @@ window.vue2d = window.vue2d || {};
                     continue;
                 }
                 let treasureName = treasure.name.toLowerCase();
-                if (treasureName.indexOf("centaines de") >= 0 || treasureName.indexOf("gigots de") >= 0) {
+                if (treasureName.indexOf("centaines de") >= 0
+                    || treasureName.indexOf("centaine de") >= 0
+                    || treasureName.indexOf("gigots de") >= 0) {
                     summary.set('GG', (summary.get('GG') ?? 0) + 1);
                     continue;
                 }
@@ -1794,6 +1794,7 @@ window.vue2d = window.vue2d || {};
                     break;
                 case "champignons":
                     this.name = val.nom;
+                    this.html = val.nom;
                     this.action = val.action;
                     break;
                 case "cenotaphes" :
