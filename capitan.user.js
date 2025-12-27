@@ -14,7 +14,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.9
+// @version 8.9.1
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -518,9 +518,10 @@ class cCAPITAN_MH {
 				oRet = cCAPITAN_MH.newRecherche(true, true);
 			}
 			if (oRet && oRet.probas.length > 0 && oRet.ici) {
+				let o = oRet.probas[0];
 				option.text += ' \uD83D\uDEC8';
 				option.style.color = 'red';
-				option.title = '[MZ] Il est utile de faire une recherche ici de cette carte';
+				option.title = `[MZ] Recherche utile de cette carte (${o.proba}% d'éliminer ${o.nb}/${cCAPITAN_MH.listeSolution.length} possibilité${o.nb > 1 ? 's' : ''})`;
 			}
 		}
 	};
