@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.16
+// @version     1.7.17
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.16';
+var MZ_latest = '1.7.17';
 var MZ_changeLog = [
+    "V1.7.17 \t\t 19/02/2026",
+    "	- Pour nos amis K : AM : PV pour jouer tout de suite",
     "V1.7.14 \t\t 30/11/2025",
     "	- Dans l'équipement, affichage des infos des cartes du trésor (script du Capitan)",
     "V1.7.9 \t\t 13/11/2025",
@@ -4062,6 +4064,57 @@ function checkLesMimis() {	// supprimer les missions finies de numTroll.MISSIONS
 
 function do_mission_liste() {
     checkLesMimis();
+}
+
+function do_AM() {
+    let nbpv = document.getElementById('nbpv');
+    let divCmde = nbpv.parentNode;
+    let txt = divCmde.innerText;
+    //console.log(txt);
+    let m = txt.match(/1\s+PV.*de\s+(\d+)\s+min.*plus\s+de\s+(\d+)/is);
+    //console.log(m);
+    if (!m) {
+        logMZ(`Echec d'analyse pour AM. txt=${txt}`);
+        return;
+    }
+    let gain = parseInt(m[1]);
+    let pvmax = parseInt(m[2]);
+    let numtroll = updateNumTroll();
+    let dla_localstorage = MY_getValue(`${numtroll}.DLA.encours`);
+    if (!dla_localstorage) {
+        logMZ(`Echec AM, pas de DLA stockée`);
+        return;
+    }
+    let msg;
+    let ok = false;
+    let DLAstockee = new Date(StringToDate(dla_localstorage));
+    let diffMinutes = Math.floor((DLAstockee.getTime() - (new Date()).getTime()) / 60000);
+    //logMZ(`gain=${gain}, pvmax=${pvmax}, diffMinutes=${diffMinutes}, dla_localstorage=${dla_localstorage}, dla=${DLAstockee.getTime()}, now=${(new Date()).getTime()}`);
+    let pvNeeded;
+    if (diffMinutes <= 0) {
+        msg = `DLA dépassée !`;
+    } else {
+        pvNeeded = Math.ceil(diffMinutes / gain);
+        if (pvNeeded > pvmax) {
+            msg = `Impossible de rejouer tout de suite, il faudrait sacrifier ${pvNeeded} PV`;
+        } else {
+            msg = `Sacrifier ${pvNeeded} PV pour rejouer tout de suite`;
+            ok = true;
+        }
+    }
+    divCmde.appendChild(document.createElement('br'));
+    divCmde.appendChild(document.createTextNode(`[MZ] `));
+    if (ok) {
+        let but = document.createElement('button');
+        but.innerText = msg;
+        divCmde.appendChild(but);
+        but.onclick = function() {
+            nbpv.value = pvNeeded;
+            return false;   // ne pas envoyer le formulaire !
+        };
+    } else {
+        divCmde.appendChild(document.createTextNode(msg));
+    }
 }
 
 /** x~x Gestion des actions -------------------------------------------- */
@@ -16999,6 +17052,8 @@ try {
         do_mission();
     } else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'A', id: -7}})) {
         do_mission_liste();
+    } else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'C', id: 3}})) {
+        do_AM();
     } else if (isPage('MH_Play/Play_action')) {
         do_actions();
     } else if (isPage("MH_Play/Play_profil") && !isPage('MH_Play/Play_profil2')) {
