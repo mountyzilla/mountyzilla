@@ -14,7 +14,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.9.1
+// @version 8.9.2
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -178,6 +178,10 @@ class cCAPITAN_MH {
 		}
 		return "X = " + sx + loc.xAbs() + ", Y = " + sy + loc.yAbs() + ", N = -" + loc.nAbs();
 	};
+
+	static mkSignedLoc(loc, infos) {
+		return new cCAPITAN_essai(infos.signeX * loc.xAbs(), infos.signeY * loc.yAbs(), -loc.nAbs());
+	}
 
 	static createHTMLTable() {	// les 3 table ont le même modèle
 		let table = document.createElement('table');
@@ -551,6 +555,11 @@ class cCAPITAN_MH {
 			let tabInfoProba = new Array();
 			if (cCAPITAN_MH.listeSolution.length==1) {
 				msg = '<' + cCAPITAN_MH.showXYN(cCAPITAN_MH.listeSolution[0], cCAPITAN_MH.infoCurrentCarte) + '>';
+				if (cCAPITAN_MH.curPos && cCAPITAN_MH.infoCurrentCarte) {
+					let loc = cCAPITAN_MH.mkSignedLoc(cCAPITAN_MH.listeSolution[0], cCAPITAN_MH.infoCurrentCarte);
+					let dist = cCAPITAN_MH.curPos.distHV(loc);
+					msg += ` dist=${dist.h}\\${dist.v}`;
+				}
 			} else if (cCAPITAN_MH.listeSolution.length==0) {
 				msg = 'Aucune solution trouvée';
 			} else {
@@ -1488,6 +1497,13 @@ class cCAPITAN_essai {
 		this.x += dx;
 		this.y += dy;
 		this.n += dn;
+	}
+
+	distHV(oOther) {	// return {h: h, v: v}
+		return {
+			h: Math.max(Math.abs(this.x - oOther.x), Math.abs(this.y - oOther.y)),
+			v: Math.abs(this.n - oOther.n),
+		}
 	}
 };
 
