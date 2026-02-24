@@ -15675,7 +15675,7 @@ function MZ_texteAideSortileges(sort) {
                 }
                 return `${ret} => <b>${2 * effet} x ${duree} = ${2 * effet * duree}</b> (${2 * effet} x ${dureeReduite} = ${2 * effet * dureeReduite})`;
             },
-            effet = 1 + Math.floor((Math.floor(pvmax / 10) + reg) / 3);
+            effet = 1 + Math.floor((Math.floor(pvbase / 10) + reg) / 3);
         // Frappe
         texte = `Attaque : <b>${att}</b> D6 `;
         if (atttour != 0) {
