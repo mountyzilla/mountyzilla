@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.17
+// @version     1.7.18
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.17';
+var MZ_latest = '1.7.18';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -4088,7 +4088,8 @@ function do_AM() {
     let msg;
     let ok = false;
     let DLAstockee = new Date(StringToDate(dla_localstorage));
-    let diffMinutes = Math.floor((DLAstockee.getTime() - (new Date()).getTime()) / 60000);
+    let now = new Date();
+    let diffMinutes = Math.floor((DLAstockee.getTime() - now.getTime()) / 60000);
     //logMZ(`gain=${gain}, pvmax=${pvmax}, diffMinutes=${diffMinutes}, dla_localstorage=${dla_localstorage}, dla=${DLAstockee.getTime()}, now=${(new Date()).getTime()}`);
     let pvNeeded;
     if (diffMinutes <= 0) {
@@ -4105,6 +4106,13 @@ function do_AM() {
     divCmde.appendChild(document.createElement('br'));
     divCmde.appendChild(document.createTextNode(`[MZ] `));
     if (ok) {
+        let autrereportMinutes, autrereportSecondes;
+        if (pvNeeded > 0) {
+            let heureAutreReport = new Date(DLAstockee.getTime() - (gain * (pvNeeded - 1) * 60000))
+            let delaiAutreReport = heureAutreReport.getTime() - now.getTime();
+            autrereportMinutes = Math.floor(delaiAutreReport / 60000);
+            autrereportSecondes = Math.floor((delaiAutreReport % 60000) / 1000);
+        }
         let but = document.createElement('button');
         but.innerText = msg;
         divCmde.appendChild(but);
@@ -4112,6 +4120,17 @@ function do_AM() {
             nbpv.value = pvNeeded;
             return false;   // ne pas envoyer le formulaire !
         };
+        if (isDesktopView()) {
+            but.title = `Sacrifier ${pvNeeded-1} PV pour jouer dans ${autrereportMinutes} min ${autrereportSecondes} sec.
+Fat. optimale : ${MZ_BMfat.fatOptimaleTxt}`;
+        } else {
+            if (autrereportMinutes) {
+                divCmde.appendChild(document.createElement('br'));
+                divCmde.appendChild(document.createTextNode(`Sacrifier ${pvNeeded-1} PV pour jouer dans ${autrereportMinutes} min ${autrereportSecondes} sec.`));
+            }
+            divCmde.appendChild(document.createElement('br'));
+            divCmde.appendChild(document.createTextNode(`Fat. optimale : ${MZ_BMfat.fatOptimaleTxt}`));
+        }
     } else {
         divCmde.appendChild(document.createTextNode(msg));
     }
@@ -14580,6 +14599,8 @@ function inputMode() {
 }
 
 class MZ_BMfat {
+    static fatOptimaleTxt = '29 / 23 / 18 / 14 / 11 / 8 / 6 / 4';
+
     // populate this.BMfrais and this.listeBmFat
     constructor() {
         this.BMfrais = false;
@@ -14829,13 +14850,12 @@ function refreshAccel() {
 }
 
 function setInfosFatiguesOptimiales() {
-    let thFatigue = document.querySelector('#fatigue').parentElement.parentElement,
-        title = 'Fat. optimale',
-        txt = '29 / 23 / 18 / 14 / 11 / 8 / 6 / 4';
+    let thFatigue = document.querySelector('#fatigue').parentElement.parentElement;
+    let title = 'Fat. optimale';
     if (isDesktopView()) {
-        thFatigue.title = `${title} : ${txt}`;
+        thFatigue.title = `${title} : ${MZ_BMfat.fatOptimaleTxt}`;
     } else {
-        appendTrDetail(thFatigue, `[MZ] ${title}`, `${txt}`)
+        appendTrDetail(thFatigue, `[MZ] ${title}`, `${MZ_BMfat.fatOptimaleTxt}`)
     }
 }
 
