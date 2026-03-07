@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.18
+// @version     1.7.19
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.18';
+var MZ_latest = '1.7.19';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -9759,7 +9759,7 @@ class MZ_cDiplo {
     // propriétés statiques
     static diplos;	// reprise du localStorage
     static diploInverse;	// par ID
-    static mythiques	// booleén
+    static mythiques	// valeur de la couleur ou vide
 
     // la propriété diplos et le localStorage sont des objets comme suit
     /*
@@ -9953,6 +9953,8 @@ class MZ_cDiplo {
                     }
                 }
             }
+            // cas particulier mythiques
+            if (bPerso && diplo.mythiques) MZ_cDiplo.mythiques = diplo.mythiques;
         }
     }
 
