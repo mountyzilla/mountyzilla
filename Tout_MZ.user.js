@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.19
+// @version     1.7.20
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.19';
+var MZ_latest = '1.7.20';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -2823,13 +2823,21 @@ class MZ_cCDMv2 {
         }
         // appel des callback
         MZ_cVueJSON.MZ_received = true;
+        if (MZ_cVueJSON.MH_received) MZ_cCDMv2.callMZCallbacks();
+    }
+
+    static callMZCallbacks() {
+        if (MZ_cVueJSON.callbacksMZDone) return;
         for (let callback of MZ_cVueJSON.callbacksFinMZ) {
             try {
+                //if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log avant appel de la callback ${callback.name}`);
                 callback();
+                if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log après appel de la callback ${callback.name}`);
             } catch (exc) {
                 logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
             }
         }
+        MZ_cVueJSON.callbacksMZDone = true;
     }
 }
 
@@ -12238,6 +12246,7 @@ class MZ_cVueJSON {
                 logMZ("MZ_cVueJSON_log Erreur à l'appel d'une callback", exc);
             }
         }
+        if (MZ_cVueJSON.MZ_received) MZ_cCDMv2.callMZCallbacks();
     }
 
     static registerCallback(callback) {
@@ -12386,7 +12395,7 @@ class MZ_cVueJSON {
 
         // teste que notre tableau est rempli si le tableau MH est rempli
         if (this.MH_json === undefined || this.objets !== undefined) {
-            if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} avorté car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
+            if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} avorté car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.objets === undefined ? 'est' : "n'est pas"} undefined`);
             if (!this.mutationObserver) {
                 // créer et activer la callback sur le tableaux de ce type de truc (monstre, troll,etc.)
                 let oThis = this;	// this n'est pas préservé pour la callback. oThis l'est (javascript est parfois joueur)
@@ -12399,7 +12408,7 @@ class MZ_cVueJSON {
             }
             return;
         }
-        if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} s'exécute pour de bon car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.Mojjets === undefined ? 'est' : "n'est pas"} undefined`);
+        if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON_log load_log ${this.nomBase} s'exécute pour de bon car MH_json ${this.MH_json === undefined ? 'est' : "n'est pas"} undefined et objets ${this.objets === undefined ? 'est' : "n'est pas"} undefined`);
 
         if (this.mutationObserver) {
             this.mutationObserver.disconnect();
@@ -12450,7 +12459,7 @@ class MZ_cVueJSON {
         if (isDesktopView() && this.indxTdAction === undefined) {
             logMZ('MZ_cVueJSON_log ' + this.nomBase + ' pas de colonne Action');
             if (this.nomBase == 'monstres') {
-                avertissement(`[MZ] Pas d'enrichissement de la vue car la case «  Menu d'actions contextuelles » du formulaire de limitation de la vue n'est pas cochée  `);
+                avertissement(`[MZ] Pas d'enrichissement de la vue car la case « Menu d'actions contextuelles » du formulaire de limitation de la vue n'est pas cochée  `);
                 let fHide = function() {document.getElementsByName('avertissement')[0].style.display = 'none';};
                 let fShow = function() {document.getElementsByName('avertissement')[0].style.display = 'block';};
                 setTimeout(fHide, 500);
@@ -12507,9 +12516,16 @@ class MZ_cVueJSON {
         ];
         for (let o of tBloc) {
             if (o === undefined || (o.eltTable && !o.loaded)) {
-                if (o && MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.load_log ${this.nomBase} ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded} donc ce n'est pas fini`);
+                if (MZ_cVueJSON.debugEnchainements) {
+                    if (o)
+                        logMZ(`MZ_cVueJSON.load_log ${this.nomBase} ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded} donc ce n'est pas fini`);
+                    else
+                        logMZ(`MZ_cVueJSON.load_log ${this.nomBase} il y a un MZ_cVueJSON.oXXX vide donc ce n'est pas fini`);
+                }
                 allMHLoaded = false;
                 break;
+            } else if (MZ_cVueJSON.debugEnchainements) {
+                logMZ(`MZ_cVueJSON.load_log ${this.nomBase} ${o.nomBase} existe=${o.eltTable!=null}, loaded=${o.loaded} donc tout va bien`);
             }
         }
         if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON_log load ' + this.nomBase + ' terminé, countMH=' + this.MH_json.length + ', countMZ=' + this.objets.length);
@@ -14510,7 +14526,7 @@ function setInfosExp() {
 
     // Calcul niveau monstre/troll min pour gain PX
     let nivCibleMin = Math.ceil((2 * nivTroll - 10) / 3);
-    tdNiv.parentElement.title = `Vos cibles doivent être au minim de niveau ${nivCibleMin} pour qu'elles vous rapportent des PX`;
+    tdNiv.parentElement.title = `Vos cibles doivent être au minimum de niveau ${nivCibleMin} pour qu'elles vous rapportent des PX`;
 
     // Calcul PX restant
     let pxRestant = pxdistribuables + pxperso - 2 * nivTroll;
