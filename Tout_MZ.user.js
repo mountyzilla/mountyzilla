@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.20
+// @version     1.7.21
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.20';
+var MZ_latest = '1.7.21';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -2555,7 +2555,7 @@ class MZ_cCDMv2 {
 
             if (!MZ_cLigneMonstre.colNiveauDone) {
                 // ajouter la colonne dans le HTML après Rèf
-                MZ_cLigneMonstre.MZ_oVueJSON.insertColumn(MZ_cLigneMonstre.MZ_oVueJSON.indxTdRef, 'Niv', '20px', 1);
+                MZ_cLigneMonstre.MZ_oVueJSON.insertColumn(MZ_cLigneMonstre.MZ_oVueJSON.indxTdRef, 'Niv.', '20px', 1);
                 MZ_cLigneMonstre.colNiveauDone = true;
             }
 
