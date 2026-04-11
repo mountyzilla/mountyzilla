@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.21
+// @version     1.7.22
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.21';
+var MZ_latest = '1.7.22';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -8398,7 +8398,7 @@ var mh_caracs = {
     'anneau de protection':
         ['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 3.00, 3.00],
     'anneau magique':
-        ['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 3.00, 3.00],
+        ['anneau', 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 0.00, 3.00, 3.00],
     "armure d'anneaux":
         ['armure', 0, 0, 0, 0, -4, 8, 0, 0, 0, 90, 180, 0, 0, 0, 0.00, 50.00, 50.00],
     'armure de bois':
@@ -8444,7 +8444,7 @@ var mh_caracs = {
     'cotte de mailles':
         ['armure', 0, 0, 0, 0, -1, 7, 0, 0, 0, 30, 60, 0, 0, 0, 0.00, 42.50, 42.50],
     'couronne de cristal':
-        ['casque', 0, 0, 0, 1, -1, 0, -1, 3, 0, 0, 0, 0, 0, 0, 0.00, 10.00, 10.00],
+        ['casque', 0, 0, 0, 1, -1, 0, -1, 3, 0, 0, 0, 5, 10, 0, 0.00, 10.00, 10.00],
     "couronne d'obsidienne":
         ['casque', 0, 0, 0, 0, 0, 1, 2, 0, -1, 0, 0, 0, 0, 0, 0.00, 10.00, 10.00],
     "coutelas d'obsidienne":
@@ -12185,9 +12185,8 @@ function do_vue() {
 
 class MZ_cVueJSON {
     // class en syntaxe ECMA. Un peu de modernité, que diable !
-    // classe "abstraite" dont héritent les classes spécifiques pour les monstres, trolls, etc.
     // cette classe contient en "static" tout ce qu'il faut pour les initialisations globales
-    // cette classe (ses filles) est instanciée une fois par type d'objet(monstre, troll, etc.)
+    // cette classe est instanciée une fois par type d'objet(monstre, troll, etc.)
     // les propriétés principales sont des tableaux d'objets cLigneVueJSON (un tableau pour chaque type montre, troll, trésor, etc.)
     // cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
 
@@ -12324,6 +12323,9 @@ class MZ_cVueJSON {
     btnFiltre;
     btnRazFiltre;
     txtFiltreNom;
+    hasNiveau;  // undefined (pas de niveau), 1 (Trolls) ou 2 (Monstres : niv min/max)
+    hasGuilde;
+    hasRace;
 
     constructor(nomBase) {
         if (MZ_cVueJSON.debugEnchainements) logMZ('MZ_cVueJSON.constructor_log ' + nomBase);
@@ -12363,11 +12365,15 @@ class MZ_cVueJSON {
                 // json_monstres est une VARIABLE GLOBALE définie par MH et remplie au moment du retour AJAX de la vue des monstres
                 this.MH_json = json_monstres;
                 this.cLigneClass = MZ_cLigneMonstre;
+                this.hasNiveau = 2;
                 break;
             case 'trolls':
                 //this.MH_ft = VUE_trolls;  // id: table#VUE_trolls - non utilisé
                 this.MH_json = json_trolls;
                 this.cLigneClass = MZ_cLigneTroll;
+                this.hasNiveau = 1;
+                this.hasGuilde = true;
+                this.hasRace = true;
                 break;
             case 'tresors':
                 //this.MH_ft = VUE_tresors;  // id: table#VUE_tresors - non utilisé
@@ -12503,6 +12509,7 @@ class MZ_cVueJSON {
         }
 
         this.cLigneClass.initGlobal();
+        this.initButtonCopy();
         this.loaded = true;
 
         let allMHLoaded = true;
@@ -12630,14 +12637,7 @@ class MZ_cVueJSON {
             varThis.applyFiltre(oConfig);
         }
 
-        let eltNav = this.eltDiv.children[2];
-        if ((!eltNav) || eltNav.tagName != 'LABEL') eltNav = this.eltDiv.children[1]; // smartphone
-        if ((!eltNav) || eltNav.tagName != 'LABEL') {
-            warnMZ('filtre ' + this.nomBase + ', impossible de trouver les blocs dans la vue, filtre impossible');
-            return;
-        }
-        eltNav.insertBefore(this.eltDivShowFiltre, null);
-        eltNav.insertBefore(this.eltDivShowFiltre, null);
+        if (!this.addEltInHeader(this.eltDivShowFiltre, 'filtre')) return;
 
         this.eltParamFiltreRestr = document.createElement('div');
         if (this.cLigneClass.nomsFiltres) {
@@ -12686,6 +12686,13 @@ class MZ_cVueJSON {
 
         if (this.cLigneClass.initOtherFiltre) this.cLigneClass.initOtherFiltre(this.eltParamFiltreRestr, oConfig);
 
+        this.addFiltre('Xmin', oConfig);
+        this.addFiltre('Xmax', oConfig);
+        this.addFiltre('Ymin', oConfig);
+        this.addFiltre('Ymax', oConfig);
+        this.addFiltre('Nmin', oConfig);
+        this.addFiltre('Nmax', oConfig);
+
         eltParamFiltre.appendChild(this.eltParamFiltreRestr);
 
         eltParamFiltre.style.display = 'none';
@@ -12694,6 +12701,24 @@ class MZ_cVueJSON {
         divTable.insertBefore(eltParamFiltre, divTable.firstChild);
 
         this.applyFiltre(oConfig, true);
+    }
+
+    addFiltre(nom, oConfig) {
+        appendText(this.eltParamFiltreRestr, nom + ' :');
+        let textbox = MZ_cLigneVue.ajoutFiltreNombre(this.eltParamFiltreRestr, 'MZ_' + nom, MZ_cLigneMonstre.modifFiltre, oConfig[nom], undefined, true);
+        textbox.style.marginRight = '5px';
+        textbox.style.marginLeft = '3px';
+    }
+
+    addEltInHeader(elt, msg) {
+        let eltNav = this.eltDiv.children[2];
+        if ((!eltNav) || eltNav.tagName != 'LABEL') eltNav = this.eltDiv.children[1]; // smartphone
+        if ((!eltNav) || eltNav.tagName != 'LABEL') {
+            warnMZ(`filtre ${this.nomBase}, impossible de trouver les blocs dans la vue, ${msg} impossible`);
+            return;
+        }
+        eltNav.insertBefore(elt, null);
+        return true;
     }
 
     applyFiltre(oConfig, noSave) {
@@ -12742,6 +12767,53 @@ class MZ_cVueJSON {
         else
             // cas générique, Nom uniquement
             MZ_cLigneVue.applyFiltreGenerique(oConfig, this.objets);
+    }
+
+    initButtonCopy() {
+        if (this.eltDivShowFiltre) {
+            this.btnCopy = appendButton(this.eltDivShowFiltre, 'Copier');
+        } else {
+            let div = document.createElement('div');
+            div.style.display = 'inline-block';
+            this.btnCopy = appendButton(div, 'Copier');
+            if (!this.addEltInHeader(div, 'copie')) return;
+        }
+        this.btnCopy.style.marginLeft = '5px';
+        let varThis = this;	// pour passer this aux callbacks
+        this.btnCopy.onclick = function () {
+            if (!(varThis.objets && varThis.objets.length > 0)) {
+                alert('ya rien !');
+                return;
+            }
+            let txt = 'distH\tdistV\tID\tNom\tX\tY\tN';
+            if (varThis.hasNiveau == 1) txt += '\tNiveau';
+            if (varThis.hasNiveau == 2) txt += '\tNiv. min\tNiv. max';
+            if (varThis.hasGuilde) txt += '\tGuilde';
+            if (varThis.hasRace) txt += '\tRace';
+            for (let o of varThis.objets) {
+                o.loadDist();
+                txt += '\n' + o.distH + '\t' + o.distV;
+                o.loadXYN();
+                txt += '\t' + o.id + '\t' + o.nom + '\t' + o.x + '\t' + o.y + '\t' + o.n;
+                if (varThis.hasNiveau == 1) {
+                    //let niv = o.getNiveau();
+                    txt += '\t' + (o.getNiveau() ?? '');
+                }
+                if (varThis.hasNiveau == 2) {
+                    //console.log(o.infoMZ && o.infoMZ.niv);
+                    if (o.infoMZ) {
+                        txt += '\t' + (o.infoMZ.niv.min ?? '') + '\t' + (o.infoMZ.niv.max ?? '');
+                    } else {
+                        txt += '\t\t';
+                    }
+                }
+                if (varThis.hasGuilde) txt += '\t' + (o.getGuilde() ?? '');
+                if (varThis.hasRace) txt += '\t' + (o.getRace() ?? '');
+            }
+            txt += '\n';
+            copyTextToClipboard(txt);
+            alert('bloc copié dans le presse-papier !');
+        };
     }
 }
 
@@ -12840,10 +12912,16 @@ class MZ_cLigneVue {
         return false;
     }
 
-    static ajoutFiltreNombre(parent, id, onChange, value, length) {
+    static ajoutFiltreNombre(parent, id, onChange, value, length, negatif) {
         let input = document.createElement('input');
         if (id) input.id = id;
-        input.type = 'number';
+        if (negatif) {  // méthode tordue pour avoir les chiffres et le "-" sur smartphine
+            input.type = 'tel';
+            input.inputmode = 'url';
+            input.pattern = '-?[0-9]+';
+        } else {
+            input.type = 'number';
+        }
         input.onchange = onChange;
         input.style.width = "40px";
         if (value) input.value = value;
@@ -13686,6 +13764,7 @@ class MZ_cLigneChampignon extends MZ_cLigneVue {
     static MZ_oVueJSON;
     static initGlobal() {
         // cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
+        MZ_cLigneChampignon.MZ_oVueJSON.initFiltre();
         MZ_cHighlightSameXYN.processVue(MZ_cLigneChampignon.MZ_oVueJSON);
         MZ_cSCIZ.processMushrooms();
     }
