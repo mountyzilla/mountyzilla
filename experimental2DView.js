@@ -153,8 +153,9 @@ window.vue2d = window.vue2d || {};
     const MORT_VIVANT = [3, "mort-vivant", "Mort-Vivant"];
     const INSECTE =[4, "insecte", "Insecte"];
     const DEMON = [5, "demon", "Démon"];
-    const INCONNU = [6, "inconnu", ""];
-    const FAMILIES = [ANIMAL, MONSTRE, HUMANOIDE, MORT_VIVANT, INSECTE, DEMON];
+    const DELIRE = [6, "delire", "Délire"];
+    const INCONNU = [7, "inconnu", "inconnu"];
+    const FAMILIES = [ANIMAL, MONSTRE, HUMANOIDE, MORT_VIVANT, INSECTE, DEMON, DELIRE];
 
     const MONSTERS = [
         ["Abishaii Bleu", DEMON],
@@ -164,6 +165,7 @@ window.vue2d = window.vue2d || {};
         ["Abishaii Vert", DEMON],
         ["Ame-en-peine", MORT_VIVANT],
         ["Amibe Géante", MONSTRE],
+        ["Amibe Gargantuesque", MONSTRE],
         ["Anaconda des Catacombes", MONSTRE],
         ["Ankheg", INSECTE],
         ["Anoploure Purpurin", INSECTE],
@@ -188,6 +190,7 @@ window.vue2d = window.vue2d || {};
         ["Champi-Glouton", HUMANOIDE],
         ["Chauve-Souris Géante", ANIMAL],
         ["Cheval à Dents de Sabre", ANIMAL],
+        ["Chevalier du Chaos", DEMON],
         ["Chimère", MONSTRE],
         ["Chonchon", MONSTRE],
         ["Coccicruelle", INSECTE],
@@ -210,8 +213,10 @@ window.vue2d = window.vue2d || {};
         ["Elémentaire de Feu", DEMON],
         ["Elémentaire de Terre", DEMON],
         ["Elémentaire du Chaos", DEMON],
+        ["Elémentaire Magmatiq", DEMON],
         ["Erinyes", DEMON],
         ["Esprit-Follet", MONSTRE],
+        ["Esprit d'Alouïne", MORT_VIVANT],
         ["Essaim Cratérien", INSECTE],
         ["Essaim Sanguinaire", INSECTE],
         ["Ettin", HUMANOIDE],
@@ -241,6 +246,7 @@ window.vue2d = window.vue2d || {};
         ["Golem de Fer", HUMANOIDE],
         ["Golem de Métal", HUMANOIDE],
         ["Golem de Mithril", HUMANOIDE],
+        ["Golem de Neige", DELIRE],
         ["Golem de Papier", HUMANOIDE],
         ["Golem de Pierre", HUMANOIDE],
         ["Gorgone", MONSTRE],
@@ -2419,7 +2425,7 @@ window.vue2d = window.vue2d || {};
 
         vue2d.grid = new Grid(x, y, n, rangeHorizontal, rangeVertical);
         vue2d.grid._options = new Options(typeof MH_vue2d_json !== 'undefined' ? MH_vue2d_json : null);
-        await vue2d.grid.indexMap(json_monstres, json_trolls, json_tresors, json_lieux, json_champignons, json_cenotaphes);
+        await vue2d.grid.indexMap(json_monstres || [], json_trolls || [], json_tresors || [], json_lieux || [], json_champignons || [], json_cenotaphes || []);
         await vue2d.grid.insertIntoDom();
     }
 
