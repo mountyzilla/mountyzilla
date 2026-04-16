@@ -6558,7 +6558,7 @@ class MZ_cSCIZ {
     static _printTreasure(t) {
         let res = `${t.nom}`;
         // gath: sciz peut parfois avoir nom == template
-        res = t.templates && t.templates === t.nom ? `${res} <b>${t.templates}</b>` : res;
+        res = t.templates && t.templates !== t.nom ? `${res} <b>${t.templates}</b>` : res;
         res = t.mithril ? `${res} <b>en Mithril</b>` : res;
         res = t.effet ? `${res} (${t.effet})` : res;
         return res;
