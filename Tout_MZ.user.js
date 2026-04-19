@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.23
+// @version     1.7.24
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.23';
+var MZ_latest = '1.7.24';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -6557,7 +6557,8 @@ class MZ_cSCIZ {
 
     static _printTreasure(t) {
         let res = `${t.nom}`;
-        res = t.templates ? `${res} <b>${t.templates}</b>` : res;
+        // gath: sciz peut parfois avoir nom == template
+        res = t.templates && t.templates !== t.nom ? `${res} <b>${t.templates}</b>` : res;
         res = t.mithril ? `${res} <b>en Mithril</b>` : res;
         res = t.effet ? `${res} (${t.effet})` : res;
         return res;
