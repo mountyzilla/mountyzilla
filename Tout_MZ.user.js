@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.24
+// @version     1.7.25
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.24';
+var MZ_latest = '1.7.25';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -12214,6 +12214,7 @@ class MZ_cVueJSON {
     static MH_received;
     static MZ_received;
     static debugEnchainements = false;
+    static debugFiltre = false;
 
     static initGlobal() {
         // le constructeur de chaque instance va faire le boulot d'init
@@ -12605,8 +12606,14 @@ class MZ_cVueJSON {
         return txt;
     }
 
+    // gestion des filtres
+    // initFiltre() est appelé pour chaque catégorie (Mosntre, Troll, etc.)
+    //      prépare les <div> zones d'affichage des filtres, zones de paramétrage, butons
+    //      prépare les filtres checkbox paramétrés dans this.cLigneClass.nomsFiltres
+    //      prépare les filtres communs : "afficler le xxx", min/max x/y/n
     initFiltre() {
-        // function utilitaire appelée par les classes MZ_cLigneVue
+        if (MZ_cVueJSON.debugFiltre) logMZ(`start MZ_cVueJSON_log.initFiltre_log ${this.nomBase}`);
+        // préparation des <div>, boutons
         this.nomFiltre = 'filtre' + this.nomBase.charAt(0).toUpperCase() + this.nomBase.slice(1);
         let oConfig = MZ_SauvegardeMH.getZone(this.nomFiltre);
         if (oConfig === undefined) oConfig = {empty: true};
@@ -12634,59 +12641,54 @@ class MZ_cVueJSON {
         this.btnRazFiltre.onclick = function() {
             oConfig = {empty: true};
             varThis.txtFiltreNom.value = '';
+            console.log(`MZ_xMin${varThis.nomBase}`);
+            document.getElementById(`MZ_xMin${varThis.nomBase}`).value = '';
+            document.getElementById(`MZ_xMax${varThis.nomBase}`).value = '';
+            document.getElementById(`MZ_yMin${varThis.nomBase}`).value = '';
+            document.getElementById(`MZ_yMax${varThis.nomBase}`).value = '';
+            document.getElementById(`MZ_nMin${varThis.nomBase}`).value = '';
+            document.getElementById(`MZ_nMax${varThis.nomBase}`).value = '';
             if (varThis.cLigneClass.razFiltre) varThis.cLigneClass.razFiltre();
             varThis.applyFiltre(oConfig);
         }
 
         if (!this.addEltInHeader(this.eltDivShowFiltre, 'filtre')) return;
 
+        // les onchange peuvent pointer vers une version spécifique ou générique
+
+        // préparation des filtres checkbox de this.cLigneClass.nomsFiltres
         this.eltParamFiltreRestr = document.createElement('div');
         if (this.cLigneClass.nomsFiltres) {
             let imgDone = false;
             for (let nomfiltre in this.cLigneClass.nomsFiltres) {
                 let oNom = this.cLigneClass.nomsFiltres[nomfiltre];
-                let chk;
                 if (!imgDone) {
                     let img = document.createElement('img');
                     img.style.padding = '0px 5px 5px 5px';
+                    // œil barré
                     img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyBmaWxsPSIjMDAwMDAwIiB3aWR0aD0iMTZweCIgaGVpZ2h0PSIxNnB4IiB2aWV3Qm94PSIwIDAgMzIgMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTSAzLjcxODc1IDIuMjgxMjUgTCAyLjI4MTI1IDMuNzE4NzUgTCA4LjUgOS45MDYyNSBMIDE5LjU5Mzc1IDIxIEwgMjEuNSAyMi45Mzc1IEwgMjguMjgxMjUgMjkuNzE4NzUgTCAyOS43MTg3NSAyOC4yODEyNSBMIDIzLjUgMjIuMDYyNSBDIDI3LjczNDM3NSAxOS45NjQ4NDQgMzAuNTc0MjE5IDE2Ljg1MTU2MyAzMC43NSAxNi42NTYyNSBMIDMxLjM0Mzc1IDE2IEwgMzAuNzUgMTUuMzQzNzUgQyAzMC40ODA0NjkgMTUuMDQyOTY5IDI0LjA4NTkzOCA4IDE2IDggQyAxNC4wNDI5NjkgOCAxMi4xOTUzMTMgOC40Mjk2ODggMTAuNSA5LjA2MjUgWiBNIDE2IDEwIEMgMTguMTUyMzQ0IDEwIDIwLjE4NzUgMTAuNjA1NDY5IDIyIDExLjQzNzUgQyAyMi42NDQ1MzEgMTIuNTE1NjI1IDIzIDEzLjczNDM3NSAyMyAxNSBDIDIzIDE2LjgxNjQwNiAyMi4yOTY4NzUgMTguNDc2NTYzIDIxLjE1NjI1IDE5LjcxODc1IEwgMTguMzEyNSAxNi44NzUgQyAxOC43MzA0NjkgMTYuMzYzMjgxIDE5IDE1LjcxNDg0NCAxOSAxNSBDIDE5IDEzLjM0Mzc1IDE3LjY1NjI1IDEyIDE2IDEyIEMgMTUuMjg1MTU2IDEyIDE0LjYzNjcxOSAxMi4yNjk1MzEgMTQuMTI1IDEyLjY4NzUgTCAxMi4wOTM3NSAxMC42NTYyNSBDIDEzLjMzNTkzOCAxMC4yNzM0MzggMTQuNjM2NzE5IDEwIDE2IDEwIFogTSA2LjY4NzUgMTAuOTA2MjUgQyAzLjQ4MDQ2OSAxMi44Nzg5MDYgMS4zOTg0MzggMTUuMTc1NzgxIDEuMjUgMTUuMzQzNzUgTCAwLjY1NjI1IDE2IEwgMS4yNSAxNi42NTYyNSBDIDEuNTA3ODEzIDE2Ljk0NTMxMyA3LjQyOTY4OCAyMy40MjU3ODEgMTUuMDYyNSAyMy45Mzc1IEMgMTUuMzcxMDk0IDIzLjk2ODc1IDE1LjY4MzU5NCAyNCAxNiAyNCBDIDE2LjMxNjQwNiAyNCAxNi42Mjg5MDYgMjMuOTY4NzUgMTYuOTM3NSAyMy45Mzc1IEMgMTcuNzYxNzE5IDIzLjg4MjgxMyAxOC41NjY0MDYgMjMuNzczNDM4IDE5LjM0Mzc1IDIzLjU5Mzc1IEwgMTcuNTYyNSAyMS44MTI1IEMgMTcuMDU0Njg4IDIxLjkyOTY4OCAxNi41MzkwNjMgMjIgMTYgMjIgQyAxMi4xNDA2MjUgMjIgOSAxOC44NTkzNzUgOSAxNSBDIDkgMTQuNDY4NzUgOS4wNzAzMTMgMTMuOTQ5MjE5IDkuMTg3NSAxMy40Mzc1IFogTSA3LjI1IDEyLjkzNzUgQyA3LjA4OTg0NCAxMy42MTMyODEgNyAxNC4zMDA3ODEgNyAxNSBDIDcgMTYuNzM4MjgxIDcuNDg4MjgxIDE4LjMzOTg0NCA4LjM0Mzc1IDE5LjcxODc1IEMgNi4wNTQ2ODggMTguNDA2MjUgNC4zMDQ2ODggMTYuODY3MTg4IDMuNDA2MjUgMTYgQyA0LjE1MjM0NCAxNS4yNzczNDQgNS40OTYwOTQgMTQuMDc4MTI1IDcuMjUgMTIuOTM3NSBaIE0gMjQuNzUgMTIuOTM3NSBDIDI2LjUwMzkwNiAxNC4wNzgxMjUgMjcuODQzNzUgMTUuMjc3MzQ0IDI4LjU5Mzc1IDE2IEMgMjcuNjk1MzEzIDE2Ljg2NzE4OCAyNS45MTc5NjkgMTguNDM3NSAyMy42MjUgMTkuNzUgQyAyNC40ODQzNzUgMTguMzcxMDk0IDI1IDE2LjczODI4MSAyNSAxNSBDIDI1IDE0LjMwMDc4MSAyNC45MTAxNTYgMTMuNjA5Mzc1IDI0Ljc1IDEyLjkzNzUgWiIvPjwvc3ZnPg==';
                     this.eltParamFiltreCache.appendChild(img);
                     imgDone = true;
                 }
-                chk = appendCheckBoxSpan(this.eltParamFiltreCache, 'MZ_chkMonstre' + nomfiltre, this.cLigneClass.modifFiltre, oNom.libelle).firstChild;
+                let chk = appendCheckBoxSpan(this.eltParamFiltreCache, 'MZ_chk' + this.nomBase + nomfiltre, this.cLigneClass.filtreChanged, oNom.libelle).firstChild;
                 if (oNom.infobulle) chk.parentNode.title = oNom.infobulle;
                 if (oConfig[nomfiltre]) chk.checked = true;
             }
         }
 
+        // préparation du filtre sur nom
         // ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
         let btn2 = appendButton(this.eltParamFiltreRestr, 'Afficher le ' + this.nomBase.substring(0, this.nomBase.length-1) + ':');
         btn2.style.marginRight = '3px';
-        //this.eltParamFiltreRestr.appendChild(btn2);
-
         this.txtFiltreNom = appendTextbox(this.eltParamFiltreRestr, 'text', 'MZ_Nom' + this.nomFiltre, 15, 30);
-        if (this.cLigneClass.modifFiltre)
-            this.txtFiltreNom.onchange = this.cLigneClass.modifFiltre;
-        else
-            this.txtFiltreNom.onchange = function() {
-                let oConfig = {};
-                let nom = document.getElementById('MZ_Nom' + varThis.nomFiltre).value;
-                if (nom.trim() != '') {
-                    oConfig.nom = nom;
-                } else {
-                    oConfig = {empty: true};
-                }
-                varThis.applyFiltre(oConfig);
-
-                if (oConfig.empty) oConfig = undefined;
-                //console.log(`[MZ] vue set config filtre ${varThis.nomFiltre} ${JSON.stringify(oConfig)}`);
-                MZ_SauvegardeMH.setZone(varThis.nomFiltre, oConfig);
-            };
+        this.txtFiltreNom.onchange = this.cLigneClass.filtreChanged;
         this.txtFiltreNom.style.marginRight = '5px';
         if (oConfig.nom) this.txtFiltreNom.value = oConfig.nom;
 
+        // init des filtres spécifiques s'il y a
         if (this.cLigneClass.initOtherFiltre) this.cLigneClass.initOtherFiltre(this.eltParamFiltreRestr, oConfig);
 
+        // init des filtre min/max x:y:n
         this.addFiltre('Xmin', 'xMin', oConfig);
         this.addFiltre('Xmax', 'xMax', oConfig);
         this.addFiltre('Ymin', 'yMin', oConfig);
@@ -12694,19 +12696,20 @@ class MZ_cVueJSON {
         this.addFiltre('Nmin', 'nMin', oConfig);
         this.addFiltre('Nmax', 'nMax', oConfig);
 
+        // finaliser l'affichage
         eltParamFiltre.appendChild(this.eltParamFiltreRestr);
-
         eltParamFiltre.style.display = 'none';
         let divTable = this.eltDiv.children[3];
         if (!divTable) divTable = this.eltDiv.children[2];	// cas smartphone
         divTable.insertBefore(eltParamFiltre, divTable.firstChild);
 
+        // les paramètres des filtres, stockés dans MH, ont été inscrits dans les éléments HTML, il faut maintenant jouer les filtres
         this.applyFiltre(oConfig, true);
     }
 
     addFiltre(nom, id, oConfig) {
         appendText(this.eltParamFiltreRestr, nom + ' :');
-        let textbox = MZ_cLigneVue.ajoutFiltreNombre(this.eltParamFiltreRestr, `MZ_${id}${this.nomBase}`, this.cLigneClass.modifFiltre, oConfig[id], undefined, true);
+        let textbox = MZ_cLigneVue.ajoutFiltreNombre(this.eltParamFiltreRestr, `MZ_${id}${this.nomBase}`, this.cLigneClass.filtreChanged, oConfig[id], undefined, true);
         textbox.style.marginRight = '5px';
         textbox.style.marginLeft = '3px';
     }
@@ -12722,8 +12725,27 @@ class MZ_cVueJSON {
         return true;
     }
 
+    filtreChangedCommun(oConfig, bSomething) {
+        if (MZ_cVueJSON.debugFiltre) {logMZ(`start filtreChangedCommun ${this.nomBase} bSomething=${bSomething} nomFiltre=${this.nomFiltre}`); console.log(oConfig);}
+        let nom = document.getElementById('MZ_Nom' + this.nomFiltre).value;
+        if (nom.trim() != '') {
+            oConfig.nom = nom;
+            bSomething = true;
+        }
+        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'x', this.nomBase)) bSomething = true;
+        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'y', this.nomBase)) bSomething = true;
+        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'n', this.nomBase)) bSomething = true;
+        if (!bSomething) oConfig.empty = true;
+        if (MZ_cVueJSON.debugFiltre) {logMZ(`après nom et xynminmax filtreChangedCommun ${this.nomBase} bSomething=${bSomething}`); console.log(oConfig);}
+        this.applyFiltre(oConfig);
+    }
+
     applyFiltre(oConfig, noSave) {
-        //Display
+        // jouer les filtres (soit à l'initialisation de la vue, soit quand quelque chose change)
+        // oConfig doit voir été rempli
+        if (MZ_cVueJSON.debugFiltre) {logMZ(`start applyFiltre ${this.nomBase}`); console.log(oConfig);}
+
+        // Display
         let eltDisplay = document.getElementById('MZ_disp' + this.nomFiltre);
         if (oConfig === undefined) oConfig = {empty: true};
         if (!oConfig.empty) {
@@ -12752,7 +12774,7 @@ class MZ_cVueJSON {
             MZ_cLigneVue.addMsgFiltreMinMax(oConfig, tabCaches, 'n', 'N');
             if (eltDisplay.firstChild) eltDisplay.removeChild(eltDisplay.firstChild);
             eltDisplay.appendChild(document.createTextNode('[MZ] Sont cachés : ' + tabCaches.join(', ')));
-        } else  {
+        } else {
             this.btnFiltre.value = 'Filtre';
             this.btnRazFiltre.style.display = 'none';
             if (eltDisplay) this.eltDivShowFiltre.removeChild(eltDisplay);
@@ -12765,17 +12787,14 @@ class MZ_cVueJSON {
             else
                 MZ_SauvegardeMH.setZone(this.nomFiltre, oConfig);
         }
-        // filtre
-        //if (this.cLigneClass.applyFiltreBloc)
-        //    this.cLigneClass.applyFiltreBloc(oConfig);
-        //else
-        //    // cas générique, Nom uniquement
-        //    MZ_cLigneVue.applyFiltreGenerique(oConfig, this.objets);
 
-        // version de applyFiltre génétique qui traite le filtre sur 
-        // Filtre nom, (X/Y/N)(Min/Max) et cas spécifiques
+        // jouer les filtres
+        // traite les filtres sur nom, (X/Y/N)(Min/Max)
+        // les filtres de filtres de this.cLigneClass.nomsFiltres et les autres cas spécifiques sont traités par :
+        //  this.cLigneClass.prepareFiltreSpecifique (fonction statique de la classe spécifique)
+        //  testFiltreSpecifique (fonction de la classe spécifique)
         if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
-        let oConfSpecifique = new Object();
+        let oConfSpecifique = new Object(); // sert à prepareFiltreSpecifique et testFiltreSpecifique pour leur petite popote
         if (this.cLigneClass.prepareFiltreSpecifique) this.cLigneClass.prepareFiltreSpecifique(oConfig, oConfSpecifique);
         for (let oLigne of this.objets) {
             let cache = false;
@@ -12926,6 +12945,7 @@ class MZ_cLigneVue {
         }
     }
 
+    // utilisé pour les trolls et les monstres
     applyDiplo(diplo) {
         if (diplo) {
             //this.eltTr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
@@ -12978,8 +12998,8 @@ class MZ_cLigneVue {
         return select;
     }
 
+    // version générique, remplacé pour les trolls et lieux
     static addLigne(id, nom, x, y, n, oNouvelleLigne, oModele) {
-        // version générique
         // crée le tr
         // gère les td communs : distance, id, nom (pas le remplissage), x, y, n
         // met le tr à sa place
@@ -13078,8 +13098,9 @@ class MZ_cLigneVue {
         } else delete oConfig[`${nom}Min`];
         let vMax = parseInt(document.getElementById(`MZ_${nom}Max${classe}`).value, 10);
         if (!isNaN(vMax)) {
-            if (oConfig[`${nom}Min`] !== undefined && oConfig[`${nom}Min`] > vMax) {
-                oConfig[`${nom}Max`] = oConfig.vMin;
+            vMin = oConfig[`${nom}Min`];
+            if (vMin !== undefined && vMin > vMax) {
+                oConfig[`${nom}Max`] = vMin;
                 oConfig[`${nom}Min`] = vMax;
             } else {
                 oConfig[`${nom}Max`] = vMax;
@@ -13093,7 +13114,7 @@ class MZ_cLigneVue {
         let msgs = [];
         let min = oConfig[`${nom}Min`];
         let max = oConfig[`${nom}Max`];
-        //console.log('****** addMsgFiltreMinMax');
+        //console.log('****** addMsgFiltreMinMax_log');
         //console.log(oConfig);
         //console.log(nom, min, max);
         if (min !== undefined) msgs.push('<' + min);
@@ -13109,10 +13130,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
     static lastIndexSent = -1;
     static isCDMsRetrieved = false;
     // filtre
-    //static checkBoxGowapsA;
-    //static checkBoxGowapsS;
-    //static checkBoxEngages;
-    //static checkBoxNonmiss;
     static listPosTroll;
     static nomsFiltres = {
         gowapA: {libelle: 'Les Gowaps Apprivoisés'},
@@ -13135,7 +13152,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
     cssMZDone;
     cibleMission;
 
-    insertColumn(param) {
+    insertColumn(param) {   // cas monstres
         // c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
         switch (param) {
             case 1:
@@ -13143,13 +13160,13 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
         }
     }
 
-    insertColumnNiveau() {
+    insertColumnNiveau() {   // cas monstres
         this.eltTdNiveau = insertTdText(this.eltTdRef, '');
         this.eltTdNiveau.style.display = 'table-cell';
         if (this.eltTr.style.backgroundColor) this.eltTdNiveau.style.backgroundColor = this.eltTr.style.backgroundColor;
     }
 
-    static initGlobal() {
+    static initGlobal() {   // cas monstres
         // cette fonction est appelée une fois que les objects dérivés de MZ_cLigneMonstre ont été créés
         MZ_cCDMv2.init();
         MZ_cCDMv2.sendAJAXCdMRequest(false, true);	// pas Full, avec Cache
@@ -13183,17 +13200,17 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
         }
     }
 
-    static initOtherFiltre(div2, oConfig) {
+    static initOtherFiltre(div2, oConfig) { // cas monstres
         appendText(div2, 'Niveau Min :');
-        let textboxNiveauMin = MZ_cLigneVue.ajoutFiltreNombre(div2, 'MZ_nivMinmonstres', MZ_cLigneMonstre.modifFiltre, oConfig.nivMin);
+        let textboxNiveauMin = MZ_cLigneVue.ajoutFiltreNombre(div2, 'MZ_nivMinmonstres', MZ_cLigneMonstre.filtreChanged, oConfig.nivMin);
         textboxNiveauMin.style.marginRight = '5px';
         textboxNiveauMin.style.marginLeft = '3px';
         appendText(div2, 'Niveau Max :');
-        let textboxNiveauMax = MZ_cLigneVue.ajoutFiltreNombre(div2, 'MZ_nivMaxmonstres', MZ_cLigneMonstre.modifFiltre, oConfig.nivMax);
+        let textboxNiveauMax = MZ_cLigneVue.ajoutFiltreNombre(div2, 'MZ_nivMaxmonstres', MZ_cLigneMonstre.filtreChanged, oConfig.nivMax);
         textboxNiveauMax.style.marginRight = '5px';
         textboxNiveauMax.style.marginLeft = '3px';
         appendText(div2, 'Famille :');
-        let comboBoxFamille = MZ_cLigneVue.ajoutFiltreDropdown(div2, 'MZ_FamilleMonstres', MZ_cLigneMonstre.modifFiltre
+        let comboBoxFamille = MZ_cLigneVue.ajoutFiltreDropdown(div2, 'MZ_FamilleMonstres', MZ_cLigneMonstre.filtreChanged
             , MZ_cLigneMonstre.listeFamilleAvecTrema
             , oConfig.famille);
         comboBoxFamille.style.marginRight = '5px';
@@ -13201,67 +13218,51 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
         let btn2 = appendButton(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'Cacher le monstre:');
         btn2.style.marginRight = '3px';
         let textboxNom = appendTextbox(MZ_cLigneMonstre.MZ_oVueJSON.eltParamFiltreCache, 'text', 'MZ_cacheMonstre', 15, 30, oConfig.nomCache);
-        textboxNom.onchange = MZ_cLigneMonstre.modifFiltre;
+        textboxNom.onchange = MZ_cLigneMonstre.filtreChanged;
         textboxNom.style.marginRight = '5px';
     }
 
-    static modifFiltre() {
+    static filtreChanged() {  // cas monstres
         let oConfig = {};
         let bSomething = false;
         for (let nomfiltre in MZ_cLigneMonstre.nomsFiltres) {
             let oNom = MZ_cLigneMonstre.nomsFiltres[nomfiltre];
-            if (document.getElementById('MZ_chkMonstre' + nomfiltre).checked) {
+            if (document.getElementById('MZ_chkmonstres' + nomfiltre).checked) {
                 oConfig[nomfiltre] = true;
                 bSomething = true;
             } else delete oConfig[nomfiltre];
         }
 
         if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'niv', 'monstres')) bSomething = true;
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'x', 'monstres')) bSomething = true;
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'y', 'monstres')) bSomething = true;
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'n', 'monstres')) bSomething = true;
-
-        let nom = document.getElementById('MZ_Nom' + MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre).value;
-        if (nom.trim() != '') {
-            oConfig.nom = nom;
-            bSomething = true;
-        } else delete oConfig.nom;
         let famille = document.getElementById('MZ_FamilleMonstres').value;
         if (famille == 'Humanoïde') famille = 'Humanoide';	// **sight**
         if (famille && famille != '0') {	// firefox nous donne "0" dans le texte de la listbox est vide
             oConfig.famille = famille;
             bSomething = true;
         } else delete oConfig.famille;
-
-        nom = document.getElementById('MZ_cacheMonstre').value;
-        if (nom.trim() != '') {
-            oConfig.nomCache = nom;
+        let nomCache = document.getElementById('MZ_cacheMonstre').value;
+        if (nomCache.trim() != '') {
+            oConfig.nomCache = nomCache;
             bSomething = true;
         } else delete oConfig.nomCache;
 
-        if (!bSomething) oConfig = {empty: true};
-
-        MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(oConfig);
-
-        //console.log('[MZ] vue set config monstre ' + JSON.stringify(oConfig));
-        if (oConfig.empty) oConfig = undefined;
-        MZ_SauvegardeMH.setZone(MZ_cLigneMonstre.MZ_oVueJSON.nomFiltre, oConfig);
+        MZ_cLigneMonstre.MZ_oVueJSON.filtreChangedCommun(oConfig, bSomething);
     }
 
-    static applyFiltreNu() {
+    static applyFiltreNu() {   // cas monstres
         MZ_cLigneMonstre.MZ_oVueJSON.applyFiltre(MZ_SauvegardeMH.getZone('filtreMonstres'));
     }
 
-    static razFiltre() {
-        document.getElementById('MZ_nivMinMonstres').value = '';
-        document.getElementById('MZ_nivMaxMonstres').value = '';
+    static razFiltre() {   // cas monstres
+        document.getElementById('MZ_nivMinmonstres').value = '';
+        document.getElementById('MZ_nivMaxmonstres').value = '';
         document.getElementById('MZ_FamilleMonstres').value = '';
         document.getElementById('MZ_cacheMonstre').value = '';
         for (let nomfiltre in MZ_cLigneMonstre.nomsFiltres)
-            document.getElementById('MZ_chkMonstre' + nomfiltre).checked = false;
+            document.getElementById('MZ_chkmonstres' + nomfiltre).checked = false;
     }
 
-    static displayOtherFiltre(oConfig) {
+    static displayOtherFiltre(oConfig) {   // cas monstres
         let tabCaches = [];
         if (oConfig.famille) tabCaches.push('Famille autre que ' + oConfig.famille);
         MZ_cLigneVue.addMsgFiltreMinMax(oConfig, tabCaches, 'niv', 'Niveau');
@@ -13269,7 +13270,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
         return tabCaches;
     }
 
-    static prepareFiltreSpecifique(oConfig, oConfSpecifique) {
+    static prepareFiltreSpecifique(oConfig, oConfSpecifique) {   // cas monstres
         // Filtre
         oConfSpecifique.bHideEg = oConfig.engage;
         //logMZ('applyFiltreBloc_log Monstre oConfig=', oConfig);
@@ -13302,11 +13303,9 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
             oConfSpecifique.nonmis = false;
             oConfSpecifique.famille = undefined;
         }
-        //let premierGoGu;	// premier Gowap ou Gnu du groupe (pour en modifier le texte)
-        //let nbGowapGroupe, nbGnuGroupe;
     }
 
-    testFiltreSpecifique(oConfig, oConfSpecifique) {
+    testFiltreSpecifique(oConfig, oConfSpecifique) {   // cas monstres
         if (oConfig.gowapA && this.nom.indexOf('Gowap Apprivoisé') != -1) return true;
         if (oConfig.gowapS && this.nom.indexOf('Gowap Sauvage') != -1) return true;
         if (oConfSpecifique.bHideEg) {
@@ -13343,16 +13342,16 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
         if (oConfSpecifique.famille
             && this.infoMZ
             && this.infoMZ.fam
-            && famille.toLowerCase() != this.infoMZ.fam.toLowerCase()) return true;
+            && oConfSpecifique.famille.toLowerCase() != this.infoMZ.fam.toLowerCase()) return true;
         if (oConfSpecifique.famille) {
             let indx = this.nom.indexOf('Flou');
             if (indx != -1) {
                 let nomSansFlou = this.nom.substring(0, indx).trim();
-                if ((MZ_cLigneMonstre.listeFamille.includes(nomSansFlou)) && nomSansFlou != famille) return true;
+                if ((MZ_cLigneMonstre.listeFamille.includes(nomSansFlou)) && nomSansFlou != oConfSpecifique.famille) return true;
             }
         }
         if (oConfSpecifique.nomCache) {
-            if (this.nom.toLowerCase().indexOf(nomCache) != -1) return true;
+            if (this.nom.toLowerCase().indexOf(oConfSpecifique.nomCache) != -1) return true;
         }
         if (oConfSpecifique.grGoGu) {
             let isGowap = (this.nom.indexOf('Gowap') != -1);
@@ -13370,7 +13369,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
                     oConfSpecifique.nbGowapGroupe = isGowap ? 1 : 0;
                     oConfSpecifique.nbGnuGroupe = isGnu ? 1 : 0;
                 } else {
-                    return true;
                     if (isGowap) {
                         oConfSpecifique.nbGowapGroupe++;
                     } else {
@@ -13384,6 +13382,7 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
                     if (oConfSpecifique.nbGnuGroupe > 0)
                         txts.push(`${oConfSpecifique.nbGnuGroupe} Gnu${oConfSpecifique.nbGnuGroupe > 1 ? 's' : ''}`);
                     oConfSpecifique.premierGoGu.eltTdNom.appendChild(document.createTextNode(txts.join(' et ')));
+                    return true;
                 }
             }
         }
@@ -13393,144 +13392,6 @@ class MZ_cLigneMonstre extends MZ_cLigneVue {
             delete this.saveHTMLNom;
         }
     }
-
-    /* à supprimer
-    static applyFiltreBloc(oConfig) {
-        // Filtre
-        let bHideEg = oConfig.engage;
-        //logMZ('applyFiltreBloc_log Monstre oConfig=', oConfig);
-        if (bHideEg && ((!MZ_cVueJSON.oTrolls) || MZ_cVueJSON.oTrolls.objets === undefined)) {
-            // Ça arrive quand on applique le filtre ici avant que la page ait reçu le retour JSON MH pour les Trolls
-            // on relancera quand tout sera reçu
-            if (MZ_cLigneMonstre.nbRetry++ < 5)
-                MZ_cVueJSON.registerCallback(MZ_cLigneMonstre.applyFiltreNu);
-            else
-                logMZ('Plus de 5 retry pour le filtrage des monstres')
-            // on continue en ignorant le filtre sur les engagés
-            bHideEg = false;
-        }
-        if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
-        let nivMin = oConfig.nivMin;
-        let nivMax = oConfig.nivMax;
-        let nonmis = oConfig.nonmis;
-        let famille = oConfig.famille;
-        let grGoGu = oConfig.grGoGu;
-        let nomCache;
-        if (oConfig.nomCache) nomCache = oConfig.nomCache.toLowerCase();
-        if ((nivMin !== undefined || nivMax !== undefined || nonmis || famille)
-            && !(MZ_cCDMv2.fetchDone)) {
-            if (MZ_cLigneMonstre.nbRetry++ < 6)	// protection
-                MZ_cVueJSON.registerCallbackMZ(MZ_cLigneMonstre.applyFiltreNu);
-            else
-                logMZ('Plus de 6 retry pour le filtrage des monstres')
-            // on continue en ignorant ces filtres
-            nivMin = undefined;
-            nivMax = undefined;
-            nonmis = false;
-            famille = undefined;
-        }
-        let premierGoGu;	// premier Gowap ou Gnu du groupe (pour en modifier le texte)
-        let nbGowapGroupe, nbGnuGroupe;
-        for (let oMonstre of MZ_cVueJSON.oMonstres.objets) {
-            let cache = (oConfig.gowapA && oMonstre.nom.indexOf('Gowap Apprivoisé') != -1)
-                || (oConfig.gowapS && oMonstre.nom.indexOf('Gowap Sauvage') != -1);
-            if (bHideEg && !cache) {
-                if (MZ_cLigneMonstre.listPosTroll === undefined) {
-                    MZ_cLigneMonstre.listPosTroll = [];	// array car N ne peut pas être négatif
-                    for (let oTroll of MZ_cVueJSON.oTrolls.objets) {
-                        oTroll.loadXYN();
-                        if (!MZ_cLigneMonstre.listPosTroll[oTroll.n]) MZ_cLigneMonstre.listPosTroll[oTroll.n] = {};	// objet à cause des x négatifs
-                        if (!MZ_cLigneMonstre.listPosTroll[oTroll.n][oTroll.x]) MZ_cLigneMonstre.listPosTroll[oTroll.n][oTroll.x] = {};
-                        MZ_cLigneMonstre.listPosTroll[oTroll.n][oTroll.x][oTroll.y] = 1;
-                    }
-                }
-                oMonstre.loadXYN();
-                if (MZ_cLigneMonstre.listPosTroll[oMonstre.n]
-                    && MZ_cLigneMonstre.listPosTroll[oMonstre.n][oMonstre.x]
-                    && MZ_cLigneMonstre.listPosTroll[oMonstre.n][oMonstre.x][oMonstre.y]) cache = true;
-            }
-            if (!cache && oConfig.flous && oMonstre.nom.indexOf('Créature Floue') == 0) cache = true;
-            if ((!cache) && oConfig.nom) {
-                if (oMonstre.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
-            }
-            if ((!cache)
-                && nivMin !== undefined
-                && oMonstre.infoMZ
-                && oMonstre.infoMZ.niv
-                && oMonstre.infoMZ.niv.max
-                && oMonstre.infoMZ.niv.max < nivMin) cache = true;
-            if ((!cache)
-                && nivMax !== undefined
-                && oMonstre.infoMZ
-                && oMonstre.infoMZ.niv
-                && oMonstre.infoMZ.niv.min
-                && oMonstre.infoMZ.niv.min > nivMax) cache = true;
-            if ((!cache)
-                && nonmis
-                && !oMonstre.cibleMission) cache = true;
-            if ((!cache)
-                && famille
-                && oMonstre.infoMZ
-                && oMonstre.infoMZ.fam
-                && famille.toLowerCase() != oMonstre.infoMZ.fam.toLowerCase()) cache = true;
-            if ((!cache)
-                && famille) {
-                let indx = oMonstre.nom.indexOf('Flou');
-                if (indx != -1) {
-                    let nomSansFlou = oMonstre.nom.substring(0, indx).trim();
-                    if ((MZ_cLigneMonstre.listeFamille.includes(nomSansFlou)) && nomSansFlou != famille) cache = true;
-                }
-            }
-            if ((!cache)
-                && nomCache) {
-                if (oMonstre.nom.toLowerCase().indexOf(nomCache) != -1) cache = true;
-            }
-            if ((!cache)
-                && grGoGu) {
-                let isGowap = (oMonstre.nom.indexOf('Gowap') != -1);
-                let isGnu;
-                if (!isGowap) isGnu = (oMonstre.nom.indexOf('Gnu') != -1);
-                if (isGowap || isGnu) {
-                    oMonstre.loadXYN();
-                    if (premierGoGu == undefined
-                        || premierGoGu.x != oMonstre.x
-                        || premierGoGu.y != oMonstre.y
-                        || premierGoGu.n != oMonstre.n) {
-                        premierGoGu = oMonstre;
-                        if (premierGoGu.saveHTMLNom == undefined)
-                            premierGoGu.saveHTMLNom = premierGoGu.eltTdNom.innerHTML;
-                        nbGowapGroupe = isGowap ? 1 : 0;
-                        nbGnuGroupe = isGnu ? 1 : 0;
-                    } else {
-                        cache = true;
-                        if (isGowap) {
-                            nbGowapGroupe++;
-                        } else {
-                            nbGnuGroupe++;
-                        }
-                        while (premierGoGu.eltTdNom.firstChild)
-                            premierGoGu.eltTdNom.removeChild(premierGoGu.eltTdNom.firstChild);
-                        let txts = []
-                        if (nbGowapGroupe > 0)
-                            txts.push(`${nbGowapGroupe} Gowap${nbGowapGroupe > 1 ? 's' : ''}`);
-                        if (nbGnuGroupe > 0)
-                            txts.push(`${nbGnuGroupe} Gnu${nbGnuGroupe > 1 ? 's' : ''}`);
-                        premierGoGu.eltTdNom.appendChild(document.createTextNode(txts.join(' et ')));
-                    }
-                }
-            }
-            if ((!cache) && (!grGoGu) && oMonstre.saveHTMLNom != undefined) {
-                // remettre le HTML d'origine
-                oMonstre.eltTdNom.innerHTML = oMonstre.saveHTMLNom;
-                delete oMonstre.saveHTMLNom;
-            }
-            let prevDisplay = oMonstre.eltTr.style.display;
-            if (cache && prevDisplay != 'none')
-                oMonstre.eltTr.style.display = 'none';
-            else if ((!cache) && prevDisplay == 'none')
-                oMonstre.eltTr.style.display = 'table-row';
-        }
-    }*/
 }
 
 class MZ_cLigneTroll extends MZ_cLigneVue {
@@ -13548,14 +13409,14 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
     eltEnvoi;
     idGuilde;
 
-    init(MZ_oVueJSON, id, eTr) {
+    init(MZ_oVueJSON, id, eTr) {   // cas trolls
         this.initGenerique(MZ_oVueJSON, id, eTr);
         this.eltTdGuilde = eTr.cells[MZ_oVueJSON.indxTdGuilde];
         this.eltTdNiv = eTr.cells[MZ_oVueJSON.indxTdNiv];
         this.eltTdRace = eTr.cells[MZ_oVueJSON.indxTdRace];
     }
 
-    insertColumn(param) {
+    insertColumn(param) {   // cas trolls
         // c'est prévu pour travailler sur plusieurs colonnes. Le paramètre dit dans quel cas on est
         switch (param) {
             case 1:
@@ -13570,24 +13431,24 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    insertColumnBtPV() {
+    insertColumnBtPV() {   // cas trolls
         this.eltTdBtPV = insertTdText(this.eltTdGuilde, '');
         this.eltTdBtPV.style.display = 'table-cell';
     }
 
-    insertColumnBtPA() {
+    insertColumnBtPA() {   // cas trolls
         this.eltTdBtPA = insertTdText(this.eltTdGuilde, '');
         this.eltTdBtPA.style.display = 'table-cell';
     }
 
-    insertColumnEnvoi() {
+    insertColumnEnvoi() {   // cas trolls
         MZ_cLigneTroll.colEnvoiDone = true;
         this.eltEnvoi = insertTd(this.eltTdNom);
         this.eltEnvoi.style.display = 'table-cell';
         this.fillColumnEnvoi();
     }
 
-    fillColumnEnvoi() {
+    fillColumnEnvoi() {   // cas trolls
         let input = document.createElement('input');
         input.type = 'checkbox';
         this.eltEnvoi.appendChild(input);
@@ -13623,7 +13484,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    getNiveau() {
+    getNiveau() {   // cas trolls
         let nivtxt;
         if (this.eltTdNiv) nivtxt= this.eltTdNiv.innerText;
         let niv = parseInt(nivtxt);
@@ -13632,7 +13493,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         if (!isNaN(niv)) return niv;
     }
 
-    static initGlobal() {
+    static initGlobal() {   // cas trolls
         // cette fonction est appelée un fois que les objects dérivés de MZ_cLigneMonstre ont été créés
 
         for (let iBricol = 1; ; iBricol++) {
@@ -13669,13 +13530,12 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    static initOtherFiltre(div2, oConfig) {
+    static initOtherFiltre(div2, oConfig) {   // cas trolls
         // ce bouton ne sert qu'à faire beau, c'est le onchange de la textbox qui va faire le boulot
         let btnGuilde = appendButton(div2, 'Nom de la guilde:');
         btnGuilde.style.marginRight = '3px';
-
         let txtboxGuilde = appendTextbox(div2, 'text', 'MZ_GuildeTroll', 15, 30);
-        txtboxGuilde.onchange = MZ_cLigneTroll.modifFiltre;
+        txtboxGuilde.onchange = MZ_cLigneTroll.filtreChanged;
         txtboxGuilde.style.marginRight = '5px';
         if (oConfig.guilde) txtboxGuilde.value = oConfig.guilde;
 
@@ -13721,63 +13581,36 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    static modifFiltre() {
+    static filtreChanged() {  // cas trolls
         let oConfig = {};
         let bSomething = false;
-        let nom = document.getElementById('MZ_Nom' + MZ_cLigneTroll.MZ_oVueJSON.nomFiltre).value;
-        if (nom.trim() != '') {
-            oConfig.nom = nom;
-            bSomething = true;
-        } else delete oConfig.nom;
         let guilde = document.getElementById('MZ_GuildeTroll').value.trim();
         if (guilde != '') {
             oConfig.guilde = guilde;
             bSomething = true;
         } else delete oConfig.guilde;
 
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'x', 'trolls')) bSomething = true;
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'y', 'trolls')) bSomething = true;
-        if (MZ_cLigneVue.buildConfigMinMax(oConfig, 'n', 'trolls')) bSomething = true;
-
-        if (!bSomething) oConfig = {empty: true};
-
-        MZ_cLigneTroll.MZ_oVueJSON.applyFiltre(oConfig);
-
-        //console.log('[MZ] filtre vue set config troll ' + JSON.stringify(oConfig));
-        if (oConfig.empty) oConfig = undefined;
-        MZ_SauvegardeMH.setZone(MZ_cLigneTroll.MZ_oVueJSON.nomFiltre, oConfig);
+        MZ_cLigneTroll.MZ_oVueJSON.filtreChangedCommun(oConfig, bSomething);
     }
 
-    static displayOtherFiltre(oConfig) {
+    static displayOtherFiltre(oConfig) {   // cas trolls
         let tabCaches = [];
         if (oConfig.guilde) tabCaches.push('Guilde autre que ' + oConfig.guilde);
         MZ_cLigneVue.addMsgFiltreMinMax(oConfig, tabCaches, 'niv', 'Niveau');
         return tabCaches;
     }
 
-    static applyFiltreBloc(oConfig) {
-        // Filtre
-        if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
-        if (oConfig.guilde) oConfig.guilde = oConfig.guilde.toLowerCase();
-        for (let oLigne of MZ_cVueJSON.oTrolls.objets) {
-            let cache = false;
-            if ((!cache) && oConfig.nom) {
-                if (oLigne.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
-            }
-            if ((!cache) && oConfig.guilde) {
-                let guilde = oLigne.eltTdGuilde.innerText;
-                if (guilde.toLowerCase().indexOf(oConfig.guilde) == -1) cache = true;
-            }
-            let prevDisplay = oLigne.eltTr.style.display;
-            //console.log('applyFiltreGenerique_log nom=' + oLigne.nom + ', cache=' + cache);
-            if (cache && prevDisplay != 'none')
-                oLigne.eltTr.style.display = 'none';
-            else if ((!cache) && prevDisplay == 'none')
-                oLigne.eltTr.style.display = 'table-row';
-        }
+    static prepareFiltreSpecifique(oConfig, oConfSpecifique) {   // cas trolls
+        if (oConfig.guilde) oConfSpecifique.guilde = oConfig.guilde.toLowerCase();
     }
 
-    static razFiltre() {
+    testFiltreSpecifique(oConfig, oConfSpecifique) {   // cas trolls
+        if (!oConfSpecifique.guilde) return false;
+        let guilde = this.eltTdGuilde.innerText;
+        if (guilde.toLowerCase().indexOf(oConfSpecifique.guilde) == -1) return true;
+    }
+
+    static razFiltre() {   // cas trolls
         document.getElementById('MZ_GuildeTroll').value = '';
     }
 
@@ -13788,7 +13621,7 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    static receptionBricolTrollAJAX(data) {
+    static receptionBricolTrollAJAX(data) {   // cas trolls
         return function (responseDetails) {
             let btData;
             if (responseDetails.status == 0) { return; }
@@ -13846,8 +13679,8 @@ class MZ_cLigneTroll extends MZ_cLigneVue {
         }
     }
 
-    static addLigne(id, nom, x, y, n, guildeId, guildeNom, niv, race) {
-        //logMZ(`addLigne Troll ${id} colBtPVDone=${MZ_cLigneTroll.colBtPVDone}`);
+    static addLigne(id, nom, x, y, n, guildeId, guildeNom, niv, race) {   // cas trolls
+        //logMZ(`addLigne_log Troll ${id} colBtPVDone=${MZ_cLigneTroll.colBtPVDone}`);
         let oModele = MZ_cVueJSON.oTrolls.objets[0];
         let oNouvelleLigne = new MZ_cLigneTroll();
         if (!MZ_cLigneVue.addLigne(id, nom, x, y, n, oNouvelleLigne, oModele)) return;
@@ -13922,6 +13755,11 @@ class MZ_cLigneTresor extends MZ_cLigneVue {
         MZ_cSCIZ.processTreasures();
         MZ_cLigneTresor.MZ_oVueJSON.initFiltre();
     }
+
+    static filtreChanged() {  // cas tresros
+        let oConfig = {};
+        MZ_cLigneTresor.MZ_oVueJSON.filtreChangedCommun(oConfig, false);
+    }
 }
 
 class MZ_cLigneChampignon extends MZ_cLigneVue {
@@ -13931,6 +13769,11 @@ class MZ_cLigneChampignon extends MZ_cLigneVue {
         MZ_cLigneChampignon.MZ_oVueJSON.initFiltre();
         MZ_cHighlightSameXYN.processVue(MZ_cLigneChampignon.MZ_oVueJSON);
         MZ_cSCIZ.processMushrooms();
+    }
+
+    static filtreChanged() {  // cas champi
+        let oConfig = {};
+        MZ_cLigneChampignon.MZ_oVueJSON.filtreChangedCommun(oConfig, false);
     }
 }
 
@@ -13948,7 +13791,7 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
         'Achat', 'Dépôt', 'Forge', 'Resurrection', 'Réseau T.G.V.', 'Soins', 'Maisonnée', 'Recycleur',
     ];
 
-    static addLigne(id, type, x, y, n) {
+    static addLigne(id, type, x, y, n) {   // cas lieux
         let oModele = MZ_cVueJSON.oLieux.objets[0];
         let oNouvelleLigne = new MZ_cLigneLieu();
         if (!MZ_cLigneVue.addLigne(id, type, x, y, n, oNouvelleLigne, oModele)) return;
@@ -13968,24 +13811,18 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
         return oNouvelleLigne;
     }
 
-    static initOtherFiltre(div2, oConfig) {
+    static initOtherFiltre(div2, oConfig) {   // cas lieux
         appendText(div2, 'Service :');
-        let comboBox = MZ_cLigneVue.ajoutFiltreDropdown(div2, 'MZ_ServiceLieu', MZ_cLigneLieu.modifFiltre
+        let comboBox = MZ_cLigneVue.ajoutFiltreDropdown(div2, 'MZ_ServiceLieu', MZ_cLigneLieu.filtreChanged
             , MZ_cLigneLieu.services
             , oConfig.service);
         comboBox.style.marginRight = '5px';
         comboBox.style.marginLeft = '3px';
     }
 
-    static modifFiltre() {
+    static filtreChanged() {   // cas lieux
         let oConfig = {};
         let bSomething = false;
-
-        let nom = document.getElementById('MZ_Nom' + MZ_cLigneLieu.MZ_oVueJSON.nomFiltre).value;
-        if (nom.trim() != '') {
-            oConfig.nom = nom;
-            bSomething = true;
-        } else delete oConfig.nom;
 
         let service = document.getElementById('MZ_ServiceLieu').value;
         if (service && service != '0') {	// firefox nous donne "0" dans le texte de la listbox est vide
@@ -13993,47 +13830,30 @@ class MZ_cLigneLieu extends MZ_cLigneVue {
             bSomething = true;
         } else delete oConfig.service;
 
-        if (!bSomething) oConfig = {empty: true};
-
-        MZ_cLigneLieu.MZ_oVueJSON.applyFiltre(oConfig);
-
-        //console.log('[MZ] vue set config lieux ' + JSON.stringify(oConfig));
-        if (oConfig.empty) oConfig = undefined;
-        MZ_SauvegardeMH.setZone(MZ_cLigneLieu.MZ_oVueJSON.nomFiltre, oConfig);
+        MZ_cLigneLieu.MZ_oVueJSON.filtreChangedCommun(oConfig, bSomething);
     }
 
-    static razFiltre() {
+    static razFiltre() {   // cas lieux
         document.getElementById('MZ_ServiceLieu').value = '';
     }
 
-    static applyFiltreBloc(oConfig) {
-        //logMZ(`applyFiltreBloc_log Lieux oConfig=${JSON.stringify(oConfig)}`);
-        if (oConfig.nom) oConfig.nom = oConfig.nom.toLowerCase();
-        let service = oConfig.service;
-        for (let oLieu of MZ_cVueJSON.oLieux.objets) {
-            let cache = false;
-            if ((!cache) && oConfig.nom) {
-                if (oLieu.nom.toLowerCase().indexOf(oConfig.nom) == -1) cache = true;
+    static prepareFiltreSpecifique(oConfig, oConfSpecifique) {   // cas lieux
+        // rien à faire
+    }
+
+    testFiltreSpecifique(oConfig, oConfSpecifique) {   // cas lieux
+        if (!oConfig.service) return false;
+        let spans = this.eltTdNom.getElementsByTagName('span');
+        let cache = true;
+        for (let oSpan of spans) {
+            if (oSpan.innerText.indexOf(oConfig.service) >= 0) {
+                //logMZ(`Lieux applyFiltreBloc_log found ${service} in ${oSpan.innerText}`);
+                cache = false;
+                break;
             }
-            if ((!cache)
-                && service) {
-                let spans = oLieu.eltTdNom.getElementsByTagName('span');
-                cache = true;
-                for (let oSpan of spans) {
-                    if (oSpan.innerText.indexOf(service) >= 0) {
-                        //logMZ(`Lieux applyFiltreBloc_log found ${service} in ${oSpan.innerText}`);
-                        cache = false;
-                        break;
-                    }
-                    //logMZ(`Lieux applyFiltreBloc_log not found ${service} in ${oSpan.innerText}`);
-                }
-            }
-            let prevDisplay = oLieu.eltTr.style.display;
-            if (cache && prevDisplay != 'none')
-                oLieu.eltTr.style.display = 'none';
-            else if ((!cache) && prevDisplay == 'none')
-                oLieu.eltTr.style.display = 'table-row';
+            //logMZ(`Lieux applyFiltreBloc_log not found ${service} in ${oSpan.innerText}`);
         }
+        return cache;
     }
 }
 
@@ -14042,6 +13862,11 @@ class MZ_cLigneCenotaphe extends MZ_cLigneVue {
     static initGlobal() {
         // cette fonction est appelée un fois que les objects dérivés de MZ_cLigneVue ont été créés
         MZ_cHighlightSameXYN.processVue(MZ_cLigneCenotaphe.MZ_oVueJSON);
+    }
+
+    static filtreChanged() {  // cas Cenotaphe
+        let oConfig = {};
+        MZ_cLigneCenotaphe.MZ_oVueJSON.filtreChangedCommun(oConfig, false);
     }
 }
 
