@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.26
+// @version     1.7.27
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.26';
+var MZ_latest = '1.7.27';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -2828,11 +2828,11 @@ class MZ_cCDMv2 {
 
     static callMZCallbacks() {
         if (MZ_cVueJSON.callbacksMZDone) return;
-        for (let callback of MZ_cVueJSON.callbacksFinMZ) {
+        for (let oCallback of MZ_cVueJSON.callbacksFinMZ) {
             try {
-                //if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log avant appel de la callback ${callback.name}`);
-                callback();
-                if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log après appel de la callback ${callback.name}`);
+                //if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log avant appel de la callback ${oCallback.callback.name}`);
+                oCallback.callback(oCallback.arg);
+                if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cCDMv2.receptionMZNiveauxAJAX_log après appel de la callback ${oCallback.callback.name}`);
             } catch (exc) {
                 logMZ("MZ_cVueJSON Erreur à l'appel d'une callback", exc);
             }
@@ -3366,6 +3366,7 @@ function composantEnchant(Monstre, composant, localisation, qualite) {
 
 function insertEnchantInfos(tbody) {
     try {
+        //logMZ('insertEnchantInfos_log');
         if (!listeMonstreEnchantement) {
             computeCompoEnchantement();
         }
@@ -3397,7 +3398,7 @@ function insertEnchantInfos(tbody) {
             }
         }
     } catch (exc) {
-        avertissement('Une erreur est survenue (insertEnchantInfos)', null, null, exc);
+        avertissement('Une erreur est survenue (insertEnchantInfos_log)', null, null, exc);
     }
 }
 
@@ -4911,6 +4912,7 @@ function lireEnchantementEncours() {
             a = appendA(li, undefined, undefined, 'Trollcante');
             a.title = 'Préparer une recherche Trollcante';
             a.onclick = function() {
+                // il faut appeler la page Trollcante en POST
                 //console.log('click recherche trollcante', compo, monstre, qualite, localisation);
                 let form = document.createElement('form');
                 form.method = 'POST';
@@ -4928,9 +4930,16 @@ function lireEnchantementEncours() {
             }
         }
 
-        let enchanteurText = cell.querySelectorAll("b")[2].textContent;
-        let enchanteurMatch = enchanteurText.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
-        MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);
+        let bs = cell.querySelectorAll("b");
+        let bDone = false;
+        for (let b of bs) {
+            let enchanteurMatch = b.textContent.match(/(\d+).*X= *([-\d]+).*Y= *([-\d]+).*N= *([-\d]+)/);
+            if (!enchanteurMatch) continue;
+            MY_setValue(`${numTroll}.enchantement.${idEquipement}.enchanteur`, `${enchanteurMatch[1]};${enchanteurMatch[2]};${enchanteurMatch[3]};${enchanteurMatch[4]}`);
+            bDone = true;
+            break;
+        }
+        if (!bDone) logMZ(`lireEnchantementEncours_log impossible de retrouver le lieu pour le trésor ${idEquipement}`);
     }
 
     let liste = MY_getValue(`${numTroll}.enchantement.liste`);
@@ -5733,6 +5742,7 @@ function formateTexte(texte) {
 
 
 function treateGowaps() {
+    //logMZ('treateGowaps_log');
     // On récupère les gowaps possédants des composants
     let tbodys = document.evaluate(
         "//tr[@class='mh_tdpage_fo']/descendant::img[@alt = 'Composant - Spécial']/../../..",
@@ -5773,8 +5783,8 @@ function treateChampi() {
 }
 
 function do_equipgowap() {
-    start_script(undefined, 'do_equipgowap');
-
+    start_script(undefined, 'do_equipgowap_log');
+    //logMZ('do_equipgowap_log');
     treateGowaps();
     treateChampi();
     if (MY_getValue(`${numTroll}.enchantement.liste`) && MY_getValue(`${numTroll}.enchantement.liste`) != "") {
@@ -5782,7 +5792,7 @@ function do_equipgowap() {
         computeEnchantementEquipement(createPopupImage, formateTexte);
     }
 
-    displayScriptTime(undefined, 'do_equipgowap');
+    displayScriptTime(undefined, 'do_equipgowap_log');
 }
 
 /** *******************************************************************************
@@ -12223,9 +12233,9 @@ class MZ_cVueJSON {
     // cette classe contient la mécanique pour initialiser le bouzin au retour des appels JSON de MH
 
     // les scripts souhaitant utiliser les données extraits MZ_cVueJSON doivent fournir une fonction (callback)
-    // par MZ_cVueJSON.registerCallback(mycallback)
+    // par MZ_cVueJSON.registerCallback(mycallback, arg)
     // 	pour ête appelé quand on a reçu les infos de MH (les blocs monstres, trolls, etc. sont remplis et traités)
-    // par MZ_cVueJSON.registerCallbackMZ(mycallback)
+    // par MZ_cVueJSON.registerCallbackMZ(mycallback, arg)
     // 	pour être appelé quand on a reçu les infos de MZ (les niveaux et carac des monstres ont été reçus, enfin les 500 premiers)
     // dans les 2 cas, si les infos ont déjà été reçues au moment de l'appel à registerCallback, la callback est appelée IMMÉDIATEMENT
 
@@ -12270,10 +12280,10 @@ class MZ_cVueJSON {
         MZ_cVueExterne.set2DViewSystem();
         // do_scizEnhanceView();
         MZ_cVueJSON.MH_received = true;
-        for (let callback of MZ_cVueJSON.callbacksFinMH) {
+        for (let oCallback of MZ_cVueJSON.callbacksFinMH) {
             try {
-                if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.allMHLoaded appel de la callback ${callback.name}`);
-                callback();
+                if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.allMHLoaded appel de la callback ${oCallback.callback.name}`);
+                oCallback.callback(oCallback.arg);
             } catch (exc) {
                 logMZ("MZ_cVueJSON_log Erreur à l'appel d'une callback", exc);
             }
@@ -12281,28 +12291,28 @@ class MZ_cVueJSON {
         if (MZ_cVueJSON.MZ_received) MZ_cCDMv2.callMZCallbacks();
     }
 
-    static registerCallback(callback) {
+    static registerCallback(callback, arg) {
         // permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH et MZ est passé, mais PAS le retour AJAX MZ avec les infos sur les monstres)
         // si c'est déjà le cas, la callback est appelée immédiatement
         if (MZ_cVueJSON.MH_received) {
             if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallback_log appel immédiat de la callback ${callback.name}`);
-            callback();
+            callback(arg);
         } else {
             if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallback_log register de la callback ${callback.name}`);
-            MZ_cVueJSON.callbacksFinMH.push(callback);
+            MZ_cVueJSON.callbacksFinMH.push({callback: callback, arg: arg});
         }
     }
 
-    static registerCallbackMZ(callback) {
+    static registerCallbackMZ(callback, arg) {
         // permet aux autres scripts d'être notifiés quand la vue est finie (tout reçu de MH, le retour MZ a été traité et les cibles des missions traitées)
         // utilisé aussi pour rafraichir le filtre des monstres pour niveau, famille et mission
         // si c'est déjà le cas, la callback est appelée immédiatement
         if (MZ_cVueJSON.MZ_received) {
             if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallbackMZ_log appel immédiat de la callback ${callback.name}`);
-            callback();
+            callback(arg);
         } else {
             if (MZ_cVueJSON.debugEnchainements) logMZ(`MZ_cVueJSON.registerCallbackMZ_log register de la callback ${callback.name}`);
-            MZ_cVueJSON.callbacksFinMZ.push(callback);
+            MZ_cVueJSON.callbacksFinMZ.push({callback: callback, arg: arg});
         }
     }
 
@@ -17121,7 +17131,8 @@ function MZdo_hookCompoTanieres() {
 	logMZ('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%', true)));
 */
 
-var MZ_fo_tresor = isPageWithParam({ url: 'MH_Play/Play_a_Action', ids: ['t_fo_equip'] });
+// TODO ne fonctionne pas, à revoir
+var MZ_fo_tresor = isPageWithParam({ url: 'MH_Play/Play_a_Action', sub: 'tresors' });
 try {
     // Détection de la page à traiter
     if (isPage("MH_Play/PlayStart2")) {
