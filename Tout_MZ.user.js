@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.25
+// @version     1.7.26
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.25';
+var MZ_latest = '1.7.26';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -4857,7 +4857,13 @@ function do_enchant() {
 }
 
 function lireEnchantementEncours() {
+    "use strict";
     let enCours = [];
+    /* test isStrict
+    var isStrict = true;
+    eval("var isStrict = false");
+    logMZ(`lireEnchantementEncours_log isStrict=${isStrict}`);
+    /* */
 
     let cells = document.querySelectorAll("td.mh_tdtitre");
     for (let i = 0; i < cells.length; i++) {
@@ -4869,10 +4875,57 @@ function lireEnchantementEncours() {
         MY_setValue(`${numTroll}.enchantement.${idEquipement}.objet`, nomEquipement);
         let components = cell.querySelectorAll("li");
         for (let j = 0; j < components.length; j++) {
-            let { compo, monstre, qualite, localisation } = extractRequiredCompo(components[j]);
-            MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(components[j].textContent)}`);
-            MZ_troogle.addTroogleLink(components[j], `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
-            MZ_troc.addTrocLink(components[j], monstre, compo, qualite);
+            let li = components[j];
+            let { compo, monstre, qualite, localisation } = extractRequiredCompo(li);
+            MY_setValue(`${numTroll}.enchantement.${idEquipement}.composant.${j}`, `${compo};${localisation};${monstre};${qualite};${trim(li.textContent)}`);
+            let a = document.createElement('a');
+            a.innerHTML = li.innerHTML;
+            while (li.firstChild) li.removeChild(li.lastChild);
+            //a.onclick = clickRechercheCompoEnchantementEnTaniere;
+            a.onclick = function() {
+                //console.log('click recherche en tanière', compo, monstre, qualite, localisation);
+                let eNew = document.getElementById('MZ_CompoTanieres');
+                if (eNew) eNew.remove;
+                eNew = document.createElement('table');
+                eNew.id = 'MZ_CompoTanieres';
+                eNew.className = 'mh_tdborder';
+                eNew.style.width = '98%';
+                eNew.style.margin = 'auto';
+                eNew.style.marginTop = '5px';
+                eNew.style.borderTop = 'solid black 1px';
+                this.parentNode.parentNode.appendChild(eNew);
+                MZ_doSearchCompoTanieres(false, {
+                    type: 'Composant',
+                    monstre: monstre,
+                    composant:compo,
+                    qualite: qualite,
+                    });
+            }
+            a.style.color = 'blue';
+            a.style.textDecoration = 'underline';
+            //li.style.cursor = 'pointer';
+            a.title = `Voir mes compos de ${monstre} en tanière`;
+            li.appendChild(a);
+            MZ_troogle.addTroogleLink(li, `${MZ_troogle.SEARCH_MONSTER} ${monstre}`);
+            //a = appendA(li, '/mountyhall/MH_Play/Play_a_Action.php?type=A&id=-8');
+            a = appendA(li, undefined, undefined, 'Trollcante');
+            a.title = 'Préparer une recherche Trollcante';
+            a.onclick = function() {
+                //console.log('click recherche trollcante', compo, monstre, qualite, localisation);
+                let form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/mountyhall/MH_Play/Play_a_Action.php?type=A&id=-8';
+                //appendHidden(form, 'type', 'L');  Ça ne semble pas utile
+                //appendHidden(form, 'id', "-5");
+                //appendHidden(form, 'sub', 'rech');
+                appendHidden(form, 'as_type', 'Composant');
+                appendHidden(form, 'as_nom_base', monstre);
+                appendHidden(form, 'as_composant_morceau', compo);
+                let q = numQualite[qualite];
+                if (q) appendHidden(form, 'as_composant_qualite', q);
+                a.appendChild(form);
+                form.submit();
+            }
         }
 
         let enchanteurText = cell.querySelectorAll("b")[2].textContent;
@@ -7431,28 +7484,6 @@ function atoi(s) {
     }
 
 })(window.MZ_troogle = window.MZ_troogle || {});
-
-
-// Namespace MZ_troc: isoler l'api liée au Troc de l'Hydre
-(function (MZ_troc) {
-
-    const BASE_TROC_URL = 'https://troc.mountyhall.com/'; // search.php
-
-    // Ajoute un lien vers le Troc de l'Hydre
-    // @param node element html (conteneur) dans lequel le lien va être ajouté
-    // @param monster monstre pour lequel le composant est recherché
-    // @param part partie du monstre/composant
-    // @param quality qualité minimum (textuelle, sera convertie via qualiteNum)
-    MZ_troc.addTrocLink = function (node, monster, part, quality) {
-        quality = qualiteNum.indexOf(quality);
-        let url = `${BASE_TROC_URL}search.php?monster=${monster}&part=${part}&qualite=${quality}&q=min`;
-        let link = appendA(node, url);
-        link.target = 'Troc';
-        let img = createImage(`${BASE_TROC_URL}favicon.png`, "Rechercher sur le Troc de l'Hydre", 'max-width: 1.5rem');
-        link.appendChild(img);
-    }
-
-})(window.MZ_troc = window.MZ_troc || {});
 
 
 function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
@@ -16707,20 +16738,21 @@ function MZ_CompoTanieresPrepare(eTable) {
         eTable = document.getElementById('tabTresorInfo');
     }
     if (!eTable) {
-        debugMZ('MZ_CompoTanieresPrepare erreur, impossible de trouver tabTresorInfo');
+        debugMZ('MZ_CompoTanieresPrepare_log erreur, impossible de trouver tabTresorInfo');
+        console.trace();
         return;
     }
     let eDiv = document.getElementById('MZ_CompoTanieres');
     if (eDiv) {
-        debugMZ('MZ_CompoTanieresPrepare div MZ_CompoTanieres déjà là');
+        debugMZ('MZ_CompoTanieresPrepare_log div MZ_CompoTanieres déjà là');
         return;
     }
     let oInfo = MZ_AnalyseInfoHistoTresor(eTable);
     if (oInfo.type != 'Composant') {
-        debugMZ(`MZ_CompoTanieresPrepare div MZ_CompoTanieres pas composant (${oInfo.type})`);
+        debugMZ(`MZ_CompoTanieresPrepare_log div MZ_CompoTanieres pas composant (${oInfo.type})`);
         return;
     }
-    debugMZ('MZ_CompoTanieresPrepare création div MZ_CompoTanieres');
+    debugMZ('MZ_CompoTanieresPrepare_log création div MZ_CompoTanieres');
     let eNew = document.createElement('table');
     eNew.id = 'MZ_CompoTanieres';
     eNew.className = 'mh_tdborder';
@@ -16738,21 +16770,24 @@ function MZ_CompoTanieresPrepare(eTable) {
     eTable.parentNode.insertBefore(eNew, eTable.nextSibling);
 }
 
-function MZ_doSearchCompoTanieres(event) {
+function MZ_doSearchCompoTanieres(event, oInfo) {
     "use strict";
     let eTableTaniere = document.getElementById('MZ_CompoTanieres');
     if (!eTableTaniere) {
-        logMZ('MZ_doSearchCompoTanieres, erreur, pas de MZ_CompoTanieres');
+        logMZ('MZ_doSearchCompoTanieres_log, erreur, pas de MZ_CompoTanieres');
         return;
     }
-    let eTableMH = document.getElementById('tabTresorInfo');
-    if (!eTableMH) {
-        logMZ('MZ_doSearchCompoTanieres, erreur, impossible de trouver tabTresorInfo');
-        return;
+    if (event !== false || !oInfo) {
+        let eTableMH = document.getElementById('tabTresorInfo');
+        if (!eTableMH) {
+            logMZ('MZ_doSearchCompoTanieres_log, erreur, impossible de trouver tabTresorInfo');
+            console.trace();
+            return;
+        }
+        oInfo = MZ_AnalyseInfoHistoTresor(eTableMH);
     }
-    let oInfo = MZ_AnalyseInfoHistoTresor(eTableMH);
     if (oInfo.type != 'Composant') {
-        logMZ('MZ_doSearchCompoTanieres, erreur, pas sur un compo');
+        logMZ('MZ_doSearchCompoTanieres_log, erreur, pas sur un compo');
         return;
     }
     let url = `/mountyhall/MH_Play/Play_a_Action.php?type=L&id=-5&sub=rech`;
@@ -16793,7 +16828,7 @@ function MZ_doSearchCompoTanieres(event) {
         }
         if (msgErreur) displayTitre(msgErreur, 'red');
         if (msgWarning) displayTitre(msgWarning, 'purple');
-        debugMZ(`MZ_doSearchCompoTanieres réponse OK ${JSON.stringify(oCompos)}`);
+        debugMZ(`MZ_doSearchCompoTanieres_log réponse OK ${JSON.stringify(oCompos)}`);
         // tri par nom de compo
         let tabTri = [];
         let nTotal = 0;
@@ -16807,10 +16842,12 @@ function MZ_doSearchCompoTanieres(event) {
                 if (n) nTotal += n;
             }
         }
+        let displayCompo = '';
+        if (!event) displayCompo = oInfo.composant + ' ';
         if (tabTri.length == 0 && !(msgErreur || msgWarning))
-            displayTitre(`Pas de composant de ${oInfo.monstre} en tanière`, 'red');
+            displayTitre(`Pas de composant ${displayCompo}de ${oInfo.monstre} en tanière`, 'red');
         else if (tabTri.length > 0)
-            displayTitre(`Vous avez ${nTotal} composants de ${oInfo.monstre} en tanière`, 'blue');
+            displayTitre(`Vous avez ${nTotal} composants ${displayCompo}de ${oInfo.monstre} en tanière`, 'blue');
         let compoLC = oInfo.composant.toLowerCase();
         if (!tabTri.includes(compoLC)) {
             tabTri.push(compoLC);
@@ -16865,12 +16902,12 @@ function MZ_doSearchCompoTanieres(event) {
                 if (oCompoRep.value) nom = oCompoRep.value.nom;
                 if (!nom && oCompoRep.nom) nom = oCompoRep.nom.value;
                 if (!nom) {
-                    logMZ(`MZ_doSearchCompoTanieres ni nom ni info dans ${JSON.stringify(oCompoRep)}`);
+                    logMZ(`MZ_doSearchCompoTanieres_log ni nom ni info dans ${JSON.stringify(oCompoRep)}`);
                     continue;
                 }
                 let m = nom.match(/> *(.*) d'une* (.*)de Qualité (.*) \[/i);
                 if (!m) {
-                    logMZ(`MZ_doSearchCompoTanieres no match ${oCompoRep.value.nom.value}`);
+                    logMZ(`MZ_doSearchCompoTanieres_log no match ${oCompoRep.value.nom.value}`);
                     continue;
                 }
                 addCompoQualite(m[1], m[3]);
@@ -16884,7 +16921,7 @@ function MZ_doSearchCompoTanieres(event) {
     // fonction de traitement du retour du premier appel (qui reçoit de l'HTML). Ne sert qu'à récupérer le code "cp"
     let callback1 = function (responseDetails) {
         try {
-            // logMZ('MZ_doSearchCompoTanieres readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
+            // logMZ('MZ_doSearchCompoTanieres_log readyState=' + responseDetails.readyState + ', error=' + responseDetails.error + ', status=' + responseDetails.status);
             if (responseDetails.status == 0) return;
             let cp;
             let eStockAppendRows = responseDetails.responseXML.getElementById('stock-append-rows');
@@ -16931,7 +16968,7 @@ function MZ_doSearchCompoTanieres(event) {
             // la suite ne devrait plus être utile au 01/11/2024
             let eDivRecherches = responseDetails.responseXML.getElementById('recherches');
             if (!eDivRecherches) {
-                logMZ('MZ_doSearchCompoTanieres réponse sans DIV recherches');
+                logMZ('MZ_doSearchCompoTanieres_log réponse sans DIV recherches');
                 return;
             }
             let bFound = false;
@@ -16955,7 +16992,7 @@ function MZ_doSearchCompoTanieres(event) {
                         }
                         let m = oTd.textContent.match(/^(.*) d'une* (.*) de Qualité (.*) \[/i);
                         if (!m) {
-                            debugMZ(`MZ_doSearchCompoTanieres no match ${oTd.textContent}`);
+                            debugMZ(`MZ_doSearchCompoTanieres_log no match ${oTd.textContent}`);
                             continue;
                         }
                         addCompoQualite(m[1], m[3]);
