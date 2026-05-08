@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.27
+// @version     1.7.28
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.27';
+var MZ_latest = '1.7.28';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -3446,13 +3446,13 @@ if (typeof isPage != "function") {
     }
 }
 function isPageWithParam(filters, trace) {
-    if (trace) logMZ(`isPageWithParam ${JSON.stringify(filters)}`);
+    if (trace) logMZ(`isPageWithParam_log ${JSON.stringify(filters)}`);
     if (filters.url && window.location.pathname.indexOf(`/mountyhall/${filters.url}`) != 0) return false;
     if (filters.body_id && document.body.id != filters.body_id) return false;
     if (filters.params) {
         let paramsGET = new URLSearchParams(window.location.search);
         for (let param in filters.params) {
-            if (trace) logMZ(`isPageWithParam ${param} get=${paramsGET.get(param)} vFilter=${filters.params[param]}`);
+            if (trace) logMZ(`isPageWithParam_log ${param} get=${paramsGET.get(param)} vFilter=${filters.params[param]}`);
             if (paramsGET.get(param) != filters.params[param]) return false;
         }
     }
@@ -7339,10 +7339,10 @@ function parseMissionSteps() {
             let stepNode = children[1];
             let stepText = stepNode.textContent;
             let validationText = children[2].textContent;
-            debugMZ(`parseMissionSteps stepText=${stepText}, validationText=${validationText}`);
+            debugMZ(`parseMissionSteps_log stepText=${stepText}, validationText=${validationText}`);
             if (0 > validationText.toLowerCase().indexOf("valid")) {
                 // Etape déjà réalisée ou pas encore réalisée
-                debugMZ(`parseMissionSteps pas en cours`);
+                debugMZ(`parseMissionSteps_log pas en cours`);
                 return;
             }
             validationFound = true;
@@ -7350,10 +7350,10 @@ function parseMissionSteps() {
                 let step = handleMonsterStep(stepText);
                 if (step) {
                     MZ_troogle.addTroogleLinkToStep(stepNode, step);
-                    debugMZ(`parseMissionSteps save ${idMission} ${step}`);
+                    debugMZ(`parseMissionSteps_log save ${idMission} ${step}`);
                     saveMission(idMission, step);
                 } else {
-                    debugMZ(`parseMissionSteps step vide`);
+                    debugMZ(`parseMissionSteps_log step vide`);
                     saveMission(idMission, false);
                 }
                 return;
@@ -9073,6 +9073,15 @@ function saveLinks() {
 }
 
 function saveAll() {
+    if (isNaN(parseInt(numTroll))) {
+        numTroll = MY_getValue('NUM_TROLL');
+    }
+    if (isNaN(parseInt(numTroll))) {
+        logMZ('saveAll_log pas ne numéro de Troll, config non sauvée');
+        let bouton = document.getElementById('saveAll');
+        bouton.value = "Erreur : pas de numéro de Troll";
+        return;
+    }
     try {
         let urlIco = document.getElementById('icoMenuIco').value;
         if (urlIco) {
@@ -14019,7 +14028,7 @@ var
     // Caracteristiques
     // Infos troll
     race, niv, datecrea,
-    idguilde, nomguilde,
+    //idguilde, nomguilde,  // non utilisé et faux (valent 0 et '') au 08/05/2026
     // Etats du troll
     fatigue, bmfatigue,
 
@@ -14171,9 +14180,10 @@ function extractionDonnees() {
     datecrea = new Date(StringToDate(strDateCrea));
     debugMZ(`Date creation : ${datecrea}`);
     // Guilde
-    idguilde = getUniqueIntValueBySelector('#descr #idguilde');
-    nomguilde = getUniqueStringValueBySelector('#descr #nomguilde');
-    debugMZ(`Guilde: ${idguilde} ${nomguilde}`);
+    // non utilisé et faux (valent 0 et '') au 08/05/2026
+    //idguilde = getUniqueIntValueBySelector('#descr #idguilde');
+    //nomguilde = getUniqueStringValueBySelector('#descr #nomguilde');
+    //debugMZ(`Guilde: ${idguilde} ${nomguilde}`);
 
     // *******************
     // Cadre "Experience"
@@ -14455,8 +14465,11 @@ function saveProfil() {
     MY_setValue(`${l_numTroll}.position.N`, posN);
     MY_setValue(`${l_numTroll}.race`, race);
     MY_setValue(`${l_numTroll}.niveau`, niv);
-    MY_setValue(`${l_numTroll}.idguilde`, idguilde);
-    MY_setValue(`${l_numTroll}.nomguilde`, nomguilde);
+    // non utilisé et faux (valent 0 et '') au 08/05/2026
+    //MY_setValue(`${l_numTroll}.idguilde`, idguilde);
+    //MY_setValue(`${l_numTroll}.nomguilde`, nomguilde);
+    MY_removeValue(`${l_numTroll}.idguilde`,);
+    MY_removeValue(`${l_numTroll}.nomguilde`);
 }
 
 /* -[functions]            Fonctions modifiant la page                   */
@@ -17131,9 +17144,8 @@ function MZdo_hookCompoTanieres() {
 	logMZ('ret getPVsRestants=' + JSON.stringify(getPVsRestants(pv, '±70%', true)));
 */
 
-// TODO ne fonctionne pas, à revoir
-var MZ_fo_tresor = isPageWithParam({ url: 'MH_Play/Play_a_Action', sub: 'tresors' });
 try {
+    let doHookCompoTaniere = false;
     // Détection de la page à traiter
     if (isPage("MH_Play/PlayStart2")) {
         replaceLinkMHtoMZ();
@@ -17157,6 +17169,7 @@ try {
         MZ_cDiplo.do_diplo();
     } else if (isPage("MH_Play/Play_equipement")) {
         do_equip();
+        doHookCompoTaniere = true;
     } else if (isPage("MH_Play/Play_menu")) {
         do_menu();
     } else if (isPage("MH_Play/Options/Play_o_Interface") || isPage("installPack")) {
@@ -17166,8 +17179,9 @@ try {
         MZ_cSCIZ.init()._overwriteEvents()
     } else if (isPage("View/PJView")) {
         do_pjview();
-    } else if (isPage("MH_Taniere/TanierePJ_o_Stock") || isPage("MH_Comptoirs/Comptoir_o_Stock")) {
+    } else if (isPage("MH_Taniere/TanierePJ_o_Stock")) {
         do_tancompo();
+        doHookCompoTaniere = true;
     } else if (isPage("MH_Play/Play_vue")) {
         do_vue();
     } else if (isPage("MH_Play/Play_news")) {
@@ -17182,12 +17196,14 @@ try {
         do_infomonstre();
     } else if (isPage("MH_Play/Play_e_follo.php")) {
         do_listegowap();
+        doHookCompoTaniere = true;
     } else if (isPage("MH_Lieux/Lieu_Description.php")) {
         do_lieuDescription();
     } else if (isPage("MH_Lieux/Lieu_Teleport")) {
         do_lieuTeleport();
-    } else if (MZ_fo_tresor) {
+    } else if (isPageWithParam({ url: 'MH_Play/Play_a_Action', params: {sub: 'tresors' }})) {
         do_equipgowap();
+        doHookCompoTaniere = true;
     } else if (isPage("MH_Play/Play_mouche")) {
         do_mouches();
     } else if (isPage("MH_Play/Play_BM")) {
@@ -17221,13 +17237,9 @@ try {
     } else if (MY_DEBUG) {
         debugMZ(`page non traitée ${window.location}`);
     }
-    if (isPage('MH_Play/Play_equipement.php') ||
-        isPage('MH_Play/Play_e_follo.php') ||
-        MZ_fo_tresor ||
-        isPage('MH_Taniere/TanierePJ_o_Stock.php') ||
+    if (doHookCompoTaniere ||
         isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -3, service: 13 } }) ||	// compo en tanière
-        isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -5, sub: 'rech' } }) ||	// recherche en tanière
-        isPage('MH_Comptoirs/Comptoir_Recherche.php')
+        isPageWithParam({ url: 'MH_Play/Play_a_Action', params: { type: 'L', id: -5, sub: 'rech' } })   	// recherche en tanière
     ) {
         MZdo_hookCompoTanieres();
     }
