@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.29
+// @version     1.7.30
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.29';
+var MZ_latest = '1.7.30';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -4035,7 +4035,9 @@ function analyseTactique(donneesMonstre, nom) {
  * gestion des missions terminées
  */
 
-function checkLesMimis() {	// supprimer les missions finies de numTroll.MISSIONS
+function checkLesMimis() {
+    // supprimer les missions finies de numTroll.MISSIONS
+    // mettre à jour les cibles
     let liens, obMissions;
     try {
         liens = document.getElementsByTagName('a');
@@ -4048,19 +4050,39 @@ function checkLesMimis() {	// supprimer les missions finies de numTroll.MISSIONS
     let enCours = {};
     for (let a of liens) {
         let href = a.href;
-        debugMZ(`checkLesMimisLog text=${a.innertext}, href=${href}`);
+        debugMZ(`checkLesMimis_log text=${a.innertext}, href=${href}`);
         if (!href) continue;
         if (!href.match(/Play_a_Action/)) continue;
         if (!href.match(/type=A/)) continue;
         if (!href.match(/id=-7/)) continue;
         let num = href.match(/mi=(\d+)/);
         if (!num) continue;
-        if (!num[1]) continue
-        //logMZ(`checkLesMimisLog num=${JSON.stringify(num)}`);
+        if (!num[1]) continue;
+        //logMZ(`checkLesMimis_log num=${JSON.stringify(num)}`);
+        if (enCours[num[1]]) continue;
         enCours[num[1]] = true;
+        debugMZ(enCours);
+        // trouver les cibles de l'étape
+        let txt = a.parentNode.innerText;
+        //logMZ(num[1], txt);
+        m = txt.match(/récompenses+\s+(.*) -[^-]+$/i);
+        //logMZ(m);
+        if (!m || !m[1]) {
+            logMZ(`Erreur à l'analyse de la mission ${num[1]}, texte ${txt}`);
+            continue;
+        }
+        let step = cMZ_Mission.handleAnyStep(m[1]);
+        debugMZ(`step mission ${num[1]}`);
+        debugMZ(step);
+        if (step) {
+            obMissions[num[1]] = step;
+        } else {
+            delete obMissions[num[1]];  // pour MZ, elle n'existe plus car MZ n'apporte pas d'aide sur ce type d'étape (compétence, etc.)
+        }
     }
     //logMZ(`Missions en cours : ${JSON.stringify(enCours)}`);
 
+    // supprimer dans MZ les missions qui n'existent plus
     for (let numMimi in obMissions) {
         if (!enCours[numMimi]) {
             delete obMissions[numMimi];
@@ -7290,152 +7312,152 @@ class MZ_cSCIZ {
 /* TODO
  * Note: nbKills n'est pas géré pour l'instant (voir avec Actions?)
  */
-function isArray(a) {
-    return Boolean(a) && a.constructor === Array;
-}
-
-function saveMission(num, obEtape, trace) {
-    let obMissions;
-    if (MY_getValue(`${numTroll}.MISSIONS`)) {
-        try {
-            // logMZ('JSON MISSION (before) = ' + MY_getValue(numTroll+'.MISSIONS'));
-            obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
-        } catch (exc) {
-            logMZ('Mission parsage', exc);
-            return;
-        }
-    }
-    if (isArray(obMissions)) {
-        obMissions = new Object();
-    }	// corrige certains cas issus d'anciennes versions MZ
-    if (obMissions == undefined) {
-        obMissions = new Object();
-    }	// protection
-    if (trace) logMZ('saveMission_log, obEtape=' + obEtape);	// debug roule
-    if (obEtape) {
-        if (trace) logMZ(`saveMissionLog add mission ${num} ${JSON.stringify(obEtape)}`);
-        obMissions[num] = obEtape;
-    } else if (obMissions[num]) {
-        if (trace) logMZ(`saveMissionLog delete mission ${num}`);
-        delete obMissions[num];
-    } else if (trace) {
-        if (trace) logMZ(`saveMissionLog delete (déjà absente) mission ${num}`);
-    }
-    MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
-    //debugMission réactiver le if (trace)
-    if (trace)
-        logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
-}
-
-function parseMissionSteps() {
-    try {
-        let titreMission = document.getElementsByTagName('h1')[0].innerText;
-        //console.log('parseMissionStepsLog ' + titreMission);
-        let idMission = titreMission.match(/\d+/)[0];
-        let validationFound = false;
-        var $missionLines = $("form tr");
-        $missionLines.each(function () {
-            let $this = $(this);
-            let children = $this.children("td");
-            let stepNode = children[1];
-            let stepText = stepNode.textContent;
-            let validationText = children[2].textContent;
-            debugMZ(`parseMissionSteps_log stepText=${stepText}, validationText=${validationText}`);
-            if (0 > validationText.toLowerCase().indexOf("valid")) {
-                // Etape déjà réalisée ou pas encore réalisée
-                debugMZ(`parseMissionSteps_log pas en cours`);
+class cMZ_Mission {
+    static saveMission(num, obEtape, trace) {
+        let obMissions;
+        if (MY_getValue(`${numTroll}.MISSIONS`)) {
+            try {
+                // logMZ('JSON MISSION (before) = ' + MY_getValue(numTroll+'.MISSIONS'));
+                obMissions = JSON.parse(MY_getValue(`${numTroll}.MISSIONS`));
+            } catch (exc) {
+                logMZ('Mission parsage', exc);
                 return;
             }
-            validationFound = true;
-            if (0 < stepText.indexOf("monstre")) {
-                let step = handleMonsterStep(stepText);
+        }
+        if (Array.isArray(obMissions)) {
+            obMissions = new Object();
+        }	// corrige certains cas issus d'anciennes versions MZ
+        if (obMissions == undefined) {
+            obMissions = new Object();
+        }	// protection
+        if (trace) logMZ('saveMission_log, obEtape=' + obEtape);	// debug roule
+        if (obEtape) {
+            if (trace) logMZ(`saveMissionLog add mission ${num} ${JSON.stringify(obEtape)}`);
+            obMissions[num] = obEtape;
+        } else if (obMissions[num]) {
+            if (trace) logMZ(`saveMissionLog delete mission ${num}`);
+            delete obMissions[num];
+        } else if (trace) {
+            if (trace) logMZ(`saveMissionLog delete (déjà absente) mission ${num}`);
+        }
+        MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
+        //debugMission réactiver le if (trace)
+        if (trace)
+            logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
+    }
+
+    static parseMissionSteps() {
+        try {
+            let titreMission = document.getElementsByTagName('h1')[0].innerText;
+            //console.log('parseMissionStepsLog ' + titreMission);
+            let idMission = titreMission.match(/\d+/)[0];
+            let validationFound = false;
+            var $missionLines = $("form tr");
+            $missionLines.each(function () {
+                let $this = $(this);
+                let children = $this.children("td");
+                let stepNode = children[1];
+                let stepText = stepNode.textContent;
+                let validationText = children[2].textContent;
+                debugMZ(`parseMissionSteps_log stepText=${stepText}, validationText=${validationText}`);
+                if (0 > validationText.toLowerCase().indexOf("valid")) {
+                    // Etape déjà réalisée ou pas encore réalisée
+                    debugMZ(`parseMissionSteps_log pas en cours`);
+                    return;
+                }
+                validationFound = true;
+                let step = cMZ_Mission.handleAnyStep(stepText);
                 if (step) {
-                    MZ_troogle.addTroogleLinkToStep(stepNode, step);
-                    debugMZ(`parseMissionSteps_log save ${idMission} ${step}`);
-                    saveMission(idMission, step);
+                    if (step.recherche) MZ_troogle.addTroogleLinkToStep(stepNode, step);
+                    debugMZ(`parseMissionSteps_log save ${idMission}`);
+                    debugMZ(step);
+                    cMZ_Mission.saveMission(idMission, step);
                 } else {
                     debugMZ(`parseMissionSteps_log step vide`);
-                    saveMission(idMission, false);
+                    cMZ_Mission.saveMission(idMission, false);
                 }
-                return;
+            });
+            if (!validationFound) {
+                // S'il n'y a plus d'étape en cours (=mission finie), on supprime
+                //debugMission repasser logMZ => debugMZ
+                logMZ('parseMissionSteps_log, la mission semble terminée');
+                cMZ_Mission.saveMission(idMission, false);
             }
-            if (0 < stepText.indexOf("du pouvoir")) {
-                let step = handlePowerStep(stepText);
-                saveMission(idMission, step);
-                return;
-            }
-            debugMZ(`Texte de mission non traité:${stepText}`);
-        });
-        if (!validationFound) {
-            // S'il n'y a plus d'étape en cours (=mission finie), on supprime
-            //debugMission repasser logMZ => debugMZ
-            logMZ('parseMissionSteps_log, la mission semble terminée');
-            saveMission(idMission, false);
+        } catch (e) {
+            warnMZ("Problème dans le traitement d'étape de mission", e);
         }
-    } catch (e) {
-        warnMZ("Problème dans le traitement d'étape de mission", e);
-    }
-}
-
-function handlePowerStep(text) {
-    let powerExtract = /du pouvoir (.*)/i;
-    let pouvoir = powerExtract.exec(text)[1];
-    pouvoir = removeEnclosingSimpleCote(pouvoir);
-    return {
-        type: 'Pouvoir',
-        pouvoir: pouvoir,
-        libelle: text
-    };
-}
-
-function handleMonsterStep(text) {
-    let mission = {
-        type: 'Niveau',
-        niveau: 0,
-        mod: 'plus',
-        mundidey: text.indexOf('Mundidey') != -1,
-        libelle: text,
-        recherche: MZ_troogle.SEARCH_MONSTER
-    };
-
-    let bFound = false;
-    //let raceExtract = /de la race des (.*)/i;
-    let match = (/de la race des (.*)/i).exec(text);
-    if (match) {
-        mission.type = 'Race'
-        let race = removeEnclosingSimpleCote(trim(match[1]));
-        mission.recherche += ` ${race}`;
-        mission.race = race;
-        bFound = true;
     }
 
-    //let familyExtract = /de la famille (.*)/i;
-    match = (/de la famille des (.*)/i).exec(text);
-    if (!match)
-        match = (/de la famille (.*)/i).exec(text);
-    if (match) {
-        mission.type = 'Famille'
-        let famille = removeEnclosingSimpleCote(trim(match[1]));
-        mission.recherche += `:${famille}`;
-        mission.famille = famille;
-        bFound = true;
+    static handleAnyStep(stepText) {
+        if (0 < stepText.indexOf("monstre")) {
+            return cMZ_Mission.handleMonsterStep(stepText);
+        }
+        if (0 < stepText.indexOf("du pouvoir")) {
+            return cMZ_Mission.handlePowerStep(stepText);
+        }
+        debugMZ(`Texte de mission non traité:${stepText}`);
     }
 
-    let minLevelExtract = /niveau.* (\d+) au moins/i;
-    match = minLevelExtract.exec(text);
-    if (match) {
-        mission.niveau = atoi(match[1]);
-        bFound = true;
+    static handlePowerStep(text) {
+        let powerExtract = /du pouvoir (.*)/i;
+        let pouvoir = powerExtract.exec(text)[1];
+        pouvoir = removeEnclosingSimpleCote(pouvoir);
+        return {
+            type: 'Pouvoir',
+            pouvoir: pouvoir,
+            libelle: text
+        };
     }
 
-    var levelRangeExtract = /niveau.* (\d+) +\+ ou - +(\d+)/i;
-    match = levelRangeExtract.exec(text);
-    if (match) {
-        mission.niveau = atoi(match[1]);
-        mission.mod = atoi(match[2]);
-        bFound = true;
+    static handleMonsterStep(text) {
+        let mission = {
+            type: 'Niveau',
+            niveau: 0,
+            mod: 'plus',
+            mundidey: text.indexOf('Mundidey') != -1,
+            libelle: text,
+            recherche: MZ_troogle.SEARCH_MONSTER
+        };
+
+        let bFound = false;
+        //let raceExtract = /de la race des (.*)/i;
+        let match = (/de la race des (.*)/i).exec(text);
+        if (match) {
+            mission.type = 'Race'
+            let race = removeEnclosingSimpleCote(trim(match[1]));
+            mission.recherche += ` ${race}`;
+            mission.race = race;
+            bFound = true;
+        }
+
+        //let familyExtract = /de la famille (.*)/i;
+        match = (/de la famille des (.*)/i).exec(text);
+        if (!match)
+            match = (/de la famille (.*)/i).exec(text);
+        if (match) {
+            mission.type = 'Famille'
+            let famille = removeEnclosingSimpleCote(trim(match[1]));
+            mission.recherche += `:${famille}`;
+            mission.famille = famille;
+            bFound = true;
+        }
+
+        let minLevelExtract = /niveau.* (\d+) au moins/i;
+        match = minLevelExtract.exec(text);
+        if (match) {
+            mission.niveau = atoi(match[1]);
+            bFound = true;
+        }
+
+        var levelRangeExtract = /niveau.* (\d+) +\+ ou - +(\d+)/i;
+        match = levelRangeExtract.exec(text);
+        if (match) {
+            mission.niveau = atoi(match[1]);
+            mission.mod = atoi(match[2]);
+            bFound = true;
+        }
+        if (bFound) return mission;
     }
-    if (bFound) return mission;
 }
 
 // un ParseInt un peu plus résistant aux Strings un peu loose
@@ -7503,7 +7525,7 @@ function removeEnclosingSimpleCote(x) {	// Roule 29/03/2019
 
 function do_mission() {
     start_script(60, 'do_mission_log');
-    parseMissionSteps();
+    cMZ_Mission.parseMissionSteps();
     displayScriptTime(undefined, 'do_mission_log');
 }
 
