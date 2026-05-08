@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.28
+// @version     1.7.29
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.28';
+var MZ_latest = '1.7.29';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -3018,7 +3018,7 @@ function createCDMTable(id, nom, donneesMonstre, closeFunct) {	// rend un Élém
 
         return table;
     } catch (exc) {
-        avertissement('Une erreur est survenue (createCDMTable)', null, null, exc);
+        avertissement('Une erreur est survenue (createCDMTable_log)', null, null, exc);
     }
 }
 
@@ -6260,6 +6260,7 @@ var g_nomMonstre = '', g_idMonstre = -1;
 // let tbody;
 
 function traiteMonstre() {
+    // appelé à l'affichage du "profil" d'un monstres
     let texte = "";
     try {
         let nodeTitre = document.evaluate(
@@ -6269,7 +6270,7 @@ function traiteMonstre() {
         if (texte == "" || texte.includes("existe pas")) {
             let tabEventDescription = document.getElementsByClassName('mh_tdpage MORT');
             if (tabEventDescription.length == 0) {
-                logMZ('traiteMonstre, impossible de trouver le nom du monstre');
+                logMZ('traiteMonstre_log, impossible de trouver le nom du monstre');
                 return;
             }
             for (let event of tabEventDescription) {
@@ -6279,17 +6280,17 @@ function traiteMonstre() {
                 }
                 let eltNom = monstreMort[0];
                 texte = eltNom.textContent;
-                // logMZ('traiteMonstre, nom sans id=' + texte);
+                // logMZ('traiteMonstre_log, nom sans id=' + texte);
                 // find next textElement
                 let eCurrent = eltNom;
                 while (eCurrent = eCurrent.parentNode) {
-                    // logMZ('traiteMonstre, eCurrent.nodeName=' + eCurrent.nodeName);
+                    // logMZ('traiteMonstre_log, eCurrent.nodeName=' + eCurrent.nodeName);
                     let eSibling = eCurrent.nextSibling;
                     if (!eSibling) {
-                        // logMZ('traiteMonstre, pas de sibling');
+                        // logMZ('traiteMonstre_log, pas de sibling');
                         continue;
                     }
-                    // logMZ('traiteMonstre, eSibling.nodeName=' + eSibling.nodeName + ', texte=' + eSibling.textContent);
+                    // logMZ('traiteMonstre_log, eSibling.nodeName=' + eSibling.nodeName + ', texte=' + eSibling.textContent);
                     if (eSibling.nodeType != 3) {
                         continue;
                     }
@@ -6298,9 +6299,9 @@ function traiteMonstre() {
                 }
             }
         }
-        // logMZ('traiteMonstre, nom=' + texte);
+        // logMZ('traiteMonstre_log, nom=' + texte);
     } catch (exc) {
-        logMZ('traiteMonstre', exc);
+        logMZ('traiteMonstre_log', exc);
         return;
     }
 
@@ -6314,7 +6315,7 @@ function traiteMonstre() {
         m = texte.match(/\((\d+)\)/);
     }
     if (!m || m.length == 0) {
-        logMZ("traiteMonstre, impossible de trouver l'id du monstre dans le nom " + texte);
+        logMZ("traiteMonstre_log, impossible de trouver l'id du monstre dans le nom " + texte);
         return;
     }
     g_idMonstre = m[1];
@@ -6360,7 +6361,7 @@ function traiteMonstre() {
             insertBefore(nodeInsert, table);
             return true;
         } catch (exc) {
-            logMZ('traiteMonstre onload', exc);
+            logMZ('traiteMonstre_log onload', exc);
             return true;
         }
     }
@@ -11951,7 +11952,7 @@ class MZ_cVueExterne {
 
 /* [functions] Gestion de l'AFFICHAGE des CdMs */
 // utilisé en vue V2
-function basculeCDM2(side = Side.RIGHT) {
+function basculeCDM2() {
     // = Bascule l'affichage des popups CdM
     let indx = this.getAttribute('data-indxMZ');
     let oMonstre = MZ_cVueJSON.oMonstres.objets[indx];
@@ -11960,7 +11961,7 @@ function basculeCDM2(side = Side.RIGHT) {
         return;
     }
     if (!document.getElementById(`popupCDM${oMonstre.id}`)) {
-        afficherCDM2(oMonstre.infoMZ, side);
+        afficherCDM2(oMonstre.infoMZ, Side.RIGHT);
     } else {
         cacherPopupCDM(`popupCDM${oMonstre.id}`);
     }
