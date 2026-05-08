@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.30
+// @version     1.7.31
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.30';
+var MZ_latest = '1.7.31';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -12060,6 +12060,8 @@ function afficherCDM2(donneesMonstre, side) {
     table.style.zIndex = 10;
     // let topY = +(300+(30*MZ_cCDMv2.setup.yIndex))%(30*Math.floor((window.innerHeight-400)/30));
     let lateralPosition = `${Number(window.innerWidth - 365)}px`;
+    // serrer à droite en mode smartphone car ça déborde souvent
+    if (!isDesktopView()) lateralPosition = `${Number(window.innerWidth - 305)}px`;
     table.style[side === Side.RIGHT ? 'left' : 'right'] = lateralPosition;
     table.style.width = '300px';
 
