@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.31
+// @version     1.7.32
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.31';
+var MZ_latest = '1.7.32';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -4089,11 +4089,17 @@ function checkLesMimis() {
             logMZ(`La mission ${numMimi} semble être finie`);
         }
     }
-    //logMZ(`Liste des missions : ${JSON.stringify(obMissions)}`);
+    //logMZ(`checkLesMimis_log : Liste des missions :`);
+    //logMZ(obMissions);
     MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
 }
 
 function do_mission_liste() {
+    // on passe ici pour toutes les pages de mission (liste, équipiers, etc.
+    // mais il ne faut lister les missions que dans la page des missions (il n'y a pas d'argument GET "mi")
+    let paramsGET = new URLSearchParams(window.location.search);
+    //logMZ(paramsGET.get('mi'));
+    if (paramsGET.get('mi') != null) return;
     checkLesMimis();
 }
 
@@ -7342,8 +7348,10 @@ class cMZ_Mission {
         }
         MY_setValue(`${numTroll}.MISSIONS`, JSON.stringify(obMissions));
         //debugMission réactiver le if (trace)
-        if (trace)
-            logMZ(`saveMission_log JSON MISSION (after) = ${MY_getValue(numTroll+'.MISSIONS')}`);
+        if (trace) {
+            logMZ(`saveMission_log JSON MISSION (after)`);
+            logMZ(obMissions);
+        }
     }
 
     static parseMissionSteps() {
