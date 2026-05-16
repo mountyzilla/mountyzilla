@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.49
+// @version 2.50
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -1797,6 +1797,8 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 		}
 		function calc_inter(x0,y0,px,py,tmax) {
+            // px et py (pas) valent -1, 0 ou 1
+            // tmax est la "longueur" (max de deltaX et deltaY
 			let res = false, a = 0, b = 0, c = 0, delta = 0, t0 = 0, t1 = 0;
 			//window.console.log('verif collision gowap-trou [x0=' + x0 + ',y0=' + y0 + ', px=' + px + ', py=' + py + ', tmax=' + tmax + ']');
 
@@ -1822,6 +1824,20 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			return res;
 		}
+        static TJ_isTrou(x, y, n) {
+            if (y === undefined) {
+                y = x.y;
+                n = x.n;
+                x = x.x;
+            }
+            for(let trou of position_trous) {
+                if (n < trou[4]) continue;  // trop bas
+                let dx = x - trou[0];
+                let dy = y - trou[1];
+                if ((dx*dx + dy*dy) < trou[2]) return true; // dans le rayon
+            }
+            return false;
+        }
 		function format_tps(tps) {
 			let jours = Math.floor(tps/1440);
 			let heures = tps%1440;

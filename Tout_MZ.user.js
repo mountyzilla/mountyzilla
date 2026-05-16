@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.32
+// @version     1.7.33
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.32';
+var MZ_latest = '1.7.33';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -6219,6 +6219,19 @@ function MZ_upgradeVueSuivants() {
                     eDiv.style.whiteSpace = 'nowrap';
                     eDiv.style.display = 'inline-block';
                     eDiv.appendChild(document.createTextNode(ordre));
+                    try {
+                         if (ordre.includes('Déplacement') || ordre.includes('Se secouer')) {
+                             let m = ordre.match(/x=(-*\d+).*y=(-*\d+).*n=(-*\d+).*/i);
+                             if (m) {
+                                 if (MZ_cHall.isTrou(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]))) {
+                                     eDiv.style.color = 'red';
+                                     eDiv.title = 'TROU !';
+                                 }
+                             }
+                         }
+                   } catch(exc) {
+                        console.log('MZ_upgradeVueSuivants_log', exc);
+                    }
                     if (eA.firstChild) eA.appendChild(document.createTextNode(' / '));
                     eA.appendChild(eDiv);
                 }
@@ -7537,57 +7550,6 @@ function do_mission() {
     displayScriptTime(undefined, 'do_mission_log');
 }
 
-/** x~x Données sur les trous de météorites ---------------------------- */
-
-var petitsTrous = {
-    '-52;57': true,
-    '55;70': true,
-    '64;70': true,
-    '12;-15': true,
-    '30;-52': true,
-    '48;-39': true
-};
-
-var grosTrous = {
-    '-35;65': true,
-    '-13;73': true,
-    '-64;9': true,
-    '-35;15': true,
-    '5;32': true,
-    '10;64': true,
-    '21;36': true,
-    '46;52': true,
-    '74;32': true,
-    '-71;-7': true,
-    '-67;-37': true,
-    '-60;-32': true,
-    '-51;-22': true,
-    '-36;-51': true,
-    '5;-49': true
-};
-
-var centreCarmine_X = 56.5;
-var centreCarmine_Y = 23.5;
-var rayonCarmine = 8.7;
-
-function isTrou(x, y, n) {
-    if (petitsTrous[`${x};${y}`]) {
-        return n < 0 && n > -60;
-    }
-    if (grosTrous[`${x};${y}`] ||
-        grosTrous[`${x - 1};${y}`] ||
-        grosTrous[`${x};${y}${1}`] ||
-        grosTrous[`${x - 1};${y}${1}`]) {
-        return n < 0 && n > -70;
-    }
-    if (Math.sqrt(
-        Math.pow(x - centreCarmine_X, 2) + Math.pow(y - centreCarmine_Y, 2)
-    ) <= rayonCarmine) {
-        return n < 0 && n > -100;
-    }
-    return false;
-}
-
 /** x~x Gestion des DEs ------------------------------------------------ */
 
 function validateDestination() {
@@ -7627,7 +7589,7 @@ function validateDestination() {
         let this_dx = Math.min(dx, i);
         let this_dy = Math.min(dy, i);
         let this_dn = Math.min(dn, i);
-        if (isTrou(x + sx * this_dx, y + sy * this_dy, n + sn * this_dn)) {
+        if (MZ_cHall.isTrou(x + sx * this_dx, y + sy * this_dy, n + sn * this_dn)) {
             return window.confirm(
                 `La voix de  mini TilK (n°36216) résonne dans votre tête :
 Vous allez tomber dans un trou de météorite.
@@ -7676,7 +7638,7 @@ function validateTPDestination() {
                     for (let y = 0; y <= 2; y++) {
                         for (let signN = -1; signN <= 1; signN = signN + 2) {
                             for (let n = 0; n <= 1; n++) {
-                                if (isTrou(
+                                if (MZ_cHall.isTrou(
                                     pos_x + signX * x, pos_y + signY * y, Math.min(-1, pos_n + signN * n)
                                 )) {
                                     nbtrous++;
@@ -16436,6 +16398,118 @@ function testBoolLocalStorage() {
     let y = GM_getValue('654654897894654654');
     logMZ(`recup GM inconnu => ${typeof y}`);	// undefined
     logMZ(`égalité ? => ${x == y}`);	// les deux sont "égaux" avec l'opérateur == (pas avec ===, bien sûr)
+}
+
+class MZ_cHall {    // encapsule les données du Hall
+    static trous = [
+        // centre (x, y), carré du rayon, rayon, profondeur
+        [-70.5, -7.5, 2, 1.5, -69],
+        [-66.5, -37.5, 2, 1.5, -69],
+        [-63.5, 8.5, 2, 1.5, -69],
+        [-59.5, -32.5, 2, 1.5, -69],
+        [-52, 57, 0.25, 0.8, -59],
+        [-50.5, -22.5, 2, 1.5, -69],
+        [-35.5, -51.5, 2, 1.5, -69],
+        [-34.5, 14.5, 2, 1.5, -69],
+        [-34.5, 64.5, 2, 1.5, -69],
+        [-11.5, 72.5, 2, 1.5, -69],
+        [5.5, -49.5, 2, 1.5, -69],
+        [5.5, 31.5, 2, 1.5, -69],
+        [10.5, 63.5, 2, 1.5, -69],
+        [12, -15, 0.25, 0.8, -59],
+        [21.5, 35.5, 2, 1.5, -69],
+        [30, -52, 0.25, 0.8, -59],
+        [46.5, 51.5, 2, 1.5, -69],
+        [48, -39, 0.25, 0.8, -59],
+        [55, 70, 0.25, 0.8, -59],
+        [56.5, 23.5, 75, 8.7, -99], // carmine
+        [64, 70, 0.25, 0.8, -59],
+        [74.5, 31.5, 2, 1.5, -69],
+    ];
+
+    static isTrou(x, y, n) {
+        // possibilité de passer un object x, y, n
+        if (y === undefined) {
+            y = x.y;
+            n = x.n;
+            x = x.x;
+        }
+        for(let trou of MZ_cHall.trous) {
+            if (n < trou[4]) continue;  // trop bas
+            let dx = x - trou[0];
+            let dy = y - trou[1];
+            if ((dx*dx + dy*dy) < trou[2]) return true; // dans le rayon
+        }
+        return false;
+    }
+
+    /* à garder pour test en cas de suspicion de bug
+    static autotest_trou() {
+        // Trou
+        for (let pos of [
+            {x:55, y:70, n:-2},
+            {x:55, y:70, n:-59},
+
+            {x:74, y:32, n:-69},
+            {x:75, y:32, n:-69},
+            {x:74, y:31, n:-69},
+            {x:75, y:31, n:-69},
+
+            {x:55, y:32, n:-99},
+            {x:58, y:32, n:-99},
+            {x:60, y:31, n:-99},
+            {x:63, y:29, n:-99},
+            {x:65, y:25, n:-99},
+            {x:65, y:22, n:-99},
+            {x:58, y:15, n:-99},
+            
+        ]) {
+            if (MZ_cHall.isTrou(pos)) continue;
+            console.log("N'est pas trou, devrait l'être", pos);
+        }
+        // Pas trou
+        for (let pos of [
+            {x:55, y:71, n:-2},
+            {x:55, y:70, n:-60},
+            {x:54, y:69, n:-59},
+            {x:54, y:70, n:-59},
+            {x:54, y:71, n:-59},
+            {x:56, y:69, n:-59},
+            {x:56, y:70, n:-59},
+            {x:56, y:71, n:-59},
+            {x:55, y:71, n:-59},
+            {x:55, y:69, n:-59},
+
+            {x:74, y:32, n:-70},
+            {x:73, y:30, n:-69},
+            {x:73, y:31, n:-69},
+            {x:73, y:32, n:-69},
+            {x:73, y:33, n:-69},
+            {x:74, y:33, n:-69},
+            {x:75, y:33, n:-69},
+            {x:74, y:30, n:-69},
+            {x:75, y:30, n:-69},
+            {x:76, y:30, n:-69},
+            {x:76, y:31, n:-69},
+            {x:76, y:32, n:-69},
+            {x:76, y:33, n:-69},
+
+            {x:55, y:33, n:-99},
+            {x:54, y:32, n:-99},
+            {x:59, y:32, n:-99},
+            {x:58, y:33, n:-99},
+            {x:61, y:31, n:-99},
+            {x:64, y:29, n:-99},
+            {x:66, y:25, n:-99},
+            {x:66, y:22, n:-99},
+            {x:59, y:15, n:-99},
+        ]) {
+            if (!MZ_cHall.isTrou(pos)) continue;
+            console.log("Est trou, ne devrait pas l'être", pos);
+        }
+        console.log('autotest_trou_log fini');
+    }
+    */
 }
 
 /* --------------------------------- Création liste trolligion --------------------------------- */
