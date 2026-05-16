@@ -7,7 +7,7 @@
 // @include */mountyhall/MH_Play/Play_vue.php*
 // @include */mountyhall/MH_Lieux/Lieu_Description.php*
 // @downloadURL https://greasyfork.org/scripts/23887-trajet-des-gowap-mkii/code/Trajet%20des%20gowap%20MkII.user.js
-// @version 2.50
+// @version 2.51
 // @description Trajet des gowaps
 // @grant GM_getValue
 // @grant GM_setValue
@@ -1824,20 +1824,6 @@ try { // ajout par Vapulabehemot (82169) le 30/08/2013
 			}
 			return res;
 		}
-        static TJ_isTrou(x, y, n) {
-            if (y === undefined) {
-                y = x.y;
-                n = x.n;
-                x = x.x;
-            }
-            for(let trou of position_trous) {
-                if (n < trou[4]) continue;  // trop bas
-                let dx = x - trou[0];
-                let dy = y - trou[1];
-                if ((dx*dx + dy*dy) < trou[2]) return true; // dans le rayon
-            }
-            return false;
-        }
 		function format_tps(tps) {
 			let jours = Math.floor(tps/1440);
 			let heures = tps%1440;
