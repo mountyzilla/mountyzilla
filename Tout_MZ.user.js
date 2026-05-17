@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.34
+// @version     1.7.35
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.34';
+var MZ_latest = '1.7.35';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -15711,11 +15711,14 @@ function MZ_texteAideSortileges(sort) {
     } else if (sort.indexOf('augmentation') != -1 && sort.indexOf('esquive') != -1) {
         let txtNth = `<div>1<sup>ere</sup>`;
         texte = '';
+        let D_esq= parseInt(MY_getValue(`${numTroll}.caracs.esquive`));
+        let horsFragil = ' hors fragilisation';
         let buff = 0;  // en %
         for (let i=1; i <= 6; i++) {
             buff += Math.floor(coefDecumul(i) * 20);
-            texte += `${txtNth} AdE : Esquive +${i} +${buff}% (+${Math.floor(esq * (1+buff/100) + i)} hors fragilisation)</div>`;
+            texte += `${txtNth} AdE : Esquive +${i} D +${buff}% (+${Math.floor(D_esq * buff/100 + i)} D${horsFragil})</div>`;
             txtNth = `<div style="font-style: italic;">${i+1}<sup>e</sup>`;
+            horsFragil = '';
         }
     } else if (sort.indexOf("augmentation des dégâts") != -1) {
         let categoriesAdD = {
