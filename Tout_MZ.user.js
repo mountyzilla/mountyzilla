@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.35
+// @version     1.7.36
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.35';
+var MZ_latest = '1.7.36';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -11866,6 +11866,7 @@ class MZ_cVueExterne {
             MZ_cVueJSON.oCenotaphes,
         ]) {
             //logMZ(`openVueCube section ${oVueJSON.nomBase}`);
+            if (!oVueJSON.objets) continue; // protection Naplumangé et autre Océbo
             let oSection = [];
             for (let oLigneVue of oVueJSON.objets) {
                 //logMZ(`openVueCube ligne ${oLigneVue.id}`);
@@ -15712,11 +15713,12 @@ function MZ_texteAideSortileges(sort) {
         let txtNth = `<div>1<sup>ere</sup>`;
         texte = '';
         let D_esq= parseInt(MY_getValue(`${numTroll}.caracs.esquive`));
-        let horsFragil = ' hors fragilisation';
+        let horsFragil = ', hors fragilisation';
         let buff = 0;  // en %
         for (let i=1; i <= 6; i++) {
             buff += Math.floor(coefDecumul(i) * 20);
-            texte += `${txtNth} AdE : Esquive +${i} D +${buff}% (+${Math.floor(D_esq * buff/100 + i)} D${horsFragil})</div>`;
+            nbD = Math.floor(D_esq * buff/100 + i);
+            texte += `${txtNth} AdE : Esquive +${i} D6 +${buff}% (+${nbD} D6, soit +${Math.floor(nbD * 3.5)}${horsFragil})</div>`;
             txtNth = `<div style="font-style: italic;">${i+1}<sup>e</sup>`;
             horsFragil = '';
         }
