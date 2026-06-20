@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.36
+// @version     1.7.37
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.36';
+var MZ_latest = '1.7.37';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -3611,7 +3611,7 @@ function chanceEsquiveParfaite(a, d, ba = 0, bd = 0) {
             }
         }
     }
-    // logMZ('chanceEsquiveParfaite, att=' + a + ', esq=' + d + ', ba=' + ba + ', bd=' + bd + ', win=' + win + ', los=' + los); // roule debug
+    // logMZ(`chanceEsquiveParfaite_log, att=${a}D, esq=${d}D, ba=${ba}, bd=${bd}, win=${win}, los=${los} => ${Math.round(100 * win / (win + los))}`);
     return Math.round(100 * win / (win + los));
 }
 
@@ -3679,8 +3679,8 @@ function getAnalyseTactique(id, nom) {
     if (donneesMonstre == null) {
         return;
     }
-    let array = analyseTactique(donneesMonstre, nom);	// rend tableau de tableaux avec  NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure
-    // logMZ('getAnalyseTactique ' + JSON.stringify(array));
+    let array = analyseTactique(donneesMonstre, nom);	// rend tableau de tableaux avec  NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure, pourcentMaitrise
+    // logMZ(`getAnalyseTactique ${JSON.stringify(array)}`);
     if (array == null) {
         return "";
     }
@@ -3690,10 +3690,12 @@ function getAnalyseTactique(id, nom) {
     let str = `<table class='${ui_table}' border='0' cellspacing='1' cellpadding='4' style='background-color:rgb(229, 222, 203);outline: thin solid;${ui_size}'><tr class='${ui_tr}'><td>Attaque</td><td>Esq. Parfaite</td><td>Touché</td><td>Critique</td><td>Dégâts</td></tr>`;
     let i;
     for (i = 0; i < array.length; i++) {
-        if (array[i][1] == 100 && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
+        if (array[i][1] == array[i][7] && i > 0) {	// si esquive parfaite du Trõll sur le Monstre est assurée pour cette frappe
+            // logMZ(`getAnalyseTactique pas le ligne pour ${JSON.stringify(array[i])}, esquive parfaite=${array[i][1]}`);
             needAutres = true;
-            break;
+            continue;
         }
+        // logMZ(`getAnalyseTactique on garde ${JSON.stringify(array[i])}, esquive parfaite=${array[i][1]}`);
         if (i == 1 && array[i][4] > 0) {	// l'attaque normale du Trõll sur le monstre fait des dégâts => gras
             str = `${str}<tr class=mh_tdpage><td><b>${array[i][0]}</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][1])}%</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][2])}%</b></td><td><b>${getTexteAnalyse(array[i][5], array[i][3])}%</b></td><td><b>${getTexteAnalyse(array[i][6], array[i][4])}</b></td></tr>`;
         } else if (i == 0) {	// attaque du monstre sur le Trõll => italique
@@ -3739,7 +3741,7 @@ function MZ_carac_build_nb_cmd_msg(donneesMonstre) {
 }
 
 // rend un tableau (un par attaque du Trõll ou du monstre) de tableaux contenant:
-//	NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure
+//	NomAttaque,chanceDEsquiveParfaite,chanceDeTouche,chanceDeCritique,degats,modificateurEsquive,modificateurArmure,pourcentageMaitrise
 function analyseTactique(donneesMonstre, nom) {
     try {
         let listeAttaques = [];
@@ -3771,7 +3773,7 @@ function analyseTactique(donneesMonstre, nom) {
             return null;
         }
 
-        debugMZ(`analyseTactique nom=${nom} ${JSON.stringify(donneesMonstre)}`);
+        debugMZ(`analyseTactique_log nom=${nom} ${JSON.stringify(donneesMonstre)}`);
         let coeffSeuil = 0.95;
         // calcul de modificateurEsquive, modificateurArmure, modificateurMagie, modificateurEsquiveM, modificateurArmureM, pasDeSR, esqM, attM, armM_mag, armM_tot, degM;
         if (donneesMonstre.esq) {
@@ -3855,7 +3857,7 @@ function analyseTactique(donneesMonstre, nom) {
         //	+ ', chanceDEsquiveParfaite=' + chanceDEsquiveParfaite + ', chanceDeTouche=' + chanceDeTouche + ', chanceDeCritique=' + chanceDeCritique);
         let degats = ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmp + degbmm - armM_tot, 1)) / 100;
         // str += "Attaque normale : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(((chanceDeTouche-chanceDeCritique)*Math.max(deg*2+degbmp+degbmm-arm,1)+chanceDeCritique*Math.max(Math.floor(deg*1.5)*2+degbmp+degbmm-arm,1))/100);
-        listeAttaques.push(new Array("Attaque normale", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
+        listeAttaques.push(new Array("Attaque normale", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure, 100));
         if (getSortComp("Vampirisme") > 0) {
             let pour = getSortComp("Vampirisme");
             chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(Math.floor(deg * 2 / 3), esqM, attbmm, 0) * pour / 100);
@@ -3863,7 +3865,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(chanceCritique(Math.floor(deg * 2 / 3), esqM, attbmm, 0) * pour / 100);
             degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm - armM_mag, 1))) / 100;
             // str += "\nVampirisme : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Vampirisme", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
+            listeAttaques.push(new Array("Vampirisme", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie, pour));
         }
         if (getSortComp("Siphon des âmes") > 0) {
             let pour = getSortComp("Siphon des âmes");
@@ -3871,7 +3873,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm, 0) * pour / 100);
             chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm, 0) * pour / 100);
             degats = ((chanceDeTouche - chanceDeCritique) * Math.max(reg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(reg * 1.5) * 2 + degbmm - armM_mag, 1)) / 100;
-            listeAttaques.push(new Array("Siphon des âmes", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
+            listeAttaques.push(new Array("Siphon des âmes", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie, pour));
         }
         if (getSortComp("Botte Secrète") > 0) {
             let pour = getSortComp("Botte Secrète");
@@ -3880,7 +3882,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(chanceCritique(Math.floor(2 * att / 3), esqM, Math.floor((attbmp + attbmm) / 2), 0) * pour / 100);
             degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(deg / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5 / 2) * 2 + Math.floor((degbmp + degbmm) / 2) - Math.floor(armM_tot / 2), 1)) / 100;
             // str += "\nBotte Secrète : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Botte Secrète", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
+            listeAttaques.push(new Array("Botte Secrète", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure, pour));
         }
         if (getSortComp("Rafale Psychique") > 0) {
             let pour = getSortComp("Rafale Psychique");
@@ -3889,7 +3891,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(0 * pour / 100);
             degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm - armM_mag, 1))) / 100;
             // str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Rafale Psychique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : ''));
+            listeAttaques.push(new Array("Rafale Psychique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : '', pour));
         }
         if (getSortComp("Explosion") > 0) {
             let pour = getSortComp("Explosion");
@@ -3898,7 +3900,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(0 * pour / 100);
             degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(1 + deg / 2 + pvbase / 20) * 2, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(1 + deg / 2 + pvbase / 20) * 1.5) * 2, 1))) / 100;
             // str += "\nRafale Psychique : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Explosion", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : ''));
+            listeAttaques.push(new Array("Explosion", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, '', pasDeSR ? modificateurMagie : '', pour));
         }
         if (getSortComp("Projectile Magique") > 0) {
             let pour = getSortComp("Projectile Magique");
@@ -3918,11 +3920,11 @@ function analyseTactique(donneesMonstre, nom) {
                 } else {
                     degats = `${degats} (plus bonus de portée)`;
                 }
-                debugMZ(`analyseTactique, iTR= ${donneesMonstre.index}, dist=${dist}, porteePM=${portee}`);
+                debugMZ(`analyseTactique_log, iTR= ${donneesMonstre.index}, dist=${dist}, porteePM=${portee}`);
             } else {
                 degats = `${degats} (plus bonus de portée)`;
             }
-            listeAttaques.push(new Array("Projectile Magique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
+            listeAttaques.push(new Array("Projectile Magique", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie, pour));
         }
         if (getSortComp("Frénésie") > 0) {
             let pour = getSortComp("Frénésie");
@@ -3931,7 +3933,7 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm + attbmp, 0) * pour / 100);
             degats = Math.round((chanceDeTouche - chanceDeCritique) * 2 * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * 2 * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
             // str += "\nFrénésie : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Frénésie", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
+            listeAttaques.push(new Array("Frénésie", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure, pour));
         }
         if (getSortComp("Charger") > 0) {
             let pour = getSortComp("Charger");
@@ -3940,16 +3942,17 @@ function analyseTactique(donneesMonstre, nom) {
             chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm + attbmp, 0) * pour / 100);
             degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(deg * 2 + degbmp + degbmm - armM_tot, 1) + chanceDeCritique * Math.max(Math.floor(deg * 1.5) * 2 + degbmm + degbmp - armM_tot, 1)) / 100;
             // str += "\nCharge : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Charger", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure));
+            listeAttaques.push(new Array("Charger", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurArmure, pour));
         }
         if (getSortComp("Griffe du Sorcier") > 0) {
             let pour = getSortComp("Griffe du Sorcier");
             chanceDEsquiveParfaite = Math.round(chanceEsquiveParfaite(att, esqM, attbmm, 0) * pour / 100);
+            // logMZ(`analyseTactique_log Griffe du Sorcier pour=${pour} att=${att} esqM=${esqM} attbmm=${attbmm} => chanceDEsquiveParfaite=${chanceDEsquiveParfaite}`);
             chanceDeTouche = Math.round(chanceTouche(att, esqM, attbmm, 0) * pour / 100);
             chanceDeCritique = Math.round(chanceCritique(att, esqM, attbmm, 0) * pour / 100);
             degats = Math.round(coeffSeuil * ((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(deg / 2) * 2 + degbmm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(deg / 2) * 1.5) * 2 + degbmm, 1))) / 100;
             // str += "\nGriffe du Sorcier : Touché "+chanceDeTouche+"% Critique "+chanceDeCritique+"% Dégâts "+(degats);
-            listeAttaques.push(new Array("Griffe du Sorcier", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie));
+            listeAttaques.push(new Array("Griffe du Sorcier", chanceDEsquiveParfaite, chanceDeTouche, chanceDeCritique, degats, modificateurEsquive, modificateurMagie, pour));
         }
         if (getSortComp("Attaque Précise", 1) > 0) {
             let niveau = 5;
@@ -3973,7 +3976,7 @@ function analyseTactique(donneesMonstre, nom) {
                 niveau--;
             }
             // str += "\nAttaque Précise : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
-            listeAttaques.push(new Array("Attaque Précise", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
+            listeAttaques.push(new Array("Attaque Précise", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure, 100));
         }
         if (getSortComp("Coup de Butoir", 1) > 0) {
             let niveau = 5;
@@ -3997,7 +4000,7 @@ function analyseTactique(donneesMonstre, nom) {
                 niveau--;
             }
             // str += "\nCoup de Butoir : Touché "+(Math.round(chanceDeTouche*100)/100)+"% Critique "+(Math.round(chanceDeCritique*100)/100)+"% Dégâts "+Math.round(degats*100)/100;
-            listeAttaques.push(new Array("Coup de Butoir", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
+            listeAttaques.push(new Array("Coup de Butoir", chanceDEsquiveParfaite, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure, 100));
         }
         listeAttaques.sort((a, b) => {
             let diff = parseInt(100 * b[4]) - parseInt(100 * a[4]); if (diff == 0) {
@@ -4015,7 +4018,7 @@ function analyseTactique(donneesMonstre, nom) {
         }
         degats = Math.round((chanceDeTouche - chanceDeCritique) * Math.max(Math.floor(degM) * 2 - arm, 1) + chanceDeCritique * Math.max(Math.floor(Math.floor(degM) * 1.5) * 2 - arm * 2 - armbmm - armbmp, 1)) / 100;
 
-        listeAttaques.unshift(new Array("Monstre", Math.round(chanceDEsquiveParfaite * 100) / 100, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure));
+        listeAttaques.unshift(new Array("Monstre", Math.round(chanceDEsquiveParfaite * 100) / 100, Math.round(chanceDeTouche * 100) / 100, Math.round(chanceDeCritique * 100) / 100, Math.round(degats * 100) / 100, modificateurEsquive, modificateurArmure, 100));
         return listeAttaques;
     } catch (exc) {
         let msgid = '';
