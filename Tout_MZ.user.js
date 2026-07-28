@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.38
+// @version     1.7.39
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -4078,9 +4078,10 @@ function checkLesMimis() {
         debugMZ(`step mission ${num[1]}`);
         debugMZ(step);
         if (step) {
+            if (!obMissions) obMissions = {};
             obMissions[num[1]] = step;
         } else {
-            delete obMissions[num[1]];  // pour MZ, elle n'existe plus car MZ n'apporte pas d'aide sur ce type d'étape (compétence, etc.)
+            if (obMissions) delete obMissions[num[1]];  // pour MZ, elle n'existe plus car MZ n'apporte pas d'aide sur ce type d'étape (compétence, etc.)
         }
     }
     //logMZ(`Missions en cours : ${JSON.stringify(enCours)}`);
@@ -14750,7 +14751,7 @@ class MZ_BMfat {
         this.BMfrais = false;
         this.listeBmFat = [];
         if (bmfatigue > 0) {
-            debugMZ(`setAccel, bmfatigue=${bmfatigue}, ${numTroll}.bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}`);
+            debugMZ(`MZ_BMfat_log, bmfatigue=${bmfatigue}, ${numTroll}.bm.fatigue=${MY_getValue(`${numTroll}.bm.fatigue`)}`);
             // On tente de recuperer les BM de fatigue de la page des BM
             if (MY_getValue(`${numTroll}.bm.fatigue`)) {
                 let BMmemoire = MY_getValue(`${numTroll}.bm.fatigue`).split(';');
@@ -17382,3 +17383,37 @@ try {
 } catch (exc) {
     logMZ(`Catch général page ${window.location.pathname}`, exc);
 }
+
+/*
+const testRouleDiv = document.createElement("div");
+testRouleDiv.width= 410;
+testRouleDiv.height = 1000;
+testRouleDiv.style.position = "fixed";
+testRouleDiv.style.top = "0px";
+testRouleDiv.style.left = "50px";
+testRouleDiv.style.width = "100px";
+testRouleDiv.style.height = "100px";
+testRouleDiv.style.backgroundColor = "#dfe38d";
+testRouleDiv.style.zIndex = 400;
+
+const testRouleTable = document.createElement("table");
+const testRouleFirstTr = document.createElement("tr");
+const testRouleFirstTd = document.createElement("td");
+
+const testRouleIframe = document.createElement("iframe");
+testRouleIframe.setAttribute("id","testRouleIframe")
+testRouleIframe.src = "//bran.mooo.com/www-alain/tframe.php";
+testRouleIframe.width = 410;
+testRouleIframe.height = 600;
+testRouleFirstTd.appendChild(testRouleIframe);
+testRouleFirstTr.appendChild(testRouleFirstTd);
+testRouleTable.appendChild(testRouleFirstTr);
+
+testRouleDiv.appendChild(testRouleTable);
+
+insertPoint = document.getElementById("banner");
+if(window.name == "Contenu") {
+    console.log(`test frame insert`);
+	insertPoint.appendChild(testRouleDiv);
+}
+*/
