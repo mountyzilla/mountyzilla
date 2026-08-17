@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.39
+// @version     1.7.40
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.38';
+var MZ_latest = '1.7.40';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -906,12 +906,12 @@ function appendTextboxBlock(node, type, name, text, size, maxlength, value, sId,
     let label = document.createElement('label');
     label.style.display = 'inline-block';
     label.style.marginRight = '10px';
-    if (!bTextRight) {
+    if (text && !bTextRight) {
         label.appendChild(document.createTextNode(text));
     }
     let i = appendTextbox(label, type, name, size, maxlength, value, sId);
     i.style.marginRight = '5px';
-    if (bTextRight) {
+    if (text && bTextRight) {
         label.appendChild(document.createTextNode(text));
     }
     node.appendChild(label);
@@ -2560,6 +2560,8 @@ class MZ_cCDMv2 {
             }
 
             let styleImg = "height:12px;width:auto;"
+            let nPeuCDM = MY_getValue('MZ_nPeuCDM');
+            let colorPeuCDM = MY_getValue('MZ_colorPeuCDM');
             for (let info of infos) {
                 let mzIndex = MZ_cLigneMonstre.MZ_oVueJSON.map_id_objets[info.id];
                 if (mzIndex === undefined) continue;
@@ -2572,6 +2574,13 @@ class MZ_cCDMv2 {
                 MZ_cCDMv2.monsters.visible.delete(mzIndex);       // on supprime de visible (pour req ajax suivant)
                 if (oMonstre.infoMZ) continue;	// Ça arrive en cas de Nvoitdouble?
                 oMonstre.infoMZ = info;
+
+                // surlignage si pas beaucoup de CdM connues de MZ
+                //logMZ(`receptionMZNiveauxAJAX id=${oMonstre.id} oMonstre.infoMZ.nCdM=${oMonstre.infoMZ.nCdM}, nPeuCDM=${nPeuCDM}`);
+                if (nPeuCDM != undefined && oMonstre.infoMZ.nCdM != undefined && oMonstre.infoMZ.nCdM <= nPeuCDM) {
+                    //logMZ(`receptionMZNiveauxAJAX set bgcolor id=${oMonstre.id} ${colorPeuCDM}`);
+                    oMonstre.eltTdNiveau.style.backgroundColor = colorPeuCDM;
+                }
 
                 let className = 'mh_tdpage';
                 let myColor = undefined;
@@ -9132,6 +9141,9 @@ function saveAll() {
         MZ_setOrRemoveValue('COMPTEAREBOURSTITRE', document.getElementById('compteAreboursTitre').checked);
         //MZ_setOrRemoveValue('COMPTEAREBOURSSUIVANTE', document.getElementById('compteAreboursSuivante').checked);
 
+        MZ_setOrRemoveValue('MZ_nPeuCDM', document.getElementById('MZ_nPeuCDM').value);
+        MZ_setOrRemoveValue('MZ_colorPeuCDM', document.getElementById('MZ_colorPeuCDM').value);
+
         MZ_setOrRemoveValue('MZ_SuivantsOrdres', document.getElementById('MZ_SuivantsOrdres').value);
         MZ_setOrRemoveValue('MZ_SuivantsCompress', document.getElementById('MZ_SuivantsCompress').checked);
         MZ_setOrRemoveValue('MZ_SuivantsTresUnique', document.getElementById('MZ_SuivantsTresUnique').checked);
@@ -9474,14 +9486,24 @@ function insertOptionTable(insertPt) {
 
     td = appendTd(appendTr(mainBody, 'mh_tdpage'));
     appendCheckBoxBlock(td, 'confirmeDecalage', "Demander confirmation lors d'un décalage de DLA", MY_getValue('CONFIRMEDECALAGE') == 'true');
+
     td = appendTd(appendTr(mainBody, 'mh_tdpage'));
     appendCheckBoxBlock(td, 'compteAreboursDLA', 'Compte à rebours de DLA', MY_getValue('COMPTEAREBOURSDLA') == 'true');
     appendCheckBoxBlock(td, 'compteAreboursTitre', 'Aussi dans le titre (pas sur smartphone)', MY_getValue('COMPTEAREBOURSTITRE') == 'true');
     //appendCheckBoxBlock(td, 'compteAreboursSuivante', 'Aussi pour la DLA suivante', MY_getValue('COMPTEAREBOURSSUIVANTE') == 'true');
 
     td = appendTd(appendTr(mainBody, 'mh_tdpage'));
+    appendText(td, 'Surligner les monstres avec moins de ');
+    let col = MY_getValue('MZ_colorPeuCDM');
+    if (col == undefined) col = '#C0C0C0';
+    let e = appendTextboxBlock(td, 'text', 'MZ_nPeuCDM', 'CdM dans la vue.   Couleur : ', 3, 3, MY_getValue('MZ_nPeuCDM'), undefined, true);
+    e.setAttribute('Title', 'Laisser vide pour ne pas surligner');
+    e = appendTextboxBlock(td, 'color', 'MZ_colorPeuCDM', undefined, 3, 3, col, undefined, true);
+    e.setAttribute('Title', 'Cliquer pour choisir la couleur\nChoisir une couleur claire');
+
+    td = appendTd(appendTr(mainBody, 'mh_tdpage'));
     appendText(td, 'Page des suivants : ');
-    let e = appendTextboxBlock(td, 'text', 'MZ_SuivantsOrdres', 'Ordres', 3, 3, MY_getValue('MZ_SuivantsOrdres'), undefined, true);
+    e = appendTextboxBlock(td, 'text', 'MZ_SuivantsOrdres', 'Ordres', 3, 3, MY_getValue('MZ_SuivantsOrdres'), undefined, true);
     e.setAttribute('Title', "Permet de voir les ordres des Gowaps dans la page des suivants\n" +
         "Vide : pas d'affichage\n" +
         "0 : tous les ordres\n" +
@@ -13004,7 +13026,9 @@ class MZ_cLigneVue {
         if (diplo) {
             //this.eltTr.className = '';	// la class empêche l'héritage de la couleur par les td. Je préfère forcer les td qu'enlever la class
             if (diplo.couleur) {
-                for (let td of this.eltTr.children) td.style.backgroundColor = diplo.couleur;
+                for (let td of this.eltTr.children)
+                    if (td.style.backgroundColor == undefined || td.style.backgroundColor == '')
+                        td.style.backgroundColor = diplo.couleur;
                 this.eltTr.style.backgroundColor = diplo.couleur;
             }
             if (diplo.titre) {
@@ -16881,6 +16905,12 @@ function MZ_extern_param() {
     }
     if (document.body.MZ_Params.MZ_SuivantsTresUnique != undefined) {
         MY_setValue('MZ_SuivantsTresUnique', document.body.MZ_Params.MZ_SuivantsTresUnique);
+    }
+    if (document.body.MZ_Params.MZ_nPeuCDM != undefined) {
+        MY_setValue('MZ_nPeuCDM', document.body.MZ_Params.MZ_nPeuCDM);
+    }
+    if (document.body.MZ_Params.MZ_colorPeuCDM != undefined) {
+        MY_setValue('MZ_colorPeuCDM', document.body.MZ_Params.MZ_colorPeuCDM);
     }
 }
 
