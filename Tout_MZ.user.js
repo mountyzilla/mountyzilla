@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.42
+// @version     1.7.43
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.42';
+var MZ_latest = '1.7.43';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -2577,7 +2577,7 @@ class MZ_cCDMv2 {
 
                 // surlignage si pas beaucoup de CdM connues de MZ
                 //logMZ(`receptionMZNiveauxAJAX id=${oMonstre.id} oMonstre.infoMZ.nCdM=${oMonstre.infoMZ.nCdM}, nPeuCDM=${nPeuCDM}`);
-                if (nPeuCDM != undefined && oMonstre.infoMZ.nCdM != undefined && oMonstre.infoMZ.nCdM <= nPeuCDM) {
+                if (nPeuCDM != undefined && oMonstre.infoMZ.nCdM != undefined && oMonstre.infoMZ.nCdM <= nPeuCDM && oMonstre.infoMZ.Mode != 'cdm') {
                     //logMZ(`receptionMZNiveauxAJAX set bgcolor id=${oMonstre.id} ${colorPeuCDM}`);
                     oMonstre.eltTdNiveau.style.backgroundColor = colorPeuCDM;
                 }
