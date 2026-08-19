@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.41
+// @version     1.7.42
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.41';
+var MZ_latest = '1.7.42';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -6537,6 +6537,7 @@ class MZ_cSCIZ {
         }
         MZ_cVueJSON.loadPosTroll();
         MZ_cSCIZ.jwt = jwt;
+        // les 2 css <collapsible-wrap, etc>, c'est permettre à la box des infos SCIZ de déborder en dessous
         addStyleSheet(`
 		.sciz-progress-bar-wrapper {
 			width: 75px;
@@ -6583,7 +6584,13 @@ class MZ_cSCIZ {
 		.info1:hover  .info2 {
 			display: inline;
 		}
-		`);
+        .collapsible-wrap .collapsible-content .collapsible-content-inner {
+            overflow: visible;
+        }
+        .collapsible-wrap .toggle:checked + .lbl-toggle + .collapsible-content {
+            overflow: visible;
+        }
+        `);
         return this;
     }
 
@@ -6886,11 +6893,6 @@ class MZ_cSCIZ {
         MZ_cSCIZ.monsters = [];  // reset view
         let mobs = [];
         let iMonster = 0;
-        try {   // permettre à la box des infos SCIZ de déborder en dessous
-            // mais ça casse le repli des blocs de vue => désactivé
-            //MZ_cVueJSON.oMonstres.eltTable.parentNode.style.overflow = 'visible';
-            //MZ_cVueJSON.oMonstres.eltTable.parentNode.parentNode.style.overflow = 'visible';
-        } catch (e) {}
         for (let oLigne of MZ_cVueJSON.oMonstres.objets) {
             let mob = oLigne.nom.match(/(?:une*\s*)*([^<>]+?)\s*\[\s*([^\]]+)/);
             if (!mob) {
