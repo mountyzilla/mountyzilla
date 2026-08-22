@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.43
+// @version     1.7.44
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.43';
+var MZ_latest = '1.7.44';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -226,6 +226,7 @@ var URL_MZinfoMonstre = `${URL_MZ}/monstres_0.9_FF.php`;
 var URL_MZgetCaracMonstre = `${URL_MZ}/getCaracMonstre.php`;
 var URL_pageDispatcherV2 = `${URL_MZ}/cdmdispatcherV2.php`;
 var URL_MZcolorPicker = `${URL_MZ}/colorPicker.html`;
+var URL_GorzakIdC = 'https://gorzak.fr/mh/champ_champi.php';
 
 // liens externes déduits
 var URL_bricol_mountyhall = `${URL_bricol}mountyhall/`;
@@ -10604,7 +10605,7 @@ function MZ_comp_traiteCdMcomp() {
         }
         if (!oContexteCdM.ok) {
             if (oContexteCdM.error) {
-                logMZ(`MZ_comp_traiteCdMcomp, ${oContexteCdM.error}`);
+                logMZ(`MZ_comp_traiteCdMcomp_log, ${oContexteCdM.error}`);
                 MZ_comp_addMessage(oContexteCdM, `Erreur MZ, ${oContexteCdM.error}`);
             }
             return;
@@ -10621,7 +10622,7 @@ function MZ_comp_traiteCdMcomp() {
     if (tstamp == undefined) {
 
         /* dans le cas de la comp, le serveur se repliera sur la date/heure courante
-		logMZ('MZ_comp_traiteCdMcomp, pas de date/heure');
+		logMZ('MZ_comp_traiteCdMcomp_log, pas de date/heure');
 		MZ_comp_addMessage(oContexteCdM, 'Impossible d\'envoyer la CdM à MZ, pas de date/heure');
 		return;
 		*/
@@ -10829,6 +10830,54 @@ function do_cdmcomp() {
     start_script(31, 'do_cdmcomp_log');
     MZ_comp_traiteCdMcomp();
     displayScriptTime(undefined, 'do_cdmcomp_log');
+}
+
+class MZ_idc { // Identification des champignons
+    static x;
+    static y;
+    static n;
+    static type;
+    static envoiFait;
+    static eltBoutonEnvoi;
+    static readPage() {
+        let txt = document.getElementById('msgEffet').innerText;
+        let m = txt.match(/avez\s+reconnu.*(Agaric Sous-Terrain|Amanite Trolloïde|Bolet Péteur|Cèpe Lumineux|Fungus Rampant|Girolle Sanglante|Horreur Des Prés|Nez Noir|Phytomassus Xilénique|Pied Jaune|Pleurote Pleureuse|Préscientus Reguis|Suinte Cadavre).+X\s*=\s*(-?\d+).+Y\s*=\s*(-?\d+).+N\s*=\s*(-?\d+)/is);
+        if (m.length != 5) {
+            logMZ(`MZ_idc_log.init erreur à la récupération du champi m=${JSON.stringify(m)}`);
+            return;
+        }
+        MZ_idc.x = parseInt(m[2]);
+        MZ_idc.y = parseInt(m[3]);
+        MZ_idc.n = parseInt(m[4]);
+        MZ_idc.type = m[1].trim();
+
+        let eTerminer = document.getElementById('termAction');
+        MZ_idc.eltBoutonEnvoi = document.createElement('a');
+        MZ_idc.eltBoutonEnvoi.className = 'submit ui-btn';
+        MZ_idc.eltBoutonEnvoi.onclick = function() {
+            let data = 'x_sign=' + encodeURIComponent(MZ_idc.x < 0 ? '-' : '+') + '&x_value=' + Math.abs(MZ_idc.x);
+            data += '&y_sign=' + encodeURIComponent(MZ_idc.y < 0 ? '-' : '+') + '&y_value=' + Math.abs(MZ_idc.y);
+            data += '&z=' + MZ_idc.n;
+            data += '&type=' + MZ_idc.type;
+            data += '&date=' + (new Date()).toISOString().substring(0, 10);
+            data += '&contributeur=' + encodeURIComponent(MY_getValue('NOM_TROLL'));
+            data += '&ajouter=';
+            new MZ_XMLHttpRequest().do({
+                method: 'POST',
+                data: data,
+                url: URL_GorzakIdC,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                trace: 'envoi IdC',
+                onload: function (responseDetails) {
+                    while (MZ_idc.eltBoutonEnvoi.firstChild) MZ_idc.eltBoutonEnvoi.removeChild(MZ_idc.eltBoutonEnvoi.firstChild);
+                    MZ_idc.eltBoutonEnvoi.appendChild(document.createTextNode("[MZ] Merci pour l'envoi !"));
+                    MZ_idc.eltBoutonEnvoi.onclick = null;
+                }
+            });
+        }
+        MZ_idc.eltBoutonEnvoi.appendChild(document.createTextNode("[MZ] Envoyer l'IdC sur le site de gorzak"));
+        eTerminer.parentNode.insertBefore(MZ_idc.eltBoutonEnvoi, eTerminer);
+    }
 }
 
 /** x~x CdmBot --------------------------------------------------------- */
@@ -17060,7 +17109,10 @@ function MZ_doSearchCompoTanieres(event, oInfo) {
                 eTd.style.border = 'solid black 1px';
                 eTd.className = 'mh_tdpage';
                 if (oInfo.composant.toLowerCase() == compo && oInfo.qualite == qualite) {
-                    eTd.style.background = 'white';
+                    if (isDesktopView())
+                        eTd.style.background = 'white';
+                    else
+                        eTd.style.background = '#D0D0D0';
                 }
                 if (qualite == '') {
                     //console.log(compo + '--' + JSON.stringify(oCompos));
@@ -17321,6 +17373,9 @@ try {
             case 'p_comptenceconnaissancedesmonstres':
                 do_cdmcomp();
                 break;
+            case 'p_comptenceidentificationdeschampignons':
+                MZ_idc.readPage();
+                break
         }
     } else if (isPage("Messagerie/ViewMessageBot")) {
         do_cdmbot();
