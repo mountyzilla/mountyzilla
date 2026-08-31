@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.44
+// @version     1.7.45
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.44';
+var MZ_latest = '1.7.45';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -8500,7 +8500,7 @@ var mh_caracs = {
     'cotte de mailles':
         ['armure', 0, 0, 0, 0, -1, 7, 0, 0, 0, 30, 60, 0, 0, 0, 0.00, 42.50, 42.50],
     'couronne de cristal':
-        ['casque', 0, 0, 0, 1, -1, 0, -1, 3, 0, 0, 0, 5, 10, 0, 0.00, 10.00, 10.00],
+        ['casque', 0, 0, 0, 1, 0, 0, -1, 3, 0, 0, 0, 5, 10, 0, 0.00, 10.00, 10.00],
     "couronne d'obsidienne":
         ['casque', 0, 0, 0, 0, 0, 1, 2, 0, -1, 0, 0, 0, 0, 0, 0.00, 10.00, 10.00],
     "coutelas d'obsidienne":
@@ -8728,7 +8728,7 @@ function getTemplates(nomItem) {
         for (let temp in mh_templates) {
             // on teste la fin du nom contre chaque template
             if (str.slice(-temp.length) != temp.toLowerCase()) {
-                //if (str.substring(0, 4) == 'robe') debugMZ(`getTemplates no match ->${str.slice(-temp.length)}<-->${temp}<-` );
+                //if (str.substring(0, 4) == 'robe') logMZ(`getTemplates_log no match ->${str.slice(-temp.length)}<-->${temp}<-` );
                 continue;
             }
             tempFound = true;
@@ -8740,6 +8740,7 @@ function getTemplates(nomItem) {
         }
     }
     arr.unshift(str);
+    //logMZ(`getTemplates_log rend`); logMZ(arr);
     return arr;
 }
 
@@ -8785,7 +8786,7 @@ function getCaracs(item) {
     let templates = getTemplates(item);
     if (!mh_caracs[templates[0]]) {
         // Si l'item est inconnu
-        debugMZ(`MZ getCaracs inconnu nom=${item} découpé en ${JSON.stringify(templates)}`);
+        debugMZ(`MZ getCaracs_log inconnu nom=${item} découpé en ${JSON.stringify(templates)}`);
         return [];
     }
     let caracs = clone(mh_caracs[templates[0]]);
@@ -8804,9 +8805,12 @@ function getCaracs(item) {
         caracs = addRenfort(caracs, templates[0]);
         templates.shift();
     }
+    //logMZ(`getCaracs_log avant templates caracs=${JSON.stringify(caracs)}`);
     for (let i = templates.length - 1; i >= 0; i--) {
         caracs = addArray(caracs, mh_templates[templates[i]]);
+        //logMZ(`getCaracs_log i=${i} après ${templates[i]} carac_template=${mh_templates[templates[i]]} caracs=${JSON.stringify(caracs)}`);
     }
+    //logMZ(`getCaracs_log rend`); logMZ(caracs);
     return caracs;
 }
 
@@ -8867,6 +8871,7 @@ function getLine(tab) {
     if (tab[15] != tab[16]) {
         str = `${str} / ${tab[16]} min`;
     }
+    //logMZ(`getLine_log ${JSON.stringify(tab)} => ${str}`);
     return str;
 }
 
@@ -8932,7 +8937,7 @@ function treateEquipement() {
         "td[2]/*/li",
         document, null, 7, null);
     if (nodes.snapshotLength > 0) {
-        debugMZ('treateEquipement CSS de base nb equip ' + nodes.snapshotLength);
+        //logMZ('treateEquipement_log CSS de base nb equip ' + nodes.snapshotLength);
         // Si CSS de base
         for (let i = 0; i < nodes.snapshotLength; i++) {
             let li = nodes.snapshotItem(i);
@@ -8943,6 +8948,7 @@ function treateEquipement() {
                 nom = nom.replace(c, "'");
             }
             let arr = getCaracs(nom);
+            //logMZ(`treateEquipement_log  nom=${nom}, carac=${JSON.stringify(arr)}`);
             if (arr.length > 0) {
                 faireLigne = true;
                 caracs = addArray(caracs, arr);
@@ -8968,7 +8974,7 @@ function treateEquipement() {
                 let node = nodes.snapshotItem(i);
                 let nodeText = node.innerText;
                 if (!nodeText) {
-                    logMZ(`treateEquipement pas de node.innertext pour ${node.outerHTML} `);
+                    logMZ(`treateEquipement_log pas de node.innertext pour ${node.outerHTML} `);
                     continue;
                 }
                 let nom = nodeText.toLowerCase();
