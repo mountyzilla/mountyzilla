@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.45
+// @version     1.7.46
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.45';
+var MZ_latest = '1.7.46';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -6174,6 +6174,7 @@ function MZ_upgradeVueSuivants() {
             } catch (e) { console.error(e); }
         }
     }
+    let cacheOrdreMH = false;
     for (let oSuivant of MZ_analyse_page_suivants.suivants) {
         if (nMaxOrdres != undefined) {
             let tabTxtOrdre = [];
@@ -6251,6 +6252,7 @@ function MZ_upgradeVueSuivants() {
                 }
                 //eA.appendChild(document.createTextNode(tabTxtOrdre.join(' / ')));
                 eOuterDiv.appendChild(eA);
+                cacheOrdreMH = true;
             } else {
                 eOuterDiv.style.display = 'none';
             }
@@ -6295,6 +6297,7 @@ function MZ_upgradeVueSuivants() {
             }
         }
     }
+    if (cacheOrdreMH) addStyleSheet('.ordreCurr {display:none}');
 }
 
 function do_lieuDescription() {
