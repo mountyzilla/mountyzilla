@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.46
+// @version     1.7.47
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.46';
+var MZ_latest = '1.7.47';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -15359,23 +15359,15 @@ function MZ_texteAideCompetence(comp, niveau) {
         texte = 'Vous voulez encourager vos compagnons de chasse ? ' +
             'Ramassez quelques Coquillages, et en avant la musique !<br>';
         texte = `${texte}${'<table class="mh_tdborder" cellspacing="1" cellpadding="1" border="0"><tbody>' +
-        '<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th></tr>' +
-        '<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Gaaaw</td><td>Fatigue +1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Ghimighimighimi</td><td>Impacte le baroufleur</td></tr>' +
-        '<tr class="mh_tdpage"><td>Huitsch</td><td>deg -1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Kliketiiik</td><td>esq -1 / concentration -1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Krouiiik</td><td>concentration -2</td></tr>' +
-        '<tr class="mh_tdpage"><td>Kssksss</td><td>esq +1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Praaaouuut</td><td>reg-1 </td></tr>' +
-        '<tr class="mh_tdpage"><td>Sssrileur</td><td>seuil 6, rend visible</td></tr>' +
-        '<tr class="mh_tdpage"><td>Tagadagada</td><td>augmente le nombre de tours (1 tour par tranche de 2)</td></tr>' +
-        '<tr class="mh_tdpage"><td>Tuutuuuut</td><td>att -1</td></tr>' +
-        '<tr class="mh_tdpage"><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
-        '<tr class="mh_tdpage"><td>Whoooom</td><td>concentration +2</td></tr>' +
-        '<tr class="mh_tdpage"><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
-        '<tr class="mh_tdpage"><td>Zbouing </td><td>reg +1</td></tr>' +
+        '<tr class="mh_tdtitre"><th>Nom</th><th>Effet</th><th>Nom</th><th>Effet</th></tr>' +
+        '<tr class="mh_tdpage"><td>Badaboum</td><td>att +1</td><td>Praaaouuut</td><td>reg-1 </td></tr>' +
+        '<tr class="mh_tdpage"><td>Booong</td><td>deg +1 / esq -1</td><td>Sssrileur</td><td>seuil 6, rend visible</td></tr>' +
+        '<tr class="mh_tdpage"><td>Gaaaw</td><td>Fatigue +1</td><td>Tagadagada</td><td>augmente le nombre de tours (1 tour par tranche de 2)</td></tr>' +
+        '<tr class="mh_tdpage"><td>Ghimighimighimi</td><td>Impacte le baroufleur</td><td>Tuutuuuut</td><td>att -1</td></tr>' +
+        '<tr class="mh_tdpage"><td>Huitsch</td><td>deg -1</td><td>Whaaag</td><td>augmente la portée horizontale (1 case par tranche de 4)</td></tr>' +
+        '<tr class="mh_tdpage"><td>Kliketiiik</td><td>esq -1 / concentration -1</td><td>Whoooom</td><td>concentration +2</td></tr>' +
+        '<tr class="mh_tdpage"><td>Krouiiik</td><td>concentration -2</td><td>Ytseukayndof</td><td>seuil 2, rend les bonus magiques</td></tr>' +
+        '<tr class="mh_tdpage"><td>Kssksss</td><td>esq +1</td><td>Zbouing </td><td>reg +1</td></tr>' +
         '</tbody></table>'}`;
     } else if (comp.indexOf("Botte Secrète") != -1) {
         modA = atttour ? Math.floor(Math.floor(2 * att / 3) * atttour / 100) : 0;
