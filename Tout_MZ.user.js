@@ -7521,7 +7521,7 @@ function atoi(s) {
 // fonctions visibles) (import Chrall)
 (function (MZ_troogle) {
 
-    const BASE_TROOGLE_URL = `https://troogle.iktomi.eu/`;
+    const BASE_TROOGLE_URL = `https://troogle.mh.raistlin.fr/`;    // `https://troogle.iktomi.eu/`;
     const BASE_TROOGLE_SEARCH = `${BASE_TROOGLE_URL}entities/?entity_search[search]=`;
 
     // Pseudo-constantes:
