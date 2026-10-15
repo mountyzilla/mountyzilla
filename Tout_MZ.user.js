@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.47
+// @version     1.7.48
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,7 +36,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.47';
+var MZ_latest = '1.7.48';
 var MZ_changeLog = [
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
@@ -57,8 +57,6 @@ var MZ_changeLog = [
 
  H2P 08/07/2020
  *		dans la vue des minerais, ça devrait a priori afficher, sur base des formules de mountypedia, le nombre de carats de chaque pépite de minerai
- Bireli-Gravos 08/12/2018
- FAIT faire un warning si l'utilisateur a désactivé la case "Menu d'actions contextuelles" dans la fenêtre "limiter la vue"
  breizhou13 20/12/2016
  envoyer les données à l'IT (Bricol'Trolls) aussi
  (Roule') Ça me semble difficile vis à vis de Bricol'Troll. Un bouton pour demander le rafraichissement ?
@@ -66,38 +64,26 @@ var MZ_changeLog = [
  partage des CDM avec seulement son groupe. Perso je prefere le partage general
  Akkila le boeuf le 26-03-2017 à 15:56
  - bouton pour rafraîchir les infos des trolls de son groupe
- Roule'
- FAIT corriger la façon dont les cibles de mission sont stockées (JSON très grosse table)
  Réactiver les jubilaires
  À supprimer : traces marquées [MZd] (mises pour analyser pb Tcherno Bill)
  06/01/2017 toute la partie tabcompo ne fonctionne plus (sans doute suite à la modification de l'affichage des objets en tanière)
  - voir l'intérêt de refaire fonctionner
  - gestion des compos d'enchantement, EM (!), mois des champignons, autre (?)
- FAIT : ambiguité sur le nom de monstres de mission : Shai, Ombre, Geck'oo et Boujd'la
  Sans doute à corriger, la compétence Baroufle pour le lien vers l'anatroliseur
  Prévision des DLA de monstre
- FAIT Niveau des monstres à la méthode Roule'
  Raistlin
  *		et si la popup des compétences s'affichait aussi au survol des raccourcis ?
- FAIT? pages des Bonus/malus, erreur sur l'effet total, tours suivants, attaque
- FAIT Les cibles de mission ont disparu dans la vue (remonté par Hera)
  80117 - Héra
  *		Il semble que l'icône de LdP n'apparait que pour les Tom
- FAIT l'infobulle de sacrifice donne des info erronées maintenant (dues aux changement d'affichage des gains/bm de temps probablement). pour moi, ça me dit "vous ne pouvez pas compenser de blessures dues à un sacrifice" alors que clairement, je peux
  Ajout dans le vue d'un pseudo-lieu pour la caverne où le meneur d'un mission doit se rendre
- FAIT Pour la portée IdC, l'arrondi est par défaut et MZ le fait par excès (1 fois en horizontal + 1 fois en vertical)
- FAIT Possibilité de plusieurs systèmes Bricol'troll
  en 1.2.17.18 SyntaxError: expected expression, got end of script[En savoir plus] Tout_MZ.user.js:12731:6
  ?
- FAIT Tenir compte de la distance pour le PM (calculatrice de combat)
  Alanae/Gnu/Pen-Hiss
  *		l'infobulle du lancer de potion pourrait donner le % du jet de toucher en fonction de la distance
  *		popup d'erreur js en mode smartphone sur un TP (pb trajet_canvas)
  Dans https://mhp.mh.raistlin.fr/mountyhall/View/View_closed.php, le lien pour se connecter à son troll est games.mountyhall.com Est-ce que ça peut être modifié par MZ ?
  a de temps en temps un popup "Error: Permission denied to access property Symbol:toPrimitive"
  est-ce que l'infobulle de charger pourrait calculer la portée pour les tours suivants en fonction de la diminution de fatigue (ce serait plus compliqué d'estimer quand on est blessé en fonction de la reg)
- Kali
- MASQUÉ "TyperError: InfoComposant[4] is undefined" à l'affichage de la vue
  **********************************************************/
 
 /** ********************************************************
@@ -6215,10 +6201,30 @@ function MZ_upgradeVueSuivants() {
             let eDLA = document.createElement('div');
             eDLA.id = `MZ_suiv_dla_${oSuivant.oJSON.id}`;
             eDLA.style.whiteSpace = 'nowrap';
-            let d = new Date(oSuivant.oJSON.dla);
-            eDLA.appendChild(document.createTextNode(`DLA : ${MZ_formatDateMS(d, false)}`));
+            let dDLA = new Date(oSuivant.oJSON.dla);
+            eDLA.appendChild(document.createTextNode(`DLA : ${MZ_formatDateMS(dDLA, false)}`));
             eDLA.style.display = 'inline-block';
             eOuterDiv.appendChild(eDLA);
+
+            if (oSuivant.oJSON.fidelite) {
+                let eFidelite = document.createElement('div');
+                eFidelite.id = `MZ_suiv_fidelite_${oSuivant.oJSON.id}`;
+                eFidelite.style.whiteSpace = 'nowrap';
+                eFidelite.style.marginLeft = '7px';
+                let dFidele = new Date(dDLA.getTime() + oSuivant.oJSON.fidelite * oSuivant.oJSON.tour * 60000);
+                let daysLeft = oSuivant.oJSON.fidelite * oSuivant.oJSON.tour / (60*24);
+                if (daysLeft < 10) {
+                    eFidelite.style.color = 'red';
+                    eFidelite.style.border = 'solid red 1px';
+                    eFidelite.style.fontWeight = 'bold';
+                } else if (daysLeft < 30) {
+                    eFidelite.style.color = '#C2410C';
+                    eFidelite.style.border = 'solid #C2410C 1px';
+                }
+                eFidelite.appendChild(document.createTextNode(`Fidèle jusqu'au : ${dFidele.toLocaleDateString('fr-FR')}`));
+                eFidelite.style.display = 'inline-block';
+                eOuterDiv.appendChild(eFidelite);
+            }
 
             if (tabTxtOrdre.length > 0) {
                 let eA = document.createElement('a');
