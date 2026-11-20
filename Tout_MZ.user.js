@@ -10,7 +10,7 @@
 // @exclude     *mh2.mh.raistlin.fr*
 // @exclude     *mhp.mh.raistlin.fr*
 // @exclude     *mzdev.mh.raistlin.fr*
-// @version     1.7.48
+// @version     1.7.49
 // @grant GM_getValue
 // @grant GM_deleteValue
 // @grant GM_setValue
@@ -36,8 +36,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  *
  *******************************************************************************/
 
-var MZ_latest = '1.7.48';
+var MZ_latest = '1.7.49';
 var MZ_changeLog = [
+    "V1.7.49 \t\t 20/11/2026",
+    "	- lien vers vue2D Gorzak",
     "V1.7.17 \t\t 19/02/2026",
     "	- Pour nos amis K : AM : PV pour jouer tout de suite",
     "V1.7.14 \t\t 30/11/2025",
@@ -170,6 +172,7 @@ var URL_vue_Gloumfs2D = 'http://gloumf.free.fr/vue2d.php';
 var URL_vue_Gloumfs3D = 'http://gloumf.free.fr/vue3d.php';
 var URL_vue_Grouky = 'http://mh.ythogtha.org/grouky.py/grouky';
 var URL_vue_cube = 'vueCube/vueCube.html';
+var URL_vue_Gorzak = 'https://gorzak.fr/mh/vue2d.html';
 
 // URLs de test HTTPS
 var URL_CertifRaistlin1 = `${URL_MZ.replace(/http:\/\//, 'https://')}/img/1.gif`;	// s'adapte si mode IP
@@ -11718,6 +11721,11 @@ class MZ_cVueExterne {
                 screen_width: window.screen.width
             }
         },
+        'Vue 2D Gorzak': {
+            url: URL_vue_Gorzak,
+            func: MZ_cVueExterne.vueGorzak,
+            noform: true,
+        },
         'Vue du CCM': {
             url: URL_vue_CCM,
             paramid: 'vue',
@@ -11812,6 +11820,46 @@ class MZ_cVueExterne {
             MY_setValue('MZ_VueExtFiltre', 1);
         } else {
             MY_removeValue('MZ_VueExtFiltre');
+        }
+    }
+
+    static vueGorzak() {
+        try {
+            let otherTab = window.open(URL_vue_Gorzak, 'Gorzak2D');
+            console.log(`après open ${URL_vue_Gorzak}`, otherTab);
+            let callback =function(event) {
+              //console.log(event);
+              // Always verify the sender's origin
+              if (event.origin !== URL_vue_Gorzak.substring(0, event.origin.length)) {
+                  logMZ(`[MZ_cVueExterne.vueGorzak_log] bad origin ${event.origin} vs ${URL_vue_Gorzak}`);
+                  return;
+              }
+              if (event.data === 'GET_VUE' || event.data === 'GET_VUE_JSON') {
+                MZ_cVueExterne.loadPorteeFiltre();
+                let position = getPosition();
+                let oData = {
+                    'self': {x: position[0], y: position[1], n: position[2], porteeH: MZ_cVueExterne.limitH, porteeV: MZ_cVueExterne.limitV},
+                    trolls: MZ_cVueJSON.oTrolls.getArray4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre),
+                    monstres: MZ_cVueJSON.oMonstres.getArray4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre),
+                    champignons: MZ_cVueJSON.oChampignons.getArray4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre),
+                    tresors: MZ_cVueJSON.oTresors.getArray4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre),
+                    lieux: MZ_cVueJSON.oLieux.getArray4Vue2D(MZ_cVueExterne.limitH, MZ_cVueExterne.limitV, MZ_cVueExterne.avecFiltre),
+                };
+                if (event.data === 'GET_VUE_JSON') {
+                    let sData = JSON.stringify(oData);
+                    //console.log(`[MZ_cVueExterne.vueGorzak_log] envoi\n${sData}`);
+                    event.source.postMessage(sData, event.origin);
+                } else {
+                    event.source.postMessage(oData, event.origin);
+                }
+              }
+            };
+            window.addEventListener('message', callback);
+            // test
+            //callback({origin: URL_vue_Gorzak, data: 'GET_VUE'});
+            return;
+        } catch (exc) {
+            logMZ(`[MZ_cVueExterne.vueGorzak_log] Erreur d'export vers Vue externe`, exc);
         }
     }
 
@@ -12747,6 +12795,44 @@ class MZ_cVueJSON {
         }
         txt += '#FIN ' + this.nomBase.toUpperCase() + "\n";
         return txt;
+    }
+
+    getArray4Vue2D(limitH, limitV, avecFiltre) {
+        if (!this.objets) return;	// cas d'effet OUKISONT, par exemple
+        let tabRet = [];
+        let myPosition = getPosition();
+        for (let o of this.objets) {
+            if (avecFiltre && o.eltTr.style.display == 'none') continue;
+            o.loadXYN();
+            if (Math.max(Math.abs(myPosition[0] - o.x), Math.abs(myPosition[1] - o.y)) > limitH) continue;
+            if (Math.abs(myPosition[2] - o.n) > limitV) continue;
+            let oRet = {
+                id: o.id,
+                nom: o.nom,
+                x : o.x,
+                y : o.y,
+                n : o.n,
+            };
+            switch (this.hasNiveau) {
+                case 1:
+                    oRet['niveau'] = o.getNiveau();
+                    break;
+                case 2:
+                    if (!o.infoMZ) {
+                        // ignore
+                    } else if (o.infoMZ.niv.min && o.infoMZ.niv.min == o.infoMZ.niv.max) {
+                        oRet['niveau'] = o.infoMZ.niv.min;
+                    } else {
+                        oRet['niveau'] = (o.infoMZ.niv.min ?? '?') + '-' + (o.infoMZ.niv.max ?? '?');
+                        if (o.infoMZ.niv.min !== undefined) oRet['nivmin'] = o.infoMZ.niv.min;
+                        if (o.infoMZ.niv.max !== undefined) oRet['nivmax'] = o.infoMZ.niv.max;
+                    }
+                    break;
+            }
+            if (this.hasRace) oRet['race'] = o.getRace();
+            tabRet.push(oRet);
+        }
+        return tabRet;
     }
 
     // gestion des filtres

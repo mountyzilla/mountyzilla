@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+<script>
+'use strict';
+var MH_capitan_json=null;
+</script>
+<script src="capitan.user.js"></script>
+<script>
+//cCAPITAN_MH.bDebug = true;
+
+cCAPITAN_MH.infoCurrentCarte = new Object();
+cCAPITAN_MH.infoCurrentCarte.essais = [];
+//cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(66 , 102,  86,  2));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(50 , 61 , 58 , 1 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(68 , 77 , 47 , 0 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(66 , 80 , 49 , 1 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(59 , 86 , 53 , 0 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(59 , 86 , 62 , 0 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(71 , 65 , 62 , 1 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(69 , 65 , 62 , 1 ));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(16 , 126,  80,  4));
+cCAPITAN_MH.infoCurrentCarte.essais.push(new cCAPITAN_essai(16 , 168,  20,  4));
+
+cCAPITAN_MH.infoCurrentCarte.mort = new cCAPITAN_essai(-61, -102, -86);
+cCAPITAN_MH.calculeSolution2();
+
+let msg = `cCAPITAN_MH.listeSolution.length=${cCAPITAN_MH.listeSolution.length}`;
+let msg2 = JSON.stringify(cCAPITAN_MH.listeSolution);
+console.log(`testLocal ${msg}`);
+
+console.log(`testLocal ${msg2}`);
+
+window.console.log(`testLocal fin`);
+</script>
+</head>
+<body>
+<div id="length"></div>
+</body>
+<script>
+document.getElementById('length').innerHTML = msg + '<br>' + msg2;
+</script>

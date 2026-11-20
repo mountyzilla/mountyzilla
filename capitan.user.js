@@ -14,7 +14,7 @@
 // @exclude *mh2.mh.raistlin.fr*
 // @exclude *mzdev.mh.raistlin.fr*
 // @name Capitan
-// @version 8.9.2
+// @version 8.9.3
 // @namespace https://greasyfork.org/users/70018
 // ==/UserScript==
 
@@ -253,15 +253,16 @@ class cCAPITAN_MH {
 		};
 		// nombre de chiffres (une coord à 1 chiffe en donne 2, le "0" et le chiffre des unités) dans les coord de la mort du Capitan
 		oContexte.nCoord3 = cCAPITAN_MH.infoCurrentCarte.mort.nbChiffre() - 6;
-		//if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log contexte initial=" + JSON.stringify(oContexte));
+		if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log contexte initial=" + JSON.stringify(oContexte));
 
 		// On lance le balayage récursif des possibilités
 		cCAPITAN_MH.listeSolution = new Array();
 		cCAPITAN_MH.calculeSolutionRecursifCoord(oContexte);
-		//if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log résultat=" + JSON.stringify(cCAPITAN_MH.listeSolution));
+		if (cCAPITAN_MH.bDebug) window.console.log("[CAPITAN debug] calculeSolution2_log résultat=" + JSON.stringify(cCAPITAN_MH.listeSolution));
 	};
 
 	static calculeSolutionRecursifCoord(oContexte) {	// balayage récursif des solutions, balayage coordonnée (x, y ou n)
+		if (cCAPITAN_MH.bDebug) console.log(`[CAPITAN debug] Coord_log start ontexte=${JSON.stringify(oContexte)}`);
 		if (oContexte.nCoord3 > 0) {	// lancer le test sur une coord à 3 chiffres
 			var newContexte = Object.assign({}, oContexte);	// clone car on modifie le contexte
 			newContexte.nCoord3--;
@@ -274,6 +275,7 @@ class cCAPITAN_MH {
 
 	static calculeSolutionRecursifDigit(oContexte, nChiffreThisCoord) {	// balayage récursif des solutions, balayages des suites de chiffres possibles
 		let thisCoord = '';
+		if (cCAPITAN_MH.bDebug) console.log(`[CAPITAN debug] Digit_log start nChiffreThisCoord=${nChiffreThisCoord}, contexte=${JSON.stringify(oContexte)}`);
 		let newContexte = Object.assign({}, oContexte);	// clone car on modifie le contexte
 		newContexte.tabCoord = oContexte.tabCoord.slice();	// clone (le clone ci-dessus est un "shallow" clone)
 		for (let i = 0; i <= 9; i++) {	// boucle sur les chiffres possibles à cette position
@@ -289,19 +291,25 @@ class cCAPITAN_MH {
 			if (oContexte.nCoordEnCours != 2) {
 				// continuer sur la coord suivante
 				newContexte.nCoordEnCours = oContexte.nCoordEnCours + 1;
+				let prevDebug = cCAPITAN_MH.bDebug;
+				if (cCAPITAN_MH.bDebug) console.log(`[CAPITAN debug] Digit_log appel calculeSolutionRecursifCoord pour la coord n°${newContexte.nCoordEnCours}, tabCoord=${JSON.stringify(newContexte.tabCoord)}`);
+				cCAPITAN_MH.bDebug = (newContexte.tabCoord[0] === '116');
 				cCAPITAN_MH.calculeSolutionRecursifCoord(newContexte);
+				cCAPITAN_MH.bDebug = prevDebug;
 				continue;
 			}
 			// ici, on a tiré tous les chiffres des 3 coordonnées, on teste si ces coord sont compatibles avec les essais
 			let bCompatible = true;
 			let oEssai;
+			//if (cCAPITAN_MH.bDebug) console.log(`[CAPITAN debug] Digit_log  nChiffreThisCoord=${nChiffreThisCoord}, contexte=${JSON.stringify(newContexte)}`);
 			if (cCAPITAN_MH.infoCurrentCarte.essais) for (oEssai of cCAPITAN_MH.infoCurrentCarte.essais) {
 				if (!oEssai.isCompatible(newContexte.tabCoord)) {
+					if (cCAPITAN_MH.bDebug) console.log(`[CAPITAN debug] ${newContexte.tabCoord} pas compatible avec ${JSON.stringify(oEssai)}`);
 					bCompatible = false;
 					break;
 				}
 			}
-			if (cCAPITAN_MH.bDebug && newContexte.tabCoord[0] == '03' && newContexte.tabCoord[1] == '80') {
+			if (cCAPITAN_MH.bDebug && bCompatible) { // && newContexte.tabCoord[0] == '03' && newContexte.tabCoord[1] == '80') {
 				let sCause = '';
 				if (!bCompatible) {
 					sCause = ' bad ' + oEssai.forPsychoChasseur() + ' nMatches=';
@@ -309,7 +317,7 @@ class cCAPITAN_MH {
 					sCause += ' ' + oEssai.nbMatchesOne(oEssai.yText(), newContexte.tabCoord[1]);
 					sCause += ' ' + oEssai.nbMatchesOne(oEssai.nText(), newContexte.tabCoord[2]);
 				}
-				//window.console.log('[CAPITAN debug] calculeSolutionRecursifDigit_log, teste ' + newContexte.tabCoord.join("; ") + ', bCompatible=' + bCompatible + sCause);
+				window.console.log('[CAPITAN debug] Digit_log , teste ' + newContexte.tabCoord.join("; ") + ', bCompatible=' + bCompatible + sCause);
 			}
 			if (bCompatible) {
 				cCAPITAN_MH.listeSolution.push(new cCAPITAN_essai(newContexte.tabCoord));	// slice pour cloner le tableau
@@ -1296,7 +1304,7 @@ localStorage='${JSON.stringify(oMortLocalStorage)}`);
 			cCAPITAN_MH.numTroll = parseInt(eltId.getAttribute('data-id'));
 			if (cCAPITAN_MH.bDebug) console.log(`[Capitan debug] troll id=${cCAPITAN_MH.numTroll}`);
 		} else cCAPITAN_MH.numTroll = 0;	// on continue, pas de problème en mode intégré sauf qu'on ne récupère pas les anciennes cartes
-		if (cCAPITAN_MH.numTroll == 0) console.log('[Capitan] erreur à la récupération du numéro de Troll');
+		if (cCAPITAN_MH.numTroll == 0) console.log('[Capitan] erreur à la récupération du numéro de Troll, on ne récupèrera pas les anciennes cartes');
 		// position courante du Troll
 		eltId = undefined;
 		if (frameSommaire) eltId = frameSommaire.document.getElementById ('DLA_xyn');
